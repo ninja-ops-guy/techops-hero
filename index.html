@@ -94,7 +94,12 @@
 
   <!-- Touch controls -->
   <div id="touch-ui" class="hidden">
-    <div id="joystick"><div id="joy-knob"></div></div>
+    <div id="dpad">
+      <button class="dbtn d-up" data-dx="0" data-dy="-1">▲</button>
+      <button class="dbtn d-left" data-dx="-1" data-dy="0">◀</button>
+      <button class="dbtn d-right" data-dx="1" data-dy="0">▶</button>
+      <button class="dbtn d-down" data-dx="0" data-dy="1">▼</button>
+    </div>
     <div id="touch-buttons">
       <button id="tb-interact" class="tbtn">A</button>
       <button id="tb-menu" class="tbtn small">☰</button>
