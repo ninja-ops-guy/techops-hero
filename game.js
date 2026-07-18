@@ -107,29 +107,50 @@ const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat ===
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
 
 // ---------- map generation ----------
+// zones: office (top), factory floor (bottom strip), server room (top-right)
+const SRV = { x0: MAPW - 13, y0: 2, x1: MAPW - 2, y1: 8 };
+const FACTORY_Y = MAPH - 9;
+function zoneAt(x, y) {
+  if (x >= SRV.x0 && x <= SRV.x1 && y >= SRV.y0 && y <= SRV.y1) return "server";
+  if (y >= FACTORY_Y) return "factory";
+  return "office";
+}
 function genMap() {
   const m = [];
   for (let y = 0; y < MAPH; y++) { m.push([]); for (let x = 0; x < MAPW; x++) m[y].push(0); }
   // outer walls
   for (let x = 0; x < MAPW; x++) { m[0][x] = 1; m[MAPH - 1][x] = 1; }
   for (let y = 0; y < MAPH; y++) { m[y][0] = 1; m[y][MAPW - 1] = 1; }
-  // room partitions (random pillars & walls)
-  const wallLines = R(4, 7);
+  // server room walls + door
+  for (let x = SRV.x0; x <= SRV.x1; x++) { m[SRV.y0][x] = 1; m[SRV.y1][x] = 1; }
+  for (let y = SRV.y0; y <= SRV.y1; y++) { m[y][SRV.x0] = 1; m[y][SRV.x1] = 1; }
+  m[SRV.y1][SRV.x0 + 3] = 0; m[SRV.y1][SRV.x0 + 4] = 0;
+  // server racks
+  for (let x = SRV.x0 + 2; x < SRV.x1 - 1; x += 2) for (let y = SRV.y0 + 1; y < SRV.y1 - 1; y += 2) m[y][x] = 3;
+  // factory: conveyor lines, CNC machines, crates
+  for (let y = FACTORY_Y + 2; y < MAPH - 2; y += 3)
+    for (let x = 3; x < MAPW - 3; x++) if (Math.random() < .88) m[y][x] = 5;
+  for (let i = 0; i < 12; i++) {
+    const x = R(2, MAPW - 3), y = R(FACTORY_Y + 1, MAPH - 3);
+    if (m[y][x] === 0) m[y][x] = pick([6, 7, 7]);
+  }
+  // office: cubicle desks, plants, water coolers
+  for (let i = 0; i < 65; i++) {
+    const x = R(2, MAPW - 3), y = R(2, FACTORY_Y - 1);
+    if (m[y][x] === 0 && zoneAt(x, y) === "office") m[y][x] = pick([2, 2, 2, 2, 4, 8]);
+  }
+  // office partition walls with doorways
+  const wallLines = R(3, 5);
   for (let i = 0; i < wallLines; i++) {
     const horiz = Math.random() < .5;
-    const pos = R(4, (horiz ? MAPH : MAPW) - 5);
-    const from = R(2, 6), len = R(8, 18);
+    const pos = R(4, FACTORY_Y - 4);
+    const from = R(2, 6), len = R(6, 14);
     const door = R(from, from + len - 1);
     for (let j = from; j < from + len; j++) {
       if (j === door || j === door + 1) continue;
       const x = horiz ? j : pos, y = horiz ? pos : j;
-      if (x > 0 && x < MAPW - 1 && y > 0 && y < MAPH - 1) m[y][x] = 1;
+      if (x > 0 && x < MAPW - 1 && y > 0 && y < FACTORY_Y - 1 && zoneAt(x, y) === "office") m[y][x] = 1;
     }
-  }
-  // scatter furniture (2 = desk, 3 = server rack, 4 = plant)
-  for (let i = 0; i < 90; i++) {
-    const x = R(2, MAPW - 3), y = R(2, MAPH - 3);
-    if (m[y][x] === 0) m[y][x] = pick([2, 2, 2, 3, 3, 4]);
   }
   return m;
 }
@@ -205,9 +226,116 @@ function resize() {
 }
 addEventListener("resize", resize); resize();
 
-const TILE_GLYPH = { 1: "🧱", 2: "🖥️", 3: "🗄️", 4: "🪴" };
+// ---------- pixel art ----------
+function px(c, X, Y, w, h) { ctx.fillStyle = c; ctx.fillRect(X, Y, w, h); }
+function drawTile(t, x, y, tm) {
+  const X = x * TILE, Y = y * TILE, z = zoneAt(x, y);
+  // floors by zone
+  if (z === "factory") {
+    px((x + y) % 2 ? "#23231c" : "#26261e", X, Y, TILE, TILE);
+    if (y === FACTORY_Y) { px("#c9a227", X, Y, TILE, 3); px("#c9a227", X, Y + TILE - 3, TILE, 3); }
+  } else if (z === "server") {
+    px((x + y) % 2 ? "#131a2a" : "#162035", X, Y, TILE, TILE);
+    px("#0c1220", X, Y, TILE, 1); px("#0c1220", X, Y, 1, TILE);
+  } else {
+    px((x + y) % 2 ? "#181826" : "#1a1a2a", X, Y, TILE, TILE);
+  }
+  if (t === 0) return;
+  switch (t) {
+    case 1: // wall panel
+      px("#2b2b40", X, Y, TILE, TILE); px("#3d3d5c", X, Y, TILE, 6);
+      px("#191926", X + 3, Y + 3, 2, 2); px("#191926", X + TILE - 5, Y + 3, 2, 2);
+      px("#191926", X + 3, Y + TILE - 5, 2, 2); px("#191926", X + TILE - 5, Y + TILE - 5, 2, 2);
+      px("#22223a", X, Y + TILE - 3, TILE, 3); break;
+    case 2: // cubicle desk with monitor
+      px("#4a3a28", X + 2, Y + 14, 28, 14); px("#5c4932", X + 2, Y + 14, 28, 3);
+      px("#101014", X + 9, Y + 2, 14, 10);
+      px(Math.floor(tm / 900) % 2 ? "#1d3" : "#162", X + 11, Y + 4, 10, 2);
+      px("#1d3", X + 11, Y + 7, 6, 1);
+      px("#333", X + 14, Y + 12, 4, 2); break;
+    case 3: // server rack with blinking LEDs
+      px("#101018", X + 4, Y + 1, 24, 30); px("#1c1c2c", X + 6, Y + 3, 20, 26);
+      for (let r = 0; r < 5; r++) {
+        px("#0a0a12", X + 7, Y + 5 + r * 5, 18, 3);
+        const on = (Math.floor(tm / 400) + r + x) % 3;
+        px(on ? (r % 2 ? "#3f6" : "#3af") : "#142", X + 21, Y + 5 + r * 5, 3, 3);
+      } break;
+    case 4: // plant
+      px("#7a4a2a", X + 11, Y + 20, 10, 10); px("#2f7a3a", X + 8, Y + 6, 16, 14);
+      px("#3f9a4a", X + 11, Y + 3, 10, 8); break;
+    case 5: { // conveyor with animated rollers
+      px("#3a3a44", X, Y + 4, TILE, 24); px("#26262e", X, Y + 6, TILE, 20);
+      const off = Math.floor(tm / 120) % 8;
+      for (let i = -1; i < 6; i++) px("#55556a", X + ((i * 8 + off + 40) % 40) - 4, Y + 8, 2, 16);
+      px("#666", X, Y + 4, TILE, 2); px("#666", X, Y + 26, TILE, 2); break;
+    }
+    case 6: // CNC machine
+      px("#5a6a7a", X + 2, Y + 4, 28, 26); px("#3a4a5a", X + 2, Y + 4, 28, 3);
+      px("#101c26", X + 6, Y + 8, 20, 10);
+      px("#3af", X + 8, Y + 10, 6, 3);
+      px("#3f6", X + 24, Y + 14, 4, 4); px("#c33", X + 24, Y + 20, 4, 4); break;
+    case 7: // crate / pallet
+      px("#8a6a3a", X + 3, Y + 8, 26, 22); px("#6a4e26", X + 3, Y + 8, 26, 3);
+      px("#6a4e26", X + 14, Y + 8, 3, 22); px("#6a4e26", X + 3, Y + 27, 26, 3); break;
+    case 8: // water cooler
+      px("#cde", X + 11, Y + 4, 10, 10); px("#9ab", X + 9, Y + 14, 14, 16);
+      px("#356", X + 12, Y + 18, 8, 4); break;
+  }
+}
+// pixel sprites (16px grid, '.' = transparent)
+const SPR_PLAYER = [
+  "....cccccccc....",
+  "...cccccccccc...",
+  "...cccccccccc...",
+  "....ssssssss....",
+  "....seesses.....",
+  "....ssssssss....",
+  ".....ssssss.....",
+  "..ooyyyyyyyyoo..",
+  "..oyoyyyyyoyo...",
+  "..oy.yyyyyy.oy..",
+  "....yyyyyyyy....",
+  "....pppppppp....",
+  "....ppp..ppp....",
+  "...bbb....bbb...",
+  "...bbb....bbb...",
+];
+const SPR_NPC = [
+  "....hhhhhhhh....",
+  "...hhhhhhhhhh...",
+  "...hhhhhhhhhh...",
+  "....ssssssss....",
+  "....seesses.....",
+  "....ssssssss....",
+  "..gggygggygggg..",
+  "..gggygggygggg..",
+  "..sg.gggggg.sg..",
+  "....gggggggg....",
+  "....gggggggg....",
+  "....ggg..ggg....",
+  "....ggg..ggg....",
+  "...bbb....bbb...",
+];
+const PAL_PLAYER = { c: "#3a7bd5", s: "#e8b88a", e: "#1a1a1a", o: "#ff8c2a", y: "#ffd24a", p: "#2a3a5e", b: "#151515" };
+const PAL_NPC = { h: "#ffd24a", s: "#e8b88a", e: "#1a1a1a", g: "#7a8a9a", y: "#e8f24a", b: "#151515" };
+function drawSpr(rows, pal, tx, ty, flip) {
+  const w = Math.max(...rows.map(r => r.length)), h = rows.length;
+  const ps = TILE / 16;
+  const ox = tx * TILE + (TILE - w * ps) / 2, oy = ty * TILE + (TILE - h * ps) / 2;
+  for (let j = 0; j < h; j++) {
+    const r = rows[j];
+    for (let i = 0; i < r.length; i++) {
+      const ch = flip ? r[r.length - 1 - i] : r[i];
+      const c = pal[ch]; if (!c) continue;
+      ctx.fillStyle = c;
+      ctx.fillRect(Math.round(ox + i * ps), Math.round(oy + j * ps), Math.ceil(ps), Math.ceil(ps));
+    }
+  }
+}
+
 function draw() {
   const s = S; if (!s) return;
+  const tm = performance.now();
   const ts = cv.height / 14; // tiles visible vertically
   ctx.fillStyle = "#0d0d16"; ctx.fillRect(0, 0, cv.width, cv.height);
   camX = clamp(s.px * TILE + TILE / 2 - cv.width / 2, 0, MAPW * TILE - cv.width);
@@ -217,12 +345,7 @@ function draw() {
   const x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(MAPW - 1, Math.ceil((camX + cv.width / sc) / TILE));
   const y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(MAPH - 1, Math.ceil((camY + cv.height / sc) / TILE));
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const t = s.map[y][x];
-    ctx.fillStyle = t === 1 ? "#232336" : ((x + y) % 2 ? "#161622" : "#181828");
-    ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
-    if (t >= 2) { ctx.font = "24px serif"; ctx.fillText(TILE_GLYPH[t], x * TILE + 16, y * TILE + 17); }
-  }
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) drawTile(s.map[y][x], x, y, tm);
   // coffee machines
   for (const c of s.coffeeMachines) { ctx.font = "24px serif"; ctx.globalAlpha = c.used ? .35 : 1; ctx.fillText("☕", c.x * TILE + 16, c.y * TILE + 17); ctx.globalAlpha = 1; }
   // lore
@@ -242,17 +365,16 @@ function draw() {
   }
   // NPCs
   for (const n of s.npcs) {
-    ctx.font = "24px serif"; ctx.fillText(n.face, n.x * TILE + 16, n.y * TILE + 17);
+    drawSpr(SPR_NPC, PAL_NPC, n.x, n.y);
     if (!n.ambient && !n.done) {
       ctx.font = "13px serif";
       ctx.fillText(n.critical ? "🚨" : "🎫", n.x * TILE + 24, n.y * TILE + 7);
     } else if (!n.ambient && n.done) { ctx.font = "12px serif"; ctx.fillText("✅", n.x * TILE + 24, n.y * TILE + 7); }
   }
-  // player
-  ctx.font = "26px serif";
-  ctx.save();
-  if (s.dir < 0) { ctx.translate(s.px * TILE + 32, 0); ctx.scale(-1, 1); ctx.fillText("🧑‍🔧", -16, s.py * TILE + 17); }
-  else ctx.fillText("🧑‍🔧", s.px * TILE + 16, s.py * TILE + 17);
+  // player (bobbing while moving)
+  const bob = s.moving ? Math.sin(tm / 90) * 1.5 : 0;
+  ctx.save(); ctx.translate(0, bob);
+  drawSpr(SPR_PLAYER, PAL_PLAYER, s.px, s.py, s.dir < 0);
   ctx.restore();
   ctx.restore();
 }
