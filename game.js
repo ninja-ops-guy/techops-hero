@@ -107,10 +107,12 @@ const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat ===
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
 
 // ---------- map generation ----------
-// zones: office (top), factory floor (bottom strip), server room (top-right)
+// zones: lobby (center), office (top), factory floor (bottom strip), server room (top-right)
 const SRV = { x0: MAPW - 13, y0: 2, x1: MAPW - 2, y1: 8 };
 const FACTORY_Y = MAPH - 9;
+const LOBBY = { x0: (MAPW >> 1) - 5, y0: (MAPH >> 1) - 2, x1: (MAPW >> 1) + 5, y1: (MAPH >> 1) + 2 };
 function zoneAt(x, y) {
+  if (x >= LOBBY.x0 && x <= LOBBY.x1 && y >= LOBBY.y0 && y <= LOBBY.y1) return "lobby";
   if (x >= SRV.x0 && x <= SRV.x1 && y >= SRV.y0 && y <= SRV.y1) return "server";
   if (y >= FACTORY_Y) return "factory";
   return "office";
@@ -152,6 +154,18 @@ function genMap() {
       if (x > 0 && x < MAPW - 1 && y > 0 && y < FACTORY_Y - 1 && zoneAt(x, y) === "office") m[y][x] = 1;
     }
   }
+  // wall decorations: posters & whiteboards on office walls
+  let decorated = 0;
+  for (let y = 1; y < FACTORY_Y - 1 && decorated < 14; y++) for (let x = 1; x < MAPW - 1 && decorated < 14; x++) {
+    if (m[y][x] === 1 && zoneAt(x, y) === "office" && (m[y + 1][x] === 0 || m[y - 1][x] === 0) && Math.random() < .12) {
+      m[y][x] = pick([11, 12]); decorated++;
+    }
+  }
+  // lobby: reception area at spawn
+  for (let y = LOBBY.y0; y <= LOBBY.y1; y++) for (let x = LOBBY.x0; x <= LOBBY.x1; x++) m[y][x] = 0;
+  for (let x = LOBBY.x0 + 1; x <= LOBBY.x0 + 4; x++) m[LOBBY.y0][x] = 9; // reception counter
+  m[LOBBY.y1][LOBBY.x1 - 2] = 10; m[LOBBY.y1][LOBBY.x1 - 3] = 10; // sofas
+  m[LOBBY.y1][LOBBY.x0] = 4; m[LOBBY.y0][LOBBY.x1] = 4; // plants
   return m;
 }
 function freeSpot(m, nearX, nearY) {
@@ -235,6 +249,10 @@ function drawTile(t, x, y, tm) {
     px((x + y) % 2 ? "#b0b0a8" : "#a8a89e", X, Y, TILE, TILE);
     px("#98988e", X, Y, TILE, 1); px("#98988e", X, Y, 1, TILE);
     if (y === FACTORY_Y) for (let i = 0; i < 4; i++) { px(i % 2 ? "#1a1a1a" : "#e8c82a", X + i * 8, Y, 8, 4); px(i % 2 ? "#e8c82a" : "#1a1a1a", X + i * 8, Y + TILE - 4, 8, 4); }
+  } else if (z === "lobby") {
+    // blue carpet
+    px((x + y) % 2 ? "#5a7a9a" : "#54718f", X, Y, TILE, TILE);
+    px("#46617c", X, Y, TILE, 1); px("#46617c", X, Y, 1, TILE);
   } else if (z === "server") {
     px((x + y) % 2 ? "#3a4a6a" : "#34435f", X, Y, TILE, TILE);
     px("#28344e", X, Y, TILE, 1); px("#28344e", X, Y, 1, TILE);
@@ -284,6 +302,26 @@ function drawTile(t, x, y, tm) {
     case 8: // water cooler
       px("#9ad", X + 11, Y + 4, 10, 10); px("#e8e8f0", X + 9, Y + 14, 14, 16);
       px("#356", X + 12, Y + 18, 8, 4); break;
+    case 9: // reception counter
+      px("#c89858", X, Y + 10, TILE, 18); px("#dab87a", X, Y + 10, TILE, 4);
+      px("#f0f0f0", X + 18, Y + 4, 10, 8);
+      px("#c33", X + 5, Y + 6, 5, 6);
+      px("#8a6a3a", X, Y + 28, TILE, 2); break;
+    case 10: // sofa
+      px("#6a7a9a", X + 2, Y + 8, 28, 20); px("#8494b4", X + 2, Y + 8, 28, 6);
+      px("#5a6a8a", X + 2, Y + 18, 13, 8); px("#5a6a8a", X + 17, Y + 18, 13, 8);
+      px("#4a3a28", X + 4, Y + 28, 3, 3); px("#4a3a28", X + 25, Y + 28, 3, 3); break;
+    case 11: // wall poster
+      px("#e8e8e4", X, Y, TILE, TILE); px("#f6f6f2", X, Y, TILE, 10);
+      px("#c8c8c0", X, Y + TILE - 7, TILE, 7); px("#8a6a4a", X, Y + TILE - 2, TILE, 2);
+      px("#3a5a8a", X + 7, Y + 5, 18, 14); px("#f0f0f0", X + 9, Y + 7, 14, 3);
+      px("#ffd24a", X + 9, Y + 12, 8, 5); break;
+    case 12: // whiteboard
+      px("#e8e8e4", X, Y, TILE, TILE); px("#f6f6f2", X, Y, TILE, 10);
+      px("#c8c8c0", X, Y + TILE - 7, TILE, 7); px("#8a6a4a", X, Y + TILE - 2, TILE, 2);
+      px("#f8f8f8", X + 3, Y + 4, 26, 16); px("#999", X + 3, Y + 4, 26, 2);
+      px("#3a5a8a", X + 6, Y + 9, 12, 1); px("#c33", X + 6, Y + 12, 16, 1);
+      px("#3f6", X + 6, Y + 15, 9, 1); break;
   }
 }
 // chibi pixel sprites (16px grid, '.' = transparent, k = outline)
@@ -322,6 +360,13 @@ const SPR_NPC = [
   "...kkkbkkbbkk...",
   "...kffk..kffk...",
   "...kkk....kkk...",
+];
+// walk-cycle frame: legs mid-stride
+const SPR_PLAYER_B = [
+  ...SPR_PLAYER.slice(0, 13),
+  "...kbbk..kbbk...",
+  "..kffk....kffk..",
+  "..kkk......kkk..",
 ];
 const PAL_PLAYER = { k: "#1a1a22", c: "#2a4a9a", s: "#f0c8a0", e: "#1a1a22", b: "#3a5fcd", w: "#f0f0f0", f: "#6a4a2a" };
 const PAL_NPCS = [
@@ -383,10 +428,11 @@ function draw() {
       ctx.fillText(n.critical ? "🚨" : "🎫", n.x * TILE + 24, n.y * TILE + 7);
     } else if (!n.ambient && n.done) { ctx.font = "12px serif"; ctx.fillText("✅", n.x * TILE + 24, n.y * TILE + 7); }
   }
-  // player (bobbing while moving)
+  // player (walk-cycle animation while moving)
   const bob = s.moving ? Math.sin(tm / 90) * 1.5 : 0;
+  const walkFrame = s.moving && Math.floor(tm / 160) % 2 === 1;
   ctx.save(); ctx.translate(0, bob);
-  drawSpr(SPR_PLAYER, PAL_PLAYER, s.px, s.py, s.dir < 0);
+  drawSpr(walkFrame ? SPR_PLAYER_B : SPR_PLAYER, PAL_PLAYER, s.px, s.py, s.dir < 0);
   ctx.restore();
   ctx.restore();
 }
@@ -400,22 +446,24 @@ addEventListener("keydown", e => {
 });
 addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
+// D-pad: hold-to-move directional buttons
 let joy = { x: 0, y: 0 };
-const joyEl = $("joystick"), knob = $("joy-knob");
-let joyId = null, joyC = null;
-joyEl.addEventListener("touchstart", e => { const t = e.changedTouches[0]; joyId = t.identifier; const r = joyEl.getBoundingClientRect(); joyC = { x: r.left + 55, y: r.top + 55 }; }, { passive: true });
-addEventListener("touchmove", e => {
-  for (const t of e.changedTouches) if (t.identifier === joyId) {
-    let dx = t.clientX - joyC.x, dy = t.clientY - joyC.y;
-    const d = Math.hypot(dx, dy) || 1, m = Math.min(d, 40);
-    dx = dx / d * m; dy = dy / d * m;
-    knob.style.left = 35 + dx + "px"; knob.style.top = 35 + dy + "px";
-    joy.x = dx / 40; joy.y = dy / 40;
-  }
-}, { passive: true });
-addEventListener("touchend", e => {
-  for (const t of e.changedTouches) if (t.identifier === joyId) { joyId = null; joy.x = joy.y = 0; knob.style.left = "35px"; knob.style.top = "35px"; }
-}, { passive: true });
+const held = new Set();
+function dpadUpdate() {
+  let x = 0, y = 0;
+  for (const b of held) { x += +b.dataset.dx; y += +b.dataset.dy; }
+  joy.x = x; joy.y = y;
+}
+document.querySelectorAll(".dbtn").forEach(b => {
+  const press = e => { e.preventDefault(); held.add(b); b.classList.add("held"); dpadUpdate(); };
+  const release = e => { e.preventDefault(); held.delete(b); b.classList.remove("held"); dpadUpdate(); };
+  b.addEventListener("touchstart", press, { passive: false });
+  b.addEventListener("touchend", release, { passive: false });
+  b.addEventListener("touchcancel", release, { passive: false });
+  b.addEventListener("mousedown", press);
+  b.addEventListener("mouseup", release);
+  b.addEventListener("mouseleave", release);
+});
 $("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); interact(); });
 $("tb-menu").addEventListener("touchstart", e => { e.preventDefault(); openPanel(); });
 $("btn-menu").addEventListener("click", openPanel);
