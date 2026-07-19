@@ -144,7 +144,7 @@ function newState() {
     chaos: null, promoted: false, autoUsed: false,
     meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0 },
     ach: [],
-    px: 0, py: 0, dir: 1, moving: false,
+    px: 0, py: 0, dir: 1, fx: "down", moving: false,
     npcs: [], portals: [], devices: [], loreSpots: [], coffeeMachines: [],
     map: null, inDialog: false, inBattle: false, gameOver: false, won: false,
   };
@@ -426,25 +426,7 @@ function drawTile(t, x, y, tm) {
       px("#3f6", X + 6, Y + 15, 9, 1); break;
   }
 }
-// chibi pixel sprites (16px grid, '.' = transparent, k = outline)
-const SPR_PLAYER = [
-  "....kkkkkkkk....",
-  "...kcccccccck...",
-  "..kcccccccccck..",
-  "..kcccccccccck..",
-  "..kssssssssssk..",
-  "..ksekkssekssk..",
-  "..kssssssssssk..",
-  "...kksssssskk...",
-  "...kbbbbbbbbk...",
-  "..kbkbwwwwbkbk..",
-  "..kbsbwwwwbsbk..",
-  "..kskbbbbbbksk..",
-  "...kbbbbbbbbk...",
-  "...kkkbkkbbkk...",
-  "...kffk..kffk...",
-  "...kkk....kkk...",
-];
+// chibi pixel sprites (16px grid, '.' = transparent, k = outline) — used for NPCs
 const SPR_NPC = [
   "....kkkkkkkk....",
   "...khhhhhhhhk...",
@@ -463,20 +445,39 @@ const SPR_NPC = [
   "...kffk..kffk...",
   "...kkk....kkk...",
 ];
-// walk-cycle frame: legs mid-stride
-const SPR_PLAYER_B = [
-  ...SPR_PLAYER.slice(0, 13),
-  "...kbbk..kbbk...",
-  "..kffk....kffk..",
-  "..kkk......kkk..",
-];
-const PAL_PLAYER = { k: "#1a1a22", c: "#2a4a9a", s: "#f0c8a0", e: "#1a1a22", b: "#3a5fcd", w: "#f0f0f0", f: "#6a4a2a" };
 const PAL_NPCS = [
   { k: "#1a1a22", h: "#6a4a2a", s: "#f0c8a0", e: "#1a1a22", b: "#3a5fcd", w: "#f0f0f0", f: "#6a4a2a" },
   { k: "#1a1a22", h: "#22222a", s: "#e8b88a", e: "#1a1a22", b: "#5a5f6a", w: "#e8e8e8", f: "#3a3a3a" },
   { k: "#1a1a22", h: "#c9a227", s: "#f0d0b0", e: "#1a1a22", b: "#8a4a6a", w: "#f0f0f0", f: "#4a3a2a" },
   { k: "#1a1a22", h: "#a84a2a", s: "#d8a880", e: "#1a1a22", b: "#3a6a4a", w: "#e8e8e8", f: "#2a2a2a" },
 ];
+// custom player sprite (atlas-based, directional facing)
+const playerImg = new Image();
+if (typeof PLAYER_ATLAS !== "undefined") playerImg.src = PLAYER_ATLAS.src;
+function drawPlayer(s, tm) {
+  const fx = s.fx || "down";
+  const now = performance.now();
+  let key;
+  if (s.partyUntil && now < s.partyUntil) key = "party";
+  else if (s.thumbsUntil && now < s.thumbsUntil) key = "thumbs";
+  else if (s.inDialog) key = "laptop";
+  else if (s.moving) key = `${fx}${1 + Math.floor(tm / 160) % 2}`;
+  else key = `${fx}0`;
+  if (!(key in PLAYER_ATLAS.frames)) key = "down0";
+  const [cx, cy] = PLAYER_ATLAS.frames[key];
+  const C = PLAYER_ATLAS.cell;
+  const dw = 46, dh = 46;
+  const bob = s.moving ? Math.sin(tm / 90) * 1.5 : 0;
+  const dx = s.px * TILE + (TILE - dw) / 2, dy = s.py * TILE + TILE - dh + 3 + bob;
+  ctx.save();
+  if (fx === "left") {
+    ctx.translate(dx + dw, 0); ctx.scale(-1, 1);
+    ctx.drawImage(playerImg, cx * C, cy * C, C, C, 0, dy, dw, dh);
+  } else {
+    ctx.drawImage(playerImg, cx * C, cy * C, C, C, dx, dy, dw, dh);
+  }
+  ctx.restore();
+}
 function drawSpr(rows, pal, tx, ty, flip) {
   const w = Math.max(...rows.map(r => r.length)), h = rows.length;
   const ps = TILE / 16;
@@ -530,12 +531,8 @@ function draw() {
       ctx.fillText(n.critical ? "🚨" : "🎫", n.x * TILE + 24, n.y * TILE + 7);
     } else if (!n.ambient && n.done) { ctx.font = "12px serif"; ctx.fillText("✅", n.x * TILE + 24, n.y * TILE + 7); }
   }
-  // player (walk-cycle animation while moving)
-  const bob = s.moving ? Math.sin(tm / 90) * 1.5 : 0;
-  const walkFrame = s.moving && Math.floor(tm / 160) % 2 === 1;
-  ctx.save(); ctx.translate(0, bob);
-  drawSpr(walkFrame ? SPR_PLAYER_B : SPR_PLAYER, PAL_PLAYER, s.px, s.py, s.dir < 0);
-  ctx.restore();
+  // player — custom atlas sprite with directional facing
+  drawPlayer(s, tm);
   ctx.restore();
   // minimap (screen-space, bottom right)
   const mm = 2, mw = MAPW * mm, mh = MAPH * mm;
@@ -607,6 +604,8 @@ function step(dt) {
   if (!s.moving) return;
   if (mag > 1) { dx /= mag; dy /= mag; }
   if (Math.abs(dx) > .1) s.dir = dx > 0 ? 1 : -1;
+  if (Math.abs(dx) > Math.abs(dy)) s.fx = dx > 0 ? "right" : "left";
+  else if (Math.abs(dy) > .1) s.fx = dy > 0 ? "down" : "up";
   moveAcc += dt * (coffeeMug() ? 3.4 : 3.0); // tiles per second
   if (moveAcc < 1) return;
   moveAcc = 0;
@@ -933,6 +932,7 @@ function resolveTicket(n) {
   const s = S;
   n.done = true; s.ticketsDone++;
   sfx("ticket");
+  s.thumbsUntil = performance.now() + 1200;
   s.meta.closed++;
   if (n.critical) s.meta.crits++;
   checkAch();
@@ -1012,6 +1012,7 @@ function promotion(newRank) {
   }[newRank] || "+10 max HP";
   if (newRank === "CIO") s.won = true;
   sfx("promote");
+  s.partyUntil = performance.now() + 1600;
   dlg("🎉 PROMOTION!", `You've been promoted to <b>${newRank}</b>!<br>${perk}`, [{ t: "Let's go.", f: () => { closeDlg(); save(); } }]);
   toast(`🎉 PROMOTED: ${newRank}`, 4000);
 }
