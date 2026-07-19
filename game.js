@@ -72,7 +72,7 @@ const ABILITIES = [
   { id: "ping", name: "Ping", icon: "📡", dmg: [8, 14], stress: 0, desc: "Reliable packet poke" },
   { id: "ps", name: "PowerShell", icon: "💠", dmg: [12, 20], stress: 8, desc: "Scripted strike" },
   { id: "flush", name: "Flush DNS", icon: "🌀", dmg: [10, 16], stress: 6, desc: "Clears corruption, heals 5 HP", heal: 5 },
-  { id: "patch", name: "Patch Deploy", icon: "🩹", dmg: [6, 10], stress: 5, desc: "Heals you for 12 HP", heal: 12 },
+  { id: "patch", name: "Patch Deploy", icon: "🩹", dmg: [6, 10], stress: 5, desc: "Heals you for 10 HP", heal: 10 },
   { id: "fw", name: "Firewall Rule", icon: "🧱", dmg: [4, 8], stress: 7, desc: "Halves next enemy hit", shield: true },
   { id: "coffee", name: "Chug Coffee", icon: "☕", dmg: [0, 0], stress: -25, desc: "Restores 25 stress", usable: "calm" },
 ];
@@ -743,7 +743,7 @@ const BOSS_NAMES = { malware: "RANSOMWARE QUEEN", bsod: "BLUE SCREEN TITAN", dns
 function startBattle(portal) {
   const s = S, npc = s.npcs.find(n => n.id === portal.npc), t = npc.type;
   const lv = 1 + Math.floor(s.day / 2) + (npc.critical ? 2 : 0);
-  let hp = 18 + lv * 8;
+  let hp = 22 + lv * 10;
   if (portal.weak) hp = Math.round(hp * .7);
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
   const boss = !!npc.critical;
@@ -845,7 +845,7 @@ function doAbility(a) {
   }
   else {
     const atk = pick(ENEMY_TACTICS[B.t.id]?.attacks || ["Packet Flood", "Corruption Wave"]);
-    let ed = R(4, 9) + Math.floor(s.day / 2) + (B.enraged ? 2 : 0);
+    let ed = R(5, 10) + Math.floor(s.day * .75) + (B.enraged ? 2 : 0);
     if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
     s.hp -= ed; addStress(4);
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
@@ -1156,6 +1156,23 @@ function renderTab(tab) {
   }
 }
 
+// ---------- music (SoundCloud widget) ----------
+let scWidget = null, musicOn = false;
+function initMusic() {
+  if (scWidget || typeof SC === "undefined") return;
+  try {
+    scWidget = SC.Widget($("sc-widget"));
+    scWidget.bind(SC.Widget.Events.READY, () => setMusic(true));
+  } catch (e) { }
+}
+function setMusic(on) {
+  musicOn = on;
+  $("btn-music").textContent = on ? "🔊" : "🔇";
+  if (!scWidget) return;
+  try { on ? scWidget.play() : scWidget.pause(); } catch (e) { }
+}
+$("btn-music").addEventListener("click", () => { initMusic(); if (scWidget) setMusic(!musicOn); });
+
 // ---------- boot ----------
 function showTouchUI() {
   if (matchMedia("(pointer:coarse)").matches) $("touch-ui").classList.remove("hidden");
@@ -1166,6 +1183,7 @@ $("btn-start").addEventListener("click", () => {
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
   showTouchUI();
+  initMusic();
   dlg("📟 CIO Dispatch", `Welcome to <b>AeroTech Manufacturing</b>, ${rank().name}.<br><br>Users have tickets. Devices have... <i>manifestations</i>. Interview users, diagnose root causes, enter the portals, and keep this factory running.<br><br>Clock out strong. Good luck.`, [{ t: "Clock in ▶", f: closeDlg }]);
 });
 $("btn-continue").addEventListener("click", () => {
@@ -1176,6 +1194,7 @@ $("btn-continue").addEventListener("click", () => {
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
   showTouchUI();
+  initMusic();
   toast(`↻ Welcome back, ${rank().name}. Day ${S.day} begins.`);
 });
 if (load()) $("btn-continue").classList.remove("hidden");
