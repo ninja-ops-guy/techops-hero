@@ -1,5 +1,5 @@
 /* ============================================================
-   TECHOPS HERO v3.3 — roguelite IT RPG (single-file web app)
+   TECHOPS HERO v3.1 — roguelite IT RPG (single-file web app)
    ============================================================ */
 "use strict";
 
@@ -216,7 +216,28 @@ function applyLab(key) {
   else if (key === "faraday") s.stats.security += 2;
   else if (key === "kb") s.stressResist = Math.min(.6, (s.stressResist || 0) + .15);
 }
+// ---------- workforce: hire technicians who work tickets for you ----------
+const STAFF_TIERS = {
+  intern: { name: "Intern", cost: 150, acc: .5, xp: 3, blurb: "Cheap, fast, 50% accuracy. Makes honest mistakes." },
+  tech: { name: "Technician", cost: 400, acc: .75, xp: 5, blurb: "Solid. Handles everyday tickets, occasional misdiagnosis." },
+  eng: { name: "Engineer", cost: 900, acc: .95, xp: 0, blurb: "Expensive, rarely wrong. No XP for you — they did the work." },
+};
+const STAFF_TRAITS = [
+  { id: "lazy", name: "Lazy", desc: "Skips steps. 2× misdiagnosis rate.", accMod: 0, mis: 2 },
+  { id: "meticulous", name: "Meticulous", desc: "Slow but never misdiagnoses. +5% accuracy.", accMod: .05, mis: 0 },
+  { id: "curious", name: "Curious", desc: "Sometimes uncovers lore or loot while working.", accMod: 0, mis: 1 },
+  { id: "overconfident", name: "Overconfident", desc: "Jumps to conclusions. 2.5× misdiagnosis rate.", accMod: 0, mis: 2.5 },
+  { id: "quicklearner", name: "Fast Learner", desc: "Gains +2% accuracy every week.", accMod: 0, mis: 1 },
+];
+const MISDIAG_NOTES = [
+  "reinstalled Office without checking licensing — user lost cached email",
+  "deleted the OST file and rebooted. Still broken. Also now it's worse",
+  "factory-reset the router to fix a DNS issue. It was not the router",
+  "replaced the keyboard to fix a software issue",
+  "disabled the firewall 'temporarily' three days ago",
+];
 const NPC_NAMES = ["Dana", "Marcus", "Priya", "Tom", "Yuki", "Carlos", "Wanda", "Earl", "Nadia", "Greg", "Sue", "Vikram", "Betty", "Hank", "Lena", "Otis"];
+const STAFF_NAMES = ["Kenji", "Rosa", "Dev", "Amara", "Luis", "Ingrid", "Theo", "Mabel", "Jules", "Ravi", "Nina", "Cole"];
 const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "📓 Admin journal: 'The root account... it changes its own password now.'", "🗄️ Forgotten server: it's been up 3,412 days. Nobody knows what it does.", "📼 VHS tape: 'ORIENTATION 1987 — the building's network predates the building.'", "🖥️ Terminal: a lone process named 'palan0' has been running since boot..."];
 
 // ---------- state ----------
@@ -231,15 +252,16 @@ function newState() {
     rep: Object.fromEntries(DEPTS.map(d => [d, 1])),
     tickets: [], ticketsDone: 0, ticketsTotal: 0, lootToday: 0,
     chaos: null, promoted: false, autoUsed: false,
-    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [] },
+    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [] },
     ach: [], books: [], lab: [], storeStock: [], stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
+    staff: [], audited: false,
     px: 0, py: 0, dir: 1, fx: "down", moving: false,
     npcs: [], portals: [], devices: [], loreSpots: [], coffeeMachines: [],
     map: null, inDialog: false, inBattle: false, gameOver: false, won: false,
   };
 }
-const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone })); } catch (e) { } };
-const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); return d; } catch (e) { return null; } };
+const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited })); } catch (e) { } };
+const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; } return d; } catch (e) { return null; } };
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
@@ -408,7 +430,7 @@ function setupDay() {
   const start = freeSpot(s.map, MAPW >> 1, MAPH >> 1);
   s.px = start.x; s.py = start.y;
   s.npcs = []; s.portals = []; s.devices = []; s.loreSpots = []; s.coffeeMachines = [];
-  s.tickets = []; s.ticketsDone = 0; s.lootToday = 0; s.autoUsed = false; s.hp = s.maxHp; s.cascadeUsed = false;
+  s.tickets = []; s.ticketsDone = 0; s.lootToday = 0; s.autoUsed = false; s.hp = s.maxHp;
   s.clock = 9 * 60;
 
   // chaos event
@@ -442,10 +464,27 @@ function setupDay() {
       id: i, name: pick(NPC_NAMES), dept, type,
       x: pos.x, y: pos.y, face: "🧑‍💼",
       done: false, interviewed: false, diagnosed: false, correctDiag: false,
-      critical: Math.random() < .12, pv: R(0, PAL_NPCS.length - 1), age: 0,
+      critical: Math.random() < .12, pv: R(0, PAL_NPCS.length - 1),
     };
     s.npcs.push(npc); s.tickets.push(npc);
     // a broken device + portal appear near the NPC after diagnosis
+  }
+  // tech debt consequence: sloppy past fixes resurface as repeat tickets
+  const repeats = s.meta.recentTypes || [];
+  if (s.meta.debt >= 5 && repeats.length && Math.random() < Math.min(.65, (s.meta.debt - 3) * .12)) {
+    const rt = TICKET_TYPES.find(t => t.id === pick(repeats));
+    if (rt) {
+      const dept = pick(DEPTS);
+      const pos = spotInBiome(s.map, BIOME_OF_DEPT[dept]);
+      const npc = {
+        id: 500 + s.day, name: pick(NPC_NAMES), dept, type: rt,
+        x: pos.x, y: pos.y, face: "🧑‍💼",
+        done: false, interviewed: false, diagnosed: false, correctDiag: false,
+        critical: false, repeat: true, trustHurt: true, pv: R(0, PAL_NPCS.length - 1),
+      };
+      s.npcs.push(npc); s.tickets.push(npc); s.ticketsTotal++;
+      setTimeout(() => toast(`🔁 REPEAT TICKET — a past ${rt.label} fix didn't hold. Tech debt collects interest.`, 3600), 2200);
+    }
   }
   // ambient NPCs wander their own departments
   for (let i = 0; i < R(4, 7); i++) {
@@ -487,12 +526,6 @@ function drawTile(t, x, y, tm) {
   // floors by biome / zone
   if (b) {
     px((x + y) % 2 ? b.f1 : b.f2, X, Y, TILE, TILE);
-    // mood lighting: departments remember how you treat them
-    const deptName = Object.keys(BIOME_OF_DEPT).find(d => BIOME_OF_DEPT[d] === b.id);
-    const deptRep = deptName && S.rep ? S.rep[deptName] : 3;
-    if (deptRep <= 1) px("#0000002e", X, Y, TILE, TILE); // neglected dept: gloomy
-    else if (deptRep >= 4 && Math.floor((x + y + Math.floor(tm / 600)) % 9) === 0) px("#ffd24a22", X, Y, 4, 4); // beloved dept: shimmer
-    if (S.flashBiome === b.id && performance.now() < S.flashUntil) px("#ffd24a33", X, Y, TILE, TILE); // just helped: golden flash
     // biome trim: accent line on the edges of the biome
     if (y === b.y0) px(b.line, X, Y, TILE, 2);
     if (x === b.x0) px(b.line, X, Y, 2, TILE);
@@ -900,7 +933,13 @@ function ambientTalk(n) {
     HR: ["Someone microwaved fish again. We're investigating.", "Remember: the ergonomic survey is mandatory."],
     Manufacturing: ["Line 2's conveyor sings when it runs dry. Music to my ears.", "Watch the yellow lines out there."],
   };
+  const trustLines = [
+    `"Please don't restart it — last time we lost two hours of work."`,
+    `"You're the one who 'fixed' it last time, right? ...It's doing it again."`,
+    `"My files came back last time, but my faith in IT didn't."`,
+  ];
   const lines = [
+    ...(n.trustHurt ? trustLines : []),
     ...(deptLines[n.dept] || []),
     `Heard the ${pick(["server room", "MDF", "fiber vault"])} hums at night. Creepy.`,
     `Word is the old root account is still active somewhere...`,
@@ -934,7 +973,7 @@ function ticketFlow(n) {
       shadow: `"ACCESS GRANTED... — the terminal is typing by itself: 'i remember this building. i remember YOU.'`,
     };
     dlg(`${n.name} — ${n.dept} ${n.critical ? "🚨" : ""}`,
-      `<b>${t.icon} ${t.label}</b><br>${symptoms[t.id]}<br><small>Interview the user, then form a hypothesis.</small>`,
+      `<b>${t.icon} ${t.label}</b>${n.repeat ? ' <span style="color:#ffb347">🔁 REPEAT</span>' : ""}<br>${symptoms[t.id]}${n.trustHurt ? '<br><i>"...and please don’t just restart it — last time we lost two hours."</i>' : ""}<br><small>Interview the user, then form a hypothesis.</small>`,
       [{ t: "🔍 Form a diagnosis", f: () => diagnose(n) }]);
     return;
   }
@@ -970,7 +1009,7 @@ function diagnose(n) {
         // partial credit: normal-strength enemy, no stress
         s.portals.push({ ...pp, npc: n.id, weak: false, partial: true });
       } else {
-        addStress(10);
+        addStress(10); n.trustHurt = true;
         toast(`❌ Wrong hypothesis... the problem is worse than it looked. (+10 stress)<br><small>Best move: ${t.diag.best}</small>`, 3400);
         s.portals.push({ ...pp, npc: n.id, weak: false });
       }
@@ -1009,12 +1048,6 @@ function startBattle(portal) {
   if (ageMin >= 60) hp = Math.round(hp * (1 + Math.min(ageMin, 240) / 60 * .05));
   const SIGS = { malware: ["enclock", "ransom"], dns: ["spawn", "poison"], bsod: ["crash", "freeze"] };
   B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false, sig: pick(SIGS[t.id] || ["overload", "wipe"]), forkBomb: false };
-  // corruption spreads: an aged malware ticket weakens you before the fight even starts
-  if (t.id === "malware" && ageMin >= 120) {
-    const bite = Math.round(s.maxHp * .1);
-    s.hp = Math.max(1, s.hp - bite);
-    blog(`<span class="sys">☣️ The corruption already spread to your terminal — you start weakened (-${bite} HP).</span>`);
-  }
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -1271,6 +1304,9 @@ function rollLoot(minRarity) {
 function resolveTicket(n) {
   const s = S;
   n.done = true; s.ticketsDone++;
+  s.meta.recentTypes = s.meta.recentTypes || [];
+  if (!n.correctDiag) s.meta.recentTypes.push(n.type.id);
+  while (s.meta.recentTypes.length > 6) s.meta.recentTypes.shift();
   sfx("ticket");
   s.thumbsUntil = performance.now() + 1200;
   s.meta.closed++;
@@ -1424,11 +1460,18 @@ function updateHUD() {
   $("bar-stress").style.width = s.stress + "%";
   $("hud-budget").textContent = "$" + s.budget;
   $("hud-tickets").textContent = `🎫 ${s.ticketsDone}/${s.ticketsTotal}`;
+  // digital twin: plant production rate dips while a line is down
+  const lineDown = s.npcs && s.npcs.some(nn => nn.type && nn.type.id === "plc" && !nn.done);
+  const prodEl = $("hud-prod");
+  if (prodEl) {
+    prodEl.textContent = lineDown ? "🏭 $6,800/min ⚠️" : "🏭 $14,200/min";
+    prodEl.style.color = lineDown ? "#ff6b6b" : "#7dd87d";
+  }
   $("chaos-banner").classList.add("hidden"); // chaos now lives on the clock line
   const open = s.tickets.filter(t => !t.done);
   $("quest-tracker").innerHTML =
     s.tickets.filter(t => t.done).map(t => `<div class="done">✅ ${t.type.label} (${t.dept})</div>`).join("") +
-    open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}</div>`).join("");
+    open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}${t.mishandled ? " ⚠️ botched" : (t.age || 0) >= 120 ? " 🔥" : (t.age || 0) >= 60 ? " ⏳" : ""}</div>`).join("");
   updateSweep();
 }
 
@@ -1495,8 +1538,73 @@ function checkDayEnd(force) {
   if (s.inBattle) return;
   if ((s.ticketsDone >= s.ticketsTotal || force) && !eodOpen) endOfDay();
 }
+// ---------- workforce: your team works the leftover queue ----------
+function staffWork() {
+  const s = S;
+  const report = [];
+  for (const m of s.staff) {
+    const tier = STAFF_TIERS[m.tier];
+    if (m.burnout >= 4) { report.push(`😴 ${m.name} is burned out — rested today.`); continue; }
+    const open = s.tickets.find(t => !t.done && !t.mishandled);
+    if (!open) { report.push(`✨ ${m.name} had a quiet day.`); continue; }
+    m.uses++;
+    // fast learners improve weekly
+    if (m.trait === "quicklearner") m.accBonus = (m.accBonus || 0) + .02;
+    const trait = STAFF_TRAITS.find(t => t.id === m.trait);
+    const acc = clamp(tier.acc + (trait?.accMod || 0) + (m.accBonus || 0) - m.burnout * .06, .1, .98);
+    const roll = Math.random();
+    const misChance = (1 - acc) * (trait?.mis || 1) * .6;
+    if (roll < acc - misChance) {
+      // clean solve
+      open.done = true; s.ticketsDone++;
+      s.rep[open.dept] = clamp(s.rep[open.dept] + 1, 0, 5);
+      addXP(tier.xp);
+      s.meta.closed++;
+      m.burnout++;
+      report.push(`✅ ${m.name} resolved "${open.type.label}" (${open.dept}) cleanly.`);
+      s.journal.push({ day: s.day, title: `${open.type.label} — resolved by ${m.name}`, body: `${m.name} (${tier.name}, ${STAFF_TRAITS.find(t => t.id === m.trait)?.name}) handled it solo. Diagnosis: ${open.type.diag.best}.` });
+      if (m.trait === "curious" && Math.random() < .2) {
+        const l = rollLoot("rare");
+        s.inv.push(l);
+        report.push(`🔍 ${m.name}'s curiosity uncovered ${l.icon} ${l.name}!`);
+      }
+    } else if (roll < acc) {
+      // misdiagnosis: ticket gets WORSE for you
+      open.mishandled = true; open.trustHurt = true;
+      open.critical = true; // escalated
+      m.burnout += 2;
+      const note = pick(MISDIAG_NOTES);
+      report.push(`⚠️ ${m.name} escalated "${open.type.label}" — ${note}. It's a 🚨 now.`);
+      s.meta.debt++;
+      s.journal.push({ day: s.day, title: `${open.type.label} — ESCALATED by ${m.name}`, body: `${m.name} ${note}. You'll inherit a harder fight.` });
+    } else {
+      // honest fail: no progress, mild stress for the tech
+      m.burnout++;
+      report.push(`🤷 ${m.name} couldn't crack "${open.type.label}". Still yours.`);
+    }
+  }
+  return report;
+}
+
+// ---------- end of day ----------
 function endOfDay() {
   const s = S; eodOpen = true;
+  // your team works the leftover queue before review
+  const staffReport = s.staff.length ? staffWork() : [];
+  // tech debt consequences: entropy breeds repeat work and audits
+  const debtNotes = [];
+  if (s.meta.debt >= 10 && !s.audited) {
+    s.audited = true;
+    if (s.journal.length >= s.meta.debt) {
+      debtNotes.push(`📋 <b>INTERNAL AUDIT PASSED</b> — your documentation saved you. (${s.journal.length} journal entries)`);
+      s.meta.debt = Math.max(0, s.meta.debt - 5);
+    } else {
+      const fine = Math.min(s.budget, 150);
+      s.budget -= fine;
+      debtNotes.push(`📋 <b>INTERNAL AUDIT FINDING</b> — undocumented changes found. Corrective action: -$${fine}. Document your work!`);
+    }
+  }
+  if (s.meta.debt >= 5) debtNotes.push(`⚠️ Tech debt is high (${s.meta.debt}) — repeat tickets are becoming more likely.`);
   let stressRec = s.chaos?.id === "calm" ? 30 : 15;
   s.stress = clamp(s.stress - stressRec, 0, 100);
   const missed = s.ticketsTotal - s.ticketsDone;
@@ -1506,7 +1614,9 @@ function endOfDay() {
   $("eod-summary").innerHTML =
     `🎫 Tickets: ${s.ticketsDone}/${s.ticketsTotal}${missed ? ` <span style="color:#f88">(${missed} rolled over, -rep)</span>` : " — <b>ZERO BACKLOG!</b> 👑"}<br>` +
     `✨ Total XP: ${s.xp} · 💰 Budget: $${s.budget}<br>` +
-    `😌 Stress recovered: -${stressRec} · Rank: <b>${rank().name}</b>`;
+    `😌 Stress recovered: -${stressRec} · Rank: <b>${rank().name}</b>` +
+    (staffReport.length ? `<br><br><b>🧑‍🔧 Team report:</b><br><small>${staffReport.join("<br>")}</small>` : "") +
+    (debtNotes.length ? `<br><br>${debtNotes.join("<br>")}` : "");
   $("eod").querySelector("h3").textContent = "Choose one reward:";
   const rewards = [
     { icon: "💻", t: "New Hardware", d: "+1 random stat", f: () => { const k = pick(Object.keys(s.stats)); s.stats[k]++; toast(`📈 ${k} +1`); } },
@@ -1534,7 +1644,7 @@ function openPanel(tab = "Character") {
   if (S.inBattle) return;
   panelOpen = true;
   $("panel").classList.remove("hidden");
-  const tabs = ["Character", "Inventory", "Store", "Certifications", "Journal", "Reputation", "Achievements"];
+  const tabs = ["Character", "Team", "Inventory", "Store", "Certifications", "Journal", "Reputation", "Achievements"];
   $("panel-title").textContent = "🧑‍🔧 TECHOPS HERO";
   $("panel-tabs").innerHTML = "";
   for (const t of tabs) {
@@ -1561,6 +1671,43 @@ function renderTab(tab) {
       `<br><h4>Soft Skills</h4>` +
       Object.entries(s.soft).map(([k, v]) => `<div class="stat-row"><span>${k}</span><span>${"▮".repeat(v)} ${v}</span></div>`).join("") +
       `<br><h4>Career Ladder</h4>` + RANKS.map(r => `<div class="stat-row"><span>${s.xp >= r.xp ? "✅" : "⬜"} ${r.name}</span><span>${r.xp} XP</span></div>`).join("");
+  } else if (tab === "Team") {
+    el.innerHTML = `<i>Your team works the leftover queue at end of day. Accuracy matters — a botched fix becomes a critical ticket and adds tech debt.</i><br><br>`;
+    if (s.staff.length) {
+      el.innerHTML += `<h4>Roster (${s.staff.length}/4)</h4>`;
+      for (const m of s.staff) {
+        const tier = STAFF_TIERS[m.tier], trait = STAFF_TRAITS.find(t => t.id === m.trait);
+        const acc = Math.round(clamp(tier.acc + (trait?.accMod || 0) + (m.accBonus || 0) - m.burnout * .06, .1, .98) * 100);
+        el.innerHTML += `<div class="loot-item">🧑‍🔧 <b>${m.name}</b> — ${tier.name} <small>(${trait?.name || "—"})</small><br><small>Accuracy ${acc}% · Burnout ${"🔥".repeat(m.burnout) || "none"} · Tickets worked: ${m.uses}</small> <button data-rest="${m.id}" ${m.burnout ? "" : "disabled"} style="float:right;background:#334;border:1px solid #88f;color:#bbf;border-radius:5px;padding:3px 10px;font-family:inherit">REST</button></div>`;
+      }
+    } else {
+      el.innerHTML += "<i>No staff yet. Hire help below — delegation is how one tech becomes a department.</i><br><br>";
+    }
+    if (s.staff.length < 4) {
+      el.innerHTML += `<br><h4>Available Hires</h4>`;
+      for (const [tid, tier] of Object.entries(STAFF_TIERS)) {
+        const afford = s.budget >= tier.cost;
+        el.innerHTML += `<div class="loot-item">💼 <b>${tier.name}</b> <span style="color:#8f8">$${tier.cost}/hire</span><br><small>${tier.blurb}</small> <button data-hire="${tid}" ${afford ? "" : "disabled"} style="float:right;background:#153;border:1px solid #4f4;color:#8f8;border-radius:5px;padding:3px 10px;font-family:inherit">HIRE</button></div>`;
+      }
+    } else {
+      el.innerHTML += `<br><i>Team is full (4 max).</i>`;
+    }
+    el.querySelectorAll("button[data-hire]").forEach(b => b.onclick = () => {
+      const tier = STAFF_TIERS[b.dataset.hire];
+      if (s.budget < tier.cost) return toast("Not enough budget!");
+      s.budget -= tier.cost;
+      const trait = pick(STAFF_TRAITS);
+      const name = pick(STAFF_NAMES.filter(n => !s.staff.some(m => m.name === n)));
+      s.staff.push({ id: Date.now() % 100000 + R(0, 99), tier: b.dataset.hire, name, trait: trait.id, burnout: 0, uses: 0, accBonus: 0 });
+      sfx("loot");
+      toast(`🤝 ${name} the ${trait.name} ${tier.name} joins the team! They'll work leftover tickets at end of day.`);
+      renderTab("Team"); updateHUD(); save();
+    });
+    el.querySelectorAll("button[data-rest]").forEach(b => b.onclick = () => {
+      const m = s.staff.find(x => String(x.id) === b.dataset.rest);
+      if (m) { m.burnout = Math.max(0, m.burnout - 2); toast(`😴 ${m.name} takes a breather. Burnout: ${m.burnout}`); }
+      renderTab("Team"); save();
+    });
   } else if (tab === "Inventory") {
     el.innerHTML = s.inv.length ? "" : "<i>No loot yet. Close tickets and clear dungeons!</i>";
     for (const l of s.inv) el.innerHTML += `<div class="loot-item">${l.icon} <span class="rarity-${l.rarity}"><b>${l.name}</b> (${l.rarity})</span><br><small>${l.stat === "stress" ? "Passive: move faster, stress resist" : `+${l.val} ${l.stat}`}</small></div>`;
