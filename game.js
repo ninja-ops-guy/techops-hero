@@ -1,5 +1,5 @@
 /* ============================================================
-   TECHOPS HERO v2.0 — roguelite IT RPG (single-file web app)
+   TECHOPS HERO v3.0 — roguelite IT RPG (single-file web app)
    ============================================================ */
 "use strict";
 
@@ -57,6 +57,7 @@ const TICKET_TYPES = [
   { id: "vlan", label: "Wrong VLAN Assignment", icon: "🔀", enemy: "Trunk Ogre", eicon: "👹", world: "Switching Maze", wbg: "#10242a", diag: ["Fix the access port VLAN & trunk allow-list", "Set every port to VLAN 1", "Disable spanning tree"], correct: 0, stat: "networking" },
   { id: "backup", label: "Backup Job Failed", icon: "🗃️", enemy: "Archive Wraith", eicon: "👻", world: "Tape Catacombs", wbg: "#1a1426", diag: ["Check VSS writers & job logs, then rerun", "Delete the backup job", "Pray to the tape gods"], correct: 0, stat: "windows" },
   { id: "slowpc", label: "PC Running Slow", icon: "🐌", enemy: "Bloatware Blob", eicon: "🦠", world: "Startup Swamp", wbg: "#14201a", diag: ["Audit startup items & resource hogs", "Download a 'PC optimizer' ad", "Just reboot forever"], correct: 0, stat: "hardware" },
+  { id: "shadow", label: "UNKNOWN ROOT PROCESS", icon: "🕳️", enemy: "THE SHADOW ADMINISTRATOR", eicon: "🌑", world: "The Root Directory", wbg: "#0a0a12", diag: ["Confront palan0 at the root terminal", "Run. Just run.", "Unplug the building"], correct: 0, stat: "security" },
 ];
 // moves unlocked by career rank (RANKS index) — your loadout evolves as you level
 const MOVE_LEVELS = [
@@ -89,6 +90,7 @@ const ENEMY_TACTICS = {
   vlan: { weak: ["acl", "tracert"], resist: ["sudo"], attacks: ["Native VLAN Mismatch", "Trunk Flap", "MAC Flap", "Spanning Tree Loop"], resistNote: "sudo on a Windows box won't fix switch config." },
   backup: { weak: ["patch", "contain"], resist: ["ping"], attacks: ["VSS Timeout", "Corrupt Catalog", "Media Full", "Job Stuck at 99%"], resistNote: "ping the tape library all day, it won't help." },
   slowpc: { weak: ["ps", "patch"], resist: ["swap"], attacks: ["100% Disk Usage", "Memory Leak", "Startup Ambush", "Thermal Throttle"], resistNote: "new hardware just gets the same bloatware." },
+  shadow: { weak: ["zerotrust", "contain", "siem"], resist: ["ping", "coffee"], attacks: ["sudo Slam", "rm -rf /home", "chmod 000", "Fork Bomb", "Kernel Injection"], resistNote: "he owns every packet you send." },
 };
 const ABILITY_CMDS = {
   ping: "ping -n 4 target", ps: "PS> .\\Invoke-Remediation.ps1", flush: "ipconfig /flushdns",
@@ -150,6 +152,8 @@ const ACHIEVEMENTS = [
   { id: "cert1", name: "Certified", icon: "🎓", desc: "Earn a certification" },
   { id: "legend", name: "Legendary Find", icon: "🌟", desc: "Loot a legendary item" },
   { id: "siteadmin", name: "Keys to the Kingdom", icon: "🗝️", desc: "Reach Site Administrator" },
+  { id: "root", name: "Root Access", icon: "🌑", desc: "Defeat palan0, the Shadow Administrator" },
+  { id: "oncall", name: "Always On-Call", icon: "🔥", desc: "Defeat palan0 on On-Call difficulty" },
 ];
 const LEARN = {
   printer: { title: "Print Spooler", body: "Real fix: restart the Print Spooler (services.msc → Print Spooler → Restart), clear C:\\Windows\\System32\\spool\\PRINTERS, then resend the job. 'PC LOAD LETTER' just means load letter-size paper." },
@@ -169,6 +173,30 @@ const LEARN = {
   backup: { title: "Backup Operations", body: "Backups fail silently until you need them. Monitor VSS writers (vssadmin list writers), test restores quarterly, and follow 3-2-1: 3 copies, 2 media types, 1 offsite." },
   slowpc: { title: "Performance Triage", body: "Task Manager → Startup tab and Resource Monitor are your friends. 100% disk usage is usually an AV scan, search indexing, or a failing drive. 'PC optimizer' ads ARE the bloatware." },
 };
+// ---------- store: books teach moves, lab equipment grants passives ----------
+const STORE_STOCK = [
+  { id: "book_itil", name: "ITIL Handbook", icon: "📘", cost: 150, type: "book", move: "rdp", blurb: "Teaches: Remote Desktop" },
+  { id: "book_phoenix", name: "The Phoenix Project", icon: "📕", cost: 220, type: "book", move: "gpo", blurb: "Teaches: Group Policy (+25% dmg ×3t)" },
+  { id: "book_linux", name: "The Linux Bible", icon: "📓", cost: 350, type: "book", move: "sudo", blurb: "Teaches: sudo rm -rf /bug" },
+  { id: "book_wire", name: "Wireshark 101", icon: "📗", cost: 400, type: "book", move: "wireshark", blurb: "Teaches: Wireshark" },
+  { id: "book_siem", name: "SIEM for Humans", icon: "📙", cost: 500, type: "book", move: "siem", blurb: "Teaches: SIEM Query (25% ×3 crit)" },
+  { id: "book_ccna", name: "CCNA in 30 Days", icon: "📔", cost: 600, type: "book", move: "acl", blurb: "Teaches: ACL Strike" },
+  { id: "lab_ram", name: "Spare RAM Kit", icon: "🟩", cost: 180, type: "lab", effect: "+10 max HP", key: "ram" },
+  { id: "lab_switch", name: "Managed Switch (Lab)", icon: "🔌", cost: 220, type: "lab", effect: "+2 networking", key: "switch" },
+  { id: "lab_pi", name: "Raspberry Pi Cluster", icon: "🍓", cost: 260, type: "lab", effect: "+2 automation", key: "pi" },
+  { id: "lab_punch", name: "Punch-Down Tool", icon: "🔨", cost: 160, type: "lab", effect: "+2 hardware", key: "punch" },
+  { id: "lab_faraday", name: "Faraday Bag", icon: "👝", cost: 240, type: "lab", effect: "+2 security", key: "faraday" },
+  { id: "lab_kb", name: "Ergonomic Keyboard", icon: "⌨️", cost: 300, type: "lab", effect: "-15% stress from all sources", key: "kb" },
+];
+function applyLab(key) {
+  const s = S;
+  if (key === "ram") { s.maxHp += 10; s.hp = Math.min(s.maxHp, s.hp + 10); }
+  else if (key === "switch") s.stats.networking += 2;
+  else if (key === "pi") s.stats.automation += 2;
+  else if (key === "punch") s.stats.hardware += 2;
+  else if (key === "faraday") s.stats.security += 2;
+  else if (key === "kb") s.stressResist = Math.min(.6, (s.stressResist || 0) + .15);
+}
 const NPC_NAMES = ["Dana", "Marcus", "Priya", "Tom", "Yuki", "Carlos", "Wanda", "Earl", "Nadia", "Greg", "Sue", "Vikram", "Betty", "Hank", "Lena", "Otis"];
 const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "📓 Admin journal: 'The root account... it changes its own password now.'", "🗄️ Forgotten server: it's been up 3,412 days. Nobody knows what it does.", "📼 VHS tape: 'ORIENTATION 1987 — the building's network predates the building.'", "🖥️ Terminal: a lone process named 'palan0' has been running since boot..."];
 
@@ -184,14 +212,14 @@ function newState() {
     rep: Object.fromEntries(DEPTS.map(d => [d, 1])),
     tickets: [], ticketsDone: 0, ticketsTotal: 0, lootToday: 0,
     chaos: null, promoted: false, autoUsed: false,
-    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0 },
-    ach: [],
+    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [] },
+    ach: [], books: [], lab: [], storeStock: [], stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
     px: 0, py: 0, dir: 1, fx: "down", moving: false,
     npcs: [], portals: [], devices: [], loreSpots: [], coffeeMachines: [],
     map: null, inDialog: false, inBattle: false, gameOver: false, won: false,
   };
 }
-const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach })); } catch (e) { } };
+const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone })); } catch (e) { } };
 const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); return d; } catch (e) { return null; } };
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
@@ -199,7 +227,9 @@ const coffeeMug = () => S.inv.some(l => l.stat === "stress");
 
 // ---------- retro SFX (WebAudio, no assets) ----------
 let AC = null;
+let sfxMuted = false;
 function sfx(kind) {
+  if (sfxMuted) return;
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)();
     if (AC.state === "suspended") AC.resume();
@@ -338,14 +368,24 @@ function setupDay() {
   let n = R(4, 6);
   if (s.chaos?.id === "patch") n += 2;
   if (s.chaos?.id === "calm") n -= 2;
+  if (s.diff > 1) n += 1; // On-Call: more tickets
   n = clamp(n, 2, 8);
   s.ticketsTotal = n;
 
+  // the palan0 arc: full lore set awakens the Shadow Administrator
+  if (s.meta.lore.length >= 5 && !s.shadowDone) {
+    const sp = freeSpot(s.map);
+    const shadowNpc = { id: 900, name: "??? (root terminal)", dept: "Infrastructure", type: TICKET_TYPES.find(t => t.id === "shadow"), x: sp.x, y: sp.y, face: "🖥️", done: false, interviewed: false, diagnosed: false, correctDiag: false, critical: true, pv: 1 };
+    s.npcs.push(shadowNpc); s.tickets.push(shadowNpc);
+    s.ticketsTotal++;
+    setTimeout(() => toast("🕳️ A terminal wakes by itself. <b>palan0 has noticed you.</b>", 4000), 1500);
+  }
+
   // spawn NPCs with tickets
   for (let i = 0; i < n; i++) {
-    let type = pick(TICKET_TYPES);
+    let type = pick(TICKET_TYPES.filter(t => t.id !== "shadow"));
     if (s.chaos?.id === "drill") type = TICKET_TYPES.find(t => t.id === "malware");
-    if (s.chaos?.id === "outage" && Math.random() < .5) type = pick(TICKET_TYPES.filter(t => t.stat === "networking"));
+    if (s.chaos?.id === "outage" && Math.random() < .5) type = pick(TICKET_TYPES.filter(t => t.stat === "networking" && t.id !== "shadow"));
     const dept = pick(DEPTS);
     const pos = freeSpot(s.map);
     const npc = {
@@ -362,11 +402,15 @@ function setupDay() {
     const pos = freeSpot(s.map);
     s.npcs.push({ id: 100 + i, name: pick(NPC_NAMES), dept: pick(DEPTS), x: pos.x, y: pos.y, face: "🧍", ambient: true, pv: R(0, PAL_NPCS.length - 1) });
   }
-  // lore spots
-  for (let i = 0; i < R(2, 4); i++) { const p = freeSpot(s.map); s.loreSpots.push({ x: p.x, y: p.y, text: pick(LORE), found: false }); }
+  // lore spots (unique pieces of the palan0 mystery)
+  const loreIds = [0, 1, 2, 3, 4].sort(() => Math.random() - .5).slice(0, R(2, 3));
+  for (const lid of loreIds) { const p = freeSpot(s.map); s.loreSpots.push({ x: p.x, y: p.y, text: LORE[lid], lid, found: false }); }
   // coffee machines
   const nc = s.chaos?.id === "heat" ? 4 : 2;
   for (let i = 0; i < nc; i++) { const p = freeSpot(s.map); s.coffeeMachines.push({ x: p.x, y: p.y, used: false }); }
+  // daily store stock rotation
+  const stockPool = STORE_STOCK.filter(it => !s.books.includes(it.id) && !(it.type === "lab" && s.lab.filter(k => k === it.key).length >= (it.key === "kb" ? 2 : 1)));
+  s.storeStock = [...stockPool].sort(() => Math.random() - .5).slice(0, 3).map(it => it.id);
 
   toast(s.chaos ? `DAY ${s.day} — ${s.chaos.name}<br><small>${s.chaos.desc}</small>` : `DAY ${s.day} begins`);
   updateHUD();
@@ -536,7 +580,7 @@ function drawSpr(rows, pal, tx, ty, flip) {
 }
 
 function draw() {
-  const s = S; if (!s) return;
+  const s = S; if (!s || !s.map) return;
   const tm = performance.now();
   const ts = cv.height / 14; // tiles visible vertically
   ctx.fillStyle = "#dfe3e8"; ctx.fillRect(0, 0, cv.width, cv.height);
@@ -547,7 +591,7 @@ function draw() {
   const x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(MAPW - 1, Math.ceil((camX + cv.width / sc) / TILE));
   const y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(MAPH - 1, Math.ceil((camY + cv.height / sc) / TILE));
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) drawTile(s.map[y][x], x, y, tm);
+  for (let y = y0; y <= y1; y++) { const row = s.map[y]; if (!row) continue; for (let x = x0; x <= x1; x++) drawTile(row[x] || 0, x, y, tm); }
   // coffee machines
   for (const c of s.coffeeMachines) { ctx.font = "24px serif"; ctx.globalAlpha = c.used ? .35 : 1; ctx.fillText("☕", c.x * TILE + 16, c.y * TILE + 17); ctx.globalAlpha = 1; }
   // lore
@@ -629,7 +673,7 @@ $("btn-menu").addEventListener("click", openPanel);
 
 let moveAcc = 0;
 function step(dt) {
-  const s = S; if (!s || s.inDialog || s.inBattle || s.gameOver || panelOpen || eodOpen) return;
+  const s = S; if (!s || !s.map || s.inDialog || s.inBattle || s.gameOver || panelOpen || eodOpen) return;
   // ambient NPCs wander the office
   if (Math.random() < .008) {
     const amb = s.npcs.filter(n => n.ambient);
@@ -688,7 +732,14 @@ function interact() {
   if (cof) { cof.used = true; addStress(-25); toast("☕ +25 calm. The dark roast hits."); return; }
   // lore?
   const lore = s.loreSpots.find(l => adjacent(p, l) && !l.found);
-  if (lore) { lore.found = true; addXP(5); s.journal.push({ day: s.day, title: "Office Lore", body: lore.text }); dlg("📜 Discovery", lore.text, [{ t: "Fascinating. (+5 XP)", f: closeDlg }]); return; }
+  if (lore) {
+    lore.found = true; addXP(5);
+    if (lore.lid !== undefined && !s.meta.lore.includes(lore.lid)) s.meta.lore.push(lore.lid);
+    s.journal.push({ day: s.day, title: "Office Lore", body: lore.text });
+    dlg("📜 Discovery", `${lore.text}<br><br><small>palan0 fragments: ${s.meta.lore.length}/5</small>`, [{ t: "Fascinating. (+5 XP)", f: closeDlg }]);
+    save();
+    return;
+  }
 }
 
 function dlg(name, text, options) {
@@ -703,7 +754,7 @@ function dlg(name, text, options) {
     box.appendChild(b);
   }
 }
-function closeDlg() { S.inDialog = false; $("dialogue").classList.add("hidden"); }
+function closeDlg() { S.inDialog = false; $("dialogue").classList.add("hidden"); flushPromo(); }
 
 function ambientTalk(n) {
   const lines = [
@@ -738,6 +789,7 @@ function ticketFlow(n) {
       vlan: `"My desk phone works but my laptop gets no IP. IT plugged me into the wrong port, didn't they?"`,
       backup: `"The nightly backup has failed 4 days in a row. Nobody noticed until Legal asked for a restore."`,
       slowpc: `"It takes 12 minutes to boot. I time it. I have a spreadsheet of the boot times."`,
+      shadow: `"ACCESS GRANTED... — the terminal is typing by itself: 'i remember this building. i remember YOU.'`,
     };
     dlg(`${n.name} — ${n.dept} ${n.critical ? "🚨" : ""}`,
       `<b>${t.icon} ${t.label}</b><br>${symptoms[t.id]}<br><small>Interview the user, then form a hypothesis.</small>`,
@@ -789,7 +841,7 @@ function fixDevice(d) {
 
 // ---------- battle ----------
 let B = null;
-const BOSS_NAMES = { malware: "RANSOMWARE QUEEN", bsod: "BLUE SCREEN TITAN", dns: "DNS HYDRA PRIME", ad: "ARCHLICH OF IDENTITIES", vpn: "TUNNEL DEVOURER", printer: "PRINTER KING", email: "PHANTOM POSTMASTER", plc: "THE LINE STOPPER", wifi: "THE DEAD ZONE", cert: "EXPIRED ROOT", disk: "THE HOARDER", update: "ETERNAL 27%", share: "LORD ACCESS DENIED", vlan: "THE MISPATCH", backup: "THE FAILED JOB", slowpc: "BLOATLORD" };
+const BOSS_NAMES = { malware: "RANSOMWARE QUEEN", bsod: "BLUE SCREEN TITAN", dns: "DNS HYDRA PRIME", ad: "ARCHLICH OF IDENTITIES", vpn: "TUNNEL DEVOURER", printer: "PRINTER KING", email: "PHANTOM POSTMASTER", plc: "THE LINE STOPPER", wifi: "THE DEAD ZONE", cert: "EXPIRED ROOT", disk: "THE HOARDER", update: "ETERNAL 27%", share: "LORD ACCESS DENIED", vlan: "THE MISPATCH", backup: "THE FAILED JOB", slowpc: "BLOATLORD", shadow: "THE SHADOW ADMINISTRATOR" };
 function startBattle(portal) {
   const s = S, npc = s.npcs.find(n => n.id === portal.npc), t = npc.type;
   const lv = 1 + Math.floor(s.day / 2) + (npc.critical ? 2 : 0);
@@ -797,8 +849,10 @@ function startBattle(portal) {
   if (portal.weak) hp = Math.round(hp * .7);
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
   const boss = !!npc.critical;
-  if (boss) hp = Math.round(hp * 1.8);
-  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false };
+  if (boss) hp = Math.round(hp * (t.id === "shadow" ? 1.9 : s.diff > 1 ? 2.0 : 1.8));
+  hp = Math.round(hp * (s.ngPlus ? 1.25 : 1));
+  const SIGS = { malware: ["enclock", "ransom"], dns: ["spawn", "poison"], bsod: ["crash", "freeze"] };
+  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false, sig: pick(SIGS[t.id] || ["overload", "wipe"]), forkBomb: false };
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -818,6 +872,13 @@ function battleAbilities() {
   const ri = RANKS.indexOf(rank());
   for (const m of MOVE_LEVELS) if (ri >= m.rank) list.push(m.ability);
   for (const c of S.certs) if (CERT_ABILITIES[c]) list.push(CERT_ABILITIES[c]);
+  // books teach moves early
+  for (const bid of S.books) {
+    const stock = STORE_STOCK.find(x => x.id === bid);
+    if (!stock) continue;
+    const mv = MOVE_LEVELS.find(m => m.ability.id === stock.move)?.ability || CERT_ABILITIES[stock.move];
+    if (mv && !list.some(a => a.id === mv.id)) list.push(mv);
+  }
   return list;
 }
 function renderBattle() {
@@ -839,6 +900,7 @@ function doAbility(a) {
   const s = S;
   if (!B || B.over) return;
   addStress(a.stress);
+  s.meta.cmds++;
   let dmg = 0;
   if (a.dmg[1] > 0) {
     const bonus = statBonus(B.t.stat);
@@ -876,33 +938,74 @@ function doAbility(a) {
   if (B.boss && !B.enraged && B.hp <= B.maxHp / 2) {
     B.enraged = true;
     sfx("chain");
-    blog(`<span class="sys">👹 <b>PHASE 2</b> — ${BOSS_NAMES[B.t.id] || B.t.enemy} ENRAGES! Its attacks intensify and it unleashes signature moves!</span>`);
+    blog(B.t.id === "shadow"
+      ? `<span class="sys">🌑 <b>palan0 escalates to root.</b> He begins DELETING your moves one by one!</span>`
+      : `<span class="sys">👹 <b>PHASE 2</b> — ${BOSS_NAMES[B.t.id] || B.t.enemy} ENRAGES! Its attacks intensify and it unleashes signature moves!</span>`);
+  }
+  // shadow final phase: fork bomb
+  if (B.t.id === "shadow" && !B.forkBomb && B.hp <= B.maxHp * .2) {
+    B.forkBomb = true;
+    sfx("bad");
+    blog(`<span class="sys">☠️ <b>FORK BOMB</b> — palan0 replicates uncontrollably (+8 HP/turn). KILL HIM BEFORE HE OVERFLOWS THE NETWORK!</span>`);
   }
   // enemy turn
   B.turns++;
   if (B.stunned) { B.stunned = false; }
   else if (B.boss && B.enraged && B.turns % 3 === 0) {
-    // boss signature move every 3rd turn while enraged
-    if (B.t.id === "malware") {
+    // boss signature move every 3rd turn while enraged (2 variants per boss type)
+    if (B.t.id === "shadow") {
+      // palan0 DELETES your strongest remaining move (temporary, never below 2 tools)
+      const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]).sort((x, y) => y.dmg[1] - x.dmg[1]);
+      if (pool.length > 2) { const victim = pool[0]; B.locks[victim.id] = 4; blog(`🗑️ <b>palan0 DELETES your ${victim.name}!</b> Gone for 4 turns — improvise!`); }
+      else { const ed = R(14, 20); s.hp -= ed; blog(`🌑 Root overflow — you take ${ed}.`); }
+    }
+    else if (B.sig === "enclock") {
       const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]);
       if (pool.length) { const victim = pick(pool); B.locks[victim.id] = 2; blog(`🔐 <b>ENCRYPTION LOCK!</b> Your ${victim.name} is encrypted for 2 turns!`); }
       else { const ed = R(10, 16); s.hp -= ed; blog(`🔐 Encryption blast — you take ${ed}.`); }
-    } else if (B.t.id === "dns") {
+    }
+    else if (B.sig === "ransom") {
+      const fee = Math.min(s.budget, 30);
+      s.budget -= fee;
+      let ed = fee >= 30 ? 4 : 12; if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
+      s.hp -= ed; addStress(6);
+      blog(`💰 <b>RANSOM DEMAND!</b> You pay $${fee} to decrypt — you take ${ed}.`);
+    }
+    else if (B.sig === "spawn") {
       const heal = R(8, 14); B.hp = Math.min(B.maxHp, B.hp + heal);
       blog(`🐍 <b>SPAWN HEAD!</b> The Hydra regrows a head — it recovers ${heal} HP!`);
-    } else if (B.t.id === "bsod") {
+    }
+    else if (B.sig === "poison") {
+      B.poison = 3; addStress(8);
+      blog(`☠️ <b>CACHE POISON!</b> Corrupted records burn you for 3 turns!`);
+    }
+    else if (B.sig === "crash") {
       let ed = R(12, 18); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
       s.hp -= ed; addStress(8);
       blog(`💙 <b>CRASH WAVE!</b> A wall of blue slams you for ${ed} — logs scatter everywhere!`);
-    } else {
+    }
+    else if (B.sig === "freeze") {
+      B.frozen = true; addStress(5);
+      blog(`🧊 <b>SYSTEM FREEZE!</b> Your next action is lost to a hard hang!`);
+    }
+    else if (B.sig === "wipe") {
+      const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]).sort((x, y) => x.dmg[1] - y.dmg[1]);
+      if (pool.length) { const victim = pool[0]; B.locks[victim.id] = 2; blog(`🗑️ <b>CORRUPTION WIPE!</b> Your weakest tool, ${victim.name}, is corrupted for 2 turns!`); }
+      else { const ed = R(9, 15); s.hp -= ed; blog(`👹 Corruption surge — you take ${ed}.`); }
+    }
+    else {
       let ed = R(9, 15); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
       s.hp -= ed; addStress(6);
       blog(`👹 <b>CRITICAL OVERLOAD!</b> Raw corruption hits you for ${ed}!`);
     }
   }
+  else if (B.frozen) {
+    B.frozen = false;
+    blog(`🧊 You are frozen solid — turn lost!`);
+  }
   else {
     const atk = pick(ENEMY_TACTICS[B.t.id]?.attacks || ["Packet Flood", "Corruption Wave"]);
-    let ed = R(5, 10) + Math.floor(s.day * .75) + (B.enraged ? 2 : 0);
+    let ed = Math.round((R(5, 10) + Math.floor(s.day * .75) + (B.enraged ? 2 : 0)) * (s.diff || 1));
     if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
     s.hp -= ed; addStress(4);
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
@@ -911,6 +1014,8 @@ function doAbility(a) {
   // tick down encryption locks
   for (const k of Object.keys(B.locks)) if (--B.locks[k] <= 0) { delete B.locks[k]; blog(`<span class="sys">🔓 Decryption complete — ability restored.</span>`); }
   if (B.regen) s.hp = clamp(s.hp + 3, 0, s.maxHp);
+  if (B.poison > 0) { B.poison--; s.hp -= 4; blog(`☠️ Cache poison burns you for 4.`); }
+  if (B.forkBomb) { B.hp = Math.min(B.maxHp, B.hp + 8); blog(`☠️ palan0 replicates... <b>+8 HP</b>`); }
   if (s.hp <= 0) return loseBattle();
   renderBattle(); updateHUD();
 }
@@ -919,6 +1024,8 @@ function winBattle() {
   B.over = true;
   sfx("win");
   if (t.id === "printer") s.meta.printerKills++;
+  const isShadow = t.id === "shadow";
+  if (isShadow) { s.shadowDone = true; unlock("root"); if (s.diff > 1) unlock("oncall"); }
   let xp = B.boss ? 70 + s.day * 2 : 20 + (n.critical ? 30 : 0);
   if (s.chaos?.id === "patch") xp = Math.round(xp * 1.5);
   addXP(xp);
@@ -932,6 +1039,7 @@ function winBattle() {
   else drops.push(rollLoot("legendary"));
   if (n.critical) drops.push(rollLoot("epic"));
   if (B.boss && Math.random() < .35) drops.push(rollLoot("legendary"));
+  if (isShadow) { drops.push(rollLoot("legendary"), rollLoot("legendary")); }
   for (const l of drops) {
     s.inv.push(l); s.lootToday++;
     if (l.rarity === "legendary") s.meta.legendaries++;
@@ -955,6 +1063,8 @@ function winBattle() {
     resolveTicket(n);
     B = null;
     updateHUD();
+    flushPromo();
+    if (isShadow) { setTimeout(() => showEnding(true), 800); return; }
     // optional real-world debrief
     const lm = LEARN[t.id];
     if (lm && !eodOpen) {
@@ -968,6 +1078,16 @@ function winBattle() {
 function loseBattle() {
   const s = S;
   sfx("bad");
+  // losing a boss fight ends the run — you're hospitalized
+  if (B.boss) {
+    const t = B.t;
+    s.portals = s.portals.filter(p => p !== B.portal);
+    s.journal.push({ day: s.day, title: `${t.label} — RUN ENDED`, body: `${BOSS_NAMES[t.id] || t.enemy} put you in the hospital. The network wins this time.` });
+    $("battle").classList.add("hidden"); s.inBattle = false; B = null;
+    save();
+    setTimeout(() => showEnding(false), 800);
+    return;
+  }
   addStress(20); s.hp = Math.round(s.maxHp / 2);
   s.portals = s.portals.filter(p => p !== B.portal);
   const dev = s.devices.find(d => d.npc === B.npc.id); if (dev) dev.fixed = true;
@@ -976,7 +1096,7 @@ function loseBattle() {
   toast("💀 The manifestation overwhelmed you. The ticket got escalated... (-1 rep, +20 stress)");
   s.journal.push({ day: s.day, title: `${n.type.label} — FAILED`, body: `Lesson: ${n.type.diag[n.type.correct]}. You won't make that mistake twice.` });
   $("battle").classList.add("hidden"); s.inBattle = false; B = null;
-  updateHUD(); checkDayEnd();
+  updateHUD(); flushPromo(); checkDayEnd();
 }
 function rollLoot(minRarity) {
   const order = ["common", "rare", "epic", "legendary"];
@@ -1005,6 +1125,8 @@ function resolveTicket(n) {
     s.ticketsDone--;
     s.meta.chains++;
     sfx("chain");
+    // clean up the old broken device — the problem moved deeper
+    s.devices = s.devices.filter(d => d.npc !== n.id);
     setTimeout(() => toast(`⛓️ ESCALATION — ${pick(CHAIN_LINES)}<br><b>${nt.icon} ${nt.label}</b> (${n.dept})`, 3500), 2700);
   }
   let repGain = 1;
@@ -1046,12 +1168,23 @@ function addXP(n) {
   const s = S, before = rank().name;
   s.xp += n;
   const after = rank().name;
-  if (after !== before) setTimeout(() => promotion(after), 600);
+  if (after !== before) {
+    if (s.inBattle || s.inDialog) s.pendingPromo = after;
+    else setTimeout(() => promotion(after), 600);
+  }
   updateHUD();
+}
+function flushPromo() {
+  const s = S;
+  if (s.pendingPromo && !s.inBattle && !s.inDialog && !eodOpen) {
+    const p = s.pendingPromo; s.pendingPromo = null;
+    promotion(p);
+  }
 }
 function addStress(n) {
   const s = S;
   let mult = s.chaos?.id === "heat" && n > 0 ? 1.5 : 1;
+  if (n > 0) mult *= (1 - (s.stressResist || 0));
   s.stress = clamp(Math.round(s.stress + n * mult), 0, 100);
   if (s.stress >= 100) { s.stress = 70; s.hp = Math.max(1, s.hp - 10); toast("🔥 BURNOUT! You snap at a user and hide in the IDF. (-10 HP)"); }
   updateHUD();
@@ -1091,20 +1224,75 @@ function updateHUD() {
   const s = S; if (!s) return;
   $("hud-day").textContent = `DAY ${s.day}`;
   $("hud-title").textContent = rank().name;
-  $("hud-clock").textContent = fmtClock(s.clock);
+  $("hud-clock").textContent = fmtClock(s.clock) + (s.chaos ? " · " + s.chaos.name : "");
   const cur = rank(), ni = RANKS.indexOf(cur);
   const next = RANKS[ni + 1];
   $("bar-xp").style.width = next ? clamp((s.xp - cur.xp) / (next.xp - cur.xp) * 100, 0, 100) + "%" : "100%";
   $("bar-stress").style.width = s.stress + "%";
   $("hud-budget").textContent = "$" + s.budget;
   $("hud-tickets").textContent = `🎫 ${s.ticketsDone}/${s.ticketsTotal}`;
-  if (s.chaos) { $("chaos-banner").classList.remove("hidden"); $("chaos-banner").textContent = `${s.chaos.name} — ${s.chaos.desc}`; }
-  else $("chaos-banner").classList.add("hidden");
+  $("chaos-banner").classList.add("hidden"); // chaos now lives on the clock line
   const open = s.tickets.filter(t => !t.done);
   $("quest-tracker").innerHTML =
     s.tickets.filter(t => t.done).map(t => `<div class="done">✅ ${t.type.label} (${t.dept})</div>`).join("") +
     open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}</div>`).join("");
   updateSweep();
+}
+
+// ---------- ending / game over ----------
+function showEnding(win) {
+  const s = S;
+  const stats =
+    `📅 Days survived: <b>${s.day}</b><br>` +
+    `🎫 Tickets closed: <b>${s.meta.closed}</b> (${s.meta.chains} chain escalations)<br>` +
+    `🚨 Critical incidents won: <b>${s.meta.crits}</b><br>` +
+    `⌨️ Commands run: <b>${s.meta.cmds}</b><br>` +
+    `🌟 Legendaries found: <b>${s.meta.legendaries}</b><br>` +
+    `🏆 Achievements: <b>${s.ach.length}/${ACHIEVEMENTS.length}</b><br>` +
+    `🎖️ Final rank: <b>${rank().name}</b>`;
+  if (win) {
+    $("eod-title").textContent = "👑 ROOT ACCESS GRANTED";
+    $("eod-summary").innerHTML =
+      `palan0 — the first admin, uploaded into Building 7's network in 1987 — is finally at rest.<br>` +
+      `The tickets will continue. They always do. But today, the network answers to <b>you</b>.<br><br>${stats}`;
+    $("eod").querySelector("h3").textContent = "Choose your legacy:";
+    const box = $("eod-rewards"); box.innerHTML = "";
+    const ng = document.createElement("button");
+    ng.innerHTML = `<span class="rw-icon">🔄</span><b>NEW GAME+</b><br>Keep certs, books, achievements. Enemies +25% HP.`;
+    ng.onclick = () => {
+      const keep = { certs: s.certs, books: s.books, ach: s.ach, meta: s.meta, journal: s.journal, lab: s.lab, stressResist: s.stressResist, inv: s.inv, rep: s.rep, stats: s.stats, soft: s.soft };
+      S = newState(); Object.assign(S, keep); S.ngPlus = true; S.meta.lore = []; S.shadowDone = false;
+      $("eod").classList.add("hidden");
+      startRun();
+      toast("🔄 NEW GAME+ — the corruption returns stronger. palan0 left backups...");
+    };
+    const end = document.createElement("button");
+    end.innerHTML = `<span class="rw-icon">🌅</span><b>RETIRE A LEGEND</b><br>End the run here. Roll credits.`;
+    end.onclick = () => { $("eod").classList.add("hidden"); showCredits(stats); };
+    box.append(ng, end);
+    $("eod").classList.remove("hidden");
+  } else {
+    $("eod-title").textContent = "🏥 RUN TERMINATED";
+    $("eod-summary").innerHTML = `The manifestation put you in the hospital. HR sends flowers.<br><br>${stats}`;
+    $("eod").querySelector("h3").textContent = "The queue never clears itself...";
+    const box = $("eod-rewards"); box.innerHTML = "";
+    const again = document.createElement("button");
+    again.innerHTML = `<span class="rw-icon">▶</span><b>CLOCK BACK IN</b><br>Fresh run, day 1.`;
+    again.onclick = () => { $("eod").classList.add("hidden"); localStorage.removeItem("techops_save"); location.reload(); };
+    box.appendChild(again);
+    $("eod").classList.remove("hidden");
+  }
+  save();
+}
+function showCredits(stats) {
+  $("eod-title").textContent = "🌅 TECHOPS HERO";
+  $("eod-summary").innerHTML = `You retire as the legend of Building 7.<br><br>${stats}<br><br><small>Thanks for playing. A Kimi × ninja-ops-guy production.</small>`;
+  $("eod").querySelector("h3").textContent = "";
+  const box = $("eod-rewards"); box.innerHTML = "";
+  const again = document.createElement("button");
+  again.innerHTML = `<span class="rw-icon">▶</span><b>PLAY AGAIN</b><br>`;
+  again.onclick = () => { localStorage.removeItem("techops_save"); location.reload(); };
+  box.appendChild(again);
 }
 
 // ---------- end of day ----------
@@ -1126,6 +1314,7 @@ function endOfDay() {
     `🎫 Tickets: ${s.ticketsDone}/${s.ticketsTotal}${missed ? ` <span style="color:#f88">(${missed} rolled over, -rep)</span>` : " — <b>ZERO BACKLOG!</b> 👑"}<br>` +
     `✨ Total XP: ${s.xp} · 💰 Budget: $${s.budget}<br>` +
     `😌 Stress recovered: -${stressRec} · Rank: <b>${rank().name}</b>`;
+  $("eod").querySelector("h3").textContent = "Choose one reward:";
   const rewards = [
     { icon: "💻", t: "New Hardware", d: "+1 random stat", f: () => { const k = pick(Object.keys(s.stats)); s.stats[k]++; toast(`📈 ${k} +1`); } },
     { icon: "📜", t: "Automation Script", d: "+2 automation", f: () => { s.stats.automation += 2; toast("📈 automation +2"); } },
@@ -1146,13 +1335,13 @@ function endOfDay() {
   save();
 }
 
-// ---------- panel (character / inventory / certs / journal / reputation / achievements) ----------
+// ---------- panel (character / inventory / store / certs / journal / reputation / achievements) ----------
 let panelOpen = false;
 function openPanel(tab = "Character") {
   if (S.inBattle) return;
   panelOpen = true;
   $("panel").classList.remove("hidden");
-  const tabs = ["Character", "Inventory", "Certifications", "Journal", "Reputation", "Achievements"];
+  const tabs = ["Character", "Inventory", "Store", "Certifications", "Journal", "Reputation", "Achievements"];
   $("panel-title").textContent = "🧑‍🔧 TECHOPS HERO";
   $("panel-tabs").innerHTML = "";
   for (const t of tabs) {
@@ -1182,6 +1371,25 @@ function renderTab(tab) {
   } else if (tab === "Inventory") {
     el.innerHTML = s.inv.length ? "" : "<i>No loot yet. Close tickets and clear dungeons!</i>";
     for (const l of s.inv) el.innerHTML += `<div class="loot-item">${l.icon} <span class="rarity-${l.rarity}"><b>${l.name}</b> (${l.rarity})</span><br><small>${l.stat === "stress" ? "Passive: move faster, stress resist" : `+${l.val} ${l.stat}`}</small></div>`;
+  } else if (tab === "Store") {
+    el.innerHTML = `<i>Mac's IT Emporium — new stock every morning. Budget: <b>$${s.budget}</b></i><br><br>`;
+    if (!s.storeStock.length) el.innerHTML += "<i>Sold out for today. Come back tomorrow.</i>";
+    for (const id of s.storeStock) {
+      const it = STORE_STOCK.find(x => x.id === id);
+      const afford = s.budget >= it.cost;
+      el.innerHTML += `<div class="loot-item">${it.icon} <b>${it.name}</b> <span style="color:#8f8">$${it.cost}</span><br><small>${it.type === "book" ? it.blurb : it.effect}</small> <button data-buy="${it.id}" data-cost="${it.cost}" ${afford ? "" : "disabled"} style="float:right;background:#153;border:1px solid #4f4;color:#8f8;border-radius:5px;padding:3px 10px;font-family:inherit">BUY</button></div>`;
+    }
+    el.innerHTML += `<br><small>Owned: ${[...s.books.map(b => STORE_STOCK.find(x => x.id === b)?.name), ...s.lab.map(k => STORE_STOCK.find(x => x.key === k)?.name)].filter(Boolean).join(", ") || "nothing yet"}</small>`;
+    el.querySelectorAll("button[data-buy]").forEach(b => b.onclick = () => {
+      const it = STORE_STOCK.find(x => x.id === b.dataset.buy);
+      if (s.budget < it.cost) return toast("Not enough budget!");
+      s.budget -= it.cost;
+      if (it.type === "book") { s.books.push(it.id); toast(`📖 Learned a new move: ${it.blurb.replace("Teaches: ", "")}!`); }
+      else { s.lab.push(it.key); applyLab(it.key); toast(`🔧 ${it.name} installed: ${it.effect}`); }
+      s.storeStock = s.storeStock.filter(x => x !== it.id);
+      sfx("loot");
+      renderTab("Store"); updateHUD(); save();
+    });
   } else if (tab === "Certifications") {
     el.innerHTML = "<i>Certs unlock new battle abilities. Study with your budget.</i><br><br>";
     for (const c of CERTS) {
@@ -1227,6 +1435,7 @@ function initMusic() {
 }
 function setMusic(on) {
   musicOn = on;
+  sfxMuted = !on; // one toggle rules all audio
   $("btn-music").textContent = on ? "🔊" : "🔇";
   if (!scWidget) return;
   try { on ? scWidget.play() : scWidget.pause(); } catch (e) { }
@@ -1239,13 +1448,26 @@ function showTouchUI() {
 }
 $("btn-start").addEventListener("click", () => {
   localStorage.removeItem("techops_save");
-  S = newState(); setupDay();
+  S = newState();
+  // difficulty select first
+  $("title-screen").classList.add("hidden");
+  $("hud").classList.remove("hidden");
+  showTouchUI();
+  S.inDialog = true;
+  dlg("🎮 SELECT SHIFT DIFFICULTY", `How hard do you want today to hurt?<br><br><b>🌱 Intern</b> — 0.7× enemy HP & damage. Learn the ropes.<br><b>🧰 Standard</b> — the intended experience.<br><b>🔥 On-Call</b> — 1.3× damage, +1 ticket/day, bosses at 2.0× HP. Achievement for beating the final boss.`, [
+    { t: "🌱 Intern", f: () => { S.diff = .7; closeDlg(); startRun(); } },
+    { t: "🧰 Standard", f: () => { S.diff = 1; closeDlg(); startRun(); } },
+    { t: "🔥 On-Call", f: () => { S.diff = 1.3; closeDlg(); startRun(); } },
+  ]);
+});
+function startRun() {
+  setupDay();
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
   showTouchUI();
   initMusic();
   dlg("📟 CIO Dispatch", `Welcome to <b>AeroTech Manufacturing</b>, ${rank().name}.<br><br>Users have tickets. Devices have... <i>manifestations</i>. Interview users, diagnose root causes, enter the portals, and keep this factory running.<br><br>Clock out strong. Good luck.`, [{ t: "Clock in ▶", f: closeDlg }]);
-});
+}
 $("btn-continue").addEventListener("click", () => {
   const d = load(); if (!d) return;
   S = newState(); Object.assign(S, d);
