@@ -1,5 +1,5 @@
 /* ============================================================
-   TECHOPS HERO v3.1 — roguelite IT RPG (single-file web app)
+   TECHOPS HERO v3.2 — roguelite IT RPG (single-file web app)
    ============================================================ */
 "use strict";
 
@@ -40,24 +40,43 @@ const CHAOS = [
   { id: "drill", name: "🛡️ RANSOMWARE DRILL", desc: "Security enemies appear, big rewards" },
   { id: "calm", name: "😌 QUIET DAY", desc: "Fewer tickets, stress recovery doubled" },
 ];
+// diag structure: best = root cause fix, okay = reasonable but suboptimal (partial credit),
+// wrong = plausible mistakes real techs make (shuffled into options each time)
 const TICKET_TYPES = [
-  { id: "printer", label: "Printer Offline", icon: "🖨️", enemy: "Printer Goblin", eicon: "👺", world: "Paper Dimension", wbg: "#3a2e18", diag: ["Restart the print spooler", "Blame the user", "Buy a new printer"], correct: 0, stat: "hardware" },
-  { id: "vpn", label: "VPN Won't Connect", icon: "🚇", enemy: "VPN Ghost", eicon: "👻", world: "Tunnel Caverns", wbg: "#14202e", diag: ["Check tunnel certs & gateway", "Reinstall Windows", "Yell at the ISP"], correct: 0, stat: "networking" },
-  { id: "dns", label: "Internet 'Broken'", icon: "📖", enemy: "DNS Hydra", eicon: "🐍", world: "Labyrinth of Names", wbg: "#1e1430", diag: ["Trace the bad DNS record", "Factory reset the router", "Sacrifice a keyboard"], correct: 0, stat: "networking" },
-  { id: "ad", label: "Account Locked Out", icon: "⛪", enemy: "AD Lich", eicon: "💀", world: "Identity Cathedral", wbg: "#241a2e", diag: ["Review lockout events in AD", "Delete the user", "Wait until tomorrow"], correct: 0, stat: "windows" },
-  { id: "malware", label: "Suspicious Pop-ups", icon: "☣️", enemy: "Malware Swarm", eicon: "🦠", world: "Corrupted Network", wbg: "#2e1414", diag: ["Isolate host, then scan", "Click the pop-up", "Format everything"], correct: 0, stat: "security" },
-  { id: "email", label: "Email Not Syncing", icon: "📬", enemy: "Email Phantom", eicon: "🕊️", world: "Mail Kingdom", wbg: "#142428", diag: ["Check Exchange queue & creds", "Send a test fax", "Blame Outlook"], correct: 0, stat: "windows" },
-  { id: "bsod", label: "Blue Screen Crash", icon: "💙", enemy: "Blue Screen Titan", eicon: "🗿", world: "Kernel Forest", wbg: "#101c34", diag: ["Analyze the dump file", "Hit it harder", "Blame cosmic rays"], correct: 0, stat: "hardware" },
-  { id: "plc", label: "PLC Offline (Factory)", icon: "🏭", enemy: "Rust Golem", eicon: "🤖", world: "Motherboard Desert", wbg: "#2e2410", diag: ["Check the VLAN segment", "Pour water on it", "Kick the conveyor"], correct: 0, stat: "networking" },
-  { id: "wifi", label: "WiFi Dead Zone", icon: "📶", enemy: "WiFi Sprite", eicon: "🧚", world: "RF Shadow Realm", wbg: "#1a2a1e", diag: ["Survey AP placement & channel overlap", "Blame the router brand", "Ban all phones"], correct: 0, stat: "networking" },
-  { id: "cert", label: "SSL Certificate Expired", icon: "📜", enemy: "Certificate Beast", eicon: "🐗", world: "Chain of Trust", wbg: "#2a2010", diag: ["Renew the cert & fix the chain", "Tell users to click 'Advanced → Proceed'", "Turn off HTTPS"], correct: 0, stat: "security" },
-  { id: "disk", label: "Disk Space Critical", icon: "💽", enemy: "Data Hoarder", eicon: "🐲", world: "Sector Wastes", wbg: "#241a10", diag: ["Purge logs, temps & set quotas", "Delete System32", "Buy everyone new laptops"], correct: 0, stat: "windows" },
-  { id: "update", label: "Stuck Windows Update", icon: "🔄", enemy: "Patch Gremlin", eicon: "😈", world: "Servicing Stack", wbg: "#1e1a2e", diag: ["Repair the servicing stack & pending ops", "Unplug mid-update", "Hide all updates forever"], correct: 0, stat: "windows" },
-  { id: "share", label: "File Share Access Denied", icon: "📁", enemy: "Permission Troll", eicon: "🧌", world: "ACL Abyss", wbg: "#201428", diag: ["Compare Share vs NTFS effective access", "Give everyone Domain Admin", "Disable the firewall"], correct: 0, stat: "windows" },
-  { id: "vlan", label: "Wrong VLAN Assignment", icon: "🔀", enemy: "Trunk Ogre", eicon: "👹", world: "Switching Maze", wbg: "#10242a", diag: ["Fix the access port VLAN & trunk allow-list", "Set every port to VLAN 1", "Disable spanning tree"], correct: 0, stat: "networking" },
-  { id: "backup", label: "Backup Job Failed", icon: "🗃️", enemy: "Archive Wraith", eicon: "👻", world: "Tape Catacombs", wbg: "#1a1426", diag: ["Check VSS writers & job logs, then rerun", "Delete the backup job", "Pray to the tape gods"], correct: 0, stat: "windows" },
-  { id: "slowpc", label: "PC Running Slow", icon: "🐌", enemy: "Bloatware Blob", eicon: "🦠", world: "Startup Swamp", wbg: "#14201a", diag: ["Audit startup items & resource hogs", "Download a 'PC optimizer' ad", "Just reboot forever"], correct: 0, stat: "hardware" },
-  { id: "shadow", label: "UNKNOWN ROOT PROCESS", icon: "🕳️", enemy: "THE SHADOW ADMINISTRATOR", eicon: "🌑", world: "The Root Directory", wbg: "#0a0a12", diag: ["Confront palan0 at the root terminal", "Run. Just run.", "Unplug the building"], correct: 0, stat: "security" },
+  { id: "printer", label: "Printer Offline", icon: "🖨️", enemy: "Printer Goblin", eicon: "👺", world: "Paper Dimension", wbg: "#3a2e18", stat: "hardware",
+    diag: { best: "Restart the print spooler & clear the queue", okay: "Check tray, cables & set as default", wrong: ["Reinstall the printer driver", "Update the printer firmware", "Power-cycle the network switch", "Replace the toner cartridge"] } },
+  { id: "vpn", label: "VPN Won't Connect", icon: "🚇", enemy: "VPN Ghost", eicon: "👻", world: "Tunnel Caverns", wbg: "#14202e", stat: "networking",
+    diag: { best: "Check tunnel certs, gateway & IKE ports", okay: "Re-enter credentials & reset the profile", wrong: ["Reboot the user's router", "Reinstall the VPN client", "Flush DNS and release/renew IP", "Lower the MTU on the NIC"] } },
+  { id: "dns", label: "Internet 'Broken'", icon: "📖", enemy: "DNS Hydra", eicon: "🐍", world: "Labyrinth of Names", wbg: "#1e1430", stat: "networking",
+    diag: { best: "Trace the bad DNS record & flush cache", okay: "Test against 8.8.8.8 to confirm DNS", wrong: ["Reboot the core switch", "Replace the WiFi access point", "Reset the user's browser profile", "Re-image the workstation"] } },
+  { id: "ad", label: "Account Locked Out", icon: "⛪", enemy: "AD Lich", eicon: "💀", world: "Identity Cathedral", wbg: "#241a2e", stat: "windows",
+    diag: { best: "Find the lockout source via Event 4740", okay: "Unlock the account & check mapped drives", wrong: ["Reset the user's password", "Rejoin the machine to the domain", "Disable the lockout policy", "Clear the credential manager only"] } },
+  { id: "malware", label: "Suspicious Pop-ups", icon: "☣️", enemy: "Malware Swarm", eicon: "🦠", world: "Corrupted Network", wbg: "#2e1414", stat: "security",
+    diag: { best: "Isolate the host first, then scan", okay: "Boot into safe mode & run a full scan", wrong: ["Run the antivirus scan immediately", "Delete the temp internet files", "Reinstall the browser", "Block the pop-up domain in DNS"] } },
+  { id: "email", label: "Email Not Syncing", icon: "📬", enemy: "Email Phantom", eicon: "🕊️", world: "Mail Kingdom", wbg: "#142428", stat: "windows",
+    diag: { best: "Check the Exchange queue & auth tokens", okay: "Test OWA in a browser to split client/server", wrong: ["Recreate the Outlook profile", "Repair Office from Programs & Features", "Restart the user's PC twice", "Whitelist the domain in spam filter"] } },
+  { id: "bsod", label: "Blue Screen Crash", icon: "💙", enemy: "Blue Screen Titan", eicon: "🗿", world: "Kernel Forest", wbg: "#101c34", stat: "hardware",
+    diag: { best: "Analyze the dump file in WinDbg", okay: "Check Event Viewer for the faulting driver", wrong: ["Run a full memory test first", "Update every driver on the machine", "Reinstall Windows cleanly", "Check for overheating components"] } },
+  { id: "plc", label: "PLC Offline (Factory)", icon: "🏭", enemy: "Rust Golem", eicon: "🤖", world: "Motherboard Desert", wbg: "#2e2410", stat: "networking",
+    diag: { best: "Check the OT VLAN segment & trunk tags", okay: "Ping the PLC & check link lights", wrong: ["Reboot the PLC cabinet", "Replace the ethernet cable", "Update the SCADA software", "Restart the engineering workstation"] } },
+  { id: "wifi", label: "WiFi Dead Zone", icon: "📶", enemy: "WiFi Sprite", eicon: "🧚", world: "RF Shadow Realm", wbg: "#1a2a1e", stat: "networking",
+    diag: { best: "Survey AP placement & channel overlap", okay: "Check band steering & AP health", wrong: ["Boost transmit power on all APs", "Replace the user's WiFi adapter", "Factory-reset the controller", "Move the user's desk closer"] } },
+  { id: "cert", label: "SSL Certificate Expired", icon: "📜", enemy: "Certificate Beast", eicon: "🐗", world: "Chain of Trust", wbg: "#2a2010", stat: "security",
+    diag: { best: "Renew the cert & repair the full chain", okay: "Check server date/time & chain order", wrong: ["Re-import the root CA on every client", "Restart the web server", "Switch the site to a different port", "Clear SSL state on the clients"] } },
+  { id: "disk", label: "Disk Space Critical", icon: "💽", enemy: "Data Hoarder", eicon: "🐲", world: "Sector Wastes", wbg: "#241a10", stat: "windows",
+    diag: { best: "Purge logs/temps & set quotas", okay: "Run disk cleanup & visualize with WinDirStat", wrong: ["Extend the volume immediately", "Delete the pagefile", "Compress the entire drive", "Uninstall unused Windows features"] } },
+  { id: "update", label: "Stuck Windows Update", icon: "🔄", enemy: "Patch Gremlin", eicon: "😈", world: "Servicing Stack", wbg: "#1e1a2e", stat: "windows",
+    diag: { best: "Repair servicing stack & pending ops", okay: "Reset the SoftwareDistribution folder", wrong: ["Reboot and hope it resumes", "Manually download the KB", "Disable the Windows Update service", "Roll back every installed update"] } },
+  { id: "share", label: "File Share Access Denied", icon: "📁", enemy: "Permission Troll", eicon: "🧌", world: "ACL Abyss", wbg: "#201428", stat: "windows",
+    diag: { best: "Compare Share vs NTFS effective access", okay: "Check group membership & effective access", wrong: ["Remap the network drive", "Restart the file server", "Re-add the user to the share ACL", "Flush the offline files cache"] } },
+  { id: "vlan", label: "Wrong VLAN Assignment", icon: "🔀", enemy: "Trunk Ogre", eicon: "👹", world: "Switching Maze", wbg: "#10242a", stat: "networking",
+    diag: { best: "Fix access port VLAN & trunk allow-list", okay: "Verify the port's mode & voice VLAN", wrong: ["Replace the patch cable", "Reboot the access switch", "Static-assign the laptop's IP", "Disable port security on the switch"] } },
+  { id: "backup", label: "Backup Job Failed", icon: "🗃️", enemy: "Archive Wraith", eicon: "👻", world: "Tape Catacombs", wbg: "#1a1426", stat: "windows",
+    diag: { best: "Check VSS writers & job logs, then rerun", okay: "Verify target storage & free space", wrong: ["Restart the backup service only", "Update the backup software", "Change the job schedule", "Delete old backup sets blindly"] } },
+  { id: "slowpc", label: "PC Running Slow", icon: "🐌", enemy: "Bloatware Blob", eicon: "🦠", world: "Startup Swamp", wbg: "#14201a", stat: "hardware",
+    diag: { best: "Audit startup items & resource hogs", okay: "Check Resource Monitor for the bottleneck", wrong: ["Add more RAM immediately", "Run disk defragmenter", "Scan for malware as first step", "Reinstall the graphics driver"] } },
+  { id: "shadow", label: "UNKNOWN ROOT PROCESS", icon: "🕳️", enemy: "THE SHADOW ADMINISTRATOR", eicon: "🌑", world: "The Root Directory", wbg: "#0a0a12", stat: "security",
+    diag: { best: "Confront palan0 at the root terminal", okay: "Trace the process tree to its origin", wrong: ["Kill the process and move on", "Report it to the vendor SOC", "Shut down the affected subnet"] } },
 ];
 // moves unlocked by career rank (RANKS index) — your loadout evolves as you level
 const MOVE_LEVELS = [
@@ -910,23 +929,34 @@ function ticketFlow(n) {
 
 function diagnose(n) {
   const s = S, t = n.type;
-  const opts = t.diag.map((d, i) => ({
-    t: `${["🅰", "🅱", "🅲"][i]} ${d}`,
+  // build a shuffled option set: best + okay + 2 plausible-but-wrong
+  const wrongs = [...t.diag.wrong].sort(() => Math.random() - .5).slice(0, 2);
+  const pool = [
+    { text: t.diag.best, kind: "best" },
+    { text: t.diag.okay, kind: "okay" },
+    ...wrongs.map(w => ({ text: w, kind: "wrong" })),
+  ].sort(() => Math.random() - .5);
+  const opts = pool.map((o, i) => ({
+    t: `${["🅰", "🅱", "🅲", "🅳"][i]} ${o.text}`,
     f: () => {
-      n.diagnosed = true; n.correctDiag = i === t.correct;
+      n.diagnosed = true; n.correctDiag = o.kind === "best";
       advanceClock(15);
       // spawn broken device near npc
       const dp = freeSpot(s.map, n.x, n.y);
       s.devices.push({ ...dp, type: t, fixed: false, npc: n.id });
-      if (n.correctDiag) {
+      const pp = freeSpot(s.map, dp.x, dp.y);
+      if (o.kind === "best") {
         addXP(8); toast("🎯 Correct diagnosis! (+8 XP)");
         // good diagnosis = easier dungeon: portal appears, enemy weakened
-        const pp = freeSpot(s.map, dp.x, dp.y);
         s.portals.push({ ...pp, npc: n.id, weak: true });
+      } else if (o.kind === "okay") {
+        addXP(4);
+        toast(`🤔 Reasonable — that helps some, but it's not the root cause. (+4 XP)<br><small>Best move: ${t.diag.best}</small>`, 3400);
+        // partial credit: normal-strength enemy, no stress
+        s.portals.push({ ...pp, npc: n.id, weak: false, partial: true });
       } else {
         addStress(10);
-        toast("❌ Wrong hypothesis... the problem is worse than it looked. (+10 stress)");
-        const pp = freeSpot(s.map, dp.x, dp.y);
+        toast(`❌ Wrong hypothesis... the problem is worse than it looked. (+10 stress)<br><small>Best move: ${t.diag.best}</small>`, 3400);
         s.portals.push({ ...pp, npc: n.id, weak: false });
       }
       n.fixedReady = true;
@@ -1164,7 +1194,7 @@ function winBattle() {
     // remove portal
     s.portals = s.portals.filter(p => p !== B.portal);
     // journal
-    s.journal.push({ day: s.day, title: `${t.label} — resolved`, body: `Root cause traced in the ${t.world}. Solution: ${t.diag[t.correct]}. Prevention: monitoring + documentation.` });
+    s.journal.push({ day: s.day, title: `${t.label} — resolved`, body: `Root cause traced in the ${t.world}. Solution: ${t.diag.best}. Prevention: monitoring + documentation.` });
     // now fix the physical device
     const dev = s.devices.find(d => d.npc === n.id);
     if (dev) { dev.fixed = true; }
@@ -1202,7 +1232,7 @@ function loseBattle() {
   s.rep[B.npc.dept] = Math.max(0, s.rep[B.npc.dept] - 1);
   const n = B.npc; n.done = true; s.ticketsDone++;
   toast("💀 The manifestation overwhelmed you. The ticket got escalated... (-1 rep, +20 stress)");
-  s.journal.push({ day: s.day, title: `${n.type.label} — FAILED`, body: `Lesson: ${n.type.diag[n.type.correct]}. You won't make that mistake twice.` });
+  s.journal.push({ day: s.day, title: `${n.type.label} — FAILED`, body: `Lesson: ${n.type.diag.best}. You won't make that mistake twice.` });
   $("battle").classList.add("hidden"); s.inBattle = false; B = null;
   updateHUD(); flushPromo(); checkDayEnd();
 }
