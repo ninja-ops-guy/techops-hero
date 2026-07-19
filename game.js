@@ -99,6 +99,16 @@ const ACHIEVEMENTS = [
   { id: "legend", name: "Legendary Find", icon: "🌟", desc: "Loot a legendary item" },
   { id: "siteadmin", name: "Keys to the Kingdom", icon: "🗝️", desc: "Reach Site Administrator" },
 ];
+const LEARN = {
+  printer: { title: "Print Spooler", body: "Real fix: restart the Print Spooler (services.msc → Print Spooler → Restart), clear C:\\Windows\\System32\\spool\\PRINTERS, then resend the job. 'PC LOAD LETTER' just means load letter-size paper." },
+  vpn: { title: "VPN Tunnels", body: "Check: can the client reach the gateway (ping, port 443/500/4500)? Are certs valid and unexpired? Is the NAT-T/ESP path blocked? 'Connected but no access' usually means split-tunnel routes are wrong." },
+  dns: { title: "DNS Troubleshooting", body: "'WiFi connected, nothing loads' is classic DNS. Compare nslookup against 8.8.8.8 vs your internal resolver. Fix: ipconfig /flushdns and correcting the bad A/CNAME record. It's always DNS." },
+  ad: { title: "Account Lockouts", body: "Find the source: Event ID 4740 on the PDC shows the caller machine. Usual suspects: cached phone credentials, mapped drives, stale service accounts. Tools: LockoutStatus, Event Viewer." },
+  malware: { title: "Incident Response", body: "Isolate first — pull the network cable, don't power off (memory evidence). Identify patient zero, check lateral movement, eradicate, then recover from known-good backups. Follow your IR plan." },
+  email: { title: "Exchange/Outlook", body: "Server side: Get-Queue on Exchange shows stuck mail. Client side: credential prompts usually mean expired passwords or broken Modern Auth tokens. Test OWA in a browser to split client vs server." },
+  bsod: { title: "Crash Analysis", body: "Open the dump in WinDbg and run !analyze -v — it names the faulting driver. Common causes: bad RAM (run MemTest86), GPU drivers, and antivirus filter drivers." },
+  plc: { title: "OT Segmentation", body: "PLCs live on isolated OT VLANs. Verify the trunk config, the VM's port-group/VLAN tag, and firewall rules between IT and OT segments. Never bridge OT directly to the internet." },
+};
 const NPC_NAMES = ["Dana", "Marcus", "Priya", "Tom", "Yuki", "Carlos", "Wanda", "Earl", "Nadia", "Greg", "Sue", "Vikram", "Betty", "Hank", "Lena", "Otis"];
 const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "📓 Admin journal: 'The root account... it changes its own password now.'", "🗄️ Forgotten server: it's been up 3,412 days. Nobody knows what it does.", "📼 VHS tape: 'ORIENTATION 1987 — the building's network predates the building.'", "🖥️ Terminal: a lone process named 'palan0' has been running since boot..."];
 
@@ -509,6 +519,24 @@ function draw() {
   drawSpr(walkFrame ? SPR_PLAYER_B : SPR_PLAYER, PAL_PLAYER, s.px, s.py, s.dir < 0);
   ctx.restore();
   ctx.restore();
+  // minimap (screen-space, bottom right)
+  const mm = 2, mw = MAPW * mm, mh = MAPH * mm;
+  const mx0 = Math.max(190, cv.width - mw - 92), my0 = cv.height - mh - 12;
+  ctx.fillStyle = "#000a"; ctx.fillRect(mx0 - 3, my0 - 3, mw + 6, mh + 6);
+  for (let y = 0; y < MAPH; y++) for (let x = 0; x < MAPW; x++) {
+    const z = zoneAt(x, y), t = s.map[y][x];
+    ctx.fillStyle = t === 1 ? "#8a8a96" : z === "factory" ? "#b0b0a8" : z === "server" ? "#3a4a6a" : z === "lobby" ? "#5a7a9a" : "#d9a05e";
+    ctx.fillRect(mx0 + x * mm, my0 + y * mm, mm, mm);
+  }
+  for (const p of s.portals) { ctx.fillStyle = "#a6f"; ctx.fillRect(mx0 + p.x * mm - 1, my0 + p.y * mm - 1, 3, 3); }
+  for (const n of s.npcs) {
+    ctx.fillStyle = n.ambient ? "#fff8" : n.done ? "#4f4" : n.critical ? "#f44" : "#fa4";
+    ctx.fillRect(mx0 + n.x * mm - 1, my0 + n.y * mm - 1, 3, 3);
+  }
+  const blink = Math.floor(tm / 400) % 2;
+  ctx.fillStyle = blink ? "#fff" : "#4af";
+  ctx.fillRect(mx0 + s.px * mm - 1, my0 + s.py * mm - 1, 3, 3);
+  ctx.strokeStyle = "#fff6"; ctx.strokeRect(mx0 - 3, my0 - 3, mw + 6, mh + 6);
 }
 
 // ---------- movement & input ----------
@@ -694,19 +722,26 @@ function fixDevice(d) {
 
 // ---------- battle ----------
 let B = null;
+const BOSS_NAMES = { malware: "RANSOMWARE QUEEN", bsod: "BLUE SCREEN TITAN", dns: "DNS HYDRA PRIME", ad: "ARCHLICH OF IDENTITIES", vpn: "TUNNEL DEVOURER", printer: "PRINTER KING", email: "PHANTOM POSTMASTER", plc: "THE LINE STOPPER" };
 function startBattle(portal) {
   const s = S, npc = s.npcs.find(n => n.id === portal.npc), t = npc.type;
   const lv = 1 + Math.floor(s.day / 2) + (npc.critical ? 2 : 0);
   let hp = 18 + lv * 8;
   if (portal.weak) hp = Math.round(hp * .7);
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
-  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [] };
+  const boss = !!npc.critical;
+  if (boss) hp = Math.round(hp * 1.8);
+  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {} };
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
   $("enemy-sprite").textContent = t.eicon;
-  $("enemy-name").textContent = `${t.enemy} — ${t.world}`;
-  blog(`<span class="sys">You step through the portal into the <b>${t.world}</b>. A ${t.enemy} manifests!</span>`);
+  $("enemy-sprite").style.fontSize = boss ? "96px" : "72px";
+  $("enemy-sprite").style.filter = boss ? "drop-shadow(0 0 20px #f44)" : "drop-shadow(0 0 12px #a0f)";
+  $("enemy-name").textContent = boss ? `👹 ${BOSS_NAMES[t.id] || "BOSS: " + t.enemy} 👹` : `${t.enemy} — ${t.world}`;
+  blog(boss
+    ? `<span class="sys">⚠️ The corruption is MASSIVE here. <b>${BOSS_NAMES[t.id] || t.enemy}</b> rises from the ${t.world}. This is a BOSS fight — watch for phase changes!</span>`
+    : `<span class="sys">You step through the portal into the <b>${t.world}</b>. A ${t.enemy} manifests!</span>`);
   renderBattle();
 }
 function blog(h) { B.log.push(h); $("battle-log").innerHTML = B.log.slice(-30).join("<br>"); $("battle-log").scrollTop = 1e6; }
@@ -723,8 +758,9 @@ function renderBattle() {
   const box = $("battle-actions"); box.innerHTML = "";
   for (const a of battleAbilities()) {
     const b = document.createElement("button");
-    b.innerHTML = `${a.icon} ${a.name}<span class="cost">${a.stress > 0 ? "+" + a.stress + " stress" : a.stress < 0 ? a.stress + " stress" : "free"}</span>`;
-    b.disabled = s.stress + a.stress > 100;
+    const locked = B.locks[a.id] > 0;
+    b.innerHTML = `${a.icon} ${a.name}<span class="cost">${locked ? `🔐 encrypted ${B.locks[a.id]}t` : a.stress > 0 ? "+" + a.stress + " stress" : a.stress < 0 ? a.stress + " stress" : "free"}</span>`;
+    b.disabled = locked || s.stress + a.stress > 100;
     b.onclick = () => doAbility(a);
     box.appendChild(b);
   }
@@ -749,15 +785,43 @@ function doAbility(a) {
   if (a.regen) { B.regen = true; blog(`<span class="sys">☁️ Auto-scaling: +3 HP per turn.</span>`); }
   if (a.usable === "calm") blog(`<span class="heal">☕ You feel human again.</span>`);
   if (B.hp <= 0) return winBattle();
+  // boss phase change at 50%
+  if (B.boss && !B.enraged && B.hp <= B.maxHp / 2) {
+    B.enraged = true;
+    sfx("chain");
+    blog(`<span class="sys">👹 <b>PHASE 2</b> — ${BOSS_NAMES[B.t.id] || B.t.enemy} ENRAGES! Its attacks intensify and it unleashes signature moves!</span>`);
+  }
   // enemy turn
+  B.turns++;
   if (B.stunned) { B.stunned = false; }
+  else if (B.boss && B.enraged && B.turns % 3 === 0) {
+    // boss signature move every 3rd turn while enraged
+    if (B.t.id === "malware") {
+      const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]);
+      if (pool.length) { const victim = pick(pool); B.locks[victim.id] = 2; blog(`🔐 <b>ENCRYPTION LOCK!</b> Your ${victim.name} is encrypted for 2 turns!`); }
+      else { const ed = R(10, 16); s.hp -= ed; blog(`🔐 Encryption blast — you take ${ed}.`); }
+    } else if (B.t.id === "dns") {
+      const heal = R(8, 14); B.hp = Math.min(B.maxHp, B.hp + heal);
+      blog(`🐍 <b>SPAWN HEAD!</b> The Hydra regrows a head — it recovers ${heal} HP!`);
+    } else if (B.t.id === "bsod") {
+      let ed = R(12, 18); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
+      s.hp -= ed; addStress(8);
+      blog(`💙 <b>CRASH WAVE!</b> A wall of blue slams you for ${ed} — logs scatter everywhere!`);
+    } else {
+      let ed = R(9, 15); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
+      s.hp -= ed; addStress(6);
+      blog(`👹 <b>CRITICAL OVERLOAD!</b> Raw corruption hits you for ${ed}!`);
+    }
+  }
   else {
     const atk = pick(["Packet Flood", "Credential Theft", "Latency Spike", "Memory Leak", "Spam Burst", "Corruption Wave"]);
-    let ed = R(4, 9) + Math.floor(s.day / 2);
+    let ed = R(4, 9) + Math.floor(s.day / 2) + (B.enraged ? 2 : 0);
     if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
     s.hp -= ed; addStress(4);
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
   }
+  // tick down encryption locks
+  for (const k of Object.keys(B.locks)) if (--B.locks[k] <= 0) { delete B.locks[k]; blog(`<span class="sys">🔓 Decryption complete — ability restored.</span>`); }
   if (B.regen) s.hp = clamp(s.hp + 3, 0, s.maxHp);
   if (s.hp <= 0) return loseBattle();
   renderBattle(); updateHUD();
@@ -767,7 +831,7 @@ function winBattle() {
   B.over = true;
   sfx("win");
   if (t.id === "printer") s.meta.printerKills++;
-  let xp = 20 + (n.critical ? 30 : 0);
+  let xp = B.boss ? 70 + s.day * 2 : 20 + (n.critical ? 30 : 0);
   if (s.chaos?.id === "patch") xp = Math.round(xp * 1.5);
   addXP(xp);
   blog(`<span class="sys">🏆 ${t.enemy} defeated! +${xp} XP</span>`);
@@ -779,6 +843,7 @@ function winBattle() {
   else if (roll < .95) drops.push(rollLoot("epic"));
   else drops.push(rollLoot("legendary"));
   if (n.critical) drops.push(rollLoot("epic"));
+  if (B.boss && Math.random() < .35) drops.push(rollLoot("legendary"));
   for (const l of drops) {
     s.inv.push(l); s.lootToday++;
     if (l.rarity === "legendary") s.meta.legendaries++;
@@ -802,6 +867,14 @@ function winBattle() {
     resolveTicket(n);
     B = null;
     updateHUD();
+    // optional real-world debrief
+    const lm = LEARN[t.id];
+    if (lm && !eodOpen) {
+      dlg(`✅ ${t.label} — CLOSED`, `Ticket documented in your journal.`, [
+        { t: `📖 Learn More — ${lm.title}`, f: () => dlg(`📖 ${lm.title}`, lm.body, [{ t: "Got it.", f: closeDlg }]) },
+        { t: "Back to work.", f: closeDlg },
+      ]);
+    }
   }, 900);
 }
 function loseBattle() {
