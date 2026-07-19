@@ -80,6 +80,25 @@ const LOOT_TABLE = [
   { name: "Infinite Coffee Mug", icon: "☕", rarity: "legendary", stat: "stress", val: 20 },
   { name: "Enterprise Laptop", icon: "🖥️", rarity: "legendary", stat: "hardware", val: 15 },
 ];
+// ticket chains: fixing one problem can reveal a deeper one
+const CHAINS = { printer: "dns", dns: "vpn", vpn: "ad", ad: "malware", email: "dns", plc: "malware", bsod: "malware" };
+const CHAIN_LINES = [
+  "Wait... the problem goes deeper.",
+  "That fix revealed something worse upstream.",
+  "The corruption spread while you worked.",
+];
+const ACHIEVEMENTS = [
+  { id: "first", name: "First Ticket", icon: "🎫", desc: "Close your first ticket" },
+  { id: "ten", name: "Seasoned Tech", icon: "🔟", desc: "Close 10 tickets total" },
+  { id: "fifty", name: "Ticket Machine", icon: "🏭", desc: "Close 50 tickets total" },
+  { id: "printer3", name: "Printer Slayer", icon: "🖨️", desc: "Defeat 3 Printer Goblins" },
+  { id: "chain", name: "How Deep Does This Go?", icon: "🕳️", desc: "Trigger a ticket chain" },
+  { id: "crit", name: "Crisis Handler", icon: "🚨", desc: "Resolve a critical incident" },
+  { id: "backlog0", name: "Zero Backlog", icon: "👑", desc: "Finish a day with every ticket closed" },
+  { id: "cert1", name: "Certified", icon: "🎓", desc: "Earn a certification" },
+  { id: "legend", name: "Legendary Find", icon: "🌟", desc: "Loot a legendary item" },
+  { id: "siteadmin", name: "Keys to the Kingdom", icon: "🗝️", desc: "Reach Site Administrator" },
+];
 const NPC_NAMES = ["Dana", "Marcus", "Priya", "Tom", "Yuki", "Carlos", "Wanda", "Earl", "Nadia", "Greg", "Sue", "Vikram", "Betty", "Hank", "Lena", "Otis"];
 const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "📓 Admin journal: 'The root account... it changes its own password now.'", "🗄️ Forgotten server: it's been up 3,412 days. Nobody knows what it does.", "📼 VHS tape: 'ORIENTATION 1987 — the building's network predates the building.'", "🖥️ Terminal: a lone process named 'palan0' has been running since boot..."];
 
@@ -95,16 +114,71 @@ function newState() {
     rep: Object.fromEntries(DEPTS.map(d => [d, 1])),
     tickets: [], ticketsDone: 0, ticketsTotal: 0, lootToday: 0,
     chaos: null, promoted: false, autoUsed: false,
+    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0 },
+    ach: [],
     px: 0, py: 0, dir: 1, moving: false,
     npcs: [], portals: [], devices: [], loreSpots: [], coffeeMachines: [],
     map: null, inDialog: false, inBattle: false, gameOver: false, won: false,
   };
 }
-const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep })); } catch (e) { } };
+const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach })); } catch (e) { } };
 const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); return d; } catch (e) { return null; } };
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
+
+// ---------- retro SFX (WebAudio, no assets) ----------
+let AC = null;
+function sfx(kind) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    const t0 = AC.currentTime;
+    const notes = {
+      hit: [[220, 0, .08, "square"], [110, .06, .1, "square"]],
+      win: [[440, 0, .09, "square"], [554, .09, .09, "square"], [659, .18, .14, "square"]],
+      ticket: [[660, 0, .07, "triangle"], [880, .07, .1, "triangle"]],
+      loot: [[523, 0, .06, "triangle"], [784, .06, .09, "triangle"]],
+      bad: [[196, 0, .15, "sawtooth"], [147, .12, .2, "sawtooth"]],
+      promote: [[392, 0, .1, "square"], [523, .1, .1, "square"], [659, .2, .1, "square"], [784, .3, .2, "square"]],
+      portal: [[330, 0, .12, "sine"], [494, .1, .15, "sine"]],
+      chain: [[294, 0, .1, "sawtooth"], [370, .1, .1, "sawtooth"], [494, .2, .16, "sawtooth"]],
+    }[kind] || [];
+    for (const [f, d, dur, type] of notes) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(.06, t0 + d);
+      g.gain.exponentialRampToValueAtTime(.001, t0 + d + dur);
+      o.connect(g).connect(AC.destination);
+      o.start(t0 + d); o.stop(t0 + d + dur);
+    }
+  } catch (e) { }
+}
+
+// ---------- achievements ----------
+function unlock(id) {
+  const s = S;
+  if (s.ach.includes(id)) return;
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  if (!a) return;
+  s.ach.push(id);
+  sfx("loot");
+  toast(`${a.icon} ACHIEVEMENT<br><b>${a.name}</b> — ${a.desc}`, 3200);
+  s.journal.push({ day: s.day, title: `Achievement: ${a.name}`, body: a.desc });
+  save();
+}
+function checkAch() {
+  const m = S.meta;
+  if (m.closed >= 1) unlock("first");
+  if (m.closed >= 10) unlock("ten");
+  if (m.closed >= 50) unlock("fifty");
+  if (m.printerKills >= 3) unlock("printer3");
+  if (m.chains >= 1) unlock("chain");
+  if (m.crits >= 1) unlock("crit");
+  if (m.legendaries >= 1) unlock("legend");
+  if (S.certs.length >= 1) unlock("cert1");
+  if (S.xp >= 300) unlock("siteadmin");
+}
 
 // ---------- map generation ----------
 // zones: lobby (center), office (top), factory floor (bottom strip), server room (top-right)
@@ -471,6 +545,15 @@ $("btn-menu").addEventListener("click", openPanel);
 let moveAcc = 0;
 function step(dt) {
   const s = S; if (!s || s.inDialog || s.inBattle || s.gameOver || panelOpen || eodOpen) return;
+  // ambient NPCs wander the office
+  if (Math.random() < .008) {
+    const amb = s.npcs.filter(n => n.ambient);
+    if (amb.length) {
+      const n = pick(amb), [wdx, wdy] = pick([[1, 0], [-1, 0], [0, 1], [0, -1]]);
+      const wx = n.x + wdx, wy = n.y + wdy;
+      if (s.map[wy] && s.map[wy][wx] === 0 && !npcAt(wx, wy) && !(wx === s.px && wy === s.py)) { n.x = wx; n.y = wy; }
+    }
+  }
   let dx = (keys.a || keys.arrowleft ? -1 : 0) + (keys.d || keys.arrowright ? 1 : 0) + joy.x;
   let dy = (keys.w || keys.arrowup ? -1 : 0) + (keys.s || keys.arrowdown ? 1 : 0) + joy.y;
   const mag = Math.hypot(dx, dy);
@@ -619,6 +702,7 @@ function startBattle(portal) {
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
   B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [] };
   s.inBattle = true;
+  sfx("portal");
   $("battle").classList.remove("hidden");
   $("enemy-sprite").textContent = t.eicon;
   $("enemy-name").textContent = `${t.enemy} — ${t.world}`;
@@ -655,6 +739,7 @@ function doAbility(a) {
     dmg = R(a.dmg[0], a.dmg[1]) + Math.round(bonus / 2);
     if (B.weakened) dmg = Math.round(dmg * 1.25);
     B.hp -= dmg;
+    sfx("hit");
     blog(`<span class="dmg">${a.icon} ${a.name} hits for <b>${dmg}</b>!</span>`);
   }
   if (a.heal) { s.hp = clamp(s.hp + a.heal, 0, s.maxHp); blog(`<span class="heal">+${a.heal} HP</span>`); }
@@ -680,6 +765,8 @@ function doAbility(a) {
 function winBattle() {
   const s = S, n = B.npc, t = B.t;
   B.over = true;
+  sfx("win");
+  if (t.id === "printer") s.meta.printerKills++;
   let xp = 20 + (n.critical ? 30 : 0);
   if (s.chaos?.id === "patch") xp = Math.round(xp * 1.5);
   addXP(xp);
@@ -692,7 +779,13 @@ function winBattle() {
   else if (roll < .95) drops.push(rollLoot("epic"));
   else drops.push(rollLoot("legendary"));
   if (n.critical) drops.push(rollLoot("epic"));
-  for (const l of drops) { s.inv.push(l); s.lootToday++; blog(`<span class="heal">Loot: ${l.icon} <b>${l.name}</b> (${l.rarity})</span>`); }
+  for (const l of drops) {
+    s.inv.push(l); s.lootToday++;
+    if (l.rarity === "legendary") s.meta.legendaries++;
+    blog(`<span class="heal">Loot: ${l.icon} <b>${l.name}</b> (${l.rarity})</span>`);
+  }
+  if (drops.length) sfx("loot");
+  checkAch();
   const cash = R(15, 40) * (s.chaos?.id === "audit" ? 2 : 1);
   s.budget += cash; blog(`<span class="heal">💰 +$${cash} budget</span>`);
   B.portal.cleared = true;
@@ -713,6 +806,7 @@ function winBattle() {
 }
 function loseBattle() {
   const s = S;
+  sfx("bad");
   addStress(20); s.hp = Math.round(s.maxHp / 2);
   s.portals = s.portals.filter(p => p !== B.portal);
   const dev = s.devices.find(d => d.npc === B.npc.id); if (dev) dev.fixed = true;
@@ -734,6 +828,23 @@ function rollLoot(minRarity) {
 function resolveTicket(n) {
   const s = S;
   n.done = true; s.ticketsDone++;
+  sfx("ticket");
+  s.meta.closed++;
+  if (n.critical) s.meta.crits++;
+  checkAch();
+  // escalation: the problem may go deeper
+  const nextId = CHAINS[n.type.id];
+  const depth = n.chainDepth || 0;
+  if (nextId && depth < 3 && Math.random() < .3) {
+    const nt = TICKET_TYPES.find(t => t.id === nextId);
+    n.type = nt; n.chainDepth = depth + 1;
+    n.done = false; n.interviewed = false; n.diagnosed = false; n.fixedReady = false;
+    n.critical = n.critical || depth + 1 >= 2;
+    s.ticketsDone--;
+    s.meta.chains++;
+    sfx("chain");
+    setTimeout(() => toast(`⛓️ ESCALATION — ${pick(CHAIN_LINES)}<br><b>${nt.icon} ${nt.label}</b> (${n.dept})`, 3500), 2700);
+  }
   let repGain = 1;
   if (s.chaos?.id === "ceo" && n.dept === "Executives") repGain = 2;
   s.rep[n.dept] = clamp(s.rep[n.dept] + repGain, 0, 5);
@@ -743,6 +854,25 @@ function resolveTicket(n) {
   updateHUD();
   checkDayEnd();
 }
+
+// ---------- PowerShell Sweep (Automation Mastery cert) ----------
+function updateSweep() {
+  const el = $("btn-sweep"); if (!el || !S) return;
+  el.classList.toggle("hidden", !(S.certs.includes("auto") && !S.autoUsed && S.tickets.some(t => !t.done)));
+}
+$("btn-sweep").addEventListener("click", () => {
+  const s = S;
+  const t = s.tickets.find(t => !t.done && !t.critical) || s.tickets.find(t => !t.done);
+  if (!t || s.autoUsed) return;
+  s.autoUsed = true;
+  const dev = s.devices.find(d => d.npc === t.id); if (dev) dev.fixed = true;
+  s.portals = s.portals.filter(p => p.npc !== t.id);
+  sfx("win");
+  toast(`⚡ POWERSHELL SWEEP<br><small>Script auto-resolved: ${t.type.label}</small>`);
+  s.journal.push({ day: s.day, title: `${t.type.label} — automated`, body: "Resolved by PowerShell Sweep. Automation is a superpower." });
+  resolveTicket(t);
+  updateSweep();
+});
 
 // ---------- HUD / clock / progression ----------
 let toastT = null;
@@ -777,6 +907,7 @@ function promotion(newRank) {
     "CIO": "👑 You run the whole digital world now. You WIN... but the tickets never end. (Endless mode unlocked)",
   }[newRank] || "+10 max HP";
   if (newRank === "CIO") s.won = true;
+  sfx("promote");
   dlg("🎉 PROMOTION!", `You've been promoted to <b>${newRank}</b>!<br>${perk}`, [{ t: "Let's go.", f: () => { closeDlg(); save(); } }]);
   toast(`🎉 PROMOTED: ${newRank}`, 4000);
 }
@@ -808,6 +939,7 @@ function updateHUD() {
   $("quest-tracker").innerHTML =
     s.tickets.filter(t => t.done).map(t => `<div class="done">✅ ${t.type.label} (${t.dept})</div>`).join("") +
     open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}</div>`).join("");
+  updateSweep();
 }
 
 // ---------- end of day ----------
@@ -823,6 +955,7 @@ function endOfDay() {
   s.stress = clamp(s.stress - stressRec, 0, 100);
   const missed = s.ticketsTotal - s.ticketsDone;
   if (missed > 0) for (const t of s.tickets.filter(t => !t.done)) s.rep[t.dept] = Math.max(0, s.rep[t.dept] - 1);
+  if (missed === 0 && s.ticketsTotal > 0) unlock("backlog0");
   $("eod-title").textContent = `DAY ${s.day} COMPLETE`;
   $("eod-summary").innerHTML =
     `🎫 Tickets: ${s.ticketsDone}/${s.ticketsTotal}${missed ? ` <span style="color:#f88">(${missed} rolled over, -rep)</span>` : " — <b>ZERO BACKLOG!</b> 👑"}<br>` +
@@ -848,13 +981,13 @@ function endOfDay() {
   save();
 }
 
-// ---------- panel (character / inventory / certs / journal / reputation) ----------
+// ---------- panel (character / inventory / certs / journal / reputation / achievements) ----------
 let panelOpen = false;
 function openPanel(tab = "Character") {
   if (S.inBattle) return;
   panelOpen = true;
   $("panel").classList.remove("hidden");
-  const tabs = ["Character", "Inventory", "Certifications", "Journal", "Reputation"];
+  const tabs = ["Character", "Inventory", "Certifications", "Journal", "Reputation", "Achievements"];
   $("panel-title").textContent = "🧑‍🔧 TECHOPS HERO";
   $("panel-tabs").innerHTML = "";
   for (const t of tabs) {
@@ -895,7 +1028,7 @@ function renderTab(tab) {
       const cost = +b.dataset.cost;
       if (s.budget < cost) return toast("Not enough budget!");
       s.budget -= cost; s.certDiscount = 0;
-      s.certs.push(b.dataset.cert); addXP(30);
+      s.certs.push(b.dataset.cert); addXP(30); checkAch();
       toast(`🎓 Certified! New ability unlocked in battle.`);
       renderTab("Certifications"); save();
     });
@@ -909,6 +1042,12 @@ function renderTab(tab) {
       el.innerHTML += `<div class="rep-row"><span>${d}</span><span class="stars">${"★".repeat(v)}${"☆".repeat(5 - v)}</span></div>`;
     }
     el.innerHTML += `<br><small>Higher rep → better budget rewards & friendlier users. Missed tickets lower rep.</small>`;
+  } else if (tab === "Achievements") {
+    el.innerHTML = `<i>${s.ach.length}/${ACHIEVEMENTS.length} unlocked</i><br><br>`;
+    for (const a of ACHIEVEMENTS) {
+      const got = s.ach.includes(a.id);
+      el.innerHTML += `<div class="loot-item" style="opacity:${got ? 1 : .4}">${a.icon} <b>${a.name}</b> ${got ? "✅" : ""}<br><small>${a.desc}</small></div>`;
+    }
   }
 }
 
