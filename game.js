@@ -49,17 +49,46 @@ const TICKET_TYPES = [
   { id: "email", label: "Email Not Syncing", icon: "📬", enemy: "Email Phantom", eicon: "🕊️", world: "Mail Kingdom", wbg: "#142428", diag: ["Check Exchange queue & creds", "Send a test fax", "Blame Outlook"], correct: 0, stat: "windows" },
   { id: "bsod", label: "Blue Screen Crash", icon: "💙", enemy: "Blue Screen Titan", eicon: "🗿", world: "Kernel Forest", wbg: "#101c34", diag: ["Analyze the dump file", "Hit it harder", "Blame cosmic rays"], correct: 0, stat: "hardware" },
   { id: "plc", label: "PLC Offline (Factory)", icon: "🏭", enemy: "Rust Golem", eicon: "🤖", world: "Motherboard Desert", wbg: "#2e2410", diag: ["Check the VLAN segment", "Pour water on it", "Kick the conveyor"], correct: 0, stat: "networking" },
+  { id: "wifi", label: "WiFi Dead Zone", icon: "📶", enemy: "WiFi Sprite", eicon: "🧚", world: "RF Shadow Realm", wbg: "#1a2a1e", diag: ["Survey AP placement & channel overlap", "Blame the router brand", "Ban all phones"], correct: 0, stat: "networking" },
+  { id: "cert", label: "SSL Certificate Expired", icon: "📜", enemy: "Certificate Beast", eicon: "🐗", world: "Chain of Trust", wbg: "#2a2010", diag: ["Renew the cert & fix the chain", "Tell users to click 'Advanced → Proceed'", "Turn off HTTPS"], correct: 0, stat: "security" },
+  { id: "disk", label: "Disk Space Critical", icon: "💽", enemy: "Data Hoarder", eicon: "🐲", world: "Sector Wastes", wbg: "#241a10", diag: ["Purge logs, temps & set quotas", "Delete System32", "Buy everyone new laptops"], correct: 0, stat: "windows" },
+  { id: "update", label: "Stuck Windows Update", icon: "🔄", enemy: "Patch Gremlin", eicon: "😈", world: "Servicing Stack", wbg: "#1e1a2e", diag: ["Repair the servicing stack & pending ops", "Unplug mid-update", "Hide all updates forever"], correct: 0, stat: "windows" },
+  { id: "share", label: "File Share Access Denied", icon: "📁", enemy: "Permission Troll", eicon: "🧌", world: "ACL Abyss", wbg: "#201428", diag: ["Compare Share vs NTFS effective access", "Give everyone Domain Admin", "Disable the firewall"], correct: 0, stat: "windows" },
+  { id: "vlan", label: "Wrong VLAN Assignment", icon: "🔀", enemy: "Trunk Ogre", eicon: "👹", world: "Switching Maze", wbg: "#10242a", diag: ["Fix the access port VLAN & trunk allow-list", "Set every port to VLAN 1", "Disable spanning tree"], correct: 0, stat: "networking" },
+  { id: "backup", label: "Backup Job Failed", icon: "🗃️", enemy: "Archive Wraith", eicon: "👻", world: "Tape Catacombs", wbg: "#1a1426", diag: ["Check VSS writers & job logs, then rerun", "Delete the backup job", "Pray to the tape gods"], correct: 0, stat: "windows" },
+  { id: "slowpc", label: "PC Running Slow", icon: "🐌", enemy: "Bloatware Blob", eicon: "🦠", world: "Startup Swamp", wbg: "#14201a", diag: ["Audit startup items & resource hogs", "Download a 'PC optimizer' ad", "Just reboot forever"], correct: 0, stat: "hardware" },
+];
+// moves unlocked by career rank (RANKS index) — your loadout evolves as you level
+const MOVE_LEVELS = [
+  { rank: 1, ability: { id: "rdp", name: "Remote Desktop", icon: "🖥️", dmg: [8, 14], stress: 5, heal: 6, desc: "Fix it without leaving your desk" } },
+  { rank: 1, ability: { id: "eventvwr", name: "Event Viewer", icon: "📋", dmg: [8, 12], stress: 6, weaken: true, desc: "Logs reveal the truth" } },
+  { rank: 2, ability: { id: "gpo", name: "Group Policy", icon: "📜", dmg: [6, 10], stress: 8, buff: true, desc: "Enforce your will: +25% dmg 3 turns" } },
+  { rank: 2, ability: { id: "pwreset", name: "Password Reset", icon: "🔑", dmg: [14, 22], stress: 7, desc: "The classic" } },
+  { rank: 3, ability: { id: "backup", name: "Backup Restore", icon: "💾", dmg: [4, 8], stress: 8, heal: 20, desc: "Big heal from last night's job" } },
+  { rank: 4, ability: { id: "wireshark", name: "Wireshark", icon: "🦈", dmg: [14, 20], stress: 9, weaken: true, desc: "See every packet's secrets" } },
+  { rank: 5, ability: { id: "siem", name: "SIEM Query", icon: "🔎", dmg: [10, 16], stress: 10, crit: true, desc: "25% chance of a 3× critical correlation" } },
+  { rank: 5, ability: { id: "vlaniso", name: "VLAN Isolate", icon: "🚧", dmg: [6, 10], stress: 10, stun: true, desc: "Quarantine the threat" } },
+  { rank: 6, ability: { id: "zerotrust", name: "Zero Trust", icon: "🛡️", dmg: [8, 12], stress: 12, shield: true, counter: true, desc: "Shield + reflect half the damage back" } },
+  { rank: 7, ability: { id: "exec", name: "Executive Order", icon: "👔", dmg: [30, 45], stress: 25, desc: "Ultimate authority. Massive stress." } },
 ];
 // IT-accurate tactics: right tool for the right problem
 const ENEMY_TACTICS = {
   printer: { weak: ["swap", "patch"], resist: ["flush"], attacks: ["PC LOAD LETTER", "Spooler Deadlock", "Toner Cloud", "Paper Jam Swarm"], resistNote: "clearing DNS cache doesn't unjam paper." },
   vpn: { weak: ["tracert", "acl"], resist: ["ping"], attacks: ["IKE Phase 1 Failure", "MTU Black Hole", "Cert Expiry", "Split-Tunnel Leak"], resistNote: "ICMP is dropped inside the tunnel — Ping gets no reply." },
   dns: { weak: ["flush", "tracert"], resist: ["ps"], attacks: ["NXDOMAIN Storm", "Cache Poison", "TTL Spiral", "Zone Transfer Flood"], resistNote: "scripts won't help until the bad record is flushed." },
-  ad: { weak: ["ps", "sudo"], resist: ["swap"], attacks: ["Kerberos Ticket Expiry", "LDAP Bind Flood", "GPO Loopback Crash", "Tombstone Rise"], resistNote: "new hardware won't unlock an account." },
+  ad: { weak: ["ps", "sudo", "pwreset"], resist: ["swap"], attacks: ["Kerberos Ticket Expiry", "LDAP Bind Flood", "GPO Loopback Crash", "Tombstone Rise"], resistNote: "new hardware won't unlock an account." },
   malware: { weak: ["contain", "patch"], resist: ["ping"], attacks: ["C2 Beacon", "Ransom Note", "Privilege Escalation", "Lateral Movement"], resistNote: "pinging malware just tells it you're online." },
   email: { weak: ["ps"], resist: ["flush"], attacks: ["Queue Backlog", "Autodiscover Loop", "OST Corruption", "Spam Typhoon"], resistNote: "DNS isn't why the queue is stuck." },
   bsod: { weak: ["swap", "patch"], resist: ["flush"], attacks: ["IRQL_NOT_LESS_OR_EQUAL", "PAGE_FAULT_IN_NONPAGED_AREA", "Faulty Driver", "Kernel Panic"], resistNote: "network commands can't fix a bad driver." },
   plc: { weak: ["ping", "tracert"], resist: ["sudo"], attacks: ["Ladder Logic Fault", "Fieldbus Timeout", "Sensor Drift", "Watchdog Reset"], resistNote: "NEVER sudo random commands on factory equipment." },
+  wifi: { weak: ["swap", "tracert"], resist: ["flush"], attacks: ["Channel Congestion", "Hidden SSID", "Interference Spike", "Captive Portal Loop"], resistNote: "DNS is fine — the RF environment is the problem." },
+  cert: { weak: ["ps", "acl"], resist: ["swap"], attacks: ["Handshake Failure", "Untrusted Root", "OCSP Staple Misfire", "Date Skew"], resistNote: "new hardware won't renew a certificate." },
+  disk: { weak: ["ps", "sudo"], resist: ["swap"], attacks: ["Log Explosion", "Temp File Swarm", "Shadow Copy Overflow", "Pagefile Surge"], resistNote: "more hardware just fills up again." },
+  update: { weak: ["patch", "ps"], resist: ["swap"], attacks: ["Rollback Loop", "0x80070002", "Pending Restart Purgatory", "Driver Conflict"], resistNote: "new hardware ships with the same broken update." },
+  share: { weak: ["gpo", "ps"], resist: ["flush"], attacks: ["Access Denied", "Inheritance Break", "Orphaned SID", "Share vs NTFS Clash"], resistNote: "this is a permissions problem, not DNS." },
+  vlan: { weak: ["acl", "tracert"], resist: ["sudo"], attacks: ["Native VLAN Mismatch", "Trunk Flap", "MAC Flap", "Spanning Tree Loop"], resistNote: "sudo on a Windows box won't fix switch config." },
+  backup: { weak: ["patch", "contain"], resist: ["ping"], attacks: ["VSS Timeout", "Corrupt Catalog", "Media Full", "Job Stuck at 99%"], resistNote: "ping the tape library all day, it won't help." },
+  slowpc: { weak: ["ps", "patch"], resist: ["swap"], attacks: ["100% Disk Usage", "Memory Leak", "Startup Ambush", "Thermal Throttle"], resistNote: "new hardware just gets the same bloatware." },
 };
 const ABILITY_CMDS = {
   ping: "ping -n 4 target", ps: "PS> .\\Invoke-Remediation.ps1", flush: "ipconfig /flushdns",
@@ -67,12 +96,17 @@ const ABILITY_CMDS = {
   coffee: "brew --dark-roast --now", swap: "[reseat RAM / swap CMOS battery]", tracert: "tracert -d target",
   contain: "PS> Disable-NetAdapter -Name * -Confirm:$false", sudo: "sudo systemctl restart corrupted.service",
   acl: "access-list 101 deny ip host 10.66.6.6 any", scale: "kubectl scale deploy/helpdesk --replicas=4",
+  rdp: "mstsc /v:target-pc", eventvwr: "Get-WinEvent -LogName System -MaxEvents 20",
+  gpo: "gpupdate /force", pwreset: "Set-ADAccountPassword -Reset -NewPassword (ConvertTo-SecureString 'Temp123!' -AsPlainText -Force)",
+  backup: "Restore-Backup -Latest -Confirm:$false", wireshark: "tshark -i eth0 host 10.0.0.5",
+  siem: "index=security action=blocked | stats count by signature", vlaniso: "switchport access vlan 999 (quarantine)",
+  zerotrust: "policy set: verify-explicit, deny-all", exec: "memo: FIX IT. NOW. —CEO",
 };
 const ABILITIES = [
   { id: "ping", name: "Ping", icon: "📡", dmg: [8, 14], stress: 0, desc: "Reliable packet poke" },
   { id: "ps", name: "PowerShell", icon: "💠", dmg: [12, 20], stress: 8, desc: "Scripted strike" },
   { id: "flush", name: "Flush DNS", icon: "🌀", dmg: [10, 16], stress: 6, desc: "Clears corruption, heals 5 HP", heal: 5 },
-  { id: "patch", name: "Patch Deploy", icon: "🩹", dmg: [6, 10], stress: 5, desc: "Heals you for 10 HP", heal: 10 },
+  { id: "patch", name: "Patch Deploy", icon: "🩹", dmg: [6, 10], stress: 5, desc: "Heals you for 12 HP", heal: 12 },
   { id: "fw", name: "Firewall Rule", icon: "🧱", dmg: [4, 8], stress: 7, desc: "Halves next enemy hit", shield: true },
   { id: "coffee", name: "Chug Coffee", icon: "☕", dmg: [0, 0], stress: -25, desc: "Restores 25 stress", usable: "calm" },
 ];
@@ -126,6 +160,14 @@ const LEARN = {
   email: { title: "Exchange/Outlook", body: "Server side: Get-Queue on Exchange shows stuck mail. Client side: credential prompts usually mean expired passwords or broken Modern Auth tokens. Test OWA in a browser to split client vs server." },
   bsod: { title: "Crash Analysis", body: "Open the dump in WinDbg and run !analyze -v — it names the faulting driver. Common causes: bad RAM (run MemTest86), GPU drivers, and antivirus filter drivers." },
   plc: { title: "OT Segmentation", body: "PLCs live on isolated OT VLANs. Verify the trunk config, the VM's port-group/VLAN tag, and firewall rules between IT and OT segments. Never bridge OT directly to the internet." },
+  wifi: { title: "Wireless Site Surveys", body: "Dead zones are physics, not magic. Do a site survey, fix AP placement, and keep 2.4GHz on channels 1/6/11 to avoid overlap. Check for interference from motors and microwaves." },
+  cert: { title: "Certificate Chains", body: "An expired cert breaks trust for every visitor. Check the full chain (leaf → intermediate → root), set renewal reminders 30 days out, and use OCSP stapling. Never train users to click through warnings." },
+  disk: { title: "Disk Hygiene", body: "Culprits: log files, temp dirs, shadow copies, and one user's 40GB video. Use WinDirStat to visualize, set quotas, and rotate logs. Deleting System32 is not a cleanup strategy." },
+  update: { title: "Servicing Stack Repair", body: "Stuck updates: check pending.xml, run DISM /RestoreHealth then sfc /scannow, and clear the SoftwareDistribution folder if needed. Interrupting updates is how you brick machines." },
+  share: { title: "Share vs NTFS Permissions", body: "Effective access = the MOST RESTRICTIVE of Share and NTFS permissions. 'Access Denied' while a coworker works? Compare group memberships and check effective access. Domain Admin is never the answer." },
+  vlan: { title: "VLAN Assignment", body: "Phone works, laptop doesn't = the port is on the voice VLAN. Check switchport mode/access VLAN and the trunk's allowed VLAN list. VLAN 1 everywhere is a security smell." },
+  backup: { title: "Backup Operations", body: "Backups fail silently until you need them. Monitor VSS writers (vssadmin list writers), test restores quarterly, and follow 3-2-1: 3 copies, 2 media types, 1 offsite." },
+  slowpc: { title: "Performance Triage", body: "Task Manager → Startup tab and Resource Monitor are your friends. 100% disk usage is usually an AV scan, search indexing, or a failing drive. 'PC optimizer' ads ARE the bloatware." },
 };
 const NPC_NAMES = ["Dana", "Marcus", "Priya", "Tom", "Yuki", "Carlos", "Wanda", "Earl", "Nadia", "Greg", "Sue", "Vikram", "Betty", "Hank", "Lena", "Otis"];
 const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "📓 Admin journal: 'The root account... it changes its own password now.'", "🗄️ Forgotten server: it's been up 3,412 days. Nobody knows what it does.", "📼 VHS tape: 'ORIENTATION 1987 — the building's network predates the building.'", "🖥️ Terminal: a lone process named 'palan0' has been running since boot..."];
@@ -688,6 +730,14 @@ function ticketFlow(n) {
       email: `"My inbox is empty. EMPTY. Where did 14,000 emails go?"`,
       bsod: `"It blue screens every time I open the spreadsheet. THE spreadsheet."`,
       plc: `"Line 3 is down. The PLC won't talk to anything. Production is staring at me."`,
+      wifi: `"The WiFi just dies in the east stairwell. My calls drop every single time."`,
+      cert: `"The site says 'Your connection is not private' with a big red warning. Clients are calling."`,
+      disk: `"It says C: is full. 0 bytes free. I only saved ONE 40GB video of the Christmas party."`,
+      update: `"It's been 'Working on updates, 27%' for three hours. Don't turn it off, right?"`,
+      share: `"It says Access Denied on the Q: drive, but Dave in accounting can open it just fine."`,
+      vlan: `"My desk phone works but my laptop gets no IP. IT plugged me into the wrong port, didn't they?"`,
+      backup: `"The nightly backup has failed 4 days in a row. Nobody noticed until Legal asked for a restore."`,
+      slowpc: `"It takes 12 minutes to boot. I time it. I have a spreadsheet of the boot times."`,
     };
     dlg(`${n.name} — ${n.dept} ${n.critical ? "🚨" : ""}`,
       `<b>${t.icon} ${t.label}</b><br>${symptoms[t.id]}<br><small>Interview the user, then form a hypothesis.</small>`,
@@ -739,7 +789,7 @@ function fixDevice(d) {
 
 // ---------- battle ----------
 let B = null;
-const BOSS_NAMES = { malware: "RANSOMWARE QUEEN", bsod: "BLUE SCREEN TITAN", dns: "DNS HYDRA PRIME", ad: "ARCHLICH OF IDENTITIES", vpn: "TUNNEL DEVOURER", printer: "PRINTER KING", email: "PHANTOM POSTMASTER", plc: "THE LINE STOPPER" };
+const BOSS_NAMES = { malware: "RANSOMWARE QUEEN", bsod: "BLUE SCREEN TITAN", dns: "DNS HYDRA PRIME", ad: "ARCHLICH OF IDENTITIES", vpn: "TUNNEL DEVOURER", printer: "PRINTER KING", email: "PHANTOM POSTMASTER", plc: "THE LINE STOPPER", wifi: "THE DEAD ZONE", cert: "EXPIRED ROOT", disk: "THE HOARDER", update: "ETERNAL 27%", share: "LORD ACCESS DENIED", vlan: "THE MISPATCH", backup: "THE FAILED JOB", slowpc: "BLOATLORD" };
 function startBattle(portal) {
   const s = S, npc = s.npcs.find(n => n.id === portal.npc), t = npc.type;
   const lv = 1 + Math.floor(s.day / 2) + (npc.critical ? 2 : 0);
@@ -748,7 +798,7 @@ function startBattle(portal) {
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
   const boss = !!npc.critical;
   if (boss) hp = Math.round(hp * 1.8);
-  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false };
+  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false };
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -765,6 +815,8 @@ function startBattle(portal) {
 function blog(h) { B.log.push(h); $("battle-log").innerHTML = B.log.slice(-30).join("<br>"); $("battle-log").scrollTop = 1e6; }
 function battleAbilities() {
   const list = [...ABILITIES];
+  const ri = RANKS.indexOf(rank());
+  for (const m of MOVE_LEVELS) if (ri >= m.rank) list.push(m.ability);
   for (const c of S.certs) if (CERT_ABILITIES[c]) list.push(CERT_ABILITIES[c]);
   return list;
 }
@@ -797,6 +849,8 @@ function doAbility(a) {
     let note = "";
     if (tac?.weak.includes(a.id)) { dmg = Math.round(dmg * 1.6); note = " ✅ <b>Right tool for the job — super effective!</b>"; }
     else if (tac?.resist.includes(a.id)) { dmg = Math.max(1, Math.round(dmg * .35)); note = ` ⚠️ <b>Barely effective</b> — ${tac.resistNote}`; }
+    if (B.dmgBuff > 0) { dmg = Math.round(dmg * 1.25); note += " 📜 <i>GPO enforced</i>"; }
+    if (a.crit && Math.random() < .25) { dmg = dmg * 3; note += " 🔎 <b>CORRELATED — CRITICAL HIT!</b>"; }
     B.hp -= dmg;
     sfx("hit");
     blog(`<span class="sys">C:\\&gt; ${ABILITY_CMDS[a.id] || a.name}</span>`);
@@ -804,7 +858,7 @@ function doAbility(a) {
     // Ping doubles as recon: reveals the enemy's weakness profile
     if (a.id === "ping" && !B.revealed && tac) {
       B.revealed = true;
-      const names = id => (ABILITIES.concat(Object.values(CERT_ABILITIES)).find(x => x.id === id) || {}).name || id;
+      const names = id => (ABILITIES.concat(Object.values(CERT_ABILITIES), MOVE_LEVELS.map(m => m.ability)).find(x => x.id === id) || {}).name || id;
       blog(`<span class="sys">📡 Recon complete — replies from target. Analysis: weak to <b>${tac.weak.map(names).join(", ")}</b>; resists <b>${tac.resist.map(names).join(", ")}</b>.</span>`);
     }
   }
@@ -813,6 +867,9 @@ function doAbility(a) {
   if (a.stun) { B.stunned = true; blog(`<span class="sys">🔒 Enemy contained! It loses a turn.</span>`); }
   if (a.weaken) { B.weakened = true; blog(`<span class="sys">🛰️ Weakness found: take +25% damage.</span>`); }
   if (a.regen) { B.regen = true; blog(`<span class="sys">☁️ Auto-scaling: +3 HP per turn.</span>`); }
+  if (a.buff) { B.dmgBuff = 3; blog(`<span class="sys">📜 Group Policy enforced — +25% damage for 3 turns.</span>`); }
+  if (a.counter) { B.counter = true; blog(`<span class="sys">🛡️ Zero Trust active — half of the next hit reflects back.</span>`); }
+  if (B.dmgBuff > 0 && a.dmg[1] > 0) B.dmgBuff--;
   if (a.usable === "calm") blog(`<span class="heal">☕ You feel human again.</span>`);
   if (B.hp <= 0) return winBattle();
   // boss phase change at 50%
@@ -849,6 +906,7 @@ function doAbility(a) {
     if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
     s.hp -= ed; addStress(4);
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
+    if (B.counter) { B.counter = false; const ref = Math.ceil(ed / 2); B.hp -= ref; blog(`🛡️ <b>Zero Trust reflects ${ref} back!</b>`); }
   }
   // tick down encryption locks
   for (const k of Object.keys(B.locks)) if (--B.locks[k] <= 0) { delete B.locks[k]; blog(`<span class="sys">🔓 Decryption complete — ability restored.</span>`); }
@@ -1013,7 +1071,9 @@ function promotion(newRank) {
   if (newRank === "CIO") s.won = true;
   sfx("promote");
   s.partyUntil = performance.now() + 1600;
-  dlg("🎉 PROMOTION!", `You've been promoted to <b>${newRank}</b>!<br>${perk}`, [{ t: "Let's go.", f: () => { closeDlg(); save(); } }]);
+  const ri = RANKS.findIndex(r => r.name === newRank);
+  const newMoves = MOVE_LEVELS.filter(m => m.rank === ri).map(m => `${m.ability.icon} <b>${m.ability.name}</b> — ${m.ability.desc}`).join("<br>");
+  dlg("🎉 PROMOTION!", `You've been promoted to <b>${newRank}</b>!<br>${perk}${newMoves ? `<br><br>🆕 New move learned:<br>${newMoves}` : ""}`, [{ t: "Let's go.", f: () => { closeDlg(); save(); } }]);
   toast(`🎉 PROMOTED: ${newRank}`, 4000);
 }
 function advanceClock(min) {
