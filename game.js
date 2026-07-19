@@ -1,5 +1,5 @@
 /* ============================================================
-   TECHOPS HERO v3.2 — roguelite IT RPG (single-file web app)
+   TECHOPS HERO v3.3 — roguelite IT RPG (single-file web app)
    ============================================================ */
 "use strict";
 
@@ -408,7 +408,7 @@ function setupDay() {
   const start = freeSpot(s.map, MAPW >> 1, MAPH >> 1);
   s.px = start.x; s.py = start.y;
   s.npcs = []; s.portals = []; s.devices = []; s.loreSpots = []; s.coffeeMachines = [];
-  s.tickets = []; s.ticketsDone = 0; s.lootToday = 0; s.autoUsed = false; s.hp = s.maxHp;
+  s.tickets = []; s.ticketsDone = 0; s.lootToday = 0; s.autoUsed = false; s.hp = s.maxHp; s.cascadeUsed = false;
   s.clock = 9 * 60;
 
   // chaos event
@@ -442,7 +442,7 @@ function setupDay() {
       id: i, name: pick(NPC_NAMES), dept, type,
       x: pos.x, y: pos.y, face: "🧑‍💼",
       done: false, interviewed: false, diagnosed: false, correctDiag: false,
-      critical: Math.random() < .12, pv: R(0, PAL_NPCS.length - 1),
+      critical: Math.random() < .12, pv: R(0, PAL_NPCS.length - 1), age: 0,
     };
     s.npcs.push(npc); s.tickets.push(npc);
     // a broken device + portal appear near the NPC after diagnosis
@@ -487,6 +487,12 @@ function drawTile(t, x, y, tm) {
   // floors by biome / zone
   if (b) {
     px((x + y) % 2 ? b.f1 : b.f2, X, Y, TILE, TILE);
+    // mood lighting: departments remember how you treat them
+    const deptName = Object.keys(BIOME_OF_DEPT).find(d => BIOME_OF_DEPT[d] === b.id);
+    const deptRep = deptName && S.rep ? S.rep[deptName] : 3;
+    if (deptRep <= 1) px("#0000002e", X, Y, TILE, TILE); // neglected dept: gloomy
+    else if (deptRep >= 4 && Math.floor((x + y + Math.floor(tm / 600)) % 9) === 0) px("#ffd24a22", X, Y, 4, 4); // beloved dept: shimmer
+    if (S.flashBiome === b.id && performance.now() < S.flashUntil) px("#ffd24a33", X, Y, TILE, TILE); // just helped: golden flash
     // biome trim: accent line on the edges of the biome
     if (y === b.y0) px(b.line, X, Y, TILE, 2);
     if (x === b.x0) px(b.line, X, Y, 2, TILE);
@@ -532,11 +538,20 @@ function drawTile(t, x, y, tm) {
       px("#b06038", X + 11, Y + 22, 10, 8); px("#8a4828", X + 11, Y + 22, 10, 2);
       px("#3f8a3a", X + 6, Y + 6, 20, 16); px("#5aa84a", X + 9, Y + 3, 14, 10);
       px("#2f6a2a", X + 13, Y + 10, 6, 6); break;
-    case 5: { // conveyor with animated rollers
+    case 5: { // conveyor with animated rollers — HALTED while a PLC ticket is open
+      const halted = S.npcs && S.npcs.some(n => n.type && n.type.id === "plc" && !n.done);
       px("#8a8a96", X, Y + 4, TILE, 24); px("#6a6a76", X, Y + 6, TILE, 20);
-      const off = Math.floor(tm / 120) % 8;
+      const off = halted ? 0 : Math.floor(tm / 120) % 8;
       for (let i = -1; i < 6; i++) px("#9a9aae", X + ((i * 8 + off + 40) % 40) - 4, Y + 8, 2, 16);
-      px("#aaa", X, Y + 4, TILE, 2); px("#aaa", X, Y + 26, TILE, 2); break;
+      px("#aaa", X, Y + 4, TILE, 2); px("#aaa", X, Y + 26, TILE, 2);
+      if (halted) {
+        // smoke puffs from the stalled line
+        const pu = Math.floor(tm / 350) % 3;
+        ctx.globalAlpha = .35 + pu * .15;
+        px("#888", X + 12 + pu * 3, Y + 2 - pu * 2, 5, 5);
+        ctx.globalAlpha = 1;
+      }
+      break;
     }
     case 6: // CNC machine
       px("#9aaeb8", X + 2, Y + 4, 28, 26); px("#b8ccd6", X + 2, Y + 4, 28, 3);
@@ -989,8 +1004,17 @@ function startBattle(portal) {
   const boss = !!npc.critical;
   if (boss) hp = Math.round(hp * (t.id === "shadow" ? 1.9 : s.diff > 1 ? 2.0 : 1.8));
   hp = Math.round(hp * (s.ngPlus ? 1.25 : 1));
+  // neglected problems harden: aged tickets make tougher enemies
+  const ageMin = npc.age || 0;
+  if (ageMin >= 60) hp = Math.round(hp * (1 + Math.min(ageMin, 240) / 60 * .05));
   const SIGS = { malware: ["enclock", "ransom"], dns: ["spawn", "poison"], bsod: ["crash", "freeze"] };
   B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false, sig: pick(SIGS[t.id] || ["overload", "wipe"]), forkBomb: false };
+  // corruption spreads: an aged malware ticket weakens you before the fight even starts
+  if (t.id === "malware" && ageMin >= 120) {
+    const bite = Math.round(s.maxHp * .1);
+    s.hp = Math.max(1, s.hp - bite);
+    blog(`<span class="sys">☣️ The corruption already spread to your terminal — you start weakened (-${bite} HP).</span>`);
+  }
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -1269,6 +1293,9 @@ function resolveTicket(n) {
   }
   let repGain = 1;
   if (s.chaos?.id === "ceo" && n.dept === "Executives") repGain = 2;
+  // the environment remembers: the dept's biome flashes gold when you save it
+  s.flashBiome = BIOME_OF_DEPT[n.dept];
+  s.flashUntil = performance.now() + 1500;
   s.rep[n.dept] = clamp(s.rep[n.dept] + repGain, 0, 5);
   addXP(10);
   toast(`✅ Ticket closed — ${n.type.label}<br>${n.dept} rep +${repGain} ${"⭐".repeat(s.rep[n.dept])}`);
@@ -1350,6 +1377,34 @@ function promotion(newRank) {
 function advanceClock(min) {
   const s = S;
   s.clock += min;
+  // live network: open tickets age and get worse
+  for (const n of s.tickets) {
+    if (n.done) continue;
+    n.age = (n.age || 0) + min;
+    // departments lose patience with neglected issues
+    if (n.age >= 120 && !n.agedWarn) {
+      n.agedWarn = true;
+      s.rep[n.dept] = Math.max(0, s.rep[n.dept] - 1);
+      toast(`😠 <b>${n.dept}</b> is losing patience over "${n.type.label}"... (-1 rep)`, 3000);
+    }
+    // problems SPREAD to other departments if ignored too long
+    if (n.age >= 180 && !n.cascaded && CHAINS[n.type.id] && !s.cascadeUsed) {
+      n.cascaded = true; s.cascadeUsed = true;
+      const nt = TICKET_TYPES.find(t => t.id === CHAINS[n.type.id]);
+      const otherDepts = DEPTS.filter(d => d !== n.dept);
+      const nd = pick(otherDepts);
+      const pos = spotInBiome(s.map, BIOME_OF_DEPT[nd]);
+      const npc = {
+        id: 500 + Math.floor(Math.random() * 400), name: pick(NPC_NAMES), dept: nd, type: nt,
+        x: pos.x, y: pos.y, face: "🧑‍💼", done: false, interviewed: false, diagnosed: false, correctDiag: false,
+        critical: Math.random() < .3, pv: R(0, PAL_NPCS.length - 1), age: 0,
+      };
+      s.npcs.push(npc); s.tickets.push(npc); s.ticketsTotal++;
+      sfx("chain");
+      toast(`⚠️ <b>OUTBREAK!</b> The ignored "${n.type.label}" spread to <b>${nd}</b> as "${nt.label}"!`, 4000);
+      updateHUD();
+    }
+  }
   if (s.clock >= 17 * 60 && s.ticketsDone < s.ticketsTotal) {
     // day force-ends when you run out of time
     toast("🕔 It's 5 PM. Remaining tickets roll to the backlog...");
