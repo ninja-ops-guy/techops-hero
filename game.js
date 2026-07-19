@@ -50,6 +50,24 @@ const TICKET_TYPES = [
   { id: "bsod", label: "Blue Screen Crash", icon: "💙", enemy: "Blue Screen Titan", eicon: "🗿", world: "Kernel Forest", wbg: "#101c34", diag: ["Analyze the dump file", "Hit it harder", "Blame cosmic rays"], correct: 0, stat: "hardware" },
   { id: "plc", label: "PLC Offline (Factory)", icon: "🏭", enemy: "Rust Golem", eicon: "🤖", world: "Motherboard Desert", wbg: "#2e2410", diag: ["Check the VLAN segment", "Pour water on it", "Kick the conveyor"], correct: 0, stat: "networking" },
 ];
+// IT-accurate tactics: right tool for the right problem
+const ENEMY_TACTICS = {
+  printer: { weak: ["swap", "patch"], resist: ["flush"], attacks: ["PC LOAD LETTER", "Spooler Deadlock", "Toner Cloud", "Paper Jam Swarm"], resistNote: "clearing DNS cache doesn't unjam paper." },
+  vpn: { weak: ["tracert", "acl"], resist: ["ping"], attacks: ["IKE Phase 1 Failure", "MTU Black Hole", "Cert Expiry", "Split-Tunnel Leak"], resistNote: "ICMP is dropped inside the tunnel — Ping gets no reply." },
+  dns: { weak: ["flush", "tracert"], resist: ["ps"], attacks: ["NXDOMAIN Storm", "Cache Poison", "TTL Spiral", "Zone Transfer Flood"], resistNote: "scripts won't help until the bad record is flushed." },
+  ad: { weak: ["ps", "sudo"], resist: ["swap"], attacks: ["Kerberos Ticket Expiry", "LDAP Bind Flood", "GPO Loopback Crash", "Tombstone Rise"], resistNote: "new hardware won't unlock an account." },
+  malware: { weak: ["contain", "patch"], resist: ["ping"], attacks: ["C2 Beacon", "Ransom Note", "Privilege Escalation", "Lateral Movement"], resistNote: "pinging malware just tells it you're online." },
+  email: { weak: ["ps"], resist: ["flush"], attacks: ["Queue Backlog", "Autodiscover Loop", "OST Corruption", "Spam Typhoon"], resistNote: "DNS isn't why the queue is stuck." },
+  bsod: { weak: ["swap", "patch"], resist: ["flush"], attacks: ["IRQL_NOT_LESS_OR_EQUAL", "PAGE_FAULT_IN_NONPAGED_AREA", "Faulty Driver", "Kernel Panic"], resistNote: "network commands can't fix a bad driver." },
+  plc: { weak: ["ping", "tracert"], resist: ["sudo"], attacks: ["Ladder Logic Fault", "Fieldbus Timeout", "Sensor Drift", "Watchdog Reset"], resistNote: "NEVER sudo random commands on factory equipment." },
+};
+const ABILITY_CMDS = {
+  ping: "ping -n 4 target", ps: "PS> .\\Invoke-Remediation.ps1", flush: "ipconfig /flushdns",
+  patch: "PS> Install-WindowsUpdate -AcceptAll", fw: "New-NetFirewallRule -Action Block",
+  coffee: "brew --dark-roast --now", swap: "[reseat RAM / swap CMOS battery]", tracert: "tracert -d target",
+  contain: "PS> Disable-NetAdapter -Name * -Confirm:$false", sudo: "sudo systemctl restart corrupted.service",
+  acl: "access-list 101 deny ip host 10.66.6.6 any", scale: "kubectl scale deploy/helpdesk --replicas=4",
+};
 const ABILITIES = [
   { id: "ping", name: "Ping", icon: "📡", dmg: [8, 14], stress: 0, desc: "Reliable packet poke" },
   { id: "ps", name: "PowerShell", icon: "💠", dmg: [12, 20], stress: 8, desc: "Scripted strike" },
@@ -731,7 +749,7 @@ function startBattle(portal) {
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
   const boss = !!npc.critical;
   if (boss) hp = Math.round(hp * 1.8);
-  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {} };
+  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false };
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -742,6 +760,7 @@ function startBattle(portal) {
   blog(boss
     ? `<span class="sys">⚠️ The corruption is MASSIVE here. <b>${BOSS_NAMES[t.id] || t.enemy}</b> rises from the ${t.world}. This is a BOSS fight — watch for phase changes!</span>`
     : `<span class="sys">You step through the portal into the <b>${t.world}</b>. A ${t.enemy} manifests!</span>`);
+  blog(`<span class="sys">Tip: use 📡 Ping to recon the enemy's weaknesses.</span>`);
   renderBattle();
 }
 function blog(h) { B.log.push(h); $("battle-log").innerHTML = B.log.slice(-30).join("<br>"); $("battle-log").scrollTop = 1e6; }
@@ -774,9 +793,21 @@ function doAbility(a) {
     const bonus = statBonus(B.t.stat);
     dmg = R(a.dmg[0], a.dmg[1]) + Math.round(bonus / 2);
     if (B.weakened) dmg = Math.round(dmg * 1.25);
+    // IT-accurate effectiveness: right tool for the right problem
+    const tac = ENEMY_TACTICS[B.t.id];
+    let note = "";
+    if (tac?.weak.includes(a.id)) { dmg = Math.round(dmg * 1.6); note = " ✅ <b>Right tool for the job — super effective!</b>"; }
+    else if (tac?.resist.includes(a.id)) { dmg = Math.max(1, Math.round(dmg * .35)); note = ` ⚠️ <b>Barely effective</b> — ${tac.resistNote}`; }
     B.hp -= dmg;
     sfx("hit");
-    blog(`<span class="dmg">${a.icon} ${a.name} hits for <b>${dmg}</b>!</span>`);
+    blog(`<span class="sys">C:\\&gt; ${ABILITY_CMDS[a.id] || a.name}</span>`);
+    blog(`<span class="dmg">${a.icon} ${a.name} hits for <b>${dmg}</b>!${note}</span>`);
+    // Ping doubles as recon: reveals the enemy's weakness profile
+    if (a.id === "ping" && !B.revealed && tac) {
+      B.revealed = true;
+      const names = id => (ABILITIES.concat(Object.values(CERT_ABILITIES)).find(x => x.id === id) || {}).name || id;
+      blog(`<span class="sys">📡 Recon complete — replies from target. Analysis: weak to <b>${tac.weak.map(names).join(", ")}</b>; resists <b>${tac.resist.map(names).join(", ")}</b>.</span>`);
+    }
   }
   if (a.heal) { s.hp = clamp(s.hp + a.heal, 0, s.maxHp); blog(`<span class="heal">+${a.heal} HP</span>`); }
   if (a.shield) { B.shield = true; blog(`<span class="sys">🧱 Firewall up — next hit halved.</span>`); }
@@ -814,7 +845,7 @@ function doAbility(a) {
     }
   }
   else {
-    const atk = pick(["Packet Flood", "Credential Theft", "Latency Spike", "Memory Leak", "Spam Burst", "Corruption Wave"]);
+    const atk = pick(ENEMY_TACTICS[B.t.id]?.attacks || ["Packet Flood", "Corruption Wave"]);
     let ed = R(4, 9) + Math.floor(s.day / 2) + (B.enraged ? 2 : 0);
     if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
     s.hp -= ed; addStress(4);
