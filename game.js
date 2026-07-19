@@ -1,5 +1,5 @@
 /* ============================================================
-   TECHOPS HERO v3.0 — roguelite IT RPG (single-file web app)
+   TECHOPS HERO v3.1 — roguelite IT RPG (single-file web app)
    ============================================================ */
 "use strict";
 
@@ -280,16 +280,39 @@ function checkAch() {
   if (S.xp >= 300) unlock("siteadmin");
 }
 
-// ---------- map generation ----------
-// zones: lobby (center), office (top), factory floor (bottom strip), server room (top-right)
+// ---------- biomes: distinct departments with their own floors, props & style ----------
 const SRV = { x0: MAPW - 13, y0: 2, x1: MAPW - 2, y1: 8 };
 const FACTORY_Y = MAPH - 9;
 const LOBBY = { x0: (MAPW >> 1) - 5, y0: (MAPH >> 1) - 2, x1: (MAPW >> 1) + 5, y1: (MAPH >> 1) + 2 };
+const BIOMES = [
+  { id: "exec", name: "EXECUTIVE SUITE", x0: 1, y0: 1, x1: 10, y1: 7, f1: "#5a3a44", f2: "#54353f", line: "#c9a227", props: [18, 19, 4, 9, 17] },
+  { id: "finance", name: "FINANCE ROW", x0: 11, y0: 1, x1: 19, y1: 7, f1: "#4a5a48", f2: "#445340", line: "#8ab86a", props: [2, 14, 4, 8] },
+  { id: "sales", name: "SALES FLOOR", x0: 20, y0: 1, x1: 27, y1: 7, f1: "#4a5a6a", f2: "#455361", line: "#6ab8d8", props: [17, 2, 20, 8] },
+  { id: "eng", name: "ENGINEERING LAB", x0: 1, y0: 8, x1: 10, y1: 13, f1: "#8a8a92", f2: "#82828a", line: "#e8823a", props: [15, 21, 12, 7] },
+  { id: "hr", name: "HR CORNER", x0: 20, y0: 8, x1: 27, y1: 13, f1: "#a08060", f2: "#987558", line: "#e8a0b8", props: [16, 4, 4, 8] },
+];
+const BIOME_OF_DEPT = { Manufacturing: "factory", Finance: "finance", Engineering: "eng", Executives: "exec", HR: "hr", Sales: "sales" };
+function biomeAt(x, y) {
+  for (const b of BIOMES) if (x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1) return b;
+  return null;
+}
 function zoneAt(x, y) {
+  const b = biomeAt(x, y);
+  if (b) return b.id;
   if (x >= LOBBY.x0 && x <= LOBBY.x1 && y >= LOBBY.y0 && y <= LOBBY.y1) return "lobby";
   if (x >= SRV.x0 && x <= SRV.x1 && y >= SRV.y0 && y <= SRV.y1) return "server";
   if (y >= FACTORY_Y) return "factory";
   return "office";
+}
+function spotInBiome(m, bid) {
+  const b = BIOMES.find(z => z.id === bid);
+  if (bid === "factory") return freeSpot(m, MAPW >> 1, FACTORY_Y + 4);
+  if (!b) return freeSpot(m);
+  for (let tries = 0; tries < 60; tries++) {
+    const x = R(b.x0 + 1, b.x1 - 1), y = R(b.y0 + 1, b.y1 - 1);
+    if (m[y] && m[y][x] === 0) return { x, y };
+  }
+  return freeSpot(m, (b.x0 + b.x1) >> 1, (b.y0 + b.y1) >> 1);
 }
 function genMap() {
   const m = [];
@@ -310,13 +333,21 @@ function genMap() {
     const x = R(2, MAPW - 3), y = R(FACTORY_Y + 1, MAPH - 3);
     if (m[y][x] === 0) m[y][x] = pick([6, 7, 7]);
   }
-  // office: cubicle desks, plants, water coolers
-  for (let i = 0; i < 65; i++) {
+  // biome props: each department gets its signature furniture
+  for (const b of BIOMES) {
+    for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) {
+      if (m[y][x] === 0 && Math.random() < .22) m[y][x] = pick(b.props);
+    }
+    // biome doorways: keep a gap open in the middle of each biome
+    for (let x = b.x0; x <= b.x1; x++) if (m[b.y0][x] === 1 && Math.random() < .5) m[b.y0][x] = 0;
+  }
+  // remaining generic office: cubicle desks, plants, water coolers
+  for (let i = 0; i < 40; i++) {
     const x = R(2, MAPW - 3), y = R(2, FACTORY_Y - 1);
-    if (m[y][x] === 0 && zoneAt(x, y) === "office") m[y][x] = pick([2, 2, 2, 2, 4, 8]);
+    if (m[y][x] === 0 && zoneAt(x, y) === "office") m[y][x] = pick([2, 2, 2, 4, 8]);
   }
   // office partition walls with doorways
-  const wallLines = R(3, 5);
+  const wallLines = R(2, 4);
   for (let i = 0; i < wallLines; i++) {
     const horiz = Math.random() < .5;
     const pos = R(4, FACTORY_Y - 4);
@@ -381,13 +412,13 @@ function setupDay() {
     setTimeout(() => toast("🕳️ A terminal wakes by itself. <b>palan0 has noticed you.</b>", 4000), 1500);
   }
 
-  // spawn NPCs with tickets
+  // spawn NPCs with tickets — each in their department's biome
   for (let i = 0; i < n; i++) {
     let type = pick(TICKET_TYPES.filter(t => t.id !== "shadow"));
     if (s.chaos?.id === "drill") type = TICKET_TYPES.find(t => t.id === "malware");
     if (s.chaos?.id === "outage" && Math.random() < .5) type = pick(TICKET_TYPES.filter(t => t.stat === "networking" && t.id !== "shadow"));
     const dept = pick(DEPTS);
-    const pos = freeSpot(s.map);
+    const pos = spotInBiome(s.map, BIOME_OF_DEPT[dept]);
     const npc = {
       id: i, name: pick(NPC_NAMES), dept, type,
       x: pos.x, y: pos.y, face: "🧑‍💼",
@@ -397,10 +428,11 @@ function setupDay() {
     s.npcs.push(npc); s.tickets.push(npc);
     // a broken device + portal appear near the NPC after diagnosis
   }
-  // ambient NPCs
-  for (let i = 0; i < R(3, 6); i++) {
-    const pos = freeSpot(s.map);
-    s.npcs.push({ id: 100 + i, name: pick(NPC_NAMES), dept: pick(DEPTS), x: pos.x, y: pos.y, face: "🧍", ambient: true, pv: R(0, PAL_NPCS.length - 1) });
+  // ambient NPCs wander their own departments
+  for (let i = 0; i < R(4, 7); i++) {
+    const dept = pick(DEPTS);
+    const pos = spotInBiome(s.map, BIOME_OF_DEPT[dept]);
+    s.npcs.push({ id: 100 + i, name: pick(NPC_NAMES), dept, x: pos.x, y: pos.y, face: "🧍", ambient: true, pv: R(0, PAL_NPCS.length - 1) });
   }
   // lore spots (unique pieces of the palan0 mystery)
   const loreIds = [0, 1, 2, 3, 4].sort(() => Math.random() - .5).slice(0, R(2, 3));
@@ -432,8 +464,16 @@ addEventListener("resize", resize); resize();
 function px(c, X, Y, w, h) { ctx.fillStyle = c; ctx.fillRect(X, Y, w, h); }
 function drawTile(t, x, y, tm) {
   const X = x * TILE, Y = y * TILE, z = zoneAt(x, y);
-  // floors by zone — bright modern-interior style
-  if (z === "factory") {
+  const b = biomeAt(x, y);
+  // floors by biome / zone
+  if (b) {
+    px((x + y) % 2 ? b.f1 : b.f2, X, Y, TILE, TILE);
+    // biome trim: accent line on the edges of the biome
+    if (y === b.y0) px(b.line, X, Y, TILE, 2);
+    if (x === b.x0) px(b.line, X, Y, 2, TILE);
+    if (y === b.y1) px(b.line, X, Y + TILE - 2, TILE, 2);
+    if (x === b.x1) px(b.line, X + TILE - 2, Y, 2, TILE);
+  } else if (z === "factory") {
     px((x + y) % 2 ? "#b0b0a8" : "#a8a89e", X, Y, TILE, TILE);
     px("#98988e", X, Y, TILE, 1); px("#98988e", X, Y, 1, TILE);
     if (y === FACTORY_Y) for (let i = 0; i < 4; i++) { px(i % 2 ? "#1a1a1a" : "#e8c82a", X + i * 8, Y, 8, 4); px(i % 2 ? "#e8c82a" : "#1a1a1a", X + i * 8, Y + TILE - 4, 8, 4); }
@@ -510,6 +550,47 @@ function drawTile(t, x, y, tm) {
       px("#f8f8f8", X + 3, Y + 4, 26, 16); px("#999", X + 3, Y + 4, 26, 2);
       px("#3a5a8a", X + 6, Y + 9, 12, 1); px("#c33", X + 6, Y + 12, 16, 1);
       px("#3f6", X + 6, Y + 15, 9, 1); break;
+    case 13: // mahogany desk (executive)
+      px("#5a2a1a", X + 1, Y + 12, 30, 16); px("#7a3a24", X + 1, Y + 12, 30, 4);
+      px("#f0e0c0", X + 20, Y + 4, 8, 10); px("#c9a227", X + 4, Y + 6, 6, 4);
+      px("#3a1a10", X + 3, Y + 26, 4, 4); px("#3a1a10", X + 25, Y + 26, 4, 4); break;
+    case 14: // filing cabinet
+      px("#8a929a", X + 7, Y + 2, 18, 28); px("#aab2ba", X + 7, Y + 2, 18, 3);
+      px("#6a727a", X + 9, Y + 7, 14, 5); px("#6a727a", X + 9, Y + 14, 14, 5); px("#6a727a", X + 9, Y + 21, 14, 5);
+      px("#444", X + 14, Y + 9, 4, 2); px("#444", X + 14, Y + 16, 4, 2); px("#444", X + 14, Y + 23, 4, 2); break;
+    case 15: // engineering workbench
+      px("#7a6a4a", X + 1, Y + 18, 30, 10); px("#9a8a6a", X + 1, Y + 18, 30, 3);
+      px("#4a4a55", X + 3, Y + 4, 8, 8); px("#3af", X + 5, Y + 6, 4, 4);
+      px("#c9a227", X + 14, Y + 6, 10, 3); px("#555", X + 14, Y + 10, 8, 3);
+      px("#666", X + 26, Y + 5, 4, 12); px("#c33", X + 27, Y + 4, 2, 2); break;
+    case 16: // round meeting table (HR)
+      px("#8a6a4a", X + 4, Y + 8, 24, 16); px("#a8875e", X + 6, Y + 6, 20, 20);
+      px("#f0f0f0", X + 12, Y + 10, 4, 4); px("#f0f0f0", X + 20, Y + 14, 4, 4); px("#f0f0f0", X + 8, Y + 16, 4, 4);
+      px("#b06038", X + 14, Y + 20, 4, 5); break;
+    case 17: // phone pod (sales)
+      px("#5a6a8a", X + 4, Y + 4, 24, 24); px("#7080a0", X + 4, Y + 4, 24, 3);
+      px("#1a1a22", X + 10, Y + 10, 12, 8); px("#3f6", X + 12, Y + 12, 8, 3);
+      px("#c9a227", X + 6, Y + 20, 6, 5); px("#f0f0f0", X + 20, Y + 20, 7, 5); break;
+    case 18: // executive corner desk
+      px("#4a2a20", X + 2, Y + 10, 28, 18); px("#6a3a28", X + 2, Y + 10, 28, 4);
+      px("#101014", X + 12, Y + 2, 12, 9); px("#3a5a8a", X + 14, Y + 4, 8, 5);
+      px("#c9a227", X + 4, Y + 4, 5, 6); px("#f0f0f0", X + 24, Y + 14, 5, 7); break;
+    case 19: // trophy shelf
+      px("#6a4a2a", X + 2, Y + 4, 28, 24); px("#8a6a3a", X + 2, Y + 4, 28, 3);
+      px("#c9a227", X + 5, Y + 9, 5, 7); px("#ffd24a", X + 6, Y + 8, 3, 3);
+      px("#c9a227", X + 14, Y + 9, 5, 7); px("#c0c0c0", X + 23, Y + 9, 5, 7);
+      px("#5a3a1a", X + 3, Y + 18, 26, 3); break;
+    case 20: // sales leaderboard
+      px("#2a3a5a", X + 3, Y + 2, 26, 26); px("#4a5a7a", X + 3, Y + 2, 26, 3);
+      px("#ffd24a", X + 6, Y + 8, 20, 3); px("#8ab86a", X + 6, Y + 13, 14, 3);
+      px("#6ab8d8", X + 6, Y + 18, 17, 3); px("#e8e8e8", X + 6, Y + 23, 9, 3); break;
+    case 21: { // robot arm (engineering)
+      px("#555", X + 13, Y + 22, 6, 8); px("#e8823a", X + 14, Y + 8, 4, 14);
+      px("#555", X + 8, Y + 5, 12, 4); px("#e8823a", X + 6, Y + 3, 5, 5);
+      const j = Math.floor(tm / 500) % 2;
+      px(j ? "#3f6" : "#c33", X + 15, Y + 25, 3, 3);
+      px("#888", X + 4, Y + 26, 24, 3); break;
+    }
   }
 }
 // chibi pixel sprites (16px grid, '.' = transparent, k = outline) — used for NPCs
@@ -537,6 +618,15 @@ const PAL_NPCS = [
   { k: "#1a1a22", h: "#c9a227", s: "#f0d0b0", e: "#1a1a22", b: "#8a4a6a", w: "#f0f0f0", f: "#4a3a2a" },
   { k: "#1a1a22", h: "#a84a2a", s: "#d8a880", e: "#1a1a22", b: "#3a6a4a", w: "#e8e8e8", f: "#2a2a2a" },
 ];
+// department uniforms: each biome has its own NPC look
+const DEPT_PAL = {
+  Executives: { k: "#1a1a22", h: "#2a2a2a", s: "#f0c8a0", e: "#1a1a22", b: "#1a1a2a", w: "#f0f0f0", f: "#3a3a3a" },
+  Finance: { k: "#1a1a22", h: "#6a4a2a", s: "#f0c8a0", e: "#1a1a22", b: "#2a5a3a", w: "#e8f0e0", f: "#4a3a2a" },
+  Sales: { k: "#1a1a22", h: "#6a5a2a", s: "#f0d0b0", e: "#1a1a22", b: "#2a4a7a", w: "#f0f0f0", f: "#2a2a2a" },
+  Engineering: { k: "#1a1a22", h: "#3a3a3a", s: "#e8b88a", e: "#1a1a22", b: "#c96a1a", w: "#f0f0f0", f: "#3a3a3a" },
+  HR: { k: "#1a1a22", h: "#4a2a1a", s: "#f0d0b0", e: "#1a1a22", b: "#a04a6a", w: "#f8e8ee", f: "#5a3a3a" },
+  Manufacturing: { k: "#1a1a22", h: "#c9a227", s: "#e8b88a", e: "#1a1a22", b: "#5a5f6a", w: "#e8e8e8", f: "#2a2a2a" },
+};
 // custom player sprite (atlas-based, directional facing)
 const playerImg = new Image();
 if (typeof PLAYER_ATLAS !== "undefined") playerImg.src = PLAYER_ATLAS.src;
@@ -592,6 +682,16 @@ function draw() {
   const y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(MAPH - 1, Math.ceil((camY + cv.height / sc) / TILE));
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (let y = y0; y <= y1; y++) { const row = s.map[y]; if (!row) continue; for (let x = x0; x <= x1; x++) drawTile(row[x] || 0, x, y, tm); }
+  // biome floor labels
+  ctx.font = "bold 9px monospace"; ctx.globalAlpha = .55;
+  for (const b of BIOMES) {
+    const lx = ((b.x0 + b.x1 + 1) / 2) * TILE, ly = (b.y0 + .7) * TILE;
+    ctx.fillStyle = "#0008";
+    ctx.fillText(b.name, lx + 1, ly + 1);
+    ctx.fillStyle = "#fffc";
+    ctx.fillText(b.name, lx, ly);
+  }
+  ctx.globalAlpha = 1;
   // coffee machines
   for (const c of s.coffeeMachines) { ctx.font = "24px serif"; ctx.globalAlpha = c.used ? .35 : 1; ctx.fillText("☕", c.x * TILE + 16, c.y * TILE + 17); ctx.globalAlpha = 1; }
   // lore
@@ -609,9 +709,9 @@ function draw() {
     ctx.beginPath(); ctx.arc(p.x * TILE + 16, p.y * TILE + 16, 12 + Math.sin(t) * 2, 0, 7); ctx.fill();
     ctx.globalAlpha = 1; ctx.fillText("🌀", p.x * TILE + 16, p.y * TILE + 17);
   }
-  // NPCs
+  // NPCs (department uniforms)
   for (const n of s.npcs) {
-    drawSpr(SPR_NPC, PAL_NPCS[n.pv ?? 0], n.x, n.y);
+    drawSpr(SPR_NPC, DEPT_PAL[n.dept] || PAL_NPCS[n.pv ?? 0], n.x, n.y);
     if (!n.ambient && !n.done) {
       ctx.font = "13px serif";
       ctx.fillText(n.critical ? "🚨" : "🎫", n.x * TILE + 24, n.y * TILE + 7);
@@ -623,10 +723,11 @@ function draw() {
   // minimap (screen-space, bottom right)
   const mm = 2, mw = MAPW * mm, mh = MAPH * mm;
   const mx0 = Math.max(190, cv.width - mw - 92), my0 = cv.height - mh - 12;
+  const ZONE_COLORS = { factory: "#b0b0a8", server: "#3a4a6a", lobby: "#5a7a9a", office: "#d9a05e", exec: "#5a3a44", finance: "#4a5a48", sales: "#4a5a6a", eng: "#8a8a92", hr: "#a08060" };
   ctx.fillStyle = "#000a"; ctx.fillRect(mx0 - 3, my0 - 3, mw + 6, mh + 6);
   for (let y = 0; y < MAPH; y++) for (let x = 0; x < MAPW; x++) {
-    const z = zoneAt(x, y), t = s.map[y][x];
-    ctx.fillStyle = t === 1 ? "#8a8a96" : z === "factory" ? "#b0b0a8" : z === "server" ? "#3a4a6a" : z === "lobby" ? "#5a7a9a" : "#d9a05e";
+    const t = s.map[y][x];
+    ctx.fillStyle = t === 1 ? "#8a8a96" : ZONE_COLORS[zoneAt(x, y)] || "#d9a05e";
     ctx.fillRect(mx0 + x * mm, my0 + y * mm, mm, mm);
   }
   for (const p of s.portals) { ctx.fillStyle = "#a6f"; ctx.fillRect(mx0 + p.x * mm - 1, my0 + p.y * mm - 1, 3, 3); }
@@ -757,10 +858,17 @@ function dlg(name, text, options) {
 function closeDlg() { S.inDialog = false; $("dialogue").classList.add("hidden"); flushPromo(); }
 
 function ambientTalk(n) {
+  const deptLines = {
+    Executives: ["We're watching the Q3 numbers very closely.", "My calendar is sacred. Fix it fast."],
+    Finance: ["Payroll runs Thursday. Nothing can break Thursday.", "These spreadsheets reconcile themselves, said no one ever."],
+    Sales: ["I'm two deals from quota — don't let my phone die.", "The leaderboard doesn't lie, friend."],
+    Engineering: ["The prototype arm draws 40 amps. Don't ask why.", "We measure everything twice here."],
+    HR: ["Someone microwaved fish again. We're investigating.", "Remember: the ergonomic survey is mandatory."],
+    Manufacturing: ["Line 2's conveyor sings when it runs dry. Music to my ears.", "Watch the yellow lines out there."],
+  };
   const lines = [
+    ...(deptLines[n.dept] || []),
     `Heard the ${pick(["server room", "MDF", "fiber vault"])} hums at night. Creepy.`,
-    `You're ${rank().name}, right? ${S.rep[n.dept] >= 3 ? n.dept + " speaks highly of you." : "We haven't had much to fix in " + n.dept + " lately."}`,
-    `Day ${S.day} already? Time flies when the network's up.`,
     `Word is the old root account is still active somewhere...`,
   ];
   dlg(`${n.name} — ${n.dept}`, pick(lines), [{ t: "Back to work.", f: closeDlg }]);
