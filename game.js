@@ -181,6 +181,17 @@ const FALSE_POSITIVES = [
   "The user's 'it started after the update' — the update was actually yesterday. Weak correlation.",
   "That log entry looks scary but it's from a service that always complains. Noise.",
 ];
+// insight: the investigation critical hit — patterns emerge automatically
+const INSIGHTS = {
+  networking: "💡 <b>INSIGHT!</b> Every affected user is on the same VLAN. It's not the endpoints — it's the fabric.",
+  windows: "💡 <b>INSIGHT!</b> All failing machines received the same software update. That's no coincidence.",
+  hardware: "💡 <b>INSIGHT!</b> Three failures started within five minutes of a switch reboot. Sequence matters.",
+  security: "💡 <b>INSIGHT!</b> The timestamps cluster around one authentication event. Patient zero located.",
+  cloud: "💡 <b>INSIGHT!</b> The failures follow the autoscaler. It's scaling down into the outage.",
+  linux: "💡 <b>INSIGHT!</b> Every crash is the same cron job firing. Found the heartbeat of the problem.",
+  programming: "💡 <b>INSIGHT!</b> The stack traces all converge on one library call.",
+  automation: "💡 <b>INSIGHT!</b> The playbook runs fine manually — the schedule is the bug.",
+};
 const ASK_LINES = [
   `"When did it start?" — "Right after the update, now that you mention it..."`,
   `"Has anything changed?" — "Well... facilities DID move my desk yesterday."`,
@@ -257,7 +268,19 @@ const STORE_STOCK = [
   { id: "lab_kb", name: "Ergonomic Keyboard", icon: "⌨️", cost: 300, type: "lab", effect: "-15% stress from all sources", key: "kb" },
   { id: "lab_skate", name: "Skateboard", icon: "🛹", cost: 350, type: "lab", effect: "+20% move speed — kick, push, coast between tickets", key: "skate" },
   { id: "lab_tugger", name: "Factory Tugger (Mini Car)", icon: "🛺", cost: 900, type: "lab", effect: "+45% move speed — the little cart that hauls parts across the floor", key: "tugger" },
+  { id: "lab_fluke", name: "Fluke Network Tester", icon: "📟", cost: 500, type: "lab", effect: "Network evidence can never be a false positive", key: "fluke", vendor: "procurement" },
+  { id: "lab_thermal", name: "Thermal Camera", icon: "🌡️", cost: 400, type: "lab", effect: "Hardware tickets: inspections grant +10 extra confidence", key: "thermal", vendor: "procurement" },
+  { id: "lab_monitor2", name: "Second Monitor", icon: "🖥️", cost: 350, type: "lab", effect: "Multitasking: all inspections grant +3 extra confidence", key: "monitor2", vendor: "procurement" },
+  { id: "lab_mechkb", name: "Mechanical Keyboard", icon: "⌨️", cost: 250, type: "lab", effect: "Documentation grants double XP", key: "mechkb", vendor: "procurement" },
+  { id: "infra_switches", name: "Replace Old Switches", icon: "🔀", cost: 1000, type: "infra", effect: "PERMANENT: retires Wrong-VLAN tickets from the plant", retire: "vlan", vendor: "procurement" },
+  { id: "infra_wifi7", name: "Deploy Wi-Fi 7", icon: "📡", cost: 900, type: "infra", effect: "PERMANENT: retires WiFi Dead Zone tickets", retire: "wifi", vendor: "procurement" },
+  { id: "infra_ups", name: "New UPS Fleet", icon: "🔋", cost: 800, type: "infra", effect: "PERMANENT: retires Blue Screen tickets (clean power)", retire: "bsod", vendor: "procurement" },
+  { id: "lab_autosrv", name: "Automation Server", icon: "🤖", cost: 1200, type: "lab", effect: "Auto-resolves one routine ticket every morning", key: "autosrv", vendor: "innovation" },
+  { id: "lab_ai", name: "AI Troubleshooting Copilot", icon: "🧠", cost: 1500, type: "lab", effect: "Highlights the correct hypothesis branch at 60% confidence", key: "ai", vendor: "innovation" },
+  { id: "lab_kcenter", name: "Knowledge Center", icon: "🏛️", cost: 700, type: "lab", effect: "Team gets +10% accuracy on documented failure modes (was +5%)", key: "kcenter", vendor: "innovation" },
 ];
+// vendor assignments (default: books=training, lab/infra=procurement, innovation flagged above)
+const VENDOR_OF = id => STORE_STOCK.find(x => x.id === id)?.vendor || (id.startsWith("book") ? "training" : "procurement");
 function applyLab(key) {
   const s = S;
   if (key === "ram") { s.maxHp += 10; s.hp = Math.min(s.maxHp, s.hp + 10); }
@@ -305,13 +328,13 @@ function newState() {
     chaos: null, promoted: false, autoUsed: false,
     meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [], kb: {} },
     ach: [], books: [], lab: [], storeStock: [], stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
-    staff: [], audited: false,
+    staff: [], audited: false, infra: [],
     px: 0, py: 0, dir: 1, fx: "down", moving: false,
     npcs: [], portals: [], devices: [], loreSpots: [], coffeeMachines: [],
     map: null, inDialog: false, inBattle: false, gameOver: false, won: false,
   };
 }
-const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited })); } catch (e) { } };
+const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra })); } catch (e) { } };
 const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; } return d; } catch (e) { return null; } };
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
@@ -513,9 +536,9 @@ function setupDay() {
 
   // spawn NPCs with tickets — each in their department's biome
   for (let i = 0; i < n; i++) {
-    let type = pick(TICKET_TYPES.filter(t => t.id !== "shadow"));
+    let type = pick(TICKET_TYPES.filter(t => t.id !== "shadow" && !(s.infra || []).includes(t.id)));
     if (s.chaos?.id === "drill") type = TICKET_TYPES.find(t => t.id === "malware");
-    if (s.chaos?.id === "outage" && Math.random() < .5) type = pick(TICKET_TYPES.filter(t => t.stat === "networking" && t.id !== "shadow"));
+    if (s.chaos?.id === "outage" && Math.random() < .5) type = pick(TICKET_TYPES.filter(t => t.stat === "networking" && t.id !== "shadow" && !(s.infra || []).includes(t.id)));
     const dept = pick(DEPTS);
     const pos = spotInBiome(s.map, BIOME_OF_DEPT[dept]);
     const npc = {
@@ -563,9 +586,21 @@ function setupDay() {
   const nc = s.chaos?.id === "heat" ? 4 : 2;
   for (let i = 0; i < nc; i++) { const p = freeSpot(s.map); s.coffeeMachines.push({ x: p.x, y: p.y, used: false }); }
   // daily store stock rotation
-  const stockPool = STORE_STOCK.filter(it => !s.books.includes(it.id) && !(it.type === "lab" && s.lab.filter(k => k === it.key).length >= (it.key === "kb" ? 2 : 1)));
-  s.storeStock = [...stockPool].sort(() => Math.random() - .5).slice(0, 3).map(it => it.id);
+  const stockPool = STORE_STOCK.filter(it => !s.books.includes(it.id)
+    && !(it.type === "lab" && s.lab.filter(k => k === it.key).length >= (it.key === "kb" ? 2 : 1))
+    && !(it.type === "infra" && (s.infra || []).includes(it.retire)));
+  s.storeStock = [...stockPool].sort(() => Math.random() - .5).slice(0, 4).map(it => it.id);
 
+  // automation server: scripts chew through one routine ticket overnight
+  if (s.lab.includes("autosrv")) {
+    const t = s.tickets.find(t => !t.done && !t.critical && t.type.id !== "shadow");
+    if (t) {
+      t.done = true; s.ticketsDone++; s.meta.closed++;
+      s.rep[t.dept] = clamp(s.rep[t.dept] + 1, 0, 5);
+      s.journal.push({ day: s.day, title: `${t.type.label} — automated`, body: "The Automation Server resolved it overnight from your documented runbooks." });
+      setTimeout(() => toast(`🤖 AUTOMATION SERVER<br><small>Overnight runbook resolved: ${t.type.label} (${t.dept})</small>`, 3800), 2800);
+    }
+  }
   toast(s.chaos ? `DAY ${s.day} — ${s.chaos.name}<br><small>${s.chaos.desc}</small>` : `DAY ${s.day} begins`);
   updateHUD();
   save();
@@ -856,6 +891,63 @@ function draw() {
   }
   // player — custom atlas sprite with directional facing
   drawPlayer(s, tm);
+  // ---------- DIGITAL TWIN: the living network ----------
+  if (s.twin) {
+    const cx = (SRV.x0 + SRV.x1 + 1) / 2 * TILE, cy = (SRV.y0 + SRV.y1 + 1) / 2 * TILE;
+    const pulse = (tm / 600) % 1;
+    ctx.save();
+    // traffic lines: every open ticket links back to the data center
+    for (const n of s.npcs) {
+      if (n.ambient || n.done || !n.type) continue;
+      const nx = n.x * TILE + 16, ny = n.y * TILE + 16;
+      const broken = n.critical || n.mishandled;
+      const col = broken ? "#ff4444" : n.critical ? "#ff4444" : (Math.floor(tm / 500) % 2 ? "#ffd24a" : "#ff9d2a");
+      // packet flow line with animated offset
+      ctx.strokeStyle = broken ? "#f448" : "#4af5";
+      ctx.lineWidth = broken ? 2.5 : 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.lineDashOffset = -tm / (broken ? 30 : 60);
+      ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(cx, cy); ctx.stroke();
+      ctx.setLineDash([]);
+      // travelling pulse
+      const px2 = nx + (cx - nx) * pulse, py2 = ny + (cy - ny) * pulse;
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(px2, py2, broken ? 4 : 3, 0, 7); ctx.fill();
+      // broken nodes blink red
+      if (broken && Math.floor(tm / 300) % 2) {
+        ctx.fillStyle = "#f44";
+        ctx.beginPath(); ctx.arc(nx, ny - 14, 5, 0, 7); ctx.fill();
+      }
+      // holographic label
+      ctx.font = "bold 8px monospace";
+      ctx.fillStyle = "#000a";
+      const label = `${n.type.icon} ${n.type.label}${n.age >= 120 ? " 🔥" : ""}`;
+      const lw = ctx.measureText(label).width + 8;
+      ctx.fillRect(nx - lw / 2, ny - 30, lw, 12);
+      ctx.fillStyle = broken ? "#ff8888" : "#7fd4ff";
+      ctx.fillText(label, nx, ny - 24);
+    }
+    // devices get holo tags too
+    for (const d of s.devices) {
+      if (d.fixed) continue;
+      const dx2 = d.x * TILE + 16, dy2 = d.y * TILE + 16;
+      ctx.strokeStyle = "#f446"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.lineDashOffset = -tm / 40;
+      ctx.beginPath(); ctx.moveTo(dx2, dy2); ctx.lineTo(cx, cy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = "bold 7px monospace"; ctx.fillStyle = "#ffb347";
+      ctx.fillText("FAULT", dx2, dy2 - 12);
+    }
+    // data center core beacon
+    const br = 10 + Math.sin(tm / 200) * 3;
+    ctx.strokeStyle = "#4af8"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, br + 6, 0, 7); ctx.stroke();
+    ctx.fillStyle = "#4af";
+    ctx.beginPath(); ctx.arc(cx, cy, br / 2, 0, 7); ctx.fill();
+    ctx.font = "bold 9px monospace"; ctx.fillStyle = "#7fd4ff";
+    ctx.fillText("CORE", cx, cy - br - 10);
+    ctx.restore();
+  }
   ctx.restore();
   // minimap (screen-space, bottom right)
   const mm = 2, mw = MAPW * mm, mh = MAPH * mm;
@@ -884,6 +976,7 @@ addEventListener("keydown", e => {
   keys[e.key.toLowerCase()] = true;
   if (["e", "enter", " "].includes(e.key.toLowerCase())) interact();
   if (e.key.toLowerCase() === "m") openPanel();
+  if (e.key.toLowerCase() === "v") toggleTwin();
 });
 addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
@@ -908,6 +1001,14 @@ document.querySelectorAll(".dbtn").forEach(b => {
 $("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); interact(); });
 $("tb-menu").addEventListener("touchstart", e => { e.preventDefault(); openPanel(); });
 $("btn-menu").addEventListener("click", openPanel);
+// digital twin: network vision overlay (button or V key)
+function toggleTwin() {
+  if (!S) return;
+  S.twin = !S.twin;
+  $("btn-twin").style.background = S.twin ? "#24a" : "";
+  toast(S.twin ? "🛰️ DIGITAL TWIN ONLINE — the living network made visible. Press 🛰️ or V to exit." : "🛰️ Digital twin offline.");
+}
+$("btn-twin").addEventListener("click", toggleTwin);
 
 let moveAcc = 0;
 function step(dt) {
@@ -1185,7 +1286,8 @@ function renderBattle() {
     const opts = B.hypChoice.map(c => {
       const b = document.createElement("button");
       b.className = "hyp-btn";
-      b.innerHTML = `${c.correct ? "🧠" : "❓"} ${c.text}`;
+      const aiTag = c.correct && s.lab.includes("ai") ? " 🤖 <b>AI SUGGESTS</b>" : "";
+      b.innerHTML = `${c.correct ? "🧠" : "❓"} ${c.text}${aiTag}`;
       b.onclick = () => resolveHypothesis(c.correct);
       box.appendChild(b);
     });
@@ -1386,12 +1488,15 @@ function workflowAction(a) {
     blog(`<span class="heal">🔍 ${a.name} reveals new evidence — uncertainty -${red}% (now ${Math.round(B.uncertainty)}%).${note}</span>`);
     // weighted evidence → confidence; but some clues are FALSE POSITIVES
     const etype = EVIDENCE_TYPES[a.id] || "config";
-    if (Math.random() < .15) {
+    const fpImmune = etype === "network" && s.lab.includes("fluke");
+    if (!fpImmune && Math.random() < .15) {
       B.confidence = clamp(B.confidence - 8, 0, 100);
       blog(`<span class="sys">🎭 <b>FALSE POSITIVE:</b> ${pick(FALSE_POSITIVES)} (-8 confidence)</span>`);
     } else {
       const w2 = (EVIDENCE_WEIGHTS[B.t.id] || {})[etype] || 2;
-      const cg2 = Math.round(w2 * R(4, 7) * (tac?.weak.includes(a.id) ? 1.4 : 1));
+      let cg2 = Math.round(w2 * R(4, 7) * (tac?.weak.includes(a.id) ? 1.4 : 1));
+      if (s.lab.includes("monitor2")) cg2 += 3;
+      if (s.lab.includes("thermal") && B.t.stat === "hardware") cg2 += 10;
       B.confidence = clamp(B.confidence + cg2, 0, 100);
       blog(`<span class="heal"><b>${EVIDENCE_LABEL[etype]}</b> +${cg2} confidence (now ${Math.round(B.confidence)}%).${w2 >= 4 ? " This is exactly the evidence that matters here." : w2 <= 1 ? " ...not the most relevant clue for this problem." : ""}</span>`);
     }
@@ -1420,7 +1525,7 @@ function workflowAction(a) {
     B.documented = true;
     s.meta.kb = s.meta.kb || {};
     s.meta.kb[B.t.id] = true; // knowledge graph: your org learns this failure mode
-    addXP(5); addStress(-5);
+    addXP(s.lab.includes("mechkb") ? 10 : 5); addStress(-5);
     s.journal.push({ day: s.day, title: `${B.t.label} — field notes`, body: `Symptoms observed, hypothesis formed, tests run. Root cause: ${B.hyp ? B.t.diag.best : "(still under investigation)"}. Good documentation trains the whole team.` });
     blog(`<span class="heal">📝 Documented: +5 XP, -5 stress. Future techs thank you — including your hires.</span>`);
   } else if (a.cat === "chaos") {
@@ -1442,6 +1547,19 @@ function workflowAction(a) {
   if (!B || B.over) return;
   renderBattle(); updateHUD();
 }
+// insight: crossing 75% confidence reveals a hidden connection
+function checkInsight() {
+  if (B.insightUsed || B.confidence < 75) return;
+  B.insightUsed = true;
+  sfx("win");
+  blog(`<span class="heal">${INSIGHTS[B.t.stat] || INSIGHTS.windows}</span>`);
+  // an insight prunes a wrong branch instantly and steadies your hands
+  const wrong = B.branches.find(b => !b.dead && !b.correct);
+  if (wrong) { wrong.dead = true; blog(`<span class="sys">🌳 Insight eliminates: <s>${wrong.text}</s></span>`); }
+  B.confidence = clamp(B.confidence + 10, 0, 100);
+  const left = B.branches.filter(b => !b.dead);
+  if (left.length === 1) blog(`<span class="heal">🌳 Only one branch remains: <b>${left[0].text}</b>. The tree has spoken.</span>`);
+}
 // every 3 evidence prunes one wrong branch from the root-cause tree
 function pruneBranches() {
   if (!B.branches) return;
@@ -1455,6 +1573,7 @@ function pruneBranches() {
     const left = B.branches.filter(b => !b.dead);
     if (left.length === 1) blog(`<span class="heal">🌳 Only one branch remains: <b>${left[0].text}</b>. The tree has spoken.</span>`);
   }
+  checkInsight();
 }
 function resolveHypothesis(correct) {
   const s = S;
@@ -1517,9 +1636,22 @@ function winBattle() {
     n.pendingRepeat = true;
     blog(`<span class="sys">⚠️ You closed it without verifying... hope it stays fixed.</span>`);
   }
+  // Perfect Investigation: rate the whole troubleshooting arc
   const firstExec = B.seq.indexOf("execute");
   const didRecon = B.seq.some(c => c === "ask" || c === "inspect");
-  if (didRecon && (firstExec === -1 || B.seq.findIndex(c => c === "ask" || c === "inspect") < firstExec) && B.verified) {
+  let stars = 1;
+  if (didRecon && (firstExec === -1 || B.seq.findIndex(c => c === "ask" || c === "inspect") < firstExec)) stars++; // recon before fixes
+  if (B.hyp) stars++;           // correct hypothesis
+  if (B.verified) stars++;      // verified before closing
+  if (B.documented) stars++;    // documented the work
+  B.stars = stars;
+  blog(`<span class="heal">${"★".repeat(stars)}${"☆".repeat(5 - stars)} <b>INVESTIGATION RATING</b></span>`);
+  if (stars >= 5) {
+    addXP(25);
+    s.rep[n.dept] = clamp(s.rep[n.dept] + 1, 0, 5);
+    s.meta.kb = s.meta.kb || {}; s.meta.kb[t.id] = true;
+    blog(`<span class="heal">🔬 <b>PERFECT INVESTIGATION</b> — observe → hypothesize → execute → verify → document. +25 XP, +1 ${n.dept} rep, knowledge captured.</span>`);
+  } else if (didRecon && (firstExec === -1 || B.seq.findIndex(c => c === "ask" || c === "inspect") < firstExec) && B.verified) {
     addXP(15);
     blog(`<span class="heal">🔬 <b>SCIENTIFIC METHOD BONUS</b> — observe, hypothesize, test, verify. +15 XP.</span>`);
   }
@@ -1830,7 +1962,7 @@ function staffWork() {
     // fast learners improve weekly
     if (m.trait === "quicklearner") m.accBonus = (m.accBonus || 0) + .02;
     const trait = STAFF_TRAITS.find(t => t.id === m.trait);
-    const kbHit = s.meta.kb && s.meta.kb[open.type.id] ? .05 : 0; // documented solutions get reused
+    const kbHit = s.meta.kb && s.meta.kb[open.type.id] ? (s.lab.includes("kcenter") ? .10 : .05) : 0; // documented solutions get reused
     const acc = clamp(tier.acc + (trait?.accMod || 0) + (m.accBonus || 0) + kbHit - m.burnout * .06, .1, .98);
     const roll = Math.random();
     const misChance = (1 - acc) * (trait?.mis || 1) * .6;
@@ -1992,19 +2124,32 @@ function renderTab(tab) {
     el.innerHTML = s.inv.length ? "" : "<i>No loot yet. Close tickets and clear dungeons!</i>";
     for (const l of s.inv) el.innerHTML += `<div class="loot-item">${l.icon} <span class="rarity-${l.rarity}"><b>${l.name}</b> (${l.rarity})</span><br><small>${l.stat === "stress" ? "Passive: move faster, stress resist" : `+${l.val} ${l.stat}`}</small></div>`;
   } else if (tab === "Store") {
-    el.innerHTML = `<i>Mac's IT Emporium — new stock every morning. Budget: <b>$${s.budget}</b></i><br><br>`;
+    el.innerHTML = `<i>Invest in your IT department. Budget: <b>$${s.budget}</b></i><br><br>`;
     if (!s.storeStock.length) el.innerHTML += "<i>Sold out for today. Come back tomorrow.</i>";
-    for (const id of s.storeStock) {
-      const it = STORE_STOCK.find(x => x.id === id);
-      const afford = s.budget >= it.cost;
-      el.innerHTML += `<div class="loot-item">${it.icon} <b>${it.name}</b> <span style="color:#8f8">$${it.cost}</span><br><small>${it.type === "book" ? it.blurb : it.effect}</small> <button data-buy="${it.id}" data-cost="${it.cost}" ${afford ? "" : "disabled"} style="float:right;background:#153;border:1px solid #4f4;color:#8f8;border-radius:5px;padding:3px 10px;font-family:inherit">BUY</button></div>`;
+    const VENDORS = [
+      ["procurement", "📦 PROCUREMENT — hardware & infrastructure"],
+      ["training", "🎓 TRAINING DEPARTMENT — books & knowledge"],
+      ["innovation", "💡 INNOVATION LAB — experimental technology"],
+    ];
+    for (const [v, header] of VENDORS) {
+      const items = s.storeStock.filter(id => VENDOR_OF(id) === v);
+      if (!items.length) continue;
+      el.innerHTML += `<h4 style="color:#7fd4ff;margin:10px 0 6px">${header}</h4>`;
+      for (const id of items) {
+        const it = STORE_STOCK.find(x => x.id === id);
+        const afford = s.budget >= it.cost;
+        el.innerHTML += `<div class="loot-item">${it.icon} <b>${it.name}</b> <span style="color:#8f8">$${it.cost}</span><br><small>${it.type === "book" ? it.blurb : it.effect}</small> <button data-buy="${it.id}" data-cost="${it.cost}" ${afford ? "" : "disabled"} style="float:right;background:#153;border:1px solid #4f4;color:#8f8;border-radius:5px;padding:3px 10px;font-family:inherit">BUY</button></div>`;
+      }
     }
+    const ownedInfra = (s.infra || []).map(r => TICKET_TYPES.find(t => t.id === r)?.label).filter(Boolean);
     el.innerHTML += `<br><small>Owned: ${[...s.books.map(b => STORE_STOCK.find(x => x.id === b)?.name), ...s.lab.map(k => STORE_STOCK.find(x => x.key === k)?.name)].filter(Boolean).join(", ") || "nothing yet"}</small>`;
+    if (ownedInfra.length) el.innerHTML += `<br><small>🏗️ Infrastructure: ${ownedInfra.join(", ")} — those tickets are retired for good.</small>`;
     el.querySelectorAll("button[data-buy]").forEach(b => b.onclick = () => {
       const it = STORE_STOCK.find(x => x.id === b.dataset.buy);
       if (s.budget < it.cost) return toast("Not enough budget!");
       s.budget -= it.cost;
       if (it.type === "book") { s.books.push(it.id); toast(`📖 Learned a new move: ${it.blurb.replace("Teaches: ", "")}!`); }
+      else if (it.type === "infra") { s.infra.push(it.retire); toast(`🏗️ ${it.name} deployed — no more "${TICKET_TYPES.find(t => t.id === it.retire).label}" tickets. Ever.`, 4000); }
       else { s.lab.push(it.key); applyLab(it.key); toast(`🔧 ${it.name} installed: ${it.effect}`); }
       s.storeStock = s.storeStock.filter(x => x !== it.id);
       sfx("loot");
