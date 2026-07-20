@@ -921,12 +921,14 @@ function draw() {
   const tm = performance.now();
   const ts = cv.height / 14; // tiles visible vertically
   ctx.fillStyle = "#dfe3e8"; ctx.fillRect(0, 0, cv.width, cv.height);
-  camX = clamp(s.px * TILE + TILE / 2 - cv.width / 2, 0, MAPW * TILE - cv.width);
-  camY = clamp(s.py * TILE + TILE / 2 - cv.height / 2, 0, MAPH * TILE - cv.height);
   const sc = ts / TILE;
+  // visible world size (in px) — the camera must pan across the WHOLE map
+  const viewW = cv.width / sc, viewH = cv.height / sc;
+  camX = clamp(s.px * TILE + TILE / 2 - viewW / 2, 0, Math.max(0, MAPW * TILE - viewW));
+  camY = clamp(s.py * TILE + TILE / 2 - viewH / 2, 0, Math.max(0, MAPH * TILE - viewH));
   ctx.save(); ctx.scale(sc, sc); ctx.translate(-camX, -camY);
-  const x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(MAPW - 1, Math.ceil((camX + cv.width / sc) / TILE));
-  const y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(MAPH - 1, Math.ceil((camY + cv.height / sc) / TILE));
+  const x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(MAPW - 1, Math.ceil((camX + viewW) / TILE));
+  const y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(MAPH - 1, Math.ceil((camY + viewH) / TILE));
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (let y = y0; y <= y1; y++) { const row = s.map[y]; if (!row) continue; for (let x = x0; x <= x1; x++) drawTile(row[x] || 0, x, y, tm); }
   // biome floor labels
