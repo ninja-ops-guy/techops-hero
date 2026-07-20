@@ -139,6 +139,23 @@ const CERT_ABILITIES = {
   ccna: { id: "acl", name: "ACL Strike", icon: "⚡", dmg: [20, 30], stress: 12 },
   cloud: { id: "scale", name: "Auto-Scale", icon: "☁️", dmg: [8, 12], stress: 6, regen: true },
 };
+// ---------- evidence-based battles: the enemy is UNCERTAINTY, not just HP ----------
+// moves fall into troubleshooting categories; recon tools double as Inspect actions
+const INSPECT_IDS = ["ping", "tracert", "eventvwr", "wireshark", "siem"];
+const WORKFLOW_ABILITIES = [
+  { id: "ask", name: "Ask User", icon: "💬", cat: "ask", dmg: [0, 0], stress: 0, desc: "When did it start? What changed? Free recon." },
+  { id: "interview", name: "Guided Interview", icon: "🗣️", cat: "ask", dmg: [0, 0], stress: 6, desc: "Structured multi-part questioning. Big uncertainty drop.", minRank: 3 },
+  { id: "verify", name: "Verify Fix", icon: "✔️", cat: "verify", dmg: [0, 0], stress: 4, desc: "User test + log check. Prevents repeat tickets." },
+  { id: "document", name: "Document Work", icon: "📝", cat: "document", dmg: [0, 0], stress: 0, desc: "Good notes: +5 XP, -5 stress, audit armor. Once per battle." },
+  { id: "randomfix", name: "Try Random Fix", icon: "🎲", cat: "chaos", dmg: [0, 0], stress: 8, desc: "No evidence, pure luck. Builds tech debt when it fails." },
+];
+const ASK_LINES = [
+  `"When did it start?" — "Right after the update, now that you mention it..."`,
+  `"Has anything changed?" — "Well... facilities DID move my desk yesterday."`,
+  `"Does anyone else have this?" — "Actually, yes — the whole east row!"`,
+  `"Can you show me?" — the user reproduces it on demand. Golden.`,
+  `"What were you doing when it broke?" — "Running the quarterly macro..."`,
+];
 const LOOT_TABLE = [
   { name: "USB Drive", icon: "💾", rarity: "common", stat: "hardware", val: 2 },
   { name: "Cat6 Cable", icon: "🔌", rarity: "common", stat: "networking", val: 2 },
@@ -1062,7 +1079,8 @@ function startBattle(portal) {
   const ageMin = npc.age || 0;
   if (ageMin >= 60) hp = Math.round(hp * (1 + Math.min(ageMin, 240) / 60 * .05));
   const SIGS = { malware: ["enclock", "ransom"], dns: ["spawn", "poison"], bsod: ["crash", "freeze"] };
-  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false, sig: pick(SIGS[t.id] || ["overload", "wipe"]), forkBomb: false };
+  B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false, sig: pick(SIGS[t.id] || ["overload", "wipe"]), forkBomb: false,
+    uncertainty: boss ? 90 : 70, evidence: 0, hyp: false, hypFailed: false, hypChoice: false, verified: false, documented: false, seq: [] };
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -1073,12 +1091,12 @@ function startBattle(portal) {
   blog(boss
     ? `<span class="sys">⚠️ The corruption is MASSIVE here. <b>${BOSS_NAMES[t.id] || t.enemy}</b> rises from the ${t.world}. This is a BOSS fight — watch for phase changes!</span>`
     : `<span class="sys">You step through the portal into the <b>${t.world}</b>. A ${t.enemy} manifests!</span>`);
-  blog(`<span class="sys">Tip: use 📡 Ping to recon the enemy's weaknesses.</span>`);
+  blog(`<span class="sys">🔍 <b>Troubleshoot it:</b> 💬 Ask and Inspect (Ping, Event Viewer, Wireshark...) to burn down <b>UNCERTAINTY</b> — fixes executed blind are weak and can backfire. Form a hypothesis at ≤50%, Execute, then ✔️ Verify before closing.</span>`);
   renderBattle();
 }
 function blog(h) { B.log.push(h); $("battle-log").innerHTML = B.log.slice(-30).join("<br>"); $("battle-log").scrollTop = 1e6; }
 function battleAbilities() {
-  const list = [...ABILITIES];
+  let list = [...ABILITIES];
   const ri = RANKS.indexOf(rank());
   for (const m of MOVE_LEVELS) if (ri >= m.rank) list.push(m.ability);
   for (const c of S.certs) if (CERT_ABILITIES[c]) list.push(CERT_ABILITIES[c]);
@@ -1089,19 +1107,51 @@ function battleAbilities() {
     const mv = MOVE_LEVELS.find(m => m.ability.id === stock.move)?.ability || CERT_ABILITIES[stock.move];
     if (mv && !list.some(a => a.id === mv.id)) list.push(mv);
   }
+  // categorize: recon tools are Inspect, everything else with damage is Execute
+  list = list.map(a => ({ ...a, cat: INSPECT_IDS.includes(a.id) ? "inspect" : "execute" }));
+  // workflow actions
+  for (const w of WORKFLOW_ABILITIES) {
+    if (w.minRank && ri < w.minRank) continue;
+    if (w.id === "verify" || w.id === "document" || w.id === "randomfix" || w.cat === "ask") list.push({ ...w });
+  }
+  // hypothesis becomes available once uncertainty is beaten down
+  if (B && !B.hyp && !B.hypFailed && B.uncertainty <= 50) list.push({ id: "hypothesize", name: "Form Hypothesis", icon: "🧠", cat: "hyp", dmg: [0, 0], stress: 5, desc: "Commit to a root cause: +50% fix damage if right." });
   return list;
 }
 function renderBattle() {
   const s = S;
   $("enemy-hp").style.width = clamp(B.hp / B.maxHp * 100, 0, 100) + "%";
+  const uncEl = $("enemy-unc");
+  if (uncEl) {
+    uncEl.style.width = clamp(B.uncertainty, 0, 100) + "%";
+    $("enemy-unc-text").textContent = B.hyp ? `HYPOTHESIS LOCKED — ${B.t.diag.best.toUpperCase()}` : `UNCERTAINTY ${Math.round(B.uncertainty)}% · EVIDENCE ${B.evidence}`;
+  }
   $("player-hp").style.width = clamp(s.hp / s.maxHp * 100, 0, 100) + "%";
   $("player-hp-text").textContent = `HP ${s.hp}/${s.maxHp} · Stress ${s.stress}/100`;
   const box = $("battle-actions"); box.innerHTML = "";
+  // hypothesis sub-choice: pick the root cause from evidence
+  if (B.hypChoice) {
+    const opts = B.hypChoice.map(c => {
+      const b = document.createElement("button");
+      b.className = "hyp-btn";
+      b.innerHTML = `${c.correct ? "🧠" : "❓"} ${c.text}`;
+      b.onclick = () => resolveHypothesis(c.correct);
+      box.appendChild(b);
+    });
+    return;
+  }
   for (const a of battleAbilities()) {
     const b = document.createElement("button");
     const locked = B.locks[a.id] > 0;
-    b.innerHTML = `${a.icon} ${a.name}<span class="cost">${locked ? `🔐 encrypted ${B.locks[a.id]}t` : a.stress > 0 ? "+" + a.stress + " stress" : a.stress < 0 ? a.stress + " stress" : "free"}</span>`;
-    b.disabled = locked || s.stress + a.stress > 100;
+    let cost = locked ? `🔐 encrypted ${B.locks[a.id]}t` : a.stress > 0 ? "+" + a.stress + " stress" : a.stress < 0 ? a.stress + " stress" : "free";
+    // telegraph risk: blind executes are weak
+    if (a.cat === "execute" && a.dmg[1] > 0 && B.uncertainty > 60) cost += " ⚠️ blind";
+    if (a.cat === "verify" && B.hp > B.maxHp * .4) cost = "🔒 fix first";
+    b.innerHTML = `${a.icon} ${a.name}<span class="cost">${cost}</span>`;
+    b.disabled = locked || s.stress + a.stress > 100 ||
+      (a.cat === "verify" && B.hp > B.maxHp * .4) ||
+      (a.cat === "document" && B.documented) ||
+      (a.cat === "verify" && B.verified);
     b.onclick = () => doAbility(a);
     box.appendChild(b);
   }
@@ -1109,12 +1159,29 @@ function renderBattle() {
 function doAbility(a) {
   const s = S;
   if (!B || B.over) return;
+  if (a.cat && a.cat !== "execute") return workflowAction(a);
+  B.seq.push("execute");
   addStress(a.stress);
   s.meta.cmds++;
   let dmg = 0;
   if (a.dmg[1] > 0) {
+    // blind fix backfire: executing with >60% uncertainty can make things WORSE
+    if (B.uncertainty > 60 && Math.random() < .35) {
+      B.uncertainty = clamp(B.uncertainty + 8, 0, 100);
+      s.meta.debt++; B.npc.trustHurt = true;
+      addStress(6);
+      sfx("bad");
+      blog(`<span class="sys">💥 <b>BLIND FIX BACKFIRED!</b> You changed settings without evidence — the problem mutates and the user watched you do it. (+1 tech debt)</span>`);
+      enemyPhase();
+      if (!B || B.over) return;
+      renderBattle(); updateHUD();
+      return;
+    }
     const bonus = statBonus(B.t.stat);
     dmg = R(a.dmg[0], a.dmg[1]) + Math.round(bonus / 2);
+    // evidence multiplier: fixes land at full strength only when uncertainty is low
+    dmg = Math.max(1, Math.round(dmg * (1 - B.uncertainty / 220)));
+    if (B.hyp) dmg = Math.round(dmg * 1.5);
     if (B.weakened) dmg = Math.round(dmg * 1.25);
     // IT-accurate effectiveness: right tool for the right problem
     const tac = ENEMY_TACTICS[B.t.id];
@@ -1127,12 +1194,6 @@ function doAbility(a) {
     sfx("hit");
     blog(`<span class="sys">C:\\&gt; ${ABILITY_CMDS[a.id] || a.name}</span>`);
     blog(`<span class="dmg">${a.icon} ${a.name} hits for <b>${dmg}</b>!${note}</span>`);
-    // Ping doubles as recon: reveals the enemy's weakness profile
-    if (a.id === "ping" && !B.revealed && tac) {
-      B.revealed = true;
-      const names = id => (ABILITIES.concat(Object.values(CERT_ABILITIES), MOVE_LEVELS.map(m => m.ability)).find(x => x.id === id) || {}).name || id;
-      blog(`<span class="sys">📡 Recon complete — replies from target. Analysis: weak to <b>${tac.weak.map(names).join(", ")}</b>; resists <b>${tac.resist.map(names).join(", ")}</b>.</span>`);
-    }
   }
   if (a.heal) { s.hp = clamp(s.hp + a.heal, 0, s.maxHp); blog(`<span class="heal">+${a.heal} HP</span>`); }
   if (a.shield) { B.shield = true; blog(`<span class="sys">🧱 Firewall up — next hit halved.</span>`); }
@@ -1158,6 +1219,12 @@ function doAbility(a) {
     sfx("bad");
     blog(`<span class="sys">☠️ <b>FORK BOMB</b> — palan0 replicates uncontrollably (+8 HP/turn). KILL HIM BEFORE HE OVERFLOWS THE NETWORK!</span>`);
   }
+  enemyPhase();
+  if (!B || B.over) return;
+  renderBattle(); updateHUD();
+}
+function enemyPhase() {
+  const s = S;
   // enemy turn
   B.turns++;
   if (B.stunned) { B.stunned = false; }
@@ -1227,8 +1294,93 @@ function doAbility(a) {
   if (B.poison > 0) { B.poison--; s.hp -= 4; blog(`☠️ Cache poison burns you for 4.`); }
   if (B.forkBomb) { B.hp = Math.min(B.maxHp, B.hp + 8); blog(`☠️ palan0 replicates... <b>+8 HP</b>`); }
   if (s.hp <= 0) return loseBattle();
+}
+
+// ---------- troubleshooting workflow actions (ask / inspect / hypothesize / verify / document) ----------
+function workflowAction(a) {
+  const s = S;
+  addStress(a.stress);
+  const tac = ENEMY_TACTICS[B.t.id];
+  if (a.cat === "ask") {
+    B.seq.push("ask");
+    const red = a.id === "interview" ? R(18, 26) : R(8, 14);
+    B.uncertainty = clamp(B.uncertainty - red, 0, 100);
+    B.evidence += a.id === "interview" ? 2 : 1;
+    blog(`<span class="sys">💬 ${pick(ASK_LINES)}</span>`);
+    blog(`<span class="heal">Evidence gathered — uncertainty -${red}% (now ${Math.round(B.uncertainty)}%).</span>`);
+    if (a.id === "interview") blog(`<span class="sys">🗣️ Guided interview: the user walks you through the whole failure timeline.</span>`);
+  } else if (a.cat === "inspect") {
+    B.seq.push("inspect");
+    let red, note;
+    if (tac?.weak.includes(a.id)) { red = R(20, 30); B.evidence += 2; note = " ✅ <b>the right diagnostic</b> — the telemetry is damning!"; }
+    else if (tac?.resist.includes(a.id)) { red = R(4, 8); B.evidence += 0; note = ` ⚠️ <b>wrong tool</b> — ${tac.resistNote}`; }
+    else { red = R(12, 18); B.evidence += 1; note = ""; }
+    B.uncertainty = clamp(B.uncertainty - red, 0, 100);
+    blog(`<span class="sys">C:\\&gt; ${ABILITY_CMDS[a.id] || a.name}</span>`);
+    blog(`<span class="heal">🔍 ${a.name} reveals new evidence — uncertainty -${red}% (now ${Math.round(B.uncertainty)}%).${note}</span>`);
+    // recon still reveals the weakness profile
+    if (!B.revealed && tac) {
+      B.revealed = true;
+      const names = id => (ABILITIES.concat(Object.values(CERT_ABILITIES), MOVE_LEVELS.map(m => m.ability)).find(x => x.id === id) || {}).name || id;
+      blog(`<span class="sys">📋 Analysis: weak to <b>${tac.weak.map(names).join(", ")}</b>; resists <b>${tac.resist.map(names).join(", ")}</b>.</span>`);
+    }
+  } else if (a.cat === "hyp") {
+    // commit to a root cause: best answer vs plausible wrong answers
+    const wrongs = [...B.t.diag.wrong].sort(() => Math.random() - .5).slice(0, 2);
+    B.hypChoice = [
+      { text: B.t.diag.best, correct: true },
+      ...wrongs.map(w => ({ text: w, correct: false })),
+    ].sort(() => Math.random() - .5);
+    blog(`<span class="sys">🧠 Evidence points somewhere. <b>What's the root cause?</b></span>`);
+    renderBattle();
+    return;
+  } else if (a.cat === "verify") {
+    B.seq.push("verify");
+    B.verified = true;
+    blog(`<span class="heal">✔️ <b>Verified:</b> user confirms the fix holds, logs are clean, monitoring shows green. This one won't bounce back.</span>`);
+  } else if (a.cat === "document") {
+    B.documented = true;
+    addXP(5); addStress(-5);
+    s.journal.push({ day: s.day, title: `${B.t.label} — field notes`, body: `Symptoms observed, hypothesis formed, tests run. Root cause: ${B.hyp ? B.t.diag.best : "(still under investigation)"}. Good documentation trains the whole team.` });
+    blog(`<span class="heal">📝 Documented: +5 XP, -5 stress. Future techs thank you — including your hires.</span>`);
+  } else if (a.cat === "chaos") {
+    B.seq.push("chaos");
+    if (Math.random() < .3) {
+      const dmg = R(15, 25);
+      B.hp -= dmg;
+      blog(`<span class="dmg">🎲 Random fix... <b>it worked?!</b> ${dmg} complexity removed. Nobody will ever know why. (Least of all you.)</span>`);
+      if (B.hp <= 0) return winBattle();
+    } else {
+      s.meta.debt++;
+      B.uncertainty = clamp(B.uncertainty + 10, 0, 100);
+      B.npc.trustHurt = true;
+      sfx("bad");
+      blog(`<span class="sys">🎲 Random fix failed — you knocked something else loose. <b>+1 tech debt</b>, uncertainty +10%.</span>`);
+    }
+  }
+  enemyPhase();
+  if (!B || B.over) return;
   renderBattle(); updateHUD();
 }
+function resolveHypothesis(correct) {
+  const s = S;
+  B.hypChoice = false;
+  if (correct) {
+    B.hyp = true;
+    B.uncertainty = clamp(B.uncertainty - 15, 0, 100);
+    blog(`<span class="heal">🎯 <b>HYPOTHESIS CONFIRMED:</b> ${B.t.diag.best}. Fixes now hit +50% — execute with confidence!</span>`);
+    sfx("win");
+  } else {
+    B.hypFailed = true;
+    B.uncertainty = clamp(B.uncertainty + 10, 0, 100);
+    addStress(8);
+    blog(`<span class="sys">❌ Wrong call — the evidence doesn't support it. Uncertainty +10%. (The root cause was: ${B.t.diag.best}.)</span>`);
+    enemyPhase();
+    if (!B || B.over) return;
+  }
+  renderBattle(); updateHUD();
+}
+
 function winBattle() {
   const s = S, n = B.npc, t = B.t;
   B.over = true;
@@ -1259,6 +1411,23 @@ function winBattle() {
   checkAch();
   const cash = R(15, 40) * (s.chaos?.id === "audit" ? 2 : 1);
   s.budget += cash; blog(`<span class="heal">💰 +$${cash} budget</span>`);
+  // verification & method bonuses (evidence-based troubleshooting pays off)
+  if (B.verified) {
+    n.verifiedFix = true;
+    addXP(10);
+    s.rep[n.dept] = clamp(s.rep[n.dept] + 1, 0, 5);
+    blog(`<span class="heal">✔️ Verified resolution — the fix will hold. +10 XP, +1 ${n.dept} rep.</span>`);
+  } else if (Math.random() < .4) {
+    // skipped verification: the ticket may bounce back as a repeat
+    n.pendingRepeat = true;
+    blog(`<span class="sys">⚠️ You closed it without verifying... hope it stays fixed.</span>`);
+  }
+  const firstExec = B.seq.indexOf("execute");
+  const didRecon = B.seq.some(c => c === "ask" || c === "inspect");
+  if (didRecon && (firstExec === -1 || B.seq.findIndex(c => c === "ask" || c === "inspect") < firstExec) && B.verified) {
+    addXP(15);
+    blog(`<span class="heal">🔬 <b>SCIENTIFIC METHOD BONUS</b> — observe, hypothesize, test, verify. +15 XP.</span>`);
+  }
   B.portal.cleared = true;
   setTimeout(() => {
     $("battle").classList.add("hidden");
@@ -1320,7 +1489,7 @@ function resolveTicket(n) {
   const s = S;
   n.done = true; s.ticketsDone++;
   s.meta.recentTypes = s.meta.recentTypes || [];
-  if (!n.correctDiag) s.meta.recentTypes.push(n.type.id);
+  if (!n.correctDiag || n.pendingRepeat) s.meta.recentTypes.push(n.type.id);
   while (s.meta.recentTypes.length > 6) s.meta.recentTypes.shift();
   sfx("ticket");
   s.thumbsUntil = performance.now() + 1200;
