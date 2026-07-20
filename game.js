@@ -206,6 +206,8 @@ const STORE_STOCK = [
   { id: "lab_punch", name: "Punch-Down Tool", icon: "🔨", cost: 160, type: "lab", effect: "+2 hardware", key: "punch" },
   { id: "lab_faraday", name: "Faraday Bag", icon: "👝", cost: 240, type: "lab", effect: "+2 security", key: "faraday" },
   { id: "lab_kb", name: "Ergonomic Keyboard", icon: "⌨️", cost: 300, type: "lab", effect: "-15% stress from all sources", key: "kb" },
+  { id: "lab_skate", name: "Skateboard", icon: "🛹", cost: 350, type: "lab", effect: "+20% move speed — kick, push, coast between tickets", key: "skate" },
+  { id: "lab_tugger", name: "Factory Tugger (Mini Car)", icon: "🛺", cost: 900, type: "lab", effect: "+45% move speed — the little cart that hauls parts across the floor", key: "tugger" },
 ];
 function applyLab(key) {
   const s = S;
@@ -265,6 +267,13 @@ const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_sa
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
+// rideables: skateboard & factory tugger stack with the coffee mug bonus
+const moveSpeed = () => {
+  let v = coffeeMug() ? 3.4 : 3.0;
+  if (S.lab.includes("skate")) v *= 1.2;
+  if (S.lab.includes("tugger")) v *= 1.45;
+  return v;
+};
 
 // ---------- retro SFX (WebAudio, no assets) ----------
 let AC = null;
@@ -720,6 +729,12 @@ function drawPlayer(s, tm) {
     ctx.drawImage(playerImg, cx * C, cy * C, C, C, dx, dy, dw, dh);
   }
   ctx.restore();
+  // rideable drawn under the player
+  const ride = s.lab.includes("tugger") ? "🛺" : s.lab.includes("skate") ? "🛹" : null;
+  if (ride) {
+    ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(ride, dx + dw / 2, dy + dh - 2);
+  }
 }
 function drawSpr(rows, pal, tx, ty, flip) {
   const w = Math.max(...rows.map(r => r.length)), h = rows.length;
@@ -860,7 +875,7 @@ function step(dt) {
   if (Math.abs(dx) > .1) s.dir = dx > 0 ? 1 : -1;
   if (Math.abs(dx) > Math.abs(dy)) s.fx = dx > 0 ? "right" : "left";
   else if (Math.abs(dy) > .1) s.fx = dy > 0 ? "down" : "up";
-  moveAcc += dt * (coffeeMug() ? 3.4 : 3.0); // tiles per second
+  moveAcc += dt * moveSpeed(); // tiles per second
   if (moveAcc < 1) return;
   moveAcc = 0;
   const nx = clamp(Math.round(s.px + (Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) : 0)), 1, MAPW - 2);
