@@ -310,6 +310,27 @@ const MISDIAG_NOTES = [
   "replaced the keyboard to fix a software issue",
   "disabled the firewall 'temporarily' three days ago",
 ];
+// ---------- drama: every critical gets a codename; some systems are LEGENDARY ----------
+const INCIDENT_NAMES = ["OPERATION BLACKOUT", "THE RED WORM", "GHOST VLAN", "THE SILENT SWITCH", "THE PHANTOM PATCH", "ZERO HOUR", "THE LONG PING", "CASCADE PROTOCOL", "THE MERIDIAN FAULT", "STATIC STORM"];
+const LEGACY_SYSTEMS = [
+  { code: "THE DINOSAUR", line: `"DC01. Seventeen years old. Never rebooted. Nobody remembers why. Nobody dares try."` },
+  { code: "OL' RELIABLE", line: `"The PLC on Line 4 has run since 1998. Every engineer who touched it... transferred."` },
+  { code: "PRN-17", line: `"The entire factory prints labels through PRN-17. There is no PRN-16. Do not ask."` },
+  { code: "THE UNKNOWN FIBER", line: `"Labeled DO NOT DISCONNECT in 2004. Nobody knows the other end. It hums."` },
+  { code: "CORE 2", line: `"Walter built it. Walter retired. The documentation retired with him."` },
+];
+const RUMORS = [
+  `"Don't touch Switch 17. Just... don't."`,
+  `"The old server room is haunted. Fans spin up at 3 AM with the power cut."`,
+  `"Accounting still has an XP box. It processes payroll. We do not speak of it."`,
+  `"Everyone blames DNS. It's never DNS. Except Tuesday. Tuesday it was DNS."`,
+  `"There was a fourth core switch once. There is no fourth core switch now."`,
+];
+const VENDOR_QUOTES = {
+  procurement: [`"I found ONE Fluke tester. Do you know what these go for?"`, `"These switches fell off a truck. Kidding. Mostly."`, `"UPS batteries. Fresh stock. The old ones caught fire, so."`],
+  training: [`"Network+ books are on sale. Nobody bought Cloud. Again."`, `"The Phoenix Project changed my life. No pressure."`, `"Certification is a journey. The journey costs $250."`],
+  innovation: [`"I built something weird. Legal hasn't seen it yet."`, `"The copilot passed its evals. Mostly. Buy it."`, `"This automation server replaced two interns. Metaphorically."`],
+};
 const NPC_NAMES = ["Dana", "Marcus", "Priya", "Tom", "Yuki", "Carlos", "Wanda", "Earl", "Nadia", "Greg", "Sue", "Vikram", "Betty", "Hank", "Lena", "Otis"];
 const STAFF_NAMES = ["Kenji", "Rosa", "Dev", "Amara", "Luis", "Ingrid", "Theo", "Mabel", "Jules", "Ravi", "Nina", "Cole"];
 const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "📓 Admin journal: 'The root account... it changes its own password now.'", "🗄️ Forgotten server: it's been up 3,412 days. Nobody knows what it does.", "📼 VHS tape: 'ORIENTATION 1987 — the building's network predates the building.'", "🖥️ Terminal: a lone process named 'palan0' has been running since boot..."];
@@ -326,7 +347,7 @@ function newState() {
     rep: Object.fromEntries(DEPTS.map(d => [d, 1])),
     tickets: [], ticketsDone: 0, ticketsTotal: 0, lootToday: 0,
     chaos: null, promoted: false, autoUsed: false,
-    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [], kb: {} },
+    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [], kb: {}, incidents: 0, mttr: [], hires: 0 },
     ach: [], books: [], lab: [], storeStock: [], stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
     staff: [], audited: false, infra: [],
     px: 0, py: 0, dir: 1, fx: "down", moving: false,
@@ -335,7 +356,7 @@ function newState() {
   };
 }
 const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra })); } catch (e) { } };
-const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; } return d; } catch (e) { return null; } };
+const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; d.meta.incidents = d.meta.incidents || 0; d.meta.mttr = d.meta.mttr || []; d.meta.hires = d.meta.hires || 0; } return d; } catch (e) { return null; } };
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
@@ -553,8 +574,20 @@ function setupDay() {
       dept === "Executives" ? "executive" :
       type.id === "plc" ? "manufacturing" :
       Math.random() < .15 ? "problem" : "routine";
+    if (npc.critical) npc.codename = pick(INCIDENT_NAMES);
     s.npcs.push(npc); s.tickets.push(npc);
     // a broken device + portal appear near the NPC after diagnosis
+  }
+  // LEGACY SYSTEMS: legendary infrastructure nobody understands — mini-bosses with names
+  const legacyCount = Math.random() < .35 ? 2 : 1;
+  const legacyCandidates = s.tickets.filter(t => !t.critical && t.type.id !== "shadow");
+  for (let li = 0; li < Math.min(legacyCount, legacyCandidates.length); li++) {
+    const victim = legacyCandidates[li];
+    const leg = pick(LEGACY_SYSTEMS.filter(l => !s.tickets.some(t => t.legacy === l.code)));
+    if (!leg) break;
+    victim.legacy = leg.code; victim.legacyLine = leg.line;
+    victim.critical = true; victim.codename = leg.code;
+    s.meta.kb = s.meta.kb || {};
   }
   // tech debt consequence: sloppy past fixes resurface as repeat tickets
   const repeats = s.meta.recentTypes || [];
@@ -1109,9 +1142,13 @@ function ambientTalk(n) {
     `"You're the one who 'fixed' it last time, right? ...It's doing it again."`,
     `"My files came back last time, but my faith in IT didn't."`,
   ];
+  const legacyHere = S.tickets.find(t => t.legacy && !t.done);
   const lines = [
     ...(n.trustHurt ? trustLines : []),
     ...(deptLines[n.dept] || []),
+    pick(RUMORS),
+    ...(legacyHere ? [legacyHere.legacyLine] : []),
+    ...(S.legendLine && Math.random() < .25 ? [S.legendLine] : []),
     `Heard the ${pick(["server room", "MDF", "fiber vault"])} hums at night. Creepy.`,
     `Word is the old root account is still active somewhere...`,
   ];
@@ -1144,7 +1181,7 @@ function ticketFlow(n) {
       shadow: `"ACCESS GRANTED... — the terminal is typing by itself: 'i remember this building. i remember YOU.'`,
     };
     dlg(`${n.name} — ${n.dept} ${n.critical ? "🚨" : ""}`,
-      `<b>${t.icon} ${t.label}</b>${n.repeat ? ' <span style="color:#ffb347">🔁 REPEAT</span>' : ""}<br>${symptoms[t.id]}${n.trustHurt ? '<br><i>"...and please don’t just restart it — last time we lost two hours."</i>' : ""}<br><small>Interview the user, then form a hypothesis.</small>`,
+      `${n.legacy ? `<span style="color:#ffd24a">🏛️ <b>LEGACY SYSTEM: ${n.legacy}</b></span><br><i>${n.legacyLine}</i><br><br>` : ""}<b>${t.icon} ${t.label}</b>${n.repeat ? ' <span style="color:#ffb347">🔁 REPEAT</span>' : ""}<br>${symptoms[t.id]}${n.trustHurt ? '<br><i>"...and please don’t just restart it — last time we lost two hours."</i>' : ""}<br><small>Interview the user, then form a hypothesis.</small>`,
       [{ t: "🔍 Form a diagnosis", f: () => diagnose(n) }]);
     return;
   }
@@ -1234,7 +1271,7 @@ function startBattle(portal) {
   $("enemy-sprite").style.filter = boss ? "drop-shadow(0 0 20px #f44)" : "drop-shadow(0 0 12px #a0f)";
   $("enemy-name").textContent = boss ? `👹 ${BOSS_NAMES[t.id] || "BOSS: " + t.enemy} 👹` : `${t.enemy} — ${t.world}`;
   blog(boss
-    ? `<span class="sys">⚠️ The corruption is MASSIVE here. <b>${BOSS_NAMES[t.id] || t.enemy}</b> rises from the ${t.world}. This is a BOSS fight — watch for phase changes!</span>`
+    ? `<span class="sys">⚠️ ${npc.codename ? `<b>«${npc.codename}»</b> — ` : ""}The corruption is MASSIVE here. <b>${BOSS_NAMES[t.id] || t.enemy}</b> rises from the ${t.world}. This is a BOSS fight — watch for phase changes!</span>`
     : `<span class="sys">You step through the portal into the <b>${t.world}</b>. A ${t.enemy} manifests!</span>`);
   if (B.personality && B.personality !== "routine") blog(`<span class="sys">🎭 <b>${B.personality.toUpperCase()} ticket</b> — ${{ security: "evidence decays over time! Uncertainty regrows each turn.", problem: "hidden systemic cause. Deeper uncertainty, richer rewards.", executive: "an exec is watching. Every turn costs composure (+stress).", manufacturing: "every turn burns production money." }[B.personality] || ""}</span>`);
   blog(`<span class="sys">🔍 <b>Troubleshoot it:</b> 💬 Ask and Inspect (Ping, Event Viewer, Wireshark...) to burn down <b>UNCERTAINTY</b> — fixes executed blind are weak and can backfire. Form a hypothesis at ≤50%, Execute, then ✔️ Verify before closing.</span>`);
@@ -1738,6 +1775,13 @@ function resolveTicket(n) {
     s.devices = s.devices.filter(d => d.npc !== n.id);
     setTimeout(() => toast(`⛓️ ESCALATION — ${pick(CHAIN_LINES)}<br><b>${nt.icon} ${nt.label}</b> (${n.dept})`, 3500), 2700);
   }
+  // incident closure: log the MTTR — the factory remembers how fast you were
+  if (n.incidentDeclared) {
+    const mttr = Math.max(1, s.clock - (n.incidentStart || s.clock));
+    s.meta.mttr.push(mttr);
+    s.journal.push({ day: s.day, title: `INCIDENT CLOSED — «${n.codename || "CRISIS"}»`, body: `Resolved in ${mttr} minutes from declaration. Post-incident review scheduled. ${n.verifiedFix ? "Fix verified — clean closure." : "⚠️ Closed WITHOUT verification."}` });
+    toast(`✅ INCIDENT CLOSED — «${n.codename}»<br><small>MTTR: ${mttr} min. The war room stands down.</small>`, 3800);
+  }
   let repGain = 1;
   if (s.chaos?.id === "ceo" && n.dept === "Executives") repGain = 2;
   // the environment remembers: the dept's biome flashes gold when you save it
@@ -1834,6 +1878,15 @@ function advanceClock(min) {
       s.rep[n.dept] = Math.max(0, s.rep[n.dept] - 1);
       toast(`😠 <b>${n.dept}</b> is losing patience over "${n.type.label}"... (-1 rep)`, 3000);
     }
+    // MAJOR INCIDENT: a neglected critical becomes a plant-wide emergency
+    if (n.critical && n.age >= 90 && !n.incidentDeclared) {
+      n.incidentDeclared = true; n.incidentStart = s.clock;
+      s.meta.incidents++;
+      sfx("bad");
+      s.flashBiome = "exec"; s.flashUntil = performance.now() + 2500;
+      toast(`🚨 <b>MAJOR INCIDENT DECLARED</b><br><b>«${n.codename || "UNNAMED CRISIS"}»</b> — ${n.type.label} (${n.dept})<br><small>Executives are in the war room. Clock is running.</small>`, 5000);
+      s.journal.push({ day: s.day, title: `MAJOR INCIDENT — «${n.codename || "CRISIS"}»`, body: `Declared at ${fmtClock(s.clock)} after ${n.age} minutes unresolved. War room opened. MTTR clock running.` });
+    }
     // problems SPREAD to other departments if ignored too long
     if (n.age >= 180 && !n.cascaded && CHAINS[n.type.id] && !s.cascadeUsed) {
       n.cascaded = true; s.cascadeUsed = true;
@@ -1882,8 +1935,36 @@ function updateHUD() {
   const open = s.tickets.filter(t => !t.done);
   $("quest-tracker").innerHTML =
     s.tickets.filter(t => t.done).map(t => `<div class="done">✅ ${t.type.label} (${t.dept})</div>`).join("") +
-    open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}${t.mishandled ? " ⚠️ botched" : (t.age || 0) >= 120 ? " 🔥" : (t.age || 0) >= 60 ? " ⏳" : ""}</div>`).join("");
+    open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label}${t.codename ? ` <span style="color:#ff9d4a">«${t.codename}»</span>` : ""} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}${t.mishandled ? " ⚠️ botched" : (t.age || 0) >= 120 ? " 🔥" : (t.age || 0) >= 60 ? " ⏳" : ""}</div>`).join("");
   updateSweep();
+}
+
+// ---------- career report: the factory scores you ----------
+function careerReport() {
+  const s = S, m = s.meta;
+  const kbCount = Object.keys(m.kb || {}).length;
+  const avgMttr = m.mttr.length ? Math.round(m.mttr.reduce((a, b) => a + b, 0) / m.mttr.length) : null;
+  const prodSaved = (m.closed * 42000 / 1e6).toFixed(1);
+  const score = m.closed * 2 + kbCount * 10 + (s.infra || []).length * 15 + (m.hires || 0) * 12 + m.incidents * 10 - m.debt * 8 + s.ach.length * 5;
+  const legacy = score >= 250 ? "🌟 LEGENDARY" : score >= 120 ? "🎖️ VETERAN" : score >= 50 ? "🔧 STEADY HAND" : "🌱 PROMISING";
+  // procedural war stories: pull the most dramatic moments from the journal
+  const war = [];
+  const esc = s.journal.find(j => j.title.includes("ESCALATED"));
+  if (esc) war.push(`<b>Closest call:</b> "${esc.title}" — the intern's ${esc.body.split(".")[0].toLowerCase()}.`);
+  const inc = s.journal.find(j => j.title.includes("MAJOR INCIDENT"));
+  if (inc) war.push(`<b>War story:</b> ${inc.title} — declared ${inc.body.split("after ")[1] || ""}.`);
+  const funny = s.journal.find(j => j.title.includes("Printer"));
+  if (funny) war.push(`<b>Funniest ticket:</b> "${funny.title}." It was the spooler. It's always the spooler.`);
+  return `<br><br>📋 <b>CAREER REPORT</b><br>` +
+    `<div style="text-align:left;display:inline-block">` +
+    `🎫 Incidents resolved: <b>${m.closed}</b> (production saved ≈ <b>$${prodSaved}M</b>)<br>` +
+    `🚨 Major incidents: <b>${m.incidents}</b>${avgMttr !== null ? ` · avg MTTR <b>${avgMttr} min</b>` : ""}<br>` +
+    `🧑‍🔧 People mentored: <b>${m.hires || 0}</b> · 🤖 Automation built: <b>${s.lab.includes("autosrv") ? "YES — runs without you" : "none"}</b><br>` +
+    `📝 Knowledge articles: <b>${kbCount}</b> · 🏗️ Systems modernized: <b>${(s.infra || []).length}</b> · ⚠️ Tech debt left: <b>${m.debt}</b><br>` +
+    `🏅 Achievements: <b>${s.ach.length}/${ACHIEVEMENTS.length}</b> · 🎖️ Rank: <b>${rank().name}</b><br>` +
+    (war.length ? `<br>${war.join("<br>")}<br>` : "") +
+    `<br>LEGACY RATING: <b style="color:#ffd24a">${legacy}</b>` +
+    `</div><br><br><i>"A great technician solves problems.<br>A great engineer prevents them.<br>A great leader builds a team that no longer needs them."</i><br><br><small>You leave the badge on the desk. A new hand will pick it up.<br>Everything comes full circle.</small>`;
 }
 
 // ---------- ending / game over ----------
@@ -1901,14 +1982,21 @@ function showEnding(win) {
     $("eod-title").textContent = "👑 ROOT ACCESS GRANTED";
     $("eod-summary").innerHTML =
       `palan0 — the first admin, uploaded into Building 7's network in 1987 — is finally at rest.<br>` +
-      `The tickets will continue. They always do. But today, the network answers to <b>you</b>.<br><br>${stats}`;
+      `The tickets will continue. They always do. But today, the network answers to <b>you</b>.<br><br>${stats}${careerReport()}`;
     $("eod").querySelector("h3").textContent = "Choose your legacy:";
     const box = $("eod-rewards"); box.innerHTML = "";
     const ng = document.createElement("button");
     ng.innerHTML = `<span class="rw-icon">🔄</span><b>NEW GAME+</b><br>Keep certs, books, achievements. Enemies +25% HP.`;
     ng.onclick = () => {
       const keep = { certs: s.certs, books: s.books, ach: s.ach, meta: s.meta, journal: s.journal, lab: s.lab, stressResist: s.stressResist, inv: s.inv, rep: s.rep, stats: s.stats, soft: s.soft };
+      // your previous career becomes someone else's legend
+      const closed = s.meta.closed, kbCount = Object.keys(s.meta.kb || {}).length, auto = s.lab.includes("autosrv");
       S = newState(); Object.assign(S, keep); S.ngPlus = true; S.meta.lore = []; S.shadowDone = false;
+      S.legendLine = auto
+        ? `"I heard about an engineer at AstraDyne who automated everything. ${closed} tickets. Just... gone."`
+        : kbCount > 3
+          ? `"My old mentor taught me never to skip verification. Their documentation saved my career once."`
+          : `"There was an engineer here once. Closed ${closed} tickets. They're a legend in the NOC now."`;
       $("eod").classList.add("hidden");
       startRun();
       toast("🔄 NEW GAME+ — the corruption returns stronger. palan0 left backups...");
@@ -1920,7 +2008,7 @@ function showEnding(win) {
     $("eod").classList.remove("hidden");
   } else {
     $("eod-title").textContent = "🏥 RUN TERMINATED";
-    $("eod-summary").innerHTML = `The manifestation put you in the hospital. HR sends flowers.<br><br>${stats}`;
+    $("eod-summary").innerHTML = `The manifestation put you in the hospital. HR sends flowers.<br><br>${stats}${careerReport()}`;
     $("eod").querySelector("h3").textContent = "The queue never clears itself...";
     const box = $("eod-rewards"); box.innerHTML = "";
     const again = document.createElement("button");
@@ -1933,7 +2021,7 @@ function showEnding(win) {
 }
 function showCredits(stats) {
   $("eod-title").textContent = "🌅 TECHOPS HERO";
-  $("eod-summary").innerHTML = `You retire as the legend of Building 7.<br><br>${stats}<br><br><small>Thanks for playing. A Kimi × ninja-ops-guy production.</small>`;
+  $("eod-summary").innerHTML = `You retire as the legend of Building 7.<br><br>${stats}${careerReport()}<br><br><small>Thanks for playing. A Kimi × ninja-ops-guy production.</small>`;
   $("eod").querySelector("h3").textContent = "";
   const box = $("eod-rewards"); box.innerHTML = "";
   const again = document.createElement("button");
@@ -2111,6 +2199,7 @@ function renderTab(tab) {
       const trait = pick(STAFF_TRAITS);
       const name = pick(STAFF_NAMES.filter(n => !s.staff.some(m => m.name === n)));
       s.staff.push({ id: Date.now() % 100000 + R(0, 99), tier: b.dataset.hire, name, trait: trait.id, burnout: 0, uses: 0, accBonus: 0 });
+      s.meta.hires = (s.meta.hires || 0) + 1;
       sfx("loot");
       toast(`🤝 ${name} the ${trait.name} ${tier.name} joins the team! They'll work leftover tickets at end of day.`);
       renderTab("Team"); updateHUD(); save();
@@ -2134,7 +2223,7 @@ function renderTab(tab) {
     for (const [v, header] of VENDORS) {
       const items = s.storeStock.filter(id => VENDOR_OF(id) === v);
       if (!items.length) continue;
-      el.innerHTML += `<h4 style="color:#7fd4ff;margin:10px 0 6px">${header}</h4>`;
+      el.innerHTML += `<h4 style="color:#7fd4ff;margin:10px 0 6px">${header}</h4><small style="color:#9a9"><i>${pick(VENDOR_QUOTES[v])}</i></small><br>`;
       for (const id of items) {
         const it = STORE_STOCK.find(x => x.id === id);
         const afford = s.budget >= it.cost;
