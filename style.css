@@ -127,3 +127,8 @@ canvas{image-rendering:pixelated;display:block}
 .bar-fill.unc { background: linear-gradient(90deg, #8a6a10, #ffd24a); width: 100%; }
 #enemy-unc-text { font-size: 8px; color: #ffd24a; letter-spacing: 1px; margin-top: 2px; text-align: center; }
 .hyp-btn { border-color: #c9a227 !important; }
+
+/* confidence meter */
+.conf-track { margin-top: 4px; border-color: #4af; }
+.bar-fill.conf { background: linear-gradient(90deg, #1a3a8a, #4af); width: 10%; }
+#enemy-conf-text { font-size: 8px; color: #7fb4ff; letter-spacing: 1px; margin-top: 2px; text-align: center; }
