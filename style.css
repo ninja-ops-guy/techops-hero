@@ -121,3 +121,9 @@ canvas{image-rendering:pixelated;display:block}
 .tbtn.small{width:46px;height:46px;font-size:16px;background:#8883;border-color:#888}
 .tbtn:active{background:#4af8}
 @media (hover:hover) and (pointer:fine){#touch-ui{display:none!important}}
+
+/* uncertainty meter (evidence-based battles) */
+.unc-track { margin-top: 4px; border-color: #c9a227; }
+.bar-fill.unc { background: linear-gradient(90deg, #8a6a10, #ffd24a); width: 100%; }
+#enemy-unc-text { font-size: 8px; color: #ffd24a; letter-spacing: 1px; margin-top: 2px; text-align: center; }
+.hyp-btn { border-color: #c9a227 !important; }
