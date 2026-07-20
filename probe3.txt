@@ -1,2 +1,0 @@
-        <button id="btn-twin" class="hud-btn">🛰️</button>
-        <button id="btn-sweep" class="hud-btn hidden">⚡</button>
