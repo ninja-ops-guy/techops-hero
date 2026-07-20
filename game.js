@@ -149,6 +149,38 @@ const WORKFLOW_ABILITIES = [
   { id: "document", name: "Document Work", icon: "📝", cat: "document", dmg: [0, 0], stress: 0, desc: "Good notes: +5 XP, -5 stress, audit armor. Once per battle." },
   { id: "randomfix", name: "Try Random Fix", icon: "🎲", cat: "chaos", dmg: [0, 0], stress: 8, desc: "No evidence, pure luck. Builds tech debt when it fails." },
 ];
+// ---------- confidence: every piece of evidence has weight, and some clues lie ----------
+const EVIDENCE_TYPES = {
+  ask: "testimony", interview: "testimony",
+  ping: "network", tracert: "network", wireshark: "network",
+  eventvwr: "logs", siem: "logs",
+};
+const EVIDENCE_WEIGHTS = {
+  printer: { testimony: 3, logs: 2, network: 1, config: 2 },
+  vpn: { testimony: 2, logs: 3, network: 4, config: 4 },
+  dns: { testimony: 1, logs: 2, network: 4, config: 3 },
+  ad: { testimony: 2, logs: 4, network: 2, config: 3 },
+  malware: { testimony: 2, logs: 4, network: 3, config: 3 },
+  email: { testimony: 2, logs: 3, network: 2, config: 4 },
+  bsod: { testimony: 2, logs: 4, network: 1, config: 3 },
+  plc: { testimony: 2, logs: 3, network: 4, config: 3 },
+  wifi: { testimony: 3, logs: 2, network: 4, config: 2 },
+  cert: { testimony: 2, logs: 3, network: 3, config: 4 },
+  disk: { testimony: 2, logs: 3, network: 1, config: 4 },
+  update: { testimony: 2, logs: 4, network: 1, config: 3 },
+  share: { testimony: 2, logs: 3, network: 2, config: 4 },
+  vlan: { testimony: 2, logs: 3, network: 4, config: 3 },
+  backup: { testimony: 2, logs: 4, network: 2, config: 3 },
+  slowpc: { testimony: 3, logs: 3, network: 1, config: 3 },
+  shadow: { testimony: 1, logs: 4, network: 3, config: 4 },
+};
+const EVIDENCE_LABEL = { testimony: "User testimony", logs: "System logs", network: "Network data", config: "Configuration state" };
+const FALSE_POSITIVES = [
+  "Ping failed... but wait — that could just be Windows Firewall blocking ICMP. Misleading.",
+  "The error timestamp doesn't line up with the outage. Red herring.",
+  "The user's 'it started after the update' — the update was actually yesterday. Weak correlation.",
+  "That log entry looks scary but it's from a service that always complains. Noise.",
+];
 const ASK_LINES = [
   `"When did it start?" — "Right after the update, now that you mention it..."`,
   `"Has anything changed?" — "Well... facilities DID move my desk yesterday."`,
@@ -271,7 +303,7 @@ function newState() {
     rep: Object.fromEntries(DEPTS.map(d => [d, 1])),
     tickets: [], ticketsDone: 0, ticketsTotal: 0, lootToday: 0,
     chaos: null, promoted: false, autoUsed: false,
-    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [] },
+    meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [], kb: {} },
     ach: [], books: [], lab: [], storeStock: [], stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
     staff: [], audited: false,
     px: 0, py: 0, dir: 1, fx: "down", moving: false,
@@ -280,7 +312,7 @@ function newState() {
   };
 }
 const save = () => { try { localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited })); } catch (e) { } };
-const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; } return d; } catch (e) { return null; } };
+const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; } return d; } catch (e) { return null; } };
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
@@ -492,6 +524,12 @@ function setupDay() {
       done: false, interviewed: false, diagnosed: false, correctDiag: false,
       critical: Math.random() < .12, pv: R(0, PAL_NPCS.length - 1),
     };
+    // ticket personalities: not every ticket behaves the same
+    npc.personality =
+      ["malware", "cert"].includes(type.id) ? "security" :
+      dept === "Executives" ? "executive" :
+      type.id === "plc" ? "manufacturing" :
+      Math.random() < .15 ? "problem" : "routine";
     s.npcs.push(npc); s.tickets.push(npc);
     // a broken device + portal appear near the NPC after diagnosis
   }
@@ -1080,7 +1118,13 @@ function startBattle(portal) {
   if (ageMin >= 60) hp = Math.round(hp * (1 + Math.min(ageMin, 240) / 60 * .05));
   const SIGS = { malware: ["enclock", "ransom"], dns: ["spawn", "poison"], bsod: ["crash", "freeze"] };
   B = { portal, npc, t, hp, maxHp: hp, shield: false, stunned: false, weakened: false, regen: false, log: [], boss, enraged: false, turns: 0, locks: {}, revealed: false, dmgBuff: 0, counter: false, sig: pick(SIGS[t.id] || ["overload", "wipe"]), forkBomb: false,
-    uncertainty: boss ? 90 : 70, evidence: 0, hyp: false, hypFailed: false, hypChoice: false, verified: false, documented: false, seq: [] };
+    uncertainty: boss ? 90 : 70, evidence: 0, hyp: false, hypFailed: false, hypChoice: false, verified: false, documented: false, seq: [],
+    confidence: 10, personality: npc.personality || "routine" };
+  // dynamic root-cause tree: the true cause hides among plausible branches
+  B.branches = [{ text: t.diag.best, correct: true, dead: false },
+    ...[...t.diag.wrong].sort(() => Math.random() - .5).slice(0, 2).map(w => ({ text: w, correct: false, dead: false }))
+  ].sort(() => Math.random() - .5);
+  if (B.personality === "problem") { B.uncertainty = clamp(B.uncertainty + 15, 0, 100); B.xpMult = 1.2; }
   s.inBattle = true;
   sfx("portal");
   $("battle").classList.remove("hidden");
@@ -1091,6 +1135,7 @@ function startBattle(portal) {
   blog(boss
     ? `<span class="sys">⚠️ The corruption is MASSIVE here. <b>${BOSS_NAMES[t.id] || t.enemy}</b> rises from the ${t.world}. This is a BOSS fight — watch for phase changes!</span>`
     : `<span class="sys">You step through the portal into the <b>${t.world}</b>. A ${t.enemy} manifests!</span>`);
+  if (B.personality && B.personality !== "routine") blog(`<span class="sys">🎭 <b>${B.personality.toUpperCase()} ticket</b> — ${{ security: "evidence decays over time! Uncertainty regrows each turn.", problem: "hidden systemic cause. Deeper uncertainty, richer rewards.", executive: "an exec is watching. Every turn costs composure (+stress).", manufacturing: "every turn burns production money." }[B.personality] || ""}</span>`);
   blog(`<span class="sys">🔍 <b>Troubleshoot it:</b> 💬 Ask and Inspect (Ping, Event Viewer, Wireshark...) to burn down <b>UNCERTAINTY</b> — fixes executed blind are weak and can backfire. Form a hypothesis at ≤50%, Execute, then ✔️ Verify before closing.</span>`);
   renderBattle();
 }
@@ -1114,8 +1159,8 @@ function battleAbilities() {
     if (w.minRank && ri < w.minRank) continue;
     if (w.id === "verify" || w.id === "document" || w.id === "randomfix" || w.cat === "ask") list.push({ ...w });
   }
-  // hypothesis becomes available once uncertainty is beaten down
-  if (B && !B.hyp && !B.hypFailed && B.uncertainty <= 50) list.push({ id: "hypothesize", name: "Form Hypothesis", icon: "🧠", cat: "hyp", dmg: [0, 0], stress: 5, desc: "Commit to a root cause: +50% fix damage if right." });
+  // hypothesis unlocks at 60% confidence — evidence earns the right to commit
+  if (B && !B.hyp && !B.hypFailed && B.confidence >= 60) list.push({ id: "hypothesize", name: "Form Hypothesis", icon: "🧠", cat: "hyp", dmg: [0, 0], stress: 5, desc: "Commit to a root cause: +50% fix damage if right." });
   return list;
 }
 function renderBattle() {
@@ -1125,6 +1170,12 @@ function renderBattle() {
   if (uncEl) {
     uncEl.style.width = clamp(B.uncertainty, 0, 100) + "%";
     $("enemy-unc-text").textContent = B.hyp ? `HYPOTHESIS LOCKED — ${B.t.diag.best.toUpperCase()}` : `UNCERTAINTY ${Math.round(B.uncertainty)}% · EVIDENCE ${B.evidence}`;
+  }
+  const confEl = $("enemy-conf");
+  if (confEl) {
+    confEl.style.width = clamp(B.confidence, 0, 100) + "%";
+    const alive = B.branches ? B.branches.filter(b => !b.dead).length : 3;
+    $("enemy-conf-text").textContent = B.hyp ? "ROOT CAUSE CONFIRMED" : `CONFIDENCE ${Math.round(B.confidence)}%${B.confidence >= 60 ? " — READY TO HYPOTHESIZE" : ""} · ${alive} BRANCH${alive === 1 ? "" : "ES"}`;
   }
   $("player-hp").style.width = clamp(s.hp / s.maxHp * 100, 0, 100) + "%";
   $("player-hp-text").textContent = `HP ${s.hp}/${s.maxHp} · Stress ${s.stress}/100`;
@@ -1181,6 +1232,8 @@ function doAbility(a) {
     dmg = R(a.dmg[0], a.dmg[1]) + Math.round(bonus / 2);
     // evidence multiplier: fixes land at full strength only when uncertainty is low
     dmg = Math.max(1, Math.round(dmg * (1 - B.uncertainty / 220)));
+    // confidence sharpens the fix further
+    dmg = Math.max(1, Math.round(dmg * (1 + B.confidence / 300)));
     if (B.hyp) dmg = Math.round(dmg * 1.5);
     if (B.weakened) dmg = Math.round(dmg * 1.25);
     // IT-accurate effectiveness: right tool for the right problem
@@ -1288,6 +1341,15 @@ function enemyPhase() {
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
     if (B.counter) { B.counter = false; const ref = Math.ceil(ed / 2); B.hp -= ref; blog(`🛡️ <b>Zero Trust reflects ${ref} back!</b>`); }
   }
+  // ticket personalities reshape the battlefield each turn
+  if (B.personality === "security") {
+    B.uncertainty = clamp(B.uncertainty + 2, 0, 100);
+    if (B.turns % 2 === 0) blog(`<span class="sys">🕵️ Logs are being wiped — uncertainty regrows (+2%).</span>`);
+  } else if (B.personality === "executive") {
+    addStress(1);
+  } else if (B.personality === "manufacturing") {
+    if (B.turns % 3 === 0) blog(`<span class="sys">🏭 The line idles... every turn burns production budget.</span>`);
+  }
   // tick down encryption locks
   for (const k of Object.keys(B.locks)) if (--B.locks[k] <= 0) { delete B.locks[k]; blog(`<span class="sys">🔓 Decryption complete — ability restored.</span>`); }
   if (B.regen) s.hp = clamp(s.hp + 3, 0, s.maxHp);
@@ -1307,8 +1369,12 @@ function workflowAction(a) {
     B.uncertainty = clamp(B.uncertainty - red, 0, 100);
     B.evidence += a.id === "interview" ? 2 : 1;
     blog(`<span class="sys">💬 ${pick(ASK_LINES)}</span>`);
-    blog(`<span class="heal">Evidence gathered — uncertainty -${red}% (now ${Math.round(B.uncertainty)}%).</span>`);
+    const w = (EVIDENCE_WEIGHTS[B.t.id] || {}).testimony || 2;
+    const cg = Math.round(w * R(4, 7) * (a.id === "interview" ? 1.6 : 1));
+    B.confidence = clamp(B.confidence + cg, 0, 100);
+    blog(`<span class="heal">Evidence gathered — uncertainty -${red}%, <b>${EVIDENCE_LABEL.testimony}</b> +${cg} confidence (now ${Math.round(B.confidence)}%).${w >= 3 ? " Testimony really matters for this one." : ""}</span>`);
     if (a.id === "interview") blog(`<span class="sys">🗣️ Guided interview: the user walks you through the whole failure timeline.</span>`);
+    pruneBranches();
   } else if (a.cat === "inspect") {
     B.seq.push("inspect");
     let red, note;
@@ -1318,6 +1384,18 @@ function workflowAction(a) {
     B.uncertainty = clamp(B.uncertainty - red, 0, 100);
     blog(`<span class="sys">C:\\&gt; ${ABILITY_CMDS[a.id] || a.name}</span>`);
     blog(`<span class="heal">🔍 ${a.name} reveals new evidence — uncertainty -${red}% (now ${Math.round(B.uncertainty)}%).${note}</span>`);
+    // weighted evidence → confidence; but some clues are FALSE POSITIVES
+    const etype = EVIDENCE_TYPES[a.id] || "config";
+    if (Math.random() < .15) {
+      B.confidence = clamp(B.confidence - 8, 0, 100);
+      blog(`<span class="sys">🎭 <b>FALSE POSITIVE:</b> ${pick(FALSE_POSITIVES)} (-8 confidence)</span>`);
+    } else {
+      const w2 = (EVIDENCE_WEIGHTS[B.t.id] || {})[etype] || 2;
+      const cg2 = Math.round(w2 * R(4, 7) * (tac?.weak.includes(a.id) ? 1.4 : 1));
+      B.confidence = clamp(B.confidence + cg2, 0, 100);
+      blog(`<span class="heal"><b>${EVIDENCE_LABEL[etype]}</b> +${cg2} confidence (now ${Math.round(B.confidence)}%).${w2 >= 4 ? " This is exactly the evidence that matters here." : w2 <= 1 ? " ...not the most relevant clue for this problem." : ""}</span>`);
+    }
+    pruneBranches();
     // recon still reveals the weakness profile
     if (!B.revealed && tac) {
       B.revealed = true;
@@ -1325,13 +1403,13 @@ function workflowAction(a) {
       blog(`<span class="sys">📋 Analysis: weak to <b>${tac.weak.map(names).join(", ")}</b>; resists <b>${tac.resist.map(names).join(", ")}</b>.</span>`);
     }
   } else if (a.cat === "hyp") {
-    // commit to a root cause: best answer vs plausible wrong answers
-    const wrongs = [...B.t.diag.wrong].sort(() => Math.random() - .5).slice(0, 2);
-    B.hypChoice = [
-      { text: B.t.diag.best, correct: true },
-      ...wrongs.map(w => ({ text: w, correct: false })),
-    ].sort(() => Math.random() - .5);
-    blog(`<span class="sys">🧠 Evidence points somewhere. <b>What's the root cause?</b></span>`);
+    // commit to a root cause from the surviving branches of the investigation tree
+    B.hypChoice = B.branches.filter(b => !b.dead).map(b => ({ text: b.text, correct: b.correct }));
+    if (B.hypChoice.length === 1) {
+      // the tree collapsed to a single branch — that's the answer
+      return resolveHypothesis(B.hypChoice[0].correct);
+    }
+    blog(`<span class="sys">🧠 The investigation tree has ${B.hypChoice.length} live branches. <b>What's the root cause?</b></span>`);
     renderBattle();
     return;
   } else if (a.cat === "verify") {
@@ -1340,6 +1418,8 @@ function workflowAction(a) {
     blog(`<span class="heal">✔️ <b>Verified:</b> user confirms the fix holds, logs are clean, monitoring shows green. This one won't bounce back.</span>`);
   } else if (a.cat === "document") {
     B.documented = true;
+    s.meta.kb = s.meta.kb || {};
+    s.meta.kb[B.t.id] = true; // knowledge graph: your org learns this failure mode
     addXP(5); addStress(-5);
     s.journal.push({ day: s.day, title: `${B.t.label} — field notes`, body: `Symptoms observed, hypothesis formed, tests run. Root cause: ${B.hyp ? B.t.diag.best : "(still under investigation)"}. Good documentation trains the whole team.` });
     blog(`<span class="heal">📝 Documented: +5 XP, -5 stress. Future techs thank you — including your hires.</span>`);
@@ -1361,6 +1441,20 @@ function workflowAction(a) {
   enemyPhase();
   if (!B || B.over) return;
   renderBattle(); updateHUD();
+}
+// every 3 evidence prunes one wrong branch from the root-cause tree
+function pruneBranches() {
+  if (!B.branches) return;
+  const alive = B.branches.filter(b => !b.dead && !b.correct);
+  const target = Math.floor(B.evidence / 3);
+  const deadCount = B.branches.filter(b => b.dead).length;
+  if (alive.length && deadCount < Math.min(target, B.branches.length - 1)) {
+    const victim = alive[0];
+    victim.dead = true;
+    blog(`<span class="sys">🌳 Evidence eliminates a branch: <s>${victim.text}</s> — ruled out.</span>`);
+    const left = B.branches.filter(b => !b.dead);
+    if (left.length === 1) blog(`<span class="heal">🌳 Only one branch remains: <b>${left[0].text}</b>. The tree has spoken.</span>`);
+  }
 }
 function resolveHypothesis(correct) {
   const s = S;
@@ -1389,6 +1483,7 @@ function winBattle() {
   const isShadow = t.id === "shadow";
   if (isShadow) { s.shadowDone = true; unlock("root"); if (s.diff > 1) unlock("oncall"); }
   let xp = B.boss ? 70 + s.day * 2 : 20 + (n.critical ? 30 : 0);
+  if (B.xpMult) xp = Math.round(xp * B.xpMult);
   if (s.chaos?.id === "patch") xp = Math.round(xp * 1.5);
   addXP(xp);
   blog(`<span class="sys">🏆 ${t.enemy} defeated! +${xp} XP</span>`);
@@ -1735,7 +1830,8 @@ function staffWork() {
     // fast learners improve weekly
     if (m.trait === "quicklearner") m.accBonus = (m.accBonus || 0) + .02;
     const trait = STAFF_TRAITS.find(t => t.id === m.trait);
-    const acc = clamp(tier.acc + (trait?.accMod || 0) + (m.accBonus || 0) - m.burnout * .06, .1, .98);
+    const kbHit = s.meta.kb && s.meta.kb[open.type.id] ? .05 : 0; // documented solutions get reused
+    const acc = clamp(tier.acc + (trait?.accMod || 0) + (m.accBonus || 0) + kbHit - m.burnout * .06, .1, .98);
     const roll = Math.random();
     const misChance = (1 - acc) * (trait?.mis || 1) * .6;
     if (roll < acc - misChance) {
