@@ -1,0 +1,4 @@
+        <div class="bar-track big unc-track"><div id="enemy-unc" class="bar-fill unc"></div></div>
+        <div id="enemy-unc-text">UNCERTAINTY</div>
+        <div class="bar-track big conf-track"><div id="enemy-conf" class="bar-fill conf"></div></div>
+        <div id="enemy-conf-text">CONFIDENCE</div>
