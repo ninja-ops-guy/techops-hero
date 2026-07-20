@@ -319,6 +319,16 @@ const LEGACY_SYSTEMS = [
   { code: "THE UNKNOWN FIBER", line: `"Labeled DO NOT DISCONNECT in 2004. Nobody knows the other end. It hums."` },
   { code: "CORE 2", line: `"Walter built it. Walter retired. The documentation retired with him."` },
 ];
+const WARROOM_LINES = [
+  `[PLANT MANAGER] We're losing $100K every hour this runs.`,
+  `[SENIOR ENGINEER] Nobody. Touch. Anything.`,
+  `[JUNIOR TECH] Why? — [SENIOR] Because nobody knows what this switch does.`,
+  `[SOC ANALYST] No lateral movement yet. Holding.`,
+  `[QUALITY] Shipment QA holds in 40 minutes. Clock.`,
+  `[EXEC] Status update. Now.`,
+  `[NETWORK] Packet drops localized to the OT segment.`,
+  `[SERVER ADMIN] Host is healthy. It's not compute.`,
+];
 const RUMORS = [
   `"Don't touch Switch 17. Just... don't."`,
   `"The old server room is haunted. Fans spin up at 3 AM with the power cut."`,
@@ -635,6 +645,38 @@ function setupDay() {
     }
   }
   toast(s.chaos ? `DAY ${s.day} — ${s.chaos.name}<br><small>${s.chaos.desc}</small>` : `DAY ${s.day} begins`);
+  // the pager never sleeps: overnight alerts test your priorities
+  if (s.day > 1 && Math.random() < .25) {
+    const ev = pick([
+      { t: "Core switch unreachable at 02:13 AM", type: "vlan" },
+      { t: "UPS battery alarm in the MDF at 03:40 AM", type: "bsod" },
+      { t: "Nightly backup failed at 04:05 AM", type: "backup" },
+      { t: "Certificate expiry warning at 01:52 AM", type: "cert" },
+    ]);
+    setTimeout(() => {
+      if (s.inBattle || eodOpen) return;
+      const prepared = s.lab.includes("autosrv") || s.lab.includes("ai");
+      const opts = [
+        { t: "📱 Respond now — drive in, handle it (+8 stress, +1 rep, +5 XP)", f: () => {
+          closeDlg(); addStress(8); addXP(5);
+          const d = pick(DEPTS); s.rep[d] = clamp(s.rep[d] + 1, 0, 5);
+          s.journal.push({ day: s.day, title: "Pager duty", body: `${ev.t}. You drove in and handled it. The night shift remembers.` });
+          toast(`📱 Handled. The night shift owes you one. (+1 ${d} rep)`); save();
+        } },
+        { t: "😴 Ignore it — you're off the clock (-1 random rep)", f: () => {
+          closeDlg();
+          const d = pick(DEPTS); s.rep[d] = Math.max(0, s.rep[d] - 1);
+          toast(`😴 You silenced the pager. ${d} noticed the slow response. (-1 rep)`); save();
+        } },
+      ];
+      if (prepared) opts.unshift({ t: "🤖 Your systems caught it first — monitoring auto-mitigated (+10 XP)", f: () => {
+        closeDlg(); addXP(10);
+        s.journal.push({ day: s.day, title: "Pager duty — automated", body: `${ev.t}. Your monitoring caught it and auto-mitigated before you woke up. This is why you built those systems.` });
+        toast("🤖 Your automation handled it at 2 AM. You slept. Glorious. (+10 XP)"); save();
+      } });
+      dlg("📟 PAGER — " + ev.t, prepared ? "Your monitoring platform already has eyes on it." : "It's 2 AM. Nobody else can take this.", opts);
+    }, 3500);
+  }
   updateHUD();
   save();
 }
@@ -1480,6 +1522,8 @@ function enemyPhase() {
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
     if (B.counter) { B.counter = false; const ref = Math.ceil(ed / 2); B.hp -= ref; blog(`🛡️ <b>Zero Trust reflects ${ref} back!</b>`); }
   }
+  // war room chatter: a declared incident has an audience
+  if (B.npc.incidentDeclared && B.turns % 3 === 1) blog(`<span class="sys">📟 ${pick(WARROOM_LINES)}</span>`);
   // ticket personalities reshape the battlefield each turn
   if (B.personality === "security") {
     B.uncertainty = clamp(B.uncertainty + 2, 0, 100);
@@ -1693,6 +1737,8 @@ function winBattle() {
     blog(`<span class="heal">🔬 <b>SCIENTIFIC METHOD BONUS</b> — observe, hypothesize, test, verify. +15 XP.</span>`);
   }
   B.portal.cleared = true;
+  // legacy monsters get a verdict: decommission, preserve, or migrate
+  if (n.legacy) setTimeout(() => legacyChoice(n), 1100);
   setTimeout(() => {
     $("battle").classList.add("hidden");
     s.inBattle = false;
@@ -1718,6 +1764,91 @@ function winBattle() {
     }
   }, 900);
 }
+// ---------- change management: cowboy deploys vs professional change windows ----------
+function changeManagement(it) {
+  const s = S;
+  closePanel();
+  const deploy = () => { s.infra.push(it.retire); updateHUD(); save(); };
+  dlg(`📋 CHANGE REQUEST #${R(1000, 9999)}`, `<b>${it.name}</b> — retire "${TICKET_TYPES.find(t => t.id === it.retire).label}" tickets permanently.<br><br>How do you deploy it?`, [
+    { t: "🤠 COWBOY — tonight, no approval. Fast. 15% outage risk.", f: () => {
+      closeDlg();
+      if (Math.random() < .15) {
+        // catastrophic: the change itself becomes a major incident
+        s.meta.debt += 2;
+        const dept = pick(DEPTS);
+        const pos = spotInBiome(s.map, BIOME_OF_DEPT[dept]);
+        const nt = pick(TICKET_TYPES.filter(t => t.id !== "shadow" && !(s.infra || []).includes(t.id)));
+        const npc2 = { id: 800 + R(0, 99), name: pick(NPC_NAMES), dept, type: nt, x: pos.x, y: pos.y, face: "🧑‍💼", done: false, interviewed: false, diagnosed: false, correctDiag: false, critical: true, codename: pick(INCIDENT_NAMES), personality: "problem", age: 91, pv: R(0, PAL_NPCS.length - 1) };
+        s.npcs.push(npc2); s.tickets.push(npc2); s.ticketsTotal++;
+        s.journal.push({ day: s.day, title: `FAILED CHANGE — ${it.name}`, body: `Cowboy deploy. No backup config, no window, no approval. The change took something down with it. CAB will hear about this.` });
+        toast(`💥 CHANGE FAILURE — the cowboy deploy broke something. A critical ${nt.label} is now burning in ${dept}! (+2 tech debt)`, 4500);
+        // but the work eventually lands anyway
+        deploy();
+      } else {
+        deploy();
+        toast(`🤠 Cowboy deploy worked. ${it.effect}. Nobody file a report.`);
+      }
+    } },
+    { t: "📅 PROFESSIONAL — backup config, schedule window (+40 min, +exec rep)", f: () => {
+      closeDlg();
+      advanceClock(40);
+      deploy();
+      s.rep.Executives = clamp(s.rep.Executives + 1, 0, 5);
+      s.journal.push({ day: s.day, title: `CHANGE COMPLETE — ${it.name}`, body: `Backed up configs, verified dependencies, scheduled window, tested rollback. Clean change. ${it.effect}.` });
+      toast(`📅 Textbook change window. ${it.effect} — and executives noticed the process. (+exec rep)`);
+    } },
+  ]);
+}
+
+// ---------- legacy verdicts: what becomes of the old machine ----------
+function legacyChoice(n) {
+  const s = S;
+  s.meta.legacyChoices = s.meta.legacyChoices || [];
+  const mk = (title, body) => s.journal.push({ day: s.day, title, body });
+  dlg(`🏛️ ${n.legacy} — VERDICT`, `The manifestation is down. But the machine remains. What becomes of <b>${n.legacy}</b>?`, [
+    { t: "🔨 DECOMMISSION — rip it out, modernize now", f: () => {
+      closeDlg();
+      s.budget += 120; s.meta.legacyChoices.push("decommissioned");
+      if (Math.random() < .3) {
+        // hidden dependency emerges
+        s.meta.debt += 2;
+        const dept = pick(DEPTS);
+        const pos = spotInBiome(s.map, BIOME_OF_DEPT[dept]);
+        const nt = pick(TICKET_TYPES.filter(t => t.id !== "shadow"));
+        const npc2 = { id: 700 + R(0, 99), name: pick(NPC_NAMES), dept, type: nt, x: pos.x, y: pos.y, face: "🧑‍💼", done: false, interviewed: false, diagnosed: false, correctDiag: false, critical: true, codename: pick(INCIDENT_NAMES), personality: "problem", pv: R(0, PAL_NPCS.length - 1) };
+        s.npcs.push(npc2); s.tickets.push(npc2); s.ticketsTotal++;
+        toast(`💥 HIDDEN DEPENDENCY — something else relied on ${n.legacy}. ${nt.label} just went critical in ${dept}! (+2 tech debt)`, 4500);
+        mk(`${n.legacy} — decommissioned (rough)`, `Ripped out for +$120 salvage. A hidden dependency surfaced immediately. It always does.`);
+      } else {
+        toast(`🔨 ${n.legacy} decommissioned cleanly. +$120 salvage. One less haunted machine.`);
+        mk(`${n.legacy} — decommissioned`, `Modernized. No hidden dependencies surfaced. This time.`);
+      }
+      updateHUD(); save();
+    } },
+    { t: "📝 PRESERVE & DOCUMENT — it stays, but now it's known", f: () => {
+      closeDlg();
+      s.meta.kb = s.meta.kb || {}; s.meta.kb[n.type.id] = true;
+      s.meta.debt++; s.meta.legacyChoices.push("preserved");
+      addXP(15);
+      toast(`📝 ${n.legacy} fully documented. The next engineer won't fear it. (+1 tech debt, +knowledge, +15 XP)`);
+      mk(`${n.legacy} — preserved`, `Documented every cable, quirk, and dependency. The monster is now a map. Knowledge is the legacy.`);
+      updateHUD(); save();
+    } },
+    { t: "🚀 MIGRATE WORKLOADS — $150, 30 min, done RIGHT", f: () => {
+      closeDlg();
+      if (s.budget < 150) return toast("Not enough budget for a proper migration!");
+      s.budget -= 150; advanceClock(30);
+      s.meta.kb = s.meta.kb || {}; s.meta.kb[n.type.id] = true;
+      s.meta.legacyChoices.push("migrated");
+      s.rep.Executives = clamp(s.rep.Executives + 1, 0, 5);
+      addXP(30);
+      toast(`🚀 TEXTBOOK MIGRATION — ${n.legacy} retired with zero downtime. The war room applauds. (+30 XP, +exec rep)`);
+      mk(`${n.legacy} — migrated`, `Planned, staged, verified, rolled back-ready. Zero downtime. This is how it's done. Legend-grade engineering.`);
+      updateHUD(); save();
+    } },
+  ]);
+}
+
 function loseBattle() {
   const s = S;
   sfx("bad");
@@ -1781,6 +1912,27 @@ function resolveTicket(n) {
     s.meta.mttr.push(mttr);
     s.journal.push({ day: s.day, title: `INCIDENT CLOSED — «${n.codename || "CRISIS"}»`, body: `Resolved in ${mttr} minutes from declaration. Post-incident review scheduled. ${n.verifiedFix ? "Fix verified — clean closure." : "⚠️ Closed WITHOUT verification."}` });
     toast(`✅ INCIDENT CLOSED — «${n.codename}»<br><small>MTTR: ${mttr} min. The war room stands down.</small>`, 3800);
+    // blameless postmortem: how do we prevent the next one?
+    setTimeout(() => {
+      if (eodOpen || S.inBattle) return;
+      dlg(`🔍 POST-INCIDENT REVIEW — «${n.codename}»`, `<b>Root cause:</b> ${n.type.diag.best}<br><b>Contributing factors:</b> ${["no monitoring", "tribal knowledge", "missing documentation", "no approval process", "single point of failure"].sort(() => Math.random() - .5).slice(0, 2).join(" + ")}<br><br>Prevention plan?`, [
+        { t: "📡 Add monitoring alert — this failure mode gets watched", f: () => {
+          closeDlg();
+          s.meta.kb = s.meta.kb || {}; s.meta.kb[n.type.id] = true;
+          toast(`📡 Alert configured. ${n.type.label} will never sneak up on the plant again. (+knowledge base)`);
+          s.journal.push({ day: s.day, title: `PIR — «${n.codename}» monitoring`, body: `Monitoring alert added for ${n.type.label}. Prevention > cure.` });
+          save();
+        } },
+        { t: "📕 Write the SOP — the team learns the fix", f: () => {
+          closeDlg();
+          addXP(10); addStress(-5);
+          s.journal.push({ day: s.day, title: `SOP — ${n.type.label}`, body: `Standard operating procedure for ${n.type.label}: ${n.type.diag.best}. Written, reviewed, published to the knowledge center.` });
+          toast(`📕 SOP published. Your team just got smarter. (+10 XP, -5 stress)`);
+          save();
+        } },
+        { t: "Skip it — next ticket.", f: () => { closeDlg(); s.meta.debt++; toast("⚠️ No prevention planned. The factory will see this one again. (+1 tech debt)"); save(); } },
+      ]);
+    }, 4200);
   }
   let repGain = 1;
   if (s.chaos?.id === "ceo" && n.dept === "Executives") repGain = 2;
@@ -1947,6 +2099,15 @@ function careerReport() {
   const prodSaved = (m.closed * 42000 / 1e6).toFixed(1);
   const score = m.closed * 2 + kbCount * 10 + (s.infra || []).length * 15 + (m.hires || 0) * 12 + m.incidents * 10 - m.debt * 8 + s.ach.length * 5;
   const legacy = score >= 250 ? "🌟 LEGENDARY" : score >= 120 ? "🎖️ VETERAN" : score >= 50 ? "🔧 STEADY HAND" : "🌱 PROMISING";
+  // the five paths: what KIND of engineer were you?
+  const paths = [
+    ["🚒 The Firefighter", "You saved us.", m.incidents * 2 + m.crits],
+    ["🏗️ The Builder", "You made us better.", (s.infra || []).length * 2 + (s.lab.includes("autosrv") ? 4 : 0)],
+    ["🎓 The Teacher", "You made us stronger.", (m.hires || 0) * 2 + kbCount],
+    ["👻 The Ghost", "You fixed things nobody noticed.", Math.max(0, 6 - m.debt) + s.certs.length],
+  ].sort((a, b) => b[2] - a[2]);
+  const balanced = paths[0][2] - paths[1][2] <= 1;
+  const pathLine = balanced ? `⚖️ <b>The Legend</b> — the balanced path. The engineer everyone remembers.` : `${paths[0][0]} — <i>"${paths[0][1]}"</i>`;
   // procedural war stories: pull the most dramatic moments from the journal
   const war = [];
   const esc = s.journal.find(j => j.title.includes("ESCALATED"));
@@ -1963,7 +2124,7 @@ function careerReport() {
     `📝 Knowledge articles: <b>${kbCount}</b> · 🏗️ Systems modernized: <b>${(s.infra || []).length}</b> · ⚠️ Tech debt left: <b>${m.debt}</b><br>` +
     `🏅 Achievements: <b>${s.ach.length}/${ACHIEVEMENTS.length}</b> · 🎖️ Rank: <b>${rank().name}</b><br>` +
     (war.length ? `<br>${war.join("<br>")}<br>` : "") +
-    `<br>LEGACY RATING: <b style="color:#ffd24a">${legacy}</b>` +
+    `<br>LEGACY RATING: <b style="color:#ffd24a">${legacy}</b><br>PATH: ${pathLine}` +
     `</div><br><br><i>"A great technician solves problems.<br>A great engineer prevents them.<br>A great leader builds a team that no longer needs them."</i><br><br><small>You leave the badge on the desk. A new hand will pick it up.<br>Everything comes full circle.</small>`;
 }
 
@@ -2238,7 +2399,7 @@ function renderTab(tab) {
       if (s.budget < it.cost) return toast("Not enough budget!");
       s.budget -= it.cost;
       if (it.type === "book") { s.books.push(it.id); toast(`📖 Learned a new move: ${it.blurb.replace("Teaches: ", "")}!`); }
-      else if (it.type === "infra") { s.infra.push(it.retire); toast(`🏗️ ${it.name} deployed — no more "${TICKET_TYPES.find(t => t.id === it.retire).label}" tickets. Ever.`, 4000); }
+      else if (it.type === "infra") { changeManagement(it); }
       else { s.lab.push(it.key); applyLab(it.key); toast(`🔧 ${it.name} installed: ${it.effect}`); }
       s.storeStock = s.storeStock.filter(x => x !== it.id);
       sfx("loot");
