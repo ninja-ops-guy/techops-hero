@@ -1,4 +1,4 @@
-// v4.1 sprite detail — action poses, NPC emote bubbles, equipment sprites.
+// v4.2 sprite detail — action poses, NPC emote bubbles, equipment sprites.
 // Loads AFTER game.js and hooks in without modifying it:
 //  - redefines drawPlayer() with pose priority (party > pose > thumbs > laptop > walk > idle)
 //  - wraps draw() with an overlay for mugs, server-room hardware, and NPC emote bubbles
@@ -63,23 +63,39 @@ drawPlayer = function (s, tm) {
 };
 
 // --- overlay: coffee mugs, server-room hardware, NPC emote bubbles ---
+// v4.2: repaint base tiles first so the stock emoji (☕ 🎫 ✅ 🚨 ⚠️) don't double-render
+// under the sprite versions — drawTile()/drawSpr() are global, so we can rebuild each tile.
 const __origDrawV41 = draw;
+const AMBIENT_BUBBLES = ["dots", "bq", "heart", "lol", "cool"];
 draw = function () {
   __origDrawV41.apply(this, arguments);
   const s = S; if (!s || !s.map) return;
   const tm = performance.now();
   const ts = cv.height / 14, sc = ts / TILE;
   ctx.save(); ctx.scale(sc, sc); ctx.translate(-camX, -camY);
-  // coffee machines — the sacred HELP DESK FUEL mug
-  for (const c of s.coffeeMachines) { ctx.globalAlpha = c.used ? .35 : 1; drawExtra("mug", c.x, c.y, 26); ctx.globalAlpha = 1; }
+  const repaint = (x, y) => drawTile((s.map[y] && s.map[y][x]) || 0, x, y, tm);
+  // coffee machines — the sacred HELP DESK FUEL mug (repaint tile to hide ☕)
+  for (const c of s.coffeeMachines) {
+    repaint(c.x, c.y);
+    ctx.globalAlpha = c.used ? .35 : 1; drawExtra("mug", c.x, c.y, 26); ctx.globalAlpha = 1;
+  }
   // server room hardware detail
   drawExtra("router", SRV.x0 + 2, SRV.y0 + 1, 26);
   drawExtra("server", SRV.x1 - 2, SRV.y0 + 1, 26);
-  // NPC emote bubbles
+  // broken devices — wrench marker (repaint tile to hide ⚠️)
+  for (const d of s.devices) {
+    if (d.fixed) continue;
+    repaint(d.x, d.y);
+    ctx.font = "24px serif"; ctx.fillText(d.type.icon, d.x * TILE + 16, d.y * TILE + 17);
+    drawExtra("wrench", d.x, d.y, 18);
+  }
+  // NPC emote bubbles (repaint tile to hide 🎫 ✅ 🚨)
   for (const n of s.npcs) {
+    repaint(n.x, n.y);
+    drawSpr(SPR_NPC, DEPT_PAL[n.dept] || PAL_NPCS[n.pv ?? 0], n.x, n.y);
     if (!n.ambient && !n.done) drawExtra(n.critical || n.legacy ? "warn" : "bex", n.x, n.y, 18);
     else if (!n.ambient && n.done) drawExtra("check", n.x, n.y, 16);
-    else if (n.ambient && ((n.id + Math.floor(tm / 2600)) % 5 === 0)) drawExtra("dots", n.x, n.y, 16);
+    else if (n.ambient && ((n.id + Math.floor(tm / 2600)) % 5 === 0)) drawExtra(AMBIENT_BUBBLES[(n.id + Math.floor(tm / 2600)) % AMBIENT_BUBBLES.length], n.x, n.y, 16);
   }
   ctx.restore();
 };
