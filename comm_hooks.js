@@ -1,4 +1,4 @@
-// v4.3.1 — Communication Battles + IT-department systems.
+// v4.4 — Communication Battles + IT-department systems.
 // Loads AFTER sprite_hooks.js. Hooks in without modifying game.js:
 //  - wraps ticketFlow() with a JRPG-style phone-call battle (hidden Patience / Ticket Gauge)
 //  - wraps startBattle() to apply call bonuses + knowledge mastery confidence
@@ -160,3 +160,109 @@ setupDay = function () {
   tagged.forEach(x => { x.root = rc; });
   s.rootResolved = 0;
 };
+
+// ---------- v4.4: the troubleshooting process ----------
+// diagnose() used to jump straight to "pick the root cause" — a conclusion with no process.
+// Now diagnosis is a structured flow: gather information -> eliminate possibilities -> conclude.
+// Each step costs 5 minutes, earns +5 battle confidence, and rules out one wrong option.
+const __origDiagnoseV44 = diagnose;
+diagnose = function (n) { troubleshoot(n); };
+
+const TSHOOT_STEPS = [
+  { id: "when", icon: "🗣️", label: "\"When did this start?\"", kind: "eliminate",
+    line: (w) => `"Right after the morning login storm…" — timing rules out: <s>${w}</s>` },
+  { id: "repro", icon: "🔁", label: "\"Can you reproduce it?\"", kind: "eliminate",
+    line: (w) => `"Every single time I try it, yes." — reproducible and local, rules out: <s>${w}</s>` },
+  { id: "changed", icon: "📋", label: "\"What changed recently?\"", kind: "confirm",
+    line: () => `"There WAS an update pushed last night…" — a lead worth following. (+5 confidence)` },
+];
+
+function troubleshoot(n) {
+  const s = S, t = n.type;
+  // same option pool the stock diagnose() would build (kept stable across steps)
+  if (!n._pool) {
+    const wrongs = [...t.diag.wrong].sort(() => Math.random() - .5).slice(0, 2);
+    n._pool = [
+      { text: t.diag.best, kind: "best" },
+      { text: t.diag.okay, kind: "okay" },
+      ...wrongs.map(w => ({ text: w, kind: "wrong" })),
+    ].sort(() => Math.random() - .5);
+    n._clues = [];
+    n._stepsDone = 0;
+    n._stepsUsed = {};
+  }
+  const pool = n._pool;
+
+  const render = () => {
+    const clueLog = n._clues.length ? `<br><br>📋 <b>Findings so far:</b><br>${n._clues.join("<br>")}` : "";
+    const wrongLeft = pool.filter(o => o.kind === "wrong" && !o.ruledOut);
+    const stepsLeft = TSHOOT_STEPS.filter(st => !n._stepsUsed[st.id] && (st.kind !== "eliminate" || wrongLeft.length));
+    const opts = stepsLeft.map(st => ({
+      t: `${st.icon} ${st.label} <small>(+5 min, +5 conf)</small>`,
+      f: () => {
+        n._stepsUsed[st.id] = true; n._stepsDone++;
+        advanceClock(5);
+        n.preConf = (n.preConf || 0) + 5;
+        if (st.kind === "eliminate") {
+          const w = pool.find(o => o.kind === "wrong" && !o.ruledOut);
+          if (w) { w.ruledOut = true; n._clues.push(`<small>${st.line(w.text)}</small>`); }
+        } else {
+          n._clues.push(`<small>${st.line()}</small>`);
+        }
+        render();
+      },
+    }));
+    opts.push({
+      t: "🧠 Form a conclusion",
+      f: () => conclude(n),
+    });
+    const ruled = pool.filter(o => o.ruledOut).length;
+    dlg(`🔧 Troubleshooting — ${t.label}`,
+      `<small>Gather information, eliminate possibilities, THEN conclude.${n._stepsDone === 0 ? " Skipping straight to a conclusion is a blind guess." : ""}</small>` +
+      `<br>Steps taken: ${n._stepsDone} · Ruled out: ${ruled}${clueLog}`,
+      opts);
+  };
+  render();
+}
+
+function conclude(n) {
+  const s = S, t = n.type;
+  const pool = n._pool;
+  const remaining = pool.filter(o => !o.ruledOut);
+  const ruledOut = pool.filter(o => o.ruledOut);
+  const opts = remaining.map((o, i) => ({
+    t: `${["🅰", "🅱", "🅲", "🅳"][i]} ${o.text}`,
+    f: () => {
+      n.diagnosed = true; n.correctDiag = o.kind === "best";
+      advanceClock(15);
+      // spawn broken device near npc (same as stock diagnose)
+      const dp = freeSpot(s.map, n.x, n.y);
+      s.devices.push({ ...dp, type: t, fixed: false, npc: n.id });
+      const pp = freeSpot(s.map, dp.x, dp.y);
+      if (o.kind === "best") {
+        addXP(8); toast("🎯 Correct diagnosis! (+8 XP)");
+        s.portals.push({ ...pp, npc: n.id, weak: true });
+      } else if (o.kind === "okay") {
+        addXP(4);
+        toast(`🤔 Reasonable — that helps some, but it's not the root cause. (+4 XP)<br><small>Best move: ${t.diag.best}</small>`, 3400);
+        s.portals.push({ ...pp, npc: n.id, weak: false, partial: true });
+      } else {
+        addStress(10); n.trustHurt = true;
+        toast(`❌ Wrong hypothesis... the problem is worse than it looked. (+10 stress)<br><small>Best move: ${t.diag.best}</small>`, 3400);
+        s.portals.push({ ...pp, npc: n.id, weak: false });
+      }
+      // process matters: methodical work pays, blind guesses don't
+      if (n._stepsDone >= 2) {
+        addXP(3); n.processCredit = true;
+        toast(`📋 By the book — evidence first, conclusion second. (+3 XP, +${n._stepsDone * 5} confidence banked)`, 3000);
+      } else if (n._stepsDone === 0) {
+        toast("🎲 Blind guess — no investigation, no bonus. The ticket remembers.", 2600);
+      }
+      n.fixedReady = true;
+      closeDlg(); updateHUD();
+    },
+  }));
+  dlg("🧠 Conclusion", `<b>${t.label}</b><br>Based on your findings, what's the root cause?` +
+    (ruledOut.length ? `<br><small>Ruled out by investigation: ${ruledOut.map(o => `<s>${o.text}</s>`).join(", ")}</small>` : ""),
+    opts);
+}
