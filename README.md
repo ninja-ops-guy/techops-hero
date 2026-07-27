@@ -1,4 +1,4 @@
-# TechOps Hero v5.5 — AeroTech Division
+# TechOps Hero v5.6 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -58,6 +58,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 - **Change Management** — cowboy deploys vs professional process (faster vs safer)
 - **Career ladder** — 8 ranks from Help Desk Technician to CIO, certifications (A+ → Cloud), procedural war stories and a full Career Report with reputation paths (Firefighter / Builder / Teacher / Ghost / Legend)
 - **Living factory** — animated floor, production counter ($/min), pager-night events, NPC emote bubbles, action poses, Digital Twin packet-flow overlay
+- **Achievements** — six collectible trophies (Cable Whisperer, Zero Downtime, Packet Detective, The Automator, VIP Whisperer, The Teacher) with cash bonuses and a trophy case at Mike's desk
+- **Rank gear** — your look evolves with rank: headset, admin tablet, security badge, and a golden CIO aura
 - **NG+** — the building remembers your legend
 
 ## Files
@@ -72,6 +74,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v53_hooks.js` | v5.3: AV/hw ticket ecosystem, repair-vs-replace, VIP pressure, cinematics, ops monitor |
 | `v54_hooks.js` | v5.4: phone/Teams interface, living helpdesk visuals |
 | `v55_hooks.js` | v5.5: week cycles, weather, mobile night controls |
+| `v56_hooks.js` | v5.6: collectible achievements, trophy case, rank gear visuals |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -82,13 +85,11 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals
 
 **Future ideas:**
-- **Character progression visuals** — badge, gear & aura evolve per rank (polo → admin tablet → threat map)
 - **More minigames** — packet-routing puzzle, AD permission puzzle, detective evidence board
 - **Procurement projects** — plant-wide hardware refresh: replace-all vs extend-lifecycle vs hybrid, budget politics included
 - **Certification study** — the Bookshelf doubles as an A+ → Cloud study desk
 - **Night maintenance windows** — after-hours change work with production on the line
-- **Collectible achievements** — Cable Whisperer, Zero Downtime, Packet Detective, The Automator
 - **Command-center endgame** — enterprise map, global sites, budget controls (SimCity × SOC)
