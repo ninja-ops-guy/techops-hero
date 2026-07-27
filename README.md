@@ -1,4 +1,4 @@
-# TechOps Hero v5.2 — AeroTech Division
+# TechOps Hero v5.3 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -22,6 +22,11 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 5. **🌃 Night Crawl** — at 16:00 the South Exit opens. Outside, the game becomes a floaty platformer: dash, double-jump (with flip), and clear three New Haven streets of glitch creatures in rhythm-based beat-'em-up combat — then head home and end the day.
 
 ## Systems
+- **AV / Workplace Tech tickets** — conference room "No Signal", Teams Room offline, warehouse scanners, shipping label printers: the high-frequency people-facing side of real IT
+- **Hardware lifecycle** — End-of-Life laptops land on your bench with a device card (model, age, warranty, battery health): **repair** ($40, 60 min, success odds shrink with age) vs **replace** ($350, 30 min, near-certain). Lifecycle math included
+- **VIP support pressure** — executive tickets are flagged VIP: handle them and they advocate to the CIO (+$40, +1 extra rep); ignore them and they escalate UP (rep loss, stress)
+- **Cinematic incident alerts** — screen shake + red banner when a dependency tree wakes up
+- **Ops Monitor** — NASA-style dashboard in the management console: network health, security posture, user satisfaction, technical debt
 - **Promotion-track perks** — your rank now unlocks real powers at the management console (Mike's desk): **scripting** (Senior+: auto-close a remote ticket daily), **delegation** (Site Admin+: hand tickets to Nick/Amit/Brandon/Daniel, closed by day end), **team standups** (Systems Admin+: -15 stress, +1 rep) and **outage response** (Systems Admin+: +15 confidence during declared incidents)
 - **Incident dependency trees** — ~35% of days, one hidden Tier-0 root cause (DC replication, DNS, PKI expiry, DHCP exhaustion, NTP drift…) spawns 3 'unrelated' tickets across the plant. Diagnose the leaves, then name the common ancestor at your desk: +$150/+15 XP and every remaining leaf pays +$25/+5 XP. Wrong trees cost stress
 - **Home upgrades** — online shopping from your desk: Gaming PC (+10% XP), Bookshelf (+6 battle confidence), Meal Prep (-15 stress/day), Better Bed (+10 max HP), Tool Bench (+2 hardware/automation)
@@ -57,6 +62,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 | `night_hooks.js` | v5.0: night platformer, ramps/tricks, vehicle speeds, exit door |
 | `office_hooks.js` | v5.1: IT dept room, Mike's desk remote fixes, terminal drills, marketing swag, tech notes |
 | `org_hooks.js` | v5.2: promotion perks, incident dependency trees, home upgrades |
+| `v53_hooks.js` | v5.3: AV/hw ticket ecosystem, repair-vs-replace, VIP pressure, cinematics, ops monitor |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -67,6 +73,15 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor
 
-**Future ideas:** endgame modes (Architect / Crisis / Survival), mentorship depth, network-map exploration, automation factory depth, multiplayer war room
+**Future ideas:**
+- **Living helpdesk** — the IT room visibly levels up with you (folding table → command center)
+- **Character progression visuals** — badge, gear & aura evolve per rank (polo → admin tablet → threat map)
+- **Phone/Teams interface** — tickets arrive as chat notifications; respond, delegate, or escalate from your pocket
+- **More minigames** — packet-routing puzzle, AD permission puzzle, detective evidence board
+- **Procurement projects** — plant-wide hardware refresh: replace-all vs extend-lifecycle vs hybrid, budget politics included
+- **Certification study** — the Bookshelf doubles as an A+ → Cloud study desk
+- **Weather & week cycles** — Monday ticket floods, Friday 4:45 PM emergencies, night maintenance windows
+- **Collectible achievements** — Cable Whisperer, Zero Downtime, Packet Detective, The Automator
+- **Command-center endgame** — enterprise map, global sites, budget controls (SimCity × SOC)
