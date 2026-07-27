@@ -143,3 +143,11 @@ canvas{image-rendering:pixelated;display:block}
     font-size: 11px;
   }
 }
+
+/* v6.2 — modern/clean polish: frosted dialogs, softer depth */
+#dialogue, #panel, #eod-summary {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 8px 32px #0009, inset 0 1px 0 #ffffff11;
+}
+#battle-scene { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
