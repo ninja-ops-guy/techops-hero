@@ -1,4 +1,4 @@
-# TechOps Hero v5.3 — AeroTech Division
+# TechOps Hero v5.4 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -12,6 +12,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 - **Move:** WASD / arrow keys, or on-screen joystick (mobile)
 - **Interact:** E / Enter / Space, or the Ⓐ button (mobile)
 - **Menu:** M or ☰
+- **Teams phone:** 📱 button or P
 - **Digital Twin overlay:** V or the 🛰️ HUD button
 
 ## The loop
@@ -22,6 +23,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 5. **🌃 Night Crawl** — at 16:00 the South Exit opens. Outside, the game becomes a floaty platformer: dash, double-jump (with flip), and clear three New Haven streets of glitch creatures in rhythm-based beat-'em-up combat — then head home and end the day.
 
 ## Systems
+- **Phone/Teams interface** — tickets arrive as chat notifications (📱 button or P key): reply "on my way", remote in, delegate to the crew, or escalate to a codenamed CRITICAL — all from your pocket
+- **Living helpdesk** — the IT room visibly levels up with your rank: cable spaghetti and one coffee mug → extra monitors, dashboard wall, motivational posters → gold-trimmed COMMAND CENTER with your rank on the plaque
 - **AV / Workplace Tech tickets** — conference room "No Signal", Teams Room offline, warehouse scanners, shipping label printers: the high-frequency people-facing side of real IT
 - **Hardware lifecycle** — End-of-Life laptops land on your bench with a device card (model, age, warranty, battery health): **repair** ($40, 60 min, success odds shrink with age) vs **replace** ($350, 30 min, near-certain). Lifecycle math included
 - **VIP support pressure** — executive tickets are flagged VIP: handle them and they advocate to the CIO (+$40, +1 extra rep); ignore them and they escalate UP (rep loss, stress)
@@ -63,6 +66,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 | `office_hooks.js` | v5.1: IT dept room, Mike's desk remote fixes, terminal drills, marketing swag, tech notes |
 | `org_hooks.js` | v5.2: promotion perks, incident dependency trees, home upgrades |
 | `v53_hooks.js` | v5.3: AV/hw ticket ecosystem, repair-vs-replace, VIP pressure, cinematics, ops monitor |
+| `v54_hooks.js` | v5.4: phone/Teams interface, living helpdesk visuals |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -73,12 +77,10 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk
 
 **Future ideas:**
-- **Living helpdesk** — the IT room visibly levels up with you (folding table → command center)
 - **Character progression visuals** — badge, gear & aura evolve per rank (polo → admin tablet → threat map)
-- **Phone/Teams interface** — tickets arrive as chat notifications; respond, delegate, or escalate from your pocket
 - **More minigames** — packet-routing puzzle, AD permission puzzle, detective evidence board
 - **Procurement projects** — plant-wide hardware refresh: replace-all vs extend-lifecycle vs hybrid, budget politics included
 - **Certification study** — the Bookshelf doubles as an A+ → Cloud study desk
