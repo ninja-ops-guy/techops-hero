@@ -6,6 +6,8 @@
      and daily policy allocation: security / hardware / staffing
    • Site incidents, outages that spill tickets onto your board,
      and a perfect-uptime bonus. SimCity × SOC.
+   v6.0.1 polish: quantified policy projections, LAST NIGHT
+   per-site report with advice, color-coded uptime.
    ============================================================ */
 "use strict";
 
@@ -36,11 +38,19 @@ function commandCenter() {
   }
   const cc = ccInit();
   const a = cc.alloc, spent = a.sec + a.hw + a.staff, left = CC_POINTS - spent;
+  // quantified nightly projections — policy choices should say what they DO
+  const incPct = Math.round(Math.max(.04, .18 - a.sec * .02) * 100);
+  const wearMax = Math.max(0, 5 - a.hw), rec = a.staff * 2;
   const rows = cc.sites.map(x => {
     const meta = CC_SITES.find(c => c.id === x.id);
     const st = x.health >= 80 ? "🟢" : x.health >= 40 ? "🟡" : "🔴";
     return `${st} ${meta.icon} ${meta.name}<br><small>${ccBar(x.health)} ${x.health}%</small>`;
   }).join("<br><br>");
+  const uptime = ccAvg(cc);
+  const upColor = uptime >= 80 ? "#4ade80" : uptime >= 40 ? "#facc15" : "#f87171";
+  const report = cc.lastReport
+    ? `<br><br>📋 <b>LAST NIGHT</b><br><small>${cc.lastReport.join("<br>")}</small>${cc.advice ? `<br><small>💡 ${cc.advice}</small>` : ""}`
+    : "";
   const map = `<small>      🍀 DUBLIN ─────────┐<br>🏙️ STAMFORD ─ 🏢 NEW HAVEN ─ 🔧 HARTFORD<br>            🏭 <b>BUILDING 7 (you)</b></small>`;
   const mk = (label, f, dis) => ({ t: label, f });
   const bump = (k, d) => () => {
@@ -50,12 +60,12 @@ function commandCenter() {
     cc.alloc[k] += d; commandCenter();
   };
   dlg("🌐 GLOBAL COMMAND CENTER",
-    `${map}<br><br>${rows}<br><br>📊 <b>ENTERPRISE UPTIME: ${ccAvg(cc)}%</b><br><br><b>DAILY POLICY</b> (${left} pts unspent)<br><small>🛡️ Security −incident odds · 🖥️ Hardware −daily wear · 👥 Staffing +nightly recovery</small><br>🛡️ ${a.sec} · 🖥️ ${a.hw} · 👥 ${a.staff}`,
+    `${map}<br><br>${rows}<br><br>📊 <b>ENTERPRISE UPTIME: <span style="color:${upColor}">${uptime}%</span></b><br><br><b>DAILY POLICY</b> (${left} pts unspent)<br>🛡️ ${a.sec} · 🖥️ ${a.hw} · 👥 ${a.staff}<br><small>→ Tonight: <b>${incPct}%</b> incident odds per site · wear up to <b>${wearMax}%</b> · recovery <b>+${rec}%</b></small>${report}`,
     [
       mk("🛡️ +1", bump("sec", 1)), mk("🛡️ −1", bump("sec", -1)),
       mk("🖥️ +1", bump("hw", 1)), mk("🖥️ −1", bump("hw", -1)),
       mk("👥 +1", bump("staff", 1)), mk("👥 −1", bump("staff", -1)),
-      { t: "✅ Commit policy", f: () => { save(); toast("🌐 Policy committed. Effects apply each morning."); commandCenter(); } },
+      { t: "✅ Commit policy", f: () => { save(); toast(`🌐 Policy live: ${incPct}% incident odds, wear ≤${wearMax}%, +${rec}% nightly recovery.`); commandCenter(); } },
       { t: "Back", f: mgmtConsole },
     ]);
 }
@@ -87,19 +97,23 @@ setupDay = function () {
   if (!hadCC || !s || !s.meta.cc || !ccUnlocked()) return;
   const cc = s.meta.cc, a = cc.alloc;
   const events = [];
+  const report = [];
   cc.sites.forEach((x, i) => {
     const meta = CC_SITES.find(c => c.id === x.id);
     const incChance = Math.max(.04, .18 - a.sec * .02);
-    let wasOut = x.health < 40;
+    const before = x.health;
+    let wasOut = x.health < 40, inc = 0, wear = 0;
     if (Math.random() < incChance) {
-      const dmg = R(8, 16);
-      x.health -= dmg;
-      events.push(`${meta.icon} ${meta.name}: incident overnight (-${dmg}%)`);
+      inc = R(8, 16);
+      x.health -= inc;
+      events.push(`${meta.icon} ${meta.name}: incident overnight (-${inc}%)`);
     }
-    const wear = Math.max(0, R(0, 5) - a.hw);
+    wear = Math.max(0, R(0, 5) - a.hw);
     if (wear) x.health -= wear;
-    x.health += a.staff * 2;
+    const recGain = a.staff * 2;
+    x.health += recGain;
     x.health = Math.max(5, Math.min(100, Math.round(x.health)));
+    report.push(`${meta.icon} ${meta.name.split(" — ")[0]}: ${before}% → ${x.health}%${inc ? ` (incident −${inc}` : ""}${wear ? `${inc ? " · " : " ("}wear −${wear}` : ""}${inc || wear ? ")" : ""}${recGain ? ` · +${recGain} recovery` : ""}`);
     // outage → the site screams into your queue
     if (!wasOut && x.health < 40) {
       const dept = pick(DEPTS);
@@ -113,6 +127,14 @@ setupDay = function () {
       }
     }
   });
+  cc.lastReport = report;
+  // what could I have done differently?
+  const hadInc = events.some(e => e.includes("incident")), hadWear = report.some(r => r.includes("wear"));
+  const lowSite = cc.sites.some(x => x.health < 60);
+  cc.advice = hadInc && a.sec < 6 ? "More 🛡️ Security would cut incident odds."
+    : hadWear && a.hw < 6 ? "More 🖥️ Hardware cover would absorb daily wear."
+    : lowSite && a.staff < 6 ? "More 👥 Staffing would speed nightly recovery."
+    : "Policy is holding. The enterprise hums.";
   if (events.length) setTimeout(() => toast(`🌐 OVERNIGHT: ${events[0]}${events.length > 1 ? ` (+${events.length - 1} more — see command center)` : ""}`, 5200), 5800);
   if (ccAvg(cc) === 100) {
     s.budget += 75;
