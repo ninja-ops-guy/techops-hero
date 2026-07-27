@@ -1,4 +1,4 @@
-# TechOps Hero v6.0 — AeroTech Division
+# TechOps Hero v6.0.1 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -66,7 +66,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 - **AD permission drills** — effective-permissions puzzles (Deny precedence, share × NTFS, group nesting, explicit vs inherited)
 - **Procurement refresh project** — from day 4, the CFO opens a capital budget line at the management console: **Replace All** ($500, EOL tickets vanish during rollout, Manufacturing +3 / Finance -2), **Extend Lifecycle** ($150, stretched fleet spawns extra EOL tickets, Finance +2 / Manufacturing -2) or **Hybrid** ($325, alternate-day rollout, everyone +1). One project per run — budget politics included
 - **Detective evidence board** — a corkboard at Mike's desk: four clue cards pinned up (a smoking gun, two supporting symptoms, and one fact that clears an innocent suspect), three theories. Find the gun, rule out the innocent, name the root cause — six rotating cases (rogue DHCP, DNS poisoning, degraded RAID, expired certs, STP loops, NTP drift), perfect boards pay like terminal drills
-- **Command-center endgame** — at Security Architect rank, the management console opens the **global command center**: an enterprise map of five sites (Building 7, New Haven, Hartford, Stamford, Dublin) with live health, and a daily 6-point policy budget — 🛡️ security lowers incident odds, 🖥️ hardware fights daily wear, 👥 staffing drives nightly recovery. Overnight incidents damage sites; sites below 40% health go OUTAGE and scream straight into your ticket queue; perfect 100% enterprise uptime pays a $75 board bonus
+- **Command-center endgame** — v6.0.1 polish: quantified policy projections, per-site LAST NIGHT report with advice, color-coded uptime, mobile touch-target fixes. At Security Architect rank, the management console opens the **global command center**: an enterprise map of five sites (Building 7, New Haven, Hartford, Stamford, Dublin) with live health, and a daily 6-point policy budget — 🛡️ security lowers incident odds, 🖥️ hardware fights daily wear, 👥 staffing drives nightly recovery. Overnight incidents damage sites; sites below 40% health go OUTAGE and scream straight into your ticket queue; perfect 100% enterprise uptime pays a $75 board bonus
 - **NG+** — the building remembers your legend
 
 ## Files
@@ -85,7 +85,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v57_hooks.js` | v5.7: night maintenance windows, certification study |
 | `v58_hooks.js` | v5.8: packet-routing & AD permission drills, procurement refresh project |
 | `v59_hooks.js` | v5.9: detective evidence board |
-| `v60_hooks.js` | v6.0: command-center endgame — enterprise map, global sites, budget policy |
+| `v60_hooks.js` | v6.0.1: command-center endgame — enterprise map, global sites, budget policy |
+| `QA_REVIEW.md` | Full QA & polish review report (v6.0.1) |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -96,6 +97,6 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1)
 
-**The roadmap is complete** — every planned feature has shipped. Future ideas welcome.
+**The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
