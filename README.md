@@ -1,4 +1,4 @@
-# TechOps Hero v5.4 — AeroTech Division
+# TechOps Hero v5.5 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -6,13 +6,14 @@ You start answering calls alone — you end up running an IT organization.
 ## Play
 Open `index.html` in any browser, or host the folder anywhere static (GitHub Pages, Netlify, S3...).
 Live version: **https://ninja-ops-guy.github.io/techops-hero/**
-Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
+Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — night mode now has full touch controls too.
 
 ## Controls
 - **Move:** WASD / arrow keys, or on-screen joystick (mobile)
-- **Interact:** E / Enter / Space, or the Ⓐ button (mobile)
+- **Interact:** E / Enter / Space, or the Ⓐ button (mobile) — becomes 👊 JAB at night
 - **Menu:** M or ☰
 - **Teams phone:** 📱 button or P
+- **Night (mobile):** joystick moves & jumps, ⚡ DASH and 🛡️ BLOCK buttons appear
 - **Digital Twin overlay:** V or the 🛰️ HUD button
 
 ## The loop
@@ -23,6 +24,9 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 5. **🌃 Night Crawl** — at 16:00 the South Exit opens. Outside, the game becomes a floaty platformer: dash, double-jump (with flip), and clear three New Haven streets of glitch creatures in rhythm-based beat-'em-up combat — then head home and end the day.
 
 ## Systems
+- **Week cycles** — HUD shows the weekday: **Monday ticket floods** (+2 walk-ins) and the dreaded **Friday 4:45 PM emergency** (a codenamed critical, always at quitting time)
+- **Daily weather** — sunny (+5% production), rain (networking closes pay +$10, animated rain), thunderstorm (+5 stress, higher incident odds, lightning blinks), heatwave (terminal drills pay +$2 for hiding in the AC)
+- **Full mobile night support** — on-screen DASH/BLOCK buttons, the Ⓐ button becomes 👊 JAB, and the virtual joystick now drives night-mode running/jumping/double-jumping; small-screen polish for chats and banners
 - **Phone/Teams interface** — tickets arrive as chat notifications (📱 button or P key): reply "on my way", remote in, delegate to the crew, or escalate to a codenamed CRITICAL — all from your pocket
 - **Living helpdesk** — the IT room visibly levels up with your rank: cable spaghetti and one coffee mug → extra monitors, dashboard wall, motivational posters → gold-trimmed COMMAND CENTER with your rank on the plaque
 - **AV / Workplace Tech tickets** — conference room "No Signal", Teams Room offline, warehouse scanners, shipping label printers: the high-frequency people-facing side of real IT
@@ -67,6 +71,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 | `org_hooks.js` | v5.2: promotion perks, incident dependency trees, home upgrades |
 | `v53_hooks.js` | v5.3: AV/hw ticket ecosystem, repair-vs-replace, VIP pressure, cinematics, ops monitor |
 | `v54_hooks.js` | v5.4: phone/Teams interface, living helpdesk visuals |
+| `v55_hooks.js` | v5.5: week cycles, weather, mobile night controls |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -77,13 +82,13 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls
 
 **Future ideas:**
 - **Character progression visuals** — badge, gear & aura evolve per rank (polo → admin tablet → threat map)
 - **More minigames** — packet-routing puzzle, AD permission puzzle, detective evidence board
 - **Procurement projects** — plant-wide hardware refresh: replace-all vs extend-lifecycle vs hybrid, budget politics included
 - **Certification study** — the Bookshelf doubles as an A+ → Cloud study desk
-- **Weather & week cycles** — Monday ticket floods, Friday 4:45 PM emergencies, night maintenance windows
+- **Night maintenance windows** — after-hours change work with production on the line
 - **Collectible achievements** — Cable Whisperer, Zero Downtime, Packet Detective, The Automator
 - **Command-center endgame** — enterprise map, global sites, budget controls (SimCity × SOC)
