@@ -1,4 +1,4 @@
-# TechOps Hero v6.1 — AeroTech Division
+# TechOps Hero v6.2 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -71,6 +71,9 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 - **NPC flag-downs** — ticket holders wave you down in the halls: engage the troubleshooting battle now or ask them to hold (being acknowledged costs them nothing — good communication)
 - **Daily standup** — 09:30 reminder; report to Mike's desk with the team. Mike references the hottest ticket on the board; your report style matters: crisp status (XP, -stress, +rep), flagging blockers (+confidence head start in that battle), offering to pair, or staying silent (+stress)
 - **Pixel-baroque sprites** — every sprite atlas rebuilt pristine: true transparency (no more white borders), cross-cell bleed removed, frames centered and isolated; plus an AI-generated golden server-rack crest on the title screen and command center
+- **Troubleshooting-session battles (v6.2 rework)** — portal battles follow a real session now: a 4-phase guide (▶ GATHER → HYPOTHESIZE → RESOLVE → VERIFY) sits above the fight and tells you what to do next; enemies scale fairly (HP ~60% of before), uncertainty starts at 52%, and corruption damage is mitigated — methodical play wins
+- **South Exit map marker** — the 16:00 exit glows with a sign and countdown (gold when closed, green and OPEN at 16:00)
+- **Modern clean look** — AI-generated night skyline behind the title crest, frosted-glass dialogs
 - **NG+** — the building remembers your legend
 
 ## Files
@@ -93,6 +96,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `QA_REVIEW.md` | Full QA & polish review report (v6.0.1) |
 | `v61_hooks.js` | v6.1: symptom-first tickets, NPC flag-downs, daily standup, crest UI |
 | `emblem.js` + `emblem_p1–p3.js` | v6.1: AI-generated pixel-baroque crest (split payload) |
+| `v62_hooks.js` | v6.2: battle rework + session guide, exit marker, title skyline |
+| `skyline.js` + `skyline_p1–p3.js` | v6.2: AI-generated night skyline title backdrop (split payload) |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -103,6 +108,6 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title
 
 **The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
