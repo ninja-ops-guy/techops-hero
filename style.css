@@ -132,3 +132,14 @@ canvas{image-rendering:pixelated;display:block}
 .conf-track { margin-top: 4px; border-color: #4af; }
 .bar-fill.conf { background: linear-gradient(90deg, #1a3a8a, #4af); width: 10%; }
 #enemy-conf-text { font-size: 8px; color: #7fb4ff; letter-spacing: 1px; margin-top: 2px; text-align: center; }
+
+/* v6.0.1 — mobile touch targets (WCAG-ish): dialogs & battle actions */
+@media (pointer: coarse) {
+  #dlg-options button,
+  #battle-actions button,
+  #eod-rewards button {
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+}
