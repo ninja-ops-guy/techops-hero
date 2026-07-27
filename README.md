@@ -1,27 +1,55 @@
-# TechOps Hero v2.0 — AeroTech Division
+# TechOps Hero v4.3 — AeroTech Division
 
-A roguelite IT help desk RPG. Every ticket is a dungeon. Every day is a run.
+A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
+You start answering calls alone — you end up running an IT organization.
 
 ## Play
 Open `index.html` in any browser, or host the folder anywhere static (GitHub Pages, Netlify, S3...).
+Live version: **https://ninja-ops-guy.github.io/techops-hero/**
 Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices.
 
 ## Controls
 - **Move:** WASD / arrow keys, or on-screen joystick (mobile)
 - **Interact:** E / Enter / Space, or the Ⓐ button (mobile)
 - **Menu:** M or ☰
+- **Digital Twin overlay:** V or the 🛰️ HUD button
 
-## Gameplay
-- **Workday runs** — each day is a randomized run: procedural office, 2–8 tickets, daily chaos event (Patch Tuesday, CEO Visit, Ransomware Drill...)
-- **Ticket flow** — interview the user → diagnose root cause (right answer = easier dungeon) → enter the 🌀 portal → turn-based battle in the digital world (Paper Dimension, Identity Cathedral, Labyrinth of Names...) → close the ticket
-- **Combat** — Ping, PowerShell, Flush DNS, Firewall Rule... abilities cost **stress** instead of mana. Coffee restores you.
-- **Progression** — 8-rank career ladder (Help Desk Technician → CIO), certifications (A+, Network+, Security+, Linux+, CCNA, Cloud, Automation) that unlock new battle abilities, Diablo-style loot rarity, department reputation stars, troubleshooting journal
-- **End of day** — pick 1 of 3 rewards; missed tickets cost rep
-- Saves to localStorage (Continue Run on the title screen)
+## The loop
+1. **📞 The Call** — every ticket starts as a communication battle. Fill the caller's Ticket Gauge without draining their Patience. Executives have none; HR talks forever; Manufacturing shouts over line noise. Push too hard and they call your manager.
+2. **Interview & Diagnose** — question the user, pick the right root cause (right answer = easier dungeon).
+3. **🌀 Portal battle** — turn-based combat where **Uncertainty is the real enemy**: gather weighted evidence (testimony, logs, network, config), prune the root-cause tree, and only hypothesize at 60%+ Confidence. Blind fixes backfire and build tech debt.
+4. **Close & grow** — XP, budget, department reputation, knowledge mastery. Coffee restores you (and the mug is sacred).
+
+## Systems
+- **Evidence-based battles** — Complexity / Uncertainty / Confidence meters, false positives, Insight auto-reveals, 5-star Perfect Investigation ratings
+- **Knowledge mastery** — solve 5 of a type → MASTERED, +10 confidence forever after
+- **Hidden root causes** — one culprit secretly sits behind several tickets each day; eliminate it for bonuses
+- **Follow-up chains** — one ticket becomes an adventure
+- **Users learn** — by day 4+, callers arrive having rebooted and pre-submitted tickets
+- **Workforce** — hire interns/techs/engineers with traits, manage burnout and misdiagnosis escalations, train them via the knowledge base
+- **Tech debt** — blind fixes and botched diagnoses compound until audits and repeat tickets bite
+- **Three-vendor shop** — Procurement, Training, and the Innovation Lab; infrastructure investments retire ticket types permanently
+- **Major Incidents** — codenamed SEV events with 90-minute declaration windows, war-room chatter, MTTR tracking, and post-incident reviews
+- **Legacy Monsters** — five named ancient systems as mini-bosses with Decommission / Preserve / Migrate verdicts and hidden dependencies
+- **Change Management** — cowboy deploys vs professional process (faster vs safer)
+- **Career ladder** — 8 ranks from Help Desk Technician to CIO, certifications (A+ → Cloud), procedural war stories and a full Career Report with reputation paths (Firefighter / Builder / Teacher / Ghost / Legend)
+- **Living factory** — animated floor, production counter ($/min), pager-night events, NPC emote bubbles, action poses, Digital Twin packet-flow overlay
+- **NG+** — the building remembers your legend
 
 ## Files
 | File | Purpose |
 |---|---|
-| `index.html` | App shell, HUD, battle/dialog/panel UI |
+| `index.html` | App shell, HUD, battle/dialog/panel UI, script load order |
 | `style.css` | Retro pixel-RPG styling, mobile/touch UI |
-| `game.js` | Engine: map gen, rendering, tickets, combat, progression |
+| `game.js` | Core engine: map gen, rendering, tickets, evidence combat, progression, workforce, incidents, legacy |
+| `comm_hooks.js` | v4.3: communication battles, mastery, chains, root causes, users-learn |
+| `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
+| `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
+| `extra_sprites.js` + `sp0–sp8.js` | Character-sheet atlas: poses, emotes, equipment (split payload) |
+
+Saves to localStorage (Continue Run on the title screen).
+
+## Roadmap
+**Shipped:** evidence-based combat · communication battles · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay
+
+**Future ideas:** endgame modes (Architect / Crisis / Survival), mentorship depth, network-map exploration, automation factory depth, multiplayer war room
