@@ -40,7 +40,7 @@ drawPlayer = function (s, tm) {
     if (fx === "left") { ctx.translate(dx + dw, 0); ctx.scale(-1, 1); ctx.drawImage(extraImg, cx * C, cy * C, C, C, 0, dy, dw, dh); }
     else ctx.drawImage(extraImg, cx * C, cy * C, C, C, dx, dy, dw, dh);
     ctx.restore();
-    const ride2 = s.lab.includes("tugger") ? "🛺" : s.lab.includes("skate") ? "🛹" : null;
+    const ride2 = s.lab.includes("tugger") ? "🛺" : s.lab.includes("bike") ? "🚲" : s.lab.includes("skate") ? "🛹" : null;
     if (ride2) { ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ride2, dx + dw / 2, dy + dh - 2); }
     return;
   }
@@ -55,7 +55,7 @@ drawPlayer = function (s, tm) {
   }
   ctx.restore();
   // rideable drawn under the player
-  const ride = s.lab.includes("tugger") ? "🛺" : s.lab.includes("skate") ? "🛹" : null;
+  const ride = s.lab.includes("tugger") ? "🛺" : s.lab.includes("bike") ? "🚲" : s.lab.includes("skate") ? "🛹" : null;
   if (ride) {
     ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(ride, dx + dw / 2, dy + dh - 2);
