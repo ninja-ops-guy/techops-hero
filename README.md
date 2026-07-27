@@ -1,4 +1,4 @@
-# TechOps Hero v5.8 — AeroTech Division
+# TechOps Hero v5.9 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -65,6 +65,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 - **Packet-routing drills** — longest-prefix-match, default-gateway, same-subnet and VLAN-isolation puzzles at the server-room terminal, with full explanations
 - **AD permission drills** — effective-permissions puzzles (Deny precedence, share × NTFS, group nesting, explicit vs inherited)
 - **Procurement refresh project** — from day 4, the CFO opens a capital budget line at the management console: **Replace All** ($500, EOL tickets vanish during rollout, Manufacturing +3 / Finance -2), **Extend Lifecycle** ($150, stretched fleet spawns extra EOL tickets, Finance +2 / Manufacturing -2) or **Hybrid** ($325, alternate-day rollout, everyone +1). One project per run — budget politics included
+- **Detective evidence board** — a corkboard at Mike's desk: four clue cards pinned up (a smoking gun, two supporting symptoms, and one fact that clears an innocent suspect), three theories. Find the gun, rule out the innocent, name the root cause — six rotating cases (rogue DHCP, DNS poisoning, degraded RAID, expired certs, STP loops, NTP drift), perfect boards pay like terminal drills
 - **NG+** — the building remembers your legend
 
 ## Files
@@ -82,6 +83,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v56_hooks.js` | v5.6: collectible achievements, trophy case, rank gear visuals |
 | `v57_hooks.js` | v5.7: night maintenance windows, certification study |
 | `v58_hooks.js` | v5.8: packet-routing & AD permission drills, procurement refresh project |
+| `v59_hooks.js` | v5.9: detective evidence board |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -92,8 +94,7 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board
 
 **Future ideas:**
-- **More minigames** — detective evidence board
 - **Command-center endgame** — enterprise map, global sites, budget controls (SimCity × SOC)
