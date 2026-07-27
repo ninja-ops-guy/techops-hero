@@ -1,4 +1,4 @@
-// v4.3 — Communication Battles + IT-department systems.
+// v4.3.1 — Communication Battles + IT-department systems.
 // Loads AFTER sprite_hooks.js. Hooks in without modifying game.js:
 //  - wraps ticketFlow() with a JRPG-style phone-call battle (hidden Patience / Ticket Gauge)
 //  - wraps startBattle() to apply call bonuses + knowledge mastery confidence
@@ -27,7 +27,11 @@ ticketFlow = function (n) {
 
 function commBattle(n) {
   const s = S;
-  if (typeof n.patience !== "number") n.patience = COMM_PATIENCE[n.dept] || 5;
+  const rep = s.rep[n.dept] || 0;
+  // departments remember: high rep = friendlier callers + better descriptions; low rep = wary
+  if (typeof n.patience !== "number") {
+    n.patience = (COMM_PATIENCE[n.dept] || 5) + (rep >= 4 ? 1 : 0) - (rep <= 1 ? 1 : 0) + ((n.timesHelped || 0) >= 3 ? 1 : 0);
+  }
   const maxPat = n.patience;
   if (typeof n.ticketGauge !== "number") n.ticketGauge = s.day >= 4 ? 2 : 0; // users learn
   n.preConf = n.preConf || 0;
@@ -70,7 +74,7 @@ function commBattle(n) {
       if (noisy) { n.patience -= 1; render(`"YOU'RE BREAKING UP—" the line noise eats your question.`); }
       else if (n.guessed) { n.ticketGauge += 1; render(`"We already covered that part." — keep it moving.`); }
       else {
-        n.guessed = true; n.ticketGauge += 1; n.preConf += 15;
+        n.guessed = true; n.ticketGauge += 1; n.preConf += rep >= 4 ? 20 : 15; // trusted techs get better clues
         render(n.root
           ? `"Funny you ask — three other desks act up the same way." 🧩 <small>(+15 confidence later — smells like ${n.root})</small>`
           : `"Huh, that actually narrows it down." <small>(+15 confidence when you portal in)</small>`);
@@ -84,8 +88,10 @@ function commBattle(n) {
     render(n.patience <= 1 ? `<i>"I'm running out of patience here…"</i>` : pick([
       `"So… can you fix it?"`, `"I have a meeting in ten."`, `"Is this going to take long?"`]));
   };
-  render(veteran
-    ? `"Hey, it's me again — I rebooted first, like you taught us."`
+  render(
+    n.trustHurt ? `"You blew me off last time. This better be quick."`
+    : (n.timesHelped || 0) >= 3 ? `"You fixed my laptop last month — I trust you. Same gremlin, I think."`
+    : veteran ? `"Hey, it's me again — I rebooted first, like you taught us."`
     : `"${pick(["Something's wrong with my computer.", "Nothing works and I changed NOTHING.", "It's broken. I didn't touch it. Ever."])}"`);
 }
 
@@ -112,6 +118,8 @@ resolveTicket = function (n) {
   __origResolveTicketV43(n);
   if (wasDone || !n.done) return;
   const s = S;
+  // relationships: users remember who helped them
+  n.timesHelped = (n.timesHelped || 0) + 1;
   // knowledge mastery — every solved type makes the next one easier
   s.meta.mastery = s.meta.mastery || {};
   const id = n.type.id;
