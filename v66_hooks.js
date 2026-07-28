@@ -1,6 +1,7 @@
 // v6.6 "AAA Polish": game juice — floating damage numbers, hit flash & screen shake,
 // extended synthesized SFX, typewriter dialogue, win confetti, hurt vignette,
 // low-HP heartbeat, smooth bars. No new assets: everything is code + CSS.
+// v6.7: settings-aware (volume, shake, particle density, text speed via window.V67SET).
 (function () {
   const V66_VER = "6.6.0";
 
@@ -23,7 +24,7 @@
       for (const [f, d, dur, type] of notes) {
         const o = AC.createOscillator(), g = AC.createGain();
         o.type = type; o.frequency.value = f;
-        g.gain.setValueAtTime(.06, t0 + d);
+        g.gain.setValueAtTime(.06 * (window.V67SET ? V67SET.volSfx : 1), t0 + d);
         g.gain.exponentialRampToValueAtTime(.001, t0 + d + dur);
         o.connect(g).connect(AC.destination);
         o.start(t0 + d); o.stop(t0 + d + dur);
@@ -49,6 +50,7 @@
   }
   function retrigger(el, cls) {
     if (!el) return;
+    if (window.V67SET && !V67SET.shake && (cls === "v66-shake" || cls === "v66-phit")) return;
     el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
   }
 
@@ -103,7 +105,7 @@
     if (!host) return;
     const colors = gold ? ["#ffd700", "#fff3b0", "#ffb700", "#ffffff"]
       : ["#7dd87d", "#5fb8ff", "#ffd700", "#ff6b6b", "#c792ff", "#ffffff"];
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < Math.round(26 * (window.V67SET ? V67SET.particles : 1)); i++) {
       const c = document.createElement("div");
       c.className = "v66-confetti";
       c.style.left = (10 + Math.random() * 80) + "%";
@@ -142,11 +144,12 @@
       return;
     }
     const full = text;
+    if (window.V67SET && V67SET.textSpeed >= 99) { el.textContent = full; return; }
     let i = 0;
     el.textContent = "";
     el.onclick = () => { clearInterval(twTimer); el.textContent = full; };
     twTimer = setInterval(() => {
-      i += 2;
+      i += 2 * (window.V67SET ? V67SET.textSpeed : 1);
       el.textContent = full.slice(0, i);
       if (i % 8 === 0 && i < full.length) sfx("blip");
       if (i >= full.length) clearInterval(twTimer);
