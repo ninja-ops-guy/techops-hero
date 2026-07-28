@@ -125,7 +125,7 @@
       const f = (typeof fel === "function") ? fel() : null;
       if (f && f.pos && !f.defeated && Math.abs(s.room.x - .88) < .07 && typeof biomeAt === "function") {
         const fb = biomeAt(f.pos.x, f.pos.y);
-        if (fb && fb.id === s.room.id) return feliciaTalk();
+        if (fb && fb.id === s.room.id) { exitRoom(); return __origInteract69(); }
       }
       const n = nearestRoomNpc();
       if (n) return n.ambient ? ambientTalk(n) : ticketFlow(n);
@@ -143,6 +143,28 @@
     ctx.save();
     if (flip) { ctx.translate(x + w / 2, 0); ctx.scale(-1, 1); ctx.drawImage(img, frame[0] * cell, frame[1] * cell, cell, cell, -w / 2, floorY - h + bob, w, h); }
     else ctx.drawImage(img, frame[0] * cell, frame[1] * cell, cell, cell, x - w / 2, floorY - h + bob, w, h);
+    ctx.restore();
+  }
+
+  // name plates are their own objects: a standing desk plaque under each person,
+  // not text baked onto the sprite (reference-art style)
+  function drawNamePlate(x, floorY, name, color) {
+    ctx.save();
+    ctx.font = "bold 9px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const w = Math.max(34, ctx.measureText(name).width + 16), h = 13;
+    const px = x - w / 2, py = floorY + 7;
+    // post + foot
+    ctx.fillStyle = "#232936"; ctx.fillRect(x - 1.5, py + h, 3, 5);
+    ctx.fillStyle = "#1a1f2b"; ctx.fillRect(x - 7, py + h + 5, 14, 2);
+    // plaque body
+    ctx.fillStyle = "#12161f";
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(px, py, w, h, 3); ctx.fill(); } else ctx.fillRect(px, py, w, h);
+    ctx.strokeStyle = "#46536e"; ctx.lineWidth = 1;
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(px + .5, py + .5, w - 1, h - 1, 3); ctx.stroke(); } else ctx.strokeRect(px + .5, py + .5, w - 1, h - 1);
+    // top sheen + engraved name
+    ctx.fillStyle = "#ffffff10"; ctx.fillRect(px + 2, py + 1, w - 4, 3);
+    ctx.fillStyle = color || "#dfe6f5";
+    ctx.fillText(name, x, py + h / 2 + .5);
     ctx.restore();
   }
 
@@ -178,8 +200,7 @@
       if (typeof npcIdx === "function") drawSideSprite(_npcImg69, 128, [npcIdx(n), 0], x, floorY, 64, false, tm);
       if (!n.ambient && !n.done) { ctx.font = "15px serif"; ctx.fillText(n.critical ? "🚨" : "🎫", x + 18, floorY - 66); }
       else if (!n.ambient && n.done) { ctx.font = "13px serif"; ctx.fillText("✅", x + 18, floorY - 64); }
-      ctx.font = "bold 9px monospace"; ctx.fillStyle = "#fffd";
-      ctx.fillText(n.name, x, floorY + 12);
+      drawNamePlate(x, floorY, n.name, n.ambient ? "#9fb4d8" : "#ffd24a");
     });
     // felicia, if she's in this department
     const f = (typeof fel === "function") ? fel() : null;
@@ -189,8 +210,7 @@
         const x = W * .88;
         ctx.fillStyle = "#0006"; ctx.beginPath(); ctx.ellipse(x, floorY + 4, 22, 5, 0, 0, 7); ctx.fill();
         drawSideSprite(_felImg69, (typeof FEL_ATLAS !== "undefined" ? FEL_ATLAS.cell : 128), [0, 0], x, floorY, 66, false, tm);
-        ctx.font = "bold 9px monospace"; ctx.fillStyle = "#00d9ff";
-        ctx.fillText("Felicia", x, floorY + 12);
+        drawNamePlate(x, floorY, "Felicia", "#00d9ff");
       }
     }
     // player (side view, walk frames)
