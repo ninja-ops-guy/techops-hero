@@ -1,4 +1,4 @@
-# TechOps Hero v6.5 — AeroTech Division
+# TechOps Hero v6.6 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -104,6 +104,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v63_hooks.js` | v6.3: transitional scenes, smooth walking, 40 scenic map props |
 | `v64_hooks.js` | v6.4: Felicia secret boss, Watchdog Protocol mode, Impreza & war-driving |
 | `v65_hooks.js` | v6.5: deep interviews (type-specific Q&A), reasoning outcomes, NPC sprite cast |
+| `v66_hooks.js` | v6.6: AAA polish — battle juice, extended SFX, typewriter dialogue, win confetti |
 | `npcs.js` + `npcs_p1–p12.js` | v6.5: AI-generated 8-character NPC cast in player style (split payload) |
 | `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
 | `props.js` + `props_p1–p5/p7` + `props_c6a-c/c8a-c/c9a-c.js` | v6.3: AI-generated 40-prop scenic atlas (split payload) |
@@ -117,7 +118,7 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast · AAA polish pass: battle juice & hit feedback · extended synthesized SFX · typewriter dialogue · win celebrations & hurt vignette
 
 ## v6.4 — Felicia: Watchdog Protocol
 - **🕶️ Hidden boss: APT-17 "MORNINGSTAR"** — Felicia Voss, the friendly contractor in the break room and at the campus café, is running a 243-day infiltration. Encounter her across days (a real printer jam, a laptop closed a second too fast, knowledge she shouldn't have), then collect **8 scattered clues** (badge logs, camera sync gaps, the 03:00 beacon, café scan spikes...). Each clue alone is explainable; together they reveal the pattern.
@@ -132,5 +133,14 @@ Saves to localStorage (Continue Run on the title screen).
 - **A self-consistent world** — red herrings stay chase-able until you verify them, and a user who's led you astray twice will stop and correct themselves, ruling out a branch. Signal answers can eliminate wrong theories outright.
 - **Varied reasoning outcomes** — failed hypotheses now come with a type-specific post-mortem ("Safe mode loads no drivers — that points AT drivers, not away"), and a failed test still kills one wrong branch half the time: no dead-end runs.
 - **🧑‍🤝‍🧑 A real cast** — all NPCs are now drawn from an AI-generated 8-character sprite sheet in the player's own pixel style: IT techs in the green vest (Mike, Nick, Amit, Brandon, Daniel), engineers with safety glasses, marketing blazers, hard-hat manufacturing, suited execs, HR cardigans, finance ties, sales headsets — one cohesive art direction.
+
+## v6.6 — AAA Polish
+- **💥 Battle juice** — every hit now lands with weight: floating damage numbers (gold for crits, red when you're hurt), hit-flash on the enemy sprite, screen shake, and a battle-entry intro slide. Heals float green; enemy regen shows too.
+- **🏆 Win celebrations** — defeating a ticket bursts confetti over the arena and the enemy dissolves in a white-hot flash, with a victory arpeggio on top.
+- **🔊 Extended synthesized SFX** — still zero audio assets: new WebAudio voices for coins, critical hits, player damage, heals, UI clicks and dialogue blips, layered on the existing chiptune kit.
+- **⌨️ Typewriter dialogue** — long plain-text conversations type out with soft blips (click to fast-forward); short confirmations and HTML-rich dialogue fade in smoothly instead.
+- **❤️ Hurt feedback** — taking damage flashes the arena red; at low HP a heartbeat vignette pulses around the screen until you recover.
+- **✨ Feel pass** — smooth eased tweens on all HUD bars, pop-in toasts, and slide-in battle-log lines round out the AAA feel.
+- **🔧 Sprite payload repair** — the player sprite atlas on the live site had silently corrupted in transit (dropped base64 characters broke the PNG decode, falling back to vector sprites); rebuilt the pristine transparent payload with corruption-proof encoding. The hero now renders in full pixel-baroque glory everywhere.
 
 **The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
