@@ -1,4 +1,4 @@
-# TechOps Hero v6.8 — AeroTech Division
+# TechOps Hero v6.9 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -15,7 +15,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 - **Teams phone:** 📱 button or P
 - **Night (mobile):** joystick moves & jumps, ⚡ DASH and 🛡️ BLOCK buttons appear
 - **Digital Twin overlay:** V or the 🛰️ HUD button
-- **Settings:** ⚙️ in the HUD · **Cutscene gallery:** 🎬
+- **Settings:** ⚙️ in the HUD · **Cutscene gallery:** 🎬 · **Exit a side-view room:** Q / Esc or the left door
 
 ## The loop
 1. **📞 The Call** — every ticket starts as a communication battle. Fill the caller's Ticket Gauge without draining their Patience. Executives have none; HR talks forever; Manufacturing shouts over line noise. Push too hard and they call your manager.
@@ -108,6 +108,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v66_hooks.js` | v6.6: AAA polish — battle juice, extended SFX, typewriter dialogue, win confetti |
 | `v67_hooks.js` | v6.7: cinematic combat — settings, ambient audio, adaptive music, boss cinematics, combos, gallery, bug fixes |
 | `v68_hooks.js` | v6.8: path guides to tickets & the way home, enforced 16:00 clock-out, Felicia overlay camera fix |
+| `v69_hooks.js` + `rooms.js` + `rooms_it/eng/factory/office.js` | v6.9: side-view department interiors (AI backdrops), perspective-switch gameplay |
+| `CONSISTENCY.md` | Game logic & loop consistency review (v6.9) |
 | `npcs.js` + `npcs_p1–p12.js` | v6.5: AI-generated 8-character NPC cast in player style (split payload) |
 | `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
 | `props.js` + `props_p1–p5/p7` + `props_c6a-c/c8a-c/c9a-c.js` | v6.3: AI-generated 40-prop scenic atlas (split payload) |
@@ -121,7 +123,7 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast · AAA polish pass: battle juice & hit feedback · extended synthesized SFX · typewriter dialogue · win celebrations & hurt vignette · cinematic combat: boss intros & combo finishers · layered ambient audio & adaptive music · dialogue portraits · accessibility settings · cutscene gallery · living-world ambience · path guides (toggleable) · enforced 16:00 clock-out & drive home
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast · AAA polish pass: battle juice & hit feedback · extended synthesized SFX · typewriter dialogue · win celebrations & hurt vignette · cinematic combat: boss intros & combo finishers · layered ambient audio & adaptive music · dialogue portraits · accessibility settings · cutscene gallery · living-world ambience · path guides (toggleable) · enforced 16:00 clock-out & drive home · side-view department interiors · perspective-switch gameplay
 
 ## v6.4 — Felicia: Watchdog Protocol
 - **🕶️ Hidden boss: APT-17 "MORNINGSTAR"** — Felicia Voss, the friendly contractor in the break room and at the campus café, is running a 243-day infiltration. Encounter her across days (a real printer jam, a laptop closed a second too fast, knowledge she shouldn't have), then collect **8 scattered clues** (badge logs, camera sync gaps, the 03:00 beacon, café scan spikes...). Each clue alone is explainable; together they reveal the pattern.
@@ -161,5 +163,11 @@ Saves to localStorage (Continue Run on the title screen).
 - **🗺️ Path guides (toggleable)** — flowing breadcrumb dots lead you to the nearest open ticket during the day, and a pulsing destination ring shows name + walking distance. At 16:00 they retarget to a green **WAY HOME** marker at the South Exit. Toggle them in ⚙️ Settings.
 - **🕓 Enforced clock-out** — at 16:00 the shift ends: a directive toast points you to the exit (you can still finish the ticket you're on). At 16:59 Security sweeps the floor and you drive home — no more silently rolling into the backlog. Big time jumps can't skip the drive either: the stock 5 PM force-end is rerouted to the sweep.
 - **🐛 Felicia stuck-sprite fix** — her NPC, clue markers and watchdog rings were rendering in screen space without the camera transform, so they glued to the screen while the world scrolled. All v6.4 overlays now render in world space.
+
+## v6.9 — Department Interiors
+- **🏢 Side-view departments** — walk into a department (IT, Engineering, Executive, Finance, Sales, HR, Marketing) and the perspective shifts to a side-scrolling interior in the cinematic pixel-art style of the reference boards: AI-generated backdrops (IT room, shuttle hangar, office suite), the dept's people at their stations with name plates, the IT crew at their desks — talk to anyone with E.
+- **Seamless transitions** — the switch is edge-triggered on entry; the left door (or Q/Esc) drops you back to the exact top-down tile. Toggle it in ⚙️ Settings.
+- **World-first consistency** — Felicia's clue spots and the APT herself keep their top-down interactions (the arc stays finishable), Felicia's station appears inside her current department, and Watchdog mode stays top-down so war-driving cruises never break.
+- **📋 Consistency review** — `CONSISTENCY.md` audits the whole loop: single clock writer, day-end paths, room-vs-world precedence, camera space, settings — with the accepted minor items documented.
 
 **The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
