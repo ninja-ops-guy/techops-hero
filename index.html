@@ -2,80 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TechOps Hero</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>TechOps Hero v6.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>">
 </head>
 <body>
-<div id="game-container">
+<div id="game-wrap">
   <canvas id="game"></canvas>
+
+  <!-- HUD -->
   <div id="hud" class="hidden">
-    <div id="hud-left">
-      <span id="hud-day"></span><span id="hud-clock"></span><span id="hud-zone"></span>
+    <div id="hud-top">
+      <div id="hud-left">
+        <div id="hud-day">DAY 1</div>
+        <div id="hud-title">Help Desk Technician</div>
+        <div id="hud-clock">09:00</div>
+      </div>
+      <div id="hud-bars">
+        <div class="bar"><span class="bar-label">XP</span><div class="bar-track"><div id="bar-xp" class="bar-fill xp"></div></div></div>
+        <div class="bar"><span class="bar-label">STRESS</span><div class="bar-track"><div id="bar-stress" class="bar-fill stress"></div></div></div>
+      </div>
+      <div id="hud-right">
+        <div id="hud-budget">$0</div>
+        <div id="hud-tickets">🎫 0</div>
+        <div id="hud-prod">🏭 $14,200/min</div>
+        <button id="btn-twin" class="hud-btn">🛰️</button>
+        <button id="btn-sweep" class="hud-btn hidden">⚡</button>
+        <button id="btn-music" class="hud-btn">🔇</button>
+        <button id="btn-menu" class="hud-btn">☰</button>
+      </div>
     </div>
-    <div id="hud-right">
-      <span id="hud-hp"></span><span id="hud-stress"></span><span id="hud-budget"></span><span id="hud-rep"></span><span id="hud-ticket"></span>
-    </div>
+    <div id="chaos-banner" class="hidden"></div>
+    <div id="quest-tracker"></div>
   </div>
-  <div id="objective" class="hidden"></div>
-  <div id="toast"></div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden"></div>
+
+  <!-- Dialogue -->
   <div id="dialogue" class="hidden">
     <div id="dlg-name"></div>
     <div id="dlg-text"></div>
     <div id="dlg-options"></div>
   </div>
+
+  <!-- Battle -->
   <div id="battle" class="hidden">
-    <div id="battle-world"></div>
-    <div id="battle-top">
-      <div id="enemy-box">
+    <div id="battle-scene">
+      <div id="battle-enemy">
         <div id="enemy-sprite"></div>
-        <div id="enemy-info">
-          <div id="enemy-name"></div>
-          <div class="bar"><div id="enemy-hp" class="bar-fill hp"></div></div>
-          <div class="bar"><div id="enemy-unc" class="bar-fill unc"></div></div>
-        </div>
+        <div id="enemy-name"></div>
+        <div class="bar-track big"><div id="enemy-hp" class="bar-fill hp"></div></div>
+        <div class="bar-track big unc-track"><div id="enemy-unc" class="bar-fill unc"></div></div>
+        <div id="enemy-unc-text">UNCERTAINTY</div>
+        <div class="bar-track big conf-track"><div id="enemy-conf" class="bar-fill conf"></div></div>
+        <div id="enemy-conf-text">CONFIDENCE</div>
       </div>
-      <div id="player-box">
-        <div id="player-info">
-          <div id="player-name-b"></div>
-          <div class="bar"><div id="player-hp" class="bar-fill hp"></div></div>
-          <div class="bar"><div id="player-conf" class="bar-fill conf"></div></div>
-        </div>
+      <div id="battle-log"></div>
+      <div id="battle-player">
+        <div class="bar-track big"><div id="player-hp" class="bar-fill hp"></div></div>
+        <div id="player-hp-text"></div>
       </div>
     </div>
-    <div id="battle-log"></div>
-    <div id="battle-menu"></div>
+    <div id="battle-actions"></div>
   </div>
-  <div id="title-screen">
-    <div id="title-emblem"></div>
-    <h1>TECHOPS HERO</h1>
-    <div id="title-sub">A ROGUELITE IT ODYSSEY</div>
-    <div id="title-buttons">
-      <button id="btn-start">▶ NEW GAME</button>
-      <button id="btn-continue" class="hidden">↻ CONTINUE</button>
-      <button id="btn-help">❓ HOW TO PLAY</button>
-    </div>
-    <div id="title-foot">keyboard: WASD/arrows + E · touch: drag to move, tap to interact</div>
+
+  <!-- Menu / panels -->
+  <div id="panel" class="hidden">
+    <div id="panel-head"><span id="panel-title"></span><button id="panel-close">✕</button></div>
+    <div id="panel-tabs"></div>
+    <div id="panel-body"></div>
   </div>
-  <div id="eod-summary" class="hidden">
-    <h2>SHIFT REPORT</h2>
-    <div id="eod-body"></div>
+
+  <!-- End of day -->
+  <div id="eod" class="hidden">
+    <h2 id="eod-title">END OF DAY</h2>
+    <div id="eod-summary"></div>
+    <h3>Choose one reward:</h3>
     <div id="eod-rewards"></div>
   </div>
-  <div id="panel" class="hidden">
-    <div id="panel-title"></div>
-    <div id="panel-body"></div>
-    <button id="panel-close">✕</button>
+
+  <!-- Title screen -->
+  <div id="title-screen">
+    <div id="title-logo">
+      <div class="t-line1">TECHOPS</div>
+      <div class="t-line2">HERO</div>
+      <div class="t-line3">v6.4 — WATCHDOG PROTOCOL</div>
+    </div>
+    <div id="title-flavor">AEROTECH MFG — BUILDING 7 // SHIFT 09:00<br>Every ticket is a dungeon. Every day is a run.</div>
+    <button id="btn-start" class="big-btn">▶ CLOCK IN</button>
+    <button id="btn-continue" class="big-btn hidden">↻ CONTINUE RUN</button>
+    <div id="title-hint">WASD / ARROWS OR JOYSTICK TO MOVE · E / Ⓐ TO INTERACT</div>
   </div>
-  <div id="touch-controls" class="hidden">
-    <div id="stick-zone"><div id="stick-base"><div id="stick-nub"></div></div></div>
+
+  <!-- Touch controls -->
+  <div id="touch-ui" class="hidden">
+    <div id="dpad">
+      <button class="dbtn d-up" data-dx="0" data-dy="-1">▲</button>
+      <button class="dbtn d-left" data-dx="-1" data-dy="0">◀</button>
+      <button class="dbtn d-right" data-dx="1" data-dy="0">▶</button>
+      <button class="dbtn d-down" data-dx="0" data-dy="1">▼</button>
+    </div>
     <div id="touch-buttons">
-      <button id="tb-a">E</button>
-      <button id="tb-b">☰</button>
+      <button id="tb-interact" class="tbtn">A</button>
+      <button id="tb-menu" class="tbtn small">☰</button>
     </div>
   </div>
 </div>
+<iframe id="sc-widget" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/raikouno/sets/ifollowedtherabbitlookatmenow&color=%233a5fcd&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0" allow="autoplay"></iframe>
+<script src="https://w.soundcloud.com/player/api.js"></script>
 <script src="player_p1.js"></script>
 <script src="player_p2.js"></script>
 <script src="player_p3.js"></script>
