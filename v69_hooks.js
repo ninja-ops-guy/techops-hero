@@ -176,8 +176,13 @@
     const W = cv.width, H = cv.height;
     const img = roomImgs[s.room.key];
     const floorY = Math.round(H * .82);
-    // backdrop
-    if (img && img.complete && img.naturalWidth) ctx.drawImage(img, 0, 0, W, H);
+    // backdrop — cover-fit so the 16:9 art never distorts on odd aspect ratios
+    if (img && img.complete && img.naturalWidth) {
+      const ir = img.naturalWidth / img.naturalHeight, cr = W / H;
+      let dw, dh;
+      if (cr > ir) { dw = W; dh = W / ir; } else { dh = H; dw = H * ir; }
+      ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    }
     else { ctx.fillStyle = "#1a2030"; ctx.fillRect(0, 0, W, H); }
     // floor shadow strip
     ctx.fillStyle = "#00000038"; ctx.fillRect(0, floorY, W, H - floorY);
