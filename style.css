@@ -151,3 +151,16 @@ canvas{image-rendering:pixelated;display:block}
   box-shadow: 0 8px 32px #0009, inset 0 1px 0 #ffffff11;
 }
 #battle-scene { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+
+/* v6.4 Felicia — Watchdog Protocol */
+#v64-panel { position: fixed; right: 10px; top: 54px; z-index: 40; width: 168px; background: #071426ee; border: 1px solid #00d9ff55; border-radius: 10px; padding: 8px 10px; font: 11px/1.5 monospace; color: #bfeaff; box-shadow: 0 4px 18px #000a; backdrop-filter: blur(6px); }
+#v64-panel .v64-h { color: #00d9ff; font-weight: bold; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+#v64-panel .v64-h button { background: #00d9ff22; color: #00d9ff; border: 1px solid #00d9ff66; border-radius: 6px; font: 9px monospace; padding: 2px 5px; cursor: pointer; }
+#v64-panel .v64-row { display: flex; justify-content: space-between; }
+#v64-panel .v64-row b { color: #39ff88; }
+#v64-panel .v64-ao { margin-top: 6px; border-top: 1px dashed #00d9ff33; padding-top: 4px; color: #8fb8cc; }
+#v64-panel .v64-ao .done { color: #39ff88; }
+#btn-felicia { display: block; margin: 10px auto 0; padding: 12px 18px; background: linear-gradient(135deg, #0b0f1a, #071426); color: #00d9ff; border: 1px solid #00d9ff; border-radius: 10px; font: bold 14px monospace; letter-spacing: 1px; cursor: pointer; box-shadow: 0 0 18px #00d9ff44; }
+#btn-felicia:hover { background: #00d9ff22; }
+#v64-backmike { text-align: center; margin-top: 6px; color: #8fb8cc; font: 11px monospace; cursor: pointer; text-decoration: underline; }
+img.v64-portrait { float: left; width: 64px; height: 64px; margin: 0 10px 6px 0; image-rendering: pixelated; border: 1px solid #00d9ff55; border-radius: 8px; background: #071426; }
