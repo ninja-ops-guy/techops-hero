@@ -1,4 +1,4 @@
-# TechOps Hero v6.3 — AeroTech Division
+# TechOps Hero v6.4 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -102,7 +102,9 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v62_hooks.js` | v6.2: battle rework + session guide, exit marker, title skyline |
 | `skyline.js` + `skyline_p1–p3.js` | v6.2: AI-generated night skyline title backdrop (split payload) |
 | `v63_hooks.js` | v6.3: transitional scenes, smooth walking, 40 scenic map props |
-| `props.js` + `props_p1–p5/p7` + `props_c6a-c/c8a-c/c9a-c.js` | v6.3: AI-generated 40-prop scenic atlas (split payload) |
+| `v64_hooks.js` | v6.4: Felicia secret boss, Watchdog Protocol mode, Impreza & war-driving |
+| `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
+| `props.js` + `props_c1a-c/p2–p5/p7` + `props_c6a-c/c8a-c/c9a-c.js` | v6.3: AI-generated 40-prop scenic atlas (split payload) |
 | `comm_hooks.js` | v4.3–4.4: communication battles, mastery, chains, root causes, users-learn |
 | `sprite_hooks.js` | v4.1–4.2: action poses, NPC emote bubbles, equipment sprites, draw overlay |
 | `player.js` + `player_p1–p5.js` | Player walk/idle sprite atlas (split payload) |
@@ -113,6 +115,14 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode
+
+## v6.4 — Felicia: Watchdog Protocol
+- **🕶️ Hidden boss: APT-17 "MORNINGSTAR"** — Felicia Voss, the friendly contractor in the break room and at the campus café, is running a 243-day infiltration. Encounter her across days (a real printer jam, a laptop closed a second too fast, knowledge she shouldn't have), then collect **8 scattered clues** (badge logs, camera sync gaps, the 03:00 beacon, café scan spikes...). Each clue alone is explainable; together they reveal the pattern.
+- **The Hunt** — at 5+ clues, confront her: a three-front boss battle (physical / digital / psychological) against a 130-HP APT with its own root-cause tree. Win and she stands down, leaving her research behind (*"You saw the pattern before anyone else did."*). Lose and she slips away — until tomorrow.
+- **🔓 Playable Felicia** — beating her unlocks **WATCHDOG PROTOCOL** on the title screen: play as Felicia with **maxed stats (all 10s), 120 HP, three legendary items** (MORNINGSTAR Deck, Ghost Rig, ORBIT Headset) and her own sprite set.
+- **🚗 Modded black Impreza** — she drives instead of walking (~2.4× speed, gold wheels, purple underglow), and every cruise is a **war drive**: sniff open APs (`ORION-GUEST`, `HANGAR-IOT`, `LEGACY-SCADA`...) for trickle cash.
+- **🛰️ Watchdog View** — the campus becomes a sensor grid: NPCs ring green/yellow/red, devices glow cyan, portals mark attack paths, network pulse lines flow. Walk near people, devices, zones and portals to **gather intelligence** across 4 channels (Employees / Systems / Facilities / Security).
+- **Actions on Objectives** — daily APT tasking (profile 5 employees, map 8 systems, chart 4 zones, expose 3 attack paths) pays cash + XP; complete all four to **advance the operation**. But scans raise **suspicion** — blend in by keeping moving, because at 100% **Mike starts hunting you** and your scans are burned for the day.
 
 **The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
