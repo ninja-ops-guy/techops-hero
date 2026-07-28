@@ -1,4 +1,4 @@
-# TechOps Hero v7.0 — AeroTech Division
+# TechOps Hero v7.1 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -110,6 +110,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v68_hooks.js` | v6.8: path guides to tickets & the way home, enforced 16:00 clock-out, Felicia overlay camera fix |
 | `v69_hooks.js` + `rooms.js` + `rooms_*_p1–p4.js` | v6.9: side-view department interiors (AI backdrops), perspective-switch gameplay |
 | `v70_hooks.js` | v7.0: Felicia scheduled appearances & walk-off, durable unlock + dev/prod separation, name plates, IT backdrop restyle |
+| `v71_hooks.js` | v7.1: toggleable objectives, cover-fit room backdrops, UI animation pack, battle hit feedback |
 | `CONSISTENCY.md` | Game logic & loop consistency review (v6.9) |
 | `npcs.js` + `npcs_p1–p12.js` | v6.5: AI-generated 8-character NPC cast in player style (split payload) |
 | `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
@@ -179,3 +180,9 @@ Saves to localStorage (Continue Run on the title screen).
 - **Fix**: Felicia's side-room station called a private function and would throw; it now steps back into the world and talks there.
 
 **The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
+
+## v7.1 — Interface Polish
+- **Toggleable objectives** — the HUD quest tracker can now be hidden from ⚙️ Settings (persisted); it also pulses when tickets arrive or close.
+- **Distortion-free side-view backdrops** — department interiors render cover-fit, so the 16:9 art keeps its aspect on any window shape.
+- **UI animation pack** — dialogue/panel/EOD/toast entrances, staggered battle & dialog buttons, floating title logo, button hover/press feedback, and a fade wipe when switching between world and side-view rooms. All gated behind a new **UI animations** setting.
+- **Battle hit feedback** — the enemy jolts when its HP drops; the arena flashes red when you're hit (driven off the HP bars, zero game-internals risk).
