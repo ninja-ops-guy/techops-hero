@@ -1,4 +1,4 @@
-# TechOps Hero v6.9 — AeroTech Division
+# TechOps Hero v7.0 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -108,7 +108,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v66_hooks.js` | v6.6: AAA polish — battle juice, extended SFX, typewriter dialogue, win confetti |
 | `v67_hooks.js` | v6.7: cinematic combat — settings, ambient audio, adaptive music, boss cinematics, combos, gallery, bug fixes |
 | `v68_hooks.js` | v6.8: path guides to tickets & the way home, enforced 16:00 clock-out, Felicia overlay camera fix |
-| `v69_hooks.js` + `rooms.js` + `rooms_it/eng/factory/office.js` | v6.9: side-view department interiors (AI backdrops), perspective-switch gameplay |
+| `v69_hooks.js` + `rooms.js` + `rooms_*_p1–p4.js` | v6.9: side-view department interiors (AI backdrops), perspective-switch gameplay |
+| `v70_hooks.js` | v7.0: Felicia scheduled appearances & walk-off, durable unlock + dev/prod separation, name plates, IT backdrop restyle |
 | `CONSISTENCY.md` | Game logic & loop consistency review (v6.9) |
 | `npcs.js` + `npcs_p1–p12.js` | v6.5: AI-generated 8-character NPC cast in player style (split payload) |
 | `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
@@ -169,5 +170,12 @@ Saves to localStorage (Continue Run on the title screen).
 - **Seamless transitions** — the switch is edge-triggered on entry; the left door (or Q/Esc) drops you back to the exact top-down tile. Toggle it in ⚙️ Settings.
 - **World-first consistency** — Felicia's clue spots and the APT herself keep their top-down interactions (the arc stays finishable), Felicia's station appears inside her current department, and Watchdog mode stays top-down so war-driving cruises never break.
 - **📋 Consistency review** — `CONSISTENCY.md` audits the whole loop: single clock writer, day-end paths, room-vs-world precedence, camera space, settings — with the accepted minor items documented.
+
+## v7.0 — Ghost Protocol
+- **Felicia, occasionally**: the NPC now appears only on scheduled days at scripted haunts (campus café, break area, front steps). After each encounter she walks off the nearest map edge and stays gone for a day or two. With 5+ clues she stays findable so the confrontation is always reachable.
+- **Prod/dev separation**: playing as Felicia now hard-requires the boss-win unlock — a tampered `techops_char` is reverted to Mike, and the unlock lives in a durable flag that survives starting a new run. Test helpers (`TOH_DEBUG.unlockFelicia/lockFelicia`) exist only behind `?dev=1`.
+- **Name plates**: room NPCs and Felicia get standing desk-plaque name plates (separate objects, reference-art style) instead of floating text.
+- **IT Department backdrop**: regenerated in the reference cubicle style — IT DEPARTMENT wall sign, KEEP CALM AND REBOOT poster, server rack, TICKETS whiteboard, water cooler, printer, trophy shelf.
+- **Fix**: Felicia's side-room station called a private function and would throw; it now steps back into the world and talks there.
 
 **The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
