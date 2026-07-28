@@ -1,0 +1,3 @@
+// v6.5 NPC sprite assembly: 8x128 atlas — 0 IT, 1 Engineering, 2 Marketing, 3 HR, 4 Manufacturing, 5 Executive, 6 Finance, 7 Sales
+const TO_NPCS = "data:image/png;base64," + NPC_B64_1 + NPC_B64_2 + NPC_B64_3 + NPC_B64_4 + NPC_B64_5 + NPC_B64_6 + NPC_B64_7 + NPC_B64_8 + NPC_B64_9 + NPC_B64_10 + NPC_B64_11 + NPC_B64_12;
+const NPC_SPRITES = { cell: 128, byDept: { IT: 0, Engineering: 1, Marketing: 2, HR: 3, Manufacturing: 4, Executives: 5, Finance: 6, Sales: 7 } };
