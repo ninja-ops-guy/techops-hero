@@ -150,7 +150,7 @@ step = function (dt) {
   if (!s || s.nightMode || s.inBattle || s.inDialog) return;
   if (s.meta.standupDay !== s.day && s.clock >= 9 * 60 + 30 && s.clock < 12 * 60 && !s.meta._v61StandupToast) {
     s.meta._v61StandupToast = true;
-    toast("📋 Standup in 5 — head to the IT room and check in with Mike.", 4200);
+    toast("📋 Standup in 5 — meet with the team in the IT room.", 4200);
   }
   if (s.meta.standupDay === s.day) s.meta._v61StandupToast = false;
 };
