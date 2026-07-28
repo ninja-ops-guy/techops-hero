@@ -374,6 +374,10 @@
     const s = S; if (!s || !s.map) return;
     const f = fel();
     const tm = performance.now();
+    // v6.8 fix: overlays must render in WORLD space (camera transform), not screen space —
+    // otherwise Felicia, clue markers and watchdog rings stick to the screen while scrolling
+    const ts64 = cv.height / 14, sc64 = ts64 / TILE;
+    ctx.save(); ctx.scale(sc64, sc64); ctx.translate(-camX, -camY);
     // clue markers
     if (f.spots && !f.defeated && !isFel()) {
       for (const c of f.spots) {
@@ -422,6 +426,7 @@
       }
       ctx.restore();
     }
+    ctx.restore(); // v6.8: end world-space transform
   };
 
   // playable felicia sprite (replaces Mike) + impreza
