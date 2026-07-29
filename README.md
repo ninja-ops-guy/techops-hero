@@ -1,4 +1,4 @@
-# TechOps Hero v7.2 — AeroTech Division
+# TechOps Hero v7.3 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -115,6 +115,8 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `apt.js` + `apt_p1–p2.js` | v7.2: AI-generated APT operative boss sprite (split payload) |
 | `emote.js` + `emote_p1.js` | v7.2: AI-generated emote icon atlas (split payload) |
 | `v72_hooks.js` | v7.2: arena sprites by ticket type, hit-stop on crits, NPC idle emotes |
+| `panels.js` + `panel_p1a–p6b.js` | v7.3: generated story-panel art for the days 5–10 arc (split payload) |
+| `v73_hooks.js` | v7.3: animated comic cutscenes, Orpheus backstory, Crown Jewel intel, day-10 endings |
 | `CONSISTENCY.md` | Game logic & loop consistency review (v6.9) |
 | `npcs.js` + `npcs_p1–p12.js` | v6.5: AI-generated 8-character NPC cast in player style (split payload) |
 | `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
@@ -195,3 +197,10 @@ Saves to localStorage (Continue Run on the title screen).
 - **Real arena sprites** — battles now render generated pixel-art monsters instead of emoji: a six-strong glitch atlas (glitch blob, cable serpent, broken robot, static wraith, paper imp, circuit beast) mapped to ticket types, and a dedicated hooded **APT operative** sprite for the secret boss. All new art in the reference style — no Felicia reuse.
 - **Hit-stop on criticals** — CRITICAL HITs freeze-zoom the arena for a beat with a bright flash.
 - **NPC idle variety** — settled and ambient coworkers show small pixel-art emote icons (coffee, zzz, gear, question, sweat) on individual schedules, in world space.
+
+## v7.3 — The Woman on the Wing
+- **Animated comic cutscenes** — a letterboxed panel player (Ken Burns push-ins, typewriter captions, click/E to advance, ESC to skip) drives the days 5–10 story arc with six generated chibi pixel-art panels in the reference style.
+- **The arc** — Day 5: the viral livestream (15.8M views) reveals the marketing contractor is the world-famous aerial violinist. Day 7: badge logs and CAM 07 show her walking Engineering halls at night. Day 8: a rooftop sunset duet — "You sound like you're saying goodbye." Day 9: an overheating storage array exposes archived simulations and a buried CITY EVACUATION MODEL behind PROJECT ORPHEUS (Clearance: CROWN JEWEL). Day 10: rain, a laptop, and a choice.
+- **Why she needs the data** — ORPHEUS, AeroTech's predictive-control grid, quietly routes power, water and evacuation for New Haven; its storm model says the south flood walls fail, and someone buried the evacuation because the math said those districts aren't worth the cost. She needs the Crown Jewel archive to force the truth into the open before the storm does.
+- **Crown Jewel intel** — three codenamed critical tickets (days 7/9/10) in Engineering each recover one intel piece when closed: ORPHEUS METADATA, CITY EVACUATION MODEL, ORPHEUS CORE KEYS.
+- **Three endings, gated by your run** — REPORT FELICIA (needs all 8 investigation clues by day 10 → Ending A "Perfect Employee"), HELP FELICIA (needs all 3 Crown Jewel intel pieces → Ending B "Let's Save the City"), and a true ending (both, plus listening when she talks → "New Haven Counts On Us"). Endings persist to localStorage and the cutscene gallery.
