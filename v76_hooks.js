@@ -174,7 +174,7 @@
     let raf = 0, drops = [];
     function loop() {
       if (ts.classList.contains("hidden") || !ts.isConnected) { c.remove(); cancelAnimationFrame(raf); return; }
-      const W = c.width = ts.clientWidth, H = ts.clientHeight;
+      const W = c.width = ts.clientWidth, H = c.height = ts.clientHeight;
       if (!drops.length) for (let i = 0; i < 40; i++) drops.push({ x: Math.random() * W, y: Math.random() * H, v: 6 + Math.random() * 5 });
       x.clearRect(0, 0, W, H);
       if (animsOn()) {
