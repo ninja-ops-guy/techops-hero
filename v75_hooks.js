@@ -28,14 +28,20 @@
     const h = document.createElement("div");
     h.className = "v75-qh";
     h.innerHTML = `<span class="v75-qt">🎯 OBJECTIVES</span><span class="v75-qn">${open} open</span><button class="v75-qb" title="${qmin ? "Expand" : "Minimize"}">${qmin ? "+" : "–"}</button>`;
-    h.querySelector("button").onclick = (e) => {
-      e.stopPropagation();
+    qt.prepend(h);
+    qt.classList.toggle("v75-min", qmin);
+  }
+  // updateHUD rebuilds the tracker every tick, so a per-button onclick dies
+  // between mousedown and mouseup — delegate on the persistent parent instead
+  const qtEl = document.getElementById("quest-tracker");
+  if (qtEl) {
+    qtEl.addEventListener("pointerdown", (e) => {
+      if (!e.target.closest || !e.target.closest(".v75-qb")) return;
+      e.stopPropagation(); e.preventDefault();
       qmin = !qmin;
       try { localStorage.setItem("techops_qtrack_min", qmin ? "1" : "0"); } catch (err) { }
       tracker();
-    };
-    qt.prepend(h);
-    qt.classList.toggle("v75-min", qmin);
+    });
   }
 
   // ============================================================
@@ -195,7 +201,8 @@
   const st = document.createElement("style");
   st.textContent = `
 /* tracker minimize */
-#quest-tracker .v75-qh{display:flex;align-items:center;gap:6px;padding:2px 0 6px;border-bottom:1px solid #46536e55;margin-bottom:6px;
+#quest-tracker .v75-qh{pointer-events:auto; /* tracker is click-through; the header must be clickable */
+ display:flex;align-items:center;gap:6px;padding:2px 0 6px;border-bottom:1px solid #46536e55;margin-bottom:6px;
  font-size:8px;color:#8fa0c8;letter-spacing:1px}
 #quest-tracker .v75-qh .v75-qn{margin-left:auto;color:#ffd24a}
 #quest-tracker .v75-qh .v75-qb{background:#232c46;border:1px solid #46536e;color:#e8ecf5;border-radius:4px;
