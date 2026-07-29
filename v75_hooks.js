@@ -24,6 +24,7 @@
     if (!qt) return;
     // innerHTML is rebuilt by updateHUD every tick — re-inject the header
     const open = S && S.tickets ? S.tickets.filter(t => !t.done).length : 0;
+    qt.querySelectorAll(".v75-qh").forEach(x => x.remove()); // never stack duplicate headers
     const h = document.createElement("div");
     h.className = "v75-qh";
     h.innerHTML = `<span class="v75-qt">🎯 OBJECTIVES</span><span class="v75-qn">${open} open</span><button class="v75-qb" title="${qmin ? "Expand" : "Minimize"}">${qmin ? "+" : "–"}</button>`;
