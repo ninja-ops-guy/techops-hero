@@ -1,4 +1,4 @@
-# TechOps Hero v7.9 — AeroTech Division
+# TechOps Hero v7.10 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
@@ -122,6 +122,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v76_hooks.js` | v7.6: time-of-day grading, real-time light map, camera lag, living title, floor texture |
 | `v77_hooks.js` | v7.7: visual-novel dialogue portraits from panel art, mood grading, talk animation |
 | `v78_hooks.js` | v7.8: ticket stinger, battle entry/punch feel, heartbeat, Felicia's desk storytelling (v7.9: battle-entry observer guard) |
+| `v710_hooks.js` | v7.10: side-view rooms match the map (palette, positions, entry-edge doors), battle tactics/diagnosis consistency |
 | `CONSISTENCY.md` | Game logic & loop consistency review (v6.9) |
 | `npcs.js` + `npcs_p1–p12.js` | v6.5: AI-generated 8-character NPC cast in player style (split payload) |
 | `felicia.js` + `felicia_p1–p12.js` | v6.4: Felicia sprite atlas + portrait + Impreza (split payload) |
@@ -136,7 +137,7 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
-**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast · AAA polish pass: battle juice & hit feedback · extended synthesized SFX · typewriter dialogue · win celebrations & hurt vignette · cinematic combat: boss intros & combo finishers · layered ambient audio & adaptive music · dialogue portraits · accessibility settings · cutscene gallery · living-world ambience · path guides (toggleable) · enforced 16:00 clock-out & drive home · side-view department interiors · perspective-switch gameplay · ghost-scheduled Felicia appearances & durable unlock · toggleable objectives & UI animation pack · generated arena sprites, hit-stop & idle emotes · animated comic cutscenes & the days 5–10 Orpheus arc (v7.3) · Crown Jewel intel tickets & gated endings · story gallery replays & ending epilogues (v7.4) · minimizable objectives tracker, condition-triggered cutscenes & the cinematic animation pack (v7.5) · certification polish: grading, lighting & camera (v7.6) · visual-novel portraits (v7.7) · combat feel & environmental storytelling (v7.8) · hotfix: battle-entry freeze & tracker minimize (v7.9)
+**Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast · AAA polish pass: battle juice & hit feedback · extended synthesized SFX · typewriter dialogue · win celebrations & hurt vignette · cinematic combat: boss intros & combo finishers · layered ambient audio & adaptive music · dialogue portraits · accessibility settings · cutscene gallery · living-world ambience · path guides (toggleable) · enforced 16:00 clock-out & drive home · side-view department interiors · perspective-switch gameplay · ghost-scheduled Felicia appearances & durable unlock · toggleable objectives & UI animation pack · generated arena sprites, hit-stop & idle emotes · animated comic cutscenes & the days 5–10 Orpheus arc (v7.3) · Crown Jewel intel tickets & gated endings · story gallery replays & ending epilogues (v7.4) · minimizable objectives tracker, condition-triggered cutscenes & the cinematic animation pack (v7.5) · certification polish: grading, lighting & camera (v7.6) · visual-novel portraits (v7.7) · combat feel & environmental storytelling (v7.8) · hotfix: battle-entry freeze & tracker minimize (v7.9) · True North: map-matched side-view rooms & battle consistency (v7.10)
 
 ## v6.4 — Felicia: Watchdog Protocol
 - **🕶️ Hidden boss: APT-17 "MORNINGSTAR"** — Felicia Voss, the friendly contractor in the break room and at the campus café, is running a 243-day infiltration. Encounter her across days (a real printer jam, a laptop closed a second too fast, knowledge she shouldn't have), then collect **8 scattered clues** (badge logs, camera sync gaps, the 03:00 beacon, café scan spikes...). Each clue alone is explainable; together they reveal the pattern.
@@ -234,6 +235,30 @@ Saves to localStorage (Continue Run on the title screen).
 - **Mood grading** — the portrait's grade follows the scene: warm on the day-8 rooftop, resolute on day 9, storm-cooled on day 10.
 - **Talk animation** — a subtle life pulse synced to the typewriter while text types out.
 - **No-leak guarantee** — portraits are stripped on every dialog close (the v6.7 portrait-leak bug class is structurally impossible); non-cast speakers keep the classic atlas portraits.
+
+## v7.10 — True North
+
+**Side-view interiors now match the top-down map, graphically and logically.**
+
+- **Palette truth** — each department's map colors (floor tones + accent line) drive its side-view room: a multiply wash keys the shared office art to the biome, the floor becomes the biome's carpet with its accent baseboard, and the entry name card + dept chip use the accent color. Exec is burgundy/gold, Finance green, Sales steel-blue, HR warm tan, Engineering orange-gray, IT cyan.
+- **Positional truth** — people stand in the room where they stand on the map: an NPC's world-x inside the department rect maps to their room-x (west→left, east→right). Felicia's station is mapped the same way instead of a fixed spot.
+- **Door logic** — the exit door sits on the edge you actually entered through: come in from the east and the door (and your starting position) is on the right. Walk into it, or press Q, to return to the exact tile you left.
+- **Dept chip** — a persistent in-room chip shows the department name in its accent color with a live count of open tickets there.
+
+**Battle flow consistency — evidence and solutions no longer contradict each other.**
+
+The fight system's "super effective" tools contradicted the diagnosis tables — moves the battle rewarded were listed as *wrong answers* in the root-cause choice:
+
+| Ticket | Was weak to | Contradiction | Now weak to |
+|---|---|---|---|
+| Printer Offline | Hardware Swap, Patch | "Replace the toner cartridge" is a wrong answer; the fix is the spooler | PowerShell, Event Viewer |
+| VPN Won't Connect | Traceroute, ACL Strike | ACLs don't fix IKE/certs | Traceroute, Wireshark |
+| Account Locked Out | PowerShell, sudo, **Password Reset** | "Reset the user's password" is a listed wrong answer (Event 4740 is the fix) | PowerShell, Event Viewer |
+| Blue Screen Crash | **Hardware Swap**, Patch | "Run a full memory test first" is a listed wrong answer (dump analysis is the fix) | Event Viewer, Patch Deploy |
+| SSL Certificate Expired | PowerShell, ACL Strike | ACLs don't renew certificates | PowerShell, Event Viewer |
+| Backup Job Failed | Patch, **Containment** | Containment isn't a backup tool (VSS/job logs are the fix) | Event Viewer, PowerShell |
+
+The battle intro also told players to "form a hypothesis at ≤50%" while the actual gate is 60% confidence — the guidance now matches the rule.
 
 ## v7.9 — Certification Hotfix
 
