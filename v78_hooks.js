@@ -53,8 +53,12 @@
   // battle entry: zoom + desaturate pulse
   const battleEl = document.getElementById("battle");
   if (battleEl) {
+    let wasHidden = battleEl.classList.contains("hidden");
     new MutationObserver(() => {
-      if (!battleEl.classList.contains("hidden")) { retrigger(battleEl, "v78-enter"); window.v78.entries++; }
+      const hid = battleEl.classList.contains("hidden");
+      if (hid === wasHidden) return; // ignore our own v78-enter class churn
+      wasHidden = hid;
+      if (!hid) { retrigger(battleEl, "v78-enter"); window.v78.entries++; }
     }).observe(battleEl, { attributes: true, attributeFilter: ["class"] });
   }
   // follow-through punch when the enemy takes damage
