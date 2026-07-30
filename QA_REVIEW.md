@@ -75,3 +75,12 @@ Failure states teach rather than punish: failed changes explain rollback, wrong 
 ## 6. Verdict
 
 TechOps Hero v6.0.1 is a cohesive, contradiction-free build with a complete progression arc (call-taker → CIO → enterprise commander), 16 green test suites, and zero P0 defects. The P2/P3 items above are polish and presentation — the game underneath is done.
+
+## v7.16 Addendum — Anti-Repetition Pass
+
+The fresh pass found one P1 consistency defect and six repetition vectors, all fixed in v7.16:
+
+- **P1 (fixed):** the five v5.3 ticket types (av_hdmi, av_teams, plant_scanner, label_printer, hw_replace) had no symptom quote — interviews rendered a literal `undefined` line.
+- **Repetition (fixed):** single quotes per type, static symptom labels, one flag-down opener, a 16-name NPC pool, small ambient-chatter pools, and fixed decision-tree option order. All now rotate deterministically per day/occurrence (hash-seeded, no save bloat).
+
+Suites: 11/11 green (v7.10/v7.15 retain their known headless timing flakes; game behavior correct).
