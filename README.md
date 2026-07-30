@@ -1,4 +1,4 @@
-# TechOps Hero v7.14 — AeroTech Division
+# TechOps Hero v7.15 — AeroTech Division
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
