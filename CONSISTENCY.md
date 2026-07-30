@@ -74,3 +74,11 @@ systems exist.
   game behavior is correct.
 
 *Author: K3 consistency pass, 2026-07-29.*
+
+## v7.16 Addendum
+
+- Variety systems (quotes, labels, openers, tree-order shuffle, day themes) are seeded by a deterministic FNV-1a hash of type-id + day + occurrence — variety without save-game bloat, and identical within a day for the same occurrence count.
+- Unisex NPC names were deliberately excluded from the name-pool expansion: dept-gendered sprites make unisex names read as name/sprite mismatches (v7.12 rule). Yuki remains the single grandfathered unisex name.
+- Ambient chatter never hijacks scripted NPCs (Felicia's rooftop scene, pinned story NPCs, the crew).
+
+*Author: K3 consistency pass, 2026-07-30.*
