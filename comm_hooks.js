@@ -18,6 +18,43 @@ const COMM_MOOD = {
 };
 const ROOT_CAUSES = ["Switch 14 failing", "a swollen UPS battery", "a shadow DNS server", "a bad patch from Tuesday", "a flaky core transceiver"];
 
+// v7.20 — every department talks like itself. Openers, reassure/demand
+// responses and idle filler are all keyed to who the user IS and where
+// they work; face-to-face conversations (you walked up to them) no longer
+// wear a phone-call frame.
+const COMM_OPENERS = {
+  Executives: ["Walk me to the fix — board in five.", "This costs me money per minute. Go."],
+  Sales: ["Demo in ten and the deck won't load. SAVE me.", "Client call at the half hour. It's urgent. It's always urgent."],
+  Manufacturing: ["LINE'S WAITING ON THIS TERMINAL. HURRY.", "SHIFT LEAD'S ON MY NECK. WHAT'S BROKEN?"],
+  Engineering: ["I already ruled out the obvious. Impress me.", "Before you ask: yes, I rebooted. Twice. Logged it."],
+  Finance: ["Quarter-end reports are due… tell me this is quick.", "I triple-checked it isn't my fault. It isn't, right?"],
+  HR: ["So sorry to bother you — take your time. Well, some time.", "Short version: it's broken. The long version is available."],
+};
+const COMM_REASSURE = {
+  Executives: `"Fine. FINE." — the calendar alert already glares, but the shoulders drop.`,
+  Sales: `"Okay, okay — breathing. You're a lifesaver." they pace a headset circle.`,
+  Manufacturing: `"ALRIGHT. ALRIGHT." a hard-hat nod; the line keeps clanking behind them.`,
+  Engineering: `"Understood. Proceeding rationally." they annotate your plan on a whiteboard.`,
+  Finance: `"Okay… okay. Numbers can wait. Mostly." a ledger closes with a soft thump.`,
+  HR: `"You're so patient with us. Anyway — as I was saying—"`,
+};
+const COMM_DEMAND = {
+  Executives: `"...careful." — but the ticket goes in. Even VPs respect process.`,
+  Sales: `"Wow. Okay. Filing it. My commission better not file with it."`,
+  Manufacturing: `"FINE. PAPERWORK. THE LINE HEARD THAT TOO."`,
+  Engineering: `"Bureaucratic, but valid. Ticket submitted — with logs attached."`,
+  Finance: `"…fine. FINE. It goes in the system, like everything else."`,
+  HR: `"Alright — but I'm documenting this interaction too, you know."`,
+};
+const COMM_FILLER = {
+  Executives: [`"Clock's ticking."`],
+  Sales: [`"The client just texted me. Twice."`],
+  Manufacturing: [`"THE LINE WON'T WAIT MUCH LONGER."`],
+  Engineering: [`"Hypothesis: this wastes cycles."`],
+  Finance: [`"Every hour of downtime hits the ledger."`],
+  HR: [`"People are asking me about it, you know…"`],
+};
+
 // ---------- Phase 1: the call ----------
 const __origTicketFlowV43 = ticketFlow;
 ticketFlow = function (n) {
@@ -38,9 +75,11 @@ function commBattle(n) {
   n.guessed = n.guessed || false;
   const veteran = s.day >= 4;
 
+  // v7.20: face-to-face when you walked up to them — it's only a call if you're apart
+  const f2f = typeof n.x === "number" && Math.abs(n.x - s.px) + Math.abs(n.y - s.py) <= 2;
   const bars = (v, mx) => "▮".repeat(Math.max(0, v)) + "▯".repeat(Math.max(0, mx - v));
   const render = (line) => {
-    dlg(`📞 Incoming Call — ${n.name} (${n.dept})`,
+    dlg(f2f ? `🗣️ ${n.name} (${n.dept})` : `📞 Incoming Call — ${n.name} (${n.dept})`,
       `<small>${COMM_MOOD[n.dept] || "🙂 Calm"}</small><br>` +
       `Patience ${bars(n.patience, maxPat)}<br>Ticket ${bars(n.ticketGauge, 4)}<br><br><i>${line}</i>`,
       [
@@ -69,7 +108,7 @@ function commBattle(n) {
       else render(veteran ? `"Already rebooted AND submitted it. I learn, you know."` : `"Oh… no. How do I even do that?" — you walk them through it.`);
     } else if (kind === "reassure") {
       n.ticketGauge += 1; n.patience = Math.min(maxPat + 1, n.patience + 1);
-      render(`"Okay… okay. Thanks. It's just been a morning." — shoulders drop.`);
+      render(COMM_REASSURE[n.dept] || `"Okay… okay. Thanks. It's just been a morning." — shoulders drop.`);
     } else if (kind === "guess") {
       if (noisy) { n.patience -= 1; render(`"YOU'RE BREAKING UP—" the line noise eats your question.`); }
       else if (n.guessed) { n.ticketGauge += 1; render(`"We already covered that part." — keep it moving.`); }
@@ -82,17 +121,18 @@ function commBattle(n) {
     } else if (kind === "demand") {
       n.ticketGauge += 3; n.patience -= 2;
       if (n.patience <= 0) return complaint();
-      render(`"...fine. FINE. Submitting it now." — frost on the line.`);
+      render(COMM_DEMAND[n.dept] || (f2f ? `"...fine. FINE. Submitting it now." — frost in the air.` : `"...fine. FINE. Submitting it now." — frost on the line.`));
     }
     if (n.ticketGauge >= 4) return finish();
     render(n.patience <= 1 ? `<i>"I'm running out of patience here…"</i>` : pick([
+      ...(COMM_FILLER[n.dept] || []),
       `"So… can you fix it?"`, `"I have a meeting in ten."`, `"Is this going to take long?"`]));
   };
   render(
     n.trustHurt ? `"You blew me off last time. This better be quick."`
     : (n.timesHelped || 0) >= 3 ? `"You fixed my laptop last month — I trust you. Same gremlin, I think."`
     : veteran ? `"Hey, it's me again — I rebooted first, like you taught us."`
-    : `"${pick(["Something's wrong with my computer.", "Nothing works and I changed NOTHING.", "It's broken. I didn't touch it. Ever."])}"`);
+    : `"${pick(COMM_OPENERS[n.dept] || ["Something's wrong with my computer.", "Nothing works and I changed NOTHING.", "It's broken. I didn't touch it. Ever."])}"`);
 }
 
 // ---------- battle bonuses: call prep + knowledge mastery ----------
