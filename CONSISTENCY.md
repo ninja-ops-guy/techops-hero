@@ -105,3 +105,10 @@ systems exist.
 
 - Sprite transparency truth, final form: the GUARANTEE lives in the renderer, not the assets. Any PNG data-URL image drawn to canvas is alpha-bled at runtime before its first visible frame; asset encoding (palette vs RGBA) is no longer a consistency risk for sprites. New sprite sheets may ship as compact palette PNGs.
 - Same rule off-canvas: sprite art shown via DOM `<img>` (title crest, dialog portraits/seals) must pass through the v7.21 async bleed, never raw palette data-URLs.
+
+## v7.22 Addendum
+
+- **Single entry point preserved** — the cinematic wraps `enterNight`, the one function every night entry (South Exit dialog, v6.8 sweep at 16:59, v6.8 backstop) already calls. No new paths into night mode were created; the v6.3 title card still fires after the cut, and day-end suppression while `s.nightMode` is untouched.
+- **Input discipline** — `S.inDialog` is held true for the whole cut (movement/interaction gated exactly like a dialog) and restored before the original `enterNight` runs; the overlay swallows all keys with a capture-phase listener so no input leaks into the frozen world.
+- **Canon art rules hold** — the cut draws Mike from the real player atlas (bleed-safe via v7.21), introduces no new character sprites, reuses no Felicia art (Felicia mode is a tinted variant + her Impreza), and keeps the neon signage English and emoji-free.
+- **Settings respected** — SFX volume (v6.7) gates every synthesized layer; the screen-shake toggle gates the BATTLE START punch. Skipping is always available and instant.
