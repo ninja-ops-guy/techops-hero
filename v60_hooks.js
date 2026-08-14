@@ -40,7 +40,8 @@ function commandCenter() {
   const a = cc.alloc, spent = a.sec + a.hw + a.staff, left = CC_POINTS - spent;
   // quantified nightly projections — policy choices should say what they DO
   const incPct = Math.round(Math.max(.04, .18 - a.sec * .02) * 100);
-  const wearMax = Math.max(0, 5 - a.hw), rec = a.staff * 2;
+  const wearCeil = 5 + Math.min(5, Math.floor(s.day / 4)); // v7.17: wear pressure grows with day count
+  const wearMax = Math.max(0, wearCeil - a.hw), rec = a.staff * 2;
   const rows = cc.sites.map(x => {
     const meta = CC_SITES.find(c => c.id === x.id);
     const st = x.health >= 80 ? "🟢" : x.health >= 40 ? "🟡" : "🔴";
@@ -108,7 +109,7 @@ setupDay = function () {
       x.health -= inc;
       events.push(`${meta.icon} ${meta.name}: incident overnight (-${inc}%)`);
     }
-    wear = Math.max(0, R(0, 5) - a.hw);
+    wear = Math.max(0, R(0, 5 + Math.min(5, Math.floor(s.day / 4))) - a.hw); // v7.17: fleets age — wear ceiling grows with day
     if (wear) x.health -= wear;
     const recGain = a.staff * 2;
     x.health += recGain;

@@ -158,3 +158,4 @@ draw = function () {
   }
   ctx.restore();
 };
+window.v63 = { v63PropSpots, PROPS: V63_PROPS }; // v7.20: prop inspection reuses the resolved spots
