@@ -285,6 +285,7 @@
     return c;
   }
   const CREW713 = ["mike", "nick", "amit", "brandon", "daniel"];
+  const v713WalkMap = new Map(); // v7.20: per-NPC last tile + time, drives the 2-frame step
   function hash713(n) { let h = (n.id || 0) * 2654435761 >>> 0; return (h ^ (h >>> 13)) >>> 0; }
   const __origDrawSpr713 = (typeof drawSpr !== "undefined") ? drawSpr : null;
   if (__origDrawSpr713 && typeof SPR_NPC !== "undefined") {
@@ -296,16 +297,29 @@
         const idx = (typeof npcIdx === "function") ? npcIdx(n) : 1;
         const h = n ? hash713(n) : 0;
         const cell = isCrew ? null : variantCell(idx, h % 4, (h >>> 3) % 5, (h >>> 6) % 6);
-        const bob = Math.sin(performance.now() / 480 + tx * 7 + ty * 3) * 1.1;
-        const dx = tx * TILE + (TILE - 32) / 2, dy = ty * TILE + TILE - 32 + 3 + bob;
+        // v7.20: NPCs draw at 40px (was 32) so the cast reads at the player's scale,
+        // with a 2-frame step cycle when the NPC is on the move.
+        const SZ = 40;
+        const now713 = performance.now();
+        const nid = n ? (n.id ?? n.name ?? tx * 91 + ty) : tx * 91 + ty;
+        const rec = v713WalkMap.get(nid);
+        let walking = false;
+        if (!rec) v713WalkMap.set(nid, { x: tx, y: ty, t: 0 });
+        else if (rec.x !== tx || rec.y !== ty) { v713WalkMap.set(nid, { x: tx, y: ty, t: now713 }); walking = true; }
+        else walking = now713 - rec.t < 380;
+        const step = walking ? ((now713 / 170) | 0) % 2 : 0; // frame A / frame B
+        const bob = Math.sin(now713 / 480 + tx * 7 + ty * 3) * (walking ? 0.4 : 1.1);
+        const dx = tx * TILE + (TILE - SZ) / 2, dy = ty * TILE + TILE - SZ + 3 + bob - (step ? 1.6 : 0);
         ctx.save();
         ctx.imageSmoothingEnabled = false;
-        // soft shadow
+        // soft shadow (squashes on the lifted frame)
         ctx.globalAlpha = .25; ctx.fillStyle = "#000";
-        ctx.beginPath(); ctx.ellipse(tx * TILE + TILE / 2, ty * TILE + TILE - 2, 9, 3, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(tx * TILE + TILE / 2, ty * TILE + TILE - 2, step ? 9 : 11, step ? 3 : 3.6, 0, 0, 7); ctx.fill();
         ctx.globalAlpha = 1;
-        if (isCrew) ctx.drawImage(npcImg713, idx * 128, 0, 128, 128, dx, dy, 32, 32);
-        else ctx.drawImage(cell, dx, dy, 32, 32);
+        // frame B: subtle forward lean + squash for a readable 2-frame walk
+        if (step) { ctx.translate(tx * TILE + TILE / 2, ty * TILE + TILE); ctx.transform(1.03, 0, step ? .04 : 0, .96, 0, 0); ctx.translate(-(tx * TILE + TILE / 2), -(ty * TILE + TILE)); }
+        if (isCrew) ctx.drawImage(npcImg713, idx * 128, 0, 128, 128, dx, dy, SZ, SZ);
+        else ctx.drawImage(cell, dx, dy, SZ, SZ);
         ctx.restore();
         return;
       }
