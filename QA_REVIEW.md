@@ -61,9 +61,9 @@ Failure states teach rather than punish: failed changes explain rollback, wrong 
 
 ### P2 — quality-of-life (recommended next)
 1. **Command Center visual upgrade** — canvas-rendered SOC wall (animated status lights, blinking site markers, connection pulses between sites) instead of dialog-only presentation; the dialog already carries the data, this is pure presentation layering
-2. **Overnight events as phone notifications** — route the 📋 LAST NIGHT summary through the v5.4 Teams interface (a "NOC" chat channel) for immersion
-3. **EOD summary cross-links** — end-of-day screen could surface command-center uptime alongside day stats
-4. **Balance watch item** — with 6 policy points the floor incident odds (4%) make full-security builds slightly dominant; consider scaling wear with day count
+2. ~~Overnight events as phone notifications~~ ✅ **v7.17** — the NOC wires the LAST NIGHT report into the Teams phone every morning (chat toast + top entry + deep-link to the command center)
+3. ~~EOD summary cross-links~~ ✅ **v7.17** — end-of-day carries color-coded enterprise uptime, outage count and the policy split
+4. ~~Balance watch item~~ ✅ **v7.17** — nightly wear ceiling now grows with day count (+1 per 4 days, capped +5); full-security builds no longer strictly dominant
 
 ### P3 — future ideas (art & immersion plan)
 1. **Character art variations** — the procedural sprite system (poses, emotes, equipment, rank gear) already supports layering; next step is role-specific sprite packs (Technician / Network Engineer / Security Analyst / Manager / Executive / Threat Actor / Vendor / End User) drawn from the same atlas pipeline, plus idle/work animation frames
@@ -84,3 +84,19 @@ The fresh pass found one P1 consistency defect and six repetition vectors, all f
 - **Repetition (fixed):** single quotes per type, static symptom labels, one flag-down opener, a 16-name NPC pool, small ambient-chatter pools, and fixed decision-tree option order. All now rotate deterministically per day/occurrence (hash-seeded, no save bloat).
 
 Suites: 11/11 green (v7.10/v7.15 retain their known headless timing flakes; game behavior correct).
+
+## v7.17 Addendum — NOC Wire (P2 closeout)
+
+Three of the four P2 quality-of-life items shipped: NOC phone channel, EOD cross-links, wear-scaling balance (13/13 new tests, 12/12 suites green). Remaining P2: the SOC-wall canvas command center (presentation layer) and the P3 art/immersion list.
+
+## v7.19 Addendum — True Transparency (mobile sprite halo)
+
+User-reported on iPhone: the player sprite showed a dark opaque box/halo and appeared to clip into NPCs ("the characters aren't transparent"). Root-caused to palette-PNG atlases with RGB(0,0,0) transparent entries (Safari interpolates palette alpha without premultiplication) plus the player being the only sprite drawn with bilinear smoothing. Fixed by re-encoding all five character/prop atlases as alpha-bled RGBA (opaque art byte-identical) and forcing nearest-neighbour in the player draw path. Regression guard: test-v719.js asserts all atlases ship as PNG colour type 6 and the smoothing guard is in the drawPlayer chain. 12/12 new tests; suites v7.10–v7.19 all green.
+
+## v7.20 Addendum — Field Polish (annotated mobile pass)
+
+Five on-device annotations addressed: (1) spawn could land outside the lobby — now deterministic lobby-centre-out; (2) remaining palette-PNG atlases (emblem, glitch, apt, emote) alpha-bled to RGBA like v7.19's five; (3) NPC sprites up to 40px with a 2-frame wander step; (4) all 40 scenic props inspectable with name + flavour; (5) Teams phone docked into the HUD column, 44px targets, toasts shifted left. Conversations: proximity decides face-to-face vs phone-call framing; per-department opener/reassure/demand/filler tables. 10/10 new tests (test-v720.js).
+
+## v7.21 Addendum — Runtime Bleed (durable sprite-halo fix)
+
+v7.19/v7.20 fixed the Safari palette-PNG black halo at the file level, but the fix was per-asset and expensive (5x payload), and any un-bled palette PNG already hosted (or added later) would regress. v7.21 moves the guarantee into the renderer: a `CanvasRenderingContext2D.drawImage` wrapper alpha-bleeds any decoded PNG data-URL image on first draw (multi-source BFS flood of opaque edge colours through transparent regions) and substitutes the bled canvas as the draw source thereafter; `dlg()` is wrapped to async-bleed DOM `<img>` embeds (title crest, dialog seals/portraits). Exactness: all atlases use binary alpha (0/255), so the getImageData/putImageData premultiplication round-trip is lossless. The repo keeps the compact palette atlas parts — runtime bleed supersedes the file-level RGBA re-encode, which remains harmless (idempotent) in the local tree. Regression guard: test-v721.js asserts the drawImage wrapper substitutes a bled canvas whose opaque art is pixel-identical (canvas readback is premultiplied, so transparent RGB always reads black in-page — the fix works because canvas sources are *sampled* premultiplied, bypassing Safari's palette-decode path), DOM embeds get swapped, and the game boots clean. 10/10 new tests; suites v7.10–v7.20 green.

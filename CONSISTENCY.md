@@ -82,3 +82,26 @@ systems exist.
 - Ambient chatter never hijacks scripted NPCs (Felicia's rooftop scene, pinned story NPCs, the crew).
 
 *Author: K3 consistency pass, 2026-07-30.*
+
+## v7.18 Addendum
+
+- Interview rule, codified: the player chooses questions; the ticket user provides answers. Tree answers are bound to the ticket's hidden root cause (TRUTH table), so an observation can never contradict the fix the run will later require. The player-facing skill is probe selection and conclusion timing.
+- Same question, same ticket type, same answer — deterministic per node, so repeated play is consistent rather than arbitrary.
+
+*Author: K3 consistency pass, 2026-07-30.*
+
+## v7.19 Addendum
+
+- Sprite truth, codified: character and prop atlases must carry colour-bled transparent pixels (never pure black/white under alpha 0). Palette-PNG transparency interpolates incorrectly on some mobile renderers; RGBA + bleed is the required export format for any future sprite.
+- Render-path parity: every world-space character draw path sets `imageSmoothingEnabled = false` (v7.13 NPCs, v7.19 player). Mixed sampling modes across sprites on the same screen are a visual-consistency bug class.
+
+## v7.20 Addendum
+
+- Conversation framing truth: dialog chrome must match physical reality — face-to-face (adjacent) conversations use 🗣️, only remote engagements use 📞. Proximity is the single source of truth, so framing can never contradict where the player is standing.
+- Spawn truth: the day spawn is the lobby (the map's carved reception area), never a random free tile.
+- Interaction priority, codified: NPC > portal > device > coffee > lore > prop-inspection. Prop inspection is strictly a fall-through and can never shadow a real interaction.
+
+## v7.21 Addendum
+
+- Sprite transparency truth, final form: the GUARANTEE lives in the renderer, not the assets. Any PNG data-URL image drawn to canvas is alpha-bled at runtime before its first visible frame; asset encoding (palette vs RGBA) is no longer a consistency risk for sprites. New sprite sheets may ship as compact palette PNGs.
+- Same rule off-canvas: sprite art shown via DOM `<img>` (title crest, dialog portraits/seals) must pass through the v7.21 async bleed, never raw palette data-URLs.
