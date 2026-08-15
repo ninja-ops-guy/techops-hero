@@ -125,3 +125,12 @@ Sev-1 alerts used to be a bare banner. v7.23 wraps `sevBanner` (the single choke
 - **Canon art**: glyphs drawn as shapes (no emoji); Mike from the real player atlas; Felicia only via her own v6.4 atlas (`TO_FELICIA`/`FEL_ATLAS`); junior tech, CIO, and K are NEW procedural figures — no Felicia reuse; AeroTech / New Haven naming.
 - **Settings**: all WebAudio gains scaled by `V67SET.volSfx`.
 - **Tests**: `test-v725.js` — 19 asserts: install, registry, title/line3, day-gating, all four cinematics fire in order, both choice stores, once-per-day latch, city day-after rule, skip path, clean state, zero page errors.
+
+## v7.26 Addendum — Story Pack II (racks / citylife / promotion)
+
+- **No parallel framework**: scenes register into the v7.25 engine via `v725.register(id, {title, shots, cues})`; drawing reuses the exported helper kit `v725.h` (panels, figures, maps). The engine gained 4-option choice keys (1–4) and per-scene named audio cues.
+- **Wrap discipline**: `checkDayEnd` wrapped outermost (after v7.25); original chain runs after skip/completion; one cinematic per day across both packs (v7.26 sets the v7.25 day latch when it plays).
+- **Guards**: no fire during dialog/battle/nightMode or active v7.22–v7.25 cinematics; requires the day to actually end.
+- **Story order**: racks (day >= 8) → coffee (11) → mentor (12) → citylife (13) → betrayal (14) → city (15+) → promotion (16). Skipping before a choice re-arms that scene the next day; later scenes wait.
+- **Persisted choices**: `_v726racks` (trace/contain/confront) + unlock flag; `_v726evening` (home/gym/coffee/crawl) with rewards (HP +25, stress -10) applied **after** the day-end chain and exactly once (`_v726eveningPaid`); `_v726rollback` (global/staged) + `_v726adminII`.
+- **Tests executed**: `test-v726.js` — 23/23 (install, registration, guards, all three scenes fire in order, choice stores, exactly-once rewards, unlock flags, once-per-day, skip path, clean state, zero page errors). Full 21-suite regression green (v7.10 east-door assert remains the documented headless timing flake — passes on rerun).

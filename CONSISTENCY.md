@@ -133,3 +133,10 @@ systems exist.
 - Story continuity: the Day 14 Betrayal Protocol pays off the Day 9 ORPHEUS/CROWN JEWEL discovery and Felicia's Day 8 "saying goodbye" rooftop beat; the Day 14 choice flag is read by The City Beneath the City's epilogue, keeping both branches canon. K debuts inside the Orpheus operations floor before ever appearing in gameplay, matching how the supervisor debuted in v7.24.
 - Character rule kept: Felicia is drawn only from her own atlas and only as herself; K (beanie, headphones, shades, green accents) is a new procedural sprite consistent with the chibi pixel-comic reference; Mike always from the real player atlas.
 - The coffee/mentor boards are deliberately lighter in palette and stakes (side quest / mentorship) to contrast the Level -17 material, per the reference boards' own tonal split.
+
+## v7.26 Addendum — Story Pack II
+
+- The new boards extend the established grammar through registration, not duplication: `v725.register` keeps one renderer, one input discipline, one skip path, one audio bus. Any future board is data (`{title, shots, cues}`), not code paths.
+- Story continuity: Shadows Between the Racks (day 8) is the TRUST beat that makes the Day 14 betrayal land — Felicia's "a group pulling strings from outside this company" seeds the CIO reveal in The City Beneath the City; its three-way choice grants the tooling (Deep Network Map / Emergency Protocols / Counterstrike Toolkit) that the late-game Orpheus takeover presupposes. Promotion Day pays off the command-center arc: the enterprise map becomes a cinematic crisis, and DELEGATE unlocks at the rank the player has earned.
+- Rewards discipline: cinematic rewards apply AFTER the end-of-day chain (so EOD adjustments can't clobber them), clamp to real stat rules (HP ≤ maxHp), and are latched exactly-once in `S.meta`.
+- Character rule kept: Mike from the real player atlas; Felicia only as herself via her v6.4 atlas; no new reuse — city-life apartment, command center, and world map are procedural props built from the shared kit.
