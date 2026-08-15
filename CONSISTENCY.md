@@ -120,3 +120,9 @@ systems exist.
 - **Never interrupts** — the wrap refuses to play while a dialog, battle, night mode, or the v7.22 drive cinematic is active; the banner alone fires in those states.
 - **Canon art rules hold** — Mike is drawn from the real player atlas (bleed-safe via v7.21); the watcher is a new procedural silhouette; no Felicia art is reused; warning glyphs are drawn shapes, not emoji.
 - **Settings respected** — SFX volume (v6.7) gates every synthesized layer; skipping is instant and always available.
+
+## v7.24 Addendum — Ghost in the Boot Drive
+- Adds a second cinematic choke point: `checkDayEnd` (resolution) complements v7.23's `sevBanner` (detection). Together they bracket the critical-incident loop: the anomaly opens as a movie, and the day it is cracked closes as one.
+- No new clock writers, no new dialog systems: the wrap only observes `s.meta.tree.cracked` (set in `org_hooks.js` root-cause flow) and the existing day-end predicate, then defers to the original chain — `endOfDay()`, EOD rewards, and v56 achievement checks are untouched.
+- Once-per-day latch (`s.meta._v724Day`) persists in `S.meta`, so save/load cannot double-fire the cinematic within a day.
+- Story continuity: the "2:17 AM" close beat matches the v7.23 watcher clue (UNKNOWN DEVICE) — the repair montage is the same night's incident, seen from the fix side.
