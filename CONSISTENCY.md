@@ -126,3 +126,10 @@ systems exist.
 - No new clock writers, no new dialog systems: the wrap only observes `s.meta.tree.cracked` (set in `org_hooks.js` root-cause flow) and the existing day-end predicate, then defers to the original chain — `endOfDay()`, EOD rewards, and v56 achievement checks are untouched.
 - Once-per-day latch (`s.meta._v724Day`) persists in `S.meta`, so save/load cannot double-fire the cinematic within a day.
 - Story continuity: the "2:17 AM" close beat matches the v7.23 watcher clue (UNKNOWN DEVICE) — the repair montage is the same night's incident, seen from the fix side.
+
+## v7.25 Addendum — Interactive Cinematic Pack
+
+- The four boards extend the established cinematic grammar: letterboxed canvas overlay, caption bar, `TECHOPS HERO —` chrome, E/click skip, once-per-day latch persisted in `S.meta` — now with in-scene choices as a first-class mechanic.
+- Story continuity: the Day 14 Betrayal Protocol pays off the Day 9 ORPHEUS/CROWN JEWEL discovery and Felicia's Day 8 "saying goodbye" rooftop beat; the Day 14 choice flag is read by The City Beneath the City's epilogue, keeping both branches canon. K debuts inside the Orpheus operations floor before ever appearing in gameplay, matching how the supervisor debuted in v7.24.
+- Character rule kept: Felicia is drawn only from her own atlas and only as herself; K (beanie, headphones, shades, green accents) is a new procedural sprite consistent with the chibi pixel-comic reference; Mike always from the real player atlas.
+- The coffee/mentor boards are deliberately lighter in palette and stakes (side quest / mentorship) to contrast the Level -17 material, per the reference boards' own tonal split.

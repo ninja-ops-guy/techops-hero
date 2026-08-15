@@ -115,3 +115,13 @@ Sev-1 alerts used to be a bare banner. v7.23 wraps `sevBanner` (the single choke
 - **Canon art:** Mike drawn from `playerImg`/`PLAYER_ATLAS` (auto-bled by v7.21); supervisor is a new procedural silhouette (cap + hi-vis vest) — no Felicia reuse; every glyph drawn as shapes (no emoji in the art); AeroTech Mfg — Plant 7 naming.
 - **Settings:** all audio through its own AudioContext with gain scaled by `V67SET.volSfx`.
 - **Tests:** `test-v724.js` — 17/17 (install, wrap, title, guards, latch, skip, full playthrough, clean state, zero page errors); full 19-suite regression green with widened version regexes.
+
+## v7.25 Addendum — Interactive Cinematic Pack (coffee / mentor / betrayal / city)
+
+- **Wrap discipline**: `checkDayEnd` wrapped outermost (loads after `v724_hooks.js`); the original chain always runs after skip/completion, deferred via the engine callback. One cinematic per day via the `S.meta._v725Day` latch.
+- **Guards**: no fire during dialog/battle/nightMode or while a v7.22/v7.23/v7.24 cinematic is active; requires the day to actually end (`ticketsDone >= ticketsTotal` or `force`).
+- **Story order**: coffee (day >= 11) → mentor (day >= 12) → betrayal (day >= 14) → city (day > `_v725betrayalDay`). Betrayal's choice is stored in `S.meta._v725betrayal` (`"stop"`/`"follow"`); skipping betrayal before the choice leaves it unresolved and it re-arms the next day.
+- **Interactivity**: choice shots pause the timeline; keys 1–3 or click pick an option; the overlay swallows all keys (capture phase) so gameplay stays frozen underneath; skip is disabled while a choice is on screen.
+- **Canon art**: glyphs drawn as shapes (no emoji); Mike from the real player atlas; Felicia only via her own v6.4 atlas (`TO_FELICIA`/`FEL_ATLAS`); junior tech, CIO, and K are NEW procedural figures — no Felicia reuse; AeroTech / New Haven naming.
+- **Settings**: all WebAudio gains scaled by `V67SET.volSfx`.
+- **Tests**: `test-v725.js` — 19 asserts: install, registry, title/line3, day-gating, all four cinematics fire in order, both choice stores, once-per-day latch, city day-after rule, skip path, clean state, zero page errors.
