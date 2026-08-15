@@ -112,3 +112,11 @@ systems exist.
 - **Input discipline** — `S.inDialog` is held true for the whole cut (movement/interaction gated exactly like a dialog) and restored before the original `enterNight` runs; the overlay swallows all keys with a capture-phase listener so no input leaks into the frozen world.
 - **Canon art rules hold** — the cut draws Mike from the real player atlas (bleed-safe via v7.21), introduces no new character sprites, reuses no Felicia art (Felicia mode is a tinted variant + her Impreza), and keeps the neon signage English and emoji-free.
 - **Settings respected** — SFX volume (v6.7) gates every synthesized layer; the screen-shake toggle gates the BATTLE START punch. Skipping is always available and instant.
+
+## v7.23 Addendum
+
+- **Single entry point preserved** — the incident cinematic wraps `sevBanner`, the one function every critical alert (anomaly, escalation, Friday spike, tree spawn) already calls. No new alert paths; the classic v5.3 banner still appears after every play or skip.
+- **Input discipline** — `S.inDialog` is held for the whole cut and restored before the original banner fires; a capture-phase key listener swallows all keys while the overlay lives.
+- **Never interrupts** — the wrap refuses to play while a dialog, battle, night mode, or the v7.22 drive cinematic is active; the banner alone fires in those states.
+- **Canon art rules hold** — Mike is drawn from the real player atlas (bleed-safe via v7.21); the watcher is a new procedural silhouette; no Felicia art is reused; warning glyphs are drawn shapes, not emoji.
+- **Settings respected** — SFX volume (v6.7) gates every synthesized layer; skipping is instant and always available.
