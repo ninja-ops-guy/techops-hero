@@ -239,7 +239,7 @@
         store: "_v725coffeePick"
       }, draw(x, tm) {
         bg725(x, "#101426");
-        x.fillStyle = "#0a0f1e"; rr(x, 240, BAR + 80, 800, 300, 10); x.fill(); x.strokeStyle = EDGE; x.lineWidth = 2.5; rr(x, 240, BAR + 80, 800, 300, 10); x.stroke();
+        panel725(x, 240, BAR + 80, 800, 300, 10); x.fill(); x.strokeStyle = EDGE; x.lineWidth = 2.5; rr(x, 240, BAR + 80, 800, 300, 10); x.stroke();
         const tags = [["TUBE TANGLE", 340, 170, AMBER], ["LOOSE SENSOR", 640, 150, RED], ["SINGLE BEAN", 800, 260, GREEN], ["JAMMED", 800, 285, GREEN]];
         x.strokeStyle = "#5a3b28"; x.lineWidth = 10;
         x.beginPath(); x.moveTo(320, 330); x.bezierCurveTo(420, 180, 520, 340, 620, 220); x.stroke();
@@ -735,7 +735,7 @@
     if (!ov725) return;
     e.stopPropagation(); e.preventDefault();
     if (waitingChoice) {
-      const n = { "1": 0, "2": 1, "3": 2 }[e.key];
+      const n = { "1": 0, "2": 1, "3": 2, "4": 3 }[e.key];
       if (n !== undefined) pickChoice725(n);
       return;
     }
@@ -794,7 +794,15 @@
 
   function cue725(i) {
     try {
-      const id = cine725 + ":" + i;
+      // registered scenes (v7.26+) may declare per-shot named cues
+      const cdef = CINES[cine725];
+      if (cdef && cdef.cues && cdef.cues[i]) {
+        const nm = cdef.cues[i];
+        if (nm === "err") err725(); else if (nm === "chime") chime725();
+        else if (nm === "alarm") alarm725(); else if (nm === "steam") steam725();
+        else if (nm && nm.indexOf("beep") === 0) beep725(3, +(nm.slice(4)) || 520);
+        return;
+      }
       if (cine725 === "coffee") {
         if (i === 1) err725(); else if (i === 4) beep725(3, 620); else if (i === 5) steam725(); else if (i === 6) chime725(); else if (i === 7) chime725();
         else beep725(2, 500);
@@ -879,8 +887,19 @@
     stats: () => Object.assign({}, st725),
     active: () => !!ov725,
     skip: () => end725(true),
-    play: (id) => play725(id || "coffee", null),
+    play: (id, cb) => play725(id || "coffee", cb || null),
     choose: (i) => pickChoice725(i),
-    cines: Object.keys(CINES)
+    get cines() { return Object.keys(CINES); },
+    // v7.26+: data-driven scene registration — one engine, many boards
+    register: (id, def) => { if (id && def && def.shots && !CINES[id]) { CINES[id] = def; return true; } return false; },
+    // shared helpers for registered scenes (no parallel drawing kits)
+    h: {
+      LW, LH, BAR, NAVY, PANEL, EDGE, CYAN, GREEN, RED, AMBER, PUR, INK, DIM, GOLD,
+      rr, panel: panel725, txt, check: check725, xmark: xmark725, bar: bar725,
+      bg: bg725, cityGlow: cityGlow725, rackRow: rackRow725, bubble: bubble725,
+      mike: mike725, felicia: felicia725, silhouette: silhouette725,
+      junior: junior725, k: k725, cio: cio725,
+      vault: vault725, twinCity: twinCity725, coffeeMachine: coffeeMachine725
+    }
   };
 })();
