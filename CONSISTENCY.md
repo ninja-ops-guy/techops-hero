@@ -147,3 +147,15 @@ systems exist.
 - Story continuity: THE NIGHT RUN is dated "two nights after the handoff" — it pays off The City Beneath the City (K's keys, the node map) and seeds the late-game resistance contracts ("Night contracts will call."). The follow-in-the-Charger branch ties Mike's car — established every evening since v7.22 — directly into K's operation.
 - Character rule kept: K is drawn from shapes (beanie, headphones, shades, green accents) and is never a Felicia reuse; Mike comes from the real player atlas; Felicia does not appear in this scene.
 - Palette discipline: both cars stay inside the dark navy/purple night grammar — the Charger reads green-on-black, the Mercedes reads green-into-purple, matching each driver's accent color (Mike's ROOT green, K's LED green shifting to Orpheus purple).
+
+## v7.28 Addendum — Performance Pass
+
+- Render canon unchanged: identical pixels, just cached — the tile-layer offscreen rebuilds on the 400ms blink quantum (monitor/server-LED blink preserved) and stamps at 1:1 with smoothing off, so the world reads exactly as before. Conveyors still animate at 120ms off live PLC ticket state (excluded from the cache on purpose). Minimap colors and blink cadence untouched.
+
+## v7.29 Addendum — Signals from the Dark
+
+- **Felicia's violin**: the rooftop signal uses her own atlas `violin` frame — never a reuse of her sprite for anyone else, and no one else plays violin. The phrase is eight notes, matching the "she's saying goodbye" rooftop motif from the day-8 duet; now reframed as "she's knocking."
+- **K's origin**: "I built its first console. It was my dashboard once." — consistent with K holding the ORPHEUS keys since v7.25 and running the resistance network since v7.27; explains why the grid listens to her deck. Her procedural figure (beanie/headphones/shades) is unchanged.
+- **ORPHEUS eye**: drawn as shapes (socket, iris, lids) — no emoji; purple grammar matches the "Orpheus listens" accent from v7.27. The eye opens only as far as the player's choice: signed contract → fully open; stood down → nearly closed.
+- **Day-9 continuity**: THE ENEMY IN THE WIRES follows directly from Day 8's UNAUTHORIZED TRAFFIC — SOURCE: INTERNAL (`_v726racks`); it names the breach's behavior ("learning the rhythm") rather than contradicting the Day-9 storage-array/evac-model beat, which still stands.
+- **Night contracts**: the v7.27 reward card promised "NIGHT CONTRACTS WILL CALL" — ORPHEUS WAKES is that call, gated on `_v727kLine`; signing sets `_v729nightContract` exactly once, and standing down explicitly keeps the line open (no dead end).
