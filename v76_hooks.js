@@ -48,7 +48,21 @@
 
   // ---------- P0-2: light map ----------
   const lc = document.createElement("canvas"), lx = lc.getContext("2d");
-  let lightScale = 1, frameEMA = 16, lodChecked = 0;
+  // v7.28 perf: default to half-res lights (soft radial glows — visually
+  // identical upscaled), and stamp a cached gradient blob instead of building
+  // a new radial gradient per light per frame.
+  let lightScale = .5, frameEMA = 16, lodChecked = 0;
+  let glowBlob = null;
+  function getGlowBlob() {
+    if (glowBlob) return glowBlob;
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const bx = c.getContext("2d");
+    const g = bx.createRadialGradient(64, 64, 10, 64, 64, 64);
+    g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    bx.fillStyle = g; bx.fillRect(0, 0, 128, 128);
+    glowBlob = c;
+    return c;
+  }
   function ambientRGB(s) {
     const outage = s.chaos && s.chaos.id === "outage";
     if (s.nightMode || outage) return [56, 60, 86];
@@ -60,9 +74,9 @@
   }
   function punch(W, H, sx, sy, r, a) {
     if (sx < -r || sy < -r || sx > W + r || sy > H + r) return;
-    const g = lx.createRadialGradient(sx, sy, r * .15, sx, sy, r);
-    g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(1, "rgba(0,0,0,0)");
-    lx.fillStyle = g; lx.beginPath(); lx.arc(sx, sy, r, 0, 7); lx.fill();
+    lx.globalAlpha = a;
+    lx.drawImage(getGlowBlob(), sx - r, sy - r, r * 2, r * 2);
+    lx.globalAlpha = 1;
   }
   function renderLights(s, sc) {
     const W = Math.ceil(cv.width * lightScale), H = Math.ceil(cv.height * lightScale);
@@ -123,7 +137,7 @@
     if (!s.room && !s.nightMode) {
       const sc = cv.height / 14 / TILE;
       ctx.fillStyle = "rgba(40,200,255,.06)";
-      ctx.fillRect((SRV.x0 * TILE - camX) * sc, (SRV.y0 * TILE - camY) * sc, (SRV.x1 - SRV.x0 + 1) * TILE * sc, (SRV.y1 - SRV.y0 + 1) * TILE * sc);
+      ctx.fillRect((SRV.x0 * TILE - camX) * sc, (SRV.y0 * TILE - camY) * sc, (SRV.x1 - SRV.x0 + 1) * TILE * TILE * sc * 0 + (SRV.x1 - SRV.x0 + 1) * TILE * sc, (SRV.y1 - SRV.y0 + 1) * TILE * sc);
     }
     ctx.restore();
   }
@@ -138,9 +152,6 @@
     const t0 = performance.now();
     const r = __origDraw76.apply(this, arguments);
     cameraPost(s, d);
-    // adaptive LOD bookkeeping
-    const ft = performance.now() - t0; frameEMA = frameEMA * .95 + ft * .05;
-    if (++lodChecked > 90) { lodChecked = 0; lightScale = frameEMA > 20 ? .5 : 1; }
     flags.tex = false; flags.fills = 0; flags.lights = false;
     if (!s || !s.map || !animsOn()) return r;
     try {
@@ -158,6 +169,10 @@
       flags.fills = (window.v76 && window.v76._fills) ? window.v76._fills.length : 0;
       if (!s.room) { renderLights(s, cv.height / 14 / TILE); flags.lights = true; }
     } catch (e) { }
+    // v7.28: the EMA now covers the WHOLE frame (core + all post layers), so
+    // the adaptive LOD actually reacts to the light map's own cost.
+    const ft = performance.now() - t0; frameEMA = frameEMA * .95 + ft * .05;
+    if (++lodChecked > 90) { lodChecked = 0; lightScale = frameEMA > 20 ? .3 : .5; }
     return r;
   };
 
