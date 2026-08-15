@@ -137,7 +137,7 @@
     if (!s.room && !s.nightMode) {
       const sc = cv.height / 14 / TILE;
       ctx.fillStyle = "rgba(40,200,255,.06)";
-      ctx.fillRect((SRV.x0 * TILE - camX) * sc, (SRV.y0 * TILE - camY) * sc, (SRV.x1 - SRV.x0 + 1) * TILE * TILE * sc * 0 + (SRV.x1 - SRV.x0 + 1) * TILE * sc, (SRV.y1 - SRV.y0 + 1) * TILE * sc);
+      ctx.fillRect((SRV.x0 * TILE - camX) * sc, (SRV.y0 * TILE - camY) * sc, (SRV.x1 - SRV.x0 + 1) * TILE * sc, (SRV.y1 - SRV.y0 + 1) * TILE * sc);
     }
     ctx.restore();
   }
