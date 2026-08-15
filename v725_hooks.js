@@ -239,7 +239,7 @@
         store: "_v725coffeePick"
       }, draw(x, tm) {
         bg725(x, "#101426");
-        panel725(x, 240, BAR + 80, 800, 300, 10); x.fill(); x.strokeStyle = EDGE; x.lineWidth = 2.5; rr(x, 240, BAR + 80, 800, 300, 10); x.stroke();
+        x.fillStyle = "#0a0f1e"; rr(x, 240, BAR + 80, 800, 300, 10); x.fill(); x.strokeStyle = EDGE; x.lineWidth = 2.5; rr(x, 240, BAR + 80, 800, 300, 10); x.stroke();
         const tags = [["TUBE TANGLE", 340, 170, AMBER], ["LOOSE SENSOR", 640, 150, RED], ["SINGLE BEAN", 800, 260, GREEN], ["JAMMED", 800, 285, GREEN]];
         x.strokeStyle = "#5a3b28"; x.lineWidth = 10;
         x.beginPath(); x.moveTo(320, 330); x.bezierCurveTo(420, 180, 520, 340, 620, 220); x.stroke();
