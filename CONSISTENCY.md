@@ -140,3 +140,10 @@ systems exist.
 - Story continuity: Shadows Between the Racks (day 8) is the TRUST beat that makes the Day 14 betrayal land — Felicia's "a group pulling strings from outside this company" seeds the CIO reveal in The City Beneath the City; its three-way choice grants the tooling (Deep Network Map / Emergency Protocols / Counterstrike Toolkit) that the late-game Orpheus takeover presupposes. Promotion Day pays off the command-center arc: the enterprise map becomes a cinematic crisis, and DELEGATE unlocks at the rank the player has earned.
 - Rewards discipline: cinematic rewards apply AFTER the end-of-day chain (so EOD adjustments can't clobber them), clamp to real stat rules (HP ≤ maxHp), and are latched exactly-once in `S.meta`.
 - Character rule kept: Mike from the real player atlas; Felicia only as herself via her v6.4 atlas; no new reuse — city-life apartment, command center, and world map are procedural props built from the shared kit.
+
+## v7.27 Addendum — Ride Along
+
+- Vehicle canon locked to the reference sheets: Mike drives the black Dodge Charger with green ghost flames (image(22)); K drives the black Mercedes with green-into-purple ghost flames and the tri-spoke star badge drawn as shapes (image(15)) — no emoji glyphs anywhere. Felicia's purple-trim Impreza variant in the night drive is unchanged.
+- Story continuity: THE NIGHT RUN is dated "two nights after the handoff" — it pays off The City Beneath the City (K's keys, the node map) and seeds the late-game resistance contracts ("Night contracts will call."). The follow-in-the-Charger branch ties Mike's car — established every evening since v7.22 — directly into K's operation.
+- Character rule kept: K is drawn from shapes (beanie, headphones, shades, green accents) and is never a Felicia reuse; Mike comes from the real player atlas; Felicia does not appear in this scene.
+- Palette discipline: both cars stay inside the dark navy/purple night grammar — the Charger reads green-on-black, the Mercedes reads green-into-purple, matching each driver's accent color (Mike's ROOT green, K's LED green shifting to Orpheus purple).
