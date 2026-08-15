@@ -1,3 +1,0 @@
-# This file tells GitHub Pages to serve the site as plain static files
-# without Jekyll processing. TechOps Hero is a pure HTML/JS game — Jekyll
-# builds are unnecessary and were causing publish failures.
