@@ -2,7 +2,7 @@
    v7.22 — NIGHT DRIVE (the cinematic cut)
    The 16:00 drive home / night-crawl opening now plays as a real-time
    cinematic instead of a hard cut, after the reference boards + clip:
-     1. AEROTECH facade in the rain — Mike walks to the SUV
+     1. AEROTECH facade in the rain — Mike walks to his Charger
      2. Headlights flare, the TECHOPS dashboard wakes
      3. Neon New Haven drive — three-layer parallax, rain, wet asphalt
      4. Iron & Tide under the elevated line — a glitch steps out of the alley
@@ -184,26 +184,54 @@
   }
   function suv(x, X, Y, sc, imp, lightsOn) {
     // X,Y = front wheel ground point; sc = px scale
+    // v7.27: Mike's daily is his Charger now — black muscle car, green ghost
+    // flames, green underglow (per the car sheet). Felicia keeps the Impreza.
     x.save(); x.translate(X, Y); x.scale(sc, sc);
-    const body = imp ? "#15151d" : "#2e333f", trim = imp ? "#8a6cff" : "#49506a";
-    if (imp) { x.save(); x.shadowColor = "#a86bff"; x.shadowBlur = 26; px(x, -98, -6, 196, 5, "#a86bff"); x.restore(); }
+    const body = imp ? "#15151d" : "#0e1013", trim = imp ? "#8a6cff" : "#39ff88";
+    x.save(); x.shadowColor = imp ? "#a86bff" : "#2ee06f"; x.shadowBlur = 26;
+    px(x, -98, -6, 196, 5, imp ? "#a86bff" : "#2ee06f"); x.restore(); // underglow
     x.fillStyle = body;
     if (imp) { rr(x, -100, -34, 200, 28, 10); x.fill(); rr(x, -64, -52, 118, 22, 8); x.fill(); } // low sedan
-    else { rr(x, -100, -52, 200, 46, 12); x.fill(); rr(x, -78, -76, 128, 30, 10); x.fill(); }    // compact SUV
+    else { // Charger — long-hood muscle stance
+      rr(x, -100, -42, 200, 36, 10); x.fill();
+      rr(x, -56, -64, 104, 24, 9); x.fill();
+      px(x, 56, -50, 36, 8, body);       // hood line
+      px(x, 72, -47, 18, 5, "#1a1d24");  // hood scoop
+    }
     x.fillStyle = "#0a0f1c"; // glass
     if (imp) { rr(x, -58, -49, 50, 16, 4); x.fill(); rr(x, -2, -49, 50, 16, 4); x.fill(); }
-    else { rr(x, -70, -72, 52, 24, 5); x.fill(); rr(x, -10, -72, 52, 24, 5); x.fill(); }
+    else { rr(x, -50, -60, 42, 18, 4); x.fill(); rr(x, -1, -60, 39, 18, 4); x.fill(); }
+    if (!imp) { // green ghost flames licking the flanks (shapes, not emoji)
+      x.fillStyle = "#1d5c38";
+      [[-92, -22, 48], [-32, -20, 42], [20, -21, 36]].forEach(f => {
+        x.beginPath(); x.moveTo(f[0], -13);
+        x.quadraticCurveTo(f[0] + f[2] * .28, f[1] - 4, f[0] + f[2] * .55, -15);
+        x.quadraticCurveTo(f[0] + f[2] * .78, f[1] - 1, f[0] + f[2], -12);
+        x.lineTo(f[0] + f[2], -7); x.lineTo(f[0], -7); x.closePath(); x.fill();
+      });
+      x.fillStyle = "#39ff88";
+      [[-82, -17, 34], [-24, -16, 30]].forEach(f => {
+        x.beginPath(); x.moveTo(f[0], -11);
+        x.quadraticCurveTo(f[0] + f[2] * .35, f[1] - 3, f[0] + f[2], -10);
+        x.lineTo(f[0] + f[2], -7); x.lineTo(f[0], -7); x.closePath(); x.fill();
+      });
+    }
     x.fillStyle = trim; px(x, -100, -16, 200, 5, trim); // side skirt
     [-64, 62].forEach(wx => { // wheels
       x.fillStyle = "#0a0a0d"; x.beginPath(); x.arc(wx, 0, 17, 0, 7); x.fill();
-      x.fillStyle = imp ? "#d9b45b" : "#565d6e"; x.beginPath(); x.arc(wx, 0, 8, 0, 7); x.fill();
+      x.fillStyle = imp ? "#d9b45b" : "#2b303c"; x.beginPath(); x.arc(wx, 0, 8, 0, 7); x.fill();
+      if (!imp) { x.strokeStyle = "#39ff88"; x.lineWidth = 1.5; x.beginPath(); x.arc(wx, 0, 11.5, 0, 7); x.stroke(); }
     });
     if (lightsOn) {
       const g = x.createLinearGradient(100, -20, 260, 6);
       g.addColorStop(0, "rgba(255,240,190,.5)"); g.addColorStop(1, "rgba(255,240,190,0)");
       x.fillStyle = g; x.beginPath(); x.moveTo(98, -26); x.lineTo(264, -8); x.lineTo(264, 8); x.lineTo(98, -6); x.closePath(); x.fill();
       x.save(); x.shadowColor = "#ffe9b0"; x.shadowBlur = 18; px(x, 92, -30, 8, 12, "#fff3c4"); x.restore();
-      px(x, -100, -28, 5, 10, "#ff4d5e"); // taillight
+      if (imp) px(x, -100, -28, 5, 10, "#ff4d5e"); // taillight
+      else { // Charger full-width rear light bar
+        x.save(); x.shadowColor = "#ff2233"; x.shadowBlur = 14;
+        px(x, -102, -36, 6, 16, "#ff2233"); x.restore();
+      }
     }
     x.fillStyle = "#101319"; rr(x, 40, -12, 34, 13, 3); x.fill(); // plate
     x.save(); x.font = 'bold 8px "Courier New",monospace'; x.fillStyle = "#cfe3ff"; x.textAlign = "center"; x.fillText("TECHOPS", 57, -3); x.restore();
@@ -511,6 +539,7 @@
     frames: () => frame722,
     skip: () => end722(true),
     DUR,
+    car: suv, // v7.27: shared Charger/Impreza draw so other scenes reuse the same car
   };
   console.log(`[v7.22] Night Drive cinematic loaded (v${VER})`);
 })();
