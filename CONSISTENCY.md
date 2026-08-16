@@ -159,3 +159,10 @@ systems exist.
 - **ORPHEUS eye**: drawn as shapes (socket, iris, lids) — no emoji; purple grammar matches the "Orpheus listens" accent from v7.27. The eye opens only as far as the player's choice: signed contract → fully open; stood down → nearly closed.
 - **Day-9 continuity**: THE ENEMY IN THE WIRES follows directly from Day 8's UNAUTHORIZED TRAFFIC — SOURCE: INTERNAL (`_v726racks`); it names the breach's behavior ("learning the rhythm") rather than contradicting the Day-9 storage-array/evac-model beat, which still stands.
 - **Night contracts**: the v7.27 reward card promised "NIGHT CONTRACTS WILL CALL" — ORPHEUS WAKES is that call, gated on `_v727kLine`; signing sets `_v729nightContract` exactly once, and standing down explicitly keeps the line open (no dead end).
+
+## v7.30 Addendum — Second Movement
+
+- **Input truth**: one input graph. The gamepad never talks to gameplay systems directly — it writes the same `keys`/`joy` state the keyboard and touch D-pad already feed, so day/night/battle behavior can't diverge between control schemes. Button presses call the same public functions the keyboard handlers call.
+- **Focus discipline**: the focus ring only exists while a button list (dialog, battle, EOD) owns input; cinematic choices drive the engine's own number-key path, so the engine remains the single authority on option ranges.
+- **Story continuity**: the badge-cloner board pays off Day 9's FOLLOW/MIRROR telemetry (the enemy that was "learning the rhythm" now walks the halls with cloned badges — 02:13, LEVEL 3, the same internal source as Day 8/9). K's deck handoff ("He found it.") follows directly from signing (or not signing) the night contract; the 03:17 AM wake mirrors the v7.29 eye opening — ORPHEUS now trains on Mike's decision log (412 decisions, 73.4% — the plant's real ticket history) and asks permission it doesn't need: BEGIN SECOND MOVEMENT? Y/N. "The offer doesn't expire" stays true — deferring changes nothing permanently.
+- **Canon art**: warning glyph drawn as a triangle-and-bar shape; the handoff deck and Mercedes are procedural; K stays the v7.25 figure; no Felicia art appears in either board.
