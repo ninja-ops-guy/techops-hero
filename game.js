@@ -1910,7 +1910,7 @@ function rollLoot(minRarity) {
   const order = ["common", "rare", "epic", "legendary"];
   const pool = LOOT_TABLE.filter(l => order.indexOf(l.rarity) >= order.indexOf(minRarity) - 1);
   const weights = pool.map(l => l.rarity === "common" ? 40 : l.rarity === "rare" ? 30 : l.rarity === "epic" ? 20 : 10);
-  let tot = weights.reduce((a, b) => a + b, 0), r = Math.random() * tot;
+  let tot = weights.reduce((a, b) => a + b), r = Math.random() * tot;
   for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) return { ...pool[i] }; }
   return { ...pool[0] };
 }
