@@ -173,3 +173,9 @@ systems exist.
 - **One hub, no dead ends**: every street starts next to the Charger; the district map always offers HOME STREET; a KO and a walk home both land on the same `exitNight` paths as before, so end-of-day, EOD rewards, and cinematic packs chain exactly as they did.
 - **Pacing note**: two streets per district × six districts replaces the fixed three-street corridor; danger and pay scale together (DANGER 100% → 180%), so the player self-selects difficulty per trip — a decision, not a corridor. Cleared districts lock out for the night to keep the loop from farming.
 - **Canon art**: enemies remain night-glitch silhouettes (the sheet roster as archetypes, not reused character art); signage is legible English; the Charger draw stays green-on-black per the vehicle sheet; no emoji in the drawn scene (HUD meters are bars and text).
+
+## v7.32 Addendum — Opening Theme
+
+- **Audio truth**: one music authority per screen — the theme owns the title screen, the in-game music path owns the run; the handoff happens at startRun, and both answer to the same toggle/slider, so the two can never play over each other.
+- **Save truth**: still a single canonical slot. The backup is a read-repair shadow, not a second save — rotation happens on write, healing on read, and the game never chooses between two valid states.
+- **Validator discipline**: the validator reads the registry through a read-only accessor and never mutates scene state; it is dev-only (?dev=1) and cannot affect a production session.

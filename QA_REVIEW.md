@@ -176,3 +176,10 @@ Sev-1 alerts used to be a bare banner. v7.23 wraps `sevBanner` (the single choke
 - **Traversal**: E at the Charger opens the district map; a 1.5s in-engine drive transition; cleared districts lock out with a +$40 bonus; HOME STREET ends the night into the normal day-end flow; KO still limps home (+20 stress).
 - **Performance**: same pass caught and fixed a real periodic hitch — the v7.28 tile cache rebuilt the full map every 400ms (12.5ms/1,318 drawTile calls spike); the quantum refresh now repaints only the ~30 blinking cells (measured 2.8ms/41 calls, steady with normal frames).
 - **Tests executed**: `test-v731.js` — 29/29 (title/line3, district & archetype tables, night entry through the drive cinematic, car menu, district travel + roster, jab-chain kill with hit-stop and cash, finisher launch, attack-token cap, block chip, street/district progression, clear bonus, map lockout, home-street ending, KO path, tracker suppression/restore, zero page errors). Full regression: 27/27 suites green.
+
+## v7.32 Addendum — Opening Theme
+
+- **Menu music**: techops-theme.mp3 loops on the title screen; gesture-gated per browser autoplay policy; stops on run start (in-game music handoff), resumes on title return; wired into the existing music toggle and V67SET.volMusic slider. The file ships in-repo (2.9 MB).
+- **Save hardening**: rotation lives in the storage layer (save()/load() are lexical consts and can't be wrapped) — every write rotates the previous blob to `techops_save_bak`; every read validates JSON and falls back to (then heals from) the backup. Covers both the missing-slot and corrupt-slot cases.
+- **Scene validator**: `v732.validate()` walks the v7.25 registry (new read-only `defs()` accessor) and rejects duplicate ids, store-less choices, duration-less shots, choice-final scenes, and over-long captions. Runs automatically behind ?dev=1.
+- **Tests executed**: `test-v732.js` — 16/16 (title/line3, exports, theme element/loop/src, play-on-gesture, stop-on-run-start, slider volume, mute toggle, backup rotation, corrupt-slot heal, validator clean + broken-scene rejection, asset served, zero page errors). Full 28-suite regression green.
