@@ -179,3 +179,11 @@ systems exist.
 - **Audio truth**: one music authority per screen — the theme owns the title screen, the in-game music path owns the run; the handoff happens at startRun, and both answer to the same toggle/slider, so the two can never play over each other.
 - **Save truth**: still a single canonical slot. The backup is a read-repair shadow, not a second save — rotation happens on write, healing on read, and the game never chooses between two valid states.
 - **Validator discipline**: the validator reads the registry through a read-only accessor and never mutates scene state; it is dev-only (?dev=1) and cannot affect a production session.
+
+## v7.33 Addendum — Friends in High Places
+
+- **One night, one hub**: Waldo's Place is a district on the existing Charger map, not a parallel evening system — time still passes per drive, the day still can't end while you're out, and HOME STREET remains the only way to bed.
+- **Friendship isn't a shop**: the largest rep gains come from the lawn, the porch and the all-nighter tune-up, not purchases; the dish market gates on trust, and both porch options (smoke / coffee) pay identically per the brief's accessibility rule.
+- **Combat augments extend, never fork**: all six intel skills wrap the v7.31 jab/draw paths in place — one combat system, one input graph; equipping is limited to 2 slots so builds are choices.
+- **Story continuity**: the tracker device (`_v733tracker`) reads as another move by the same internal adversary as the Day-8/9 breach and the badge-cloner (`_v730badge`); the Ghost Shift seed (`_v733ghost`) only fires after a legitimately cracked incident tree, and the crescent-cursor tag stays a drawn shape — no emoji in the art.
+- **Canon art**: Waldo is his own generated atlas + a new procedural figure (beanie, gold chain, fur-hood puffer) — never a Felicia reuse; the property scene draws the house, dish, grill and string lights procedurally over the night street.
