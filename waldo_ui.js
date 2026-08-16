@@ -1,0 +1,1 @@
+window.TO_WALDO_UI = window.__WALDO_UI_P1+window.__WALDO_UI_P2;
