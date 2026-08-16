@@ -1,0 +1,1 @@
+window.TO_ENV_OBJECTS = window.__ENV_OBJECTS_P1+window.__ENV_OBJECTS_P2+window.__ENV_OBJECTS_P3;
