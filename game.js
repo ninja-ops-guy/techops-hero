@@ -1254,7 +1254,7 @@ function ticketFlow(n) {
       vlan: `"My desk phone works but my laptop gets no IP. IT plugged me into the wrong port, didn't they?"`,
       backup: `"The nightly backup has failed 4 days in a row. Nobody noticed until Legal asked for a restore."`,
       slowpc: `"It takes 12 minutes to boot. I time it. I have a spreadsheet of the boot times."`,
-      shadow: `"ACCESS GRANTED... — the terminal is typing by itself: 'i remember this building. i remember YOU.'"`,
+      shadow: `"ACCESS GRANTED... — the terminal is typing by itself. it remembers this building. it remembers YOU."`,
     };
     dlg(`${n.name} — ${n.dept} ${n.critical ? "🚨" : ""}`,
       `${n.legacy ? `<span style="color:#ffd24a">🏛️ <b>LEGACY SYSTEM: ${n.legacy}</b></span><br><i>${n.legacyLine}</i><br><br>` : ""}<b>${t.icon} ${t.label}</b>${n.repeat ? ' <span style="color:#ffb347">🔁 REPEAT</span>' : ""}<br>${symptoms[t.id]}${n.trustHurt ? '<br><i>"...and please don’t just restart it — last time we lost two hours."</i>' : ""}<br><small>Interview the user, then form a hypothesis.</small>`,
