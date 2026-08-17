@@ -1,6 +1,6 @@
 /* ==========================================================================
    v7.33 — FRIENDS IN HIGH PLACES (the Waldo pack)
-   Waldo — Mike's longtime friend: satellite threat-intelligence contact,
+   Waldo — Mike's childhood friend: satellite threat-intelligence contact,
    backyard mechanic, porch philosopher. This pack wires his brief into the
    existing systems only (no parallel frameworks):
      · WALDO'S PLACE — a social night destination on the Charger's district
@@ -335,7 +335,7 @@
         ]);
       } else hangout733();
     } else if (h.id === "garage") {
-      if (t < 1) { dlg("🔧 The Garage", "The door's half open — tools, a lift, a radio murmuring corridos. Waldo waves you off: \"Garage privileges are earned, homes. Help me out sometime.\"<br><small>Reach HOMIE tier (20 rep).</small>", [{ t: "Fair.", f: closeDlg }]); return; }
+      if (t < 1) { dlg("🔧 The Garage", "The door's half open — tools, a lift, a radio murmuring corridos. Waldo waves you off: \"Garage privileges are earned, homes. And we only go back to when we were kids.\"<br><small>Reach HOMIE tier (20 rep).</small>", [{ t: "Fair.", f: closeDlg }]); return; }
       if (t >= 2 && !m._v733tracker) {
         dlg("🔧 The Garage", "The Charger's CHECK ENGINE light glows — then dies when Waldo looks at it. \"Intermittent? Bring it in. NOW.\"<br><small>Check Engine Friendship — a diagnosis with a secret inside.</small>", [
           { t: "🔧 Pop the hood. (story)", f: () => { closeDlg(); try { v725.play("waldo_tracker", function () { trackerReward733(); }); } catch (e) { trackerReward733(); } } },
