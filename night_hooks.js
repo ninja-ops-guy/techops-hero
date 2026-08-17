@@ -517,6 +517,16 @@ function drawNM() {
   const sky = ctx.createLinearGradient(0, 0, 0, H);
   sky.addColorStop(0, D.sky); sky.addColorStop(.7, D.far); sky.addColorStop(1, D.mid);
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // v7.34: painted district backdrop (payload-loaded) replaces the procedural
+  // sky layers when present; the street/railing/HUD stay procedural either way
+  const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
+  if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
+    const bs = Math.max(W / __bg734.naturalWidth, (horizon + 60) / __bg734.naturalHeight);
+    const bw = __bg734.naturalWidth * bs, bh = __bg734.naturalHeight * bs;
+    const bx = -((NM.cam * .18) % Math.max(1, bw - W + 1));
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(__bg734, bx, horizon + 40 - bh, bw, bh);
+  } else {
   // moon + stars
   ctx.fillStyle = "#e8ecff"; ctx.beginPath(); ctx.arc(W - 90, 60, 22, 0, 7); ctx.fill();
   ctx.fillStyle = "#ffffff55";
@@ -546,6 +556,7 @@ function drawNM() {
       ctx.restore();
     }
   }
+  } // v7.34: end procedural-sky else (painted backdrop drew instead)
   // near railing (fast parallax)
   ctx.strokeStyle = "#232c44"; ctx.lineWidth = 3;
   ctx.beginPath();
