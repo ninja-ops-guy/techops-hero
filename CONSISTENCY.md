@@ -201,3 +201,10 @@ systems exist.
 - **Interior truth**: garage and den are backdrop swaps on the same Waldo's-Place district — no new travel system, the Charger still waits outside, time still passes.
 - **Assist economy**: CLOSE AIR SUPPORT fires once per night, only at critical HP, only in combat districts; it floors the room rather than killing it — a rescue, not a skip button.
 - **Quest ordering**: dish offers (Parts Run → Nowhere to Be) queue before the intel market at the same hotspot; the den holds social stories (party → finale); nothing overrides a pending stock quest.
+
+## v7.36 Addendum — Full Wiring
+
+- **Style truth**: the rank reads only what the fight already tracks (moves used, perfects, airtime, hits taken) — no new damage rules; it never gates rewards.
+- **Quest order closes the loop**: house call (tier 2) precedes the party (tier 3) as in the brief; family (tier 3) and the bird (tier 4) chain after; every choice persists once and feeds the docs/skills already shipped.
+- **Null continuity**: the fragment-in-the-archive hook from the Ghost Fork epilogue pays off as a boss, not a retcon — same district grammar (Industrial), same silhouette-under-frame rendering as the Shepherd.
+- **Portrait precedence**: v7.7 cinematic portraits > v7.35 nameplates > v7.36 busts — one speaker image per dialog, always.
