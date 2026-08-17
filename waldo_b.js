@@ -1,1 +1,0 @@
-window.TO_WALDO_B = window.__WALDO_B_P1+window.__WALDO_B_P2+window.__WALDO_B_P3;
