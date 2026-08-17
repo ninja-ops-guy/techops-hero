@@ -214,3 +214,12 @@ Sev-1 alerts used to be a bare banner. v7.23 wraps `sevBanner` (the single choke
 - **Caught by test**: the style-rank wrap read NM.hp after a KO had nulled NM mid-step (v7.31 KO path) — the zero-page-errors assert caught it; the wrap now re-checks NM after the inner call. The v7.36 Felicia-portrait assert codified the yield rule (v7.7 wins when present).
 - **Boss discipline**: Warden Null is an NM_KINDS entry + post-step wrap, same pattern as NULL SHEPHERD; the cage root restores pre-step position rather than touching input.
 - **Tests executed**: `test-v736.js` — 28/28 (registration, validator, draw smoke incl. patched signal shot, alt title flag, portrait busts, roster render, style rank, dog bark, three quests with persisted choices + exactly-once skill unlocks, Warden spawn/teleport/laser/cage/defeat latch, save/reload, zero page errors). Full battery green incl. v731 KO path 29/29.
+
+## v7.37 Addendum — Third Shift
+
+- test-v737.js: 19 asserts (facility gate/drives/grade paths, dead drops + radio, EOD pose,
+  persistence, zero errors). Two implementation bugs caught pre-ship: async Image decode on the
+  EOD pose (warmed at load) and mission drive state not resetting on district reload.
+- Version-lock: title regexes +37, line3 +THIRD SHIFT, regression +gs1 scene.
+- Battery: regression 29/29, v731 29/29, v732 17/17, v729 27/27, v730 32/32, v733 29/29,
+  v734 37/37, v735 31/31, v736 28/28, v737 19/19, uat 14/14.
