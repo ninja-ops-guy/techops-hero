@@ -200,3 +200,10 @@ Sev-1 alerts used to be a bare banner. v7.23 wraps `sevBanner` (the single choke
 - **Chain discipline**: gk1..gk6 gate on the v7.33 ghost seed and days 20–25, latch all earlier packs' day flags when they play, and gk6 additionally requires the boss kill — tested negative and positive.
 - **Caught by test**: the boss initially spawned without a `face`, so the beam column resolved to NaN and every frame threw inside the lamp-glow gradient — the beam test caught it (face now derived each tick).
 - **Tests executed**: `test-v734.js` — 37/37 (payloads, registration, validator clean, draw smoke, seed gate, full mission chain in order, archive choice persisted, exactly-once rewards, gk6 boss gate, backdrop decode, boss spawn/teleport/beam/phase/defeat loot, companion unlock, decoy once-per-night, porch conversation, save/reload, zero page errors). Full battery green: regression 26/26, v733 29/29, v732 17/17, v731 29/29, v730 32/32, v729 27/27, uat 14/14.
+
+## v7.35 Addendum — Good Dogs
+
+- **Async-asset discipline**: data-URL Images decode asynchronously — first-use creation made the first dialog plate / dog draw silently miss. All v7.35 images are pre-warmed at load; the crop cache never stores a miss. Caught by the plate/dog tests.
+- **Interception discipline**: v7.35's interact wrap is outermost; garage interior waits for the tracker quest (stock menu wins first), the den door sits clear of K's porch spot, and the dish queues quest offers before the market. The stuck-v723-overlay flake class is handled in-suite (clearBlockers pattern).
+- **Canon patch verified by test**: archive crystal = recorded simulations, INSTALL/DESTROY/DIVIDE, "course: Earth", stories-not-memories.
+- **Tests executed**: `test-v735.js` — 31/31 (registration, validator, draw smoke incl. key-art patches, plate injection, canon strings, dog/decoy atlas renders, den & garage interiors, parts→nowhere→party→brothers chain with persisted choices, rest-day block exactly-once, CLOSE AIR SUPPORT, save/reload, zero page errors). Full battery green: regression 27/27, v734 37/37, v733 29/29, v732 17/17, v731 29/29, v730 32/32, v729 27/27, uat 14/14.
