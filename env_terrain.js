@@ -1,1 +1,0 @@
-window.TO_ENV_TERRAIN = window.__ENV_TERRAIN_P1+window.__ENV_TERRAIN_P2+window.__ENV_TERRAIN_P3+window.__ENV_TERRAIN_P4;
