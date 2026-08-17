@@ -1,1 +1,0 @@
-window.TO_ENV_STRUCT = window.__ENV_STRUCT_P1+window.__ENV_STRUCT_P2+window.__ENV_STRUCT_P3;
