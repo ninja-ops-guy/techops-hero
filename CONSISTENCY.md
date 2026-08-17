@@ -208,3 +208,14 @@ systems exist.
 - **Quest order closes the loop**: house call (tier 2) precedes the party (tier 3) as in the brief; family (tier 3) and the bird (tier 4) chain after; every choice persists once and feeds the docs/skills already shipped.
 - **Null continuity**: the fragment-in-the-archive hook from the Ghost Fork epilogue pays off as a boss, not a retcon — same district grammar (Industrial), same silhouette-under-frame rendering as the Shepherd.
 - **Portrait precedence**: v7.7 cinematic portraits > v7.35 nameplates > v7.36 busts — one speaker image per dialog, always.
+
+## v7.37 Addendum — Third Shift
+
+- Ghost Shift chapters 1–2 (AFTER HOURS evidence drives, DEAD DROPS fragments) are mission
+  mechanics on existing night streets, flags `S.meta._v737ch1/_v737ch2/_v737drops` — all
+  persisted, all documented into the v7.33 intel archive.
+- The crescent-around-a-cursor symbol recurs (v7.33 graffiti → plant wall → gs1 cinematic) as
+  one character's calling card, unnamed in ch.1–2 — consistent with Echo staying anonymous.
+- mike_actions powers the EOD celebration pose only; Mike's procedural body still drives live
+  night play pending the combat-architecture cycle.
+- New v725 scene: gs1 (validator-clean, counted in test-regression).
