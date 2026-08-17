@@ -118,3 +118,99 @@ Sev-1 alerts used to be a bare banner. v7.23 wraps `sevBanner` (the single choke
 
 ## v7.25 Addendum — Interactive Cinematic Pack (coffee / mentor / betrayal / city)
 
+- **Wrap discipline**: `checkDayEnd` wrapped outermost (loads after `v724_hooks.js`); the original chain always runs after skip/completion, deferred via the engine callback. One cinematic per day via the `S.meta._v725Day` latch.
+- **Guards**: no fire during dialog/battle/nightMode or while a v7.22/v7.23/v7.24 cinematic is active; requires the day to actually end (`ticketsDone >= ticketsTotal` or `force`).
+- **Story order**: coffee (day >= 11) → mentor (day >= 12) → betrayal (day >= 14) → city (day > `_v725betrayalDay`). Betrayal's choice is stored in `S.meta._v725betrayal` (`"stop"`/`"follow"`); skipping betrayal before the choice leaves it unresolved and it re-arms the next day.
+- **Interactivity**: choice shots pause the timeline; keys 1–3 or click pick an option; the overlay swallows all keys (capture phase) so gameplay stays frozen underneath; skip is disabled while a choice is on screen.
+- **Canon art**: glyphs drawn as shapes (no emoji); Mike from the real player atlas; Felicia only via her own v6.4 atlas (`TO_FELICIA`/`FEL_ATLAS`); junior tech, CIO, and K are NEW procedural figures — no Felicia reuse; AeroTech / New Haven naming.
+- **Settings**: all WebAudio gains scaled by `V67SET.volSfx`.
+- **Tests**: `test-v725.js` — 19 asserts: install, registry, title/line3, day-gating, all four cinematics fire in order, both choice stores, once-per-day latch, city day-after rule, skip path, clean state, zero page errors.
+
+## v7.26 Addendum — Story Pack II (racks / citylife / promotion)
+
+- **No parallel framework**: scenes register into the v7.25 engine via `v725.register(id, {title, shots, cues})`; drawing reuses the exported helper kit `v725.h` (panels, figures, maps). The engine gained 4-option choice keys (1–4) and per-scene named audio cues.
+- **Wrap discipline**: `checkDayEnd` wrapped outermost (after v7.25); original chain runs after skip/completion; one cinematic per day across both packs (v7.26 sets the v7.25 day latch when it plays).
+- **Guards**: no fire during dialog/battle/nightMode or active v7.22–v7.25 cinematics; requires the day to actually end.
+- **Story order**: racks (day >= 8) → coffee (11) → mentor (12) → citylife (13) → betrayal (14) → city (15+) → promotion (16). Skipping before a choice re-arms that scene the next day; later scenes wait.
+- **Persisted choices**: `_v726racks` (trace/contain/confront) + unlock flag; `_v726evening` (home/gym/coffee/crawl) with rewards (HP +25, stress -10) applied **after** the day-end chain and exactly once (`_v726eveningPaid`); `_v726rollback` (global/staged) + `_v726adminII`.
+- **Tests executed**: `test-v726.js` — 23/23 (install, registration, guards, all three scenes fire in order, choice stores, exactly-once rewards, unlock flags, once-per-day, skip path, clean state, zero page errors). Full 21-suite regression green (v7.10 east-door assert remains the documented headless timing flake — passes on rerun).
+
+## v7.27 Addendum — Ride Along (the Charger & K's night run)
+
+- **Edit, don't duplicate**: the v7.22 night drive's car draw was edited in place — the placeholder SUV became Mike's reference-faithful black Dodge Charger (slab body, hood scoop, green triple-tongue ghost flames, green wheel rings, full-width rear light bar, green underglow) inside the same `suv()` function; Felicia's Impreza branch untouched. The draw is exported as `v722.car` so K's cinematic reuses it instead of redrawing.
+- **Registration, not a new framework**: K — THE NIGHT RUN is data on the shared v7.25 engine (`v725.register("krun", {title, shots, cues})`); the Mercedes, rain, and speed lines are new helpers in `v727_hooks.js` only.
+- **Wrap discipline**: `checkDayEnd` wrapped outermost (after v7.26); the original chain always runs after skip/completion. One cinematic per day across all three packs — v7.27 sets `_v727Day` plus the v7.25/v7.26 latches when it plays.
+- **Guards**: day >= 17 AND the city handoff (`_v725city`) required; no fire during dialog/battle/nightMode or active v7.22–v7.26 cinematics; requires the day to actually end. Skipping before the choice re-arms the next day.
+- **Persisted choice**: `_v727krun` (`"shotgun"`/`"charger"`) changes shot 4's composition (riding with K vs following in the Charger) and the reward-card line. Reward `_v727kLine` (K — DIRECT LINE UNLOCKED) applies after the day-end chain, exactly once.
+- **Tests executed**: `test-v727.js` — 19/19 (install, registration, exports, guards incl. the city-handoff requirement, choice hold, both branches, once-per-day, skip path, offscreen-canvas draw smoke for both cars, zero page errors). Full 22-suite regression green (older suites' version regexes widened to v7.27; v7.4/v7.5/v7.20 asserts are timing-flaky under parallel load and pass in isolation).
+
+## v7.28 Addendum — Performance Pass
+
+- **Root-caused, not guessed**: canvas-op counters + per-context attribution isolated the lag to (1) the minimap redrawing all 1,344 map cells per frame, (2) the tile layer's ~2,400 `px()` fillRects per frame, (3) the v7.6 light map building radial gradients per light per frame with an adaptive LOD that measured only its inner draw cost. fillRect 3,294 → ~600/frame (−82%); radial gradients 0; light-map ctx ≈0ms.
+- **Fixes in place, no parallel systems**: minimap and tile layer cached to offscreen canvases inside `game.js`'s existing draw (keyed on the live `s.map` reference; tile cache refreshes on the 400ms blink quantum so monitor/LED blink survives; conveyors excluded — they animate at 120ms off live ticket state). `px()` retargets via `pxCtx` — one line. Light map stamps a cached glow blob at half-res; EMA now covers the whole wrapped frame.
+- **Pixel-perfect kept**: the tile cache stamps with `imageSmoothingEnabled = false` (caught by test — the first version of the assertion sampled the wrong canvas and exposed that the unscaled cache would have blurred; fixed before ship).
+- **Environment honesty**: absolute draw-ms in the sandbox swings ±30% run-to-run (2-core software rasterizer, shared with the platform browser); a same-machine A/B (stash fixes, re-measure, restore) proved the noise and confirmed the op-count wins are the durable fix.
+- **Tests**: `test-v728.js` — 15 asserts: title/line3, both caches live and keyed to the map, amortized drawTile budget, blink-quantum refresh, conveyor overlay, zero per-frame gradients, fillRect budget, varied world pixels, pixel-perfect cache stamp, save still writes, movement with caches, zero page errors. Full 24-suite regression green.
+
+## v7.29 Addendum — Signals from the Dark (story pack III)
+
+- **No parallel framework**: all three boards register into the v7.25 engine; drawing reuses `v725.h` plus two new shared draws exported as `v729.eye` (ORPHEUS eye) and `v729.wave` (soundwave).
+- **Wrap discipline**: `checkDayEnd` wrapped outermost (after v7.27); day-end chain runs first, rewards land on top exactly once; one cinematic per day across all four packs.
+- **Guards**: day-gated chains — wires needs day>=9 + `_v726racks`; signal needs day>=15 + `_v725betrayal`; orpheus needs day>=18 + `_v727kLine`. Each negative gate is test-covered.
+- **Suite maintenance**: v7.25/v7.26/v7.27 suites pre-resolve the v7.29 latches in their isolation blocks (a new outermost pack would otherwise steal their day slots — caught as a real regression, fixed in the suites, not the game).
+- **Tests**: `test-v729.js` — 27 asserts: install, registration, exports, title/line3, all three day gates (negative + positive), three choice stores, exactly-once rewards (follow→trace flag, sign→night contract, stand-down→nothing), once-per-day latch across all packs, no refire, skip path, standalone draw execution, save persistence of the latches, clean state, zero page errors.
+- **UAT**: `uat-v729.js` — 11 asserts on the production path (no dev flag): cold boot, world entry, movement, NPC dialog, save marker → reload → continue → restored, cinematic engine live, mobile viewport (390×844) canvas fit + dialog reachability, zero page errors. Cinematics screenshot-verified (traceroute, rooftop violin, ORPHEUS eye).
+- **Known gap (definition of done)**: gamepad/controller input is still not implemented anywhere in the codebase — tracked as an open item, not claimed.
+
+## v7.30 Addendum — Second Movement (gamepad + story pack IV)
+
+- **Controller support (definition-of-done item closed)**: the pad polls inside the existing frame loop and writes the same `keys` object every system already reads — day movement, night crawl run/jump/dash/block all work with zero changes to those systems. Buttons are edge-triggered against the same functions the keyboard calls (`interact`, `openPanel`/`closePanel`, `phonePanel`, `toggleTwin`). A gold focus ring walks dialog/battle/EOD button lists (dpad/stick), A activates; v7.25-engine choices navigate by dpad and confirm with A through the engine's own key handler (out-of-range keys are engine-ignored). World keys are never written while a dialog, battle, panel, EOD screen or cinematic owns input.
+- **Boards**: badge (day>=10 after `_v729wires`) and emerald (day>=19 after `_v729orpheus`) register on the shared v7.25 engine; choices persist in `S.meta` (`_v730badge` + per-choice flags, `_v730secondMovement` + `_v730secondMvmt`); rewards apply after the day-end chain, exactly once; one cinematic per day across all five packs (v7.30 latches its own and all earlier day flags).
+- **Tests executed**: `test-v730.js` — 32/32 (title/line3, exports, step+loop wraps, mocked-pad detection, stick & dpad movement, panel open/close, A-interact with focus ring, battle action + win, pad-driven engine choice, save persistence, disconnect handling, both boards' negative gates, full playback through the real checkDayEnd choke with choices and exactly-once flags, zero page errors). Suite hardening note: earlier packs' day-gates are pre-latched in the board tests (standard isolation pattern).
+- **Full regression**: 26/26 suites green.
+
+## v7.31 Addendum — Night Shift (night-crawl rework)
+
+- **Reference fidelity**: districts from the sheet's city locations (Downtown / Long Wharf / Industrial / Wooster / Airport / Suburbs + Home Street); enemies use the sheet roster (Street Thug, Corrupt Guard, Cyber Skimmer, Drone Operator, Elite Hunter) as night-glitch silhouettes with tint underglows; HUD carries the sheet's HP/FOCUS/COMBO/DANGER/district/time readouts; the Charger waits at the left end of every street as the hub.
+- **Beat-'em-up mechanics**: hit-stop on connect (heavier on kills), jab chain (jab → jab → launcher sweep), guard blocks, skimmer blink-steps, drone-op mid-range zaps, hunter lunges, attack tokens cap simultaneous aggressors at 2, knockdown states, block chips at 25%. Rhythm-perfect timing system kept from v5.0.
+- **Traversal**: E at the Charger opens the district map; a 1.5s in-engine drive transition; cleared districts lock out with a +$40 bonus; HOME STREET ends the night into the normal day-end flow; KO still limps home (+20 stress).
+- **Performance**: same pass caught and fixed a real periodic hitch — the v7.28 tile cache rebuilt the full map every 400ms (12.5ms/1,318 drawTile calls spike); the quantum refresh now repaints only the ~30 blinking cells (measured 2.8ms/41 calls, steady with normal frames).
+- **Tests executed**: `test-v731.js` — 29/29 (title/line3, district & archetype tables, night entry through the drive cinematic, car menu, district travel + roster, jab-chain kill with hit-stop and cash, finisher launch, attack-token cap, block chip, street/district progression, clear bonus, map lockout, home-street ending, KO path, tracker suppression/restore, zero page errors). Full regression: 27/27 suites green.
+
+## v7.32 Addendum — Opening Theme
+
+- **Menu music**: techops-theme.mp3 loops on the title screen; gesture-gated per browser autoplay policy; stops on run start (in-game music handoff), resumes on title return; wired into the existing music toggle and V67SET.volMusic slider. The file ships in-repo (2.9 MB).
+- **Save hardening**: rotation lives in the storage layer (save()/load() are lexical consts and can't be wrapped) — every write rotates the previous blob to `techops_save_bak`; every read validates JSON and falls back to (then heals from) the backup. Covers both the missing-slot and corrupt-slot cases.
+- **Scene validator**: `v732.validate()` walks the v7.25 registry (new read-only `defs()` accessor) and rejects duplicate ids, store-less choices, duration-less shots, choice-final scenes, and over-long captions. Runs automatically behind ?dev=1.
+- **Tests executed**: `test-v732.js` — 16/16 (title/line3, exports, theme element/loop/src, play-on-gesture, stop-on-run-start, slider volume, mute toggle, backup rotation, corrupt-slot heal, validator clean + broken-scene rejection, asset served, zero page errors). Full 28-suite regression green.
+
+## v7.33 Addendum — Friends in High Places
+
+- **Social district discipline**: Waldo's Place rides the v7.31 Charger hub as a roster-empty district; E is social-only there (jab suppressed), the car menu/home flow are untouched, and no combat systems were duplicated — augments wrap `nmJab`/`drawNM` in place.
+- **Stress/time truth**: the v7.33 stress effects only move the setupDay clock (08:30 clear-head / 09:30 burnout); a recovered block is possible once per day by construction, matching the brief's anti-exploit rule.
+- **Car truth**: condition lives on `S.car` (persisted), degrades only on combat-district drives, breakdowns are capped by ROAD READY, and repairs are a coop minigame — maintenance never becomes busywork.
+- **Asset pipeline**: four new production sheets (Waldo poses/actions, dialog UI kit, environment kit x4 incl. terrain grid) sliced to transparent frames with uniform cells + bottom-center pivots; shipped as split base64 payloads (`waldo_*`, `env_*`) with `.atlas.js` metadata; full frame zip delivered separately.
+- **Caught by test**: the Waldo scene draw initially referenced the canvas size via an undefined `W` — the frame threw before mowing state could update; the mowing test caught it (fixed, suite green).
+- **Tests executed**: `test-v733.js` — payload/exports, district menu, arrival, intro cinematic, mowing Q1 payout + exactly-once flags, porch story choice persistence, tracker choice (trace) + diagnostics upgrade, coop repair minigame (marker timing, mates-rates charge), Orbital Trace marking launched enemies, equip persistence, both stress tiers, Ghost Shift seed, save/reload survival, zero page errors.
+
+## v7.34 Addendum — Ghost Fork
+
+- **Bestiary, not fork**: NULL SHEPHERD is an NM_KINDS entry spawned through the stock nmSpawnEnemies wrap; teleport/beam/phase live in a stepNM post-wrap; the stock silhouette draw remains under his atlas frames as shadow.
+- **Backdrops as a hook, not a rewrite**: one guarded branch in drawNM paints the decoded district image instead of the procedural sky layers; street, railing, lamps, HUD and every combat layer are untouched, and any missing payload falls back to the v7.31 look.
+- **Chain discipline**: gk1..gk6 gate on the v7.33 ghost seed and days 20–25, latch all earlier packs' day flags when they play, and gk6 additionally requires the boss kill — tested negative and positive.
+- **Caught by test**: the boss initially spawned without a `face`, so the beam column resolved to NaN and every frame threw inside the lamp-glow gradient — the beam test caught it (face now derived each tick).
+- **Tests executed**: `test-v734.js` — 37/37 (payloads, registration, validator clean, draw smoke, seed gate, full mission chain in order, archive choice persisted, exactly-once rewards, gk6 boss gate, backdrop decode, boss spawn/teleport/beam/phase/defeat loot, companion unlock, decoy once-per-night, porch conversation, save/reload, zero page errors). Full battery green: regression 26/26, v733 29/29, v732 17/17, v731 29/29, v730 32/32, v729 27/27, uat 14/14.
+
+## v7.35 Addendum — Good Dogs
+
+- **Async-asset discipline**: data-URL Images decode asynchronously — first-use creation made the first dialog plate / dog draw silently miss. All v7.35 images are pre-warmed at load; the crop cache never stores a miss. Caught by the plate/dog tests.
+- **Interception discipline**: v7.35's interact wrap is outermost; garage interior waits for the tracker quest (stock menu wins first), the den door sits clear of K's porch spot, and the dish queues quest offers before the market. The stuck-v723-overlay flake class is handled in-suite (clearBlockers pattern).
+- **Canon patch verified by test**: archive crystal = recorded simulations, INSTALL/DESTROY/DIVIDE, "course: Earth", stories-not-memories.
+- **Tests executed**: `test-v735.js` — 31/31 (registration, validator, draw smoke incl. key-art patches, plate injection, canon strings, dog/decoy atlas renders, den & garage interiors, parts→nowhere→party→brothers chain with persisted choices, rest-day block exactly-once, CLOSE AIR SUPPORT, save/reload, zero page errors). Full battery green: regression 27/27, v734 37/37, v733 29/29, v732 17/17, v731 29/29, v730 32/32, v729 27/27, uat 14/14.
+
+## v7.36 Addendum — Full Wiring
+
+- **Every payload accounted for**: felicia_music (signal close-up + encore), dogs_action (arrival bark + idles), portraits_ui (dialog busts), warden_null (boss), enemy_roster (archetype overlays), bg_shuttle_crew (alt title) wired; ui_lobby / mike_actions / interiors explicitly reserved in README (multiplayer / combat-depth / Hollow Network cycles).
+- **Caught by test**: the style-rank wrap read NM.hp after a KO had nulled NM mid-step (v7.31 KO path) — the zero-page-errors assert caught it; the wrap now re-checks NM after the inner call. The v7.36 Felicia-portrait assert codified the yield rule (v7.7 wins when present).
+- **Boss discipline**: Warden Null is an NM_KINDS entry + post-step wrap, same pattern as NULL SHEPHERD; the cage root restores pre-step position rather than touching input.
+- **Tests executed**: `test-v736.js` — 28/28 (registration, validator, draw smoke incl. patched signal shot, alt title flag, portrait busts, roster render, style rank, dog bark, three quests with persisted choices + exactly-once skill unlocks, Warden spawn/teleport/laser/cage/defeat latch, save/reload, zero page errors). Full battery green incl. v731 KO path 29/29.
