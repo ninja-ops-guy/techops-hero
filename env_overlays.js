@@ -1,1 +1,0 @@
-window.TO_ENV_OVERLAYS = window.__ENV_OVERLAYS_P1+window.__ENV_OVERLAYS_P2;
