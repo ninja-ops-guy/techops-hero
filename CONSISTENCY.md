@@ -187,3 +187,10 @@ systems exist.
 - **Combat augments extend, never fork**: all six intel skills wrap the v7.31 jab/draw paths in place — one combat system, one input graph; equipping is limited to 2 slots so builds are choices.
 - **Story continuity**: the tracker device (`_v733tracker`) reads as another move by the same internal adversary as the Day-8/9 breach and the badge-cloner (`_v730badge`); the Ghost Shift seed (`_v733ghost`) only fires after a legitimately cracked incident tree, and the crescent-cursor tag stays a drawn shape — no emoji in the art.
 - **Canon art**: Waldo is his own generated atlas + a new procedural figure (beanie, gold chain, fur-hood puffer) — never a Felicia reuse; the property scene draws the house, dish, grill and string lights procedurally over the night street.
+
+## v7.34 Addendum — Ghost Fork
+
+- **Canon reconciliation**: K's ORPHEUS-console origin (v7.29) and the Directorate clone origin coexist — the console K built was built FROM Mike's patterns; neither pack contradicts the other on screen. Waldo's smuggler past (crimson mask, Cell 1984) predates the New Haven years; he is beardless in both.
+- **Choice truth**: the archive choice is stored once (`_v734archive`), read by the epilogue card and future K dialogue; Divide is canon, Destroy pays the stronger fork, Restore is respected.
+- **Assist discipline**: the fork decoy fires at most once per night, never during drives, and only redirects enemies by nudging their positions post-step — no parallel AI, no input-graph changes; the gamepad path is untouched.
+- **Art truth**: K draws from his own atlas or the v7.25 procedural figure — never Felicia; the dogs are drawn as shapes with collar interfaces; the boss falls back to a procedural glitch wraith when his payload is absent.
