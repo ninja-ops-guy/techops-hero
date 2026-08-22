@@ -3,7 +3,9 @@ name: Campaign contracts
 on:
   pull_request:
     paths:
+      - "assets/campaign/**"
       - "campaign_*.js"
+      - "scripts/generate_sector04_assets.py"
       - "test_campaign_*.js"
       - "ui_coop.js"
       - "test_ui_coop_contract.js"
@@ -11,7 +13,9 @@ on:
   push:
     branches: [main]
     paths:
+      - "assets/campaign/**"
       - "campaign_*.js"
+      - "scripts/generate_sector04_assets.py"
       - "test_campaign_*.js"
       - "ui_coop.js"
       - "test_ui_coop_contract.js"
@@ -42,6 +46,7 @@ jobs:
           node --check test_campaign_native_act1.js
           node --check test_campaign_assets.js
           node --check test_campaign_asset_pipeline.js
+          node --check test_campaign_runtime_assets.js
           node --check test_campaign_sector04.js
           node --check test_campaign_sector04_runtime.js
           node --check test_campaign_save_reload.js
@@ -52,6 +57,8 @@ jobs:
         run: node test_campaign_assets.js
       - name: Verify campaign asset pipeline
         run: node test_campaign_asset_pipeline.js
+      - name: Verify campaign runtime assets
+        run: node test_campaign_runtime_assets.js
       - name: Verify full campaign contract
         run: node test_campaign_story.js
       - name: Verify campaign runtime adapter
