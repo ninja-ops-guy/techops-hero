@@ -18,6 +18,8 @@ Code or assets existing in the repository is not enough to claim integration.
 
 `campaign_story.js` owns campaign-wide authored meaning: act order, prerequisites, outputs, design laws, ORPHEUS signatures, K's personhood rule, the three endings, and canon-critical text. Gameplay hooks may deliver these beats, but must not redefine them.
 
+`campaign_runtime.js` owns the browser bridge between the existing game hooks and the campaign contracts. It adds a Mike's Desk Act I Campaign Queue path that can assign Day 1 ownership, run the workstation/Felicia/ORPHEUS video beat, document Impossible Access, verify Shipping and Plating, enter Sector 04, Insight the Access Guard, sever the identity controller, and transition to Tuesday Morning through canonical state.
+
 ## Integration laws
 
 1. Every active ticket has exactly one owner before work begins.
@@ -45,8 +47,10 @@ Code or assets existing in the repository is not enough to claim integration.
 ```bash
 node --check campaign_act1.js
 node --check campaign_story.js
+node --check campaign_runtime.js
 node test_campaign_act1.js
 node test_campaign_story.js
+node test_campaign_runtime.js
 ```
 
 Both contract suites must pass before campaign state changes merge.
