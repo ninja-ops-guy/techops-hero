@@ -190,7 +190,32 @@ systems exist.
 
 ## v7.34 Addendum — Ghost Fork
 
-- **Canon reconciliation**: K's ORPHEUS-console origin (v7.29) and the Directorate clone origin coexist — the console K built was built FROM Mike's patterns; neither pack contradicts the other on screen. Waldo's smuggler past (crimson mask, Cell 1984) predates the New Haven years; he is beardless in both.
+- **Canon reconciliation (v7.34 patch)**: K is a clone built from Mike's pattern with NO transferred memories — the K-0 "archive crystal" holds the Directorate's RECORDED Mike simulations, not memories, and its INSTALL choice installs patterns, not a past. K knows Mike's face only through Waldo's and others' stories (explicit in gk2's caption and the porch line). Waldo and Mike are childhood friends. The Vault escape is physical: the four leave aboard the stolen shuttle, course Earth. K's ORPHEUS-console origin (v7.29) coexists — that console work was Directorate labor, not Mike's life. Waldo's smuggler past (crimson mask, Cell 1984) predates the New Haven years; he is beardless in both.
 - **Choice truth**: the archive choice is stored once (`_v734archive`), read by the epilogue card and future K dialogue; Divide is canon, Destroy pays the stronger fork, Restore is respected.
 - **Assist discipline**: the fork decoy fires at most once per night, never during drives, and only redirects enemies by nudging their positions post-step — no parallel AI, no input-graph changes; the gamepad path is untouched.
 - **Art truth**: K draws from his own atlas or the v7.25 procedural figure — never Felicia; the dogs are drawn as shapes with collar interfaces; the boss falls back to a procedural glitch wraith when his payload is absent.
+
+## v7.35 Addendum — Good Dogs
+
+- **Dogs are dogs**: Manchez (amber, tactical) and Katrin (blue, linguistic) render only from their shared atlas; collars glow their faction colors; they never speak in drawn art (barks are their strong opinions).
+- **Interior truth**: garage and den are backdrop swaps on the same Waldo's-Place district — no new travel system, the Charger still waits outside, time still passes.
+- **Assist economy**: CLOSE AIR SUPPORT fires once per night, only at critical HP, only in combat districts; it floors the room rather than killing it — a rescue, not a skip button.
+- **Quest ordering**: dish offers (Parts Run → Nowhere to Be) queue before the intel market at the same hotspot; the den holds social stories (party → finale); nothing overrides a pending stock quest.
+
+## v7.36 Addendum — Full Wiring
+
+- **Style truth**: the rank reads only what the fight already tracks (moves used, perfects, airtime, hits taken) — no new damage rules; it never gates rewards.
+- **Quest order closes the loop**: house call (tier 2) precedes the party (tier 3) as in the brief; family (tier 3) and the bird (tier 4) chain after; every choice persists once and feeds the docs/skills already shipped.
+- **Null continuity**: the fragment-in-the-archive hook from the Ghost Fork epilogue pays off as a boss, not a retcon — same district grammar (Industrial), same silhouette-under-frame rendering as the Shepherd.
+- **Portrait precedence**: v7.7 cinematic portraits > v7.35 nameplates > v7.36 busts — one speaker image per dialog, always.
+
+## v7.37 Addendum — Third Shift
+
+- Ghost Shift chapters 1–2 (AFTER HOURS evidence drives, DEAD DROPS fragments) are mission
+  mechanics on existing night streets, flags `S.meta._v737ch1/_v737ch2/_v737drops` — all
+  persisted, all documented into the v7.33 intel archive.
+- The crescent-around-a-cursor symbol recurs (v7.33 graffiti → plant wall → gs1 cinematic) as
+  one character's calling card, unnamed in ch.1–2 — consistent with Echo staying anonymous.
+- mike_actions powers the EOD celebration pose only; Mike's procedural body still drives live
+  night play pending the combat-architecture cycle.
+- New v725 scene: gs1 (validator-clean, counted in test-regression).

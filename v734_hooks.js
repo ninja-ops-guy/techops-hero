@@ -151,7 +151,7 @@
             m._v734shepherdDown = true;
             m._v734loot = m._v734loot || {}; m._v734loot.fork = true; m._v734loot.crystal = true;
             NM.cash += 140;
-            NM.msg = "💀 NULL SHEPHERD DELETED — +$140 · GHOST FORK SOURCE + MEMORY CRYSTAL recovered"; NM.msgT = now + 4600;
+            NM.msg = "💀 NULL SHEPHERD DELETED — +$140 · GHOST FORK SOURCE + ARCHIVE CRYSTAL recovered"; NM.msgT = now + 4600;
             sfx("promote"); save();
           }
         }
@@ -200,13 +200,17 @@
       ctx.fillStyle = e.phased ? "#a06bff" : "#ff6b81"; ctx.fillRect(W734() / 2 - 156, 88, 312 * Math.max(0, e.hp) / e.maxHp, 10);
       ctx.fillStyle = "#e8ecff"; ctx.font = "bold 10px monospace"; ctx.textAlign = "center"; ctx.fillText("NULL SHEPHERD", W734() / 2, 97);
     }
-    // the fork decoy
+    // the fork decoy (v7.35: K's action-atlas frame when present)
     if (NM._v734decoy) {
       const dx = NM._v734decoy.x - NM.cam, dy = NM_FLOOR;
-      ctx.globalAlpha = .55 + .2 * Math.sin(now / 120);
-      ctx.fillStyle = "#39ff88"; ctx.beginPath(); ctx.arc(dx, dy - 30, 14, 0, 7); ctx.fill();
-      ctx.fillStyle = "#0b0e1d"; ctx.font = "bold 12px monospace"; ctx.textAlign = "center"; ctx.fillText("K?", dx, dy - 26);
-      ctx.globalAlpha = 1;
+      let drawn = false;
+      try { if (window.v735 && v735.decoy) drawn = v735.decoy(ctx, dx, dy, now); } catch (e) { }
+      if (!drawn) {
+        ctx.globalAlpha = .55 + .2 * Math.sin(now / 120);
+        ctx.fillStyle = "#39ff88"; ctx.beginPath(); ctx.arc(dx, dy - 30, 14, 0, 7); ctx.fill();
+        ctx.fillStyle = "#0b0e1d"; ctx.font = "bold 12px monospace"; ctx.textAlign = "center"; ctx.fillText("K?", dx, dy - 26);
+        ctx.globalAlpha = 1;
+      }
     }
     // K at Waldo's porch + the good dogs (post-gk6)
     if (NM.district === "waldo" && meta734() && meta734()._v734k) {
@@ -232,7 +236,11 @@
     if (pose === "wave") { x.strokeStyle = "#151920"; x.lineWidth = 9 * u; x.beginPath(); x.moveTo(dx + 20 * u, dy - 56 * u); x.lineTo(dx + 36 * u, dy - 88 * u); x.stroke(); x.fillStyle = "#c98a5b"; x.beginPath(); x.arc(dx + 38 * u, dy - 92 * u, 5.5 * u, 0, 7); x.fill(); }
     x.restore();
   }
-  function dog734(x, dx, dy, tint, tm) { // two extremely dangerous little dogs (shapes)
+  function dog734(x, dx, dy, tint, tm) { // two extremely dangerous little dogs
+    // v7.35: their own atlas when present (manchez = amber rows, katrin = blue rows)
+    try {
+      if (window.v735 && v735.dog && v735.dog(x, dx, dy, tint === "#f59e0b" ? "manchez" : "katrin", tm)) return;
+    } catch (e) { }
     const b = Math.sin(tm / 300) * 1.5;
     x.fillStyle = "#e8e4da"; // fluffy body
     x.beginPath(); x.ellipse(dx, dy - 10 + b * .3, 13, 9, 0, 0, 7); x.fill();
@@ -274,7 +282,7 @@
       ],
       gk2: [
         { dur: 2400, cap: "Cell 118. Someone is tapping a rhythm against the wall.", draw(x, tm) { vaultBg734(x, tm); cell734(x, tm, 118, CYAN); kFig734(x, LW / 2, LH - BAR - 40, 150, "deck"); } },
-        { dur: 2600, cap: "\"The prison sent dogs now?\" — \"We sent ourselves.\"", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2 + 120, LH - BAR - 40, 160, "deck"); dogs734(x, tm); H.bubble(x, "The prison sent dogs now?", LW / 2 - 460, BAR + 80, 360); H.bubble(x, "We sent ourselves.", LW / 2 - 420, BAR + 155, 280); } },
+        { dur: 2600, cap: "\"The prison sent dogs now?\" — \"We sent ourselves.\" · K knows Mike's face only from Waldo's stories.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2 + 120, LH - BAR - 40, 160, "deck"); dogs734(x, tm); H.bubble(x, "The prison sent dogs now?", LW / 2 - 460, BAR + 80, 360); H.bubble(x, "We sent ourselves.", LW / 2 - 420, BAR + 155, 280); } },
         { dur: 2600, cap: "Manchez presses Waldo's broken mask emblem to the glass.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2 + 100, LH - BAR - 40, 160, "deck"); dogs734(x, tm); x.fillStyle = RED; H.rr(x, LW / 2 - 60, BAR + 160, 60, 44, 6); x.fill(); x.fillStyle = "#0d0a18"; x.beginPath(); x.arc(LW / 2 - 44, BAR + 176, 5, 0, 7); x.arc(LW / 2 - 20, BAR + 176, 5, 0, 7); x.fill(); } },
         { dur: 2400, cap: "\"Waldo is captured.\" — K stands. \"Open the door.\"", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2, LH - BAR - 40, 200, "fist"); dogs734(x, tm); H.bubble(x, "Open the door.", LW / 2 - 120, BAR + 90, 220); } },
         { dur: 2800, cap: "The suppression collar breaks. Emerald light returns.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2, LH - BAR - 40, 210, "fist"); x.strokeStyle = GREEN; x.lineWidth = 3; for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28 + tm / 400; x.beginPath(); x.moveTo(LW / 2, LH - BAR - 160); x.lineTo(LW / 2 + Math.cos(a) * 90, LH - BAR - 160 + Math.sin(a) * 60); x.stroke(); } dogs734(x, tm); H.txt(x, "SUPPRESSION COLLAR — OFFLINE", LW / 2, BAR + 60, 16, GREEN, "center", true); } },
@@ -294,15 +302,15 @@
       ],
       gk5: [
         { dur: 2400, cap: "THE ARCHIVE OF MIKES. Dozens of unfinished versions.", draw(x, tm) { vaultBg734(x, tm); for (let i = 0; i < 6; i++) { const ax = 140 + i * 180; x.strokeStyle = PUR; x.globalAlpha = .4; H.rr(x, ax, BAR + 90, 120, 300, 8); x.stroke(); x.globalAlpha = 1; H.silhouette(x, ax + 60, BAR + 370, 140, "#141126"); } H.txt(x, "CLONE ARCHIVE", LW / 2, BAR + 60, 18, PUR, "center", true); } },
-        { dur: 2600, cap: "His original memory crystal. Everything they stole from Mike.", draw(x, tm) { vaultBg734(x, tm); x.fillStyle = GREEN; x.save(); x.translate(LW / 2, BAR + 220); x.rotate(tm / 1400); x.beginPath(); x.moveTo(0, -34); x.lineTo(24, 0); x.lineTo(0, 34); x.lineTo(-24, 0); x.closePath(); x.fill(); x.restore(); x.strokeStyle = GREEN; x.globalAlpha = .4; x.beginPath(); x.arc(LW / 2, BAR + 220, 60 + 8 * Math.sin(tm / 300), 0, 7); x.stroke(); x.globalAlpha = 1; H.txt(x, "MEMORY CRYSTAL — K-0", LW / 2, BAR + 300, 15, GREEN, "center", true); } },
+        { dur: 2600, cap: "The K-0 archive crystal. Every simulated Mike they ever ran.", draw(x, tm) { vaultBg734(x, tm); x.fillStyle = GREEN; x.save(); x.translate(LW / 2, BAR + 220); x.rotate(tm / 1400); x.beginPath(); x.moveTo(0, -34); x.lineTo(24, 0); x.lineTo(0, 34); x.lineTo(-24, 0); x.closePath(); x.fill(); x.restore(); x.strokeStyle = GREEN; x.globalAlpha = .4; x.beginPath(); x.arc(LW / 2, BAR + 220, 60 + 8 * Math.sin(tm / 300), 0, 7); x.stroke(); x.globalAlpha = 1; H.txt(x, "ARCHIVE CRYSTAL — K-0 · MIKE SIMULATIONS", LW / 2, BAR + 300, 15, GREEN, "center", true); } },
         {
-          dur: 0, cap: "Restore it and lose himself. Destroy it. Or divide it.", choice: {
+          dur: 0, cap: "Install it and lose himself. Destroy it. Or divide it.", choice: {
             prompt: "THE CRYSTAL",
-            options: ["1 — RESTORE (his memories, less of me)", "2 — DESTROY (stronger fork)", "3 — DIVIDE (archive it for later)"],
+            options: ["1 — INSTALL (Mike's patterns, less of me)", "2 — DESTROY (stronger fork)", "3 — DIVIDE (archive it for later)"],
             store: "_v734archive", values: ["restore", "destroy", "divide"]
           }, draw(x, tm) { vaultBg734(x, tm); x.fillStyle = GREEN; x.save(); x.translate(LW / 2, BAR + 200); x.rotate(tm / 1400); x.beginPath(); x.moveTo(0, -30); x.lineTo(21, 0); x.lineTo(0, 30); x.lineTo(-21, 0); x.closePath(); x.fill(); x.restore(); kFig734(x, LW / 2 - 260, LH - BAR - 40, 170, "deck"); dogs734(x, tm); }
         },
-        { dur: 2800, cap: "Neither the Directorate's truth nor its erasure. His own.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2, LH - BAR - 40, 190, "fist"); dogs734(x, tm); const p = (meta734() || {})._v734archive; H.txt(x, p === "destroy" ? "THE FORK BURNS BRIGHTER." : p === "restore" ? "HE CARRIES MORE OF MIKE NOW." : "THE TRUTH, FILED UNDER HIS OWN NAME.", LW / 2, BAR + 60, 15, GOLD, "center", true); } },
+        { dur: 2800, cap: "Neither the Directorate's truth nor its erasure. His own.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2, LH - BAR - 40, 190, "fist"); dogs734(x, tm); const p = (meta734() || {})._v734archive; H.txt(x, p === "destroy" ? "THE FORK BURNS BRIGHTER." : p === "restore" ? "HE CARRIES MIKE'S PLAYBOOK NOW." : "THE TRUTH, FILED UNDER HIS OWN NAME.", LW / 2, BAR + 60, 15, GOLD, "center", true); } },
         { dur: 2400, cap: "Warden Null sends the champion: NULL SHEPHERD. Suburbs, tomorrow night.", draw(x, tm) { vaultBg734(x, tm); shepherdFig734(x, LW / 2, LH - BAR - 40, 220, tm); H.txt(x, "NULL SHEPHERD — INBOUND", LW / 2, BAR + 60, 18, RED, "center", true); } },
       ],
       gk6: [
@@ -310,7 +318,7 @@
         { dur: 2600, cap: "Someone must stay connected. K quietly locks the door.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2, LH - BAR - 40, 190, "deck"); H.bubble(x, "You gave me a choice once.", LW / 2 - 400, BAR + 90, 360); H.txt(x, "CONTROL ROOM — SEALED FROM INSIDE", LW / 2, BAR + 60, 14, RED, "center", true); } },
         { dur: 2800, cap: "The dogs route the portal math across all four minds. No one stays.", draw(x, tm) { vaultBg734(x, tm); kFig734(x, LW / 2 - 60, LH - BAR - 40, 170, "deck"); if (window.v733 && drawWaldoRef734) drawWaldoRef734(x, LW / 2 + 160, LH - BAR - 40, 170, "idle", true); dogs734(x, tm); x.strokeStyle = GREEN; x.lineWidth = 2; x.beginPath(); x.moveTo(LW / 2 - 60, LH - BAR - 150); x.lineTo(LW / 2 + 160, LH - BAR - 150); x.lineTo(LW / 2 - 245, LH - BAR - 60); x.stroke(); H.txt(x, "DISTRIBUTED CALCULATION — 4 MINDS", LW / 2, BAR + 60, 15, GREEN, "center", true); } },
         { dur: 2800, cap: "Warden Null escapes as a fragment — inside K's own archive.", draw(x, tm) { vaultBg734(x, tm); shepherdFig734(x, LW / 2 + 220, LH - BAR - 30, 130, tm); x.globalAlpha = .35; kFig734(x, LW / 2 - 180, LH - BAR - 40, 170, "deck"); x.globalAlpha = 1; H.txt(x, "FRAGMENT LODGED — THE ARCHIVE", LW / 2, BAR + 60, 15, PUR, "center", true); } },
-        { dur: 3000, cap: "He scratches one emerald letter into the keycard. Just K.", draw(x, tm) { H.bg(x, "#0a0e20"); H.cityGlow(x, tm, 30); kFig734(x, LW / 2 - 100, LH - BAR - 40, 190, "idle"); if (window.v733 && drawWaldoRef734) drawWaldoRef734(x, LW / 2 + 140, LH - BAR - 40, 180, "wave", true); dogs734(x, tm); x.fillStyle = "#10152a"; H.rr(x, LW / 2 - 70, BAR + 100, 140, 84, 8); x.fill(); x.strokeStyle = GREEN; x.lineWidth = 3; H.rr(x, LW / 2 - 70, BAR + 100, 140, 84, 8); x.stroke(); H.txt(x, "K", LW / 2, BAR + 142, 44, GREEN, "center", true); H.txt(x, "K JOINS THE CREW — GHOST FORK ONLINE", LW / 2, BAR + 216, 15, GOLD, "center", true); } },
+        { dur: 3000, cap: "Aboard the stolen shuttle, course: Earth. He scratches one emerald letter. Just K.", draw(x, tm) { H.bg(x, "#0a0e20"); H.cityGlow(x, tm, 30); kFig734(x, LW / 2 - 100, LH - BAR - 40, 190, "idle"); if (window.v733 && drawWaldoRef734) drawWaldoRef734(x, LW / 2 + 140, LH - BAR - 40, 180, "wave", true); dogs734(x, tm); x.fillStyle = "#10152a"; H.rr(x, LW / 2 - 70, BAR + 100, 140, 84, 8); x.fill(); x.strokeStyle = GREEN; x.lineWidth = 3; H.rr(x, LW / 2 - 70, BAR + 100, 140, 84, 8); x.stroke(); H.txt(x, "K", LW / 2, BAR + 142, 44, GREEN, "center", true); H.txt(x, "K JOINS THE CREW — GHOST FORK ONLINE", LW / 2, BAR + 216, 15, GOLD, "center", true); } },
       ],
     };
     const GK_TITLES = {
@@ -345,7 +353,7 @@
     if (id === "gk3") { m._v734fork = true; }
     if (id === "gk4") { m._v734brothers = true; if (window.v733) { /* Waldo rep: the rescue is the friendship */ m._v733rep = (m._v733rep || 0) + 20; } }
     if (id === "gk5") { if (m._v734archive === "destroy") m._v734forkPlus = true; }
-    if (id === "gk6") { m._v734k = true; m._v734loot.wrench = true; m._v734loot.module = true; m._v734loot.photo = true; }
+    if (id === "gk6") { m._v734k = true; m._v734loot.wrench = true; m._v734loot.module = true; m._v734loot.photo = true; try { localStorage.setItem("techops_ghostfork_done", "1"); } catch (e) { } } // v7.36: durable alt-title flag
     try { save(); } catch (e) { }
   }
   window.checkDayEnd = function (force) {
@@ -385,7 +393,7 @@
         ws.used.k734 = true;
         addStress(-6);
         if (window.v733) S.meta._v733rep = (S.meta._v733rep || 0) + 3;
-        dlg("🎹 K", "K picks out something slow on the emerald piano. Manchez headbutts your shin; Katrin translates your heartbeat and files it under ACCEPTABLE.<br><br><i>\"You ever remember something that happened to somebody else?\"</i><br><small>-6 stress · +3 Waldo rep</small>", [
+        dlg("🎹 K", "K picks out something slow on the emerald piano. Manchez headbutts your shin; Katrin translates your heartbeat and files it under ACCEPTABLE.<br><br><i>\"You ever hear a story so many times it feels like it happened to you?\"</i><br><small>-6 stress · +3 Waldo rep</small>", [
           { t: "\"You're not the version of me they made.\"", f: () => { closeDlg(); dlg("🎹 K", "<i>\"Neither are you.\"</i> He goes back to the piano. The dogs argue about it in barks.", [{ t: "Good night, K.", f: closeDlg }]); } },
           { t: "Just listen.", f: closeDlg },
         ]);

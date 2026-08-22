@@ -1,2 +1,0 @@
-ChatGPT Codex write-access verification.
-Created 2026-08-22 for PR #1 integration readiness.
