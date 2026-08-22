@@ -65,6 +65,21 @@
     return state.story;
   }
 
+  function syncAct1State(state) {
+    var story = ensureStoryState(state);
+    var flags = state.flags || {};
+    if (flags.ticketAssignmentsConfirmed && flags.feliciaVideoSeen && story.completedActs.indexOf("prologue") < 0) {
+      story.completedActs.push("prologue");
+      actById("prologue").produces.forEach(function (fact) { story.facts[fact] = true; });
+    }
+    if (flags.tuesdayMorningReached && flags.sector04Completed && story.completedActs.indexOf("act_1") < 0) {
+      assert(story.completedActs.indexOf("prologue") >= 0, "Tuesday state cannot import without a completed prologue");
+      story.completedActs.push("act_1");
+      actById("act_1").produces.forEach(function (fact) { story.facts[fact] = true; });
+    }
+    return story;
+  }
+
   function hasFact(state, fact) {
     var story = ensureStoryState(state);
     return story.facts[fact] === true || (state.flags && state.flags[fact] === true);
@@ -127,6 +142,7 @@
     K_MEMORY_RULE: K_MEMORY_RULE,
     CANON_LINES: CANON_LINES,
     ensureStoryState: ensureStoryState,
+    syncAct1State: syncAct1State,
     eligibleActs: eligibleActs,
     completeAct: completeAct,
     chooseEnding: chooseEnding,
