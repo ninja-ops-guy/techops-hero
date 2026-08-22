@@ -79,6 +79,39 @@ assert.strictEqual(fakeSrc, "packs/sector04.locked_violin_door.png");
 assert.strictEqual(record.status, "ready");
 assert.ok(record.image);
 
+assert.strictEqual(Runtime.generatedAssetSpec("sector04.violin_note.fx").kind, "violin_note");
+assert.strictEqual(Runtime.generatedAssetSpec("sector04.terminal.symptoms").kind, "terminal");
+
+function fakeCtx() {
+  const calls = [];
+  return {
+    calls,
+    canvas: { width: 960 },
+    save() { calls.push("save"); },
+    restore() { calls.push("restore"); },
+    fillRect() { calls.push("fillRect"); },
+    strokeRect() { calls.push("strokeRect"); },
+    fillText() { calls.push("fillText"); },
+    drawImage() { calls.push("drawImage"); },
+    beginPath() { calls.push("beginPath"); },
+    arc() { calls.push("arc"); },
+    moveTo() { calls.push("moveTo"); },
+    lineTo() { calls.push("lineTo"); },
+    stroke() { calls.push("stroke"); },
+    fill() { calls.push("fill"); },
+    set font(value) { this._font = value; },
+    set textAlign(value) { this._textAlign = value; },
+    set fillStyle(value) { this._fillStyle = value; },
+    set strokeStyle(value) { this._strokeStyle = value; },
+    set globalAlpha(value) { this._globalAlpha = value; }
+  };
+}
+
+let ctx = fakeCtx();
+assert.strictEqual(Runtime.drawGeneratedAsset(ctx, "sector04.terminal.symptoms", 100, 100, 126, 68), true);
+assert.ok(ctx.calls.includes("strokeRect"));
+assert.ok(ctx.calls.filter(call => call === "fillRect").length >= 3);
+
 let result = Runtime.hitGuard(campaign, night, 100, 1000);
 assert.strictEqual(result.suppressed, true);
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).spawned, false);
