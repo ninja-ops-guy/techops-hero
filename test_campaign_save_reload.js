@@ -11,6 +11,7 @@ global.localStorage = {
 
 global.TechOpsCampaign = Campaign;
 global.TechOpsCampaignRuntime = require("./campaign_runtime.js");
+global.TechOpsSector04 = require("./campaign_sector04.js");
 
 let lastDialog = null;
 global.dlg = function (name, body, options) {
