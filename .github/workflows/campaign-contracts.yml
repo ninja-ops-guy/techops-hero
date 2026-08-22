@@ -29,7 +29,10 @@ jobs:
         run: |
           node --check campaign_act1.js
           node --check campaign_story.js
+          node --check campaign_runtime.js
       - name: Verify Act I contract
         run: node test_campaign_act1.js
       - name: Verify full campaign contract
         run: node test_campaign_story.js
+      - name: Verify campaign runtime adapter
+        run: node test_campaign_runtime.js
