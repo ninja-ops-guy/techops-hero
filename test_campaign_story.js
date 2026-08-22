@@ -1,6 +1,7 @@
 "use strict";
 const assert = require("assert");
 const Story = require("./campaign_story.js");
+const Campaign = require("./campaign_act1.js");
 
 assert.equal(Story.validateCanon(), true);
 assert.deepEqual(Story.ORPHEUS_SIGNATURES, [
@@ -36,5 +37,21 @@ assert.deepEqual(Story.CANON_LINES.final, [
   "EVERY SYSTEM IS A RELATIONSHIP.",
   "LEAVE IT BETTER THAN YOU FOUND IT."
 ]);
+
+// The vertical-slice state imports into the full story without duplicating state ownership.
+const act1 = Campaign.createInitialState();
+Campaign.assignTicket(act1, "shipping_cannot_print", "mike");
+Campaign.assignTicket(act1, "plating_workstation_down", "mike");
+Campaign.assignTicket(act1, "impossible_access_event", "mike");
+Campaign.completeStandup(act1);
+Campaign.completeWorkstation(act1, { redInTheMirrorHeard: true, feliciaVideoSeen: true });
+Campaign.recordGhostEvidence(act1, { id: "badge_impossible_access", perspective: "firsthand" });
+Campaign.enterSector04(act1);
+Campaign.insightAccessGuard(act1);
+Campaign.severAccessController(act1);
+Campaign.transitionToTuesday(act1);
+Story.syncAct1State(act1);
+assert.deepEqual(act1.story.completedActs, ["prologue", "act_1"]);
+assert(Story.eligibleActs(act1).includes("act_2"));
 
 console.log("Complete campaign contract: PASS");
