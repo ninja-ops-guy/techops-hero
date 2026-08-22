@@ -72,6 +72,10 @@
     return root && root.TechOpsCampaignRuntime ? root.TechOpsCampaignRuntime : null;
   }
 
+  function sector04() {
+    return root && root.TechOpsSector04 ? root.TechOpsSector04 : null;
+  }
+
   function storage() {
     return root && root.localStorage ? root.localStorage : null;
   }
@@ -278,8 +282,15 @@
       "Rain strikes the hangar roof. Interfaces become physical. Permissions become doors.<br><br>Damage can suppress the Access Guard. Understanding can defeat it.",
       [
         { t: "Enter Sector 04", f: function () {
-          var rt = runtime();
-          if (rt) rt.enterSector04();
+          var sx = sector04();
+          if (sx) {
+            var campaign = loadState();
+            sx.enter(campaign);
+            saveState(campaign);
+          } else {
+            var rt = runtime();
+            if (rt) rt.enterSector04();
+          }
           insightSector04();
         } },
         { t: "Use normal night crawl", f: function () {
@@ -291,12 +302,25 @@
   }
 
   function insightSector04() {
-    var rt = runtime();
-    var result = rt ? rt.insightAccessGuard() : act1().insightAccessGuard(loadState());
+    var sx = sector04();
+    var result;
+    if (sx) {
+      var campaign = loadState();
+      result = sx.insight(campaign);
+      saveState(campaign);
+    } else {
+      var rt = runtime();
+      result = rt ? rt.insightAccessGuard() : act1().insightAccessGuard(loadState());
+    }
     if (!result.success) {
       return callDialog("SECTOR 04 INSIGHT",
         result.message + "<br><br>The player can still fight, but Mike cannot yet understand the controller dependency.",
         [{ t: "Retreat", f: closeDialog }]);
+    }
+    if (sx) {
+      var clueState = loadState();
+      sx.inspect(clueState, "purple_damage");
+      saveState(clueState);
     }
     return callDialog("ACCESS GUARD",
       result.message + "<br><br>An enemy collapses with purple damage already burned through its body. Mike did not cause it.",
@@ -308,8 +332,14 @@
 
   function suppressSector04() {
     var campaign = loadState();
-    act1().suppressAccessGuard(campaign, 15000);
-    act1().insightAccessGuard(campaign);
+    var sx = sector04();
+    if (sx) {
+      sx.suppress(campaign);
+      sx.insight(campaign);
+    } else {
+      act1().suppressAccessGuard(campaign, 15000);
+      act1().insightAccessGuard(campaign);
+    }
     saveState(campaign);
     return callDialog("ACCESS GUARD SUPPRESSED",
       "The body falls. The incident remains.<br><br>Damage created time. It did not solve the dependency.",
@@ -318,8 +348,16 @@
 
   function completeSector04() {
     var campaign = loadState();
-    act1().severAccessController(campaign);
-    act1().transitionToTuesday(campaign);
+    var sx = sector04();
+    if (sx) {
+      sx.severController(campaign);
+      sx.inspect(campaign, "locked_violin_door");
+      sx.terminal(campaign);
+      sx.complete(campaign);
+    } else {
+      act1().severAccessController(campaign);
+      act1().transitionToTuesday(campaign);
+    }
     saveState(campaign);
     return callDialog("TUESDAY MORNING",
       "A locked door stands beyond the arena. From behind it: one violin note.<br><br><b>YOU ARE FIXING THE SYMPTOMS.</b><br><br>Mike: Then show me the problem.<br><br>Morning comes. The queue is waiting.",
