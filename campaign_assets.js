@@ -66,7 +66,59 @@
       label: "Sector 04 integration overview",
       expectedSource: "combined Sector 04 gameplay, Felicia, terminal, shipping, plating, transition board",
       status: "concept_sheet"
+    },
+    act1_sector04_runtime_pack_20260822: {
+      label: "Act I and Sector 04 runtime pack candidate",
+      expectedSource: "single composite sheet containing Access Guard frames, identity controller, locked violin door, Felicia frames, terminal UI, standup cards, Shipping, Plating, and transition panels",
+      status: "concept_sheet",
+      qc: {
+        sourceImage: "784A8C9E-0374-41E5-A2A6-B241ABA4A7D7.jpeg",
+        visualQuality: "strong_reference",
+        runtimeReadiness: "requires_slicing_and_transparency",
+        notes: [
+          "Strong subject coverage for Sector 04, Felicia/workstation, Shipping, Plating, and standup UI.",
+          "Composite sheet has white background and mixed scales, so it is not runtime-ready as-is.",
+          "Tiny UI text should be replaced by native game text except exact terminal/canon text.",
+          "Side-view combat frames and top-down room assets must be separated before atlas integration."
+        ]
+      }
     }
+  };
+
+  var QC_GATES = {
+    source_sheet: [
+      "identifiable_subject",
+      "matches_campaign_phase",
+      "no_canon_spoiler",
+      "sufficient_resolution_for_slicing",
+      "style_consistent_enough_for_reference"
+    ],
+    runtime_png: [
+      "png_format",
+      "transparent_background",
+      "single_asset_per_file_or_mapped_frame",
+      "padding_8_to_16_px",
+      "no_baked_labels_except_terminal_or_screen",
+      "stable_asset_id_filename",
+      "correct_perspective_for_role",
+      "canvas_scale_safe",
+      "canon_safe"
+    ],
+    animated_atlas: [
+      "transparent_background",
+      "even_frame_grid_or_json_frame_map",
+      "consistent_anchor_feet_or_center",
+      "consistent_scale_across_frames",
+      "left_right_flippable_when_side_view",
+      "no_duplicate_or_melted_frames",
+      "fx_layer_separable_when_possible"
+    ]
+  };
+
+  var QC_SEVERITY = {
+    pass: 0,
+    warn: 1,
+    fail: 2
   };
 
   var SLOTS = [
@@ -134,6 +186,51 @@
     return SLOTS.filter(function (slot) { return slot.required; });
   }
 
+  function sheetReview(sheetId) {
+    var sheet = SHEETS[sheetId];
+    if (!sheet) return null;
+    return sheet.qc || null;
+  }
+
+  function slotFilename(slotId) {
+    return slotId + ".png";
+  }
+
+  function validateCandidate(slotId, candidate) {
+    var slot = byId(slotId);
+    var errors = [];
+    var warnings = [];
+    candidate = candidate || {};
+    if (!slot) errors.push("Unknown asset slot: " + slotId);
+    if (!candidate.filename) errors.push("Candidate filename is required");
+    if (candidate.filename && slot && candidate.filename !== slotFilename(slot.id)) {
+      errors.push("Filename must be " + slotFilename(slot.id));
+    }
+    if (candidate.kind === "source_sheet") {
+      if (candidate.transparent === true) warnings.push("Source sheets may be transparent, but runtime assets still require individual exports");
+      if (!candidate.subjects || !candidate.subjects.length) errors.push("Source sheet needs listed subjects for QC review");
+      return { ok: errors.length === 0, warnings: warnings, errors: errors };
+    }
+    if (candidate.kind !== "runtime_png" && candidate.kind !== "animated_atlas") {
+      errors.push("Candidate kind must be source_sheet, runtime_png, or animated_atlas");
+    }
+    if (candidate.format !== "png") errors.push("Runtime assets must be PNG");
+    if (candidate.transparent !== true) errors.push("Runtime assets must have transparent backgrounds");
+    if (candidate.hasBakedLabels && slot && slot.role !== "terminal" && slot.role !== "ui" && slot.role !== "verification") {
+      errors.push("Baked labels are not allowed for " + slot.id);
+    }
+    if (slot && slot.role === "terminal" && candidate.exactText && candidate.exactText !== "YOU ARE FIXING THE SYMPTOMS.") {
+      errors.push("Sector 04 terminal must preserve exact canon text");
+    }
+    if (candidate.perspective && slot) {
+      var shouldBeSide = slot.role === "enemy" || slot.role === "npc" || slot.role === "clue" || slot.role === "foreshadow";
+      var shouldBeTop = slot.id.indexOf("sector04.tiles.") === 0;
+      if (shouldBeSide && candidate.perspective !== "side") warnings.push(slot.id + " should be side-view for runtime use");
+      if (shouldBeTop && candidate.perspective !== "top") warnings.push(slot.id + " should be top-down for tile use");
+    }
+    return { ok: errors.length === 0, warnings: warnings, errors: errors };
+  }
+
   function validate() {
     var errors = [];
     var ids = {};
@@ -142,6 +239,7 @@
       ids[slot.id] = true;
       if (!PHASES[slot.phase]) errors.push("Unknown phase for " + slot.id + ": " + slot.phase);
       if (!SHEETS[slot.sheet]) errors.push("Unknown source sheet for " + slot.id + ": " + slot.sheet);
+      if (slotFilename(slot.id).indexOf(" ") >= 0) errors.push("Asset filename cannot contain spaces: " + slot.id);
       CANON_RULES.forEach(function (rule) {
         (rule.forbiddenSlotText || []).forEach(function (text) {
           if (slot.id.indexOf(text) >= 0) errors.push("Canon violation in " + slot.id + ": " + rule.id);
@@ -159,11 +257,16 @@
   return {
     PHASES: PHASES,
     SHEETS: SHEETS,
+    QC_GATES: QC_GATES,
+    QC_SEVERITY: QC_SEVERITY,
     SLOTS: SLOTS,
     CANON_RULES: CANON_RULES,
     byId: byId,
     slotsForPhase: slotsForPhase,
     requiredSlots: requiredSlots,
+    sheetReview: sheetReview,
+    slotFilename: slotFilename,
+    validateCandidate: validateCandidate,
     validate: validate
   };
 });
