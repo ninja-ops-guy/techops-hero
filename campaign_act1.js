@@ -11,6 +11,64 @@
   var VERSION = 1;
   var SAVE_KEY = "techops_hero_campaign_v1";
   var TICKETS = ["shipping_cannot_print", "plating_workstation_down", "impossible_access_event"];
+  var TICKET_TEMPLATES = {
+    shipping_cannot_print: {
+      id: "shipping_cannot_print",
+      requester: "Shipping clerk",
+      department: "Shipping",
+      humanNeed: "Shipping must print customs labels so outgoing avionics work can move.",
+      visibleSymptom: "Printer shows ready, but customs-label jobs disappear from the queue.",
+      operationalContext: "Shipment must clear before the production handoff window or downstream work stalls.",
+      hypotheses: ["driver_issue", "spooler_queue", "permissions", "network_path"],
+      verificationCondition: "Requester prints the required customs label and confirms the label is accurate.",
+      nightManifestation: null,
+      campaignOutputs: [],
+      ordinary: true
+    },
+    plating_workstation_down: {
+      id: "plating_workstation_down",
+      requester: "Plating operator",
+      department: "Manufacturing",
+      humanNeed: "Production needs the workstation restored so the plating line can move.",
+      visibleSymptom: "Workstation restarted overnight and never returned to usable service.",
+      operationalContext: "A physical line is waiting on a digital dependency.",
+      hypotheses: ["stale_service", "credential_state", "integration_failure", "local_workstation_fault"],
+      verificationCondition: "Operator completes a real production interaction and confirms the line can resume.",
+      nightManifestation: null,
+      campaignOutputs: [],
+      ordinary: true
+    },
+    impossible_access_event: {
+      id: "impossible_access_event",
+      requester: "Security operations",
+      department: "Security",
+      humanNeed: "Security must understand a valid access record that conflicts with physical reality.",
+      visibleSymptom: "Mike's badge appears to open SECTOR04-EAST at 02:13 when he was not present.",
+      operationalContext: "Identity, physical presence, and audit trust no longer align.",
+      hypotheses: ["credential_clone", "controller_replay", "camera_gap", "orpheus_interference"],
+      verificationCondition: "Document the unresolved inconsistency without falsely closing it.",
+      nightManifestation: "sector_04_access_guard",
+      campaignOutputs: ["ghost_identity_evidence"],
+      ordinary: false
+    }
+  };
+  var TUESDAY_MORNING_CONTRACT = {
+    persists: [
+      "campaign flags", "evidence sources", "evidence provenance", "trust state",
+      "team health", "verification history", "human outcomes", "completed tickets",
+      "unresolved tickets", "ORPHEUS signature exposure", "workstation discoveries",
+      "MORNINGSTAR inventory", "player behavior history"
+    ],
+    resets: [
+      "Night Walker temporary sector state", "active combat state",
+      "manifestation suppression timers", "current night position"
+    ],
+    transforms: [
+      "Night evidence becomes daytime hypotheses", "unresolved tickets age",
+      "verified work creates future opportunities", "poor verification becomes recurrence risk"
+    ],
+    requiredBoundary: "New Game through Sector 04 must cut cleanly to Day 2 / Ghost Frequency."
+  };
   var PERSPECTIVE_RANK = {
     unverified: 0, inferred: 1, delegated_partial: 2,
     delegated_verified: 3, firsthand: 4, corroborated_firsthand: 5
@@ -58,6 +116,19 @@
       playerBehaviorHistory: [],
       history: [{ type: "campaign_started", at: now() }]
     };
+  }
+
+  function getTicketTemplate(ticketId) {
+    assert(TICKETS.indexOf(ticketId) >= 0, "Unknown Act I ticket: " + ticketId);
+    return clone(TICKET_TEMPLATES[ticketId]);
+  }
+
+  function listTicketTemplates() {
+    return TICKETS.map(function (id) { return getTicketTemplate(id); });
+  }
+
+  function getTuesdayMorningContract() {
+    return clone(TUESDAY_MORNING_CONTRACT);
   }
 
   function validate(state) {
@@ -223,7 +294,11 @@
 
   var api = {
     VERSION: VERSION, SAVE_KEY: SAVE_KEY, TICKETS: TICKETS.slice(),
+    TICKET_TEMPLATES: clone(TICKET_TEMPLATES),
+    TUESDAY_MORNING_CONTRACT: clone(TUESDAY_MORNING_CONTRACT),
     createInitialState: initialState, clone: clone, validate: validate,
+    getTicketTemplate: getTicketTemplate, listTicketTemplates: listTicketTemplates,
+    getTuesdayMorningContract: getTuesdayMorningContract,
     assignTicket: assignTicket, completeStandup: completeStandup,
     completeWorkstation: completeWorkstation, recordGhostEvidence: recordGhostEvidence,
     resolveTicket: resolveTicket, enterSector04: enterSector04,
