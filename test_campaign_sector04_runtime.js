@@ -1,6 +1,7 @@
 const assert = require("assert");
 
 global.TechOpsCampaign = require("./campaign_act1.js");
+global.TechOpsCampaignAssets = require("./campaign_assets.js");
 global.TechOpsSector04 = require("./campaign_sector04.js");
 const Runtime = require("./campaign_sector04_runtime.js");
 
@@ -52,8 +53,31 @@ assert.strictEqual(night.district, "sector04");
 assert.strictEqual(night.enemies.length, 1);
 assert.strictEqual(night.enemies[0].campaignSector04Guard, true);
 assert.strictEqual(night.enemies[0].assetSlot, "sector04.access_guard.idle");
+assert.strictEqual(Runtime.assetFilename("sector04.access_guard.idle"), "sector04.access_guard.idle.png");
+assert.strictEqual(Runtime.assetUrl("sector04.access_guard.idle"), "assets/campaign/sector04.access_guard.idle.png");
+assert.strictEqual(Runtime.atlasUrl("sector04.access_guard.respawn"), "assets/campaign/sector04.access_guard.respawn.atlas.json");
+assert.strictEqual(night._sector04.assets.get("sector04.access_guard.idle").status, "unavailable");
 assert.ok(night._sector04.inspectables.some(p => p.assetSlot === "sector04.terminal.symptoms"));
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).active, true);
+
+let resolver = Runtime.createAssetResolver({ basePath: "/runtime-assets" });
+let record = resolver.requestSlot("sector04.identity_controller.active");
+assert.strictEqual(record.url, "/runtime-assets/sector04.identity_controller.active.png");
+assert.strictEqual(record.status, "unavailable");
+
+let fakeSrc = "";
+function FakeImage() {}
+Object.defineProperty(FakeImage.prototype, "src", {
+  set(value) {
+    fakeSrc = value;
+    if (this.onload) this.onload();
+  }
+});
+resolver = Runtime.createAssetResolver({ basePath: "packs", Image: FakeImage });
+record = resolver.requestSlot("sector04.locked_violin_door");
+assert.strictEqual(fakeSrc, "packs/sector04.locked_violin_door.png");
+assert.strictEqual(record.status, "ready");
+assert.ok(record.image);
 
 let result = Runtime.hitGuard(campaign, night, 100, 1000);
 assert.strictEqual(result.suppressed, true);
