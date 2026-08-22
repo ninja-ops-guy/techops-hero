@@ -35,7 +35,9 @@ jobs:
           node --check campaign_story.js
           node --check campaign_runtime.js
           node --check campaign_native_act1.js
+          node --check campaign_sector04.js
           node --check test_campaign_native_act1.js
+          node --check test_campaign_sector04.js
           node --check test_campaign_save_reload.js
           node --check test_ui_coop_contract.js
       - name: Verify Act I contract
@@ -46,6 +48,8 @@ jobs:
         run: node test_campaign_runtime.js
       - name: Verify native Act I integration
         run: node test_campaign_native_act1.js
+      - name: Verify Sector 04 native sandbox
+        run: node test_campaign_sector04.js
       - name: Verify Act I save/reload traversal
         run: node test_campaign_save_reload.js
       - name: Verify UI co-op asset authority
