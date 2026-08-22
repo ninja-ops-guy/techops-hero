@@ -51,6 +51,8 @@ Runtime.createEncounter(campaign, night);
 assert.strictEqual(night.district, "sector04");
 assert.strictEqual(night.enemies.length, 1);
 assert.strictEqual(night.enemies[0].campaignSector04Guard, true);
+assert.strictEqual(night.enemies[0].assetSlot, "sector04.access_guard.idle");
+assert.ok(night._sector04.inspectables.some(p => p.assetSlot === "sector04.terminal.symptoms"));
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).active, true);
 
 let result = Runtime.hitGuard(campaign, night, 100, 1000);
