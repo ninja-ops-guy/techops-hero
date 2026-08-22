@@ -9,11 +9,42 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
+  var DEFAULT_ASSET_BASE = "assets/campaign/";
+
+  var NATIVE_ASSET_BINDINGS = {
+    standup: [
+      "ui.standup.board",
+      "ui.standup.ticket_card",
+      "ui.standup.owner_badge"
+    ],
+    workstation: [
+      "workstation.felicia.video_frame",
+      "workstation.orpheus.glitch_frame",
+      "workstation.corporate_aircraft_panel"
+    ],
+    shipping: [
+      "shipping.dock_background",
+      "shipping.clerk.idle",
+      "shipping.label_printer",
+      "shipping.printed_label_success"
+    ],
+    plating: [
+      "plating.line_background",
+      "plating.operator.idle",
+      "plating.workstation_cracked",
+      "plating.line_stopped_display"
+    ],
+    access: [
+      "ui.standup.owner_badge"
+    ]
+  };
+
   var CONTACTS = {
     standup: {
       id: "campaign_standup",
       name: "STANDUP BOARD",
       face: "BOARD",
+      assetSlot: "ui.standup.board",
       fallback: { x: 34, y: 12 }
     },
     shipping: {
@@ -23,6 +54,8 @@
       dept: "Shipping",
       face: "SHIP",
       biome: "factory",
+      assetSlot: "shipping.clerk.idle",
+      backgroundAssetSlot: "shipping.dock_background",
       fallback: { x: 8, y: 34 }
     },
     plating: {
@@ -32,6 +65,8 @@
       dept: "Manufacturing",
       face: "LINE",
       biome: "factory",
+      assetSlot: "plating.operator.idle",
+      backgroundAssetSlot: "plating.line_background",
       fallback: { x: 18, y: 35 }
     },
     access: {
@@ -41,6 +76,7 @@
       dept: "Security",
       face: "SEC",
       biome: "office",
+      assetSlot: "ui.standup.owner_badge",
       fallback: { x: 38, y: 12 }
     }
   };
@@ -49,17 +85,20 @@
     shipping_cannot_print: {
       title: "SHIPPING CANNOT PRINT",
       body: "The clerk does not have a printer issue. She has trucks waiting. The queue accepts jobs, then drops customs labels before they print.",
-      verify: "The customs label prints and Shipping confirms the label is accurate."
+      verify: "The customs label prints and Shipping confirms the label is accurate.",
+      assetContext: "shipping"
     },
     plating_workstation_down: {
       title: "PLATING WORKSTATION DOWN",
       body: "The operator does not have a Windows issue. He has a line that cannot move. The workstation restarted overnight and never came back.",
-      verify: "The operator completes a real production interaction and confirms the line can resume."
+      verify: "The operator completes a real production interaction and confirms the line can resume.",
+      assetContext: "plating"
     },
     impossible_access_event: {
       title: "IMPOSSIBLE ACCESS EVENT",
       body: "Badge ID: M.OLIVEFIELD<br>Door: SECTOR04-EAST<br>Timestamp: 02:13<br>Controller ACK: VALID<br><br>Mike was not there.",
-      verify: "The record is not closed as solved. It is documented as identity evidence."
+      verify: "The record is not closed as solved. It is documented as identity evidence.",
+      assetContext: "access"
     }
   };
 
@@ -78,6 +117,45 @@
 
   function sector04Runtime() {
     return root && root.TechOpsSector04Runtime ? root.TechOpsSector04Runtime : null;
+  }
+
+  function assetsApi() {
+    return root && root.TechOpsCampaignAssets ? root.TechOpsCampaignAssets : null;
+  }
+
+  function assetFilename(slotId) {
+    var api = assetsApi();
+    return api && typeof api.slotFilename === "function" ? api.slotFilename(slotId) : slotId + ".png";
+  }
+
+  function normalizeBasePath(basePath) {
+    basePath = basePath || DEFAULT_ASSET_BASE;
+    return basePath.charAt(basePath.length - 1) === "/" ? basePath : basePath + "/";
+  }
+
+  function assetUrl(slotId, basePath) {
+    return normalizeBasePath(basePath || (root && root.TECHOPS_CAMPAIGN_ASSET_BASE) || DEFAULT_ASSET_BASE) + assetFilename(slotId);
+  }
+
+  function assetsForContext(contextId) {
+    return (NATIVE_ASSET_BINDINGS[contextId] || []).slice();
+  }
+
+  function assetUrlsForContext(contextId, basePath) {
+    return assetsForContext(contextId).map(function (slotId) {
+      return { slot: slotId, url: assetUrl(slotId, basePath) };
+    });
+  }
+
+  function setAssetContext(contextId) {
+    var slots = assetsForContext(contextId);
+    var context = {
+      id: contextId,
+      slots: slots,
+      urls: slots.map(function (slotId) { return assetUrl(slotId); })
+    };
+    if (root) root.__techopsCampaignNativeAct1Assets = context;
+    return context;
   }
 
   function storage() {
@@ -151,6 +229,8 @@
       name: contact.name,
       dept: contact.dept || "IT",
       face: contact.face,
+      assetSlot: contact.assetSlot || null,
+      backgroundAssetSlot: contact.backgroundAssetSlot || null,
       x: pos.x,
       y: pos.y,
       ambient: true,
@@ -192,6 +272,7 @@
   }
 
   function openStandup() {
+    setAssetContext("standup");
     var state = loadState();
     if (state.flags.ticketAssignmentsConfirmed) {
       return callDialog("CAMPAIGN STANDUP",
@@ -220,6 +301,7 @@
   }
 
   function openWorkstation() {
+    setAssetContext("workstation");
     var state = loadState();
     if (!state.flags.ticketAssignmentsConfirmed) return openStandup();
     if (!state.flags.workstationOpened) {
@@ -232,6 +314,7 @@
   }
 
   function resolveTicket(ticketId) {
+    setAssetContext(TICKET_COPY[ticketId] && TICKET_COPY[ticketId].assetContext);
     var campaign = withAssignedState();
     if (!campaign.flags.workstationOpened) {
       return callDialog("WORKSTATION REQUIRED",
@@ -255,6 +338,7 @@
   }
 
   function recordAccessEvidence() {
+    setAssetContext("access");
     var campaign = withAssignedState();
     if (!campaign.flags.workstationOpened) {
       return callDialog("WORKSTATION REQUIRED",
@@ -429,6 +513,12 @@
 
   var api = {
     CONTACTS: CONTACTS,
+    NATIVE_ASSET_BINDINGS: NATIVE_ASSET_BINDINGS,
+    assetFilename: assetFilename,
+    assetUrl: assetUrl,
+    assetsForContext: assetsForContext,
+    assetUrlsForContext: assetUrlsForContext,
+    setAssetContext: setAssetContext,
     ensureWorld: ensureWorld,
     openStandup: openStandup,
     openWorkstation: openWorkstation,

@@ -9,6 +9,7 @@ global.localStorage = {
 global.TechOpsCampaign = require("./campaign_act1.js");
 global.TechOpsCampaignRuntime = require("./campaign_runtime.js");
 global.TechOpsSector04 = require("./campaign_sector04.js");
+global.TechOpsCampaignAssets = require("./campaign_assets.js");
 
 let lastDialog = null;
 global.dlg = function (name, body, options) {
@@ -46,24 +47,42 @@ assert.strictEqual(native.ensureWorld(), true);
 assert.ok(global.S.meta.campaignAct1Native);
 assert.ok(global.S.npcs.some(n => n.campaignAct1 === "shipping_cannot_print"));
 assert.ok(global.S.npcs.some(n => n.campaignAct1 === "impossible_access_event"));
+assert.strictEqual(native.assetFilename("shipping.clerk.idle"), "shipping.clerk.idle.png");
+assert.strictEqual(native.assetUrl("plating.line_background"), "assets/campaign/plating.line_background.png");
+assert.deepStrictEqual(native.assetsForContext("workstation"), [
+  "workstation.felicia.video_frame",
+  "workstation.orpheus.glitch_frame",
+  "workstation.corporate_aircraft_panel"
+]);
+assert.ok(native.assetUrlsForContext("shipping").some(asset => asset.url === "assets/campaign/shipping.label_printer.png"));
+assert.strictEqual(global.S.npcs.find(n => n.campaignAct1 === "shipping_cannot_print").assetSlot, "shipping.clerk.idle");
+assert.strictEqual(global.S.npcs.find(n => n.campaignAct1 === "plating_workstation_down").backgroundAssetSlot, "plating.line_background");
 
 global.S.px = global.S.meta.campaignAct1Native.standup.x;
 global.S.py = global.S.meta.campaignAct1Native.standup.y + 1;
 native.openStandup();
 assert.strictEqual(lastDialog.name, "CAMPAIGN STANDUP");
+assert.deepStrictEqual(global.__techopsCampaignNativeAct1Assets.slots, [
+  "ui.standup.board",
+  "ui.standup.ticket_card",
+  "ui.standup.owner_badge"
+]);
 lastDialog.options[0].f();
 assert.strictEqual(global.TechOpsCampaign.load(global.localStorage).flags.ticketAssignmentsConfirmed, true);
 
 native.openWorkstation();
+assert.ok(global.__techopsCampaignNativeAct1Assets.slots.includes("workstation.orpheus.glitch_frame"));
 let state = global.TechOpsCampaign.load(global.localStorage);
 assert.strictEqual(state.flags.workstationOpened, true);
 assert.strictEqual(state.flags.feliciaVideoSeen, true);
 
 native.resolveTicket("shipping_cannot_print");
+assert.ok(global.__techopsCampaignNativeAct1Assets.slots.includes("shipping.printed_label_success"));
 state = global.TechOpsCampaign.load(global.localStorage);
 assert.strictEqual(state.humanOutcomes.shipping_cannot_print, "restored");
 
 native.resolveTicket("plating_workstation_down");
+assert.ok(global.__techopsCampaignNativeAct1Assets.slots.includes("plating.line_stopped_display"));
 state = global.TechOpsCampaign.load(global.localStorage);
 assert.strictEqual(state.humanOutcomes.plating_workstation_down, "restored");
 
