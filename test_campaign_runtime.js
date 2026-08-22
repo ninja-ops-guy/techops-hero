@@ -8,8 +8,32 @@ global.localStorage = {
 
 global.TechOpsCampaign = require("./campaign_act1.js");
 global.TechOpsStory = require("./campaign_story.js");
+global.mikeDesk = function () {
+  global.__mikeDeskOpened = true;
+};
+const fakeOptions = {
+  children: [],
+  querySelector() { return this.children[0] || null; },
+  insertBefore(button) { this.children.unshift(button); }
+};
+global.document = {
+  readyState: "complete",
+  getElementById(id) {
+    if (id === "dlg-name") return { textContent: "MIKE'S DESK" };
+    if (id === "dlg-options") return fakeOptions;
+    return null;
+  },
+  createElement(tag) {
+    return { tagName: tag.toUpperCase(), textContent: "", className: "", onclick: null };
+  }
+};
 
 const runtime = require("./campaign_runtime.js");
+
+global.mikeDesk();
+assert.strictEqual(global.__mikeDeskOpened, true);
+assert.strictEqual(fakeOptions.children[0].textContent, "Act I Campaign Queue");
+assert.strictEqual(typeof fakeOptions.children[0].onclick, "function");
 
 function resetStorage() {
   global.localStorage.data = {};
