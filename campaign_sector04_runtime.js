@@ -14,10 +14,10 @@
   var INTERACT_RANGE = 56;
 
   var POINTS = [
-    { id: "purple_damage", x: 610, y: FLOOR - 24, label: "Purple damage", requiresController: false },
-    { id: "identity_controller", x: 1180, y: 292, label: "Identity controller", requiresController: true },
-    { id: "locked_violin_door", x: 1570, y: FLOOR - 42, label: "Locked door", requiresController: false },
-    { id: "symptoms_terminal", x: 1660, y: FLOOR - 58, label: "Terminal", requiresController: true }
+    { id: "purple_damage", x: 610, y: FLOOR - 24, label: "Purple damage", requiresController: false, assetSlot: "sector04.purple_damage.enemy" },
+    { id: "identity_controller", x: 1180, y: 292, label: "Identity controller", requiresController: true, assetSlot: "sector04.identity_controller.active" },
+    { id: "locked_violin_door", x: 1570, y: FLOOR - 42, label: "Locked door", requiresController: false, assetSlot: "sector04.locked_violin_door" },
+    { id: "symptoms_terminal", x: 1660, y: FLOOR - 58, label: "Terminal", requiresController: true, assetSlot: "sector04.terminal.symptoms" }
   ];
 
   function campaignApi() {
@@ -58,6 +58,8 @@
       name: "Access Guard",
       kind: "access_guard",
       campaignSector04Guard: true,
+      assetSlot: "sector04.access_guard.idle",
+      suppressedAssetSlot: "sector04.access_guard.suppressed",
       x: 780,
       y: FLOOR - 38,
       w: 30,
@@ -105,7 +107,8 @@
         x: p.x,
         y: p.y,
         label: p.label,
-        requiresController: p.requiresController
+        requiresController: p.requiresController,
+        assetSlot: p.assetSlot
       };
     });
     return night._sector04;
