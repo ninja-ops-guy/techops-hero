@@ -53,6 +53,104 @@
     return normalizeBasePath(basePath) + slotId + ".atlas.json";
   }
 
+  function generatedAssetSpec(slotId) {
+    var map = {
+      "sector04.access_guard.idle": { kind: "guard", accent: "#8b5cf6" },
+      "sector04.access_guard.attack": { kind: "guard_attack", accent: "#a855f7" },
+      "sector04.access_guard.suppressed": { kind: "guard_down", accent: "#7c3aed" },
+      "sector04.access_guard.respawn": { kind: "respawn", accent: "#c084fc" },
+      "sector04.purple_damage.enemy": { kind: "damaged_enemy", accent: "#a855f7" },
+      "sector04.purple_damage.fx": { kind: "burn_fx", accent: "#d946ef" },
+      "sector04.identity_controller.active": { kind: "controller", accent: "#a855f7" },
+      "sector04.identity_controller.severed": { kind: "controller_severed", accent: "#f97316" },
+      "sector04.identity_controller.spark_fx": { kind: "spark_fx", accent: "#f59e0b" },
+      "sector04.locked_violin_door": { kind: "locked_door", accent: "#a855f7" },
+      "sector04.violin_note.fx": { kind: "violin_note", accent: "#d946ef" },
+      "sector04.terminal.symptoms": { kind: "terminal", accent: "#c084fc" }
+    };
+    return map[slotId] || { kind: "unknown", accent: "#38bdf8" };
+  }
+
+  function drawGeneratedAsset(ctx, slotId, sx, sy, w, h) {
+    if (!ctx) return false;
+    var spec = generatedAssetSpec(slotId);
+    var x = sx - w / 2;
+    var y = sy - h;
+    var cx = sx;
+    var cy = y + h / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.96;
+    ctx.strokeStyle = spec.accent;
+    ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
+    if (spec.kind === "terminal") {
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+      ctx.fillStyle = spec.accent;
+      ctx.fillRect(x + 10, y + 12, w - 20, 6);
+      ctx.fillRect(x + 10, y + 26, w - 46, 5);
+      ctx.fillRect(x + 10, y + 40, w - 32, 5);
+    } else if (spec.kind === "locked_door") {
+      ctx.fillRect(x + w * 0.18, y, w * 0.64, h);
+      ctx.strokeRect(x + w * 0.18, y, w * 0.64, h);
+      ctx.fillStyle = spec.accent;
+      ctx.fillRect(cx - 9, y + h * 0.2, 18, h * 0.42);
+      ctx.strokeRect(cx - 7, y + h * 0.62, 14, 12);
+    } else if (spec.kind === "controller" || spec.kind === "controller_severed") {
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.min(w, h) * 0.34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = spec.accent;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.min(w, h) * 0.16, 0, Math.PI * 2);
+      ctx.fill();
+      if (spec.kind === "controller_severed") {
+        ctx.strokeStyle = "#f97316";
+        ctx.beginPath();
+        ctx.moveTo(x + 7, y + h - 7);
+        ctx.lineTo(x + w - 7, y + 7);
+        ctx.stroke();
+      }
+    } else if (spec.kind === "violin_note") {
+      ctx.strokeStyle = spec.accent;
+      ctx.beginPath();
+      ctx.moveTo(cx - 8, y + h * 0.72);
+      ctx.lineTo(cx - 8, y + h * 0.28);
+      ctx.lineTo(cx + 16, y + h * 0.2);
+      ctx.stroke();
+      ctx.fillStyle = spec.accent;
+      ctx.beginPath();
+      ctx.arc(cx - 12, y + h * 0.74, 8, 0, Math.PI * 2);
+      ctx.arc(cx + 12, y + h * 0.66, 8, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (spec.kind === "burn_fx" || spec.kind === "respawn" || spec.kind === "spark_fx") {
+      ctx.fillStyle = spec.accent;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.min(w, h) * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = spec.accent;
+      ctx.beginPath();
+      ctx.moveTo(cx, y + 4);
+      ctx.lineTo(cx, y + h - 4);
+      ctx.moveTo(x + 4, cy);
+      ctx.lineTo(x + w - 4, cy);
+      ctx.stroke();
+    } else if (spec.kind === "damaged_enemy" || spec.kind === "guard_down") {
+      ctx.fillRect(x + w * 0.14, y + h * 0.58, w * 0.72, h * 0.22);
+      ctx.strokeRect(x + w * 0.14, y + h * 0.58, w * 0.72, h * 0.22);
+      ctx.fillStyle = spec.accent;
+      ctx.fillRect(x + w * 0.46, y + h * 0.48, w * 0.16, h * 0.2);
+    } else {
+      ctx.fillRect(x + w * 0.3, y + h * 0.22, w * 0.4, h * 0.62);
+      ctx.strokeRect(x + w * 0.3, y + h * 0.22, w * 0.4, h * 0.62);
+      ctx.fillStyle = spec.accent;
+      ctx.fillRect(x + w * 0.36, y + h * 0.32, w * 0.28, h * 0.18);
+      if (spec.kind === "guard_attack") ctx.fillRect(x + w * 0.62, y + h * 0.38, w * 0.32, h * 0.08);
+    }
+    ctx.restore();
+    return true;
+  }
+
   function createAssetResolver(options) {
     options = options || {};
     var basePath = normalizeBasePath(options.basePath || (root && root.TECHOPS_CAMPAIGN_ASSET_BASE) || DEFAULT_ASSET_BASE);
@@ -396,8 +494,8 @@
     if (g && g.alive) {
       var guardX = g.x + (g.w || 30) / 2 - cam;
       var guardY = g.y + (g.h || 38);
-      if (guardX >= -80 && guardX <= W + 80) {
-        drawAsset(g.assetSlot, guardX, guardY, 54, 70);
+      if (guardX >= -80 && guardX <= W + 80 && !drawAsset(g.assetSlot, guardX, guardY, 54, 70)) {
+        drawGeneratedAsset(ctx, g.assetSlot, guardX, guardY, 54, 70);
       }
     }
     night._sector04.inspectables.forEach(function (p) {
@@ -405,7 +503,8 @@
       if (sx < -60 || sx > W + 60) return;
       var color = p.id === "purple_damage" ? "#a78bfa" : p.id === "identity_controller" ? "#38bdf8" : "#f8fafc";
       var size = inspectableSize(p.id);
-      if (!drawAsset(p.assetSlot, sx, p.y + size.h / 2, size.w, size.h)) {
+      if (!drawAsset(p.assetSlot, sx, p.y + size.h / 2, size.w, size.h) &&
+          !drawGeneratedAsset(ctx, p.assetSlot, sx, p.y + size.h / 2, size.w, size.h)) {
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.85;
         ctx.fillRect(sx - 8, p.y - 8, 16, 16);
@@ -506,6 +605,8 @@
     assetUrl: assetUrl,
     atlasUrl: atlasUrl,
     createAssetResolver: createAssetResolver,
+    generatedAssetSpec: generatedAssetSpec,
+    drawGeneratedAsset: drawGeneratedAsset,
     nearestInspectable: nearestInspectable,
     hitGuard: hitGuard,
     syncCombat: syncCombat,
