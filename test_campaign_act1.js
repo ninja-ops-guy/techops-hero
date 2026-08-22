@@ -10,6 +10,26 @@ function assignAll(state, impossibleOwner) {
   C.completeWorkstation(state, { redInTheMirrorHeard: true, feliciaVideoSeen: true });
 }
 
+// Ticket template contract.
+const templates = C.listTicketTemplates();
+assert.equal(templates.length, 3);
+assert.equal(C.getTicketTemplate("shipping_cannot_print").ordinary, true);
+assert.equal(C.getTicketTemplate("plating_workstation_down").ordinary, true);
+assert.equal(C.getTicketTemplate("impossible_access_event").ordinary, false);
+assert.equal(C.getTicketTemplate("impossible_access_event").campaignOutputs[0], "ghost_identity_evidence");
+assert.equal(C.getTicketTemplate("impossible_access_event").nightManifestation, "sector_04_access_guard");
+assert.throws(() => C.getTicketTemplate("unknown"), /Unknown Act I ticket/);
+const mutatedTemplate = C.getTicketTemplate("shipping_cannot_print");
+mutatedTemplate.humanNeed = "mutated";
+assert.notEqual(C.getTicketTemplate("shipping_cannot_print").humanNeed, "mutated", "ticket templates are defensive copies");
+
+// Tuesday boundary contract.
+const tuesday = C.getTuesdayMorningContract();
+assert.ok(tuesday.persists.includes("evidence provenance"));
+assert.ok(tuesday.persists.includes("verification history"));
+assert.ok(tuesday.resets.includes("active combat state"));
+assert.ok(tuesday.transforms.includes("Night evidence becomes daytime hypotheses"));
+
 // Canonical firsthand route: daytime understanding enables permanent Night Walker defeat.
 const direct = C.createInitialState();
 assert.throws(() => C.completeStandup(direct), /exactly one owner/);
