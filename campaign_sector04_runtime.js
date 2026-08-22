@@ -12,6 +12,7 @@
   var WIDTH = 1800;
   var FLOOR = 430;
   var INTERACT_RANGE = 56;
+  var DEFAULT_ASSET_BASE = "assets/campaign/";
 
   var POINTS = [
     { id: "purple_damage", x: 610, y: FLOOR - 24, label: "Purple damage", requiresController: false, assetSlot: "sector04.purple_damage.enemy" },
@@ -28,6 +29,99 @@
   function sectorApi() {
     if (!root || !root.TechOpsSector04) throw new Error("TechOpsSector04 is required");
     return root.TechOpsSector04;
+  }
+
+  function assetsApi() {
+    return root && root.TechOpsCampaignAssets ? root.TechOpsCampaignAssets : null;
+  }
+
+  function assetFilename(slotId) {
+    var api = assetsApi();
+    return api && typeof api.slotFilename === "function" ? api.slotFilename(slotId) : slotId + ".png";
+  }
+
+  function normalizeBasePath(basePath) {
+    basePath = basePath || DEFAULT_ASSET_BASE;
+    return basePath.charAt(basePath.length - 1) === "/" ? basePath : basePath + "/";
+  }
+
+  function assetUrl(slotId, basePath) {
+    return normalizeBasePath(basePath) + assetFilename(slotId);
+  }
+
+  function atlasUrl(slotId, basePath) {
+    return normalizeBasePath(basePath) + slotId + ".atlas.json";
+  }
+
+  function createAssetResolver(options) {
+    options = options || {};
+    var basePath = normalizeBasePath(options.basePath || (root && root.TECHOPS_CAMPAIGN_ASSET_BASE) || DEFAULT_ASSET_BASE);
+    var ImageCtor = options.Image || root && root.Image;
+    var fetchFn = options.fetch || root && root.fetch;
+    var records = {};
+
+    function ensure(slotId) {
+      if (!slotId) return null;
+      if (!records[slotId]) {
+        records[slotId] = {
+          slot: slotId,
+          url: assetUrl(slotId, basePath),
+          atlasUrl: atlasUrl(slotId, basePath),
+          status: ImageCtor ? "pending" : "unavailable",
+          atlasStatus: fetchFn ? "pending" : "unavailable",
+          image: null,
+          atlas: null,
+          error: null
+        };
+      }
+      return records[slotId];
+    }
+
+    function requestSlot(slotId) {
+      var record = ensure(slotId);
+      if (!record || record.requested || !ImageCtor) return record;
+      record.requested = true;
+      record.status = "loading";
+      var img = new ImageCtor();
+      img.onload = function () {
+        record.image = img;
+        record.status = "ready";
+      };
+      img.onerror = function () {
+        record.status = "missing";
+        record.error = "image_load_failed";
+      };
+      img.src = record.url;
+      return record;
+    }
+
+    function requestAtlas(slotId) {
+      var record = ensure(slotId);
+      if (!record || record.atlasRequested || !fetchFn) return record;
+      record.atlasRequested = true;
+      record.atlasStatus = "loading";
+      fetchFn(record.atlasUrl)
+        .then(function (res) {
+          if (!res || !res.ok) throw new Error("atlas_load_failed");
+          return res.json();
+        })
+        .then(function (json) {
+          record.atlas = json;
+          record.atlasStatus = "ready";
+        })
+        .catch(function () {
+          record.atlasStatus = "missing";
+        });
+      return record;
+    }
+
+    return {
+      basePath: basePath,
+      records: records,
+      requestSlot: requestSlot,
+      requestAtlas: requestAtlas,
+      get: ensure
+    };
   }
 
   function storage() {
@@ -101,6 +195,7 @@
       completed: false
     };
     night._sector04.active = true;
+    night._sector04.assets = night._sector04.assets || createAssetResolver();
     night._sector04.inspectables = POINTS.map(function (p) {
       return {
         id: p.id,
@@ -110,6 +205,9 @@
         requiresController: p.requiresController,
         assetSlot: p.assetSlot
       };
+    });
+    night._sector04.inspectables.forEach(function (p) {
+      night._sector04.assets.requestSlot(p.assetSlot);
     });
     return night._sector04;
   }
@@ -128,6 +226,8 @@
     night.face = 1;
     night.platforms = platformLayout();
     night.enemies = [accessGuard()];
+    rt.assets.requestSlot(night.enemies[0].assetSlot);
+    rt.assets.requestSlot(night.enemies[0].suppressedAssetSlot);
     night.clear = false;
     night.cam = 0;
     message(night, "SECTOR 04 - damage suppresses; understanding defeats.", 4200);
@@ -159,6 +259,7 @@
     var g = accessGuard();
     night.enemies = (night.enemies || []).filter(function (enemy) { return !enemy.campaignSector04Guard; });
     night.enemies.push(g);
+    ensureNight(night).assets.requestSlot(g.assetSlot);
     night.clear = false;
     return g;
   }
@@ -271,17 +372,45 @@
     if (!ctx || !night || !night._sector04) return false;
     var cam = night.cam || 0;
     var W = width || ctx.canvas && ctx.canvas.width || 960;
+    var resolver = night._sector04.assets || createAssetResolver();
+    night._sector04.assets = resolver;
+
+    function drawAsset(slotId, sx, sy, w, h) {
+      var record = resolver.requestSlot(slotId);
+      if (!record || record.status !== "ready" || !record.image) return false;
+      ctx.drawImage(record.image, sx - w / 2, sy - h, w, h);
+      return true;
+    }
+
+    function inspectableSize(id) {
+      if (id === "symptoms_terminal") return { w: 126, h: 68 };
+      if (id === "locked_violin_door") return { w: 52, h: 86 };
+      if (id === "identity_controller") return { w: 48, h: 48 };
+      return { w: 76, h: 54 };
+    }
+
     ctx.save();
     ctx.font = "12px monospace";
     ctx.textAlign = "center";
+    var g = guard(night);
+    if (g && g.alive) {
+      var guardX = g.x + (g.w || 30) / 2 - cam;
+      var guardY = g.y + (g.h || 38);
+      if (guardX >= -80 && guardX <= W + 80) {
+        drawAsset(g.assetSlot, guardX, guardY, 54, 70);
+      }
+    }
     night._sector04.inspectables.forEach(function (p) {
       var sx = p.x - cam;
       if (sx < -60 || sx > W + 60) return;
       var color = p.id === "purple_damage" ? "#a78bfa" : p.id === "identity_controller" ? "#38bdf8" : "#f8fafc";
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.85;
-      ctx.fillRect(sx - 8, p.y - 8, 16, 16);
-      ctx.globalAlpha = 1;
+      var size = inspectableSize(p.id);
+      if (!drawAsset(p.assetSlot, sx, p.y + size.h / 2, size.w, size.h)) {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.85;
+        ctx.fillRect(sx - 8, p.y - 8, 16, 16);
+        ctx.globalAlpha = 1;
+      }
       ctx.fillStyle = "#e5e7eb";
       ctx.fillText(p.label, sx, p.y - 14);
     });
@@ -373,6 +502,10 @@
     POINTS: POINTS,
     createEncounter: createEncounter,
     accessGuard: accessGuard,
+    assetFilename: assetFilename,
+    assetUrl: assetUrl,
+    atlasUrl: atlasUrl,
+    createAssetResolver: createAssetResolver,
     nearestInspectable: nearestInspectable,
     hitGuard: hitGuard,
     syncCombat: syncCombat,
