@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate deterministic transparent Sector 04 runtime placeholder assets.
+"""Generate deterministic transparent campaign runtime placeholder assets.
 
 These are production-slot stand-ins, not concept sheets. They satisfy the
 runtime contract until hand-painted transparent exports replace them.
@@ -156,6 +156,154 @@ def terminal(name: str) -> None:
     save(img, name)
 
 
+def screen_panel(name: str, title: str, glitch: bool = False) -> None:
+    img, d = canvas((160, 96))
+    d.rounded_rectangle((8, 10, 152, 86), radius=8, fill=DARK, outline=CYAN if not glitch else PURPLE, width=3)
+    d.rectangle((20, 24, 140, 64), fill=(15, 23, 42, 255), outline=(51, 65, 85, 255))
+    font = ImageFont.load_default()
+    if glitch:
+        d.text((45, 40), title, fill=VIOLET, font=font)
+        for y in range(28, 65, 8):
+            d.line((24, y, 136, y - 6), fill=PURPLE, width=2)
+        d.rectangle((68, 32, 92, 56), fill=(15, 23, 42, 180), outline=VIOLET)
+    else:
+        d.ellipse((38, 34, 72, 58), fill=(30, 41, 59, 255), outline=CYAN)
+        d.line((76, 34, 128, 34), fill=CYAN, width=3)
+        d.line((76, 46, 118, 46), fill=(148, 163, 184, 255), width=2)
+        d.line((76, 57, 132, 57), fill=(148, 163, 184, 255), width=2)
+    d.rectangle((16, 72, 70, 78), fill=PURPLE if glitch else CYAN)
+    save(img, name)
+
+
+def aircraft_panel(name: str) -> None:
+    img, d = canvas((160, 96))
+    d.rounded_rectangle((8, 10, 152, 86), radius=8, fill=(15, 23, 42, 230), outline=AMBER, width=3)
+    d.polygon([(26, 58), (72, 34), (136, 58), (72, 48)], fill=(30, 41, 59, 255), outline=AMBER)
+    d.line((72, 34, 72, 22), fill=CYAN, width=3)
+    for x in (44, 92, 122):
+        glow(d, (x, 36), 4, AMBER)
+    d.line((28, 66, 132, 66), fill=(148, 163, 184, 200), width=2)
+    save(img, name)
+
+
+def standup_board(name: str) -> None:
+    img, d = canvas((192, 120))
+    colors = [CYAN, AMBER, (239, 68, 68, 255), PURPLE, (34, 197, 94, 255)]
+    d.rounded_rectangle((8, 8, 184, 112), radius=10, fill=DARK, outline=CYAN, width=3)
+    for i, color in enumerate(colors):
+        x = 16 + i * 34
+        d.rounded_rectangle((x, 26, x + 26, 92), radius=4, fill=(15, 23, 42, 255), outline=color, width=2)
+        d.rectangle((x + 5, 36, x + 21, 43), fill=color)
+        d.rectangle((x + 5, 52, x + 21, 59), fill=(51, 65, 85, 255))
+        d.rectangle((x + 5, 68, x + 21, 75), fill=(51, 65, 85, 255))
+    d.rectangle((46, 96, 146, 102), fill=(34, 197, 94, 230))
+    save(img, name)
+
+
+def ticket_card(name: str) -> None:
+    img, d = canvas((96, 80))
+    d.rounded_rectangle((10, 10, 86, 70), radius=7, fill=DARK, outline=AMBER, width=3)
+    d.rectangle((20, 20, 56, 28), fill=CYAN)
+    d.rectangle((20, 38, 76, 44), fill=(148, 163, 184, 240))
+    d.rectangle((20, 52, 62, 58), fill=(71, 85, 105, 240))
+    glow(d, (76, 24), 5, AMBER)
+    save(img, name)
+
+
+def owner_badge(name: str) -> None:
+    img, d = canvas((72, 72))
+    d.ellipse((10, 10, 62, 62), fill=DARK, outline=(34, 197, 94, 255), width=3)
+    d.ellipse((26, 18, 46, 38), fill=(30, 64, 175, 255), outline=CYAN)
+    d.arc((18, 34, 54, 64), 200, 340, fill=(34, 197, 94, 255), width=6)
+    d.line((22, 51, 31, 60), fill=(34, 197, 94, 255), width=4)
+    d.line((31, 60, 52, 36), fill=(34, 197, 94, 255), width=4)
+    save(img, name)
+
+
+def worker(name: str, accent=CYAN, clipboard: bool = False) -> None:
+    img, d = canvas((88, 128))
+    d.ellipse((34, 16, 56, 40), fill=(180, 83, 9, 255), outline=INK)
+    d.rectangle((30, 39, 60, 84), fill=(30, 64, 175, 255), outline=INK)
+    d.line((32, 50, 18, 80), fill=accent, width=7)
+    d.line((58, 50, 72, 80), fill=accent, width=7)
+    d.line((38, 84, 30, 118), fill=MID, width=8)
+    d.line((53, 84, 62, 118), fill=MID, width=8)
+    d.rectangle((27, 44, 34, 83), fill=AMBER)
+    d.rectangle((56, 44, 63, 83), fill=AMBER)
+    d.rectangle((32, 10, 58, 22), fill=accent, outline=INK)
+    if clipboard:
+        d.rounded_rectangle((58, 54, 80, 86), radius=3, fill=WHITE, outline=INK)
+        d.line((62, 64, 75, 64), fill=(71, 85, 105, 255), width=1)
+        d.line((62, 72, 75, 72), fill=(71, 85, 105, 255), width=1)
+    save(img, name)
+
+
+def label_printer(name: str) -> None:
+    img, d = canvas((96, 80))
+    d.rounded_rectangle((18, 20, 76, 58), radius=6, fill=DARK, outline=CYAN, width=3)
+    d.rectangle((28, 28, 66, 38), fill=(51, 65, 85, 255))
+    d.rectangle((38, 56, 72, 70), fill=WHITE, outline=(148, 163, 184, 255))
+    for x in range(43, 68, 5):
+        d.line((x, 59, x, 68), fill=INK, width=1)
+    save(img, name)
+
+
+def label_success(name: str) -> None:
+    img, d = canvas((96, 80))
+    d.rounded_rectangle((14, 12, 82, 68), radius=5, fill=WHITE, outline=CYAN, width=3)
+    for x in range(26, 68, 6):
+        d.line((x, 30, x, 54), fill=INK, width=2)
+    d.ellipse((58, 12, 84, 38), fill=(34, 197, 94, 255))
+    d.line((64, 25, 70, 31), fill=WHITE, width=3)
+    d.line((70, 31, 80, 18), fill=WHITE, width=3)
+    save(img, name)
+
+
+def dock_background(name: str) -> None:
+    img, d = canvas((192, 112))
+    d.rectangle((12, 28, 86, 92), fill=(51, 65, 85, 235), outline=CYAN)
+    d.rectangle((94, 48, 176, 92), fill=(241, 245, 249, 235), outline=CYAN)
+    d.rectangle((132, 60, 170, 84), fill=(30, 64, 175, 255))
+    d.rectangle((22, 38, 74, 84), fill=(15, 23, 42, 255), outline=AMBER)
+    d.rectangle((48, 86, 80, 96), fill=AMBER)
+    d.rectangle((104, 88, 178, 96), fill=(100, 116, 139, 255))
+    save(img, name)
+
+
+def cracked_workstation(name: str) -> None:
+    img, d = canvas((112, 88))
+    d.rounded_rectangle((18, 16, 94, 62), radius=5, fill=DARK, outline=(239, 68, 68, 255), width=3)
+    d.rectangle((28, 26, 84, 50), fill=(30, 27, 75, 255))
+    d.line((38, 28, 58, 48), fill=WHITE, width=2)
+    d.line((58, 48, 72, 30), fill=WHITE, width=2)
+    d.rectangle((46, 62, 66, 72), fill=(71, 85, 105, 255))
+    d.rectangle((32, 72, 80, 78), fill=(71, 85, 105, 255))
+    glow(d, (80, 24), 5, (239, 68, 68, 255))
+    save(img, name)
+
+
+def line_stopped(name: str) -> None:
+    img, d = canvas((160, 96))
+    d.rounded_rectangle((8, 12, 152, 84), radius=8, fill=DARK, outline=(239, 68, 68, 255), width=4)
+    font = ImageFont.load_default()
+    d.text((50, 30), "LINE STOPPED", fill=(248, 113, 113, 255), font=font)
+    for y in (50, 62, 74):
+        d.rectangle((28, y, 38, y + 7), fill=(239, 68, 68, 255))
+        d.rectangle((46, y, 122, y + 5), fill=(100, 116, 139, 255))
+    save(img, name)
+
+
+def plating_line_background(name: str) -> None:
+    img, d = canvas((192, 112))
+    d.rectangle((12, 34, 180, 88), fill=(15, 23, 42, 235), outline=AMBER)
+    for x in (34, 88, 142):
+        d.rectangle((x, 42, x + 28, 78), fill=(30, 41, 59, 255), outline=CYAN)
+        d.line((x + 14, 34, x + 14, 42), fill=AMBER, width=3)
+    d.line((18, 88, 174, 88), fill=AMBER, width=5)
+    d.line((24, 96, 168, 96), fill=(100, 116, 139, 255), width=4)
+    save(img, name)
+
+
 def main() -> None:
     guard_pose("sector04.access_guard.idle.png", "idle")
     guard_pose("sector04.access_guard.attack.png", "attack")
@@ -169,6 +317,20 @@ def main() -> None:
     locked_door("sector04.locked_violin_door.png")
     violin_note("sector04.violin_note.fx.png")
     terminal("sector04.terminal.symptoms.png")
+    screen_panel("workstation.felicia.video_frame.png", "FELICIA")
+    screen_panel("workstation.orpheus.glitch_frame.png", "ORPHEUS", glitch=True)
+    aircraft_panel("workstation.corporate_aircraft_panel.png")
+    standup_board("ui.standup.board.png")
+    ticket_card("ui.standup.ticket_card.png")
+    owner_badge("ui.standup.owner_badge.png")
+    worker("shipping.clerk.idle.png", accent=CYAN, clipboard=True)
+    label_printer("shipping.label_printer.png")
+    label_success("shipping.printed_label_success.png")
+    dock_background("shipping.dock_background.png")
+    worker("plating.operator.idle.png", accent=AMBER, clipboard=False)
+    cracked_workstation("plating.workstation_cracked.png")
+    line_stopped("plating.line_stopped_display.png")
+    plating_line_background("plating.line_background.png")
 
 
 if __name__ == "__main__":

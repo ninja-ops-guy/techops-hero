@@ -5,7 +5,21 @@ const zlib = require("zlib");
 
 const Assets = require("./campaign_assets.js");
 
-const REQUIRED_SECTOR04 = [
+const REQUIRED_RUNTIME_ASSETS = [
+  "workstation.felicia.video_frame",
+  "workstation.orpheus.glitch_frame",
+  "workstation.corporate_aircraft_panel",
+  "ui.standup.board",
+  "ui.standup.ticket_card",
+  "ui.standup.owner_badge",
+  "shipping.clerk.idle",
+  "shipping.label_printer",
+  "shipping.printed_label_success",
+  "shipping.dock_background",
+  "plating.operator.idle",
+  "plating.workstation_cracked",
+  "plating.line_stopped_display",
+  "plating.line_background",
   "sector04.access_guard.idle",
   "sector04.access_guard.attack",
   "sector04.access_guard.suppressed",
@@ -19,6 +33,16 @@ const REQUIRED_SECTOR04 = [
   "sector04.violin_note.fx",
   "sector04.terminal.symptoms"
 ];
+
+function expectedPerspective(slotId) {
+  const slot = Assets.byId(slotId);
+  if (!slot) return "front";
+  if (slotId.startsWith("sector04.identity_controller")) return "top";
+  if (slot.role === "ui" || slot.role === "verification" || slot.role === "presentation" || slot.role === "terminal") return "screen";
+  if (slot.role === "npc" || slot.role === "enemy" || slot.role === "clue" || slot.role === "foreshadow") return "side";
+  if (slot.role === "environment" || slot.role === "prop") return "side";
+  return "front";
+}
 
 function parsePng(filePath) {
   const buffer = fs.readFileSync(filePath);
@@ -100,7 +124,7 @@ function pixelStats(png) {
   return { opaque, transparent, whiteOpaque };
 }
 
-for (const slotId of REQUIRED_SECTOR04) {
+for (const slotId of REQUIRED_RUNTIME_ASSETS) {
   const filename = Assets.slotFilename(slotId);
   const filePath = path.join(__dirname, "assets", "campaign", filename);
   assert.ok(fs.existsSync(filePath), `${filename} must exist`);
@@ -115,7 +139,8 @@ for (const slotId of REQUIRED_SECTOR04) {
     filename,
     format: "png",
     transparent: true,
-    perspective: slotId.includes("access_guard") || slotId.includes("purple_damage") || slotId.includes("violin_note") ? "side" : "front"
+    perspective: expectedPerspective(slotId),
+    hasBakedLabels: slotId.includes("terminal") || slotId.includes("line_stopped")
   });
   assert.deepStrictEqual(candidate.errors, [], `${filename} contract errors: ${candidate.errors.join(", ")}`);
 }
