@@ -1,225 +1,227 @@
 /* ==========================================================================
-   v7.37 — THIRD SHIFT (Ghost Shift chapters 1–2 + mike_actions wiring)
-     · CH.1 AFTER HOURS — the v7.33 encrypted message becomes playable:
-       Industrial street 1 (the recycling facility) hides 3 evidence drives.
-       The brief's two-objective rule: clearing the street is one thing;
-       recovering every drive before leaving is the grade. Full recovery pays
-       the reveal — every drive was already wiped; they wanted the HARDWARE.
-     · CH.2 DEAD DROPS — one glowing cache per combat district (first visit
-       each): fragments of incident reports erased from the archive. At 3,
-       the distorted radio speaks: "You fix their systems. I remember what
-       they erased." Fragments file into the v7.33 intel docs.
-     · mike_actions, first honest wiring: A/S style nights end the EOD screen
-       with Mike's celebration pose from the sheet.
-   Chapters 3–5 wait on the Echo sprite (documented). No new frameworks:
-   missions ride NM state, the v7.25 engine, and the existing wraps.
+   v7.37 — NIGHT CRAWLER playable from the main menu (NIGHT_WALKER form)
+   Wrap-only (game.js / night_hooks.js untouched):
+     · Title-screen button "🌙 NIGHT CRAWLER" (v6.4 felTitle pattern) — starts
+       a run that drops straight into night mode at 16:00 as the glitch-void
+       walker instead of day-Mike. "← play as Mike instead" backlink clears it.
+     · Player night-mode draw reskinned to the NIGHT_WALKER atlas
+       (idle/walk/guard/light/launcher/dash/beam/hit/down/defeat) with a
+       procedural dark-silhouette fallback when the atlas payload is absent.
+     · Satellite beam special on S (unused by night mode): 2× sweep-finisher
+       damage, 1.5 s cooldown. All Mike damage/timing/collision numbers are
+       unchanged — pure reskin plus this one additive special.
    ========================================================================== */
 (function () {
   const VER = "7.37";
   if (window.v737) return;
-  const meta737 = () => { try { return (typeof S !== "undefined") && S ? (S.meta || (S.meta = {})) : null; } catch (e) { return null; } };
-  const now737 = () => performance.now();
+  window.v737 = true;
+  try {
+    const meta737 = () => { try { return (typeof S !== "undefined" && S) ? (S.meta || (S.meta = {})) : null; } catch (e) { return null; } };
+    const isNC = () => { const m = meta737(); return !!(m && m._char === "nightcrawler"); };
 
-  // ---------- payload plumbing ----------
-  let mikeImg737 = null;
-  try { // warm the decode at load — data-URL Images resolve asynchronously
-    if (typeof TO_MIKE_ACTIONS !== "undefined" && TO_MIKE_ACTIONS) { mikeImg737 = new Image(); mikeImg737.src = TO_MIKE_ACTIONS; }
-  } catch (e) { }
-  function mikePose737(frame) { // crop a mike_actions frame to a data URL (for DOM)
-    try {
-      if (typeof TO_MIKE_ACTIONS === "undefined" || typeof MIKE_ACTIONS === "undefined" || !TO_MIKE_ACTIONS) return null;
-      if (!mikeImg737) { mikeImg737 = new Image(); mikeImg737.src = TO_MIKE_ACTIONS; }
-      if (!mikeImg737.complete || !mikeImg737.naturalWidth) return null;
-      const A = MIKE_ACTIONS, fr = A.frames[frame] || A.frames[Object.keys(A.frames)[0]];
-      const CH = A.cellH || A.cell;
-      const c = document.createElement("canvas"); c.width = A.cell; c.height = CH;
-      c.getContext("2d").drawImage(mikeImg737, fr[0] * A.cell, fr[1] * CH, A.cell, CH, 0, 0, A.cell, CH);
-      return c.toDataURL();
-    } catch (e) { return null; }
-  }
+    // ---------- atlas (contract: window.NIGHT_WALKER from night_walker.atlas.js) ----------
+    let nwImg = null;
+    const NW = () => (typeof NIGHT_WALKER !== "undefined") ? NIGHT_WALKER : null;
+    function nwFrame(key, x, dx, dy, h, flip) {
+      try {
+        const A = NW();
+        if (!A || !A.src || !A.frames) throw 0;
+        if (!nwImg) { nwImg = new Image(); nwImg.src = A.src; }
+        if (!nwImg.complete || !nwImg.naturalWidth) throw 0;
+        const fr = A.frames[key] || A.frames[Object.keys(A.frames)[0]], C = A.cell || 64;
+        x.imageSmoothingEnabled = false;
+        if (flip) { x.save(); x.translate(dx, 0); x.scale(-1, 1); x.drawImage(nwImg, fr[0] * C, fr[1] * C, C, (A.cellH || C), -h / 2, dy - h, h, h); x.restore(); }
+        else x.drawImage(nwImg, fr[0] * C, fr[1] * C, C, (A.cellH || C), dx - h / 2, dy - h, h, h);
+        return true;
+      } catch (e) { return false; }
+    }
+    const nwKey = (row, i, n) => { const A = NW(); const k = row + (n ? (i % n) : 0); return (A && A.frames && A.frames[k]) ? k : row + "0"; };
 
-  // ---------- ch.1: the recycling facility (Industrial street 1) ----------
-  const DRIVES737 = [{ x: 620 }, { x: 1010 }, { x: 1420 }];
-  function missionActive737() {
-    try {
-      const m = meta737();
-      return typeof NM !== "undefined" && NM && NM.district === "industrial" && NM.street === 1 && m && m._v733ghost && !m._v737ch1;
-    } catch (e) { return false; }
-  }
-  function missionState737() {
-    if (!NM.mission737) NM.mission737 = { got: [false, false, false] };
-    return NM.mission737;
-  }
-  const _nmLoad737 = nmLoadDistrict;
-  window.nmLoadDistrict = function (id) {
-    _nmLoad737(id);
-    try {
-      if (typeof NM !== "undefined" && NM) {
-        NM._v737dropTaken = false; // cache availability re-evaluates per street
-        if (id === "industrial" && NM.street === 1) {
-          NM.mission737 = null; // fresh drives per attempt
-          if (missionActive737()) {
-            NM.msg = "♻️ THE RECYCLING PLANT — clear it AND recover the 3 evidence drives"; NM.msgT = now737() + 4200;
+    // ---------- procedural fallback (same footprint as the nm Mike figure) ----------
+    function drawNCFallback(x, NM, px, py, now) {
+      const w = NM.w, h = NM.h, cxp = px + w / 2, cyp = py + h / 2;
+      // glitch dash trail
+      if (NM.dashT > 0) {
+        x.save(); x.globalAlpha = .22;
+        for (let i = 1; i <= 3; i++) { x.fillStyle = "#b18cff"; x.fillRect(px - NM.face * i * 9, py + 6, w, h - 6); }
+        x.restore();
+      }
+      x.save();
+      x.translate(cxp, cyp);
+      if (NM.flip > 0) x.rotate((NM.face) * (16 - NM.flip) / 16 * Math.PI * 2);
+      if (NM.ifr > 0 && Math.floor(now / 80) % 2) x.globalAlpha = .45;
+      x.scale(NM.face, 1);
+      // dark silhouette body
+      x.fillStyle = "#0b0916"; x.beginPath(); x.roundRect(-w / 2, -h / 2, w, h, 6); x.fill();
+      x.strokeStyle = "#7b5cff88"; x.lineWidth = 2; x.stroke(); // void rim
+      // teal eye
+      x.fillStyle = "#2dd4bf"; x.fillRect(-3, -h / 2 + 6, 6, 3);
+      // jab / beam arm
+      if (NM.jabAnim > 0) {
+        x.fillStyle = "#1a1430";
+        if (NM.jabStage === 2) { x.fillRect(w / 2 - 2, -10, 18, 5); x.fillRect(w / 2 - 2, 2, 18, 5); }
+        else x.fillRect(w / 2 - 2, -4 + (NM.jabStage === 1 ? -5 : 0), 16, 6);
+      }
+      x.restore();
+      // purple wisps
+      x.save(); x.globalAlpha = .5 + .2 * Math.sin(now / 260);
+      x.fillStyle = "#8b5cf6";
+      for (let i = 0; i < 3; i++) {
+        const a = now / 420 + i * 2.1;
+        x.fillRect(cxp + Math.cos(a) * (w * .9) - 2, py + 6 + ((i * 13 + now / 30) % (h - 8)), 4, 4);
+      }
+      x.restore();
+      if (NM.block) { x.strokeStyle = "#2dd4bf"; x.lineWidth = 3; x.beginPath(); x.arc(cxp, cyp, 24, -1.2, 1.2); x.stroke(); }
+    }
+
+    // ---------- atlas-driven player figure ----------
+    function drawNCPlayer(x, NM, px, py, now) {
+      const h = NM.h * 1.5, cxp = px + NM.w / 2, flip = NM.face < 0, dy = py + NM.h;
+      const anim = (row, n, spd) => nwKey(row, Math.floor(now / (spd || 110)), n);
+      let key = null;
+      if (NM.hp <= 0) key = anim("defeat", 10, 90);
+      else if (NM._737beamT > 0) key = nwKey("beam", Math.floor((26 - NM._737beamT) / 26 * 8), 8);
+      else if (NM._737hitT > now) key = NM.onGround ? anim("hit", 6, 70) : anim("down", 6, 90);
+      else if (NM.dashT > 0) key = anim("dash", 6, 60);
+      else if (NM.jabAnim > 0) {
+        if (NM.jabStage === 2) key = nwKey("launcher", Math.floor((9 - NM.jabAnim) / 9 * 5), 5); // the sweep launches
+        else key = nwKey("light", NM.jabStage * 3 + Math.floor((9 - NM.jabAnim) / 9 * 3), 8);
+      }
+      else if (NM.block) key = anim("guard", 4, 140);
+      else if (NM.flip > 0 || !NM.onGround) key = anim("airrec", 4, 130);
+      else if (Math.abs(NM.vx) > .5) key = anim("walk", 6, 95);
+      else key = anim("idle", 6, 160);
+      if (!nwFrame(key, x, cxp, dy, h, flip)) drawNCFallback(x, NM, px, py, now);
+    }
+
+    // ---------- satellite beam special (S key — untouched by night mode) ----------
+    const BEAM_DMG = 36;          // 2× the sweep finisher's heavy damage (12 × 1.5 × 2)
+    const BEAM_CD = 1500;         // 1.5 s cooldown
+    function ncBeam() {
+      if (!NM || NM.drive || NM.block) return;
+      const now = performance.now();
+      if (NM._737beamCD && now < NM._737beamCD) return;
+      NM._737beamCD = now + BEAM_CD;
+      NM._737beamT = 26;
+      const bx0 = NM.face > 0 ? NM.x + NM.w : NM.x - 280, bw = 280;
+      let hit = false;
+      for (const e of NM.enemies) {
+        if (!e.alive || e.down > 0) continue;
+        if (e.x + e.w > bx0 && e.x < bx0 + bw && Math.abs(e.y - NM.y) < 52) {
+          hit = true;
+          e.hp -= BEAM_DMG; e.hitT = 8; e.kb = NM.face * 8;
+          NM.hitStop = Math.max(NM.hitStop, 5);
+          if (e.hp <= 0) {
+            e.alive = false; NM.kills++;
+            NM.hitStop = Math.max(NM.hitStop, 8);
+            const c = e.cash[0] + Math.floor(Math.random() * (e.cash[1] - e.cash[0] + 1));
+            NM.cash += c;
+            NM.msg = `🛰️ ${e.name} vaporized by the satellite beam! +$${c}`; NM.msgT = now + 1400;
           }
         }
       }
-    } catch (e) { }
-  };
-  const _stepNM737 = stepNM;
-  window.stepNM = function (dt) {
-    _stepNM737(dt);
+      NM.msg = hit ? (NM.msgT > now ? NM.msg : "🛰️ SATELLITE BEAM") : "🛰️ SATELLITE BEAM — nothing in the line";
+      NM.msgT = now + 900;
+      sfx(hit ? "hit" : "portal");
+      nmCheckClear();
+    }
+    function drawNCBeam(x, NM, now) {
+      if (!NM._737beamT || NM._737beamT <= 0) return;
+      const a = Math.min(1, NM._737beamT / 14);
+      const bx = NM.face > 0 ? NM.x + NM.w - NM.cam : NM.x - 280 - NM.cam;
+      x.save();
+      x.globalAlpha = .75 * a;
+      x.shadowColor = "#2dd4bf"; x.shadowBlur = 18;
+      x.fillStyle = "#2dd4bf"; x.fillRect(bx, NM.y + 4, 280, 7);
+      x.fillStyle = "#b18cff"; x.fillRect(bx, NM.y + 8, 280, 2);
+      x.restore();
+    }
+
+    // ---------- character select: newState + run start ----------
+    const __origNewState737 = newState;
+    newState = function () {
+      const s = __origNewState737();
+      try { if (localStorage.getItem("techops_char") === "nightcrawler") s.meta._char = "nightcrawler"; } catch (e) { }
+      return s;
+    };
+    function ncEnterNight(s) {
+      try {
+        if (!s || s.nightMode || typeof enterNight !== "function") return;
+        s.clock = Math.max(s.clock || 0, 16 * 60); // night door opens 16:00 — walk straight out
+        enterNight();
+      } catch (e) { }
+    }
+    const __origStartRun737 = startRun;
+    startRun = function () {
+      __origStartRun737();
+      try { if (isNC()) ncEnterNight(S); } catch (e) { }
+    };
+    // CONTINUE RUN restores the nightcrawler form (btn-continue handler is anonymous
+    // in game.js and synchronous, so this listener runs right after it)
     try {
-      if (typeof NM === "undefined" || !NM || NM.drive) return;
-      // drive pickups (walk over)
-      if (missionActive737()) {
-        const st = missionState737();
-        DRIVES737.forEach((d, i) => {
-          if (!st.got[i] && Math.abs(NM.x - d.x) < 34) {
-            st.got[i] = true;
-            NM.msg = `💾 EVIDENCE DRIVE ${st.got.filter(Boolean).length}/3 — securely erased… but present`; NM.msgT = now737() + 2200;
-            sfx("pickup");
-          }
-        });
-      }
-      // dead-drop caches: one per combat district, first visit
-      const m = meta737();
-      if (m && m._v733ghost && NM.district !== "waldo" && NM.district !== "home" && NM.street === 1) {
-        m._v737drops = m._v737drops || [];
-        if (!m._v737drops.includes(NM.district) && !NM._v737dropTaken) {
-          if (Math.abs(NM.x - 900) < 34) {
-            NM._v737dropTaken = true;
-            m._v737drops.push(NM.district);
-            m._v733docs = m._v733docs || []; m._v733docs.push("erased-report-" + NM.district);
-            const n = m._v737drops.length;
-            NM.msg = `📡 DEAD DROP — incident report fragment ${n} (name deleted from every record)`; NM.msgT = now737() + 3000;
-            sfx("promote"); save();
-            if (n >= 3 && !m._v737ch2) {
-              m._v737ch2 = true;
-              setTimeout(() => { try { toast("📻 DISTORTED TRANSMISSION — \"You fix their systems. I remember what they erased.\"", 5600); } catch (e) { } }, 1200);
-            }
-          }
+      const bc = document.getElementById("btn-continue");
+      if (bc) bc.addEventListener("click", () => { setTimeout(() => { try { if (isNC()) ncEnterNight(S); } catch (e) { } }, 0); });
+    } catch (e) { }
+
+    // a nightcrawler run stays a night run: dawn just rolls into the next night
+    if (typeof exitNight === "function") {
+      const __origExitNight737 = exitNight;
+      exitNight = function (homeSafe) {
+        __origExitNight737(homeSafe);
+        try { if (isNC()) ncEnterNight(S); } catch (e) { }
+      };
+    }
+
+    // ---------- night-mode wraps (no-ops unless playing the nightcrawler) ----------
+    if (typeof stepNM === "function") {
+      const __origStepNM737 = stepNM;
+      stepNM = function (dt) {
+        if (!isNC() || !NM) return __origStepNM737(dt);
+        const hp0 = NM.hp, f = dt * 60;
+        const sKey = keys.s;                              // S = satellite beam (unused by nm)
+        if (sKey && !NM._737sHeld) ncBeam();
+        NM._737sHeld = !!sKey;
+        if (NM._737beamT > 0) NM._737beamT -= f;
+        __origStepNM737(dt);
+        if (NM && NM.hp < hp0) NM._737hitT = performance.now() + 420; // hurt flash for the reskin
+      };
+    }
+    if (typeof drawNM === "function") {
+      const __origDrawNM737 = drawNM;
+      drawNM = function () {
+        if (!isNC() || !NM) return __origDrawNM737();
+        // hide Mike's procedural figure during the original pass (zero-size
+        // rects, no block arc), then draw the NIGHT_WALKER form on top — HUD,
+        // enemies, street and timing all stay byte-identical.
+        const svW = NM.w, svH = NM.h, svB = NM.block;
+        NM.w = 0; NM.h = 0; NM.block = false;
+        try { __origDrawNM737(); } finally { NM.w = svW; NM.h = svH; NM.block = svB; }
+        if (!NM.drive) {
+          drawNCBeam(ctx, NM, performance.now());
+          drawNCPlayer(ctx, NM, NM.x - NM.cam, NM.y, performance.now());
         }
-      }
-    } catch (e) { window.__err737 = String(e && e.stack || e); }
-  };
-  // caches reset per street load
-  const _nmLoad737b = window.nmLoadDistrict;
-  window.nmLoadDistrict = function (id) { _nmLoad737b(id); try { if (typeof NM !== "undefined" && NM) NM._v737dropTaken = false; } catch (e) { } };
+      };
+    }
 
-  // street clear grading — wrap the progression choke point
-  const _nmNextStage737 = nmNextStage;
-  window.nmNextStage = function () {
-    try {
-      if (missionActive737()) {
-        const st = missionState737(), got = st.got.filter(Boolean).length, m = meta737();
-        m._v737ch1 = true;
-        m._v733docs = m._v733docs || [];
-        if (got === 3) {
-          m._v733docs.push("after-hours-grade-A");
-          NM.cash += 60;
-          try { v725.play("gs1", null); } catch (e) { }
-          try { save(); } catch (e) { }
-        } else {
-          m._v733docs.push("after-hours-partial");
-          toast(`♻️ Street cleared, but ${3 - got} drive(s) left behind — someone else may find them.`, 4200);
-          try { save(); } catch (e) { }
-        }
-      }
-    } catch (e) { window.__err737b = String(e && e.stack || e); }
-    return _nmNextStage737();
-  };
+    // ---------- title screen: character select ----------
+    (function ncTitle() {
+      try {
+        const ts = document.getElementById("title-screen"); if (!ts) return;
+        const b = document.createElement("button");
+        b.id = "btn-nightcrawler";
+        b.textContent = "🌙 NIGHT CRAWLER";
+        b.onclick = () => { localStorage.setItem("techops_char", "nightcrawler"); document.getElementById("btn-start").click(); };
+        ts.appendChild(b);
+        const back = document.createElement("div");
+        back.id = "v737-backmike";
+        back.textContent = "← play as Mike instead";
+        back.style.display = localStorage.getItem("techops_char") === "nightcrawler" ? "block" : "none";
+        back.style.cursor = "pointer";
+        back.onclick = () => { localStorage.removeItem("techops_char"); location.reload(); };
+        ts.appendChild(back);
+      } catch (e) { }
+    })();
 
-  // ---------- mission rendering ----------
-  const _drawNM737 = drawNM;
-  window.drawNM = function () {
-    _drawNM737();
-    try {
-      if (typeof NM === "undefined" || !NM || NM.drive) return;
-      const now = now737();
-      ctx.save();
-      if (missionActive737()) {
-        const st = missionState737();
-        DRIVES737.forEach((d, i) => {
-          if (st.got[i]) return;
-          const dx = d.x - NM.cam, dy = NM_FLOOR;
-          ctx.fillStyle = ((now / 400) | 0) % 2 ? "#39d3ff" : "#e8ecff";
-          ctx.fillRect(dx - 7, dy - 26, 14, 18); // the drive
-          ctx.fillStyle = "#0b0e1d"; ctx.fillRect(dx - 4, dy - 22, 8, 5);
-          ctx.strokeStyle = "rgba(57,211,255,.6)"; ctx.beginPath(); ctx.arc(dx, dy - 17, 16 + 4 * Math.sin(now / 300), 0, 7); ctx.stroke();
-        });
-        // crescent-cursor tag on the wall (the calling card from v7.33)
-        const gx = 1500 - NM.cam, gy = NM_FLOOR - 160;
-        ctx.strokeStyle = "rgba(57,211,255,.7)"; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(gx, gy, 24, .8, 5.6); ctx.stroke();
-        if (((now / 500) | 0) % 2) { ctx.fillStyle = "rgba(57,211,255,.7)"; ctx.fillRect(gx + 18, gy - 9, 4, 18); }
-        // objective strip
-        ctx.fillStyle = "#000a"; ctx.fillRect(18, 84, 260, 24);
-        ctx.fillStyle = "#39d3ff"; ctx.font = "bold 12px monospace"; ctx.textAlign = "left";
-        ctx.fillText(`EVIDENCE ${st.got.filter(Boolean).length}/3`, 28, 100);
-      }
-      // dead-drop caches
-      const m = meta737();
-      if (m && m._v733ghost && NM.district !== "waldo" && NM.district !== "home" && NM.street === 1 && !(m._v737drops || []).includes(NM.district) && !NM._v737dropTaken) {
-        const dx = 900 - NM.cam, dy = NM_FLOOR;
-        ctx.fillStyle = ((now / 350) | 0) % 2 ? "#ffd166" : "#e8ecff";
-        ctx.fillRect(dx - 8, dy - 22, 16, 14); // the cache
-        ctx.strokeStyle = "rgba(255,209,102,.6)"; ctx.beginPath(); ctx.arc(dx, dy - 15, 14 + 3 * Math.sin(now / 280), 0, 7); ctx.stroke();
-      }
-      ctx.restore();
-    } catch (e) { }
-  };
-
-  // ---------- ch.1 reveal cinematic ----------
-  if (window.v725 && v725.register && v725.h) {
-    const H = v725.h, LW = H.LW, LH = H.LH, BAR = H.BAR;
-    const GREEN = H.GREEN, CYAN = H.CYAN, RED = H.RED, DIM = H.DIM, GOLD = H.GOLD;
-    const GS1 = [
-      { dur: 2400, cap: "AFTER HOURS — the recycling plant, picked clean.", draw(x, tm) { H.bg(x, "#0d0906"); H.rackRow(x, tm, BAR + 90, 8, .3); H.txt(x, "E-WASTE RECLAMATION — CLOSED 2019", LW / 2, BAR + 60, 16, DIM, "center", true); } },
-      { dur: 2600, cap: "Three drives recovered. Every one already wiped. Securely.", draw(x, tm) { H.bg(x, "#0d0906"); for (let i = 0; i < 3; i++) { x.fillStyle = "#10152a"; H.rr(x, LW / 2 - 220 + i * 160, BAR + 140, 120, 80, 6); x.fill(); x.strokeStyle = CYAN; H.rr(x, LW / 2 - 220 + i * 160, BAR + 140, 120, 80, 6); x.stroke(); H.txt(x, "WIPED", LW / 2 - 160 + i * 160, BAR + 182, 15, RED, "center", true); } } },
-      { dur: 2600, cap: "They wanted the hardware, not the data. Someone is rebuilding something.", draw(x, tm) { H.bg(x, "#0a0714"); x.strokeStyle = "rgba(57,211,255,.7)"; x.lineWidth = 4; x.beginPath(); x.arc(LW / 2, BAR + 210, 60, .8, 5.6); x.stroke(); if (((tm / 500) | 0) % 2) { x.fillStyle = "rgba(57,211,255,.7)"; x.fillRect(LW / 2 + 44, BAR + 186, 9, 44); } H.txt(x, "A CRESCENT AROUND A BLINKING CURSOR", LW / 2, BAR + 310, 15, CYAN, "center", true); } },
-      { dur: 2600, cap: "INVESTIGATION GRADE: A — the Ghost Shift is yours now.", draw(x, tm) { H.bg(x, "#0a140f"); H.panel(x, LW / 2 - 320, BAR + 100, 640, 100, "#0d1f16"); H.txt(x, "INVESTIGATION GRADE: A", LW / 2, BAR + 132, 20, GOLD, "center", true); H.txt(x, "AFTER HOURS — DOCUMENTED", LW / 2, BAR + 162, 14, GREEN, "center", true); } },
-    ];
-    v725.register("gs1", { title: "GHOST SHIFT I — AFTER HOURS", shots: GS1, cues: { 2: "beep440", 3: "chime" } });
-  }
-
-  // ---------- mike_actions: the EOD celebration on a stylish night ----------
-  const _endOfDay737 = endOfDay;
-  window.endOfDay = function () {
-    _endOfDay737();
-    try {
-      const m = meta737();
-      const rank = m && m._v737lastStyle;
-      if (rank === "A" || rank === "S") {
-        const url = mikePose737("f170"); // celebration pose row
-        if (url) {
-          const sum = document.getElementById("eod-summary");
-          if (sum && !sum.querySelector(".v737-pose")) {
-            const im = document.createElement("img");
-            im.src = url; im.className = "v737-pose"; im.alt = "";
-            im.style.cssText = "display:block;margin:10px auto 0;width:112px;height:120px;image-rendering:pixelated";
-            sum.appendChild(im);
-            sum.innerHTML += `<small>Night style rank: <b style="color:${rank === "S" ? "#ffd166" : "#39ff88"}">${rank}</b> — the city noticed.</small>`;
-          }
-        }
-      }
-    } catch (e) { }
-  };
-  const _exitNight737 = exitNight;
-  window.exitNight = function (homeSafe) {
-    try {
-      const m = meta737();
-      if (m && typeof NM !== "undefined" && NM && NM._v736style) m._v737lastStyle = NM._v736style.rank;
-    } catch (e) { }
-    return _exitNight737(homeSafe);
-  };
-
-  // ---------- exports ----------
-  window.v737 = {
-    version: VER,
-    state: () => { const m = meta737() || {}; return { ch1: !!m._v737ch1, ch2: !!m._v737ch2, drops: m._v737drops || [], docs: m._v733docs || [], lastStyle: m._v737lastStyle || null }; },
-    drives: () => { try { return missionState737().got.slice(); } catch (e) { return []; } },
-    play: () => v725.play("gs1", null),
-    mikePose: mikePose737,
-  };
-  console.log("[v7.37] Third Shift loaded — the plant remembers");
+    console.log("[v7.37] night crawler playable loaded");
+  } catch (e) { try { console.warn("[v7.37] load error", e); } catch (_) { } }
 })();
