@@ -76,6 +76,10 @@
     return root && root.TechOpsSector04 ? root.TechOpsSector04 : null;
   }
 
+  function sector04Runtime() {
+    return root && root.TechOpsSector04Runtime ? root.TechOpsSector04Runtime : null;
+  }
+
   function storage() {
     return root && root.localStorage ? root.localStorage : null;
   }
@@ -282,6 +286,11 @@
       "Rain strikes the hangar roof. Interfaces become physical. Permissions become doors.<br><br>Damage can suppress the Access Guard. Understanding can defeat it.",
       [
         { t: "Enter Sector 04", f: function () {
+          var sxRuntime = sector04Runtime();
+          if (sxRuntime && typeof sxRuntime.enterBrowser === "function" && root.document) {
+            sxRuntime.enterBrowser();
+            return;
+          }
           var sx = sector04();
           if (sx) {
             var campaign = loadState();
