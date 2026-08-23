@@ -89,6 +89,10 @@ for (const slotId of requiredSector04Slots) {
 assert.strictEqual(Runtime.presentationForSlot("sector04.access_guard.idle").anchor, "feet");
 assert.strictEqual(Runtime.presentationForSlot("sector04.identity_controller.active").anchor, "center");
 assert.strictEqual(Runtime.presentationForSlot("sector04.terminal.symptoms").exactText, "YOU ARE FIXING THE SYMPTOMS.");
+assert.strictEqual(Runtime.presentationForSlot("sector04.access_guard.respawn").frames.length, 2);
+assert.deepStrictEqual(Runtime.frameForSlot("sector04.access_guard.respawn", 0), { x: 0, y: 0, w: 160, h: 256 });
+assert.deepStrictEqual(Runtime.frameForSlot("sector04.access_guard.respawn", 140), { x: 160, y: 0, w: 160, h: 256 });
+assert.strictEqual(Runtime.frameForSlot("sector04.access_guard.idle", 0), null);
 
 let resolver = Runtime.createAssetResolver({ basePath: "/runtime-assets" });
 let record = resolver.requestSlot("sector04.identity_controller.active");
@@ -99,6 +103,7 @@ let fakeSrc = "";
 function FakeImage() {}
 Object.defineProperty(FakeImage.prototype, "src", {
   set(value) {
+    this._src = value;
     fakeSrc = value;
     if (this.onload) this.onload();
   }
@@ -116,13 +121,14 @@ function fakeCtx() {
   const calls = [];
   return {
     calls,
+    drawImageArgs: [],
     canvas: { width: 960 },
     save() { calls.push("save"); },
     restore() { calls.push("restore"); },
     fillRect() { calls.push("fillRect"); },
     strokeRect() { calls.push("strokeRect"); },
     fillText() { calls.push("fillText"); },
-    drawImage() { calls.push("drawImage"); },
+    drawImage(...args) { calls.push("drawImage"); this.drawImageArgs.push(args); },
     beginPath() { calls.push("beginPath"); },
     arc() { calls.push("arc"); },
     moveTo() { calls.push("moveTo"); },
@@ -142,6 +148,35 @@ assert.strictEqual(Runtime.drawGeneratedAsset(ctx, "sector04.terminal.symptoms",
 assert.ok(ctx.calls.includes("strokeRect"));
 assert.ok(ctx.calls.filter(call => call === "fillRect").length >= 3);
 
+const readyResolver = Runtime.createAssetResolver({ Image: FakeImage });
+for (const slotId of requiredSector04Slots) readyResolver.requestSlot(slotId);
+night._sector04.assets = readyResolver;
+global.performance = { now: () => 140 };
+night.enemies[0].windup = 3;
+ctx = fakeCtx();
+assert.strictEqual(Runtime.drawOverlay(ctx, night, 960), true);
+assert.ok(
+  ctx.drawImageArgs.some(args => args.length === 5 && args[0]._src.endsWith("sector04.access_guard.attack.png")),
+  "attack-state guard must draw the attack asset instead of idle"
+);
+
+night.enemies[0].alive = false;
+night._sector04.respawnFxUntil = 500;
+ctx = fakeCtx();
+assert.strictEqual(Runtime.drawOverlay(ctx, night, 960), true);
+assert.ok(
+  ctx.drawImageArgs.some(args =>
+    args.length === 9 &&
+    args[1] === 160 &&
+    args[3] === 160 &&
+    args[4] === 256
+  ),
+  "respawn sheet must crop an animation frame instead of drawing the whole placeholder sheet"
+);
+
+campaign = prepare(true);
+night = nightState();
+Runtime.createEncounter(campaign, night);
 let result = Runtime.hitGuard(campaign, night, 100, 1000);
 assert.strictEqual(result.suppressed, true);
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).spawned, false);
