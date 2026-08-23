@@ -34,6 +34,23 @@ const REQUIRED_RUNTIME_ASSETS = [
   "sector04.terminal.symptoms"
 ];
 
+const ACT1_PRODUCTION_SOURCE_ASSETS = [
+  "workstation.felicia.video_frame",
+  "workstation.orpheus.glitch_frame",
+  "workstation.corporate_aircraft_panel",
+  "ui.standup.board",
+  "ui.standup.ticket_card",
+  "ui.standup.owner_badge",
+  "shipping.clerk.idle",
+  "shipping.label_printer",
+  "shipping.printed_label_success",
+  "shipping.dock_background",
+  "plating.operator.idle",
+  "plating.workstation_cracked",
+  "plating.line_stopped_display",
+  "plating.line_background"
+];
+
 function expectedPerspective(slotId) {
   const slot = Assets.byId(slotId);
   if (!slot) return "front";
@@ -143,6 +160,25 @@ for (const slotId of REQUIRED_RUNTIME_ASSETS) {
     hasBakedLabels: slotId.includes("terminal") || slotId.includes("line_stopped")
   });
   assert.deepStrictEqual(candidate.errors, [], `${filename} contract errors: ${candidate.errors.join(", ")}`);
+}
+
+const manifestPath = path.join(__dirname, "assets", "campaign", "production_source_manifest.json");
+assert.ok(fs.existsSync(manifestPath), "production source manifest must exist");
+const productionManifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+assert.strictEqual(productionManifest.kind, "techops_hero_production_source_extract_manifest");
+assert.strictEqual(productionManifest.scope, "Act I day-job runtime PNGs");
+const productionEntries = new Map((productionManifest.entries || []).map((entry) => [entry.slot_id, entry]));
+
+for (const slotId of ACT1_PRODUCTION_SOURCE_ASSETS) {
+  const entry = productionEntries.get(slotId);
+  assert.ok(entry, `${slotId} must have production source traceability`);
+  assert.strictEqual(entry.filename, Assets.slotFilename(slotId), `${slotId} manifest filename must match slot filename`);
+  assert.ok(/\.jpeg$/i.test(entry.source), `${slotId} must trace back to a source JPEG sheet`);
+  assert.ok(Array.isArray(entry.crop) && entry.crop.length === 4, `${slotId} must record a source crop box`);
+  assert.ok(Array.isArray(entry.canvas) && entry.canvas.length === 2, `${slotId} must record runtime canvas dimensions`);
+  assert.ok(entry.opaque_pixels > 80, `${slotId} manifest must record visible art`);
+  assert.ok(entry.transparent_pixels > entry.opaque_pixels * 0.2, `${slotId} manifest must record transparent padding`);
+  assert.ok(entry.white_opaque_ratio < 0.2, `${slotId} must pass white-background QC`);
 }
 
 console.log("Campaign runtime assets: PASS");

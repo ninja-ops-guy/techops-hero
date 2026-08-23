@@ -1,0 +1,421 @@
+{
+  "kind": "techops_hero_production_source_extract_manifest",
+  "version": 1,
+  "scope": "Act I day-job runtime PNGs",
+  "source_policy": "user_provided_asset_library_sheets_from_upload_workspace",
+  "qc_gates": [
+    "source crop chosen from identifiable production-intent subject",
+    "white sheet background removed to alpha",
+    "transparent runtime padding preserved",
+    "baked labels limited to UI, screen, and verification assets",
+    "manifest records crop traceability"
+  ],
+  "entries": [
+    {
+      "slot_id": "workstation.corporate_aircraft_panel",
+      "source": "447C6CBF-89A4-4944-815E-58EE4F913E89.jpeg",
+      "crop": [
+        20,
+        105,
+        580,
+        485
+      ],
+      "canvas": [
+        640,
+        432
+      ],
+      "mode": "panel",
+      "qc": "source panel is clean, readable, and matches the corporate-video aircraft beat",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "workstation.corporate_aircraft_panel.png",
+      "content_bbox": [
+        40,
+        26,
+        600,
+        406
+      ],
+      "opaque_pixels": 210976,
+      "transparent_pixels": 65504,
+      "white_opaque_pixels": 126,
+      "white_opaque_ratio": 0.0006
+    },
+    {
+      "slot_id": "workstation.felicia.video_frame",
+      "source": "447C6CBF-89A4-4944-815E-58EE4F913E89.jpeg",
+      "crop": [
+        615,
+        20,
+        1008,
+        488
+      ],
+      "canvas": [
+        512,
+        512
+      ],
+      "mode": "panel",
+      "qc": "source panel provides Felicia violin identity without pre-reveal Violinist labeling",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "workstation.felicia.video_frame.png",
+      "content_bbox": [
+        59,
+        22,
+        452,
+        490
+      ],
+      "opaque_pixels": 182575,
+      "transparent_pixels": 79569,
+      "white_opaque_pixels": 57,
+      "white_opaque_ratio": 0.0003
+    },
+    {
+      "slot_id": "workstation.orpheus.glitch_frame",
+      "source": "447C6CBF-89A4-4944-815E-58EE4F913E89.jpeg",
+      "crop": [
+        18,
+        530,
+        465,
+        1015
+      ],
+      "canvas": [
+        512,
+        512
+      ],
+      "mode": "panel",
+      "qc": "source panel includes exact ORPHEUS visual language and glitch treatment",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "workstation.orpheus.glitch_frame.png",
+      "content_bbox": [
+        39,
+        14,
+        473,
+        498
+      ],
+      "opaque_pixels": 205741,
+      "transparent_pixels": 56403,
+      "white_opaque_pixels": 1086,
+      "white_opaque_ratio": 0.0053
+    },
+    {
+      "slot_id": "ui.standup.board",
+      "source": "50E9D510-F28F-4A50-8B53-69EA441E2830.jpeg",
+      "crop": [
+        20,
+        75,
+        1426,
+        1008
+      ],
+      "canvas": [
+        1600,
+        1200
+      ],
+      "mode": "ui_panel",
+      "qc": "full standup board is legible enough for native UI context and ticket-ownership beat",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "ui.standup.board.png",
+      "content_bbox": [
+        97,
+        253,
+        1503,
+        1186
+      ],
+      "opaque_pixels": 1294651,
+      "transparent_pixels": 625349,
+      "white_opaque_pixels": 3844,
+      "white_opaque_ratio": 0.003
+    },
+    {
+      "slot_id": "ui.standup.ticket_card",
+      "source": "50E9D510-F28F-4A50-8B53-69EA441E2830.jpeg",
+      "crop": [
+        323,
+        688,
+        583,
+        855
+      ],
+      "canvas": [
+        320,
+        224
+      ],
+      "mode": "ui_card",
+      "qc": "label-printer ticket card directly matches Shipping Printer Offline story beat",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "ui.standup.ticket_card.png",
+      "content_bbox": [
+        30,
+        43,
+        290,
+        210
+      ],
+      "opaque_pixels": 43410,
+      "transparent_pixels": 28270,
+      "white_opaque_pixels": 200,
+      "white_opaque_ratio": 0.0046
+    },
+    {
+      "slot_id": "ui.standup.owner_badge",
+      "source": "50E9D510-F28F-4A50-8B53-69EA441E2830.jpeg",
+      "crop": [
+        1130,
+        112,
+        1335,
+        178
+      ],
+      "canvas": [
+        256,
+        128
+      ],
+      "mode": "ui_badges",
+      "qc": "team ownership avatars support the all-tickets-owned mechanic",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "ui.standup.owner_badge.png",
+      "content_bbox": [
+        25,
+        48,
+        230,
+        114
+      ],
+      "opaque_pixels": 13530,
+      "transparent_pixels": 19238,
+      "white_opaque_pixels": 25,
+      "white_opaque_ratio": 0.0018
+    },
+    {
+      "slot_id": "shipping.clerk.idle",
+      "source": "A80875E1-1183-46B7-811F-06291CAE24B3.jpeg",
+      "crop": [
+        5,
+        5,
+        155,
+        405
+      ],
+      "canvas": [
+        256,
+        512
+      ],
+      "mode": "character",
+      "qc": "primary Shipping clerk pose is high resolution and readable after alpha cleanup",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "shipping.clerk.idle.png",
+      "content_bbox": [
+        57,
+        113,
+        199,
+        498
+      ],
+      "opaque_pixels": 33071,
+      "transparent_pixels": 98001,
+      "white_opaque_pixels": 256,
+      "white_opaque_ratio": 0.0077
+    },
+    {
+      "slot_id": "shipping.label_printer",
+      "source": "A80875E1-1183-46B7-811F-06291CAE24B3.jpeg",
+      "crop": [
+        690,
+        48,
+        775,
+        155
+      ],
+      "canvas": [
+        192,
+        192
+      ],
+      "mode": "prop",
+      "qc": "compact printer prop matches the printer-offline ticket",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "shipping.label_printer.png",
+      "content_bbox": [
+        57,
+        87,
+        135,
+        178
+      ],
+      "opaque_pixels": 5814,
+      "transparent_pixels": 31050,
+      "white_opaque_pixels": 81,
+      "white_opaque_ratio": 0.0139
+    },
+    {
+      "slot_id": "shipping.printed_label_success",
+      "source": "A80875E1-1183-46B7-811F-06291CAE24B3.jpeg",
+      "crop": [
+        900,
+        55,
+        1024,
+        190
+      ],
+      "canvas": [
+        256,
+        192
+      ],
+      "mode": "verification_screen",
+      "qc": "ShipScan Pro success screen carries the green check verification state",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "shipping.printed_label_success.png",
+      "content_bbox": [
+        75,
+        69,
+        180,
+        178
+      ],
+      "opaque_pixels": 8809,
+      "transparent_pixels": 40343,
+      "white_opaque_pixels": 33,
+      "white_opaque_ratio": 0.0037
+    },
+    {
+      "slot_id": "shipping.dock_background",
+      "source": "A80875E1-1183-46B7-811F-06291CAE24B3.jpeg",
+      "crop": [
+        1005,
+        585,
+        1526,
+        858
+      ],
+      "canvas": [
+        768,
+        432
+      ],
+      "mode": "environment",
+      "qc": "assembled shipping dock environment is style-matched and scene-readable",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "shipping.dock_background.png",
+      "content_bbox": [
+        124,
+        153,
+        643,
+        418
+      ],
+      "opaque_pixels": 135781,
+      "transparent_pixels": 195995,
+      "white_opaque_pixels": 136,
+      "white_opaque_ratio": 0.001
+    },
+    {
+      "slot_id": "plating.operator.idle",
+      "source": "11F70540-0D02-43B4-8461-46FF96C295AF.jpeg",
+      "crop": [
+        8,
+        420,
+        75,
+        585
+      ],
+      "canvas": [
+        192,
+        384
+      ],
+      "mode": "character",
+      "qc": "plating operator pose is clean and canon-safe for the production-line ticket",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "plating.operator.idle.png",
+      "content_bbox": [
+        66,
+        218,
+        126,
+        370
+      ],
+      "opaque_pixels": 5356,
+      "transparent_pixels": 68372,
+      "white_opaque_pixels": 55,
+      "white_opaque_ratio": 0.0103
+    },
+    {
+      "slot_id": "plating.workstation_cracked",
+      "source": "11F70540-0D02-43B4-8461-46FF96C295AF.jpeg",
+      "crop": [
+        862,
+        292,
+        1002,
+        435
+      ],
+      "canvas": [
+        256,
+        224
+      ],
+      "mode": "prop",
+      "qc": "cracked workstation prop clearly communicates the failed-plating-workstation issue",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "plating.workstation_cracked.png",
+      "content_bbox": [
+        58,
+        67,
+        198,
+        210
+      ],
+      "opaque_pixels": 18002,
+      "transparent_pixels": 39342,
+      "white_opaque_pixels": 21,
+      "white_opaque_ratio": 0.0012
+    },
+    {
+      "slot_id": "plating.line_stopped_display",
+      "source": "11F70540-0D02-43B4-8461-46FF96C295AF.jpeg",
+      "crop": [
+        1212,
+        292,
+        1432,
+        443
+      ],
+      "canvas": [
+        384,
+        256
+      ],
+      "mode": "verification_screen",
+      "qc": "LINE STOPPED display has baked canonical operational text and is intentionally preserved",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "plating.line_stopped_display.png",
+      "content_bbox": [
+        84,
+        91,
+        300,
+        242
+      ],
+      "opaque_pixels": 32222,
+      "transparent_pixels": 66082,
+      "white_opaque_pixels": 25,
+      "white_opaque_ratio": 0.0008
+    },
+    {
+      "slot_id": "plating.line_background",
+      "source": "11F70540-0D02-43B4-8461-46FF96C295AF.jpeg",
+      "crop": [
+        866,
+        580,
+        1525,
+        844
+      ],
+      "canvas": [
+        768,
+        432
+      ],
+      "mode": "environment",
+      "qc": "assembled plating line background gives the day-job scene production context",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "plating.line_background.png",
+      "content_bbox": [
+        54,
+        154,
+        713,
+        418
+      ],
+      "opaque_pixels": 173089,
+      "transparent_pixels": 158687,
+      "white_opaque_pixels": 41,
+      "white_opaque_ratio": 0.0002
+    }
+  ]
+}
