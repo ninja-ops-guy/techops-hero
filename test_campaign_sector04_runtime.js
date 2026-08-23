@@ -1,4 +1,6 @@
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
 
 global.TechOpsCampaign = require("./campaign_act1.js");
 global.TechOpsCampaignAssets = require("./campaign_assets.js");
@@ -59,6 +61,34 @@ assert.strictEqual(Runtime.atlasUrl("sector04.access_guard.respawn"), "assets/ca
 assert.strictEqual(night._sector04.assets.get("sector04.access_guard.idle").status, "unavailable");
 assert.ok(night._sector04.inspectables.some(p => p.assetSlot === "sector04.terminal.symptoms"));
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).active, true);
+
+const requiredSector04Slots = [
+  "sector04.access_guard.idle",
+  "sector04.access_guard.attack",
+  "sector04.access_guard.suppressed",
+  "sector04.access_guard.respawn",
+  "sector04.purple_damage.enemy",
+  "sector04.purple_damage.fx",
+  "sector04.identity_controller.active",
+  "sector04.identity_controller.severed",
+  "sector04.identity_controller.spark_fx",
+  "sector04.locked_violin_door",
+  "sector04.violin_note.fx",
+  "sector04.terminal.symptoms"
+];
+assert.deepStrictEqual(Runtime.requiredPresentationSlots().sort(), requiredSector04Slots.slice().sort());
+for (const slotId of requiredSector04Slots) {
+  const presentation = Runtime.presentationForSlot(slotId);
+  assert.ok(presentation, `${slotId} needs runtime presentation metadata`);
+  assert.ok(["enemy", "clue", "prop", "fx", "terminal"].includes(presentation.layer), `${slotId} has invalid render layer`);
+  assert.ok(["feet", "center"].includes(presentation.anchor), `${slotId} has invalid render anchor`);
+  assert.ok(presentation.width >= 40 && presentation.height >= 40, `${slotId} must be scaled to readable runtime size`);
+  assert.ok(night._sector04.assets.get(slotId), `${slotId} must be preloaded in the encounter asset resolver`);
+  assert.ok(fs.existsSync(path.join(__dirname, "assets", "campaign", global.TechOpsCampaignAssets.slotFilename(slotId))), `${slotId} PNG must exist`);
+}
+assert.strictEqual(Runtime.presentationForSlot("sector04.access_guard.idle").anchor, "feet");
+assert.strictEqual(Runtime.presentationForSlot("sector04.identity_controller.active").anchor, "center");
+assert.strictEqual(Runtime.presentationForSlot("sector04.terminal.symptoms").exactText, "YOU ARE FIXING THE SYMPTOMS.");
 
 let resolver = Runtime.createAssetResolver({ basePath: "/runtime-assets" });
 let record = resolver.requestSlot("sector04.identity_controller.active");

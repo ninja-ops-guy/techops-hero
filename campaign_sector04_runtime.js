@@ -21,6 +21,36 @@
     { id: "symptoms_terminal", x: 1660, y: FLOOR - 58, label: "Terminal", requiresController: true, assetSlot: "sector04.terminal.symptoms" }
   ];
 
+  var PRESENTATION = {
+    "sector04.access_guard.idle": { layer: "enemy", anchor: "feet", width: 54, height: 70, fallback: true },
+    "sector04.access_guard.attack": { layer: "enemy", anchor: "feet", width: 64, height: 70, fallback: true },
+    "sector04.access_guard.suppressed": { layer: "enemy", anchor: "feet", width: 78, height: 52, fallback: true },
+    "sector04.access_guard.respawn": { layer: "fx", anchor: "center", width: 72, height: 72, fallback: true },
+    "sector04.purple_damage.enemy": { layer: "clue", anchor: "feet", width: 76, height: 54, fallback: true },
+    "sector04.purple_damage.fx": { layer: "fx", anchor: "center", width: 58, height: 46, fallback: true },
+    "sector04.identity_controller.active": { layer: "prop", anchor: "center", width: 48, height: 48, fallback: true },
+    "sector04.identity_controller.severed": { layer: "prop", anchor: "center", width: 54, height: 50, fallback: true },
+    "sector04.identity_controller.spark_fx": { layer: "fx", anchor: "center", width: 42, height: 42, fallback: true },
+    "sector04.locked_violin_door": { layer: "prop", anchor: "feet", width: 52, height: 86, fallback: true },
+    "sector04.violin_note.fx": { layer: "fx", anchor: "center", width: 42, height: 42, fallback: true },
+    "sector04.terminal.symptoms": { layer: "terminal", anchor: "center", width: 126, height: 68, fallback: true, exactText: "YOU ARE FIXING THE SYMPTOMS." }
+  };
+
+  var GENERATED = {
+    "sector04.access_guard.idle": { kind: "guard", accent: "#8b5cf6" },
+    "sector04.access_guard.attack": { kind: "guard_attack", accent: "#a855f7" },
+    "sector04.access_guard.suppressed": { kind: "guard_down", accent: "#7c3aed" },
+    "sector04.access_guard.respawn": { kind: "respawn", accent: "#c084fc" },
+    "sector04.purple_damage.enemy": { kind: "damaged_enemy", accent: "#a855f7" },
+    "sector04.purple_damage.fx": { kind: "burn_fx", accent: "#d946ef" },
+    "sector04.identity_controller.active": { kind: "controller", accent: "#a855f7" },
+    "sector04.identity_controller.severed": { kind: "controller_severed", accent: "#f97316" },
+    "sector04.identity_controller.spark_fx": { kind: "spark_fx", accent: "#f59e0b" },
+    "sector04.locked_violin_door": { kind: "locked_door", accent: "#a855f7" },
+    "sector04.violin_note.fx": { kind: "violin_note", accent: "#d946ef" },
+    "sector04.terminal.symptoms": { kind: "terminal", accent: "#c084fc" }
+  };
+
   function campaignApi() {
     if (!root || !root.TechOpsCampaign) throw new Error("TechOpsCampaign is required");
     return root.TechOpsCampaign;
@@ -53,22 +83,16 @@
     return normalizeBasePath(basePath) + slotId + ".atlas.json";
   }
 
+  function presentationForSlot(slotId) {
+    return PRESENTATION[slotId] || null;
+  }
+
+  function requiredPresentationSlots() {
+    return Object.keys(PRESENTATION);
+  }
+
   function generatedAssetSpec(slotId) {
-    var map = {
-      "sector04.access_guard.idle": { kind: "guard", accent: "#8b5cf6" },
-      "sector04.access_guard.attack": { kind: "guard_attack", accent: "#a855f7" },
-      "sector04.access_guard.suppressed": { kind: "guard_down", accent: "#7c3aed" },
-      "sector04.access_guard.respawn": { kind: "respawn", accent: "#c084fc" },
-      "sector04.purple_damage.enemy": { kind: "damaged_enemy", accent: "#a855f7" },
-      "sector04.purple_damage.fx": { kind: "burn_fx", accent: "#d946ef" },
-      "sector04.identity_controller.active": { kind: "controller", accent: "#a855f7" },
-      "sector04.identity_controller.severed": { kind: "controller_severed", accent: "#f97316" },
-      "sector04.identity_controller.spark_fx": { kind: "spark_fx", accent: "#f59e0b" },
-      "sector04.locked_violin_door": { kind: "locked_door", accent: "#a855f7" },
-      "sector04.violin_note.fx": { kind: "violin_note", accent: "#d946ef" },
-      "sector04.terminal.symptoms": { kind: "terminal", accent: "#c084fc" }
-    };
-    return map[slotId] || { kind: "unknown", accent: "#38bdf8" };
+    return GENERATED[slotId] || { kind: "unknown", accent: "#38bdf8" };
   }
 
   function drawGeneratedAsset(ctx, slotId, sx, sy, w, h) {
@@ -153,7 +177,7 @@
 
   function createAssetResolver(options) {
     options = options || {};
-    var basePath = normalizeBasePath(options.basePath || (root && root.TECHOPS_CAMPAIGN_ASSET_BASE) || DEFAULT_ASSET_BASE);
+    var basePath = normalizeBasePath(options.basePath || root && root.TECHOPS_CAMPAIGN_ASSET_BASE || DEFAULT_ASSET_BASE);
     var ImageCtor = options.Image || root && root.Image;
     var fetchFn = options.fetch || root && root.fetch;
     var records = {};
@@ -213,13 +237,12 @@
       return record;
     }
 
-    return {
-      basePath: basePath,
-      records: records,
-      requestSlot: requestSlot,
-      requestAtlas: requestAtlas,
-      get: ensure
-    };
+    return { basePath: basePath, records: records, requestSlot: requestSlot, requestAtlas: requestAtlas, get: ensure };
+  }
+
+  function preloadPresentationAssets(resolver) {
+    if (!resolver || typeof resolver.requestSlot !== "function") return [];
+    return requiredPresentationSlots().map(function (slotId) { return resolver.requestSlot(slotId); });
   }
 
   function storage() {
@@ -251,7 +274,9 @@
       kind: "access_guard",
       campaignSector04Guard: true,
       assetSlot: "sector04.access_guard.idle",
+      attackAssetSlot: "sector04.access_guard.attack",
       suppressedAssetSlot: "sector04.access_guard.suppressed",
+      respawnAssetSlot: "sector04.access_guard.respawn",
       x: 780,
       y: FLOOR - 38,
       w: 30,
@@ -286,27 +311,14 @@
 
   function ensureNight(night) {
     if (!night) throw new Error("A Night mode state is required");
-    night._sector04 = night._sector04 || {
-      active: true,
-      prompt: "",
-      lastInteraction: null,
-      completed: false
-    };
+    night._sector04 = night._sector04 || { active: true, prompt: "", lastInteraction: null, completed: false };
     night._sector04.active = true;
     night._sector04.assets = night._sector04.assets || createAssetResolver();
+    preloadPresentationAssets(night._sector04.assets);
     night._sector04.inspectables = POINTS.map(function (p) {
-      return {
-        id: p.id,
-        x: p.x,
-        y: p.y,
-        label: p.label,
-        requiresController: p.requiresController,
-        assetSlot: p.assetSlot
-      };
+      return { id: p.id, x: p.x, y: p.y, label: p.label, requiresController: p.requiresController, assetSlot: p.assetSlot };
     });
-    night._sector04.inspectables.forEach(function (p) {
-      night._sector04.assets.requestSlot(p.assetSlot);
-    });
+    night._sector04.inspectables.forEach(function (p) { night._sector04.assets.requestSlot(p.assetSlot); });
     return night._sector04;
   }
 
@@ -335,9 +347,7 @@
 
   function guard(night) {
     if (!night || !night.enemies) return null;
-    for (var i = 0; i < night.enemies.length; i++) {
-      if (night.enemies[i].campaignSector04Guard) return night.enemies[i];
-    }
+    for (var i = 0; i < night.enemies.length; i++) if (night.enemies[i].campaignSector04Guard) return night.enemies[i];
     return null;
   }
 
@@ -368,20 +378,12 @@
   }
 
   function nearestInspectable(night, x, y) {
-    var rt = ensureNight(night);
     var pos = { x: x, y: y };
     var best = null;
-    rt.inspectables.forEach(function (p) {
+    ensureNight(night).inspectables.forEach(function (p) {
       var d = distance(pos, p);
       if (d <= INTERACT_RANGE && (!best || d < best.distance)) {
-        best = {
-          id: p.id,
-          x: p.x,
-          y: p.y,
-          label: p.label,
-          requiresController: p.requiresController,
-          distance: d
-        };
+        best = { id: p.id, x: p.x, y: p.y, label: p.label, requiresController: p.requiresController, distance: d };
       }
     });
     return best;
@@ -421,9 +423,7 @@
     if (after.resolved || after.permanentlyDefeated) {
       removeGuard(night);
       night.clear = true;
-      return sector;
-    }
-    if (!before.spawned && after.spawned) {
+    } else if (!before.spawned && after.spawned) {
       spawnGuardIfMissing(night);
       message(night, "Access Guard reconstituted. Find the controller.", 2600);
     }
@@ -476,15 +476,16 @@
     function drawAsset(slotId, sx, sy, w, h) {
       var record = resolver.requestSlot(slotId);
       if (!record || record.status !== "ready" || !record.image) return false;
-      ctx.drawImage(record.image, sx - w / 2, sy - h, w, h);
+      var presentation = presentationForSlot(slotId) || {};
+      var y = presentation.anchor === "center" ? sy - h / 2 : sy - h;
+      ctx.drawImage(record.image, sx - w / 2, y, w, h);
       return true;
     }
 
     function inspectableSize(id) {
-      if (id === "symptoms_terminal") return { w: 126, h: 68 };
-      if (id === "locked_violin_door") return { w: 52, h: 86 };
-      if (id === "identity_controller") return { w: 48, h: 48 };
-      return { w: 76, h: 54 };
+      var point = POINTS.find(function (p) { return p.id === id; });
+      var presentation = point && presentationForSlot(point.assetSlot);
+      return presentation ? { w: presentation.width, h: presentation.height } : { w: 76, h: 54 };
     }
 
     ctx.save();
@@ -494,8 +495,9 @@
     if (g && g.alive) {
       var guardX = g.x + (g.w || 30) / 2 - cam;
       var guardY = g.y + (g.h || 38);
-      if (guardX >= -80 && guardX <= W + 80 && !drawAsset(g.assetSlot, guardX, guardY, 54, 70)) {
-        drawGeneratedAsset(ctx, g.assetSlot, guardX, guardY, 54, 70);
+      var guardPresentation = presentationForSlot(g.assetSlot) || { width: 54, height: 70 };
+      if (guardX >= -80 && guardX <= W + 80 && !drawAsset(g.assetSlot, guardX, guardY, guardPresentation.width, guardPresentation.height)) {
+        drawGeneratedAsset(ctx, g.assetSlot, guardX, guardY, guardPresentation.width, guardPresentation.height);
       }
     }
     night._sector04.inspectables.forEach(function (p) {
@@ -548,7 +550,6 @@
   function install() {
     if (!root || root.__techopsSector04RuntimeInstalled) return false;
     root.__techopsSector04RuntimeInstalled = true;
-
     if (typeof root.nmJab === "function") {
       var originalJab = root.nmJab;
       root.nmJab = function () {
@@ -562,7 +563,6 @@
         return result;
       };
     }
-
     if (typeof root.stepNM === "function") {
       var originalStep = root.stepNM;
       root.stepNM = function () {
@@ -576,7 +576,6 @@
         return result;
       };
     }
-
     if (typeof root.drawNM === "function") {
       var originalDraw = root.drawNM;
       root.drawNM = function () {
@@ -586,7 +585,6 @@
         return result;
       };
     }
-
     if (typeof root.interact === "function") {
       var originalInteract = root.interact;
       root.interact = function () {
@@ -599,12 +597,16 @@
 
   var api = {
     POINTS: POINTS,
+    PRESENTATION: PRESENTATION,
     createEncounter: createEncounter,
     accessGuard: accessGuard,
     assetFilename: assetFilename,
     assetUrl: assetUrl,
     atlasUrl: atlasUrl,
+    presentationForSlot: presentationForSlot,
+    requiredPresentationSlots: requiredPresentationSlots,
     createAssetResolver: createAssetResolver,
+    preloadPresentationAssets: preloadPresentationAssets,
     generatedAssetSpec: generatedAssetSpec,
     drawGeneratedAsset: drawGeneratedAsset,
     nearestInspectable: nearestInspectable,
