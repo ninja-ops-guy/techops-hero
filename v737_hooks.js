@@ -22,16 +22,26 @@
     // ---------- atlas (contract: window.NIGHT_WALKER from night_walker.atlas.js) ----------
     let nwImg = null;
     const NW = () => (typeof NIGHT_WALKER !== "undefined") ? NIGHT_WALKER : null;
+    function nwSourceRect(A, key) {
+      const fr = A.frames[key] || A.frames[Object.keys(A.frames)[0]];
+      const C = A.cell || 64;
+      // NIGHT_WALKER stores pixel offsets ([0,128],[256,128]...), while older
+      // grid atlases store cell coordinates ([0,1],[2,1]...). Support both so
+      // restored payloads animate instead of sampling outside the sheet.
+      const sx = fr[0] >= C || fr[1] >= (A.cellH || C) ? fr[0] : fr[0] * C;
+      const sy = fr[0] >= C || fr[1] >= (A.cellH || C) ? fr[1] : fr[1] * (A.cellH || C);
+      return [sx, sy, C, (A.cellH || C)];
+    }
     function nwFrame(key, x, dx, dy, h, flip) {
       try {
         const A = NW();
         if (!A || !A.src || !A.frames) throw 0;
         if (!nwImg) { nwImg = new Image(); nwImg.src = A.src; }
         if (!nwImg.complete || !nwImg.naturalWidth) throw 0;
-        const fr = A.frames[key] || A.frames[Object.keys(A.frames)[0]], C = A.cell || 64;
+        const fr = nwSourceRect(A, key);
         x.imageSmoothingEnabled = false;
-        if (flip) { x.save(); x.translate(dx, 0); x.scale(-1, 1); x.drawImage(nwImg, fr[0] * C, fr[1] * C, C, (A.cellH || C), -h / 2, dy - h, h, h); x.restore(); }
-        else x.drawImage(nwImg, fr[0] * C, fr[1] * C, C, (A.cellH || C), dx - h / 2, dy - h, h, h);
+        if (flip) { x.save(); x.translate(dx, 0); x.scale(-1, 1); x.drawImage(nwImg, fr[0], fr[1], fr[2], fr[3], -h / 2, dy - h, h, h); x.restore(); }
+        else x.drawImage(nwImg, fr[0], fr[1], fr[2], fr[3], dx - h / 2, dy - h, h, h);
         return true;
       } catch (e) { return false; }
     }

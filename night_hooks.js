@@ -24,6 +24,87 @@
 // ---------- speed: the car is 3x, and there's a bike now ----------
 try { SHOP.push({ id: "lab_bike", name: "Fixie Bike", icon: "🚲", cost: 550, type: "lab", effect: "+60% move speed — beat New Haven traffic", key: "bike", vendor: "procurement" }); } catch (e) { }
 
+// ---------- production sprite bridges ----------
+// Night mode was originally authored with procedural debug silhouettes. Keep
+// those as fallbacks, but prefer the already-loaded production atlases when
+// they are available in the browser bundle.
+let __nmGlitchImg = null;
+function nmGlitchImg() {
+  try {
+    if (typeof TO_GLITCH === "undefined" || !TO_GLITCH) return null;
+    if (!__nmGlitchImg || __nmGlitchImg.src !== TO_GLITCH) {
+      __nmGlitchImg = new Image();
+      __nmGlitchImg.src = TO_GLITCH;
+    }
+    return (__nmGlitchImg.complete && __nmGlitchImg.naturalWidth) ? __nmGlitchImg : null;
+  } catch (e) { return null; }
+}
+
+function nmEnemySpriteIndex(e) {
+  if (!e) return 0;
+  if (e.kind === "guard") return 1;
+  if (e.kind === "skimmer") return 2;
+  if (e.kind === "hunter") return 3;
+  if (e.kind === "droneop") return 5;
+  return 0;
+}
+
+function drawNightEnemyAtlas(x, e, ex, now) {
+  const img = nmGlitchImg();
+  if (!img || !e) return false;
+  const C = 112;
+  const gi = nmEnemySpriteIndex(e);
+  const sx = (gi % 3) * C, sy = Math.floor(gi / 3) * C;
+  const size = Math.max(58, Math.round((e.h || 38) * 1.7));
+  const dx = Math.round(ex + (e.w || 30) / 2 - size / 2);
+  const dy = Math.round(e.y + (e.h || 38) - size + 6);
+  x.save();
+  x.imageSmoothingEnabled = false;
+  if (e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
+  if (e.down > 0) {
+    x.translate(dx + size / 2, dy + size / 2);
+    x.rotate(.24 * Math.sign(e.kb || 1));
+    x.drawImage(img, sx, sy, C, C, -size / 2, -size / 2, size, size);
+  } else {
+    x.drawImage(img, sx, sy, C, C, dx, dy, size, size);
+  }
+  x.restore();
+  return true;
+}
+
+function drawNightPlayerAtlas(x, NM, px, py, now) {
+  try {
+    if (typeof PLAYER_ATLAS === "undefined" || typeof playerImg === "undefined") return false;
+    if (!playerImg.complete || !playerImg.naturalWidth) return false;
+    const C = PLAYER_ATLAS.cell || 96;
+    const moving = Math.abs(NM.vx || 0) > .45;
+    let key = "right0";
+    if (NM.jabAnim > 0) key = "thumbs";
+    else if (NM.block) key = "laptop";
+    else if (NM.dashT > 0) key = "party";
+    else if (moving) key = "right" + (1 + Math.floor(now / 120) % 2);
+    if (!PLAYER_ATLAS.frames[key]) key = "right0";
+    const fr = PLAYER_ATLAS.frames[key] || PLAYER_ATLAS.frames.down0;
+    if (!fr) return false;
+    const h = Math.round((NM.h || 34) * 1.55);
+    const w = h;
+    const dx = Math.round(px + (NM.w || 22) / 2 - w / 2);
+    const dy = Math.round(py + (NM.h || 34) - h + 5);
+    x.save();
+    x.imageSmoothingEnabled = false;
+    if (NM.ifr > 0 && Math.floor(now / 80) % 2) x.globalAlpha = .45;
+    if (NM.face < 0) {
+      x.translate(dx + w, 0);
+      x.scale(-1, 1);
+      x.drawImage(playerImg, fr[0] * C, fr[1] * C, C, C, 0, dy, w, h);
+    } else {
+      x.drawImage(playerImg, fr[0] * C, fr[1] * C, C, C, dx, dy, w, h);
+    }
+    x.restore();
+    return true;
+  } catch (e) { return false; }
+}
+
 const __origStepV50 = step;
 step = function (dt) {
   const s = S;
@@ -600,17 +681,19 @@ function drawNM() {
     // tint underglow — figures read against the dark street
     ctx.save(); ctx.globalAlpha = .45; ctx.fillStyle = e.tint;
     ctx.beginPath(); ctx.ellipse(ex + e.w / 2, NM_FLOOR + 4, e.w * .9, 6, 0, 0, 7); ctx.fill(); ctx.restore();
-    const flick = e.hitT > 0 || (e.kind === "hunter" && Math.floor(now / 140 + e.x) % 7 === 0);
-    ctx.fillStyle = flick ? "#ffffff" : "#2a3a56";
-    ctx.beginPath(); ctx.roundRect(ex, e.y, e.w, e.h, 6); ctx.fill();
-    ctx.strokeStyle = e.tint; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = e.tint;
-    ctx.fillRect(ex + 5, e.y + 8, 4, 5); ctx.fillRect(ex + e.w - 9, e.y + 8, 4, 5); // eyes
-    if (e.kind === "guard") { ctx.fillStyle = e.tint + "88"; ctx.fillRect(ex - 5, e.y + 6, 5, e.h - 10); } // shield slab
-    if (e.kind === "droneop") { // hovering drone companion
+    if (!drawNightEnemyAtlas(ctx, e, ex, now)) {
+      const flick = e.hitT > 0 || (e.kind === "hunter" && Math.floor(now / 140 + e.x) % 7 === 0);
+      ctx.fillStyle = flick ? "#ffffff" : "#2a3a56";
+      ctx.beginPath(); ctx.roundRect(ex, e.y, e.w, e.h, 6); ctx.fill();
+      ctx.strokeStyle = e.tint; ctx.lineWidth = 3; ctx.stroke();
       ctx.fillStyle = e.tint;
-      const dy = e.y - 26 + Math.sin(now / 240) * 4;
-      ctx.fillRect(ex + e.w / 2 - 6, dy, 12, 5); ctx.fillRect(ex + e.w / 2 - 2, dy - 3, 4, 3);
+      ctx.fillRect(ex + 5, e.y + 8, 4, 5); ctx.fillRect(ex + e.w - 9, e.y + 8, 4, 5); // eyes
+      if (e.kind === "guard") { ctx.fillStyle = e.tint + "88"; ctx.fillRect(ex - 5, e.y + 6, 5, e.h - 10); } // shield slab
+      if (e.kind === "droneop") { // hovering drone companion
+        ctx.fillStyle = e.tint;
+        const dy = e.y - 26 + Math.sin(now / 240) * 4;
+        ctx.fillRect(ex + e.w / 2 - 6, dy, 12, 5); ctx.fillRect(ex + e.w / 2 - 2, dy - 3, 4, 3);
+      }
     }
     if (e.down > 0) { ctx.save(); ctx.translate(ex + e.w / 2, e.y + e.h / 2); ctx.rotate(.35 * Math.sign(e.kb || 1)); ctx.globalAlpha = .7; ctx.restore(); }
     if (e.windup > 8) { ctx.fillStyle = "#ff5252"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center"; ctx.fillText("!", ex + e.w / 2, e.y - 12); }
@@ -625,21 +708,23 @@ function drawNM() {
     for (let i = 1; i <= 3; i++) { ctx.fillStyle = "#7ec8ff"; ctx.fillRect(px - NM.face * i * 9, py + 6, NM.w, NM.h - 6); }
     ctx.restore();
   }
-  ctx.save();
-  ctx.translate(cxp, cyp);
-  if (NM.flip > 0) ctx.rotate((NM.face) * (16 - NM.flip) / 16 * Math.PI * 2);
-  if (NM.ifr > 0 && Math.floor(now / 80) % 2) ctx.globalAlpha = .45;
-  ctx.scale(NM.face, 1);
-  ctx.fillStyle = "#4a6390"; ctx.fillRect(-NM.w / 2, -NM.h / 2 + 10, NM.w, NM.h - 10); // jacket
-  ctx.strokeStyle = "#7ec8ff88"; ctx.lineWidth = 2; ctx.strokeRect(-NM.w / 2, -NM.h / 2 + 10, NM.w, NM.h - 10); // rim light
-  ctx.fillStyle = "#5a3b28"; ctx.fillRect(-NM.w / 2 + 3, -NM.h / 2 - 2, NM.w - 6, 12); // head
-  ctx.fillStyle = "#14100c"; ctx.fillRect(-NM.w / 2 + 1, -NM.h / 2 - 6, NM.w - 2, 6); // dreads
-  if (NM.jabAnim > 0) { // jab 1 / jab 2 / sweep
-    ctx.fillStyle = "#5a3b28";
-    if (NM.jabStage === 2) { ctx.fillRect(NM.w / 2 - 2, -10, 18, 5); ctx.fillRect(NM.w / 2 - 2, 2, 18, 5); }
-    else ctx.fillRect(NM.w / 2 - 2, -4 + (NM.jabStage === 1 ? -5 : 0), 16, 6);
+  if (!drawNightPlayerAtlas(ctx, NM, px, py, now)) {
+    ctx.save();
+    ctx.translate(cxp, cyp);
+    if (NM.flip > 0) ctx.rotate((NM.face) * (16 - NM.flip) / 16 * Math.PI * 2);
+    if (NM.ifr > 0 && Math.floor(now / 80) % 2) ctx.globalAlpha = .45;
+    ctx.scale(NM.face, 1);
+    ctx.fillStyle = "#4a6390"; ctx.fillRect(-NM.w / 2, -NM.h / 2 + 10, NM.w, NM.h - 10); // jacket
+    ctx.strokeStyle = "#7ec8ff88"; ctx.lineWidth = 2; ctx.strokeRect(-NM.w / 2, -NM.h / 2 + 10, NM.w, NM.h - 10); // rim light
+    ctx.fillStyle = "#5a3b28"; ctx.fillRect(-NM.w / 2 + 3, -NM.h / 2 - 2, NM.w - 6, 12); // head
+    ctx.fillStyle = "#14100c"; ctx.fillRect(-NM.w / 2 + 1, -NM.h / 2 - 6, NM.w - 2, 6); // dreads
+    if (NM.jabAnim > 0) { // jab 1 / jab 2 / sweep
+      ctx.fillStyle = "#5a3b28";
+      if (NM.jabStage === 2) { ctx.fillRect(NM.w / 2 - 2, -10, 18, 5); ctx.fillRect(NM.w / 2 - 2, 2, 18, 5); }
+      else ctx.fillRect(NM.w / 2 - 2, -4 + (NM.jabStage === 1 ? -5 : 0), 16, 6);
+    }
+    ctx.restore();
   }
-  ctx.restore();
   if (NM.block) { ctx.strokeStyle = "#7ec8ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cxp, cyp, 24, -1.2, 1.2); ctx.stroke(); }
   // ---------- sheet-style HUD ----------
   // left: HP + FOCUS pips + cash
