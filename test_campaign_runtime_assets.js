@@ -51,6 +51,21 @@ const ACT1_PRODUCTION_SOURCE_ASSETS = [
   "plating.line_background"
 ];
 
+const SECTOR04_PRODUCTION_SOURCE_ASSETS = [
+  "sector04.access_guard.idle",
+  "sector04.access_guard.attack",
+  "sector04.access_guard.suppressed",
+  "sector04.access_guard.respawn",
+  "sector04.purple_damage.enemy",
+  "sector04.purple_damage.fx",
+  "sector04.identity_controller.active",
+  "sector04.identity_controller.severed",
+  "sector04.identity_controller.spark_fx",
+  "sector04.locked_violin_door",
+  "sector04.violin_note.fx",
+  "sector04.terminal.symptoms"
+];
+
 function expectedPerspective(slotId) {
   const slot = Assets.byId(slotId);
   if (!slot) return "front";
@@ -166,10 +181,10 @@ const manifestPath = path.join(__dirname, "assets", "campaign", "production_sour
 assert.ok(fs.existsSync(manifestPath), "production source manifest must exist");
 const productionManifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 assert.strictEqual(productionManifest.kind, "techops_hero_production_source_extract_manifest");
-assert.strictEqual(productionManifest.scope, "Act I day-job runtime PNGs");
+assert.strictEqual(productionManifest.scope, "Act I day-job and Sector 04 runtime PNGs");
 const productionEntries = new Map((productionManifest.entries || []).map((entry) => [entry.slot_id, entry]));
 
-for (const slotId of ACT1_PRODUCTION_SOURCE_ASSETS) {
+for (const slotId of ACT1_PRODUCTION_SOURCE_ASSETS.concat(SECTOR04_PRODUCTION_SOURCE_ASSETS)) {
   const entry = productionEntries.get(slotId);
   assert.ok(entry, `${slotId} must have production source traceability`);
   assert.strictEqual(entry.filename, Assets.slotFilename(slotId), `${slotId} manifest filename must match slot filename`);

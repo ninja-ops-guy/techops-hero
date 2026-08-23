@@ -1,7 +1,7 @@
 {
   "kind": "techops_hero_production_source_extract_manifest",
   "version": 1,
-  "scope": "Act I day-job runtime PNGs",
+  "scope": "Act I day-job and Sector 04 runtime PNGs",
   "source_policy": "user_provided_asset_library_sheets_from_upload_workspace",
   "qc_gates": [
     "source crop chosen from identifiable production-intent subject",
@@ -416,6 +416,354 @@
       "transparent_pixels": 158687,
       "white_opaque_pixels": 41,
       "white_opaque_ratio": 0.0002
+    },
+    {
+      "slot_id": "sector04.access_guard.idle",
+      "source": "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+      "crop": [
+        20,
+        0,
+        175,
+        225
+      ],
+      "canvas": [
+        192,
+        256
+      ],
+      "mode": "enemy",
+      "qc": "front/side idle guard pose is readable and matches the Night Walker armor style",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.access_guard.idle.png",
+      "content_bbox": [
+        34,
+        23,
+        157,
+        242
+      ],
+      "opaque_pixels": 17236,
+      "transparent_pixels": 31916,
+      "white_opaque_pixels": 184,
+      "white_opaque_ratio": 0.0107
+    },
+    {
+      "slot_id": "sector04.access_guard.attack",
+      "source": "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+      "crop": [
+        905,
+        450,
+        1225,
+        630
+      ],
+      "canvas": [
+        384,
+        256
+      ],
+      "mode": "enemy",
+      "qc": "firing pose provides a clear side-view attack silhouette with purple muzzle FX",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.access_guard.attack.png",
+      "content_bbox": [
+        32,
+        62,
+        352,
+        242
+      ],
+      "opaque_pixels": 23712,
+      "transparent_pixels": 74592,
+      "white_opaque_pixels": 266,
+      "white_opaque_ratio": 0.0112
+    },
+    {
+      "slot_id": "sector04.access_guard.suppressed",
+      "source": "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+      "crop": [
+        152,
+        660,
+        320,
+        790
+      ],
+      "canvas": [
+        256,
+        192
+      ],
+      "mode": "enemy",
+      "qc": "kneeling/downed frame separates suppression from identity-controller severing",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.access_guard.suppressed.png",
+      "content_bbox": [
+        44,
+        48,
+        212,
+        178
+      ],
+      "opaque_pixels": 11417,
+      "transparent_pixels": 37735,
+      "white_opaque_pixels": 107,
+      "white_opaque_ratio": 0.0094
+    },
+    {
+      "slot_id": "sector04.access_guard.respawn",
+      "source": "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+      "crop": [
+        290,
+        805,
+        590,
+        970
+      ],
+      "canvas": [
+        320,
+        256
+      ],
+      "mode": "fx",
+      "qc": "purple reconstitution frame supports respawn/phase-in combat feedback",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.access_guard.respawn.png",
+      "content_bbox": [
+        14,
+        81,
+        306,
+        242
+      ],
+      "opaque_pixels": 25610,
+      "transparent_pixels": 56310,
+      "white_opaque_pixels": 221,
+      "white_opaque_ratio": 0.0086
+    },
+    {
+      "slot_id": "sector04.purple_damage.enemy",
+      "source": "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+      "crop": [
+        500,
+        215,
+        780,
+        385
+      ],
+      "canvas": [
+        320,
+        224
+      ],
+      "mode": "clue",
+      "qc": "collapsed already-injured enemy frame directly supports the Sector 04 clue beat",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.purple_damage.enemy.png",
+      "content_bbox": [
+        20,
+        40,
+        300,
+        210
+      ],
+      "opaque_pixels": 28254,
+      "transparent_pixels": 43426,
+      "white_opaque_pixels": 38,
+      "white_opaque_ratio": 0.0013
+    },
+    {
+      "slot_id": "sector04.purple_damage.fx",
+      "source": "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+      "crop": [
+        1008,
+        54,
+        1218,
+        390
+      ],
+      "canvas": [
+        256,
+        384
+      ],
+      "mode": "fx",
+      "qc": "static purple burn shimmer gives a separate readable damage residue effect",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.purple_damage.fx.png",
+      "content_bbox": [
+        23,
+        24,
+        233,
+        360
+      ],
+      "opaque_pixels": 36668,
+      "transparent_pixels": 61636,
+      "white_opaque_pixels": 31,
+      "white_opaque_ratio": 0.0008
+    },
+    {
+      "slot_id": "sector04.identity_controller.active",
+      "source": "92347444-9D26-42FD-9501-2B6029C84407.jpeg",
+      "crop": [
+        420,
+        18,
+        785,
+        385
+      ],
+      "canvas": [
+        384,
+        384
+      ],
+      "mode": "prop",
+      "qc": "active controller source has the strongest intact powered core silhouette",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.identity_controller.active.png",
+      "content_bbox": [
+        18,
+        14,
+        365,
+        370
+      ],
+      "opaque_pixels": 87884,
+      "transparent_pixels": 59572,
+      "white_opaque_pixels": 685,
+      "white_opaque_ratio": 0.0078
+    },
+    {
+      "slot_id": "sector04.identity_controller.severed",
+      "source": "92347444-9D26-42FD-9501-2B6029C84407.jpeg",
+      "crop": [
+        0,
+        438,
+        385,
+        790
+      ],
+      "canvas": [
+        384,
+        384
+      ],
+      "mode": "prop",
+      "qc": "severed controller source shows broken cables and unstable purple core state",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.identity_controller.severed.png",
+      "content_bbox": [
+        15,
+        18,
+        369,
+        365
+      ],
+      "opaque_pixels": 68645,
+      "transparent_pixels": 78811,
+      "white_opaque_pixels": 494,
+      "white_opaque_ratio": 0.0072
+    },
+    {
+      "slot_id": "sector04.identity_controller.spark_fx",
+      "source": "92347444-9D26-42FD-9501-2B6029C84407.jpeg",
+      "crop": [
+        982,
+        835,
+        1224,
+        984
+      ],
+      "canvas": [
+        288,
+        192
+      ],
+      "mode": "fx",
+      "qc": "relay-snap spark source is isolated and suitable for controller break feedback",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.identity_controller.spark_fx.png",
+      "content_bbox": [
+        34,
+        29,
+        253,
+        178
+      ],
+      "opaque_pixels": 24733,
+      "transparent_pixels": 30563,
+      "white_opaque_pixels": 0,
+      "white_opaque_ratio": 0.0
+    },
+    {
+      "slot_id": "sector04.locked_violin_door",
+      "source": "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+      "crop": [
+        28,
+        500,
+        397,
+        1005
+      ],
+      "canvas": [
+        384,
+        512
+      ],
+      "mode": "prop",
+      "qc": "locked door prop preserves the behind-door violin foreshadow without extra labels",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "sector04.locked_violin_door.png",
+      "content_bbox": [
+        15,
+        14,
+        369,
+        498
+      ],
+      "opaque_pixels": 162650,
+      "transparent_pixels": 33958,
+      "white_opaque_pixels": 226,
+      "white_opaque_ratio": 0.0014
+    },
+    {
+      "slot_id": "sector04.violin_note.fx",
+      "source": "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+      "crop": [
+        405,
+        500,
+        795,
+        1005
+      ],
+      "canvas": [
+        384,
+        512
+      ],
+      "mode": "foreshadow",
+      "qc": "musical note VFX source matches the locked-door violin sound cue",
+      "preserve_panel": false,
+      "threshold": 246,
+      "filename": "sector04.violin_note.fx.png",
+      "content_bbox": [
+        14,
+        24,
+        370,
+        487
+      ],
+      "opaque_pixels": 96165,
+      "transparent_pixels": 100443,
+      "white_opaque_pixels": 594,
+      "white_opaque_ratio": 0.0062
+    },
+    {
+      "slot_id": "sector04.terminal.symptoms",
+      "source": "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+      "crop": [
+        818,
+        514,
+        1428,
+        1006
+      ],
+      "canvas": [
+        768,
+        640
+      ],
+      "mode": "terminal",
+      "qc": "terminal crop preserves the exact YOU ARE FIXING THE SYMPTOMS canon text",
+      "preserve_panel": true,
+      "threshold": 246,
+      "filename": "sector04.terminal.symptoms.png",
+      "content_bbox": [
+        79,
+        134,
+        689,
+        626
+      ],
+      "opaque_pixels": 292632,
+      "transparent_pixels": 198888,
+      "white_opaque_pixels": 517,
+      "white_opaque_ratio": 0.0018
     }
   ]
 }

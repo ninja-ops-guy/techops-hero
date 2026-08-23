@@ -165,6 +165,104 @@ EXTRACTS: tuple[Extract, ...] = (
         "assembled plating line background gives the day-job scene production context",
         preserve_panel=True,
     ),
+    Extract(
+        "sector04.access_guard.idle",
+        "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+        (20, 0, 175, 225),
+        (192, 256),
+        "enemy",
+        "front/side idle guard pose is readable and matches the Night Walker armor style",
+    ),
+    Extract(
+        "sector04.access_guard.attack",
+        "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+        (905, 450, 1225, 630),
+        (384, 256),
+        "enemy",
+        "firing pose provides a clear side-view attack silhouette with purple muzzle FX",
+    ),
+    Extract(
+        "sector04.access_guard.suppressed",
+        "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+        (152, 660, 320, 790),
+        (256, 192),
+        "enemy",
+        "kneeling/downed frame separates suppression from identity-controller severing",
+    ),
+    Extract(
+        "sector04.access_guard.respawn",
+        "1165222B-2BEA-4D1B-B96E-CA1713153403.jpeg",
+        (290, 805, 590, 970),
+        (320, 256),
+        "fx",
+        "purple reconstitution frame supports respawn/phase-in combat feedback",
+    ),
+    Extract(
+        "sector04.purple_damage.enemy",
+        "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+        (500, 215, 780, 385),
+        (320, 224),
+        "clue",
+        "collapsed already-injured enemy frame directly supports the Sector 04 clue beat",
+    ),
+    Extract(
+        "sector04.purple_damage.fx",
+        "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+        (1008, 54, 1218, 390),
+        (256, 384),
+        "fx",
+        "static purple burn shimmer gives a separate readable damage residue effect",
+    ),
+    Extract(
+        "sector04.identity_controller.active",
+        "92347444-9D26-42FD-9501-2B6029C84407.jpeg",
+        (420, 18, 785, 385),
+        (384, 384),
+        "prop",
+        "active controller source has the strongest intact powered core silhouette",
+    ),
+    Extract(
+        "sector04.identity_controller.severed",
+        "92347444-9D26-42FD-9501-2B6029C84407.jpeg",
+        (0, 438, 385, 790),
+        (384, 384),
+        "prop",
+        "severed controller source shows broken cables and unstable purple core state",
+    ),
+    Extract(
+        "sector04.identity_controller.spark_fx",
+        "92347444-9D26-42FD-9501-2B6029C84407.jpeg",
+        (982, 835, 1224, 984),
+        (288, 192),
+        "fx",
+        "relay-snap spark source is isolated and suitable for controller break feedback",
+    ),
+    Extract(
+        "sector04.locked_violin_door",
+        "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+        (28, 500, 397, 1005),
+        (384, 512),
+        "prop",
+        "locked door prop preserves the behind-door violin foreshadow without extra labels",
+        preserve_panel=True,
+    ),
+    Extract(
+        "sector04.violin_note.fx",
+        "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+        (405, 500, 795, 1005),
+        (384, 512),
+        "foreshadow",
+        "musical note VFX source matches the locked-door violin sound cue",
+    ),
+    Extract(
+        "sector04.terminal.symptoms",
+        "5A83036E-44D6-4E68-AE67-064E56DD88F5.jpeg",
+        (818, 514, 1428, 1006),
+        (768, 640),
+        "terminal",
+        "terminal crop preserves the exact YOU ARE FIXING THE SYMPTOMS canon text",
+        preserve_panel=True,
+    ),
 )
 
 
@@ -223,7 +321,7 @@ def extract_one(spec: Extract) -> dict:
 
     out_path = OUT / f"{spec.slot_id}.png"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(out_path, pnginfo=info, optimize=True)
+    canvas.save(out_path, pnginfo=info)
 
     bbox = alpha_bbox(canvas)
     opaque = 0
@@ -254,7 +352,7 @@ def main() -> None:
     manifest = {
         "kind": "techops_hero_production_source_extract_manifest",
         "version": 1,
-        "scope": "Act I day-job runtime PNGs",
+        "scope": "Act I day-job and Sector 04 runtime PNGs",
         "source_policy": "user_provided_asset_library_sheets_from_upload_workspace",
         "qc_gates": [
             "source crop chosen from identifiable production-intent subject",
