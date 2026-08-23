@@ -430,6 +430,40 @@
     return sector;
   }
 
+  function recoveryAdvice(campaign) {
+    var evidence = campaign && campaign.evidence && campaign.evidence.ghostIdentityEvidence;
+    if (evidence && evidence.status === "established") {
+      return { required: false, reason: null, message: "" };
+    }
+    return {
+      required: true,
+      reason: "daytime_identity_evidence_missing",
+      action: "return_to_daytime_access_investigation",
+      message: "Unknown controller—daytime investigation required. Return to Security Ops and document the impossible access event before severing the controller."
+    };
+  }
+
+  function retreatToDayInvestigation(campaign, night) {
+    var advice = recoveryAdvice(campaign);
+    if (!advice.required) return { changed: false, advice: advice };
+    var sector = sectorApi().ensure(campaign);
+    sector.active = false;
+    sector.accessGuardSpawned = false;
+    sector.respawnAt = null;
+    if (campaign && campaign.campaign && campaign.campaign.day === 1) campaign.campaign.phase = "day_shift";
+    if (campaign && campaign.night) campaign.night.combatActive = false;
+    if (night) {
+      if (night._sector04) {
+        night._sector04.active = false;
+        night._sector04.lastInteraction = "retreat_to_daytime_access_investigation";
+      }
+      removeGuard(night);
+      night.clear = true;
+      message(night, advice.message, 4200);
+    }
+    return { changed: true, advice: advice };
+  }
+
   function inspectNearest(campaign, night, x, y) {
     var p = nearestInspectable(night, x, y);
     if (!p) return null;
@@ -437,8 +471,9 @@
     if (p.requiresController && !snap.controllerRevealed) {
       var insight = sectorApi().insight(campaign);
       if (!insight.success) {
-        message(night, insight.message, 3200);
-        return { id: p.id, blocked: true, message: insight.message };
+        var advice = recoveryAdvice(campaign);
+        message(night, advice.message, 4200);
+        return { id: p.id, blocked: true, message: advice.message, recovery: advice };
       }
     }
     if (p.id === "identity_controller") {
@@ -542,7 +577,18 @@
     if (!result) return false;
     saveCampaign(campaign);
     if (result.message && root.dlg && (result.id === "symptoms_terminal" || result.blocked)) {
-      root.dlg("SECTOR 04", result.message, [{ t: "Continue", f: root.closeDlg }]);
+      var options = [{ t: "Continue", f: root.closeDlg }];
+      if (result.blocked && result.recovery && result.recovery.required) {
+        options.unshift({ t: "Return to daytime investigation", f: function () {
+          var freshCampaign = loadCampaign();
+          var freshNight = browserNight();
+          retreatToDayInvestigation(freshCampaign, freshNight);
+          saveCampaign(freshCampaign);
+          if (root.S) root.S.nightMode = null;
+          if (root.closeDlg) root.closeDlg();
+        } });
+      }
+      root.dlg("SECTOR 04", result.message, options);
     }
     return true;
   }
@@ -613,6 +659,8 @@
     hitGuard: hitGuard,
     syncCombat: syncCombat,
     tick: tick,
+    recoveryAdvice: recoveryAdvice,
+    retreatToDayInvestigation: retreatToDayInvestigation,
     inspectNearest: inspectNearest,
     drawOverlay: drawOverlay,
     enterBrowser: enterBrowser,

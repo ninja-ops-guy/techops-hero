@@ -186,7 +186,23 @@ night = nightState();
 Runtime.createEncounter(campaign, night);
 let blocked = Runtime.inspectNearest(campaign, night, 1180, 292);
 assert.strictEqual(blocked.blocked, true);
-assert.strictEqual(blocked.message, "Unknown controller—daytime investigation required.");
+assert.strictEqual(blocked.recovery.required, true);
+assert.strictEqual(blocked.recovery.reason, "daytime_identity_evidence_missing");
+assert.strictEqual(blocked.recovery.action, "return_to_daytime_access_investigation");
+assert.strictEqual(blocked.message, "Unknown controller—daytime investigation required. Return to Security Ops and document the impossible access event before severing the controller.");
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).controllerSevered, false);
+let recovery = Runtime.retreatToDayInvestigation(campaign, night);
+assert.strictEqual(recovery.changed, true);
+assert.strictEqual(campaign.campaign.phase, "day_shift");
+assert.strictEqual(campaign.campaign.day, 1);
+assert.strictEqual(campaign.flags.sector04Entered, true);
+assert.strictEqual(campaign.flags.tuesdayMorningReached, false);
+assert.strictEqual(campaign.night.combatActive, false);
+assert.strictEqual(global.TechOpsSector04.snapshot(campaign).active, false);
+assert.strictEqual(night._sector04.active, false);
+assert.strictEqual(night.enemies.some(e => e.campaignSector04Guard && e.alive), false);
+
+campaign = prepare(true);
+assert.strictEqual(Runtime.recoveryAdvice(campaign).required, false);
 
 console.log("Sector 04 runtime bridge: PASS");
