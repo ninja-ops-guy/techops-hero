@@ -53,6 +53,7 @@ jobs:
           node --check test_campaign_sector04_runtime.js
           node --check test_campaign_save_reload.js
           node --check test_campaign_browser_entrypoint.js
+          node --check test_static_entrypoint_integrity.js
           node --check test_ui_coop_contract.js
       - name: Verify Act I contract
         run: node test_campaign_act1.js
@@ -76,5 +77,7 @@ jobs:
         run: node test_campaign_save_reload.js
       - name: Verify campaign browser entrypoint
         run: node test_campaign_browser_entrypoint.js
+      - name: Verify static entrypoint integrity
+        run: node test_static_entrypoint_integrity.js
       - name: Verify UI co-op asset authority
         run: node test_ui_coop_contract.js
