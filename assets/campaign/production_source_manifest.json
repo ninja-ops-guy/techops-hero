@@ -108,8 +108,8 @@
         1008
       ],
       "canvas": [
-        1600,
-        1200
+        800,
+        600
       ],
       "mode": "ui_panel",
       "qc": "full standup board is legible enough for native UI context and ticket-ownership beat",
@@ -117,15 +117,15 @@
       "threshold": 246,
       "filename": "ui.standup.board.png",
       "content_bbox": [
-        97,
-        253,
-        1503,
-        1186
+        14,
+        74,
+        786,
+        586
       ],
-      "opaque_pixels": 1294651,
-      "transparent_pixels": 625349,
-      "white_opaque_pixels": 3844,
-      "white_opaque_ratio": 0.003
+      "opaque_pixels": 390722,
+      "transparent_pixels": 89278,
+      "white_opaque_pixels": 618,
+      "white_opaque_ratio": 0.0016
     },
     {
       "slot_id": "ui.standup.ticket_card",

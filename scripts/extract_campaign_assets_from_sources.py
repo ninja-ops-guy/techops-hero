@@ -73,7 +73,7 @@ EXTRACTS: tuple[Extract, ...] = (
         "ui.standup.board",
         "50E9D510-F28F-4A50-8B53-69EA441E2830.jpeg",
         (20, 75, 1426, 1008),
-        (1600, 1200),
+        (800, 600),
         "ui_panel",
         "full standup board is legible enough for native UI context and ticket-ownership beat",
         preserve_panel=True,
