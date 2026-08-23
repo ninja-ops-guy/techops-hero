@@ -25,7 +25,18 @@
     "sector04.access_guard.idle": { layer: "enemy", anchor: "feet", width: 54, height: 70, fallback: true },
     "sector04.access_guard.attack": { layer: "enemy", anchor: "feet", width: 64, height: 70, fallback: true },
     "sector04.access_guard.suppressed": { layer: "enemy", anchor: "feet", width: 78, height: 52, fallback: true },
-    "sector04.access_guard.respawn": { layer: "fx", anchor: "center", width: 72, height: 72, fallback: true },
+    "sector04.access_guard.respawn": {
+      layer: "fx",
+      anchor: "center",
+      width: 72,
+      height: 72,
+      fallback: true,
+      frames: [
+        { x: 0, y: 0, w: 160, h: 256 },
+        { x: 160, y: 0, w: 160, h: 256 }
+      ],
+      frameMs: 140
+    },
     "sector04.purple_damage.enemy": { layer: "clue", anchor: "feet", width: 76, height: 54, fallback: true },
     "sector04.purple_damage.fx": { layer: "fx", anchor: "center", width: 58, height: 46, fallback: true },
     "sector04.identity_controller.active": { layer: "prop", anchor: "center", width: 48, height: 48, fallback: true },
@@ -85,6 +96,14 @@
 
   function presentationForSlot(slotId) {
     return PRESENTATION[slotId] || null;
+  }
+
+  function frameForSlot(slotId, atMs) {
+    var presentation = presentationForSlot(slotId);
+    if (!presentation || !presentation.frames || !presentation.frames.length) return null;
+    var frameMs = Math.max(1, presentation.frameMs || 120);
+    var index = Math.floor((atMs || nowMs()) / frameMs) % presentation.frames.length;
+    return presentation.frames[index];
   }
 
   function requiredPresentationSlots() {
@@ -402,6 +421,7 @@
       return { hit: true, permanent: true };
     }
     var result = sectorApi().suppress(campaign, atMs);
+    ensureNight(night).respawnFxUntil = result.respawnAt;
     message(night, "Access Guard suppressed. The incident remains.", 2600);
     return { hit: true, suppressed: true, respawnAt: result.respawnAt };
   }
@@ -411,7 +431,8 @@
     if (!g || g.alive || g.hp > 0) return { changed: false };
     var snap = sectorApi().snapshot(campaign);
     if (snap.resolved || snap.guardSuppressed) return { changed: false };
-    sectorApi().suppress(campaign, atMs);
+    var result = sectorApi().suppress(campaign, atMs);
+    ensureNight(night).respawnFxUntil = result.respawnAt;
     message(night, "Access Guard suppressed. Damage created time, not restoration.", 2800);
     return { changed: true, suppressed: true };
   }
@@ -423,8 +444,10 @@
     if (after.resolved || after.permanentlyDefeated) {
       removeGuard(night);
       night.clear = true;
+      ensureNight(night).respawnFxUntil = 0;
     } else if (!before.spawned && after.spawned) {
       spawnGuardIfMissing(night);
+      ensureNight(night).respawnFxUntil = 0;
       message(night, "Access Guard reconstituted. Find the controller.", 2600);
     }
     return sector;
@@ -513,8 +536,17 @@
       if (!record || record.status !== "ready" || !record.image) return false;
       var presentation = presentationForSlot(slotId) || {};
       var y = presentation.anchor === "center" ? sy - h / 2 : sy - h;
-      ctx.drawImage(record.image, sx - w / 2, y, w, h);
+      var frame = frameForSlot(slotId, nowMs());
+      if (frame) ctx.drawImage(record.image, frame.x, frame.y, frame.w, frame.h, sx - w / 2, y, w, h);
+      else ctx.drawImage(record.image, sx - w / 2, y, w, h);
       return true;
+    }
+
+    function activeGuardAsset(g) {
+      if (!g) return "sector04.access_guard.idle";
+      if (g.hitT > 0 || g.down > 0) return g.suppressedAssetSlot || "sector04.access_guard.suppressed";
+      if (g.windup > 0 || g.jabAnim > 0 || g.cd > 0) return g.attackAssetSlot || "sector04.access_guard.attack";
+      return g.assetSlot || "sector04.access_guard.idle";
     }
 
     function inspectableSize(id) {
@@ -530,9 +562,18 @@
     if (g && g.alive) {
       var guardX = g.x + (g.w || 30) / 2 - cam;
       var guardY = g.y + (g.h || 38);
-      var guardPresentation = presentationForSlot(g.assetSlot) || { width: 54, height: 70 };
-      if (guardX >= -80 && guardX <= W + 80 && !drawAsset(g.assetSlot, guardX, guardY, guardPresentation.width, guardPresentation.height)) {
-        drawGeneratedAsset(ctx, g.assetSlot, guardX, guardY, guardPresentation.width, guardPresentation.height);
+      var guardSlot = activeGuardAsset(g);
+      var guardPresentation = presentationForSlot(guardSlot) || { width: 54, height: 70 };
+      if (guardX >= -80 && guardX <= W + 80 && !drawAsset(guardSlot, guardX, guardY, guardPresentation.width, guardPresentation.height)) {
+        drawGeneratedAsset(ctx, guardSlot, guardX, guardY, guardPresentation.width, guardPresentation.height);
+      }
+    } else if (night._sector04.respawnFxUntil && night._sector04.respawnFxUntil > nowMs()) {
+      var fxSlot = "sector04.access_guard.respawn";
+      var fxPresentation = presentationForSlot(fxSlot) || { width: 72, height: 72 };
+      var fxX = 780 + 15 - cam;
+      var fxY = FLOOR - 18;
+      if (!drawAsset(fxSlot, fxX, fxY, fxPresentation.width, fxPresentation.height)) {
+        drawGeneratedAsset(ctx, fxSlot, fxX, fxY, fxPresentation.width, fxPresentation.height);
       }
     }
     night._sector04.inspectables.forEach(function (p) {
@@ -654,6 +695,7 @@
     createAssetResolver: createAssetResolver,
     preloadPresentationAssets: preloadPresentationAssets,
     generatedAssetSpec: generatedAssetSpec,
+    frameForSlot: frameForSlot,
     drawGeneratedAsset: drawGeneratedAsset,
     nearestInspectable: nearestInspectable,
     hitGuard: hitGuard,
