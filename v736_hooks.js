@@ -151,6 +151,99 @@
       }
     } catch (e) { }
 
+    // ================= animated dog fallback for the pair =================
+    function dogFig736(x, who, dx, dy, h, pose, flip, tm) {
+      const u = h / 100;
+      const t = tm || 0;
+      const tint = who === "katrin" ? "#3fa9f5" : "#f59e0b";
+      const coat = who === "katrin" ? "#dcecff" : "#ffe4bd";
+      const trim = who === "katrin" ? "#8fd8ff" : "#fbbf24";
+      const bob = Math.sin(t / 180) * 2.5 * u;
+      const wag = Math.sin(t / 90) * 7 * u;
+      const strike = pose === "strike";
+      const cast = pose === "cast";
+      const shield = pose === "shield";
+      const bark = pose === "bark";
+      const down = pose === "down";
+      const crouch = strike ? 5 * u : 0;
+      const lean = strike ? 9 * u : cast ? -3 * u : 0;
+      x.save();
+      if (flip) { x.translate(dx, 0); x.scale(-1, 1); x.translate(-dx, 0); }
+      x.translate(strike ? Math.sin(t / 50) * 2 * u : 0, down ? 7 * u : bob);
+      if (down) x.rotate(-0.08);
+
+      x.fillStyle = coat;
+      x.beginPath();
+      x.ellipse(dx - 1 * u + lean, dy - 30 * u + crouch, 28 * u, down ? 11 * u : 17 * u, 0, 0, 7);
+      x.fill();
+      x.fillStyle = "#cfc7b8";
+      x.beginPath();
+      x.ellipse(dx + 15 * u + lean, dy - 43 * u + crouch, 14 * u, down ? 10 * u : 14 * u, 0, 0, 7);
+      x.fill();
+      x.fillStyle = trim;
+      x.beginPath();
+      x.arc(dx + 13 * u + lean, dy - 54 * u + crouch, 9 * u, Math.PI, 0);
+      x.fill();
+
+      x.fillStyle = "#171008";
+      x.beginPath();
+      x.arc(dx + 18 * u + lean, dy - 44 * u + crouch, 2.1 * u, 0, 7);
+      x.fill();
+      x.beginPath();
+      x.arc(dx + 28 * u + lean, dy - 38 * u + crouch, 2.6 * u, 0, 7);
+      x.fill();
+      x.strokeStyle = tint;
+      x.lineWidth = 3 * u;
+      x.beginPath();
+      x.arc(dx + 7 * u + lean, dy - 29 * u + crouch, 10 * u, 0.3, Math.PI - 0.3);
+      x.stroke();
+      x.fillStyle = tint;
+      x.fillRect(dx + 5 * u + lean, dy - 31 * u + crouch, 4 * u, 4 * u);
+
+      x.strokeStyle = coat;
+      x.lineWidth = 5 * u;
+      x.beginPath();
+      x.moveTo(dx - 25 * u + lean, dy - 33 * u + crouch);
+      x.quadraticCurveTo(dx - 42 * u + lean, dy - 55 * u - wag + crouch, dx - 30 * u + lean, dy - 63 * u - wag + crouch);
+      x.stroke();
+      x.strokeStyle = "#d8d2c4";
+      x.lineWidth = 4 * u;
+      const step = down ? 0 : Math.sin(t / 110) * 3 * u;
+      for (const lx of [-14, 2, 16]) {
+        x.beginPath();
+        x.moveTo(dx + lx * u + lean, dy - 17 * u + crouch);
+        x.lineTo(dx + (lx + (strike ? 7 : 0)) * u + lean, dy - 4 * u + step + crouch);
+        x.stroke();
+      }
+
+      if (bark || cast) {
+        x.strokeStyle = "rgba(103,232,249,.65)";
+        x.lineWidth = 2 * u;
+        for (let i = 0; i < 3; i++) {
+          const r = (12 + i * 8 + (t / 40) % 8) * u;
+          x.beginPath();
+          x.arc(dx + 35 * u + lean, dy - 40 * u + crouch, r, -0.5, 0.45);
+          x.stroke();
+        }
+      }
+      if (shield) {
+        x.strokeStyle = "rgba(160,107,255,.7)";
+        x.lineWidth = 3 * u;
+        x.beginPath();
+        x.ellipse(dx + lean, dy - 36 * u + crouch, 38 * u, 30 * u, 0, 0, 7);
+        x.stroke();
+      }
+      if (strike) {
+        x.strokeStyle = "rgba(245,158,11,.55)";
+        x.lineWidth = 3 * u;
+        x.beginPath();
+        x.moveTo(dx + 28 * u + lean, dy - 32 * u);
+        x.lineTo(dx + 58 * u + lean, dy - 30 * u);
+        x.stroke();
+      }
+      x.restore();
+    }
+
     // ================= procedural figures for the pair =================
     function katrinFig736(x, dx, dy, h, pose, flip, tm) {
       const u = h / 100;
@@ -190,12 +283,12 @@
     }
     function drawPairFig736(x, who, dx, dy, h, pose, flip, tm) {
       // KATRIN_MANCHEZ contract first (guarded); procedural figures otherwise
+      const frame = Math.floor((tm || 0) / 140) % 7;
       const key = who === "katrin"
-        ? (pose === "cast" ? "kat_hack" : pose === "down" ? "kat_sleep" : pose === "shield" ? "kat_shield" : "kat_idle")
-        : (pose === "strike" ? "man_pounce" : pose === "down" ? "man_sleep" : pose === "bark" ? "man_bark" : "man_idle");
+        ? (pose === "cast" ? "kat_hack" : pose === "down" ? "kat_down" : pose === "shield" ? "kat_shield" : pose === "strike" ? "kat_pounce" : "kat_idle" + frame)
+        : (pose === "strike" ? "man_pounce" : pose === "down" ? "man_down" : pose === "shield" ? "man_shield" : pose === "bark" ? "man_bark" : pose === "cast" ? "man_hack" : "man_idle" + frame);
       if (atlasFrame736("KATRIN_MANCHEZ", key, x, dx - h * 0.36, dy - h, h * 0.72, h, flip)) return;
-      if (who === "katrin") katrinFig736(x, dx, dy, h, pose, flip, tm);
-      else manchezFig736(x, dx, dy, h, pose, flip, tm);
+      dogFig736(x, who, dx, dy, h, pose, flip, tm);
     }
     function duoFig736(x, key, dx, dy, w, h, flip, tm) { // duo_* tandem frames, procedural burst fallback
       if (atlasFrame736("KATRIN_MANCHEZ", key, x, dx, dy, w, h, flip)) return;
