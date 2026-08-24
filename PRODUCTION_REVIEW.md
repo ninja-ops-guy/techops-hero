@@ -1,76 +1,95 @@
-# TechOps Hero — Production Readiness & Concept Fidelity Review
+# TechOps Hero — Production Readiness Review
 
-**Date:** 2026-08-17 · **Scope:** all delivered briefs (cutscene bible, production backlog, night-crawler spec, story arc, mechanics/pacing notes) + all reference sheets vs the shipped v7.31 build · **Reviewer:** K3
-
----
+**Updated:** 2026-08-24  
+**Authority:** `PRODUCTION_BASELINE_v1.2.md` + TechOps Hero Story Bible v1.2  
+**Runtime:** v7.37 with Campaign Director, native Day 1 integration, Sector 04 runtime, and Good Dogs runtime asset integration
 
 ## Verdict
 
-**Ship-ready as a vertical-slice-plus product.** The build is stable (27/27 suites green), performant (v7.28/v7.31 measured wins), save-safe, exactly-once on rewards, controller-complete, and visually faithful to the reference grammar. The docs' aspirational backlog (40+ systems) is largely covered or consciously scoped out; the gaps that remain are P2 polish, listed at the end. No P0 defects. Two P1 items fixed in this pass (deploy snapshot refreshed; Pages outage is GitHub-side).
+The repository is **feature-rich and testable, but not yet production-final under Story Bible v1.2**.
 
----
+The current build has substantial systems, art, campaign adapters, Night Walker combat, Sector 04 contracts, Good Dogs content, and static-entrypoint coverage. However, the Story Bible changes the release bar: production readiness is now judged first by the canonical opening, reveal timing, state authority, verification loop, and New Game -> Tuesday resilience—not by the amount of late-game content already present.
 
-## 1. Doc requirement audit (what the briefs demand vs what ships)
+This supersedes older statements that the project was globally "ship-ready" based on earlier v6/v7 scope.
 
-### Cutscene bible brief
-| Requirement | Status |
-|---|---|
-| Data-driven scenes | ✅ all boards are `{title, shots, cues}` data on the v7.25 engine |
-| Manifest before implementation / no silent placeholders | ✅ every board adapts an uploaded reference sheet; drawn-glyph stand-ins are documented canon, never silently swapped |
-| Exactly-once rewards | ✅ latched in `S.meta`, test-covered per pack |
-| Skip/replay behavior | ✅ skip except during choices; gallery replays |
-| State matrix (replay/skip/save before+after choice/interruption) | ✅ covered in suites v7.25–v7.30 (skip re-arms, choices persist in save blob, once-per-day latches) |
-| Controller input in cutscenes | ✅ v7.30 dpad + A drives engine choices |
-| Accessibility (reduced motion, text speed) | ✅ settings menu (v6.7): UI-animations toggle, text speed, SFX/music volume, colorblind palette |
-| Scene validator in CI | ⚠️ partial — the engine refuses duplicate scene ids at registration; a full schema validator (unknown speaker, text overflow, dead-end branch) is not built. **P2** |
-| Performance budgets doc | ✅ measured per-frame budgets enforced in tests (fillRect budget, amortized drawTile); formal budget doc added below |
-| Profiling evidence for heavy scenes | ✅ probe logs in verifier/runs (fillRect 3,294→~600, quantum-hitch fix measured) |
+## What is already strong
 
-### Night-crawler spec (vertical slice)
-| Requirement | Status |
-|---|---|
-| Move/jump/dash/block/attack chain | ✅ v7.31 (3-hit chain → launcher, dash i-frames, block chip) |
-| Hit-stop / telegraphs / crowd control | ✅ v7.31 (hit-stop, "!" windups, 2-attacker tokens) |
-| Enemy archetypes | ✅ five sheet archetypes live; the spec's parry/perfect-dodge and stagger meter are **P2** |
-| Insight scan & diagnosis-alters-encounter | ✅ exists in the day game (evidence/confidence/hypothesis alters the fight); not yet wired into the night mode — **P2** |
-| Environmental system interactions | ✅ partially (conveyors halt on PLC tickets, day-side change windows); night-side breaker/crane interactions are **P2** |
-| Results screen / performance rating | ✅ exists in the day game (5-star Investigation ratings, career report); night-crawl rating card is **P2** |
+- Campaign Director exists as an executable contract (`campaign_act1.js`).
+- Canonical Day 1 ticket templates exist for Shipping, Plating, and Impossible Access.
+- Ticket ownership is explicit and validated before standup completion.
+- Evidence provenance/perspective exists for the Impossible Access thread.
+- Sector 04 already distinguishes suppression-by-damage from permanent resolution-by-understanding.
+- Sector 04 has a dedicated runtime bridge and no-softlock/static-entrypoint tests.
+- Campaign assets have explicit IDs and deterministic runtime bindings.
+- Good Dogs production art is now wired into runtime atlas paths rather than relying on procedural placeholders.
+- Static entrypoint integrity prevents duplicate/missing campaign script authorities.
 
-### Production backlog (systems coverage)
-Fully covered: time/weather, ticket economy, troubleshooting loop (observe→document), Digital Twin overlay, comm battles, workforce/leadership, command center, certifications, change management, incident lifecycle incl. PIRs, career report, NG+, mobile + gamepad, gallery, accessibility settings, UAT/regression CI.
-Deliberately simplified or open: NPC schedules are ambient-wander only (P2), salary/rent economy abstracted into budget (fine), relationship values abstracted into dept rep (fine), full co-op move list (out of scope), localization export (P2), backup save slots (P2 — single localStorage slot today).
+## P0 production gaps
 
----
+### 1. Opening state semantics need normalization
 
-## 2. Concept fidelity (sheets vs build, screenshot-verified this pass)
+Story Bible v1.2 names these canonical states:
 
-| Reference | Build match |
-|---|---|
-| Mike (dreads/sunglasses/vest/ROOT mug) | ✅ player atlas + all cinematic draws |
-| Felicia (violin, purple grammar) | ✅ own atlas only, violin frame on the signal board |
-| Charger (green ghost flames/underglow) | ✅ night drive + K's run + parked hub car |
-| K (beanie/headphones/shades) | ✅ procedural figure, never a Felicia reuse |
-| Night city districts + neon | ✅ v7.31 six districts, legible English signs, lamp pools, wet lanes |
-| Night enemy roster | ✅ five archetypes as night-glitch silhouettes w/ tints |
-| Badge-cloner / wires / K-origin / ORPHEUS boards | ✅ shipped in v7.29/v7.30, screenshot-verified against the sheets (incl. panel-level details: EVENT 77A2F381, 03:17 AM, 99.7%) |
-| Night HUD (HP/FOCUS/COMBO/DANGER/district) | ✅ v7.31 |
-| Boss-fight mockup (hangar, "RESTORE SECTOR 04", insight button) | ⚠️ the day battle UI is DOM-based, not the mockup's diegetic hangar fight. Documented as a deliberate engine choice; the night boss arena is the closest match — **P2 theming gap** |
+`standup_started`, `ticket_assignments_confirmed`, `standup_completed`, `workstation_checked`, `red_in_mirror_heard`, `felicia_blog_found`, `felicia_video_watched`, `day_work_unlocked`.
 
----
+The current Campaign Director uses older camelCase/combined flags and treats workstation completion too coarsely. The next compatibility-safe migration should expose the canonical semantic states without invalidating existing saves.
 
-## 3. Prioritized gaps
+### 2. Workstation is still too much of a shortcut
 
-**P0** — none.
-**P1** — none open (deploy snapshot refreshed this pass; GitHub Pages 404 remains a GitHub-side setting to flip in repo Settings → Pages).
-**P2** (tracked, not blocking):
-1. Scene-schema validator in CI (duplicate shots, text overflow, dead-end branches).
-2. Night-mode Insight scan + environmental interactions + results card (spec's investigation loop at night).
-3. Backup save slot / atomic save rotation.
-4. Dialogue history + remappable keys.
-5. Parry/perfect-dodge + stagger meter at night.
-6. Diegetic boss-arena theming closer to the hangar mockup.
+The canonical opening requires a playable first-person workstation with QUEUE / TEAMS / ALERTS / COMPANY / MUSIC. Red in the Mirror is ordinary listening; the Felicia video begins from the company surface; ORPHEUS corruption is brief; music ducks and resumes; ticket timers begin only after the sequence commits.
 
-## Performance budget (formalized)
-- World frame: < 1,200 canvas fill ops; zero per-frame gradient construction; tile-cache quantum repaint ≤ 40 drawTile calls.
-- Cinematic scene load: instant (all procedural); zero network fetches at runtime.
-- Verified: probes in `verifier/runs/`, suites test-v728 (budgets) and test-v731 (night).
+Current adapters compress several of those beats into one completion call. That is suitable for contract scaffolding, not final presentation.
+
+### 3. `day_work_unlocked` must become authoritative
+
+Normal work/timers should have one explicit campaign gate. The workstation sequence—not merely opening a desk dialog—must be what unlocks Day 1.
+
+### 4. Native Day 1 needs full journey regression
+
+The repository has contract tests, but production gating must cover the complete player journey:
+
+- desktop minimum-interaction path
+- mobile minimum-interaction path
+- skip path
+- save/reload at every boundary
+- firsthand and delegated Impossible Access ownership
+- procedural noncritical tickets around the canonical three
+- Sector 04 completion and direct Tuesday transition
+
+### 5. Scene-schema validation is still missing
+
+Required validator coverage: duplicate IDs, unknown speakers, text overflow, missing required state writes, invalid branches, dead-end objectives, and non-replay/skip semantics.
+
+## P1 story-system proof before more endgame expansion
+
+The next campaign tranche should prove the Bible's Acts II–III systems before more spectacle is added:
+
+- badge-cloner investigation
+- first daylight Felicia conversation after the company video
+- MORNINGSTAR traces and component ledger
+- rooftop violin investigation
+- The Violinist reveal
+- Evidence and Trust as separate variables
+- companion AI with bounded, legible support behavior
+- delegation changing perspective without breaking authored progression
+
+Good Dogs Protocol, Ghost Fork, Watchdog, ORPHEUS WAKES, and the three endings remain canon, but their presence does not waive the opening and Acts II–III gates.
+
+## Architecture consolidation target
+
+Canonical campaign authority should converge on the campaign modules, not continue to spread across version hooks:
+
+- `campaign_act1.js` — semantic Campaign Director / Day 1 contract
+- `campaign_runtime.js` — adapter only
+- `campaign_native_act1.js` — native Day 1 world integration
+- `campaign_sector04.js` — Sector 04 mission semantics
+- `campaign_sector04_runtime.js` — Night Walker/browser bridge
+- `campaign_assets.js` — campaign asset authority
+
+Historical `vXX_hooks.js` remain valid providers of mechanics and assets, but new canon state should not exist only inside them.
+
+## Release gate
+
+Do not call the project production-ready until the first 30–45 minutes satisfy Story Bible v1.2 with final-quality interaction, art scale, state semantics, reveal timing, verification, reload/skip behavior, and mobile/desktop traversal.
+
+The canonical production checklist now lives in `PRODUCTION_BASELINE_v1.2.md`.
