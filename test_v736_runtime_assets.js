@@ -3,10 +3,12 @@ const fs = require("fs");
 
 const v736 = fs.readFileSync("v736_hooks.js", "utf8");
 const index = fs.readFileSync("index.html", "utf8");
+const atlasJs = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
+const manifest = JSON.parse(fs.readFileSync("assets/v736/katrin_manchez_manifest.json", "utf8"));
 
 assert(
   /function\s+dogFig736\s*\(/.test(v736),
-  "v7.36 pair fallback must render the Good Dogs as animated dogs, not static humanoid placeholders"
+  "v7.36 pair fallback must render animated dogs if the atlas cannot decode"
 );
 
 assert(
@@ -35,29 +37,55 @@ assert(
   "KATRIN_MANCHEZ atlas must remain the first draw attempt before animated fallback"
 );
 
+assert(!/kat_sleep|man_sleep/.test(drawPair), "Good Dogs gameplay must not map downed combat bodies to sleep placeholders");
+
 assert(
-  !/kat_sleep|man_sleep/.test(drawPair),
-  "Good Dogs gameplay must not map downed combat bodies to sleep placeholders"
+  index.includes('script src="katrin_manchez.atlas.js"') &&
+    index.indexOf('script src="katrin_manchez.atlas.js"') < index.indexOf('script src="v736_hooks.js"'),
+  "KATRIN_MANCHEZ atlas metadata must load before the v7.36 gameplay hook"
 );
 
 assert(
-  /Math\.sin\(t\s*\/\s*90\)/.test(v736) && /quadraticCurveTo\(dx - 42 \* u \+ lean/.test(v736),
-  "Animated dog fallback must preserve the wagging-tail motion from the previous Good Dogs placeholder"
+  !index.includes("manchez_katrin_hits_p1.js") && !index.includes("manchez_katrin_hits_p5.js"),
+  "The old partial manchez_katrin_hits chunk payload must stay unloaded"
 );
 
 assert(
-  fs.existsSync("manchez_katrin_hits_p1.js") &&
-    fs.existsSync("manchez_katrin_hits_p2.js") &&
-    fs.existsSync("manchez_katrin_hits_p3.js") &&
-    fs.existsSync("manchez_katrin_hits_p4.js"),
-  "Committed Manchez/Katrin payload chunks must remain tracked for restoration"
+  atlasJs.includes('"src":"assets/v736/katrin_manchez_atlas.png"') &&
+    !atlasJs.includes("__GK_KATRIN_MANCHEZ"),
+  "KATRIN_MANCHEZ must point at the source-derived PNG atlas, not the missing chunk global"
 );
 
-assert(
-  !fs.existsSync("manchez_katrin_hits_p5.js") &&
-    !index.includes("manchez_katrin_hits_p1.js") &&
-    !index.includes("katrin_manchez.atlas.js"),
-  "Partial Manchez/Katrin payload must stay unwired until the remaining chunks restore a usable src"
-);
+for (const key of [
+  "kat_idle0",
+  "kat_idle1",
+  "kat_idle2",
+  "kat_idle3",
+  "kat_idle4",
+  "kat_idle5",
+  "kat_idle6",
+  "kat_hack",
+  "kat_shield",
+  "kat_pounce",
+  "kat_down",
+  "man_idle0",
+  "man_idle1",
+  "man_idle2",
+  "man_idle3",
+  "man_idle4",
+  "man_idle5",
+  "man_idle6",
+  "man_hack",
+  "man_shield",
+  "man_pounce",
+  "man_down",
+]) {
+  assert(atlasJs.includes(`"${key":[`), `atlas metadata must include ${key}`);
+  assert(manifest.frames[key], `manifest must include ${key}`);
+  assert(fs.existsSync(manifest.frames[key].png), `source-derived frame PNG must exist for ${key}`);
+}
+
+assert(fs.existsSync("assets/v736/katrin_manchez_atlas.png"), "packed KATRIN_MANCHEZ runtime atlas PNG must exist");
+assert(manifest.frame_count >= 49, "manifest must track the recovered Good Dogs frame set");
 
 console.log("v736 runtime asset wiring checks passed");

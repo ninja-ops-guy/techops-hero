@@ -1,0 +1,749 @@
+{
+  "source": "Manchez and Katrin Knockdown Atlas.png",
+  "source_size": [
+    1254,
+    1254
+  ],
+  "generated_at": "2026-08-24",
+  "background_key": "near-white checkerboard alpha key",
+  "frame_count": 49,
+  "runtime_atlas": "assets/v736/katrin_manchez_atlas.png",
+  "frame_directory": "assets/v736/katrin_manchez",
+  "frames": {
+    "man_idle0": {
+      "source_cell": [
+        0,
+        50,
+        210,
+        220
+      ],
+      "atlas_rect": [
+        4,
+        4,
+        178,
+        157
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle0.png"
+    },
+    "man_idle1": {
+      "source_cell": [
+        210,
+        50,
+        190,
+        220
+      ],
+      "atlas_rect": [
+        186,
+        4,
+        151,
+        162
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle1.png"
+    },
+    "man_hack": {
+      "source_cell": [
+        400,
+        50,
+        195,
+        220
+      ],
+      "atlas_rect": [
+        341,
+        4,
+        157,
+        170
+      ],
+      "png": "assets/v736/katrin_manchez/man_hack.png"
+    },
+    "man_pounce": {
+      "source_cell": [
+        595,
+        50,
+        180,
+        220
+      ],
+      "atlas_rect": [
+        502,
+        4,
+        153,
+        159
+      ],
+      "png": "assets/v736/katrin_manchez/man_pounce.png"
+    },
+    "man_bark": {
+      "source_cell": [
+        0,
+        270,
+        210,
+        230
+      ],
+      "atlas_rect": [
+        659,
+        4,
+        178,
+        157
+      ],
+      "png": "assets/v736/katrin_manchez/man_bark.png"
+    },
+    "man_roll": {
+      "source_cell": [
+        930,
+        50,
+        160,
+        220
+      ],
+      "atlas_rect": [
+        841,
+        4,
+        144,
+        163
+      ],
+      "png": "assets/v736/katrin_manchez/man_roll.png"
+    },
+    "man_wall_hit": {
+      "source_cell": [
+        1090,
+        50,
+        164,
+        220
+      ],
+      "atlas_rect": [
+        4,
+        178,
+        147,
+        176
+      ],
+      "png": "assets/v736/katrin_manchez/man_wall_hit.png"
+    },
+    "man_look": {
+      "source_cell": [
+        210,
+        270,
+        190,
+        230
+      ],
+      "atlas_rect": [
+        155,
+        178,
+        139,
+        156
+      ],
+      "png": "assets/v736/katrin_manchez/man_look.png"
+    },
+    "man_strike": {
+      "source_cell": [
+        400,
+        270,
+        195,
+        230
+      ],
+      "atlas_rect": [
+        298,
+        178,
+        173,
+        158
+      ],
+      "png": "assets/v736/katrin_manchez/man_strike.png"
+    },
+    "man_crouch": {
+      "source_cell": [
+        595,
+        270,
+        180,
+        230
+      ],
+      "atlas_rect": [
+        475,
+        178,
+        145,
+        154
+      ],
+      "png": "assets/v736/katrin_manchez/man_crouch.png"
+    },
+    "man_leap": {
+      "source_cell": [
+        775,
+        270,
+        155,
+        230
+      ],
+      "atlas_rect": [
+        624,
+        178,
+        133,
+        175
+      ],
+      "png": "assets/v736/katrin_manchez/man_leap.png"
+    },
+    "man_down": {
+      "source_cell": [
+        930,
+        270,
+        160,
+        230
+      ],
+      "atlas_rect": [
+        761,
+        178,
+        152,
+        135
+      ],
+      "png": "assets/v736/katrin_manchez/man_down.png"
+    },
+    "man_wall_down": {
+      "source_cell": [
+        1090,
+        270,
+        164,
+        230
+      ],
+      "atlas_rect": [
+        4,
+        358,
+        136,
+        156
+      ],
+      "png": "assets/v736/katrin_manchez/man_wall_down.png"
+    },
+    "kat_idle0": {
+      "source_cell": [
+        0,
+        500,
+        210,
+        280
+      ],
+      "atlas_rect": [
+        144,
+        358,
+        168,
+        158
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle0.png"
+    },
+    "kat_idle1": {
+      "source_cell": [
+        210,
+        500,
+        190,
+        280
+      ],
+      "atlas_rect": [
+        316,
+        358,
+        142,
+        154
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle1.png"
+    },
+    "kat_hack": {
+      "source_cell": [
+        400,
+        500,
+        195,
+        280
+      ],
+      "atlas_rect": [
+        462,
+        358,
+        152,
+        181
+      ],
+      "png": "assets/v736/katrin_manchez/kat_hack.png"
+    },
+    "kat_pounce": {
+      "source_cell": [
+        595,
+        500,
+        180,
+        280
+      ],
+      "atlas_rect": [
+        618,
+        358,
+        148,
+        155
+      ],
+      "png": "assets/v736/katrin_manchez/kat_pounce.png"
+    },
+    "kat_leap": {
+      "source_cell": [
+        775,
+        500,
+        155,
+        280
+      ],
+      "atlas_rect": [
+        770,
+        358,
+        145,
+        197
+      ],
+      "png": "assets/v736/katrin_manchez/kat_leap.png"
+    },
+    "kat_roll": {
+      "source_cell": [
+        930,
+        500,
+        160,
+        280
+      ],
+      "atlas_rect": [
+        4,
+        559,
+        147,
+        179
+      ],
+      "png": "assets/v736/katrin_manchez/kat_roll.png"
+    },
+    "kat_wall_hit": {
+      "source_cell": [
+        1090,
+        500,
+        164,
+        280
+      ],
+      "atlas_rect": [
+        155,
+        559,
+        143,
+        170
+      ],
+      "png": "assets/v736/katrin_manchez/kat_wall_hit.png"
+    },
+    "kat_bark": {
+      "source_cell": [
+        0,
+        780,
+        210,
+        220
+      ],
+      "atlas_rect": [
+        302,
+        559,
+        165,
+        142
+      ],
+      "png": "assets/v736/katrin_manchez/kat_bark.png"
+    },
+    "kat_look": {
+      "source_cell": [
+        210,
+        780,
+        190,
+        220
+      ],
+      "atlas_rect": [
+        471,
+        559,
+        141,
+        129
+      ],
+      "png": "assets/v736/katrin_manchez/kat_look.png"
+    },
+    "kat_strike": {
+      "source_cell": [
+        400,
+        780,
+        195,
+        220
+      ],
+      "atlas_rect": [
+        616,
+        559,
+        161,
+        155
+      ],
+      "png": "assets/v736/katrin_manchez/kat_strike.png"
+    },
+    "kat_crouch": {
+      "source_cell": [
+        595,
+        780,
+        180,
+        220
+      ],
+      "atlas_rect": [
+        781,
+        559,
+        148,
+        151
+      ],
+      "png": "assets/v736/katrin_manchez/kat_crouch.png"
+    },
+    "kat_shield": {
+      "source_cell": [
+        0,
+        1000,
+        210,
+        210
+      ],
+      "atlas_rect": [
+        4,
+        742,
+        168,
+        133
+      ],
+      "png": "assets/v736/katrin_manchez/kat_shield.png"
+    },
+    "kat_down": {
+      "source_cell": [
+        930,
+        780,
+        160,
+        220
+      ],
+      "atlas_rect": [
+        176,
+        742,
+        153,
+        119
+      ],
+      "png": "assets/v736/katrin_manchez/kat_down.png"
+    },
+    "kat_cheer": {
+      "source_cell": [
+        1090,
+        780,
+        164,
+        220
+      ],
+      "atlas_rect": [
+        333,
+        742,
+        119,
+        142
+      ],
+      "png": "assets/v736/katrin_manchez/kat_cheer.png"
+    },
+    "kat_down_heavy": {
+      "source_cell": [
+        210,
+        1000,
+        190,
+        210
+      ],
+      "atlas_rect": [
+        456,
+        742,
+        175,
+        102
+      ],
+      "png": "assets/v736/katrin_manchez/kat_down_heavy.png"
+    },
+    "kat_hack_low": {
+      "source_cell": [
+        400,
+        1000,
+        195,
+        210
+      ],
+      "atlas_rect": [
+        635,
+        742,
+        158,
+        147
+      ],
+      "png": "assets/v736/katrin_manchez/kat_hack_low.png"
+    },
+    "kat_pounce_low": {
+      "source_cell": [
+        595,
+        1000,
+        180,
+        210
+      ],
+      "atlas_rect": [
+        797,
+        742,
+        149,
+        138
+      ],
+      "png": "assets/v736/katrin_manchez/kat_pounce_low.png"
+    },
+    "kat_leap_low": {
+      "source_cell": [
+        775,
+        1000,
+        155,
+        210
+      ],
+      "atlas_rect": [
+        4,
+        893,
+        129,
+        137
+      ],
+      "png": "assets/v736/katrin_manchez/kat_leap_low.png"
+    },
+    "kat_dizzy": {
+      "source_cell": [
+        930,
+        1000,
+        160,
+        210
+      ],
+      "atlas_rect": [
+        137,
+        893,
+        160,
+        128
+      ],
+      "png": "assets/v736/katrin_manchez/kat_dizzy.png"
+    },
+    "kat_stand": {
+      "source_cell": [
+        1090,
+        1000,
+        164,
+        210
+      ],
+      "atlas_rect": [
+        301,
+        893,
+        121,
+        134
+      ],
+      "png": "assets/v736/katrin_manchez/kat_stand.png"
+    },
+    "man_shield": {
+      "source_cell": [
+        595,
+        270,
+        180,
+        230
+      ],
+      "atlas_rect": [
+        426,
+        893,
+        145,
+        154
+      ],
+      "png": "assets/v736/katrin_manchez/man_shield.png"
+    },
+    "man_down_wall": {
+      "source_cell": [
+        1090,
+        270,
+        164,
+        230
+      ],
+      "atlas_rect": [
+        575,
+        893,
+        136,
+        156
+      ],
+      "png": "assets/v736/katrin_manchez/man_down_wall.png"
+    },
+    "kat_sleep": {
+      "source_cell": [
+        210,
+        1000,
+        190,
+        210
+      ],
+      "atlas_rect": [
+        715,
+        893,
+        175,
+        102
+      ],
+      "png": "assets/v736/katrin_manchez/kat_sleep.png"
+    },
+    "kat_hack2": {
+      "source_cell": [
+        400,
+        1000,
+        195,
+        210
+      ],
+      "atlas_rect": [
+        4,
+        1053,
+        158,
+        147
+      ],
+      "png": "assets/v736/katrin_manchez/kat_hack2.png"
+    },
+    "kat_pounce2": {
+      "source_cell": [
+        595,
+        1000,
+        180,
+        210
+      ],
+      "atlas_rect": [
+        166,
+        1053,
+        149,
+        138
+      ],
+      "png": "assets/v736/katrin_manchez/kat_pounce2.png"
+    },
+    "kat_leap2": {
+      "source_cell": [
+        775,
+        1000,
+        155,
+        210
+      ],
+      "atlas_rect": [
+        319,
+        1053,
+        129,
+        137
+      ],
+      "png": "assets/v736/katrin_manchez/kat_leap2.png"
+    },
+    "man_idle2": {
+      "source_cell": [
+        210,
+        50,
+        190,
+        220
+      ],
+      "atlas_rect": [
+        452,
+        1053,
+        151,
+        162
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle2.png"
+    },
+    "man_idle3": {
+      "source_cell": [
+        595,
+        50,
+        180,
+        220
+      ],
+      "atlas_rect": [
+        607,
+        1053,
+        153,
+        159
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle3.png"
+    },
+    "man_idle4": {
+      "source_cell": [
+        775,
+        270,
+        155,
+        230
+      ],
+      "atlas_rect": [
+        764,
+        1053,
+        133,
+        175
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle4.png"
+    },
+    "man_idle5": {
+      "source_cell": [
+        930,
+        50,
+        160,
+        220
+      ],
+      "atlas_rect": [
+        4,
+        1232,
+        144,
+        163
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle5.png"
+    },
+    "man_idle6": {
+      "source_cell": [
+        210,
+        270,
+        190,
+        230
+      ],
+      "atlas_rect": [
+        152,
+        1232,
+        139,
+        156
+      ],
+      "png": "assets/v736/katrin_manchez/man_idle6.png"
+    },
+    "kat_idle2": {
+      "source_cell": [
+        400,
+        500,
+        195,
+        280
+      ],
+      "atlas_rect": [
+        295,
+        1232,
+        152,
+        181
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle2.png"
+    },
+    "kat_idle3": {
+      "source_cell": [
+        595,
+        500,
+        180,
+        280
+      ],
+      "atlas_rect": [
+        451,
+        1232,
+        148,
+        155
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle3.png"
+    },
+    "kat_idle4": {
+      "source_cell": [
+        775,
+        500,
+        155,
+        280
+      ],
+      "atlas_rect": [
+        603,
+        1232,
+        145,
+        197
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle4.png"
+    },
+    "kat_idle5": {
+      "source_cell": [
+        930,
+        500,
+        160,
+        280
+      ],
+      "atlas_rect": [
+        752,
+        1232,
+        147,
+        179
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle5.png"
+    },
+    "kat_idle6": {
+      "source_cell": [
+        210,
+        780,
+        190,
+        220
+      ],
+      "atlas_rect": [
+        4,
+        1433,
+        141,
+        129
+      ],
+      "png": "assets/v736/katrin_manchez/kat_idle6.png"
+    }
+  }
+}
