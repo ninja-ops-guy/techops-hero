@@ -80,7 +80,7 @@ for (const key of [
   "man_pounce",
   "man_down",
 ]) {
-  assert(atlasJs.includes(`"${key":[`), `atlas metadata must include ${key}`);
+  assert(atlasJs.includes(`"${key}":[`), `atlas metadata must include ${key}`);
   assert(manifest.frames[key], `manifest must include ${key}`);
   assert(fs.existsSync(manifest.frames[key].png), `source-derived frame PNG must exist for ${key}`);
 }
