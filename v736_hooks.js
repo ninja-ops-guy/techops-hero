@@ -290,12 +290,21 @@
       if (atlasFrame736("KATRIN_MANCHEZ", key, x, dx - h * 0.36, dy - h, h * 0.72, h, flip)) return;
       dogFig736(x, who, dx, dy, h, pose, flip, tm);
     }
-    function duoFig736(x, key, dx, dy, w, h, flip, tm) { // duo_* tandem frames, procedural burst fallback
+    function duoFig736(x, key, dx, dy, w, h, flip, tm) { // duo_* tandem frames; composed dogs if no duo atlas exists yet
       if (atlasFrame736("KATRIN_MANCHEZ", key, x, dx, dy, w, h, flip)) return;
-      const cx = dx + w / 2, cy = dy + h / 2, a = .5 + .5 * Math.sin((tm || 0) / 90);
-      x.save(); x.strokeStyle = "rgba(192,132,252," + (.4 + a * .5) + ")"; x.lineWidth = 3;
-      for (let i = 0; i < 8; i++) { const an = i * Math.PI / 4 + (tm || 0) / 300; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(an) * w * .45, cy + Math.sin(an) * h * .45); x.stroke(); }
-      x.fillStyle = "rgba(255,210,74," + (.5 + a * .5) + ")"; x.beginPath(); x.arc(cx, cy, w * .12, 0, 7); x.fill();
+      const cx = dx + w / 2, base = dy + h * .9, phase = Math.floor((tm || 0) / 140) % 2;
+      const slam = key === "duo_slam";
+      const katPose = slam ? (phase ? "strike" : "shield") : (phase ? "cast" : "strike");
+      const manPose = slam ? (phase ? "strike" : "cast") : (phase ? "bark" : "strike");
+      const dir = flip ? -1 : 1;
+      const a = .5 + .5 * Math.sin((tm || 0) / 90);
+      x.save();
+      x.strokeStyle = "rgba(192,132,252," + (.25 + a * .35) + ")"; x.lineWidth = 3;
+      x.beginPath(); x.arc(cx, base - h * .52, w * (.28 + a * .03), 0, 7); x.stroke();
+      drawPairFig736(x, "katrin", cx - dir * w * .2, base, h * .68, katPose, flip, tm);
+      drawPairFig736(x, "manchez", cx + dir * w * .2, base + h * .02, h * .72, manPose, !flip, (tm || 0) + 80);
+      x.fillStyle = "rgba(255,240,180," + (.12 + a * .12) + ")";
+      x.beginPath(); x.arc(cx, base - h * .56, w * .1, 0, 7); x.fill();
       x.restore();
     }
     function waldoFig736(x, dx, dy, h, pose) { // WALDO_FULL contract first (guarded); shapes otherwise
@@ -1100,7 +1109,7 @@
             ctx.fillStyle = "rgba(255,82,82," + blink + ")"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center";
             ctx.fillText("Ⓔ REVIVE — " + Math.max(0, c.downT).toFixed(1) + "s", bx, F - 70);
           }
-          // tandem finisher burst (KATRIN_MANCHEZ duo_* frame, procedural starburst fallback)
+          // tandem finisher burst (KATRIN_MANCHEZ duo_* frame, composed dog-action fallback)
           if (cs.finisherFx && now < cs.finisherFx) {
             const bx = (NM.x + (ch[partnerWho(cs)].downed || ch[partnerWho(cs)].out ? NM.x : cs.partner.x)) / 2 - NM.cam;
             ctx.globalAlpha = Math.min(1, (cs.finisherFx - now) / 300);
