@@ -2,6 +2,7 @@ const assert = require("assert");
 const fs = require("fs");
 
 const v736 = fs.readFileSync("v736_hooks.js", "utf8");
+const v737 = fs.readFileSync("v737_hooks.js", "utf8");
 const index = fs.readFileSync("index.html", "utf8");
 const atlasJs = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
 const manifest = JSON.parse(fs.readFileSync("assets/v736/katrin_manchez_manifest.json", "utf8"));
@@ -59,11 +60,33 @@ assert(
   "Tandem finisher comments and code must not describe the active fallback as the old placeholder starburst"
 );
 
+assert(
+  /function\s+drawGoodDogActive737\s*\(/.test(v737) &&
+    /NM\s*&&\s*NM\._v736/.test(v737) &&
+    /drawGoodDogActive737\(ctx,\s*NM/.test(v737),
+  "The final render wrapper must replace the active campaign fighter with the production Good Dogs atlas"
+);
+
+assert(
+  /NM\.w\s*=\s*0;\s*NM\.h\s*=\s*0;\s*NM\.block\s*=\s*false/.test(v737) &&
+    /NM\.w\s*=\s*svW;\s*NM\.h\s*=\s*svH;\s*NM\.block\s*=\s*svB/.test(v737),
+  "Good Dogs render bridge must suppress the generic Mike body only during drawing and restore collision dimensions"
+);
+
+for (const stateKey of ["roll", "wall_hit", "strike", "shield", "leap", "down"]) {
+  assert(v737.includes(`p + "${stateKey}"`) || v737.includes(`_${stateKey}`) || v737.includes(`\"${stateKey}\"`), `active Good Dogs bridge should account for ${stateKey}`);
+}
+
+assert(
+  /There is no authored walk row/.test(v737) && /idle0/.test(v737),
+  "Ground movement must use clean authored motion/idle frames rather than fake attack-as-walk poses"
+);
 
 assert(
   index.includes('script src="katrin_manchez.atlas.js"') &&
-    index.indexOf('script src="katrin_manchez.atlas.js"') < index.indexOf('script src="v736_hooks.js"'),
-  "KATRIN_MANCHEZ atlas metadata must load before the v7.36 gameplay hook"
+    index.indexOf('script src="katrin_manchez.atlas.js"') < index.indexOf('script src="v736_hooks.js"') &&
+    index.indexOf('script src="v736_hooks.js"') < index.indexOf('script src="v737_hooks.js"'),
+  "KATRIN_MANCHEZ metadata must load before v7.36 and the final v7.37 render bridge"
 );
 
 assert(
@@ -89,6 +112,10 @@ for (const key of [
   "kat_shield",
   "kat_pounce",
   "kat_down",
+  "kat_roll",
+  "kat_wall_hit",
+  "kat_leap",
+  "kat_strike",
   "man_idle0",
   "man_idle1",
   "man_idle2",
@@ -100,6 +127,10 @@ for (const key of [
   "man_shield",
   "man_pounce",
   "man_down",
+  "man_roll",
+  "man_wall_hit",
+  "man_leap",
+  "man_strike",
 ]) {
   assert(atlasJs.includes(`"${key}":[`), `atlas metadata must include ${key}`);
   assert(manifest.frames[key], `manifest must include ${key}`);
