@@ -7,6 +7,10 @@
      · Player night-mode draw reskinned to the NIGHT_WALKER atlas
        (idle/walk/guard/light/launcher/dash/beam/hit/down/defeat) with a
        procedural dark-silhouette fallback when the atlas payload is absent.
+     · Late-stage Good Dogs bridge: when the v7.36 breakout is active, the
+       engine's Mike body is suppressed for the render pass and the currently
+       controlled Katrin/Manchez fighter is drawn from KATRIN_MANCHEZ. The
+       v7.36 partner, HUD, objectives and combat math remain untouched.
      · Satellite beam special on S (unused by night mode): 2× sweep-finisher
        damage, 1.5 s cooldown. All Mike damage/timing/collision numbers are
        unchanged — pure reskin plus this one additive special.
@@ -46,6 +50,55 @@
       } catch (e) { return false; }
     }
     const nwKey = (row, i, n) => { const A = NW(); const k = row + (n ? (i % n) : 0); return (A && A.frames && A.frames[k]) ? k : row + "0"; };
+
+    // ---------- active Good Dogs production-atlas bridge ----------
+    let gdImg737 = null;
+    const GD737 = () => (typeof KATRIN_MANCHEZ !== "undefined") ? KATRIN_MANCHEZ : null;
+    function gdFrame737(key, x, cx, base, h, flip) {
+      try {
+        const A = GD737();
+        if (!A || !A.src || !A.frames || !A.frames[key]) return false;
+        if (!gdImg737) { gdImg737 = new Image(); gdImg737.src = A.src; }
+        if (!gdImg737.complete || !gdImg737.naturalWidth) return false;
+        const fr = A.frames[key];
+        if (!fr || fr.length < 4 || !(fr[2] > 0 && fr[3] > 0)) return false;
+        const dw = h * (fr[2] / fr[3]);
+        x.save(); x.imageSmoothingEnabled = false;
+        if (flip) { x.translate(cx, 0); x.scale(-1, 1); x.drawImage(gdImg737, fr[0], fr[1], fr[2], fr[3], -dw / 2, base - h, dw, h); }
+        else x.drawImage(gdImg737, fr[0], fr[1], fr[2], fr[3], cx - dw / 2, base - h, dw, h);
+        x.restore();
+        return true;
+      } catch (e) { return false; }
+    }
+    function gdKey737(who, NM, now) {
+      const p = who === "katrin" ? "kat_" : "man_";
+      const A = GD737();
+      const has = (k) => !!(A && A.frames && A.frames[k]);
+      if (NM.hp <= 0) return p + "down";
+      if (NM.ifr > 0 && has(p + "wall_hit") && Math.floor(now / 80) % 2) return p + "wall_hit";
+      if (NM.dashT > 0 && has(p + "roll")) return p + "roll";
+      if (NM.jabAnim > 0) {
+        if (who === "katrin") return has("kat_strike") && NM.jabStage === 2 ? "kat_strike" : "kat_pounce";
+        return has("man_strike") && NM.jabStage === 2 ? "man_strike" : "man_pounce";
+      }
+      if (NM.block && has(p + "shield")) return p + "shield";
+      if (!NM.onGround && has(p + "leap")) return p + "leap";
+      // There is no authored walk row in this source sheet. Cycle the seven
+      // clean idle/motion frames instead of pretending attack poses are walk.
+      const idle = p + "idle" + (Math.floor(now / (Math.abs(NM.vx) > .5 ? 105 : 155)) % 7);
+      return has(idle) ? idle : p + "idle0";
+    }
+    function drawGoodDogActive737(x, NM, now, oldW, oldH) {
+      try {
+        const cs = NM && NM._v736;
+        if (!cs || !cs.active || (cs.chars && cs.chars[cs.active] && cs.chars[cs.active].downed)) return false;
+        const who = cs.active === "manchez" ? "manchez" : "katrin";
+        const h = Math.max(50, (oldH || 42) * 1.45);
+        const cx = NM.x - NM.cam + (oldW || 28) / 2;
+        const base = NM.y + (oldH || 42);
+        return gdFrame737(gdKey737(who, NM, now), x, cx, base, h, NM.face < 0);
+      } catch (e) { return false; }
+    }
 
     // ---------- procedural fallback (same footprint as the nm Mike figure) ----------
     function drawNCFallback(x, NM, px, py, now) {
@@ -182,7 +235,7 @@
       };
     }
 
-    // ---------- night-mode wraps (no-ops unless playing the nightcrawler) ----------
+    // ---------- night-mode wraps (Good Dogs campaign bridge + Night Crawler) ----------
     if (typeof stepNM === "function") {
       const __origStepNM737 = stepNM;
       stepNM = function (dt) {
@@ -199,6 +252,17 @@
     if (typeof drawNM === "function") {
       const __origDrawNM737 = drawNM;
       drawNM = function () {
+        // v7.36 owns all Good Dogs simulation/partner/UI logic, but its base
+        // night pass still paints the generic Mike player. Suppress only that
+        // figure during rendering, then draw the active dog from the authored
+        // source-derived atlas. Collision dimensions are restored immediately.
+        if (NM && NM._v736) {
+          const svW = NM.w, svH = NM.h, svB = NM.block;
+          NM.w = 0; NM.h = 0; NM.block = false;
+          try { __origDrawNM737(); } finally { NM.w = svW; NM.h = svH; NM.block = svB; }
+          if (!NM.drive) drawGoodDogActive737(ctx, NM, performance.now(), svW, svH);
+          return;
+        }
         if (!isNC() || !NM) return __origDrawNM737();
         // hide Mike's procedural figure during the original pass (zero-size
         // rects, no block arc), then draw the NIGHT_WALKER form on top — HUD,
@@ -232,6 +296,6 @@
       } catch (e) { }
     })();
 
-    console.log("[v7.37] night crawler playable loaded");
+    console.log("[v7.37] night crawler + Good Dogs production atlas bridge loaded");
   } catch (e) { try { console.warn("[v7.37] load error", e); } catch (_) { } }
 })();
