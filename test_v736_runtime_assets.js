@@ -39,6 +39,27 @@ assert(
 
 assert(!/kat_sleep|man_sleep/.test(drawPair), "Good Dogs gameplay must not map downed combat bodies to sleep placeholders");
 
+const duoStart = v736.indexOf("function duoFig736");
+const duoEnd = v736.indexOf("function waldoFig736", duoStart);
+assert(duoStart > -1 && duoEnd > duoStart, "duoFig736 block must exist");
+const duoBlock = v736.slice(duoStart, duoEnd);
+
+assert(
+  duoBlock.indexOf('atlasFrame736("KATRIN_MANCHEZ"') < duoBlock.indexOf('drawPairFig736(x, "katrin"'),
+  "True duo atlas frames must still be attempted before the composed dog-action fallback"
+);
+
+assert(
+  /drawPairFig736\(x,\s*"katrin"/.test(duoBlock) && /drawPairFig736\(x,\s*"manchez"/.test(duoBlock),
+  "Tandem finisher fallback must compose the actual Good Dogs animation frames instead of effect-only placeholders"
+);
+
+assert(
+  !/procedural starburst fallback/.test(v736),
+  "Tandem finisher comments and code must not describe the active fallback as the old placeholder starburst"
+);
+
+
 assert(
   index.includes('script src="katrin_manchez.atlas.js"') &&
     index.indexOf('script src="katrin_manchez.atlas.js"') < index.indexOf('script src="v736_hooks.js"'),
