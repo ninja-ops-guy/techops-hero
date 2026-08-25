@@ -1,0 +1,11 @@
+{
+  "name": "techops-hero-runtime-bot",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "runtime-bot": "node scripts/runtime_bot.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.55.0"
+  }
+}
