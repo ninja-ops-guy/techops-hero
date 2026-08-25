@@ -63,6 +63,7 @@ jobs:
           node --check v737_hooks.js
           node --check test_campaign_native_act1.js
           node --check test_campaign_day1_runtime_gate.js
+          node --check test_campaign_opening_acceptance.js
           node --check test_campaign_assets.js
           node --check test_campaign_asset_pipeline.js
           node --check test_campaign_runtime_assets.js
@@ -90,6 +91,8 @@ jobs:
         run: node test_campaign_native_act1.js
       - name: Verify Day 1 runtime gate
         run: node test_campaign_day1_runtime_gate.js
+      - name: Verify production opening acceptance
+        run: node test_campaign_opening_acceptance.js
       - name: Verify Sector 04 native sandbox
         run: node test_campaign_sector04.js
       - name: Verify Sector 04 runtime bridge
