@@ -9,9 +9,11 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 3;
+  var VERSION = 4;
   var BASE = "assets/campaign/";
+  var ENTER_MS = 240;
   var EXIT_MS = 180;
+  var MAP_W = 42, MAP_H = 32;
   var SCENES = Object.freeze({
     standup: { label: "TECHOPS STANDUP // 08:55", mode: "board", background: "ui.standup.board", props: ["ui.standup.ticket_card", "ui.standup.owner_badge"] },
     workstation: { label: "MIKE // WORKSTATION", mode: "first_person", background: "workstation.corporate_aircraft_panel", props: ["workstation.felicia.video_frame", "workstation.orpheus.glitch_frame"] },
@@ -28,6 +30,46 @@
   function loadCampaign() {
     try { return root && root.TechOpsCampaign && typeof root.TechOpsCampaign.load === "function" ? root.TechOpsCampaign.load(root.localStorage) : null; }
     catch (e) { return null; }
+  }
+  function gameState() {
+    try { return root && root.S && typeof root.S === "object" ? root.S : null; } catch (e) { return null; }
+  }
+  function snapshotWorld() {
+    var s = gameState();
+    if (!s) return null;
+    return {
+      px: Number(s.px), py: Number(s.py),
+      room: s.room !== undefined ? s.room : null,
+      area: s.area !== undefined ? s.area : null,
+      map: s.map !== undefined && typeof s.map !== "object" ? s.map : null,
+      facing: s.facing !== undefined ? s.facing : (s.face !== undefined ? s.face : null),
+      clock: s.clock !== undefined ? s.clock : null,
+      day: s.day !== undefined ? s.day : null
+    };
+  }
+  function restoreWorld(snapshot) {
+    var s = gameState();
+    if (!s || !snapshot) return false;
+    if (Number.isFinite(snapshot.px)) s.px = snapshot.px;
+    if (Number.isFinite(snapshot.py)) s.py = snapshot.py;
+    if (snapshot.room !== null && s.room !== undefined) s.room = snapshot.room;
+    if (snapshot.area !== null && s.area !== undefined) s.area = snapshot.area;
+    if (snapshot.map !== null && s.map !== undefined && typeof s.map !== "object") s.map = snapshot.map;
+    if (snapshot.facing !== null) {
+      if (s.facing !== undefined) s.facing = snapshot.facing;
+      else if (s.face !== undefined) s.face = snapshot.facing;
+    }
+    return true;
+  }
+  function worldFocus(snapshot) {
+    snapshot = snapshot || snapshotWorld();
+    var x = snapshot && Number.isFinite(snapshot.px) ? snapshot.px : MAP_W / 2;
+    var y = snapshot && Number.isFinite(snapshot.py) ? snapshot.py : MAP_H / 2;
+    // Tile-space coordinates are converted to a viewport-safe origin. Clamp away
+    // from the extreme edges so the cinematic aperture remains readable on mobile.
+    var xp = Math.max(12, Math.min(88, ((x + 0.5) / MAP_W) * 100));
+    var yp = Math.max(15, Math.min(85, ((y + 0.5) / MAP_H) * 100));
+    return { x: xp, y: yp };
   }
   function sceneForDialog(name) {
     name = String(name || "").toUpperCase();
@@ -85,8 +127,10 @@
     if (!canDom() || root.document.getElementById("act1-reference-style")) return;
     var s = root.document.createElement("style"); s.id = "act1-reference-style";
     s.textContent = [
-      ".act1-reference{position:fixed;inset:0;z-index:13;overflow:hidden;pointer-events:none;background:#071017;font-family:'Press Start 2P',monospace;animation:a1-enter .22s ease-out both}",
-      ".act1-reference.a1-leave{animation:a1-leave .18s ease-in both}",
+      ".act1-reference{position:fixed;inset:0;z-index:13;overflow:hidden;pointer-events:none;background:#071017;font-family:'Press Start 2P',monospace;transform-origin:var(--a1-origin-x,50%) var(--a1-origin-y,50%);animation:a1-enter .24s cubic-bezier(.2,.8,.2,1) both}",
+      ".act1-reference.a1-from-world{clip-path:circle(150% at var(--a1-origin-x,50%) var(--a1-origin-y,50%));animation:a1-world-enter .24s cubic-bezier(.2,.8,.2,1) both}",
+      ".act1-reference.a1-leave{animation:a1-world-leave .18s ease-in both}",
+      ".act1-reference .a1-world-anchor{position:absolute;left:var(--a1-origin-x,50%);top:var(--a1-origin-y,50%);width:10px;height:10px;margin:-5px;border:1px solid rgba(126,255,205,.55);border-radius:50%;box-shadow:0 0 18px rgba(126,255,205,.48);animation:a1-anchor .7s ease-out both}",
       ".act1-reference .a1-bg{position:absolute;inset:-2%;background-size:cover;background-position:center;image-rendering:auto;filter:saturate(.92) contrast(1.06);animation:a1-breathe 8s ease-in-out infinite alternate}",
       ".act1-reference .a1-grade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,10,15,.74),rgba(5,10,15,.12) 45%,rgba(5,10,15,.55)),radial-gradient(circle at 50% 42%,transparent 20%,rgba(0,0,0,.6) 100%)}",
       ".act1-reference .a1-label{position:absolute;left:18px;top:max(18px,env(safe-area-inset-top));font-size:9px;color:#d7e6ea;letter-spacing:1px;text-shadow:0 2px 0 #000}",
@@ -112,13 +156,16 @@
       ".act1-reference .a1-verify{left:12%;right:12%;bottom:16%;height:3px;background:#7effcd;box-shadow:0 0 20px rgba(126,255,205,.65);animation:a1-verify 2s ease-in-out infinite}",
       ".act1-reference.a1-camera_push .a1-bg{animation:a1-push 7s ease-in-out infinite alternate}.act1-reference.a1-camera_track .a1-bg{animation:a1-track 9s ease-in-out infinite alternate}",
       ".act1-reference.a1-board_focus .a1-props .a1-prop:first-child{animation:a1-boardfocus 2.8s ease-in-out infinite}.act1-reference.a1-board_lock .a1-props{filter:drop-shadow(0 0 14px rgba(126,255,205,.18))}",
-      "@keyframes a1-enter{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}@keyframes a1-leave{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.992)}}",
+      "@keyframes a1-enter{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}",
+      "@keyframes a1-world-enter{0%{opacity:.25;clip-path:circle(2% at var(--a1-origin-x,50%) var(--a1-origin-y,50%));transform:scale(.985)}100%{opacity:1;clip-path:circle(150% at var(--a1-origin-x,50%) var(--a1-origin-y,50%));transform:scale(1)}}",
+      "@keyframes a1-world-leave{0%{opacity:1;clip-path:circle(150% at var(--a1-origin-x,50%) var(--a1-origin-y,50%));transform:scale(1)}100%{opacity:0;clip-path:circle(2% at var(--a1-origin-x,50%) var(--a1-origin-y,50%));transform:scale(.99)}}",
+      "@keyframes a1-anchor{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(5)}}",
       "@keyframes a1-breathe{from{transform:scale(1.01)}to{transform:scale(1.025)}}@keyframes a1-push{from{transform:scale(1.01) translateX(0)}to{transform:scale(1.055) translateX(-.7%)}}@keyframes a1-track{from{transform:scale(1.025) translateX(-1.3%)}to{transform:scale(1.025) translateX(1.3%)}}",
       "@keyframes a1-actor-idle{from{transform:translateY(0)}to{transform:translateY(-4px)}}@keyframes a1-scan{from{transform:translateY(-8px)}to{transform:translateY(8px)}}@keyframes a1-glitch{0%,91%,94%,100%{opacity:0;transform:translateY(0)}92%{opacity:.8;transform:translateY(70px)}93%{opacity:.35;transform:translateY(115px)}}",
       "@keyframes a1-forklift{0%,10%{transform:translateX(0)}70%,100%{transform:translateX(760%)}}@keyframes a1-feed{0%,35%{transform:scaleX(.15);opacity:.45}60%,85%{transform:scaleX(1);opacity:1}100%{transform:translateY(12px) scaleX(1);opacity:0}}@keyframes a1-eject{0%,25%{transform:translateY(-14px);opacity:0}45%,78%{transform:translateY(0);opacity:1}100%{transform:translateY(12px);opacity:0}}",
       "@keyframes a1-beacon{0%,45%{opacity:.25}50%,100%{opacity:1}}@keyframes a1-machine{from{transform:translateX(-30%)}to{transform:translateX(30%)}}@keyframes a1-run{from{transform:translateX(-40%)}to{transform:translateX(40%)}}",
       "@keyframes a1-audit{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(165px);opacity:.8}}@keyframes a1-lock{0%,100%{opacity:.35}50%{opacity:.8}}@keyframes a1-verify{0%,100%{opacity:.25;transform:scaleX(.5)}50%{opacity:.9;transform:scaleX(1)}}@keyframes a1-boardfocus{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}",
-      "@media(prefers-reduced-motion:reduce){.act1-reference,.act1-reference *{animation:none!important;transition:none!important}}",
+      "@media(prefers-reduced-motion:reduce){.act1-reference,.act1-reference *{animation:none!important;transition:none!important;clip-path:none!important}}",
       "@media(max-width:600px){.act1-reference .a1-label{font-size:7px}.act1-reference .a1-status{font-size:6px;bottom:14%}.act1-reference .a1-actor{right:4%;height:40%;max-width:44%;bottom:25%}.act1-reference .a1-props{left:4%;right:4%;gap:8px;bottom:25%;height:24%}.act1-reference.a1-first_person .a1-props{left:6%;right:6%;height:36%}.act1-reference.a1-investigation:after{left:4%;right:4%;font-size:7px;padding:12px}.act1-reference .a1-forklift{bottom:28%}}"
     ].join("\n"); root.document.head.appendChild(s);
   }
@@ -149,6 +196,9 @@
     var el = root.document.getElementById("act1-reference");
     if (!el) return false;
     root.__techopsAct1ReferenceScene = null;
+    var snapshot = root.__techopsAct1WorldSnapshot || null;
+    restoreWorld(snapshot);
+    root.__techopsAct1WorldSnapshot = null;
     if (immediate || reducedMotion() || !root.setTimeout) removeNow(el);
     else { el.className += " a1-leave"; root.setTimeout(function () { removeNow(el); }, EXIT_MS); }
     return true;
@@ -158,18 +208,27 @@
     if (!spec) return { id: sceneId, active: false };
     state = state || loadCampaign();
     var profile = presentationFor(sceneId, state, dialogName);
-    if (!canDom()) return { id: sceneId, active: false, mode: spec.mode, background: url(spec.background), presentation: profile };
+    var snapshot = snapshotWorld();
+    var focus = worldFocus(snapshot);
+    if (!canDom()) return { id: sceneId, active: false, mode: spec.mode, background: url(spec.background), presentation: profile, worldSnapshot: snapshot, focus: focus };
     ensureStyle(); hide(true);
-    var el = root.document.createElement("div"); el.id = "act1-reference"; el.className = "act1-reference a1-" + spec.mode + " a1-" + profile.variant;
+    // Capture after replacing any prior scene so this scene owns the return point.
+    root.__techopsAct1WorldSnapshot = snapshot;
+    var el = root.document.createElement("div");
+    el.id = "act1-reference";
+    el.className = "act1-reference a1-from-world a1-" + spec.mode + " a1-" + profile.variant;
+    el.style.setProperty("--a1-origin-x", focus.x.toFixed(2) + "%");
+    el.style.setProperty("--a1-origin-y", focus.y.toFixed(2) + "%");
     var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg);
     var grade = root.document.createElement("div"); grade.className = "a1-grade"; el.appendChild(grade);
     if (spec.actor) el.appendChild(image(spec.actor, "a1-actor"));
     if (profile.props.length) { var props = root.document.createElement("div"); props.className = "a1-props"; profile.props.forEach(function (slot) { props.appendChild(image(slot, "a1-prop")); }); el.appendChild(props); }
     addMotion(el, profile);
+    if (!reducedMotion()) el.appendChild(motionNode("a1-world-anchor"));
     var label = root.document.createElement("div"); label.className = "a1-label"; label.textContent = spec.label; el.appendChild(label);
     if (profile.statusText) { var status = root.document.createElement("div"); status.className = "a1-status"; status.textContent = profile.statusText; el.appendChild(status); }
     root.document.body.appendChild(el); root.__techopsAct1ReferenceScene = sceneId;
-    return { id: sceneId, active: true, mode: spec.mode, background: url(spec.background), presentation: profile };
+    return { id: sceneId, active: true, mode: spec.mode, background: url(spec.background), presentation: profile, worldSnapshot: snapshot, focus: focus };
   }
 
   function install() {
@@ -182,5 +241,5 @@
   }
 
   install();
-  return { VERSION: VERSION, BASE: BASE, EXIT_MS: EXIT_MS, SCENES: SCENES, filename: filename, url: url, sceneForDialog: sceneForDialog, presentationFor: presentationFor, motionFor: motionFor, show: show, hide: hide, install: install };
+  return { VERSION: VERSION, BASE: BASE, ENTER_MS: ENTER_MS, EXIT_MS: EXIT_MS, SCENES: SCENES, filename: filename, url: url, sceneForDialog: sceneForDialog, presentationFor: presentationFor, motionFor: motionFor, snapshotWorld: snapshotWorld, restoreWorld: restoreWorld, worldFocus: worldFocus, show: show, hide: hide, install: install };
 });
