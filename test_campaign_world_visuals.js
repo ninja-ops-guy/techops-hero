@@ -47,7 +47,7 @@ assert.ok(/NM&&NM\._v736/.test(goodDogs), "active render authority must be scope
 assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs), "controlled body must render from the Good Dogs atlas");
 assert.ok(/There is no authored walk cycle/.test(goodDogs), "locomotion must not mislabel attack poses as walking");
 assert.ok(/good-dogs-touch/.test(goodDogs) && /SWAP/.test(goodDogs) && /SYNC/.test(goodDogs) && /K SUPPORT/.test(goodDogs), "mobile co-op controls must expose pair mechanics");
-assert.ok(/idle2/.test(goodDogs) && /idle6/.test(goodDogs), "historical seven-frame partner loop must be normalized to neutral poses");
+assert.ok(/for\(var i=2;i<7;i\+\+\)/.test(goodDogs) && /idle0/.test(goodDogs) && /idle1/.test(goodDogs), "historical seven-frame partner loop must be normalized to the two neutral poses");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
 assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed production bootstrap must load the Good Dogs authority");
