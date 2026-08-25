@@ -28,9 +28,11 @@ assert.ok(script('campaign_sector04_runtime.js') < script('campaign_native_act1.
 
 assert.ok(script('dogs.js') !== -1,'dogs.js must be present in deployed entrypoint');
 assert.ok(dogs.includes('good_boys_mobile_launch_guard.js?v=3'),'dogs.js must cache-bust Good Boys mobile launch guard v3');
-assert.ok(dogs.includes('production_mode_router.js?v=1'),'dogs.js must bootstrap cache-busted production mode router');
+assert.ok(dogs.includes('production_mode_router.js?v=2'),'dogs.js must bootstrap cache-busted production mode router v2');
 ['VERSION=3','pairReady','installStartGuard','resume_pair_missing','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
-['VERSION=1','launchNightCrawler','launchGoodBoys','enterNightReliably','wrapStartRun','wrapGoodBoysStart','good_boys_pair_timeout'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
+['VERSION=2','launchNightCrawler','launchGoodBoys','enterNightReliably','good_boys_pair_timeout','typeof S!=="undefined"','typeof NM!=="undefined"'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
+assert.ok(!modeRouter.includes('root.NM&&'),'router must not read lexical NM through window/root');
+assert.ok(!modeRouter.includes('return root.S||null'),'router must not read lexical S through window/root');
 
 has('auto_play=false');
 has('allow="autoplay"');
