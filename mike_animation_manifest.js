@@ -10,7 +10,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 2;
+  var VERSION = 3;
   var WALK_FRAME_MS = 135;
 
   var DAY_SHIFT = Object.freeze({
@@ -31,15 +31,36 @@
     })
   });
 
+  /*
+   * classifiedStates records semantics supported by repository provenance but
+   * does NOT authorize runtime use. Example: v7.37 explicitly used f170 as the
+   * A/S-rank end-of-day celebration pose. Because the image payload is absent,
+   * that frame remains classified-but-unapproved until visual QA is possible.
+   */
+  var CLASSIFIED_STATES = Object.freeze({
+    celebration: Object.freeze({
+      frames: Object.freeze(["f170"]),
+      confidence: "historical_explicit",
+      provenance: Object.freeze({
+        commit: "8bedfd0fc8acdacc4b3b468f6ffdb9ce0cb644f2",
+        subsystem: "v7.37 endOfDay",
+        note: "Historical implementation calls mikePose737('f170') and labels it the celebration pose row."
+      }),
+      approved: false,
+      blockReason: "Renderable MIKE_ACTIONS source is missing; visual QA has not been performed."
+    })
+  });
+
   var ACTION_ATLAS = Object.freeze({
     atlas: "MIKE_ACTIONS",
     frameCount: 182,
     naming: "f000..f181",
-    status: "unclassified",
+    status: "partially_classified",
     sourceStatus: "metadata_only",
     payloadGlobals: Object.freeze(["TO_MIKE_ACTIONS", "__GK_MIKE_ACTIONS"]),
+    classifiedStates: CLASSIFIED_STATES,
     approvedStates: Object.freeze({}),
-    policy: "Do not bind MIKE_ACTIONS frames to gameplay semantics until the source sheet has been visually reviewed, a renderable source payload is present, and the frame range is explicitly labeled in this manifest."
+    policy: "A frame may be classified from explicit repository provenance, but it may not be bound to gameplay until a renderable source exists, visual review confirms the pose, and the state is copied into approvedStates."
   });
 
   function stateKey(facing, moving) {
@@ -63,9 +84,19 @@
     return { state: semantic.indexOf("walk_") === 0 ? "walk" : "idle", semantic: semantic, key: spec.frames[index], flip: !!spec.flip, index: index };
   }
 
+  function frameInStates(states, frameKey) {
+    return Object.keys(states || {}).some(function (name) {
+      var state = states[name];
+      return !!(state && state.frames && state.frames.indexOf(frameKey) >= 0);
+    });
+  }
+
+  function actionFrameClassified(frameKey) {
+    return frameInStates(ACTION_ATLAS.classifiedStates, frameKey);
+  }
+
   function actionFrameApproved(frameKey) {
-    var states = ACTION_ATLAS.approvedStates;
-    return Object.keys(states).some(function (name) { return states[name].frames.indexOf(frameKey) >= 0; });
+    return frameInStates(ACTION_ATLAS.approvedStates, frameKey);
   }
 
   function actionAtlasSource(scope) {
@@ -93,6 +124,7 @@
     stateKey: stateKey,
     stateSpec: stateSpec,
     resolveDayShift: resolveDayShift,
+    actionFrameClassified: actionFrameClassified,
     actionFrameApproved: actionFrameApproved,
     actionAtlasSource: actionAtlasSource,
     actionAtlasReady: actionAtlasReady
