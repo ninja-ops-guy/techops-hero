@@ -20,7 +20,7 @@ on:
       - "scripts/extract_katrin_manchez_assets.py"
       - "scripts/production_release_gate.js"
       - "test_campaign_*.js"
-      - "test_good_boys_canon_runtime.js"
+      - "test_good_boys_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
@@ -48,7 +48,7 @@ on:
       - "scripts/extract_katrin_manchez_assets.py"
       - "scripts/production_release_gate.js"
       - "test_campaign_*.js"
-      - "test_good_boys_canon_runtime.js"
+      - "test_good_boys_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
@@ -86,6 +86,7 @@ jobs:
           node --check good_boys_canon_runtime.js
           node --check good_boys_reference_mechanics.js
           node --check good_boys_gameplay_loop.js
+          node --check good_boys_mobile_launch_guard.js
           node --check good_dogs_production_runtime.js
           node --check mike_animation_manifest.js
           node --check mike_actions.js
@@ -102,6 +103,7 @@ jobs:
           node --check test_campaign_native_act2.js
           node --check test_campaign_world_visuals.js
           node --check test_good_boys_canon_runtime.js
+          node --check test_good_boys_mobile_launch_guard.js
           node --check test_mobile_production_tester.js
           node --check test_mike_animation_manifest.js
           node --check test_campaign_day1_runtime_gate.js
@@ -132,6 +134,8 @@ jobs:
         run: node test_campaign_world_visuals.js
       - name: Verify Good Boys canon runtime
         run: node test_good_boys_canon_runtime.js
+      - name: Verify Good Boys mobile launch recovery
+        run: node test_good_boys_mobile_launch_guard.js
       - name: Verify production mobile tester
         run: node test_mobile_production_tester.js
       - name: Verify Mike animation semantics
