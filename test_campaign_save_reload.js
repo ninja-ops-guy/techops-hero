@@ -56,7 +56,7 @@ reloadCheckpoint("standup ownership", state => {
   assert.strictEqual(state.assignments.impossible_access_event, "mike");
 });
 
-choose("Open workstation");
+native.openWorkstation();
 reloadCheckpoint("workstation checked", state => {
   assert.strictEqual(state.flags.workstation_checked, true);
   assert.strictEqual(state.flags.red_in_mirror_heard, false);
