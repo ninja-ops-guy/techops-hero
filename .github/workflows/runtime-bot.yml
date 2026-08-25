@@ -32,7 +32,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install browser bot
         run: |
@@ -69,7 +68,7 @@ jobs:
           if [ -f runtime-bot-artifacts/report.md ]; then
             cat runtime-bot-artifacts/report.md >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "# Runtime bot\n\nReport file was not produced." >> "$GITHUB_STEP_SUMMARY"
+            printf '# Runtime bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload REPL, screenshots and traces
