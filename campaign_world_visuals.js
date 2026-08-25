@@ -9,16 +9,13 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 2;
+  var VERSION = 3;
   var INTERACT_RANGE = 2.15;
-  var WALK_FRAME_MS = 135;
   var PLAYER_DRAW_SIZE = 46;
-  var WALK_FRAMES = Object.freeze({
-    down: ["down0", "down1", "down0", "down2"],
-    up: ["up0", "up1", "up0", "up2"],
-    right: ["right0", "right1", "right0", "right2"],
-    left: ["right0", "right1", "right0", "right2"]
-  });
+
+  function animations() {
+    return root && root.TechOpsMikeAnimations ? root.TechOpsMikeAnimations : null;
+  }
 
   function distance(ax, ay, bx, by) {
     var dx = Number(ax || 0) - Number(bx || 0);
@@ -83,15 +80,14 @@
   }
 
   function playerFrame(state, tm) {
+    var api = animations();
+    if (api && typeof api.resolveDayShift === "function") return api.resolveDayShift(state, tm);
     state = state || {};
     var facing = ["up", "down", "left", "right"].indexOf(state.fx) >= 0 ? state.fx : "down";
     if (state.partyUntil && tm < state.partyUntil) return { key: "party", flip: false, state: "party" };
     if (state.thumbsUntil && tm < state.thumbsUntil) return { key: "thumbs", flip: false, state: "thumbs" };
     if (state.inDialog) return { key: "laptop", flip: false, state: "interact" };
-    if (!state.moving) return { key: facing === "left" ? "right0" : facing + "0", flip: facing === "left", state: "idle" };
-    var frames = WALK_FRAMES[facing] || WALK_FRAMES.down;
-    var index = Math.floor(tm / WALK_FRAME_MS) % frames.length;
-    return { key: frames[index], flip: facing === "left", state: "walk", index: index };
+    return { key: facing === "left" ? "right0" : facing + "0", flip: facing === "left", state: state.moving ? "walk" : "idle" };
   }
 
   function drawProductionPlayer(state, tm) {
@@ -199,8 +195,8 @@
   return {
     VERSION: VERSION,
     INTERACT_RANGE: INTERACT_RANGE,
-    WALK_FRAME_MS: WALK_FRAME_MS,
-    WALK_FRAMES: WALK_FRAMES,
+    PLAYER_DRAW_SIZE: PLAYER_DRAW_SIZE,
+    animations: animations,
     distance: distance,
     candidates: candidates,
     nearestInteractable: nearestInteractable,
