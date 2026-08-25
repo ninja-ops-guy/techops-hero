@@ -3,15 +3,22 @@ const assert = require("assert");
 const manifest = require("./mike_animation_manifest.js");
 const world = require("./campaign_world_visuals.js");
 
-assert.strictEqual(manifest.VERSION, 2);
+assert.strictEqual(manifest.VERSION, 3);
 assert.strictEqual(manifest.WALK_FRAME_MS, 135);
 assert.strictEqual(manifest.DAY_SHIFT.atlas, "PLAYER_ATLAS");
 assert.strictEqual(manifest.ACTION_ATLAS.atlas, "MIKE_ACTIONS");
 assert.strictEqual(manifest.ACTION_ATLAS.frameCount, 182);
-assert.strictEqual(manifest.ACTION_ATLAS.status, "unclassified");
+assert.strictEqual(manifest.ACTION_ATLAS.status, "partially_classified");
 assert.strictEqual(manifest.ACTION_ATLAS.sourceStatus, "metadata_only");
 assert.deepStrictEqual(manifest.ACTION_ATLAS.payloadGlobals, ["TO_MIKE_ACTIONS", "__GK_MIKE_ACTIONS"]);
 assert.deepStrictEqual(manifest.ACTION_ATLAS.approvedStates, {});
+assert.deepStrictEqual(manifest.ACTION_ATLAS.classifiedStates.celebration.frames, ["f170"]);
+assert.strictEqual(manifest.ACTION_ATLAS.classifiedStates.celebration.confidence, "historical_explicit");
+assert.strictEqual(manifest.ACTION_ATLAS.classifiedStates.celebration.provenance.commit, "8bedfd0fc8acdacc4b3b468f6ffdb9ce0cb644f2");
+assert.strictEqual(manifest.ACTION_ATLAS.classifiedStates.celebration.approved, false);
+assert.strictEqual(manifest.actionFrameClassified("f170"), true);
+assert.strictEqual(manifest.actionFrameApproved("f170"), false);
+assert.strictEqual(manifest.actionFrameClassified("f000"), false);
 assert.strictEqual(manifest.actionFrameApproved("f000"), false);
 assert.strictEqual(manifest.actionFrameApproved("f181"), false);
 
@@ -54,4 +61,4 @@ assert.strictEqual(world.animations(), manifest);
 assert.strictEqual(world.playerFrame({fx:"right", moving:true}, 135).key, "right1");
 assert.strictEqual(world.playerFrame({fx:"left", moving:true}, 405).flip, true);
 
-console.log("Mike canonical animation manifest + source readiness: PASS");
+console.log("Mike canonical animation manifest + provenance + source readiness: PASS");
