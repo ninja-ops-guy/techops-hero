@@ -52,13 +52,23 @@ assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics));
 assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics));
 
 const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
-assert.ok(/VERSION=4/.test(canon), "Good Boys canon runtime must be v4");
-assert.ok(/THE INCIDENT/.test(canon) && /CROSS THE BREACH/.test(canon));
-assert.ok(/LOCATE CELL 118 · BREAK THE CONTROLS · FREE K/.test(canon));
-assert.ok(/FREE WALDO · BREAK THE WARDEN/.test(canon));
+assert.ok(/VERSION=5/.test(canon), "Good Boys canon runtime must be v5");
+assert.ok(/WALDO'S HOUSE/.test(canon) && /THE HIDDEN BAY/.test(canon) && /MAKE A DOOR/.test(canon));
+assert.ok(/FIND WALDO'S TRAIL · REACH THE HIDDEN BAY/.test(canon));
+assert.ok(/INVESTIGATE THE PRISONER · VERIFY · FREE K/.test(canon));
+assert.ok(/FREE WALDO · HOLD BOTH SIDES · BREAK LOCKDOWN/.test(canon));
+assert.ok(/goodboys_home/.test(canon) && /goodboys_hangar/.test(canon) && /goodboys_breach/.test(canon));
 assert.ok(/prepareNightRuntime/.test(canon) && /night_runtime_timeout/.test(canon), "mobile handoff must wait for NM runtime");
+assert.ok(/suppressLegacyPresentation/.test(canon) && /NEW HAVEN STREETS/.test(canon), "Good Boys must suppress inherited Night Crawler presentation");
 assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon));
 assert.ok(!/toDataURL/.test(canon));
+
+const assets = fs.readFileSync("good_boys_campaign_assets.js", "utf8");
+["goodboys_home","goodboys_hangar","goodboys_approach","goodboys_breach","goodboys_cell118","goodboys_cell1984","goodboys_escape","goodboys_earthfall"].forEach(id=>assert.ok(assets.includes(id), id+" asset missing"));
+assert.ok(/WALDO'S HOUSE/.test(assets) && /HIDDEN BAY/.test(assets));
+assert.ok(/IMPACT VECTOR ACCEPTED/.test(assets) && /MAKE A DOOR/.test(canon));
+assert.ok(/NM_DISTRICTS/.test(assets) && /installDistricts/.test(assets), "generated visuals must be wired as playable Night-engine districts");
+assert.ok(!/NEW HAVEN/.test(assets), "Good Boys world assets must not inherit New Haven identity");
 
 const loop = fs.readFileSync("good_boys_gameplay_loop.js", "utf8");
 assert.ok(/VERSION=3/.test(loop), "concept gameplay loop must be v3");
@@ -79,7 +89,7 @@ assert.ok(/HULL BREACH — BOOST \/ AIR DASH/.test(loop) && /applyHazards/.test(
 assert.ok(/CELL 118/.test(loop) && /CELL 1984/.test(loop) && /MAINTENANCE SHUTTLE/.test(loop), "orbital landmarks must be visually authored into gameplay");
 assert.ok(/drawStageAccents/.test(loop) && /foreground rails\/pipes/.test(loop), "stage must include foreground depth treatment");
 assert.ok(/installStep/.test(loop) && /root\.stepNM=/.test(loop), "shared Night physics must be safely extended for Good Boys hazards");
-assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /explosion_orange/.test(canon), "mission lighting language must match concept art");
+assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /impact_orange/.test(canon), "mission lighting language must match campaign route");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
 assert.ok(worldSource.includes("good_dogs_production_runtime.js"));
@@ -93,4 +103,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys concept gameplay loop v3: PASS");
+console.log("Campaign playable world visuals + Good Boys Waldo-house-to-prison route v5: PASS");
