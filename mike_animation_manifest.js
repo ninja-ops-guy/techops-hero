@@ -7,10 +7,10 @@
   var api = factory(root);
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.TechOpsMikeAnimations = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+})(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 1;
+  var VERSION = 2;
   var WALK_FRAME_MS = 135;
 
   var DAY_SHIFT = Object.freeze({
@@ -36,8 +36,10 @@
     frameCount: 182,
     naming: "f000..f181",
     status: "unclassified",
+    sourceStatus: "metadata_only",
+    payloadGlobals: Object.freeze(["TO_MIKE_ACTIONS", "__GK_MIKE_ACTIONS"]),
     approvedStates: Object.freeze({}),
-    policy: "Do not bind MIKE_ACTIONS frames to gameplay semantics until the source sheet has been visually reviewed and the frame range is explicitly labeled in this manifest."
+    policy: "Do not bind MIKE_ACTIONS frames to gameplay semantics until the source sheet has been visually reviewed, a renderable source payload is present, and the frame range is explicitly labeled in this manifest."
   });
 
   function stateKey(facing, moving) {
@@ -66,6 +68,23 @@
     return Object.keys(states).some(function (name) { return states[name].frames.indexOf(frameKey) >= 0; });
   }
 
+  function actionAtlasSource(scope) {
+    scope = scope || root || {};
+    var atlas = scope[ACTION_ATLAS.atlas];
+    if (atlas && typeof atlas.src === "string" && atlas.src.length > 0) return { kind: "atlas_src", value: atlas.src };
+    for (var i = 0; i < ACTION_ATLAS.payloadGlobals.length; i++) {
+      var name = ACTION_ATLAS.payloadGlobals[i];
+      if (typeof scope[name] === "string" && scope[name].length > 0) return { kind: "payload", name: name, value: scope[name] };
+    }
+    return null;
+  }
+
+  function actionAtlasReady(scope) {
+    var source = actionAtlasSource(scope);
+    var atlas = (scope || root || {})[ACTION_ATLAS.atlas];
+    return !!(source && atlas && atlas.frames && Object.keys(atlas.frames).length === ACTION_ATLAS.frameCount);
+  }
+
   return {
     VERSION: VERSION,
     WALK_FRAME_MS: WALK_FRAME_MS,
@@ -74,6 +93,8 @@
     stateKey: stateKey,
     stateSpec: stateSpec,
     resolveDayShift: resolveDayShift,
-    actionFrameApproved: actionFrameApproved
+    actionFrameApproved: actionFrameApproved,
+    actionAtlasSource: actionAtlasSource,
+    actionAtlasReady: actionAtlasReady
   };
 });
