@@ -1,0 +1,110 @@
+name: Runtime bot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "*.js"
+      - "*.html"
+      - "*.css"
+      - "package.json"
+      - "scripts/runtime_bot.mjs"
+      - ".github/workflows/runtime-bot.yml"
+  schedule:
+    - cron: "17 */2 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: runtime-bot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install browser bot
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit
+
+      - name: Start exact-commit local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/techops-runtime-server.log 2>&1 &
+          echo $! > /tmp/techops-runtime-server.pid
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/techops-runtime-server.log
+          exit 1
+
+      - name: Run Night Crawler + Good Boys REPL bot
+        id: bot
+        continue-on-error: true
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
+        run: |
+          set +e
+          npm run runtime-bot
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Add report to workflow summary
+        if: always()
+        run: |
+          if [ -f runtime-bot-artifacts/report.md ]; then
+            cat runtime-bot-artifacts/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "# Runtime bot\n\nReport file was not produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload REPL, screenshots and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-bot-${{ github.sha }}
+          path: runtime-bot-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Report failure to GitHub issue
+        if: always() && steps.bot.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Runtime Bot: playable-mode regression"
+          body_file="runtime-bot-artifacts/report.md"
+          issue="$(gh issue list --state open --search \"$title in:title\" --json number --jq '.[0].number // empty')"
+          {
+            echo
+            echo "Commit: \`$SHA\`"
+            echo "Run: $RUN_URL"
+            echo
+            [ -f "$body_file" ] && cat "$body_file" || echo "Runtime bot failed before producing its report."
+          } > /tmp/runtime-bot-issue.md
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body-file /tmp/runtime-bot-issue.md
+          else
+            gh issue create --title "$title" --body-file /tmp/runtime-bot-issue.md
+          fi
+
+      - name: Enforce runtime bot result
+        if: always()
+        run: |
+          test "${{ steps.bot.outputs.exit_code }}" = "0"
