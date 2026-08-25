@@ -28,6 +28,7 @@ requiredElement("tb-interact");
 requiredElement("tb-menu");
 requiredElement("dialogue");
 
+const lastHistoricalHook = scriptIndex("v737_hooks.js");
 const campaignAct1 = scriptIndex("campaign_act1.js");
 const campaignAssets = scriptIndex("campaign_assets.js");
 const campaignRuntime = scriptIndex("campaign_runtime.js");
@@ -35,10 +36,12 @@ const sector04 = scriptIndex("campaign_sector04.js");
 const sector04Runtime = scriptIndex("campaign_sector04_runtime.js");
 const nativeAct1 = scriptIndex("campaign_native_act1.js");
 
+assert.ok(lastHistoricalHook < campaignAct1, "canonical campaign authority must load after the historical version-hook stack");
 assert.ok(campaignAct1 < campaignRuntime, "campaign runtime must load after campaign state contract");
 assert.ok(campaignAssets < sector04Runtime, "Sector 04 runtime must load after campaign asset authority");
 assert.ok(sector04 < sector04Runtime, "Sector 04 runtime must load after Sector 04 contract");
 assert.ok(sector04Runtime < nativeAct1, "native Act I must see the Sector 04 browser runtime at install time");
+assert.strictEqual(html.indexOf("_hooks.js", nativeAct1), -1, "no historical version hook may load after canonical native Act I authority");
 
 const sectorRuntimeSource = fs.readFileSync("campaign_sector04_runtime.js", "utf8");
 assert.ok(
