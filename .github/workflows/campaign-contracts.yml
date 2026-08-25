@@ -18,6 +18,7 @@ on:
       - "v737_hooks.js"
       - "scripts/generate_sector04_assets.py"
       - "scripts/extract_katrin_manchez_assets.py"
+      - "scripts/production_release_gate.js"
       - "test_campaign_*.js"
       - "test_good_boys_canon_runtime.js"
       - "test_mobile_production_tester.js"
@@ -45,6 +46,7 @@ on:
       - "v737_hooks.js"
       - "scripts/generate_sector04_assets.py"
       - "scripts/extract_katrin_manchez_assets.py"
+      - "scripts/production_release_gate.js"
       - "test_campaign_*.js"
       - "test_good_boys_canon_runtime.js"
       - "test_mobile_production_tester.js"
@@ -61,7 +63,7 @@ permissions:
 jobs:
   contracts:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -92,6 +94,7 @@ jobs:
           node --check campaign_sector04_runtime.js
           node --check v736_hooks.js
           node --check v737_hooks.js
+          node --check scripts/production_release_gate.js
           node --check test_campaign_act2.js
           node --check test_campaign_act2_reload_gates.js
           node --check test_campaign_native_act1.js
@@ -183,3 +186,5 @@ jobs:
         run: node test_night_runtime_assets.js
       - name: Verify UI co-op asset authority
         run: node test_ui_coop_contract.js
+      - name: Verify aggregate production release gate
+        run: node scripts/production_release_gate.js
