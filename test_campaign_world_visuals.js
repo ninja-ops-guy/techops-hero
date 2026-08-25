@@ -41,11 +41,16 @@ assert.strictEqual(typeof visuals.loadNightReference, "function");
 assert.strictEqual(typeof visuals.loadGoodDogsProduction, "function");
 
 const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
+assert.ok(/VERSION = 2/.test(goodDogs), "Good Dogs reference pass must be v2");
 assert.ok(/#btn-v736/.test(goodDogs), "co-op title entry must mark the Good Dogs launch path");
 assert.ok(/v722\.skip/.test(goodDogs), "Good Dogs must bypass the generic Night Drive wrapper during campaign entry");
 assert.ok(/NM&&NM\._v736/.test(goodDogs), "active render authority must be scoped to the 118/1984 campaign");
 assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs), "controlled body must render from the Good Dogs atlas");
-assert.ok(/There is no authored walk cycle/.test(goodDogs), "locomotion must not mislabel attack poses as walking");
+assert.ok(/never substitute attack\/crouch\/knockdown art for walk/.test(goodDogs), "locomotion must not mislabel attack poses as walking");
+assert.ok(/Math\.max\(78,\(NM\.h\|\|34\)\*2\.30\)/.test(goodDogs), "active dogs must render at reference-readable hero scale");
+assert.ok(/drawReferenceHUD/.test(goodDogs) && /GOOD DOGS PROTOCOL/.test(goodDogs), "co-op must own a reference-style two-character HUD");
+assert.ok(/KATRIN/.test(goodDogs) && /MANCHEZ/.test(goodDogs) && /118 \/ 1984/.test(goodDogs), "reference HUD must preserve pair and mission identity");
+assert.ok(/good-dogs-active #hud\{display:none!important\}/.test(goodDogs), "generic Day Shift HUD must be hidden during Good Dogs gameplay");
 assert.ok(/good-dogs-touch/.test(goodDogs) && /SWAP/.test(goodDogs) && /SYNC/.test(goodDogs) && /K SUPPORT/.test(goodDogs), "mobile co-op controls must expose pair mechanics");
 assert.ok(/for\(var i=2;i<7;i\+\+\)/.test(goodDogs) && /idle0/.test(goodDogs) && /idle1/.test(goodDogs), "historical seven-frame partner loop must be normalized to the two neutral poses");
 
@@ -58,4 +63,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Mike locomotion + mobile safe-area + Night/Good Dogs production loaders: PASS");
+console.log("Campaign playable world visuals + Mike locomotion + mobile safe-area + Night/Good Dogs reference loaders: PASS");
