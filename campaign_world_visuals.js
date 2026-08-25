@@ -9,8 +9,16 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 1;
+  var VERSION = 2;
   var INTERACT_RANGE = 2.15;
+  var WALK_FRAME_MS = 135;
+  var PLAYER_DRAW_SIZE = 46;
+  var WALK_FRAMES = Object.freeze({
+    down: ["down0", "down1", "down0", "down2"],
+    up: ["up0", "up1", "up0", "up2"],
+    right: ["right0", "right1", "right0", "right2"],
+    left: ["right0", "right1", "right0", "right2"]
+  });
 
   function distance(ax, ay, bx, by) {
     var dx = Number(ax || 0) - Number(bx || 0);
@@ -50,9 +58,7 @@
   function lightProfile(state) {
     state = state || {};
     var zone = "default";
-    try {
-      if (typeof root.zoneAt === "function") zone = String(root.zoneAt(state.px, state.py) || "default").toLowerCase();
-    } catch (e) {}
+    try { if (typeof root.zoneAt === "function") zone = String(root.zoneAt(state.px, state.py) || "default").toLowerCase(); } catch (e) {}
     var profiles = {
       factory: { vignette: 0.17, warm: 0.10, cool: 0.02 },
       engineering: { vignette: 0.14, warm: 0.07, cool: 0.07 },
@@ -73,11 +79,51 @@
     if (!canRender()) return null;
     var ts = cv.height / 14;
     var sc = ts / TILE;
-    return {
-      x: (tx * TILE + TILE / 2 - camX) * sc,
-      y: (ty * TILE + TILE / 2 - camY) * sc,
-      scale: sc
-    };
+    return { x: (tx * TILE + TILE / 2 - camX) * sc, y: (ty * TILE + TILE / 2 - camY) * sc, scale: sc };
+  }
+
+  function playerFrame(state, tm) {
+    state = state || {};
+    var facing = ["up", "down", "left", "right"].indexOf(state.fx) >= 0 ? state.fx : "down";
+    if (state.partyUntil && tm < state.partyUntil) return { key: "party", flip: false, state: "party" };
+    if (state.thumbsUntil && tm < state.thumbsUntil) return { key: "thumbs", flip: false, state: "thumbs" };
+    if (state.inDialog) return { key: "laptop", flip: false, state: "interact" };
+    if (!state.moving) return { key: facing === "left" ? "right0" : facing + "0", flip: facing === "left", state: "idle" };
+    var frames = WALK_FRAMES[facing] || WALK_FRAMES.down;
+    var index = Math.floor(tm / WALK_FRAME_MS) % frames.length;
+    return { key: frames[index], flip: facing === "left", state: "walk", index: index };
+  }
+
+  function drawProductionPlayer(state, tm) {
+    try {
+      if (!state || typeof PLAYER_ATLAS === "undefined" || typeof playerImg === "undefined" || !PLAYER_ATLAS.frames) return false;
+      var plan = playerFrame(state, tm);
+      var frame = PLAYER_ATLAS.frames[plan.key] || PLAYER_ATLAS.frames.down0;
+      if (!frame) return false;
+      var C = PLAYER_ATLAS.cell;
+      var dw = PLAYER_DRAW_SIZE, dh = PLAYER_DRAW_SIZE;
+      var dx = state.px * TILE + (TILE - dw) / 2;
+      var dy = state.py * TILE + TILE - dh + 3;
+      var cx = state.px * TILE + TILE / 2;
+      var cy = state.py * TILE + TILE - 2;
+      ctx.save();
+      ctx.globalAlpha = state.moving ? 0.22 : 0.28;
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, state.moving ? 13 : 11, state.moving ? 4.2 : 3.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      if (plan.flip) {
+        ctx.translate(dx + dw, 0); ctx.scale(-1, 1);
+        ctx.drawImage(playerImg, frame[0] * C, frame[1] * C, C, C, 0, dy, dw, dh);
+      } else {
+        ctx.drawImage(playerImg, frame[0] * C, frame[1] * C, C, C, dx, dy, dw, dh);
+      }
+      ctx.restore();
+      return true;
+    } catch (e) { return false; }
   }
 
   function drawInteractionCue(tm) {
@@ -91,64 +137,38 @@
     ctx.globalAlpha = pulse;
     ctx.strokeStyle = target.kind === "npc" ? "#f2d46b" : target.kind === "device" ? "#7effcd" : "#b388ff";
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2); ctx.stroke();
     ctx.globalAlpha = 0.88;
-    ctx.font = "bold 9px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "rgba(4,10,14,.82)";
-    ctx.fillRect(pt.x - 18, pt.y - radius - 18, 36, 14);
-    ctx.fillStyle = "#f3f7f8";
-    ctx.fillText("E / A", pt.x, pt.y - radius - 11);
+    ctx.font = "bold 9px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(4,10,14,.82)"; ctx.fillRect(pt.x - 18, pt.y - radius - 18, 36, 14);
+    ctx.fillStyle = "#f3f7f8"; ctx.fillText("E / A", pt.x, pt.y - radius - 11);
     ctx.restore();
   }
 
   function drawGrade(tm) {
-    var p = lightProfile(S);
-    var w = cv.width, h = cv.height;
+    var p = lightProfile(S), w = cv.width, h = cv.height;
     ctx.save();
     var vignette = ctx.createRadialGradient(w * 0.5, h * 0.48, Math.min(w, h) * 0.12, w * 0.5, h * 0.48, Math.max(w, h) * 0.72);
-    vignette.addColorStop(0, "rgba(0,0,0,0)");
-    vignette.addColorStop(1, "rgba(0,0,0," + p.vignette + ")");
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, w, h);
-
+    vignette.addColorStop(0, "rgba(0,0,0,0)"); vignette.addColorStop(1, "rgba(0,0,0," + p.vignette + ")");
+    ctx.fillStyle = vignette; ctx.fillRect(0, 0, w, h);
     var drift = (Math.sin(tm / 2600) + 1) / 2;
     var warm = ctx.createLinearGradient(0, 0, w, h);
-    warm.addColorStop(0, "rgba(255,196,116," + (p.warm * (0.65 + drift * 0.35)) + ")");
-    warm.addColorStop(0.55, "rgba(255,196,116,0)");
-    ctx.fillStyle = warm;
-    ctx.fillRect(0, 0, w, h);
-
+    warm.addColorStop(0, "rgba(255,196,116," + (p.warm * (0.65 + drift * 0.35)) + ")"); warm.addColorStop(0.55, "rgba(255,196,116,0)");
+    ctx.fillStyle = warm; ctx.fillRect(0, 0, w, h);
     var cool = ctx.createLinearGradient(w, 0, 0, h);
-    cool.addColorStop(0, "rgba(102,187,255," + p.cool + ")");
-    cool.addColorStop(0.6, "rgba(102,187,255,0)");
-    ctx.fillStyle = cool;
-    ctx.fillRect(0, 0, w, h);
-    ctx.restore();
+    cool.addColorStop(0, "rgba(102,187,255," + p.cool + ")"); cool.addColorStop(0.6, "rgba(102,187,255,0)");
+    ctx.fillStyle = cool; ctx.fillRect(0, 0, w, h); ctx.restore();
   }
 
-  function installPlayerShadow() {
+  function installPlayerRenderer() {
     try {
-      if (typeof drawPlayer !== "function" || drawPlayer.__productionShadow) return false;
+      if (typeof drawPlayer !== "function" || drawPlayer.__productionLocomotion) return false;
       var base = drawPlayer;
       drawPlayer = function (s, tm) {
-        try {
-          var cx = s.px * TILE + TILE / 2;
-          var cy = s.py * TILE + TILE - 2;
-          ctx.save();
-          ctx.globalAlpha = s.moving ? 0.22 : 0.28;
-          ctx.fillStyle = "#000";
-          ctx.beginPath();
-          ctx.ellipse(cx, cy, s.moving ? 13 : 11, s.moving ? 4.4 : 3.8, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        } catch (e) {}
+        if (!(s && s.nightMode) && drawProductionPlayer(s, tm || 0)) return true;
         return base.apply(this, arguments);
       };
-      drawPlayer.__productionShadow = true;
+      drawPlayer.__productionLocomotion = true;
       return true;
     } catch (e) { return false; }
   }
@@ -173,19 +193,21 @@
     } catch (e) { return false; }
   }
 
-  function install() {
-    return { playerShadow: installPlayerShadow(), drawPolish: installDrawPolish() };
-  }
+  function install() { return { playerRenderer: installPlayerRenderer(), drawPolish: installDrawPolish() }; }
 
   var installed = install();
   return {
     VERSION: VERSION,
     INTERACT_RANGE: INTERACT_RANGE,
+    WALK_FRAME_MS: WALK_FRAME_MS,
+    WALK_FRAMES: WALK_FRAMES,
     distance: distance,
     candidates: candidates,
     nearestInteractable: nearestInteractable,
     lightProfile: lightProfile,
-    installPlayerShadow: installPlayerShadow,
+    playerFrame: playerFrame,
+    drawProductionPlayer: drawProductionPlayer,
+    installPlayerRenderer: installPlayerRenderer,
     installDrawPolish: installDrawPolish,
     install: install,
     installed: installed
