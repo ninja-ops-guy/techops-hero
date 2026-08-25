@@ -11,6 +11,7 @@ const tests = [
   "test_campaign_world_visuals.js",
   "test_good_boys_canon_runtime.js",
   "test_good_boys_mobile_launch_guard.js",
+  "test_production_mode_router.js",
   "test_mobile_production_tester.js",
   "test_production_performance_budget.js",
   "test_mike_animation_manifest.js",
@@ -44,8 +45,6 @@ for (const file of tests) {
   }
 }
 
-// Mike action atlas quarantine is intentionally separate because it protects
-// against a newly restored but visually unclassified source sheet.
 const quarantine = spawnSync(process.execPath, ["-e", `
 global.window=global;
 require('./mike_actions.atlas.js');
