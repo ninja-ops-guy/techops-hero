@@ -1,21 +1,21 @@
-/* Good Boys canon runtime — production authority v3.
- * Fixes: no redundant "play as Mike instead" title copy, no legacy M1 premise,
- * safe DOM-owned opening handoff, orbital-only campaign districts, and direct
- * suppression of Day Shift UI while Good Boys is active.
+/* Good Boys canon runtime — production authority v4.
+ * Canon: music-video orbital incident + approved Good Boys gameplay concept.
+ * Fixes legacy title copy, M1 premise, async Night runtime handoff, district
+ * leakage, Day Shift HUD leakage, and keeps the 118/1984 loop orbital-first.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysCanon)return;
-  var VERSION=3,chain=false,baseLoad=null,basePlay=null,baseDraw=null;
+  var VERSION=4,chain=false,baseLoad=null,basePlay=null,baseDraw=null;
   var SEQ={
-    1:{name:"THE INCIDENT",objective:"STAY TOGETHER · CROSS THE BREACH · REACH THE SHUTTLE",zone:"ORBITAL COMMAND RING",bg:"orbital_gate"},
-    2:{name:"HULL BREACH",objective:"REACH THE MAINTENANCE SHUTTLE",zone:"SHATTERED TRANSIT SPINE",bg:"orbital_gate"},
-    3:{name:"DETENTION RING",objective:"ENTER BLACKSITE MERIDIAN",zone:"ORBITAL DETENTION",bg:"orbital_gate"},
-    4:{name:"CELL 118",objective:"FIND CELL 118 · GET THE PRISONER OUT",zone:"PRISON BLOCK 118",bg:"orbital_gate"},
-    5:{name:"ACCESS GRANTED",objective:"DEFEND K WHILE HE OPENS THE ROUTE",zone:"ORPHEUS ACCESS CORE",bg:"orbital_eye"},
-    6:{name:"CELL 1984",objective:"FREE WALDO IN CELL 1984",zone:"SURVEILLANCE BLOCK",bg:"orbital_eye"},
-    7:{name:"GOOD BOYS PROTOCOL",objective:"ESCAPE TO THE SHUTTLE · FINISH TOGETHER",zone:"COLLAPSING DETENTION RING",bg:"orbital_eye"},
-    8:{name:"RETURN TO EARTH",objective:"GET EVERYONE HOME",zone:"MAINTENANCE SHUTTLE",bg:"orbital_gate"}
+    1:{name:"THE INCIDENT",objective:"STAY TOGETHER · CROSS THE BREACH · REACH THE SHUTTLE",zone:"ORBITAL COMMAND RING",bg:"orbital_gate",light:"pressure_blue"},
+    2:{name:"HULL BREACH",objective:"BOOST · AIR DASH · REACH THE MAINTENANCE SHUTTLE",zone:"SHATTERED TRANSIT SPINE",bg:"orbital_gate",light:"pressure_blue"},
+    3:{name:"DETENTION RING",objective:"INFILTRATE THE ORBITAL DETENTION FACILITY",zone:"ORBITAL DETENTION",bg:"orbital_gate",light:"detention_blue"},
+    4:{name:"CELL 118",objective:"LOCATE CELL 118 · BREAK THE CONTROLS · FREE K",zone:"PRISON BLOCK 118",bg:"orbital_gate",light:"cell118_blue"},
+    5:{name:"ACCESS GRANTED",objective:"DEFEND K WHILE HE OPENS THE ROUTE",zone:"ORPHEUS ACCESS CORE",bg:"orbital_eye",light:"hack_green"},
+    6:{name:"CELL 1984",objective:"FREE WALDO · BREAK THE WARDEN",zone:"SURVEILLANCE BLOCK 1984",bg:"orbital_eye",light:"emergency_red"},
+    7:{name:"GOOD BOYS PROTOCOL",objective:"RUN FOR THE SHUTTLE · TANDEM FINISHER",zone:"COLLAPSING DETENTION RING",bg:"orbital_eye",light:"explosion_orange"},
+    8:{name:"EARTHFALL",objective:"GET K · WALDO · KATRIN · MANCHEZ HOME",zone:"MAINTENANCE SHUTTLE",bg:"orbital_gate",light:"earthfall_blue"}
   };
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function meta(){try{return root.S&&root.S.meta&&root.S.meta._v736?root.S.meta._v736:null;}catch(e){return null;}}
@@ -32,7 +32,7 @@
       var all=ts.querySelectorAll("button,a,div,span,p");
       for(var i=0;i<all.length;i++){
         var el=all[i],t=(el.textContent||"").replace(/\s+/g," ").trim().toLowerCase();
-        if(t==="play as mike instead"||t==="← play as mike instead"||t.indexOf("play as mike instead")>=0){el.style.setProperty("display","none","important");el.setAttribute("aria-hidden","true");}
+        if(t.indexOf("play as mike instead")>=0){el.style.setProperty("display","none","important");el.setAttribute("aria-hidden","true");}
       }
       return true;
     }catch(e){return false;}
@@ -68,19 +68,37 @@
     }catch(e){}
   }
 
+  /* startCombat736 assumes enterNight() has produced NM synchronously. On mobile,
+     that assumption is false in several paths. Prime the Night runtime first,
+     then invoke the original mission callback only after NM exists. */
+  function prepareNightRuntime(cb){
+    var tries=0,maxTries=80;
+    function ready(){
+      closeLegacyDialog();
+      if(root.NM){try{if(cb)cb();}catch(e){root.__goodBoysHandoffError=String(e&&e.stack||e);}return;}
+      if(++tries>=maxTries){root.__goodBoysCoreBroken="night_runtime_timeout";return;}
+      try{(root.setTimeout||setTimeout)(ready,25);}catch(e){root.__goodBoysCoreBroken="night_runtime_timer_failed";}
+    }
+    try{
+      if(!root.NM&&typeof root.enterNight==="function")root.enterNight();
+      try{if(root.v722&&typeof root.v722.active==="function"&&root.v722.active()&&typeof root.v722.skip==="function")root.v722.skip();}catch(_){}
+    }catch(e){root.__goodBoysHandoffError=String(e&&e.stack||e);}
+    ready();
+  }
+
   function showIncidentIntro(cb){
     try{
-      if(!root.document){if(cb)cb();return true;}
+      if(!root.document){prepareNightRuntime(cb);return true;}
       var old=root.document.getElementById("good-boys-incident-intro");if(old)old.remove();
       closeLegacyDialog();
       var o=root.document.createElement("div");o.id="good-boys-incident-intro";
-      o.style.cssText="position:fixed;inset:0;z-index:100000;background:radial-gradient(circle at 50% 28%,#102238 0,#050912 38%,#020409 100%);display:flex;align-items:flex-end;justify-content:center;padding:max(18px,env(safe-area-inset-bottom)) 14px;color:#eef8ff;font-family:monospace";
-      o.innerHTML='<div style="width:min(680px,96vw);margin-bottom:4vh;background:#050914f2;border:2px solid #39bdf8;border-radius:14px;padding:18px;box-shadow:0 0 30px #0ea5e955"><div style="color:#f4c75b;font:700 22px monospace;line-height:1.05">GOOD BOYS PROTOCOL — THE INCIDENT</div><p style="font-size:16px;line-height:1.55;margin:14px 0">Katrin and Manchez are already aboard an orbital installation when the structure tears open around them.</p><p style="font-size:16px;line-height:1.55;margin:0 0 14px">Pressure alarms. Broken glass. Failing gravity. The maintenance route is collapsing.</p><div style="font-weight:700;font-size:16px;margin:14px 0">Stay together. Cross the breach. Reach the shuttle.</div><div style="color:#9fb5c9;font-size:13px;line-height:1.45">BOOST JUMP ×3 · AIR DASH ×2 · partner throw/catch · SWAP keeps both dogs alive.</div><button id="good-boys-begin" style="width:100%;min-height:54px;margin-top:18px;border:2px solid #38bdf8;border-radius:10px;background:#0a1726;color:#e9f8ff;font:700 15px monospace">BEGIN THE INCIDENT</button></div>';
+      o.style.cssText="position:fixed;inset:0;z-index:100000;background:radial-gradient(circle at 50% 25%,#0e2940 0,#060a12 38%,#010307 100%);display:flex;align-items:flex-end;justify-content:center;padding:max(18px,env(safe-area-inset-bottom)) 14px;color:#eef8ff;font-family:monospace";
+      o.innerHTML='<div style="width:min(680px,96vw);margin-bottom:4vh;background:#050914f2;border:2px solid #39bdf8;border-radius:14px;padding:18px;box-shadow:0 0 30px #0ea5e955"><div style="color:#f4c75b;font:700 22px monospace;line-height:1.05">GOOD BOYS PROTOCOL — THE INCIDENT</div><p style="font-size:16px;line-height:1.55;margin:14px 0">Katrin and Manchez are already aboard an orbital installation when the structure tears open around them.</p><p style="font-size:16px;line-height:1.55;margin:0 0 14px">Pressure alarms. Broken glass. Failing gravity. The maintenance route is collapsing.</p><div style="font-weight:700;font-size:16px;margin:14px 0">Stay together. Cross the breach. Reach the shuttle.</div><div style="color:#9fb5c9;font-size:13px;line-height:1.45">BOOST JUMP ×3 · AIR DASH ×2 · PARTNER THROW/CATCH · SWAP · SYNC</div><button id="good-boys-begin" style="width:100%;min-height:54px;margin-top:18px;border:2px solid #38bdf8;border-radius:10px;background:#0a1726;color:#e9f8ff;font:700 15px monospace">BEGIN THE INCIDENT</button></div>';
       root.document.body.appendChild(o);
-      var done=false,go=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}if(done)return;done=true;try{o.remove();}catch(_){}closeLegacyDialog();try{if(cb)cb();}catch(e){root.__goodBoysHandoffError=String(e&&e.stack||e);}};
+      var done=false,go=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}if(done)return;done=true;try{o.remove();}catch(_){}closeLegacyDialog();prepareNightRuntime(cb);};
       var b=root.document.getElementById("good-boys-begin");if(b){b.addEventListener("pointerdown",go,{once:true});b.addEventListener("click",go,{once:true});}
       return true;
-    }catch(e){root.__goodBoysIntroError=String(e&&e.stack||e);if(cb)try{cb();}catch(_){}return false;}
+    }catch(e){root.__goodBoysIntroError=String(e&&e.stack||e);prepareNightRuntime(cb);return false;}
   }
 
   function installOpeningAuthority(){
@@ -109,8 +127,13 @@
 
   function drawHud(x){
     try{
-      var c=cs();if(!c)return;var W=x.canvas.width,cfg=canonical(),compact=W<760,h=compact?110:84;
-      x.save();x.fillStyle="rgba(2,6,10,.95)";x.fillRect(0,0,W,h);x.textAlign="center";x.fillStyle="#f2f7fb";x.font="bold "+(compact?10:13)+"px monospace";x.fillText(cfg.name,W/2,compact?66:24);x.fillStyle="#8edcff";x.font="bold "+(compact?8:10)+"px monospace";x.fillText(cfg.objective,W/2,compact?83:43);x.fillStyle="#7f95aa";x.font="bold 8px monospace";x.fillText(cfg.zone+" · SYNC "+Math.round(c.sync||0)+"%",W/2,compact?99:61);x.restore();
+      var c=cs();if(!c)return;var W=x.canvas.width,cfg=canonical(),compact=W<760;
+      x.save();
+      var stripY=compact?76:68,stripH=compact?36:32;
+      x.fillStyle="rgba(1,5,9,.86)";x.fillRect(Math.max(6,W*.19),stripY,W-Math.max(12,W*.38),stripH);
+      x.strokeStyle=cfg.light==="emergency_red"?"#ef4444":cfg.light==="hack_green"?"#22c55e":"#38bdf8";x.lineWidth=1;x.strokeRect(Math.max(6,W*.19)+.5,stripY+.5,W-Math.max(12,W*.38)-1,stripH-1);
+      x.textAlign="center";x.fillStyle="#f2f7fb";x.font="bold "+(compact?8:10)+"px monospace";x.fillText(cfg.name+" · "+cfg.objective,W/2,stripY+14);
+      x.fillStyle="#8edcff";x.font="bold 7px monospace";x.fillText(cfg.zone+" · SYNC "+Math.round(c.sync||0)+"%",W/2,stripY+27);x.restore();
     }catch(e){}
   }
 
@@ -126,12 +149,13 @@
       if(!active())return true;var c=cs();
       if(!root.NM||!c.chars||!c.chars.katrin||!c.chars.manchez){root.__goodBoysCoreBroken="missing_pair_state";return false;}
       if(root.NM.district!=="orbital"&&mission()<=7){try{root.nmLoadDistrict("orbital");}catch(_){} }
-      return true;
+      if(!isFinite(root.NM.x)||!isFinite(root.NM.y)){root.__goodBoysCoreBroken="invalid_player_position";return false;}
+      root.__goodBoysCoreBroken=null;return true;
     }catch(e){root.__goodBoysCoreBroken=String(e);return false;}
   }
 
-  function syncIdentity(){try{if(!active())return false;var c=cs(),cfg=canonical();c.canonName=cfg.name;c.canonObjective=cfg.objective;c.canonZone=cfg.zone;root.NM._goodBoysCanon=true;root.NM._goodBoysMission=mission();return true;}catch(e){return false;}}
+  function syncIdentity(){try{if(!active())return false;var c=cs(),cfg=canonical();c.canonName=cfg.name;c.canonObjective=cfg.objective;c.canonZone=cfg.zone;c.canonLight=cfg.light;root.NM._goodBoysCanon=true;root.NM._goodBoysMission=mission();return true;}catch(e){return false;}}
   function tick(){cleanTitle();installStartAuthority();installDistrictAuthority();installOpeningAuthority();installHudAuthority();hideLegacyUi();syncIdentity();enforceBackground();healthCheck();}
   tick();var timer=null;try{timer=root.setInterval(tick,120);}catch(e){}
-  root.TechOpsGoodBoysCanon={VERSION:VERSION,SEQUENCE:SEQ,mission:mission,canonical:canonical,latch:latch,isChain:isChain,cleanTitle:cleanTitle,showIncidentIntro:showIncidentIntro,installStartAuthority:installStartAuthority,installDistrictAuthority:installDistrictAuthority,installOpeningAuthority:installOpeningAuthority,installHudAuthority:installHudAuthority,enforceBackground:enforceBackground,hideLegacyUi:hideLegacyUi,healthCheck:healthCheck,tick:tick,timer:timer};
+  root.TechOpsGoodBoysCanon={VERSION:VERSION,SEQUENCE:SEQ,mission:mission,canonical:canonical,latch:latch,isChain:isChain,cleanTitle:cleanTitle,prepareNightRuntime:prepareNightRuntime,showIncidentIntro:showIncidentIntro,installStartAuthority:installStartAuthority,installDistrictAuthority:installDistrictAuthority,installOpeningAuthority:installOpeningAuthority,installHudAuthority:installHudAuthority,enforceBackground:enforceBackground,hideLegacyUi:hideLegacyUi,healthCheck:healthCheck,tick:tick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
