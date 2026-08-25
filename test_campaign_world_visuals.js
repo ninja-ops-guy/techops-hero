@@ -1,11 +1,35 @@
 "use strict";
 const assert = require("assert");
 
+delete global.TechOpsMikeAnimations;
 const visuals = require("./campaign_world_visuals.js");
-assert.strictEqual(visuals.VERSION, 2);
+assert.strictEqual(visuals.VERSION, 4);
 assert.strictEqual(visuals.INTERACT_RANGE, 2.15);
-assert.strictEqual(visuals.WALK_FRAME_MS, 135);
+assert.strictEqual(visuals.SAFE_WALK_FRAME_MS, 135);
 assert.strictEqual(visuals.distance(0, 0, 3, 4), 5);
+assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.down, ["down0", "down1", "down0", "down2"]);
+assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.up, ["up0", "up1", "up0", "up2"]);
+assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.right, ["right0", "right1", "right0", "right2"]);
+assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.left, ["right0", "right1", "right0", "right2"]);
+
+let f = visuals.safePlayerFrame({ fx: "down", moving: false }, 0);
+assert.strictEqual(f.key, "down0");
+assert.strictEqual(f.state, "idle");
+f = visuals.safePlayerFrame({ fx: "left", moving: false }, 0);
+assert.strictEqual(f.key, "right0");
+assert.strictEqual(f.flip, true);
+f = visuals.safePlayerFrame({ fx: "down", moving: true }, 135);
+assert.strictEqual(f.key, "down1");
+f = visuals.safePlayerFrame({ fx: "down", moving: true }, 270);
+assert.strictEqual(f.key, "down0");
+f = visuals.safePlayerFrame({ fx: "down", moving: true }, 405);
+assert.strictEqual(f.key, "down2");
+f = visuals.safePlayerFrame({ fx: "left", moving: true }, 405);
+assert.strictEqual(f.key, "right2");
+assert.strictEqual(f.flip, true);
+f = visuals.safePlayerFrame({ fx: "up", moving: false, inDialog: true }, 0);
+assert.strictEqual(f.key, "laptop");
+assert.strictEqual(f.state, "interact");
 
 const state = {
   px: 10,
@@ -22,7 +46,6 @@ let target = visuals.nearestInteractable(state);
 assert.strictEqual(target.kind, "npc");
 assert.strictEqual(target.source.id, "ticket");
 assert.strictEqual(target.distance, 1);
-
 state.npcs[1].done = true;
 target = visuals.nearestInteractable(state);
 assert.strictEqual(target.source.id, "ambient");
@@ -40,33 +63,13 @@ const profile = visuals.lightProfile({ px: 0, py: 0 });
 assert.ok(profile.vignette >= 0 && profile.vignette < 0.5);
 assert.ok(profile.warm >= 0 && profile.cool >= 0);
 
-// Day Shift locomotion deliberately uses the known neutral directional atlas,
-// not unclassified frames from the 182-frame combat/action sheet. This prevents
-// walk cycles from accidentally selecting attack poses while still using every
-// authored directional step frame in the verified player atlas.
-assert.deepStrictEqual(visuals.WALK_FRAMES.down, ["down0", "down1", "down0", "down2"]);
-assert.deepStrictEqual(visuals.WALK_FRAMES.up, ["up0", "up1", "up0", "up2"]);
-assert.deepStrictEqual(visuals.WALK_FRAMES.right, ["right0", "right1", "right0", "right2"]);
-
-let f = visuals.playerFrame({ fx: "down", moving: false }, 0);
-assert.strictEqual(f.key, "down0");
-assert.strictEqual(f.state, "idle");
-f = visuals.playerFrame({ fx: "left", moving: false }, 0);
-assert.strictEqual(f.key, "right0");
-assert.strictEqual(f.flip, true);
-f = visuals.playerFrame({ fx: "down", moving: true }, 135);
-assert.strictEqual(f.key, "down1");
-f = visuals.playerFrame({ fx: "down", moving: true }, 270);
-assert.strictEqual(f.key, "down0");
-f = visuals.playerFrame({ fx: "down", moving: true }, 405);
-assert.strictEqual(f.key, "down2");
-f = visuals.playerFrame({ fx: "right", moving: true }, 135);
+// Once canonical semantics are loaded, the renderer delegates to the manifest.
+global.TechOpsMikeAnimations = require("./mike_animation_manifest.js");
+f = visuals.playerFrame({ fx: "right", moving: true }, global.TechOpsMikeAnimations.WALK_FRAME_MS);
 assert.strictEqual(f.key, "right1");
-f = visuals.playerFrame({ fx: "left", moving: true }, 405);
-assert.strictEqual(f.key, "right2");
-assert.strictEqual(f.flip, true);
-f = visuals.playerFrame({ fx: "up", moving: false, inDialog: true }, 0);
-assert.strictEqual(f.key, "laptop");
-assert.strictEqual(f.state, "interact");
+assert.strictEqual(f.semantic, "walk_right");
+assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
+assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
+assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
 
-console.log("Campaign playable world visuals + Day Shift locomotion: PASS");
+console.log("Campaign playable world visuals + Mike locomotion authority: PASS");
