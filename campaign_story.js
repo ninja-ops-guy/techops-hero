@@ -106,8 +106,18 @@
     assert(ENDINGS.open_network.command === "REVOKE ROOT", "Open Network command drifted from canon");
     assert(CANON_LINES.final.length === 3, "Epilogue requires three final lines"); return true;
   }
+  function loadPresentationModule() {
+    if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
+    window.__techopsAct1VisualLoader = true;
+    var script = window.document.createElement("script");
+    script.src = "campaign_native_act1_visuals.js";
+    script.async = false;
+    window.document.head.appendChild(script);
+    return true;
+  }
   validateCanon();
-  var api = { VERSION: VERSION, ACTS: ACTS, ENDINGS: ENDINGS, DESIGN_LAWS: DESIGN_LAWS, ORPHEUS_SIGNATURES: ORPHEUS_SIGNATURES, K_MEMORY_RULE: K_MEMORY_RULE, CANON_LINES: CANON_LINES, ensureStoryState: ensureStoryState, syncAct1State: syncAct1State, eligibleActs: eligibleActs, completeAct: completeAct, chooseEnding: chooseEnding, validateCanon: validateCanon };
+  loadPresentationModule();
+  var api = { VERSION: VERSION, ACTS: ACTS, ENDINGS: ENDINGS, DESIGN_LAWS: DESIGN_LAWS, ORPHEUS_SIGNATURES: ORPHEUS_SIGNATURES, K_MEMORY_RULE: K_MEMORY_RULE, CANON_LINES: CANON_LINES, ensureStoryState: ensureStoryState, syncAct1State: syncAct1State, eligibleActs: eligibleActs, completeAct: completeAct, chooseEnding: chooseEnding, validateCanon: validateCanon, loadPresentationModule: loadPresentationModule };
   if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:story-ready", { detail: { version: VERSION, api: api } }));
   return api;
 });
