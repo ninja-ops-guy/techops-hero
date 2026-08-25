@@ -1,6 +1,6 @@
 # Canonical Workstation Flow
 
-This note records the implemented Story Bible v1.2 opening behavior. It is descriptive only; runtime authority remains `campaign_act1.js` and native presentation remains `campaign_native_act1.js`.
+This note records the implemented Story Bible v1.2 opening behavior. It is descriptive only; runtime authority remains `campaign_act1.js` and native presentation/runtime bridging remains `campaign_native_act1.js`.
 
 ## Flow
 
@@ -19,13 +19,18 @@ The workstation exposes five authored surfaces: `QUEUE`, `TEAMS`, `ALERTS`, `COM
 - Delegating Impossible Access to Security produces delegated evidence perspective rather than silently converting it to firsthand.
 - v1 saves migrate forward, while v2 saves preserve canonical partial progress without re-inferring it from compatibility aliases.
 - Reload is covered at each workstation boundary through Tuesday Morning.
+- Positive base-runtime clock advancement is frozen during canonical Day 1 until explicit CLOCK IN.
+- Because `game.js::advanceClock(min)` is not called while the gate is locked, procedural ticket age, reputation penalties, major-incident declaration, cascades, and the 17:00 force-end cannot occur before CLOCK IN.
+- Procedural ticket NPCs, unresolved ticket portals, and broken ticket devices are blocked before CLOCK IN and route the player back toward standup/workstation.
+- Ambient NPC conversation and non-work exploration remain available while the shift is paused.
+- After CLOCK IN, the original base `advanceClock(min)` and `interact()` paths resume unchanged.
 
 ## Verification
 
-Campaign contracts run #64 passed the complete existing suite after the workstation/save-reload conversion. The subsequent semantic regression also verifies that v2 compatibility aliases cannot silently re-unlock Day 1 after reload.
+Campaign contracts run #64 passed the complete existing suite after the workstation/save-reload conversion. The semantic migration regression then verified that v2 compatibility aliases cannot silently re-unlock Day 1 after reload.
+
+Campaign contracts run #70 passed after the runtime gate landed. Its dedicated `test_campaign_day1_runtime_gate.js` proves that before CLOCK IN no base clock call occurs and therefore no ticket aging, reputation penalty, incident declaration, cascade, or 17:00 force-end can fire; it also proves procedural work is blocked while ambient interaction still falls through, and that the untouched base behavior resumes after `day_work_unlocked`.
 
 ## Next integration target
 
-The base roguelite clock currently advances through `game.js::advanceClock(min)`, which increments `S.clock`, ages every unresolved procedural ticket, can reduce department reputation, declares major incidents at age thresholds, cascades ignored problems, and can force-end the day at 17:00.
-
-Production integration should route those base-runtime effects through the canonical `day_work_unlocked` gate inside the existing native campaign authority. Until explicit CLOCK IN, movement and authored opening interactions should remain available, but procedural ticket work and positive clock aging should not advance. After CLOCK IN, the existing clock/incident/cascade behavior should resume unchanged.
+Run the canonical minimum-interaction opening against the deployed browser build on both desktop and mobile: new run -> standup -> workstation -> MUSIC -> COMPANY -> CLOCK IN -> ordinary ticket -> Impossible Access -> Sector 04 -> Tuesday Morning. Treat any mismatch between semantic state, visible HUD clock, touch controls, dialog layering, or production asset presentation as a release blocker.
