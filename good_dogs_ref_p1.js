@@ -1,0 +1,1 @@
+window.GOOD_DOGS_REF_B64_1=""+chunks[0]+"";
