@@ -1,0 +1,13 @@
+"use strict";
+const assert=require("assert"),fs=require("fs"),vm=require("vm");
+const src=fs.readFileSync("production_runtime_safety.js","utf8");
+let rafCb=null,drawCalls=0,stepCalls=0;
+const ops=[];
+const context={console,Date,setTimeout(fn){fn();return 1;},requestAnimationFrame(fn){rafCb=fn;return 1;},matchMedia(){return{matches:true};},addEventListener(){},document:{getElementById(id){if(id==="game")return context.cv;if(id==="game-wrap")return{style:{}};if(id==="touch-ui")return{style:{removeProperty(){}},classList:{remove(){}}};return null;}},cv:{width:640,height:360,style:{},getContext(){return context.g;}},g:{save(){},restore(){},setTransform(){},fillRect(){ops.push("fill");},fillText(t){ops.push(String(t));},set fillStyle(v){},set font(v){}},drawNM(){drawCalls++;},stepNM(){stepCalls++;}};
+context.globalThis=context;
+vm.createContext(context);
+vm.runInContext("let S={nightMode:{}}; let NM={x:10,y:20};\n"+src,context,{filename:"production_runtime_safety.js"});
+const api=context.TechOpsRuntimeSafety;assert.ok(api);assert.strictEqual(api.VERSION,1);assert.strictEqual(api.active(),true);assert.strictEqual(api.safeDraw(),true);assert.strictEqual(drawCalls,1);assert.strictEqual(api.safeStep(16),true);assert.strictEqual(stepCalls,1);
+context.drawNM=function(){throw new Error("boom")};assert.strictEqual(api.safeDraw(),false);assert.ok(String(context.__nightRuntimeRenderError).includes("boom"));assert.ok(ops.some(x=>x.includes("NIGHT RUNTIME RECOVERY")));
+assert.ok(!src.includes("root.S")&&!src.includes("root.NM"),"safety runtime must use lexical S/NM bindings");
+console.log("Production runtime safety: PASS");
