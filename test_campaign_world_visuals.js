@@ -61,13 +61,18 @@ assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon));
 assert.ok(!/toDataURL/.test(canon));
 
 const loop = fs.readFileSync("good_boys_gameplay_loop.js", "utf8");
-assert.ok(/VERSION=1/.test(loop));
+assert.ok(/VERSION=2/.test(loop), "concept gameplay loop must be v2");
 assert.ok(/Sheet 3 = moment-to-moment gameplay\/HUD/.test(loop), "gameplay loop must declare concept-sheet authority");
 assert.ok(/CELL 118 — FREE K/.test(loop) && /CELL 1984 — FREE WALDO/.test(loop));
 assert.ok(/Run for the shuttle\. Build Sync\. Finish together\./.test(loop));
 assert.ok(/good-boys-loop-controls/.test(loop));
 ["gbl-dash","gbl-attack","gbl-block","gbl-swap","gbl-boost","gbl-throw","gbl-sync","gbl-k"].forEach(id=>assert.ok(loop.includes(id), id+" control missing"));
 assert.ok(/c\.chars\.katrin/.test(loop) && /c\.chars\.manchez/.test(loop) && /c\.partner/.test(loop), "loop must repair linked-pair state");
+assert.ok(/drawDogCard/.test(loop) && /P1 ACTIVE/.test(loop), "concept HUD must show persistent Katrin/Manchez status and active control");
+assert.ok(/drawLinkStatus/.test(loop) && /LINK!/.test(loop), "concept HUD must expose linked-pair Sync state");
+assert.ok(/#touch-buttons\{display:none!important\}/.test(loop), "generic Night buttons must not compete with Good Boys mobile controls");
+assert.ok(/_goodBoysReferenceScale=1\.55/.test(loop), "Good Boys should retain hero-scale presentation metadata");
+assert.ok(/concept_v2/.test(loop) && /controls:8/.test(loop), "acceptance telemetry must expose concept HUD authority and control count");
 assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /explosion_orange/.test(canon), "mission lighting language must match concept art");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
@@ -82,4 +87,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys concept gameplay loop: PASS");
+console.log("Campaign playable world visuals + Good Boys concept gameplay loop v2: PASS");
