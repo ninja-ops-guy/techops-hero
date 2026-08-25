@@ -4,10 +4,13 @@ const assert = require("assert");
 global.__techopsCampaignNativeAct1Assets = null;
 global.dlg = function () { return true; };
 global.closeDlg = function () { return true; };
+global.S = { px: 10, py: 8, room: "factory", area: "plating", facing: "right", clock: 540, day: 1 };
 
 const visuals = require("./campaign_native_act1_visuals.js");
 
-assert.strictEqual(visuals.VERSION, 3);
+assert.strictEqual(visuals.VERSION, 4);
+assert.strictEqual(visuals.ENTER_MS, 240);
+assert.strictEqual(visuals.EXIT_MS, 180);
 assert.strictEqual(visuals.url("shipping.dock_background"), "assets/campaign/shipping.dock_background.png");
 assert.strictEqual(visuals.sceneForDialog("CAMPAIGN STANDUP"), "standup");
 assert.strictEqual(visuals.sceneForDialog("WORKSTATION // COMPANY"), "workstation");
@@ -18,6 +21,23 @@ assert.strictEqual(visuals.sceneForDialog("IMPOSSIBLE ACCESS EVENT"), "access");
 global.__techopsCampaignNativeAct1Assets = { id: "plating" };
 assert.strictEqual(visuals.sceneForDialog("ANY DIALOG"), "plating");
 global.__techopsCampaignNativeAct1Assets = null;
+
+const snap = visuals.snapshotWorld();
+assert.deepStrictEqual(snap, { px: 10, py: 8, room: "factory", area: "plating", map: null, facing: "right", clock: 540, day: 1 });
+const focus = visuals.worldFocus(snap);
+assert.ok(focus.x > 20 && focus.x < 30, "player X should seed the cinematic origin");
+assert.ok(focus.y > 20 && focus.y < 30, "player Y should seed the cinematic origin");
+global.S.px = 99; global.S.py = 99; global.S.room = "wrong"; global.S.area = "wrong"; global.S.facing = "left";
+assert.strictEqual(visuals.restoreWorld(snap), true);
+assert.strictEqual(global.S.px, 10);
+assert.strictEqual(global.S.py, 8);
+assert.strictEqual(global.S.room, "factory");
+assert.strictEqual(global.S.area, "plating");
+assert.strictEqual(global.S.facing, "right");
+// Returning from presentation must not rewind legitimate simulation time.
+global.S.clock = 555;
+visuals.restoreWorld(snap);
+assert.strictEqual(global.S.clock, 555);
 
 const base = {
   flags: { standup_completed: false, day_work_unlocked: false },
@@ -81,6 +101,5 @@ owned.flags.standup_completed = true;
 p = visuals.presentationFor("standup", owned);
 assert.strictEqual(p.variant, "owned");
 assert.deepStrictEqual(p.motion, ["board_lock", "ambient_drift"]);
-assert.strictEqual(visuals.EXIT_MS, 180);
 
-console.log("Campaign Day 1 state-reactive visuals: PASS");
+console.log("Campaign Day 1 world-camera continuity + state-reactive visuals: PASS");
