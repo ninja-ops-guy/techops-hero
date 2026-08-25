@@ -59,6 +59,7 @@ jobs:
           node --check campaign_scene_schema.js
           node --check campaign_runtime.js
           node --check campaign_native_act1.js
+          node --check campaign_native_act1_visuals.js
           node --check campaign_native_act2.js
           node --check campaign_visual_direction.js
           node --check campaign_sector04.js
@@ -67,8 +68,8 @@ jobs:
           node --check v737_hooks.js
           node --check test_campaign_act2.js
           node --check test_campaign_native_act1.js
+          node --check test_campaign_native_act1_visuals.js
           node --check test_campaign_native_act2.js
-          node --check test_campaign_visual_assets.js
           node --check test_campaign_day1_runtime_gate.js
           node --check test_campaign_opening_acceptance.js
           node --check test_campaign_scene_schema.js
@@ -89,6 +90,8 @@ jobs:
         run: node test_campaign_act2.js
       - name: Verify native Acts II-III gameplay
         run: node test_campaign_native_act2.js
+      - name: Verify Day 1 reference presentation
+        run: node test_campaign_native_act1_visuals.js
       - name: Verify campaign visual atlas integration
         run: node test_campaign_visual_assets.js
       - name: Verify campaign asset contract
