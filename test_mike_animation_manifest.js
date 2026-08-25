@@ -19,12 +19,13 @@ const expected = {
   right: ["right0", "right1", "right0", "right2"],
   left: ["right0", "right1", "right0", "right2"]
 };
-assert.deepStrictEqual(world.WALK_FRAMES, expected);
+assert.deepStrictEqual(world.SAFE_WALK_FRAMES, expected);
 assert.deepStrictEqual(manifest.DAY_SHIFT.states.walk_down.frames, expected.down);
 assert.deepStrictEqual(manifest.DAY_SHIFT.states.walk_up.frames, expected.up);
 assert.deepStrictEqual(manifest.DAY_SHIFT.states.walk_right.frames, expected.right);
 assert.deepStrictEqual(manifest.DAY_SHIFT.states.walk_left.frames, expected.left);
 assert.strictEqual(manifest.DAY_SHIFT.states.walk_left.flip, true);
+assert.strictEqual(world.SAFE_WALK_FRAME_MS, manifest.WALK_FRAME_MS);
 
 assert.deepStrictEqual(manifest.resolveDayShift({fx:"down", moving:false}, 0), {state:"idle", semantic:"idle_down", key:"down0", flip:false, index:0});
 assert.strictEqual(manifest.resolveDayShift({fx:"down", moving:true}, 135).key, "down1");
@@ -32,5 +33,10 @@ assert.strictEqual(manifest.resolveDayShift({fx:"down", moving:true}, 270).key, 
 assert.strictEqual(manifest.resolveDayShift({fx:"down", moving:true}, 405).key, "down2");
 assert.strictEqual(manifest.resolveDayShift({fx:"left", moving:true}, 135).flip, true);
 assert.strictEqual(manifest.resolveDayShift({fx:"right", moving:false, inDialog:true}, 0).key, "laptop");
+
+// The gameplay renderer must consume the canonical manifest when present.
+assert.strictEqual(world.animations(), manifest);
+assert.strictEqual(world.playerFrame({fx:"right", moving:true}, 135).key, "right1");
+assert.strictEqual(world.playerFrame({fx:"left", moving:true}, 405).flip, true);
 
 console.log("Mike canonical animation manifest: PASS");
