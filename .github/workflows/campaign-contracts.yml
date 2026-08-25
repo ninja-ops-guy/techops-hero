@@ -7,6 +7,8 @@ on:
       - "assets/v736/**"
       - "campaign_*.js"
       - "mike_animation_manifest.js"
+      - "mike_actions.js"
+      - "mike_actions.atlas.js"
       - "index.html"
       - "katrin_manchez.atlas.js"
       - "v736_hooks.js"
@@ -27,6 +29,8 @@ on:
       - "assets/v736/**"
       - "campaign_*.js"
       - "mike_animation_manifest.js"
+      - "mike_actions.js"
+      - "mike_actions.atlas.js"
       - "index.html"
       - "katrin_manchez.atlas.js"
       - "v736_hooks.js"
@@ -68,6 +72,8 @@ jobs:
           node --check campaign_visual_direction.js
           node --check campaign_world_visuals.js
           node --check mike_animation_manifest.js
+          node --check mike_actions.js
+          node --check mike_actions.atlas.js
           node --check campaign_sector04.js
           node --check campaign_sector04_runtime.js
           node --check v736_hooks.js
@@ -104,6 +110,20 @@ jobs:
         run: node test_campaign_world_visuals.js
       - name: Verify Mike animation semantics
         run: node test_mike_animation_manifest.js
+      - name: Verify Mike action atlas remains quarantined
+        run: |
+          node - <<'NODE'
+          global.window = global;
+          require('./mike_actions.atlas.js');
+          require('./mike_actions.js');
+          const manifest = require('./mike_animation_manifest.js');
+          if (!global.MIKE_ACTIONS || Object.keys(global.MIKE_ACTIONS.frames || {}).length !== 182) throw new Error('MIKE_ACTIONS metadata contract changed');
+          if (global.MIKE_ACTIONS.src) throw new Error('MIKE_ACTIONS gained a source: classify/approve its semantics before enabling it');
+          if (global.TO_MIKE_ACTIONS || global.__GK_MIKE_ACTIONS) throw new Error('Mike action payload restored: visually review and classify f000-f181 before enabling it');
+          if (manifest.actionAtlasReady(global)) throw new Error('Unclassified Mike action atlas must not be render-ready');
+          if (Object.keys(manifest.ACTION_ATLAS.approvedStates).length) throw new Error('Unreviewed Mike action frames must remain quarantined');
+          console.log('Mike action atlas quarantine: PASS');
+          NODE
       - name: Verify campaign visual atlas integration
         run: node test_campaign_visual_assets.js
       - name: Verify campaign asset contract
