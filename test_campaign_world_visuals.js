@@ -1,9 +1,10 @@
 "use strict";
 const assert = require("assert");
+const fs = require("fs");
 
 delete global.TechOpsMikeAnimations;
 const visuals = require("./campaign_world_visuals.js");
-assert.strictEqual(visuals.VERSION, 6);
+assert.strictEqual(visuals.VERSION, 7);
 assert.strictEqual(visuals.INTERACT_RANGE, 2.15);
 assert.strictEqual(visuals.SAFE_WALK_FRAME_MS, 135);
 assert.strictEqual(visuals.distance(0, 0, 3, 4), 5);
@@ -37,6 +38,19 @@ assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("safe-area-inset-left"));
 assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("safe-area-inset-right"));
 assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("min-height:44px"));
 assert.strictEqual(typeof visuals.loadNightReference, "function");
+assert.strictEqual(typeof visuals.loadGoodDogsProduction, "function");
+
+const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
+assert.ok(/#btn-v736/.test(goodDogs), "co-op title entry must mark the Good Dogs launch path");
+assert.ok(/v722\.skip/.test(goodDogs), "Good Dogs must bypass the generic Night Drive wrapper during campaign entry");
+assert.ok(/NM&&NM\._v736/.test(goodDogs), "active render authority must be scoped to the 118/1984 campaign");
+assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs), "controlled body must render from the Good Dogs atlas");
+assert.ok(/There is no authored walk cycle/.test(goodDogs), "locomotion must not mislabel attack poses as walking");
+assert.ok(/good-dogs-touch/.test(goodDogs) && /SWAP/.test(goodDogs) && /SYNC/.test(goodDogs) && /K SUPPORT/.test(goodDogs), "mobile co-op controls must expose pair mechanics");
+assert.ok(/idle2/.test(goodDogs) && /idle6/.test(goodDogs), "historical seven-frame partner loop must be normalized to neutral poses");
+
+const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
+assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed production bootstrap must load the Good Dogs authority");
 
 global.TechOpsMikeAnimations = require("./mike_animation_manifest.js");
 f = visuals.playerFrame({ fx:"right", moving:true }, global.TechOpsMikeAnimations.WALK_FRAME_MS);
@@ -44,4 +58,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Mike locomotion + mobile safe-area + Night reference loader: PASS");
+console.log("Campaign playable world visuals + Mike locomotion + mobile safe-area + Night/Good Dogs production loaders: PASS");
