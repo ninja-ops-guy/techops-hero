@@ -9,9 +9,16 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 3;
+  var VERSION = 4;
   var INTERACT_RANGE = 2.15;
   var PLAYER_DRAW_SIZE = 46;
+  var SAFE_WALK_FRAME_MS = 135;
+  var SAFE_WALK_FRAMES = Object.freeze({
+    down: Object.freeze(["down0", "down1", "down0", "down2"]),
+    up: Object.freeze(["up0", "up1", "up0", "up2"]),
+    right: Object.freeze(["right0", "right1", "right0", "right2"]),
+    left: Object.freeze(["right0", "right1", "right0", "right2"])
+  });
 
   function animations() {
     return root && root.TechOpsMikeAnimations ? root.TechOpsMikeAnimations : null;
@@ -79,15 +86,23 @@
     return { x: (tx * TILE + TILE / 2 - camX) * sc, y: (ty * TILE + TILE / 2 - camY) * sc, scale: sc };
   }
 
+  function safePlayerFrame(state, tm) {
+    state = state || {};
+    tm = Number(tm || 0);
+    var facing = ["up", "down", "left", "right"].indexOf(state.fx) >= 0 ? state.fx : "down";
+    if (state.partyUntil && tm < state.partyUntil) return { key: "party", flip: false, state: "party", semantic: "party", index: 0 };
+    if (state.thumbsUntil && tm < state.thumbsUntil) return { key: "thumbs", flip: false, state: "thumbs", semantic: "thumbs", index: 0 };
+    if (state.inDialog) return { key: "laptop", flip: false, state: "interact", semantic: "interact", index: 0 };
+    if (!state.moving) return { key: facing === "left" ? "right0" : facing + "0", flip: facing === "left", state: "idle", semantic: "idle_" + facing, index: 0 };
+    var frames = SAFE_WALK_FRAMES[facing] || SAFE_WALK_FRAMES.down;
+    var index = Math.floor(tm / SAFE_WALK_FRAME_MS) % frames.length;
+    return { key: frames[index], flip: facing === "left", state: "walk", semantic: "walk_" + facing, index: index };
+  }
+
   function playerFrame(state, tm) {
     var api = animations();
     if (api && typeof api.resolveDayShift === "function") return api.resolveDayShift(state, tm);
-    state = state || {};
-    var facing = ["up", "down", "left", "right"].indexOf(state.fx) >= 0 ? state.fx : "down";
-    if (state.partyUntil && tm < state.partyUntil) return { key: "party", flip: false, state: "party" };
-    if (state.thumbsUntil && tm < state.thumbsUntil) return { key: "thumbs", flip: false, state: "thumbs" };
-    if (state.inDialog) return { key: "laptop", flip: false, state: "interact" };
-    return { key: facing === "left" ? "right0" : facing + "0", flip: facing === "left", state: state.moving ? "walk" : "idle" };
+    return safePlayerFrame(state, tm);
   }
 
   function drawProductionPlayer(state, tm) {
@@ -196,11 +211,14 @@
     VERSION: VERSION,
     INTERACT_RANGE: INTERACT_RANGE,
     PLAYER_DRAW_SIZE: PLAYER_DRAW_SIZE,
+    SAFE_WALK_FRAME_MS: SAFE_WALK_FRAME_MS,
+    SAFE_WALK_FRAMES: SAFE_WALK_FRAMES,
     animations: animations,
     distance: distance,
     candidates: candidates,
     nearestInteractable: nearestInteractable,
     lightProfile: lightProfile,
+    safePlayerFrame: safePlayerFrame,
     playerFrame: playerFrame,
     drawProductionPlayer: drawProductionPlayer,
     installPlayerRenderer: installPlayerRenderer,
