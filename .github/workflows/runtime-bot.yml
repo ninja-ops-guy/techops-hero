@@ -89,7 +89,7 @@ jobs:
         run: |
           title="Runtime Bot: playable-mode regression"
           body_file="runtime-bot-artifacts/report.md"
-          issue="$(gh issue list --state open --search \"$title in:title\" --json number --jq '.[0].number // empty')"
+          issue="$(gh issue list --state open --json number,title --jq '.[] | select(.title=="Runtime Bot: playable-mode regression") | .number' | head -n1)"
           {
             echo
             echo "Commit: \`$SHA\`"
