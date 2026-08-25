@@ -14,5 +14,12 @@ window.TO_DOGS = (function(){ try { return window.__GK_DOGS || undefined; } catc
     r.id="production-mode-router";
     r.src="production_mode_router.js?v=2";
     (document.head||document.documentElement).appendChild(r);
+
+    var safetyExisting=document.getElementById("production-runtime-safety");
+    if (safetyExisting) safetyExisting.remove();
+    var q=document.createElement("script");
+    q.id="production-runtime-safety";
+    q.src="production_runtime_safety.js?v=1";
+    (document.head||document.documentElement).appendChild(q);
   } catch(e) { window.__goodBoysMobileGuardLoaderError=String(e&&e.stack||e); }
 })();
