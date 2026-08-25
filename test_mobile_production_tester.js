@@ -5,6 +5,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const world = fs.readFileSync('campaign_world_visuals.js', 'utf8');
 const dogs = fs.readFileSync('dogs.js', 'utf8');
 const mobileGuard = fs.readFileSync('good_boys_mobile_launch_guard.js', 'utf8');
+const modeRouter = fs.readFileSync('production_mode_router.js', 'utf8');
 function has(s){assert.ok(html.includes(s),`missing mobile production marker: ${s}`);}
 function script(src){return html.indexOf(`<script src="${src}"></script>`);}
 
@@ -27,7 +28,9 @@ assert.ok(script('campaign_sector04_runtime.js') < script('campaign_native_act1.
 
 assert.ok(script('dogs.js') !== -1,'dogs.js must be present in deployed entrypoint');
 assert.ok(dogs.includes('good_boys_mobile_launch_guard.js?v=3'),'dogs.js must cache-bust Good Boys mobile launch guard v3');
+assert.ok(dogs.includes('production_mode_router.js?v=1'),'dogs.js must bootstrap cache-busted production mode router');
 ['VERSION=3','pairReady','installStartGuard','resume_pair_missing','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
+['VERSION=1','launchNightCrawler','launchGoodBoys','enterNightReliably','wrapStartRun','wrapGoodBoysStart','good_boys_pair_timeout'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
 
 has('auto_play=false');
 has('allow="autoplay"');
