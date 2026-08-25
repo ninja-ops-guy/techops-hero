@@ -55,6 +55,7 @@ jobs:
           node --check campaign_assets.js
           node --check campaign_asset_pipeline.js
           node --check campaign_story.js
+          node --check campaign_scene_schema.js
           node --check campaign_runtime.js
           node --check campaign_native_act1.js
           node --check campaign_sector04.js
@@ -64,6 +65,7 @@ jobs:
           node --check test_campaign_native_act1.js
           node --check test_campaign_day1_runtime_gate.js
           node --check test_campaign_opening_acceptance.js
+          node --check test_campaign_scene_schema.js
           node --check test_campaign_assets.js
           node --check test_campaign_asset_pipeline.js
           node --check test_campaign_runtime_assets.js
@@ -85,6 +87,8 @@ jobs:
         run: node test_campaign_runtime_assets.js
       - name: Verify full campaign contract
         run: node test_campaign_story.js
+      - name: Verify campaign scene schema
+        run: node test_campaign_scene_schema.js
       - name: Verify campaign runtime adapter
         run: node test_campaign_runtime.js
       - name: Verify native Act I integration
