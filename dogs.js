@@ -26,7 +26,7 @@ window.TO_DOGS = (function(){ try { return window.__GK_DOGS || undefined; } catc
     if (routerExisting) routerExisting.remove();
     var r=document.createElement("script");
     r.id="production-mode-router";
-    r.src="production_mode_router.js?v=2";
+    r.src="production_mode_router.js?v=3";
     (document.head||document.documentElement).appendChild(r);
 
     var safetyExisting=document.getElementById("production-runtime-safety");
