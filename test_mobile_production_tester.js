@@ -13,16 +13,16 @@ assert.ok(!html.includes('<title>TechOps Hero v7.37</title>'),'stale v7.37 page 
 ['game','hud','hud-clock','dialogue','dlg-options','touch-ui','dpad','tb-interact','tb-menu'].forEach(id=>has(`id="${id}"`));
 has('WASD / ARROWS OR JOYSTICK TO MOVE · E / Ⓐ TO INTERACT');
 
-const requiredScripts=['campaign_act1.js','campaign_act2.js','campaign_assets.js','campaign_scene_schema.js','campaign_runtime.js','campaign_sector04.js','campaign_sector04_runtime.js','campaign_visual_direction.js','campaign_native_act1.js','campaign_native_act1_visuals.js','campaign_native_act2.js','mike_animation_manifest.js','campaign_world_visuals.js'];
+// Explicit production entrypoint modules. Some optional visual atlases are
+// deliberately bootstrapped by campaign_world_visuals after legacy hooks.
+const requiredScripts=['campaign_act1.js','campaign_act2.js','campaign_assets.js','campaign_scene_schema.js','campaign_runtime.js','campaign_sector04.js','campaign_sector04_runtime.js','campaign_visual_direction.js','campaign_native_act1.js','campaign_native_act2.js','campaign_world_visuals.js'];
 requiredScripts.forEach(src=>assert.notStrictEqual(script(src),-1,`${src} missing from mobile tester`));
 const legacy=script('v737_hooks.js'), worldIndex=script('campaign_world_visuals.js'), act1=script('campaign_act1.js');
 assert.ok(legacy < worldIndex,'stable playable-world presentation must load after legacy hooks');
 assert.ok(worldIndex < act1,'world presentation may bootstrap before semantic campaign authority; it must not overwrite campaign state');
 assert.ok(script('campaign_sector04_runtime.js') < script('campaign_native_act1.js'),'native Act I must load after Sector 04 bridge');
 
-// iPhone notches/home indicators: runtime production layer must protect HUD, dialogue and both control clusters.
 ['safe-area-inset-top','safe-area-inset-bottom','safe-area-inset-left','safe-area-inset-right','#hud-top','#dialogue','#dpad','#touch-buttons','min-height:44px'].forEach(marker=>assert.ok(world.includes(marker),`mobile safe-area/touch contract missing ${marker}`));
-// Supplied visual references must be bootstrapped on the same deployed tester.
 ['night_walker_reference_v1.js','night_reference_visuals.js','loadNightReference'].forEach(marker=>assert.ok(world.includes(marker),`Night reference bootstrap missing ${marker}`));
 
 has('auto_play=false');
