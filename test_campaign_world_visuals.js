@@ -4,7 +4,7 @@ const fs = require("fs");
 
 delete global.TechOpsMikeAnimations;
 const visuals = require("./campaign_world_visuals.js");
-assert.strictEqual(visuals.VERSION, 8);
+assert.strictEqual(visuals.VERSION, 9);
 assert.strictEqual(visuals.INTERACT_RANGE, 2.15);
 assert.strictEqual(visuals.SAFE_WALK_FRAME_MS, 135);
 assert.strictEqual(visuals.distance(0, 0, 3, 4), 5);
@@ -37,6 +37,7 @@ assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("min-height:44px"));
 assert.strictEqual(typeof visuals.loadNightReference, "function");
 assert.strictEqual(typeof visuals.loadGoodDogsProduction, "function");
 assert.strictEqual(typeof visuals.loadGoodBoysMechanics, "function");
+assert.strictEqual(typeof visuals.loadGoodBoysCanon, "function");
 
 const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
 assert.ok(/VERSION = 2/.test(goodDogs), "Good Dogs reference pass must be v2");
@@ -53,9 +54,23 @@ assert.ok(/3x boost jump/.test(mechanics) && /boostJump/.test(mechanics), "refer
 assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics), "reference mechanics must include two airborne dashes");
 assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics), "partner throw and mid-air catch must be implemented");
 assert.ok(/gb-boost/.test(mechanics) && /gb-airdash/.test(mechanics) && /gb-throw/.test(mechanics), "mobile Good Boys controls must expose boost, air dash and throw/catch");
+
+const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
+assert.ok(/THE INCIDENT/.test(canon) && /SURVIVE THE HULL BREACH/.test(canon), "Good Boys must open with the canon orbital incident/hull breach");
+assert.ok(/REACH THE MAINTENANCE SHUTTLE/.test(canon), "maintenance shuttle must be a canon early objective");
+assert.ok(/FIND CELL 118 · GET HIM OUT/.test(canon), "Cell 118/K recovery must be explicit");
+assert.ok(/FREE WALDO IN CELL 1984/.test(canon), "Cell 1984/Waldo must be explicit");
+assert.ok(/GOOD BOYS PROTOCOL/.test(canon) && /ESCAPE TO THE SHUTTLE/.test(canon), "campaign finale must test pair escape mechanics");
+assert.ok(/if\(isChain\(\) && mission\(\)<=7\) id="orbital"/.test(canon), "legacy suburbs/industrial districts must be overridden by orbital canon");
+assert.ok(/_goodBoysRequestedDistrict/.test(canon) && /_goodBoysCanonDistrict="orbital"/.test(canon), "district substitution must be observable for QA");
+assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon), "generic Day Shift HUD must be directly suppressed, not merely covered");
+assert.ok(/PRISON CELL 118/.test(canon) && /CELL 1984/.test(canon), "runtime backdrop must contain the two canonical prison landmarks");
+assert.ok(/ORBITAL COMMAND RING/.test(canon) && /SHATTERED TRANSIT SPINE/.test(canon), "music-video orbital environments must drive the first two missions");
+
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
 assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed bootstrap must load the Good Dogs authority");
 assert.ok(worldSource.includes("good_boys_reference_mechanics.js"), "deployed bootstrap must load reference pair mechanics after Good Dogs runtime");
+assert.ok(worldSource.includes("good_boys_canon_runtime.js"), "deployed bootstrap must load the canon orbital runtime");
 
 global.TechOpsMikeAnimations = require("./mike_animation_manifest.js");
 f = visuals.playerFrame({ fx:"right", moving:true }, global.TechOpsMikeAnimations.WALK_FRAME_MS);
@@ -63,4 +78,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys reference mechanics: PASS");
+console.log("Campaign playable world visuals + Good Boys canon orbital runtime: PASS");
