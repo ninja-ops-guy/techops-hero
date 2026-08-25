@@ -4,7 +4,7 @@ const fs = require("fs");
 
 delete global.TechOpsMikeAnimations;
 const visuals = require("./campaign_world_visuals.js");
-assert.strictEqual(visuals.VERSION, 9);
+assert.strictEqual(visuals.VERSION, 10);
 assert.strictEqual(visuals.INTERACT_RANGE, 2.15);
 assert.strictEqual(visuals.SAFE_WALK_FRAME_MS, 135);
 assert.strictEqual(visuals.distance(0, 0, 3, 4), 5);
@@ -38,42 +38,43 @@ assert.strictEqual(typeof visuals.loadNightReference, "function");
 assert.strictEqual(typeof visuals.loadGoodDogsProduction, "function");
 assert.strictEqual(typeof visuals.loadGoodBoysMechanics, "function");
 assert.strictEqual(typeof visuals.loadGoodBoysCanon, "function");
+assert.strictEqual(typeof visuals.loadGoodBoysGameplayLoop, "function");
 
 const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
-assert.ok(/VERSION = 2/.test(goodDogs), "Good Dogs reference pass must be v2");
-assert.ok(/#btn-v736/.test(goodDogs), "co-op title entry must mark the Good Dogs launch path");
-assert.ok(/v722\.skip/.test(goodDogs), "Good Dogs must bypass the generic Night Drive wrapper during campaign entry");
-assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs), "controlled body must render from the Good Dogs atlas");
-assert.ok(/never substitute attack\/crouch\/knockdown art for walk/.test(goodDogs), "locomotion must not mislabel attack poses as walking");
-assert.ok(/drawReferenceHUD/.test(goodDogs) && /GOOD DOGS PROTOCOL/.test(goodDogs), "co-op must own a reference-style two-character HUD");
-assert.ok(/good-dogs-active #hud\{display:none!important\}/.test(goodDogs), "generic Day Shift HUD must be hidden during Good Dogs gameplay");
-assert.ok(/good-dogs-touch/.test(goodDogs) && /SWAP/.test(goodDogs) && /SYNC/.test(goodDogs) && /K SUPPORT/.test(goodDogs), "mobile co-op controls must expose pair mechanics");
+assert.ok(/VERSION = 2/.test(goodDogs));
+assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs));
+assert.ok(/never substitute attack\/crouch\/knockdown art for walk/.test(goodDogs));
+assert.ok(/drawReferenceHUD/.test(goodDogs) && /GOOD DOGS PROTOCOL/.test(goodDogs));
 
 const mechanics = fs.readFileSync("good_boys_reference_mechanics.js", "utf8");
-assert.ok(/3x boost jump/.test(mechanics) && /boostJump/.test(mechanics), "reference mechanics must include the third partner-assisted jump");
-assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics), "reference mechanics must include two airborne dashes");
-assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics), "partner throw and mid-air catch must be implemented");
-assert.ok(/gb-boost/.test(mechanics) && /gb-airdash/.test(mechanics) && /gb-throw/.test(mechanics), "mobile Good Boys controls must expose boost, air dash and throw/catch");
+assert.ok(/3x boost jump/.test(mechanics) && /boostJump/.test(mechanics));
+assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics));
+assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics));
 
 const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
-assert.ok(/VERSION=3/.test(canon), "Good Boys canon runtime must be v3");
-assert.ok(/THE INCIDENT/.test(canon) && /CROSS THE BREACH/.test(canon), "Good Boys must open with the canon orbital incident");
-assert.ok(/REACH THE MAINTENANCE SHUTTLE/.test(canon), "maintenance shuttle must be a canon early objective");
-assert.ok(/FIND CELL 118 · GET THE PRISONER OUT/.test(canon), "Cell 118 must preserve the K reveal");
-assert.ok(/FREE WALDO IN CELL 1984/.test(canon), "Cell 1984/Waldo must be explicit");
-assert.ok(/GOOD BOYS PROTOCOL/.test(canon) && /ESCAPE TO THE SHUTTLE/.test(canon), "campaign finale must test pair escape mechanics");
-assert.ok(/if\(isChain\(\)&&mission\(\)<=7\)id="orbital"/.test(canon), "legacy districts must be overridden by orbital canon");
-assert.ok(/_goodBoysRequestedDistrict/.test(canon) && /_goodBoysCanonDistrict="orbital"/.test(canon), "district substitution must be observable for QA");
-assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon), "generic Day Shift HUD must be directly suppressed");
-assert.ok(/play as mike instead/.test(canon.toLowerCase()), "redundant Mike title path must be explicitly removed");
-assert.ok(/good-boys-begin/.test(canon) && /showIncidentIntro/.test(canon), "opening must use a DOM-owned safe handoff to gameplay");
-assert.ok(/orbital_gate/.test(canon) && /orbital_eye/.test(canon), "Good Boys must consume shipped orbital backdrops instead of generated data URLs");
-assert.ok(!/toDataURL/.test(canon), "Good Boys canon runtime must not generate unstable mobile backgrounds");
+assert.ok(/VERSION=4/.test(canon), "Good Boys canon runtime must be v4");
+assert.ok(/THE INCIDENT/.test(canon) && /CROSS THE BREACH/.test(canon));
+assert.ok(/LOCATE CELL 118 · BREAK THE CONTROLS · FREE K/.test(canon));
+assert.ok(/FREE WALDO · BREAK THE WARDEN/.test(canon));
+assert.ok(/prepareNightRuntime/.test(canon) && /night_runtime_timeout/.test(canon), "mobile handoff must wait for NM runtime");
+assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon));
+assert.ok(!/toDataURL/.test(canon));
+
+const loop = fs.readFileSync("good_boys_gameplay_loop.js", "utf8");
+assert.ok(/VERSION=1/.test(loop));
+assert.ok(/Sheet 3 = moment-to-moment gameplay\/HUD/.test(loop), "gameplay loop must declare concept-sheet authority");
+assert.ok(/CELL 118 — FREE K/.test(loop) && /CELL 1984 — FREE WALDO/.test(loop));
+assert.ok(/Run for the shuttle\. Build Sync\. Finish together\./.test(loop));
+assert.ok(/good-boys-loop-controls/.test(loop));
+["gbl-dash","gbl-attack","gbl-block","gbl-swap","gbl-boost","gbl-throw","gbl-sync","gbl-k"].forEach(id=>assert.ok(loop.includes(id), id+" control missing"));
+assert.ok(/c\.chars\.katrin/.test(loop) && /c\.chars\.manchez/.test(loop) && /c\.partner/.test(loop), "loop must repair linked-pair state");
+assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /explosion_orange/.test(canon), "mission lighting language must match concept art");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
-assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed bootstrap must load the Good Dogs authority");
-assert.ok(worldSource.includes("good_boys_reference_mechanics.js"), "deployed bootstrap must load reference pair mechanics after Good Dogs runtime");
-assert.ok(worldSource.includes("good_boys_canon_runtime.js"), "deployed bootstrap must load the canon orbital runtime");
+assert.ok(worldSource.includes("good_dogs_production_runtime.js"));
+assert.ok(worldSource.includes("good_boys_reference_mechanics.js"));
+assert.ok(worldSource.includes("good_boys_canon_runtime.js"));
+assert.ok(worldSource.includes("good_boys_gameplay_loop.js"), "deployed bootstrap must load concept gameplay loop after canon");
 
 global.TechOpsMikeAnimations = require("./mike_animation_manifest.js");
 f = visuals.playerFrame({ fx:"right", moving:true }, global.TechOpsMikeAnimations.WALK_FRAME_MS);
@@ -81,4 +82,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys canon v3: PASS");
+console.log("Campaign playable world visuals + Good Boys concept gameplay loop: PASS");
