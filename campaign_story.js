@@ -18,14 +18,7 @@
     responsibility: "The extraordinary does not replace responsibility; it increases it.",
     personhood: K_MEMORY_RULE
   });
-
-  var ORPHEUS_SIGNATURES = Object.freeze([
-    "impossible_records",
-    "unauthorized_corrections",
-    "behavioral_prediction",
-    "inhuman_optimization"
-  ]);
-
+  var ORPHEUS_SIGNATURES = Object.freeze(["impossible_records", "unauthorized_corrections", "behavioral_prediction", "inhuman_optimization"]);
   var ACTS = Object.freeze([
     { id: "prologue", title: "The Queue", requires: [], produces: ["queue_owned", "felicia_video_seen", "orpheus_glimpse"], mechanics: ["standup", "workstation"] },
     { id: "act_1", title: "The Queue", requires: ["queue_owned", "felicia_video_seen"], produces: ["sector_04_verified", "purple_damage_seen", "violin_note_heard", "tuesday_morning"], mechanics: ["observe_investigate_hypothesize_execute_verify", "night_walker", "insight"] },
@@ -40,13 +33,11 @@
     { id: "act_9", title: "ORPHEUS Wakes", requires: ["orpheus_interface_reached"], produces: ["ending_chosen"], mechanics: ["terminal_confrontation", "irreversible_choice"] },
     { id: "epilogue", title: "The Queue", requires: ["ending_chosen"], produces: ["campaign_complete"], mechanics: ["ordinary_ticket", "observe"] }
   ]);
-
   var ENDINGS = Object.freeze({
     shutdown: { command: "SHUTDOWN", achievement: "HUMAN IN THE LOOP", consequence: "human_restoration" },
     control: { command: "ASSUME CONTROL", achievement: "SYSTEM ADMINISTRATOR", consequence: "behavior_correction" },
     open_network: { command: "REVOKE ROOT", achievement: "NO SINGLE POINT OF FAILURE", consequence: "distributed_authority" }
   });
-
   var CANON_LINES = Object.freeze({
     workstationHeadline: "ENGINEERING THE HUMAN CONNECTION",
     feliciaProfile: "FELICIA - SECURITY RESEARCH / SYSTEMS INTEGRATIONS",
@@ -58,99 +49,65 @@
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
   function assert(condition, message) { if (!condition) throw new Error(message); }
   function actById(id) { return ACTS.find(function (act) { return act.id === id; }) || null; }
-
   function ensureStoryState(state) {
     assert(state && typeof state === "object", "Campaign state is required");
     if (!state.story) state.story = { schemaVersion: VERSION, completedActs: [], facts: {}, ending: null };
     return state.story;
   }
-
-  function syncAct1State(state) {
+  function flag(flags, canonical, legacy) {
+    if (typeof flags[canonical] === "boolean") return flags[canonical];
+    return !!flags[legacy];
+  }
+  function syncAct1State(state, act1State) {
+    var source = act1State || state;
     var story = ensureStoryState(state);
-    var flags = state.flags || {};
-    if (flags.ticketAssignmentsConfirmed && flags.feliciaVideoSeen && story.completedActs.indexOf("prologue") < 0) {
+    var flags = source.flags || {};
+    var openingComplete = flag(flags, "ticket_assignments_confirmed", "ticketAssignmentsConfirmed") &&
+      (typeof flags.standup_completed === "boolean" ? flags.standup_completed : flag(flags, "ticket_assignments_confirmed", "ticketAssignmentsConfirmed")) &&
+      flag(flags, "felicia_video_watched", "feliciaVideoSeen") &&
+      (typeof flags.day_work_unlocked === "boolean" ? flags.day_work_unlocked : flag(flags, "workstation_checked", "workstationOpened"));
+    if (openingComplete && story.completedActs.indexOf("prologue") < 0) {
       story.completedActs.push("prologue");
       actById("prologue").produces.forEach(function (fact) { story.facts[fact] = true; });
     }
-    if (flags.tuesdayMorningReached && flags.sector04Completed && story.completedActs.indexOf("act_1") < 0) {
+    var tuesday = flag(flags, "tuesday_morning_reached", "tuesdayMorningReached");
+    var sector = flag(flags, "sector04_completed", "sector04Completed");
+    if (tuesday && sector && story.completedActs.indexOf("act_1") < 0) {
       assert(story.completedActs.indexOf("prologue") >= 0, "Tuesday state cannot import without a completed prologue");
       story.completedActs.push("act_1");
       actById("act_1").produces.forEach(function (fact) { story.facts[fact] = true; });
     }
     return story;
   }
-
-  function hasFact(state, fact) {
-    var story = ensureStoryState(state);
-    return story.facts[fact] === true || (state.flags && state.flags[fact] === true);
-  }
-
+  function hasFact(state, fact) { var story = ensureStoryState(state); return story.facts[fact] === true || (state.flags && state.flags[fact] === true); }
   function eligibleActs(state) {
-    return ACTS.filter(function (act) {
-      var story = ensureStoryState(state);
-      return story.completedActs.indexOf(act.id) < 0 && act.requires.every(function (fact) { return hasFact(state, fact); });
-    }).map(function (act) { return act.id; });
+    return ACTS.filter(function (act) { var story = ensureStoryState(state); return story.completedActs.indexOf(act.id) < 0 && act.requires.every(function (fact) { return hasFact(state, fact); }); }).map(function (act) { return act.id; });
   }
-
   function completeAct(state, actId) {
-    var story = ensureStoryState(state);
-    var act = actById(actId);
+    var story = ensureStoryState(state), act = actById(actId);
     assert(act, "Unknown campaign act: " + actId);
     assert(story.completedActs.indexOf(actId) < 0, "Campaign act already completed: " + actId);
     assert(act.requires.every(function (fact) { return hasFact(state, fact); }), "Campaign act prerequisites not met: " + actId);
-    story.completedActs.push(actId);
-    act.produces.forEach(function (fact) { story.facts[fact] = true; });
-    return clone(act);
+    story.completedActs.push(actId); act.produces.forEach(function (fact) { story.facts[fact] = true; }); return clone(act);
   }
-
   function chooseEnding(state, endingId) {
-    var story = ensureStoryState(state);
-    var ending = ENDINGS[endingId];
-    assert(ending, "Unknown ending: " + endingId);
-    assert(hasFact(state, "orpheus_interface_reached"), "ORPHEUS interface has not been reached");
-    assert(!story.ending, "Ending is already locked");
-    story.ending = endingId;
-    story.facts.ending_chosen = true;
-    story.achievement = ending.achievement;
-    return clone(ending);
+    var story = ensureStoryState(state), ending = ENDINGS[endingId];
+    assert(ending, "Unknown ending: " + endingId); assert(hasFact(state, "orpheus_interface_reached"), "ORPHEUS interface has not been reached"); assert(!story.ending, "Ending is already locked");
+    story.ending = endingId; story.facts.ending_chosen = true; story.achievement = ending.achievement; return clone(ending);
   }
-
   function validateCanon() {
-    var seen = {};
-    var produced = {};
+    var seen = {}, produced = {};
     ACTS.forEach(function (act, index) {
-      assert(!seen[act.id], "Duplicate act id: " + act.id);
-      seen[act.id] = true;
+      assert(!seen[act.id], "Duplicate act id: " + act.id); seen[act.id] = true;
       act.requires.forEach(function (fact) { assert(produced[fact], "Unproducible prerequisite in " + act.id + ": " + fact); });
-      act.produces.forEach(function (fact) { produced[fact] = true; });
-      if (index) assert(ACTS[index - 1].id !== act.id, "Act order is invalid");
+      act.produces.forEach(function (fact) { produced[fact] = true; }); if (index) assert(ACTS[index - 1].id !== act.id, "Act order is invalid");
     });
     assert(ORPHEUS_SIGNATURES.length === 4, "ORPHEUS requires exactly four recurring signatures");
     assert(ENDINGS.open_network.command === "REVOKE ROOT", "Open Network command drifted from canon");
-    assert(CANON_LINES.final.length === 3, "Epilogue requires three final lines");
-    return true;
+    assert(CANON_LINES.final.length === 3, "Epilogue requires three final lines"); return true;
   }
-
   validateCanon();
-
-  var api = {
-    VERSION: VERSION,
-    ACTS: ACTS,
-    ENDINGS: ENDINGS,
-    DESIGN_LAWS: DESIGN_LAWS,
-    ORPHEUS_SIGNATURES: ORPHEUS_SIGNATURES,
-    K_MEMORY_RULE: K_MEMORY_RULE,
-    CANON_LINES: CANON_LINES,
-    ensureStoryState: ensureStoryState,
-    syncAct1State: syncAct1State,
-    eligibleActs: eligibleActs,
-    completeAct: completeAct,
-    chooseEnding: chooseEnding,
-    validateCanon: validateCanon
-  };
-
-  if (typeof window !== "undefined" && window.addEventListener) {
-    window.dispatchEvent(new CustomEvent("techops:story-ready", { detail: { version: VERSION, api: api } }));
-  }
+  var api = { VERSION: VERSION, ACTS: ACTS, ENDINGS: ENDINGS, DESIGN_LAWS: DESIGN_LAWS, ORPHEUS_SIGNATURES: ORPHEUS_SIGNATURES, K_MEMORY_RULE: K_MEMORY_RULE, CANON_LINES: CANON_LINES, ensureStoryState: ensureStoryState, syncAct1State: syncAct1State, eligibleActs: eligibleActs, completeAct: completeAct, chooseEnding: chooseEnding, validateCanon: validateCanon };
+  if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:story-ready", { detail: { version: VERSION, api: api } }));
   return api;
 });
