@@ -50,7 +50,7 @@ assert.ok(/good-dogs-touch/.test(goodDogs) && /SWAP/.test(goodDogs) && /SYNC/.te
 
 const mechanics = fs.readFileSync("good_boys_reference_mechanics.js", "utf8");
 assert.ok(/3x boost jump/.test(mechanics) && /boostJump/.test(mechanics), "reference mechanics must include the third partner-assisted jump");
-assert.ok(/two mid-air dashes/.test(mechanics) && /airDashCount/.test(mechanics), "reference mechanics must include two airborne dashes");
+assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics), "reference mechanics must include two airborne dashes");
 assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics), "partner throw and mid-air catch must be implemented");
 assert.ok(/gb-boost/.test(mechanics) && /gb-airdash/.test(mechanics) && /gb-throw/.test(mechanics), "mobile Good Boys controls must expose boost, air dash and throw/catch");
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
