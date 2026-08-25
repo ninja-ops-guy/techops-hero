@@ -6,6 +6,7 @@ on:
       - "assets/campaign/**"
       - "assets/v736/**"
       - "campaign_*.js"
+      - "mike_animation_manifest.js"
       - "index.html"
       - "katrin_manchez.atlas.js"
       - "v736_hooks.js"
@@ -13,6 +14,7 @@ on:
       - "scripts/generate_sector04_assets.py"
       - "scripts/extract_katrin_manchez_assets.py"
       - "test_campaign_*.js"
+      - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
       - "test_night_runtime_assets.js"
       - "ui_coop.js"
@@ -24,6 +26,7 @@ on:
       - "assets/campaign/**"
       - "assets/v736/**"
       - "campaign_*.js"
+      - "mike_animation_manifest.js"
       - "index.html"
       - "katrin_manchez.atlas.js"
       - "v736_hooks.js"
@@ -31,6 +34,7 @@ on:
       - "scripts/generate_sector04_assets.py"
       - "scripts/extract_katrin_manchez_assets.py"
       - "test_campaign_*.js"
+      - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
       - "test_night_runtime_assets.js"
       - "ui_coop.js"
@@ -63,6 +67,7 @@ jobs:
           node --check campaign_native_act2.js
           node --check campaign_visual_direction.js
           node --check campaign_world_visuals.js
+          node --check mike_animation_manifest.js
           node --check campaign_sector04.js
           node --check campaign_sector04_runtime.js
           node --check v736_hooks.js
@@ -72,6 +77,7 @@ jobs:
           node --check test_campaign_native_act1_visuals.js
           node --check test_campaign_native_act2.js
           node --check test_campaign_world_visuals.js
+          node --check test_mike_animation_manifest.js
           node --check test_campaign_day1_runtime_gate.js
           node --check test_campaign_opening_acceptance.js
           node --check test_campaign_scene_schema.js
@@ -96,6 +102,8 @@ jobs:
         run: node test_campaign_native_act1_visuals.js
       - name: Verify playable world presentation
         run: node test_campaign_world_visuals.js
+      - name: Verify Mike animation semantics
+        run: node test_mike_animation_manifest.js
       - name: Verify campaign visual atlas integration
         run: node test_campaign_visual_assets.js
       - name: Verify campaign asset contract
