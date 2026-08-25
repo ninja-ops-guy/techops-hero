@@ -123,6 +123,27 @@ assert.equal(migrated.flags.felicia_video_watched, true);
 assert.equal(migrated.flags.day_work_unlocked, true);
 assert.equal(migrated.flags.tuesday_morning_reached, true);
 
+// v2 save regression: compatibility aliases must never re-infer canonical progress.
+const partialV2 = C.createInitialState();
+assignOnly(partialV2, "mike");
+C.checkWorkstation(partialV2);
+C.findFeliciaBlog(partialV2);
+C.completeFeliciaVideo(partialV2, { started: true });
+assert.equal(partialV2.flags.workstationOpened, true);
+assert.equal(partialV2.flags.feliciaVideoSeen, true);
+assert.equal(partialV2.flags.red_in_mirror_heard, false);
+assert.equal(partialV2.flags.day_work_unlocked, false);
+const partialMemory = new Map();
+const partialStorage = { setItem: (k, v) => partialMemory.set(k, v), getItem: k => partialMemory.get(k) || null };
+C.save(partialV2, partialStorage);
+const partialReloaded = C.load(partialStorage);
+assert.equal(partialReloaded.schemaVersion, 2);
+assert.equal(partialReloaded.flags.workstation_checked, true);
+assert.equal(partialReloaded.flags.felicia_video_watched, true);
+assert.equal(partialReloaded.flags.red_in_mirror_heard, false, "v2 reload must preserve missing Red state");
+assert.equal(partialReloaded.flags.day_work_unlocked, false, "legacy aliases cannot silently unlock a v2 save");
+assert.throws(() => C.unlockDayWork(partialReloaded), /music/);
+
 // Persistence contract.
 const memory = new Map();
 const storage = { setItem: (k, v) => memory.set(k, v), getItem: k => memory.get(k) || null };
