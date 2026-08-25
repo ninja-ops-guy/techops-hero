@@ -10,7 +10,7 @@
   "use strict";
 
   var VERSION = 2;
-  var SAVE_KEY = "techops_hero_campaign_v1"; // intentionally stable for migration
+  var SAVE_KEY = "techops_hero_campaign_v1";
   var TICKETS = ["shipping_cannot_print", "plating_workstation_down", "impossible_access_event"];
   var TICKET_TEMPLATES = {
     shipping_cannot_print: {
@@ -108,22 +108,33 @@
     assert(state && typeof state === "object", "Campaign state is required");
     state.flags = state.flags || {};
     var old = state.flags;
+    var sourceVersion = Number(state.schemaVersion || 1);
     var fresh = canonicalFlags();
+
     Object.keys(fresh).forEach(function (key) {
       if (typeof old[key] === "boolean") fresh[key] = old[key];
     });
-    Object.keys(FLAG_ALIASES).forEach(function (canonical) {
-      var legacy = FLAG_ALIASES[canonical];
-      if (typeof old[canonical] !== "boolean" && typeof old[legacy] === "boolean") fresh[canonical] = old[legacy];
-    });
-    // v1 collapsed these authored beats; preserve progress without replaying them.
-    if (old.ticketAssignmentsConfirmed) fresh.standup_completed = true;
-    if (old.workstationOpened) fresh.workstation_checked = true;
-    if (old.feliciaVideoSeen) {
-      fresh.felicia_blog_found = true;
-      fresh.felicia_video_watched = true;
+
+    // Only legacy saves are allowed to infer canonical progress from camelCase aliases.
+    // v2 saves already contain canonical flags; re-applying the v1 collapse would cause
+    // feliciaVideoSeen/workstationOpened aliases to silently unlock day work on every load.
+    if (sourceVersion < VERSION) {
+      Object.keys(FLAG_ALIASES).forEach(function (canonical) {
+        var legacy = FLAG_ALIASES[canonical];
+        if (typeof old[legacy] === "boolean") fresh[canonical] = old[legacy];
+      });
+      if (old.ticketAssignmentsConfirmed) fresh.standup_completed = true;
+      if (old.workstationOpened) fresh.workstation_checked = true;
+      if (old.feliciaVideoSeen) {
+        fresh.felicia_blog_found = true;
+        fresh.felicia_video_watched = true;
+      }
+      if (old.workstationOpened && old.feliciaVideoSeen) {
+        fresh.red_in_mirror_heard = old.redInTheMirrorHeard !== false;
+        fresh.day_work_unlocked = true;
+      }
     }
-    if (old.workstationOpened && old.feliciaVideoSeen) fresh.day_work_unlocked = true;
+
     state.flags = Object.assign(old, fresh);
     state.schemaVersion = VERSION;
     if (!state.history) state.history = [];
@@ -145,7 +156,7 @@
       if (state.flags.ticket_assignments_confirmed) assert(!!state.assignments[id], "Confirmed standup requires one owner per ticket: " + id);
     });
     if (state.flags.day_work_unlocked) {
-      assert(state.flags.standup_completed && state.flags.workstation_checked && state.flags.felicia_video_watched, "Day work cannot unlock before the authored opening completes");
+      assert(state.flags.standup_completed && state.flags.workstation_checked && state.flags.red_in_mirror_heard && state.flags.felicia_blog_found && state.flags.felicia_video_watched, "Day work cannot unlock before the authored opening completes");
     }
     return true;
   }
@@ -197,7 +208,7 @@
     return syncLegacyFlags(state);
   }
   function unlockDayWork(state) {
-    assert(state.flags.workstation_checked && state.flags.felicia_video_watched, "Workstation and Felicia video state must complete before day work unlocks");
+    assert(state.flags.standup_completed && state.flags.workstation_checked && state.flags.red_in_mirror_heard && state.flags.felicia_blog_found && state.flags.felicia_video_watched, "Standup, workstation, music, company blog, and Felicia video must complete before day work unlocks");
     state.flags.day_work_unlocked = true;
     state.campaign.phase = "day_shift";
     state.history.push({ type: "day_work_unlocked", at: now() });
