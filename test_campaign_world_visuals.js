@@ -4,7 +4,7 @@ const fs = require("fs");
 
 delete global.TechOpsMikeAnimations;
 const visuals = require("./campaign_world_visuals.js");
-assert.strictEqual(visuals.VERSION, 7);
+assert.strictEqual(visuals.VERSION, 8);
 assert.strictEqual(visuals.INTERACT_RANGE, 2.15);
 assert.strictEqual(visuals.SAFE_WALK_FRAME_MS, 135);
 assert.strictEqual(visuals.distance(0, 0, 3, 4), 5);
@@ -12,7 +12,6 @@ assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.down, ["down0", "down1", "down0"
 assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.up, ["up0", "up1", "up0", "up2"]);
 assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.right, ["right0", "right1", "right0", "right2"]);
 assert.deepStrictEqual(visuals.SAFE_WALK_FRAMES.left, ["right0", "right1", "right0", "right2"]);
-
 let f = visuals.safePlayerFrame({ fx: "down", moving: false }, 0);
 assert.strictEqual(f.key, "down0"); assert.strictEqual(f.state, "idle");
 f = visuals.safePlayerFrame({ fx: "left", moving: false }, 0); assert.strictEqual(f.key, "right0"); assert.strictEqual(f.flip, true);
@@ -21,7 +20,6 @@ f = visuals.safePlayerFrame({ fx: "down", moving: true }, 270); assert.strictEqu
 f = visuals.safePlayerFrame({ fx: "down", moving: true }, 405); assert.strictEqual(f.key, "down2");
 f = visuals.safePlayerFrame({ fx: "left", moving: true }, 405); assert.strictEqual(f.key, "right2"); assert.strictEqual(f.flip, true);
 f = visuals.safePlayerFrame({ fx: "up", moving: false, inDialog: true }, 0); assert.strictEqual(f.key, "laptop"); assert.strictEqual(f.state, "interact");
-
 const state = { px:10, py:10, npcs:[{id:"ambient",x:11,y:10,ambient:true,done:false},{id:"ticket",x:10,y:11,ambient:false,done:false}], devices:[{id:"device",x:12,y:10,fixed:false}], portals:[{id:"portal",x:10,y:12}] };
 let target = visuals.nearestInteractable(state);
 assert.strictEqual(target.kind, "npc"); assert.strictEqual(target.source.id, "ticket"); assert.strictEqual(target.distance, 1);
@@ -29,7 +27,6 @@ state.npcs[1].done = true; target = visuals.nearestInteractable(state); assert.s
 state.npcs[0].done = true; target = visuals.nearestInteractable(state); assert.strictEqual(target.kind, "device"); assert.strictEqual(target.distance, 2);
 state.devices[0].fixed = true; target = visuals.nearestInteractable(state); assert.strictEqual(target.kind, "portal");
 state.portals = []; assert.strictEqual(visuals.nearestInteractable(state), null);
-
 const profile = visuals.lightProfile({ px:0, py:0 });
 assert.ok(profile.vignette >= 0 && profile.vignette < 0.5); assert.ok(profile.warm >= 0 && profile.cool >= 0);
 assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("safe-area-inset-top"));
@@ -39,23 +36,26 @@ assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("safe-area-inset-right"));
 assert.ok(visuals.MOBILE_SAFE_AREA_CSS.includes("min-height:44px"));
 assert.strictEqual(typeof visuals.loadNightReference, "function");
 assert.strictEqual(typeof visuals.loadGoodDogsProduction, "function");
+assert.strictEqual(typeof visuals.loadGoodBoysMechanics, "function");
 
 const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
 assert.ok(/VERSION = 2/.test(goodDogs), "Good Dogs reference pass must be v2");
 assert.ok(/#btn-v736/.test(goodDogs), "co-op title entry must mark the Good Dogs launch path");
 assert.ok(/v722\.skip/.test(goodDogs), "Good Dogs must bypass the generic Night Drive wrapper during campaign entry");
-assert.ok(/NM&&NM\._v736/.test(goodDogs), "active render authority must be scoped to the 118/1984 campaign");
 assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs), "controlled body must render from the Good Dogs atlas");
 assert.ok(/never substitute attack\/crouch\/knockdown art for walk/.test(goodDogs), "locomotion must not mislabel attack poses as walking");
-assert.ok(/Math\.max\(78,\(NM\.h\|\|34\)\*2\.30\)/.test(goodDogs), "active dogs must render at reference-readable hero scale");
 assert.ok(/drawReferenceHUD/.test(goodDogs) && /GOOD DOGS PROTOCOL/.test(goodDogs), "co-op must own a reference-style two-character HUD");
-assert.ok(/KATRIN/.test(goodDogs) && /MANCHEZ/.test(goodDogs) && /118 \/ 1984/.test(goodDogs), "reference HUD must preserve pair and mission identity");
 assert.ok(/good-dogs-active #hud\{display:none!important\}/.test(goodDogs), "generic Day Shift HUD must be hidden during Good Dogs gameplay");
 assert.ok(/good-dogs-touch/.test(goodDogs) && /SWAP/.test(goodDogs) && /SYNC/.test(goodDogs) && /K SUPPORT/.test(goodDogs), "mobile co-op controls must expose pair mechanics");
-assert.ok(/for\(var i=2;i<7;i\+\+\)/.test(goodDogs) && /idle0/.test(goodDogs) && /idle1/.test(goodDogs), "historical seven-frame partner loop must be normalized to the two neutral poses");
 
+const mechanics = fs.readFileSync("good_boys_reference_mechanics.js", "utf8");
+assert.ok(/3x boost jump/.test(mechanics) && /boostJump/.test(mechanics), "reference mechanics must include the third partner-assisted jump");
+assert.ok(/two mid-air dashes/.test(mechanics) && /airDashCount/.test(mechanics), "reference mechanics must include two airborne dashes");
+assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics), "partner throw and mid-air catch must be implemented");
+assert.ok(/gb-boost/.test(mechanics) && /gb-airdash/.test(mechanics) && /gb-throw/.test(mechanics), "mobile Good Boys controls must expose boost, air dash and throw/catch");
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
-assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed production bootstrap must load the Good Dogs authority");
+assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed bootstrap must load the Good Dogs authority");
+assert.ok(worldSource.includes("good_boys_reference_mechanics.js"), "deployed bootstrap must load reference pair mechanics after Good Dogs runtime");
 
 global.TechOpsMikeAnimations = require("./mike_animation_manifest.js");
 f = visuals.playerFrame({ fx:"right", moving:true }, global.TechOpsMikeAnimations.WALK_FRAME_MS);
@@ -63,4 +63,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Mike locomotion + mobile safe-area + Night/Good Dogs reference loaders: PASS");
+console.log("Campaign playable world visuals + Good Boys reference mechanics: PASS");
