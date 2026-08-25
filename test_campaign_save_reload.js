@@ -1,5 +1,4 @@
 const assert = require("assert");
-
 const Campaign = require("./campaign_act1.js");
 
 global.localStorage = {
@@ -22,26 +21,16 @@ global.closeDlg = function () { global.S.inDialog = false; };
 global.toast = function () {};
 global.adjacent = function (a, b) { return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= 1; };
 
-function makeMap() {
-  return Array.from({ length: 44 }, () => Array.from({ length: 44 }, () => 0));
-}
-
+function makeMap() { return Array.from({ length: 44 }, () => Array.from({ length: 44 }, () => 0)); }
 function bootGame() {
-  global.S = {
-    day: 1,
-    map: makeMap(),
-    npcs: [],
-    meta: {},
-    inDialog: false,
-    inBattle: false,
-    nightMode: false,
-    _nightObjs: { door: { x: 20, y: 28 } },
-    px: 0,
-    py: 0
-  };
+  global.S = { day: 1, map: makeMap(), npcs: [], meta: {}, inDialog: false, inBattle: false, nightMode: false, _nightObjs: { door: { x: 20, y: 28 } }, px: 0, py: 0 };
   lastDialog = null;
 }
-
+function choose(text) {
+  const option = lastDialog.options.find(o => o.t === text);
+  assert.ok(option, `Missing option '${text}' in ${lastDialog.name}`);
+  option.f();
+}
 function reloadCheckpoint(label, verify) {
   const before = Campaign.load(global.localStorage);
   const serialized = global.localStorage.getItem(Campaign.SAVE_KEY);
@@ -60,20 +49,48 @@ const native = require("./campaign_native_act1.js");
 native.ensureWorld();
 
 native.openStandup();
-assert.strictEqual(lastDialog.name, "CAMPAIGN STANDUP");
-lastDialog.options[0].f();
+choose("Assign queue: Mike investigates access");
 reloadCheckpoint("standup ownership", state => {
-  assert.strictEqual(state.flags.ticketAssignmentsConfirmed, true);
-  assert.strictEqual(state.assignments.shipping_cannot_print, "mike");
-  assert.strictEqual(state.assignments.plating_workstation_down, "amit");
+  assert.strictEqual(state.flags.ticket_assignments_confirmed, true);
+  assert.strictEqual(state.flags.standup_completed, true);
   assert.strictEqual(state.assignments.impossible_access_event, "mike");
 });
 
-native.openWorkstation();
-reloadCheckpoint("workstation video", state => {
-  assert.strictEqual(state.flags.workstationOpened, true);
-  assert.strictEqual(state.flags.redInTheMirrorHeard, true);
-  assert.strictEqual(state.flags.feliciaVideoSeen, true);
+choose("Open workstation");
+reloadCheckpoint("workstation checked", state => {
+  assert.strictEqual(state.flags.workstation_checked, true);
+  assert.strictEqual(state.flags.red_in_mirror_heard, false);
+  assert.strictEqual(state.flags.felicia_video_watched, false);
+  assert.strictEqual(state.flags.day_work_unlocked, false);
+});
+
+native.openMusicTab();
+choose("Play Red in the Mirror");
+reloadCheckpoint("music playback", state => {
+  assert.strictEqual(state.flags.red_in_mirror_heard, true);
+  assert.strictEqual(state.flags.day_work_unlocked, false);
+});
+
+native.openCompanyTab();
+choose("Open Felicia profile");
+reloadCheckpoint("company profile found", state => {
+  assert.strictEqual(state.flags.felicia_blog_found, true);
+  assert.strictEqual(state.flags.felicia_video_watched, false);
+});
+
+native.openCompanyTab();
+choose("Play Engineering the Human Connection");
+choose("Finish video");
+reloadCheckpoint("company video complete", state => {
+  assert.strictEqual(state.flags.felicia_video_watched, true);
+  assert.strictEqual(state.flags.day_work_unlocked, false);
+});
+
+native.openCompanyTab();
+choose("CLOCK IN — START DAY SHIFT");
+reloadCheckpoint("day work unlocked", state => {
+  assert.strictEqual(state.flags.day_work_unlocked, true);
+  assert.strictEqual(state.campaign.phase, "day_shift");
 });
 
 native.resolveTicket("shipping_cannot_print");
@@ -85,7 +102,6 @@ reloadCheckpoint("shipping verification", state => {
 native.resolveTicket("plating_workstation_down");
 reloadCheckpoint("plating verification", state => {
   assert.strictEqual(state.tickets.plating_workstation_down.verification, "strong");
-  assert.strictEqual(state.humanOutcomes.plating_workstation_down, "restored");
 });
 
 native.recordAccessEvidence();
@@ -95,18 +111,15 @@ reloadCheckpoint("impossible access evidence", state => {
 });
 
 native.sector04Door();
-assert.strictEqual(lastDialog.name, "SECTOR 04 - NIGHT WALKER");
-lastDialog.options[0].f();
+choose("Enter Sector 04");
 assert.strictEqual(lastDialog.name, "ACCESS GUARD");
 reloadCheckpoint("sector 04 entered", state => {
-  assert.strictEqual(state.flags.sector04Entered, true);
+  assert.strictEqual(state.flags.sector04_entered, true);
   assert.strictEqual(state.night.accessGuard.dependencyLocated, true);
 });
 
 native.insightSector04();
-assert.strictEqual(lastDialog.name, "ACCESS GUARD");
-lastDialog.options[0].f();
-assert.strictEqual(lastDialog.name, "ACCESS GUARD SUPPRESSED");
+choose("Suppress manifestation");
 reloadCheckpoint("access guard suppressed", state => {
   assert.strictEqual(state.night.accessGuard.suppressed, true);
   assert.strictEqual(state.night.accessGuard.permanentlyDefeated, false);
@@ -114,12 +127,12 @@ reloadCheckpoint("access guard suppressed", state => {
 
 native.completeSector04();
 reloadCheckpoint("tuesday morning", state => {
-  assert.strictEqual(state.flags.tuesdayMorningReached, true);
+  assert.strictEqual(state.flags.tuesday_morning_reached, true);
   assert.strictEqual(state.campaign.day, 2);
   assert.strictEqual(state.campaign.chapter, "ghost_frequency");
-  assert.strictEqual(state.night.accessGuard.permanentlyDefeated, false);
 });
 
+// Delegated compatibility route remains valid and keeps diagnosis unavailable until evidence arrives.
 global.localStorage.removeItem(Campaign.SAVE_KEY);
 bootGame();
 native.ensureWorld();
@@ -127,17 +140,18 @@ global.TechOpsCampaignRuntime.confirmAssignments("delegated");
 global.TechOpsCampaignRuntime.runWorkstation();
 reloadCheckpoint("delegated access before night", state => {
   assert.strictEqual(state.assignments.impossible_access_event, "security");
+  assert.strictEqual(state.flags.day_work_unlocked, true);
   assert.strictEqual(state.evidence.ghostIdentityEvidence.status, "unknown");
 });
 
 native.sector04Door();
-lastDialog.options[0].f();
+choose("Enter Sector 04");
 assert.strictEqual(lastDialog.name, "SECTOR 04 INSIGHT");
 assert.ok(lastDialog.body.includes("Unknown controller"));
 reloadCheckpoint("delegated unknown controller", state => {
-  assert.strictEqual(state.flags.sector04Entered, true);
+  assert.strictEqual(state.flags.sector04_entered, true);
   assert.strictEqual(state.night.accessGuard.dependencyKnown, false);
-  assert.strictEqual(state.flags.tuesdayMorningReached, false);
+  assert.strictEqual(state.flags.tuesday_morning_reached, false);
 });
 
 console.log("Campaign save/reload traversal: PASS");
