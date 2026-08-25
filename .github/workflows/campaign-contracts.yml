@@ -6,6 +6,8 @@ on:
       - "assets/campaign/**"
       - "assets/v736/**"
       - "campaign_*.js"
+      - "good_boys_*.js"
+      - "good_dogs_production_runtime.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -17,6 +19,7 @@ on:
       - "scripts/generate_sector04_assets.py"
       - "scripts/extract_katrin_manchez_assets.py"
       - "test_campaign_*.js"
+      - "test_good_boys_canon_runtime.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
@@ -30,6 +33,8 @@ on:
       - "assets/campaign/**"
       - "assets/v736/**"
       - "campaign_*.js"
+      - "good_boys_*.js"
+      - "good_dogs_production_runtime.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -41,6 +46,7 @@ on:
       - "scripts/generate_sector04_assets.py"
       - "scripts/extract_katrin_manchez_assets.py"
       - "test_campaign_*.js"
+      - "test_good_boys_canon_runtime.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
@@ -75,6 +81,9 @@ jobs:
           node --check campaign_native_act2.js
           node --check campaign_visual_direction.js
           node --check campaign_world_visuals.js
+          node --check good_boys_canon_runtime.js
+          node --check good_boys_reference_mechanics.js
+          node --check good_dogs_production_runtime.js
           node --check mike_animation_manifest.js
           node --check mike_actions.js
           node --check mike_actions.atlas.js
@@ -88,6 +97,7 @@ jobs:
           node --check test_campaign_native_act1_visuals.js
           node --check test_campaign_native_act2.js
           node --check test_campaign_world_visuals.js
+          node --check test_good_boys_canon_runtime.js
           node --check test_mobile_production_tester.js
           node --check test_mike_animation_manifest.js
           node --check test_campaign_day1_runtime_gate.js
@@ -116,6 +126,8 @@ jobs:
         run: node test_campaign_native_act1_visuals.js
       - name: Verify playable world presentation
         run: node test_campaign_world_visuals.js
+      - name: Verify Good Boys canon runtime
+        run: node test_good_boys_canon_runtime.js
       - name: Verify production mobile tester
         run: node test_mobile_production_tester.js
       - name: Verify Mike animation semantics
