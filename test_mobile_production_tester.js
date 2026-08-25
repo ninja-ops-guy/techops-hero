@@ -3,6 +3,8 @@ const fs = require('fs');
 
 const html = fs.readFileSync('index.html', 'utf8');
 const world = fs.readFileSync('campaign_world_visuals.js', 'utf8');
+const dogs = fs.readFileSync('dogs.js', 'utf8');
+const mobileGuard = fs.readFileSync('good_boys_mobile_launch_guard.js', 'utf8');
 function has(s){assert.ok(html.includes(s),`missing mobile production marker: ${s}`);}
 function script(src){return html.indexOf(`<script src="${src}"></script>`);}
 
@@ -24,6 +26,11 @@ assert.ok(script('campaign_sector04_runtime.js') < script('campaign_native_act1.
 
 ['safe-area-inset-top','safe-area-inset-bottom','safe-area-inset-left','safe-area-inset-right','#hud-top','#dialogue','#dpad','#touch-buttons','min-height:44px'].forEach(marker=>assert.ok(world.includes(marker),`mobile safe-area/touch contract missing ${marker}`));
 ['night_walker_reference_v1.js','night_reference_visuals.js','loadNightReference'].forEach(marker=>assert.ok(world.includes(marker),`Night reference bootstrap missing ${marker}`));
+
+// Good Boys mobile launch guard must ship through the dog asset bootstrap.
+assert.ok(script('dogs.js') !== -1,'dogs.js must be present in deployed entrypoint');
+assert.ok(dogs.includes('good_boys_mobile_launch_guard.js'),'dogs.js must bootstrap Good Boys mobile launch guard');
+['pairReady','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
 
 has('auto_play=false');
 has('allow="autoplay"');
