@@ -1,6 +1,7 @@
 /* TechOps Hero — Acts II–III semantic proof.
  * Story Bible v1.2 / production baseline: Ghost Frequency -> Parts in Motion.
- * Keeps Evidence and Trust separate and prevents reveal-order shortcuts.
+ * Keeps Evidence and Trust separate, prevents reveal-order shortcuts, and
+ * defines the bounded Felicia companion/free-play contract for production.
  */
 (function (root, factory) {
   var api = factory();
@@ -9,8 +10,9 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  var VERSION = 1;
+  var VERSION = 2;
   var COMPONENTS = Object.freeze(["telemetry", "antenna", "compute", "power", "flight_control", "sensor"]);
+  var COMPANION_BOUNDS = Object.freeze({ followDistance: 5, assistRadius: 4, hardLeash: 9, actionCooldownMs: 1200 });
 
   function assert(condition, message) { if (!condition) throw new Error(message); }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -35,7 +37,23 @@
       reveal: { violinistRevealed: false },
       history: []
     };
-    return state.p1;
+    var p1 = state.p1;
+    p1.schemaVersion = VERSION;
+    p1.evidence = p1.evidence || { score: 0, records: [], badgeClonerVerified: false, rooftopViolinVerified: false };
+    p1.trust = p1.trust || { score: 0, feliciaDaylightConversation: false, history: [] };
+    p1.morningstar = p1.morningstar || { traces: [], components: {}, signatureFound: false };
+    p1.reveal = p1.reveal || { violinistRevealed: false };
+    p1.history = p1.history || [];
+    p1.companion = p1.companion || {
+      mode: "locked",
+      followDistance: COMPANION_BOUNDS.followDistance,
+      assistRadius: COMPANION_BOUNDS.assistRadius,
+      hardLeash: COMPANION_BOUNDS.hardLeash,
+      actionCooldownMs: COMPANION_BOUNDS.actionCooldownMs,
+      readable: true
+    };
+    p1.duet = p1.duet || { protocolCompleted: false, freeplayUnlocked: false };
+    return p1;
   }
   function requireTuesday(state) {
     assert(hasOpeningFlag(state, "tuesday_morning_reached", "tuesdayMorningReached"), "Ghost Frequency requires Tuesday Morning");
@@ -123,14 +141,51 @@
   }
 
   function violinistRevealEligible(state) {
+    var p1 = ensure(state), f = facts(state);
+    return !!(f.ghost_identity_established && f.morningstar_signature_found && f.felicia_contact && p1.evidence.rooftopViolinVerified);
+  }
+
+  function companionPolicy(state) {
+    var p1 = ensure(state), revealed = !!p1.reveal.violinistRevealed;
+    return {
+      enabled: revealed,
+      mode: revealed ? p1.companion.mode : "locked",
+      followDistance: p1.companion.followDistance,
+      assistRadius: p1.companion.assistRadius,
+      hardLeash: p1.companion.hardLeash,
+      actionCooldownMs: p1.companion.actionCooldownMs,
+      readable: p1.companion.readable === true,
+      freeplayUnlocked: !!p1.duet.freeplayUnlocked
+    };
+  }
+
+  function setCompanionMode(state, mode) {
+    requireTuesday(state);
     var p1 = ensure(state);
-    var f = facts(state);
-    return !!(
-      f.ghost_identity_established &&
-      f.morningstar_signature_found &&
-      f.felicia_contact &&
-      p1.evidence.rooftopViolinVerified
-    );
+    assert(p1.reveal.violinistRevealed, "Felicia companion support requires The Violinist reveal");
+    assert(["off", "follow", "support"].indexOf(mode) >= 0, "Unknown companion mode");
+    p1.companion.mode = mode;
+    record(state, "felicia_companion_mode", mode);
+    return companionPolicy(state);
+  }
+
+  function feliciaFreeplayEligible(state) {
+    var p1 = ensure(state);
+    return !!(p1.duet.protocolCompleted && p1.duet.freeplayUnlocked && facts(state).duet_protocol_complete);
+  }
+
+  function completeDuetProtocol(state) {
+    requireTuesday(state);
+    var p1 = ensure(state);
+    assert(p1.reveal.violinistRevealed, "Duet Protocol requires The Violinist reveal");
+    if (!p1.duet.protocolCompleted) {
+      p1.duet.protocolCompleted = true;
+      p1.duet.freeplayUnlocked = true;
+      p1.companion.mode = "follow";
+      facts(state).duet_protocol_complete = true;
+      record(state, "duet_protocol_completed");
+    }
+    return { protocolCompleted: true, freeplayUnlocked: feliciaFreeplayEligible(state), companion: companionPolicy(state) };
   }
 
   function revealViolinist(state) {
@@ -140,6 +195,7 @@
     assert(violinistRevealEligible(state), "The Violinist reveal prerequisites are not met");
     p1.reveal.violinistRevealed = true;
     p1.chapter = "parts_in_motion";
+    p1.companion.mode = "support";
     facts(state).violinist_revealed = true;
     record(state, "violinist_revealed");
     return clone(p1.reveal);
@@ -156,13 +212,17 @@
       morningstarSignatureFound: p1.morningstar.signatureFound,
       rooftopViolinVerified: p1.evidence.rooftopViolinVerified,
       violinistRevealEligible: violinistRevealEligible(state),
-      violinistRevealed: p1.reveal.violinistRevealed
+      violinistRevealed: p1.reveal.violinistRevealed,
+      companion: companionPolicy(state),
+      duetProtocolCompleted: !!p1.duet.protocolCompleted,
+      feliciaFreeplayUnlocked: feliciaFreeplayEligible(state)
     };
   }
 
   return {
     VERSION: VERSION,
     COMPONENTS: COMPONENTS,
+    COMPANION_BOUNDS: COMPANION_BOUNDS,
     ensure: ensure,
     beginGhostFrequency: beginGhostFrequency,
     recordBadgeClonerEvidence: recordBadgeClonerEvidence,
@@ -171,6 +231,10 @@
     recordRooftopViolinEvidence: recordRooftopViolinEvidence,
     violinistRevealEligible: violinistRevealEligible,
     revealViolinist: revealViolinist,
+    companionPolicy: companionPolicy,
+    setCompanionMode: setCompanionMode,
+    completeDuetProtocol: completeDuetProtocol,
+    feliciaFreeplayEligible: feliciaFreeplayEligible,
     snapshot: snapshot
   };
 });
