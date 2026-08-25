@@ -1,0 +1,49 @@
+"use strict";
+const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
+
+const html = fs.readFileSync("index.html", "utf8");
+const scripts = [...html.matchAll(/<script\s+src="([^"]+)"/g)].map(m => m[1]);
+const local = scripts.filter(s => !/^https?:\/\//.test(s));
+const duplicates = local.filter((s, i) => local.indexOf(s) !== i);
+assert.deepStrictEqual(duplicates, [], "duplicate local script tags increase startup work");
+
+const missing = local.filter(s => !fs.existsSync(s));
+assert.deepStrictEqual(missing, [], "every startup script must exist");
+
+const indexBytes = fs.statSync("index.html").size;
+const styleBytes = fs.statSync("style.css").size;
+assert.ok(indexBytes < 250 * 1024, `index.html exceeds 250 KiB structural budget: ${indexBytes}`);
+assert.ok(styleBytes < 160 * 1024, `style.css exceeds 160 KiB structural budget: ${styleBytes}`);
+assert.ok(local.length <= 260, `startup script count ${local.length} exceeds consolidation ceiling 260`);
+
+let startupBytes = 0;
+let largest = { file: "", bytes: 0 };
+for (const file of local) {
+  const bytes = fs.statSync(file).size;
+  startupBytes += bytes;
+  if (bytes > largest.bytes) largest = { file, bytes };
+  assert.ok(bytes < 3 * 1024 * 1024, `${file} exceeds 3 MiB single-script decode/parse guard`);
+}
+assert.ok(startupBytes < 40 * 1024 * 1024, `local startup JS exceeds 40 MiB structural ceiling: ${startupBytes}`);
+
+// Production modules should remain small concern layers; large payloads belong in assets.
+for (const file of [
+  "campaign_act1.js","campaign_act2.js","campaign_native_act1.js","campaign_native_act2.js",
+  "campaign_world_visuals.js","good_dogs_production_runtime.js","good_boys_reference_mechanics.js",
+  "good_boys_canon_runtime.js","good_boys_gameplay_loop.js"
+]) {
+  assert.ok(fs.existsSync(file), `${file} missing`);
+  assert.ok(fs.statSync(file).size < 180 * 1024, `${file} exceeds 180 KiB concern-module budget`);
+}
+
+const report = {
+  localStartupScripts: local.length,
+  indexKiB: +(indexBytes / 1024).toFixed(1),
+  styleKiB: +(styleBytes / 1024).toFixed(1),
+  startupJsMiB: +(startupBytes / 1024 / 1024).toFixed(2),
+  largestScript: largest.file,
+  largestScriptKiB: +(largest.bytes / 1024).toFixed(1)
+};
+console.log("Production static performance budget: PASS", JSON.stringify(report));
