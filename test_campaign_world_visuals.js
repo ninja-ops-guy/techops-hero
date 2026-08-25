@@ -56,16 +56,19 @@ assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics), "part
 assert.ok(/gb-boost/.test(mechanics) && /gb-airdash/.test(mechanics) && /gb-throw/.test(mechanics), "mobile Good Boys controls must expose boost, air dash and throw/catch");
 
 const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
-assert.ok(/THE INCIDENT/.test(canon) && /SURVIVE THE HULL BREACH/.test(canon), "Good Boys must open with the canon orbital incident/hull breach");
+assert.ok(/VERSION=3/.test(canon), "Good Boys canon runtime must be v3");
+assert.ok(/THE INCIDENT/.test(canon) && /CROSS THE BREACH/.test(canon), "Good Boys must open with the canon orbital incident");
 assert.ok(/REACH THE MAINTENANCE SHUTTLE/.test(canon), "maintenance shuttle must be a canon early objective");
-assert.ok(/FIND CELL 118 · GET HIM OUT/.test(canon), "Cell 118/K recovery must be explicit");
+assert.ok(/FIND CELL 118 · GET THE PRISONER OUT/.test(canon), "Cell 118 must preserve the K reveal");
 assert.ok(/FREE WALDO IN CELL 1984/.test(canon), "Cell 1984/Waldo must be explicit");
 assert.ok(/GOOD BOYS PROTOCOL/.test(canon) && /ESCAPE TO THE SHUTTLE/.test(canon), "campaign finale must test pair escape mechanics");
-assert.ok(/if\(isChain\(\) && mission\(\)<=7\) id="orbital"/.test(canon), "legacy suburbs/industrial districts must be overridden by orbital canon");
+assert.ok(/if\(isChain\(\)&&mission\(\)<=7\)id="orbital"/.test(canon), "legacy districts must be overridden by orbital canon");
 assert.ok(/_goodBoysRequestedDistrict/.test(canon) && /_goodBoysCanonDistrict="orbital"/.test(canon), "district substitution must be observable for QA");
-assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon), "generic Day Shift HUD must be directly suppressed, not merely covered");
-assert.ok(/PRISON CELL 118/.test(canon) && /CELL 1984/.test(canon), "runtime backdrop must contain the two canonical prison landmarks");
-assert.ok(/ORBITAL COMMAND RING/.test(canon) && /SHATTERED TRANSIT SPINE/.test(canon), "music-video orbital environments must drive the first two missions");
+assert.ok(/style\.setProperty\("display","none","important"\)/.test(canon), "generic Day Shift HUD must be directly suppressed");
+assert.ok(/play as mike instead/.test(canon.toLowerCase()), "redundant Mike title path must be explicitly removed");
+assert.ok(/good-boys-begin/.test(canon) && /showIncidentIntro/.test(canon), "opening must use a DOM-owned safe handoff to gameplay");
+assert.ok(/orbital_gate/.test(canon) && /orbital_eye/.test(canon), "Good Boys must consume shipped orbital backdrops instead of generated data URLs");
+assert.ok(!/toDataURL/.test(canon), "Good Boys canon runtime must not generate unstable mobile backgrounds");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
 assert.ok(worldSource.includes("good_dogs_production_runtime.js"), "deployed bootstrap must load the Good Dogs authority");
@@ -78,4 +81,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys canon orbital runtime: PASS");
+console.log("Campaign playable world visuals + Good Boys canon v3: PASS");
