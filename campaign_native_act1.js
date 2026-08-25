@@ -323,12 +323,60 @@
     };
   }
 
+  function dayWorkLocked() {
+    var gs = gameState();
+    if (!gs || gs.day !== 1 || gs.nightMode) return false;
+    var campaign = loadState();
+    return campaign.campaign.day === 1 && !campaign.flags.day_work_unlocked && !campaign.flags.tuesday_morning_reached;
+  }
+
+  function blockedBaseWorkAtPlayer() {
+    var gs = gameState();
+    if (!gs) return null;
+    var p = { x: gs.px, y: gs.py };
+    var npc = (gs.npcs || []).find(function (n) { return isAdjacent(p, n) && !n.ambient && !n.campaignAct1; });
+    if (npc) return { kind: "ticket", target: npc };
+    var portal = (gs.portals || []).find(function (item) { return isAdjacent(p, item); });
+    if (portal) return { kind: "portal", target: portal };
+    var device = (gs.devices || []).find(function (item) { return isAdjacent(p, item) && !item.fixed; });
+    if (device) return { kind: "device", target: device };
+    return null;
+  }
+
+  function pauseBaseWorkDialog() {
+    var campaign = loadState();
+    return callDialog("SHIFT PAUSED", "The procedural queue is visible, but its clock has not started. Complete the authored opening before ordinary ticket work can age, escalate, or resolve.", [
+      { t: campaign.flags.standup_completed ? "Open workstation" : "Go to standup", f: campaign.flags.standup_completed ? openWorkstation : openStandup },
+      { t: "Back", f: closeDialog }
+    ]);
+  }
+
+  function syncDayWorkMeta() {
+    var gs = gameState();
+    if (!gs) return false;
+    var campaign = loadState();
+    gs.meta = gs.meta || {};
+    gs.meta.dayWorkUnlocked = !!campaign.flags.day_work_unlocked;
+    gs.meta.ticketTimersActive = !!campaign.flags.day_work_unlocked;
+    return true;
+  }
+
   function install() {
     if (root.__techopsCampaignNativeAct1Installed) return false;
     root.__techopsCampaignNativeAct1Installed = true;
     if (typeof root.setupDay === "function") {
       var originalSetupDay = root.setupDay;
-      root.setupDay = function () { originalSetupDay.apply(this, arguments); ensureWorld(); };
+      root.setupDay = function () { originalSetupDay.apply(this, arguments); ensureWorld(); syncDayWorkMeta(); };
+    }
+    if (typeof root.advanceClock === "function") {
+      var originalAdvanceClock = root.advanceClock;
+      root.advanceClock = function (minutes) {
+        if (dayWorkLocked() && Number(minutes) > 0) {
+          syncDayWorkMeta();
+          return gameState() ? gameState().clock : undefined;
+        }
+        return originalAdvanceClock.apply(this, arguments);
+      };
     }
     if (typeof root.interact === "function") {
       var originalInteract = root.interact;
@@ -341,6 +389,7 @@
           if (isAdjacent(p, native.plating)) return resolveTicket("plating_workstation_down");
           if (isAdjacent(p, native.access)) return recordAccessEvidence();
         }
+        if (dayWorkLocked() && blockedBaseWorkAtPlayer()) return pauseBaseWorkDialog();
         return originalInteract.apply(this, arguments);
       };
     }
@@ -348,6 +397,7 @@
       var originalNightDoorDialog = root.nightDoorDialog;
       root.nightDoorDialog = function () { var campaign = loadState(); if (campaign.flags.day_work_unlocked && campaign.campaign.day === 1 && !campaign.flags.tuesday_morning_reached) return sector04Door(); return originalNightDoorDialog.apply(this, arguments); };
     }
+    syncDayWorkMeta();
     return true;
   }
 
@@ -375,6 +425,9 @@
     insightSector04: insightSector04,
     completeSector04: completeSector04,
     currentWorldProgress: currentWorldProgress,
+    dayWorkLocked: dayWorkLocked,
+    blockedBaseWorkAtPlayer: blockedBaseWorkAtPlayer,
+    syncDayWorkMeta: syncDayWorkMeta,
     install: install
   };
 
