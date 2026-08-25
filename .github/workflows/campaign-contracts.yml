@@ -83,6 +83,7 @@ jobs:
           node --check campaign_world_visuals.js
           node --check good_boys_canon_runtime.js
           node --check good_boys_reference_mechanics.js
+          node --check good_boys_gameplay_loop.js
           node --check good_dogs_production_runtime.js
           node --check mike_animation_manifest.js
           node --check mike_actions.js
