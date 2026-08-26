@@ -1,10 +1,10 @@
-/* TechOps Hero — production runtime bootstrap v2.
+/* TechOps Hero — production runtime bootstrap v3.
  * Loads the complete asset registry first, then production authorities.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=2,started=false,done=false;
+  var VERSION=3,started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -16,7 +16,8 @@
     "good_boys_mobile_launch_guard.js",
     "production_runtime_safety.js",
     "production_wrapper_guard.js",
-    "production_mode_router.js"
+    "production_mode_router.js",
+    "production_presentation_guard.js"
   ];
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
   function load(src){return new Promise(function(resolve){
@@ -42,6 +43,7 @@
     try{if(root.TechOpsGoodBoysCanon)root.TechOpsGoodBoysCanon.tick();}catch(e){}
     try{if(root.TechOpsGoodBoysGameplayLoop)root.TechOpsGoodBoysGameplayLoop.tick();}catch(e){}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
+    try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     done=true;root.__productionBootstrapReady=true;
   }
   root.TechOpsProductionBootstrap={VERSION:VERSION,FILES:FILES,start:start,ready:function(){return done;}};
