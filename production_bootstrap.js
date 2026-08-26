@@ -1,12 +1,13 @@
-/* TechOps Hero — production runtime bootstrap v5.
- * Loads gameplay authorities first and freezes the composed Night wrapper chain
- * BEFORE any heavyweight production asset preload. This prevents periodic
- * feature installers from re-wrapping one another while assets decode.
+/* TechOps Hero — production runtime bootstrap v6.
+ * Builds the alternate-mode compositor as one transaction. Feature modules run
+ * their initial installers immediately, but their periodic maintenance timers
+ * are deferred until production_wrapper_guard freezes the composed draw/step
+ * chain. This removes the drawNM A->B->A recursion race entirely.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=5,started=false,done=false;
+  var VERSION=6,started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -15,14 +16,13 @@
     "good_boys_reference_mechanics.js",
     "good_boys_canon_runtime.js",
     "good_boys_gameplay_loop.js",
-    /* Freeze the complete draw/step chain immediately after the three Good
-       Boys authorities have composed. Do not move this below asset preloads. */
     "production_wrapper_guard.js",
     "good_boys_mobile_launch_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
     "production_presentation_guard.js"
   ];
+  var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
   function load(src){return new Promise(function(resolve){try{if(!root.document||has(src)){resolve(true);return;}var s=root.document.createElement("script");s.src=src;s.async=false;s.dataset.productionBootstrap=src;s.onload=function(){resolve(true);};s.onerror=function(){root.__productionBootstrapError=src;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){root.__productionBootstrapError=String(e&&e.stack||e);resolve(false);}});}
   async function start(){
@@ -31,15 +31,51 @@
     while(!(root.v736&&typeof root.v736.start==="function"&&root.v737)&&tries++<400)await new Promise(function(r){(root.setTimeout||setTimeout)(r,10);});
     root.__productionParserStackReady=!!(root.v736&&root.v737);
 
-    /* Script installation is intentionally fast and non-blocking. In v4 the
-       registry's image/script preload was awaited here, giving 100/120 ms
-       wrapper-maintenance timers enough time to create a recursive drawNM
-       graph before the wrapper guard existed. */
-    for(var i=0;i<FILES.length;i++){
-      await load(FILES[i]);
-      if(FILES[i]==="production_wrapper_guard.js"){
-        try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}
+    var nativeSetInterval=root.setInterval?root.setInterval.bind(root):null;
+    var nativeClearInterval=root.clearInterval?root.clearInterval.bind(root):null;
+    var deferred=[],deferOn=false,nextFake=-7000;
+    function beginTimerDeferral(){
+      if(deferOn||!nativeSetInterval)return;deferOn=true;
+      root.setInterval=function(fn,ms){
+        var rec={fake:nextFake--,fn:fn,ms:Math.max(1,Number(ms)||1),args:Array.prototype.slice.call(arguments,2),cancelled:false,real:null};
+        deferred.push(rec);return rec.fake;
+      };
+      if(nativeClearInterval)root.clearInterval=function(id){
+        for(var i=0;i<deferred.length;i++)if(deferred[i].fake===id&&!deferred[i].real){deferred[i].cancelled=true;return;}
+        return nativeClearInterval(id);
+      };
+      root.__productionTimersDeferred=true;
+    }
+    function releaseTimers(){
+      if(!deferOn)return;deferOn=false;
+      if(nativeSetInterval)root.setInterval=nativeSetInterval;
+      if(nativeClearInterval)root.clearInterval=nativeClearInterval;
+      for(var i=0;i<deferred.length;i++){
+        var r=deferred[i];if(r.cancelled||typeof r.fn!=="function")continue;
+        try{r.real=nativeSetInterval(function(rec){return function(){return rec.fn.apply(root,rec.args);};}(r),r.ms);}catch(e){}
       }
+      root.__productionDeferredTimerCount=deferred.filter(function(r){return !r.cancelled;}).length;
+      root.__productionTimersDeferred=false;
+    }
+
+    try{
+      for(var i=0;i<FILES.length;i++){
+        var src=FILES[i];
+        if(src===DEFER_FROM)beginTimerDeferral();
+        /* Restore the native timer API before loading the guard itself so its
+           enforcement interval starts normally. Feature timers remain parked. */
+        if(src===FREEZE_AT&&deferOn){
+          root.setInterval=nativeSetInterval;
+          if(nativeClearInterval)root.clearInterval=nativeClearInterval;
+        }
+        await load(src);
+        if(src===FREEZE_AT){
+          try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}
+          releaseTimers();
+        }
+      }
+    }finally{
+      if(deferOn)releaseTimers();
     }
 
     /* Heavy art installation begins only after the wrapper chain is frozen. */
