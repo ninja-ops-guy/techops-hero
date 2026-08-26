@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime safety v1
+/* TechOps Hero — production runtime safety v2
  * Independent last-loaded safety loop for alternate modes.
  * Keeps Night/Good Boys render + input alive if a legacy hook throws and
  * surfaces the actual exception instead of leaving a black mobile screen.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root || root.TechOpsRuntimeSafety) return;
-  var VERSION=1, raf=0, lastError=null, errorCount=0, lastOk=0;
+  var VERSION=2, raf=0, lastError=null, errorCount=0, lastOk=0;
   function state(){try{return (typeof S!=="undefined"&&S)?S:null;}catch(e){return null;}}
   function world(){try{return (typeof NM!=="undefined"&&NM)?NM:null;}catch(e){return null;}}
   function canvas(){try{return typeof cv!=="undefined"&&cv?cv:(root.document&&root.document.getElementById("game"));}catch(e){return null;}}
@@ -48,7 +48,11 @@
   function frame(ts){
     try{
       if(active()){
-        var dt=prev?Math.min(40,Math.max(0,ts-prev)):16;prev=ts;
+        /* requestAnimationFrame timestamps are milliseconds; gameplay stepNM
+           consumes seconds. v1 passed 16-40 directly and could catapult a
+           recovery frame across the entire stage. */
+        var dtMs=prev?Math.min(40,Math.max(0,ts-prev)):16;prev=ts;
+        var dt=dtMs/1000;
         /* Only provide an independent update when the main loop appears stalled. */
         var now=Date.now?Date.now():0;
         if(!root.__nightRuntimeLastOk || now-root.__nightRuntimeLastOk>250){safeStep(dt);}
