@@ -1,9 +1,10 @@
 window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } catch(e) { return undefined; } })();
 /* Production bootstrap entrypoint.
- * bg_noc.js is parsed before v7.34-v7.37 and the campaign runtime stack, so
- * starting production immediately from here races later parser-owned wrappers.
- * Defer only until DOMContentLoaded: every classic script in index.html has then
- * executed, while we still start before the player can meaningfully interact.
+ * Several parser-loaded campaign modules register DOMContentLoaded installers
+ * (notably Sector 04) instead of wrapping immediately. Production must start
+ * after those listeners have finished or they can capture a production wrapper
+ * as their "original" and close a drawNM cycle. Queue boot one task after the
+ * DOMContentLoaded dispatch so the entire legacy/campaign chain is final first.
  */
 (function(){
   function boot(){
@@ -16,8 +17,9 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
       (document.head||document.documentElement).appendChild(s);
     }catch(e){window.__productionBootstrapWireError=String(e&&e.stack||e);}
   }
+  function queueBoot(){try{(window.setTimeout||setTimeout)(boot,0);}catch(e){boot();}}
   try{
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
-    else boot();
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',queueBoot,{once:true});
+    else queueBoot();
   }catch(e){window.__productionBootstrapWireError=String(e&&e.stack||e);}
 })();
