@@ -1,29 +1,25 @@
 /* ==========================================================================
    v7.32 — OPENING THEME: menu music + save hardening + scene validator
-   1. MENU MUSIC — techops-theme.mp3 loops on the title screen. Browsers gate
-      audio behind a user gesture, so the theme starts on the first click/key
-      and hands off cleanly: pauses when a run starts (the in-game music path
-      takes over), resumes if the title screen is shown again. The HUD music
-      button mutes it together with everything else, and the Settings music
-      slider drives its volume (V67SET.volMusic).
-   2. SAVE HARDENING — rotating backup slot: every save keeps the previous
-      good blob in techops_save_bak; load() falls back to it if the main slot
-      is missing or corrupt. Saves stay single-writer, same format.
-   3. SCENE VALIDATOR (dev) — behind ?dev=1, walks every registered cinematic
-      and rejects: duplicate scene ids, choice shots without a store, timed
-      shots with no duration, scenes with no exit shot, over-long captions.
-      Failures land on the console and window.v732.validate() — bad content
-      fails in development, never during gameplay.
+   1. MENU MUSIC — optional production theme. Set window.TECHOPS_THEME_SRC to
+      an actual shipped/licensed audio URL before this script loads. No default
+      file is requested, so production never emits a missing-audio 404.
+   2. SAVE HARDENING — rotating backup slot.
+   3. SCENE VALIDATOR (dev) — validates registered cinematics under ?dev=1.
    ========================================================================== */
 (function () {
-  const VER = "7.32";
+  const VER = "7.32.1";
   if (window.v732) return;
 
-  // ---------- 1. menu music ----------
   let theme = null, themeWanted = false;
+  function themeSource() {
+    try { return (typeof window.TECHOPS_THEME_SRC === "string" && window.TECHOPS_THEME_SRC.trim()) ? window.TECHOPS_THEME_SRC.trim() : ""; }
+    catch (e) { return ""; }
+  }
   function getTheme() {
     if (theme) return theme;
-    theme = new Audio("techops-theme.mp3");
+    const src = themeSource();
+    if (!src) return null;
+    theme = new Audio(src);
     theme.loop = true;
     try { theme.volume = (window.V67SET ? V67SET.volMusic : .8); } catch (e) { theme.volume = .8; }
     return theme;
@@ -32,69 +28,50 @@
   function titleVisible() { const t = $("title-screen"); return t && !t.classList.contains("hidden"); }
   function tryPlay() {
     const t = getTheme();
-    themeVolume(); // volume follows the slider, regardless of where we are
-    if (!titleVisible()) return;
-    if (window.V67SET && V67SET.volMusic <= 0) return;
-    if (typeof sfxMuted !== "undefined" && sfxMuted) return; // music toggle off
+    if (!t) return false;
+    themeVolume();
+    if (!titleVisible()) return false;
+    if (window.V67SET && V67SET.volMusic <= 0) return false;
+    if (typeof sfxMuted !== "undefined" && sfxMuted) return false;
     themeWanted = true;
-    t.play().catch(() => { }); // if the browser still refuses, the next gesture retries
+    t.play().catch(() => { });
+    return true;
   }
   function stopTheme() { themeWanted = false; if (theme) theme.pause(); }
-  // start on the first gesture while the title is up
   const gesture = () => { if (titleVisible()) tryPlay(); };
   addEventListener("pointerdown", gesture);
   addEventListener("keydown", gesture);
-  // hand off when a run starts / continues
   const _startRun732 = startRun;
   window.startRun = function () { stopTheme(); return _startRun732.apply(this, arguments); };
-  // resume if the title ever comes back
-  const _showTitle732 = () => { if (titleVisible() && themeWanted) tryPlay(); };
-  // music button + volume slider drive the theme too
   const _setMusic732 = (typeof setMusic !== "undefined") ? setMusic : null;
   if (_setMusic732) {
     window.setMusic = function (on) {
       const r = _setMusic732.apply(this, arguments);
-      try {
-        themeVolume();
-        if (!on) { if (theme) theme.pause(); }
-        else if (titleVisible()) tryPlay();
-      } catch (e) { }
+      try { themeVolume(); if (!on) { if (theme) theme.pause(); } else if (titleVisible()) tryPlay(); } catch (e) { }
       return r;
     };
   }
-  // follow the volume slider live
   setInterval(() => { if (theme && themeWanted && titleVisible() && theme.paused && !(typeof sfxMuted !== "undefined" && sfxMuted)) tryPlay(); themeVolume(); }, 2500);
 
-  // ---------- 2. save hardening (rotating backup) ----------
-  // save/load in game.js are lexical consts (not wrappable) — so the rotation
-  // lives in the storage layer itself, where every reader/writer passes through.
   const LS = window.localStorage;
   const _setItem = LS.setItem.bind(LS);
   const _getItem = LS.getItem.bind(LS);
   let healing732 = false;
   LS.setItem = function (k, v) {
     if (k === "techops_save" && !healing732) {
-      try {
-        const prev = _getItem("techops_save");
-        if (prev && prev !== v) _setItem("techops_save_bak", prev); // last known-good rotates here
-      } catch (e) { }
+      try { const prev = _getItem("techops_save"); if (prev && prev !== v) _setItem("techops_save_bak", prev); } catch (e) { }
     }
     return _setItem(k, v);
   };
   LS.getItem = function (k) {
     if (k !== "techops_save") return _getItem(k);
     const v = _getItem(k);
-    if (v) {
-      try { JSON.parse(v); return v; } catch (e) { } // corrupt main — fall through to backup
-    }
+    if (v) { try { JSON.parse(v); return v; } catch (e) { } }
     const bak = _getItem("techops_save_bak");
-    if (bak) { // heal the main slot so the corruption can't stick
-      try { healing732 = true; _setItem("techops_save", bak); healing732 = false; } catch (e) { healing732 = false; }
-    }
+    if (bak) { try { healing732 = true; _setItem("techops_save", bak); healing732 = false; } catch (e) { healing732 = false; } }
     return bak;
   };
 
-  // ---------- 3. scene validator (dev only) ----------
   function validate732() {
     const issues = [];
     const cines = (window.v725 && v725.defs) ? v725.defs() : {};
@@ -129,10 +106,6 @@
     }
   } catch (e) { window.__err732 = String(e && e.stack || e); }
 
-  window.v732 = {
-    version: VER,
-    theme: () => theme, playTheme: tryPlay, stopTheme,
-    validate: validate732,
-  };
-  console.log("[v7.32] Opening Theme loaded — menu music, save backup, scene validator");
+  window.v732 = { version: VER, theme: () => theme, playTheme: tryPlay, stopTheme, validate: validate732 };
+  console.log("[v7.32] Opening Theme loaded — optional menu music, save backup, scene validator");
 })();
