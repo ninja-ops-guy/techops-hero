@@ -1,96 +1,42 @@
-/* TechOps Hero — Good Boys mobile launch guard v4.
+/* TechOps Hero — Good Boys mobile launch guard v5.
  * Production authority for iOS/Safari Good Boys launch sequencing.
- *
- * Critical v4 fix: game.js/night_hooks.js declare S and NM with top-level
- * `let`, so they are global lexical bindings but are not guaranteed to exist as
- * window.S/window.NM. v3 used root.S/root.NM, which made the guard report
- * resume_night_missing even while the Night engine had actually started.
+ * The authored campaign intro is an intentional player state and must never be
+ * misclassified as a stalled Night handoff while the player is reading it.
  */
 (function(root){
   "use strict";
-  if(!root) return;
+  if(!root)return;
   var PRIOR=root.TechOpsGoodBoysMobileLaunchGuard;
-  if(PRIOR && Number(PRIOR.VERSION||0)>=4) return;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=5)return;
   try{if(PRIOR&&PRIOR.timer&&root.clearInterval)root.clearInterval(PRIOR.timer);}catch(e){}
 
-  var VERSION=4, timer=null, launchToken=0;
-  var pending={id:null,cb:null}, launchIntent=null;
+  var VERSION=5,timer=null,launchToken=0;
+  var pending={id:null,cb:null},launchIntent=null;
 
-  function state(){try{return (typeof S!=="undefined"&&S)?S:null;}catch(e){return null;}}
-  function world(){try{return (typeof NM!=="undefined"&&NM)?NM:null;}catch(e){return null;}}
-  function enterNightFn(){try{return typeof enterNight==="function"?enterNight:null;}catch(e){return null;}}
+  function state(){try{return (typeof S!=="undefined"&&S)?S:(root.S||null);}catch(e){return root.S||null;}}
+  function world(){try{return (typeof NM!=="undefined"&&NM)?NM:(root.NM||null);}catch(e){return root.NM||null;}}
+  function enterNightFn(){try{return typeof enterNight==="function"?enterNight:(typeof root.enterNight==="function"?root.enterNight:null);}catch(e){return null;}}
   function drawNightFn(){try{return typeof drawNM==="function"?drawNM:null;}catch(e){return null;}}
   function stepNightFn(){try{return typeof stepNM==="function"?stepNM:null;}catch(e){return null;}}
-
-  function isGoodBoysCombat(id){ return /^b736m[1-7]$/.test(String(id||"")); }
-  function missionFromState(){
-    try{var s=state(),m=s&&s.meta&&s.meta._v736&&Number(s.meta._v736.m);return m>=1&&m<=7?m:null;}catch(e){return null;}
-  }
-  function nightReady(){
-    try{
-      if(root.TechOpsProductionModeRouter&&Number(root.TechOpsProductionModeRouter.VERSION||0)>=2&&typeof root.TechOpsProductionModeRouter.nightWorldReady==="function")return !!root.TechOpsProductionModeRouter.nightWorldReady();
-      var s=state(),n=world();return !!(s&&s.nightMode&&n&&drawNightFn()&&stepNightFn()&&isFinite(n.x)&&isFinite(n.y));
-    }catch(e){return false;}
-  }
-  function pairReady(){
-    try{
-      if(root.TechOpsProductionModeRouter&&Number(root.TechOpsProductionModeRouter.VERSION||0)>=2&&typeof root.TechOpsProductionModeRouter.pairReady==="function")return !!root.TechOpsProductionModeRouter.pairReady();
-      var n=world(),c=n&&n._v736;return !!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner&&(c.active==="katrin"||c.active==="manchez"));
-    }catch(e){return false;}
-  }
+  function isGoodBoysCombat(id){return /^b736m[1-7]$/.test(String(id||""));}
+  function missionFromState(){try{var s=state(),m=s&&s.meta&&s.meta._v736&&Number(s.meta._v736.m);return m>=1&&m<=7?m:null;}catch(e){return null;}}
+  function nightReady(){try{if(root.TechOpsProductionModeRouter&&Number(root.TechOpsProductionModeRouter.VERSION||0)>=2&&typeof root.TechOpsProductionModeRouter.nightWorldReady==="function")return !!root.TechOpsProductionModeRouter.nightWorldReady();var s=state(),n=world();return !!(s&&s.nightMode&&n&&drawNightFn()&&stepNightFn()&&isFinite(n.x)&&isFinite(n.y));}catch(e){return false;}}
+  function pairReady(){try{if(root.TechOpsProductionModeRouter&&Number(root.TechOpsProductionModeRouter.VERSION||0)>=2&&typeof root.TechOpsProductionModeRouter.pairReady==="function")return !!root.TechOpsProductionModeRouter.pairReady();var n=world(),c=n&&n._v736;return !!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner&&(c.active==="katrin"||c.active==="manchez"));}catch(e){return false;}}
   function titleVisible(){try{var t=root.document&&root.document.getElementById("title-screen");return !!(t&&!t.classList.contains("hidden"));}catch(e){return false;}}
-  function setGenericShellHidden(hidden){
-    try{if(!root.document)return;["touch-ui","hud"].forEach(function(id){var e=root.document.getElementById(id);if(!e)return;if(hidden){if(e.dataset.gbPrevDisplay===undefined)e.dataset.gbPrevDisplay=e.style.display||"";e.style.display="none";}else if(e.dataset.gbPrevDisplay!==undefined){e.style.display=e.dataset.gbPrevDisplay;delete e.dataset.gbPrevDisplay;}});}catch(e){}
-  }
-  function closeShell(){
-    try{if(root.document)["dialogue","panel","eod","battle"].forEach(function(id){var e=root.document.getElementById(id);if(e)e.classList.add("hidden");});var s=state();if(s)s.inDialog=false;}catch(e){}
-  }
-  function primeNight(){
-    try{closeShell();var f=enterNightFn();if(!nightReady()&&f)f();}catch(e){root.__goodBoysMobilePrimeError=String(e&&e.stack||e);}
-    try{if(root.v722&&typeof root.v722.active==="function"&&root.v722.active()&&typeof root.v722.skip==="function")root.v722.skip();}catch(e){}
-  }
-  function repairAuthorities(){
-    try{if(root.TechOpsGoodBoysCanon)root.TechOpsGoodBoysCanon.tick();}catch(e){}
-    try{if(root.TechOpsGoodBoysGameplayLoop)root.TechOpsGoodBoysGameplayLoop.tick();}catch(e){}
-    try{if(root.TechOpsGoodDogsProduction)root.TechOpsGoodDogsProduction.tick();}catch(e){}
-    try{if(root.TechOpsGoodBoysReferenceMechanics)root.TechOpsGoodBoysReferenceMechanics.tick();}catch(e){}
-  }
+  function introVisible(){try{var o=root.document&&root.document.getElementById("good-boys-campaign-intro");if(!o||o.classList.contains("hidden"))return false;var s=root.getComputedStyle?root.getComputedStyle(o):o.style;return !s||(s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity||1)!==0);}catch(e){return false;}}
+  function setGenericShellHidden(hidden){try{if(!root.document)return;["touch-ui","hud"].forEach(function(id){var e=root.document.getElementById(id);if(!e)return;if(hidden){if(e.dataset.gbPrevDisplay===undefined)e.dataset.gbPrevDisplay=e.style.display||"";e.style.display="none";}else if(e.dataset.gbPrevDisplay!==undefined){e.style.display=e.dataset.gbPrevDisplay;delete e.dataset.gbPrevDisplay;}});}catch(e){}}
+  function closeShell(){try{if(root.document)["dialogue","panel","eod","battle"].forEach(function(id){var e=root.document.getElementById(id);if(e)e.classList.add("hidden");});var s=state();if(s)s.inDialog=false;}catch(e){}}
+  function primeNight(){try{closeShell();var f=enterNightFn();if(!nightReady()&&f)f();}catch(e){root.__goodBoysMobilePrimeError=String(e&&e.stack||e);}try{if(root.v722&&typeof root.v722.active==="function"&&root.v722.active()&&typeof root.v722.skip==="function")root.v722.skip();}catch(e){}}
+  function repairAuthorities(){try{if(root.TechOpsGoodBoysCanon)root.TechOpsGoodBoysCanon.tick();}catch(e){}try{if(root.TechOpsGoodBoysGameplayLoop)root.TechOpsGoodBoysGameplayLoop.tick();}catch(e){}try{if(root.TechOpsGoodDogsProduction)root.TechOpsGoodDogsProduction.tick();}catch(e){}try{if(root.TechOpsGoodBoysReferenceMechanics)root.TechOpsGoodBoysReferenceMechanics.tick();}catch(e){}}
   function clearRecovery(){try{var o=root.document&&root.document.getElementById("good-boys-mobile-recovery");if(o)o.remove();}catch(e){}}
-  function markSuccess(id,recovered){
-    launchIntent=null;setGenericShellHidden(false);clearRecovery();root.__goodBoysCoreBroken=null;
-    root.__goodBoysMobileLaunchState={id:id||("b736m"+(missionFromState()||"?")),night:true,pair:true,recovered:!!recovered,version:VERSION};
-  }
+  function markSuccess(id,recovered){launchIntent=null;setGenericShellHidden(false);clearRecovery();root.__goodBoysCoreBroken=null;root.__goodBoysMobileLaunchState={id:id||("b736m"+(missionFromState()||"?")),night:true,pair:true,recovered:!!recovered,version:VERSION};}
   function retryPending(){clearRecovery();root.__goodBoysCoreBroken=null;var id=pending.id||(launchIntent&&launchIntent.id)||("b736m"+(missionFromState()||1));if(typeof pending.cb==="function"){waitForNight(id,pending.cb,true);return true;}try{if(root.TechOpsProductionModeRouter&&typeof root.TechOpsProductionModeRouter.launchGoodBoys==="function"){root.TechOpsProductionModeRouter.launchGoodBoys();return true;}if(root.v736&&typeof root.v736.start==="function"){root.v736.start();return true;}}catch(e){}return false;}
-  function showFailure(reason){
-    try{
-      root.__goodBoysCoreBroken=reason||"mobile_night_handoff_timeout";setGenericShellHidden(true);
-      if(!root.document)return;clearRecovery();
-      var o=root.document.createElement("div");o.id="good-boys-mobile-recovery";
-      o.style.cssText="position:fixed;inset:0;z-index:100001;background:#02060bf2;color:#eef8ff;display:flex;align-items:center;justify-content:center;padding:20px;font-family:monospace";
-      o.innerHTML='<div style="max-width:520px;border:2px solid #38bdf8;border-radius:14px;background:#07111d;padding:18px;text-align:center"><div style="font-weight:800;font-size:18px;color:#7dd3fc">GOOD BOYS — RUNTIME RECOVERY</div><p style="line-height:1.5">The co-op engine did not finish attaching Katrin and Manchez. The generic Night shell was blocked instead of becoming playable.</p><div style="font-size:11px;color:#94a3b8;margin:10px 0">'+String(reason||"handoff_timeout")+'</div><button id="gb-mobile-retry" style="width:100%;min-height:52px;border:2px solid #38bdf8;border-radius:10px;background:#0a1726;color:#eef8ff;font-weight:800">RETRY CO-OP HANDOFF</button></div>';
-      root.document.body.appendChild(o);var b=root.document.getElementById("gb-mobile-retry");if(b)b.onclick=retryPending;
-    }catch(e){}
-  }
-  function verifyPair(id,cb,reattach){
-    var checks=0,maxChecks=40;
-    function check(){repairAuthorities();if(pairReady()){markSuccess(id,reattach);return;}if(++checks<maxChecks){(root.setTimeout||setTimeout)(check,25);return;}if(!reattach&&typeof cb==="function"){try{cb();}catch(e){root.__goodBoysMobileCallbackError=String(e&&e.stack||e);}verifyPair(id,cb,true);return;}showFailure("pair_attach_failed");}
-    check();
-  }
-  function waitForNight(id,cb,isRetry){
-    pending={id:id,cb:cb};launchIntent=launchIntent||{id:id,at:Date.now?Date.now():0};setGenericShellHidden(true);
-    var token=++launchToken,tries=0,maxTries=320;
-    function poll(){if(token!==launchToken)return;primeNight();if(nightReady()){root.__goodBoysCoreBroken=null;try{cb&&cb();}catch(e){root.__goodBoysMobileCallbackError=String(e&&e.stack||e);showFailure("combat_callback_failed");return;}verifyPair(id,cb,!!isRetry);return;}if(++tries>=maxTries){showFailure("mobile_night_handoff_timeout");return;}(root.setTimeout||setTimeout)(poll,25);}
-    poll();
-  }
-  function installPlayGuard(){
-    try{if(!root.v725||typeof root.v725.play!=="function")return false;var current=root.v725.play;if(current.__goodBoysMobileGuardV4)return true;var guarded=function(id,cb){if(!isGoodBoysCombat(id))return current.apply(this,arguments);launchIntent={id:String(id),at:Date.now?Date.now():0};setGenericShellHidden(true);var wrapped=typeof cb==="function"?function(){waitForNight(id,cb,false);}:cb;return current.call(this,id,wrapped);};guarded.__goodBoysMobileGuard=true;guarded.__goodBoysMobileGuardV4=true;guarded.__goodBoysMobileGuardBase=current;root.v725.play=guarded;return true;}catch(e){root.__goodBoysMobileGuardError=String(e&&e.stack||e);return false;}
-  }
-  function installStartGuard(){
-    try{if(!root.v736||typeof root.v736.start!=="function")return false;var current=root.v736.start;if(current.__goodBoysStartGuardV4)return true;var guarded=function(){var m=missionFromState()||1;launchIntent={id:"b736m"+m,at:Date.now?Date.now():0};setGenericShellHidden(true);return current.apply(this,arguments);};guarded.__goodBoysStartGuardV4=true;guarded.__goodBoysStartGuardBase=current;root.v736.start=guarded;return true;}catch(e){return false;}
-  }
-  function watchdog(){
-    try{installPlayGuard();installStartGuard();repairAuthorities();if(pairReady()){if(launchIntent)markSuccess(launchIntent.id,false);return;}if(!launchIntent||titleVisible())return;setGenericShellHidden(true);var age=(Date.now?Date.now():0)-Number(launchIntent.at||0);if(nightReady()&&age>2500&&!root.__goodBoysCoreBroken)showFailure("resume_pair_missing");else if(age>10000&&!root.__goodBoysCoreBroken)showFailure("resume_night_missing");}catch(e){root.__goodBoysMobileWatchdogError=String(e&&e.stack||e);}
-  }
+  function showFailure(reason){try{root.__goodBoysCoreBroken=reason||"mobile_night_handoff_timeout";setGenericShellHidden(true);if(!root.document)return;clearRecovery();var o=root.document.createElement("div");o.id="good-boys-mobile-recovery";o.style.cssText="position:fixed;inset:0;z-index:100001;background:#02060bf2;color:#eef8ff;display:flex;align-items:center;justify-content:center;padding:20px;font-family:monospace";o.innerHTML='<div style="max-width:520px;border:2px solid #38bdf8;border-radius:14px;background:#07111d;padding:18px;text-align:center"><div style="font-weight:800;font-size:18px;color:#7dd3fc">GOOD BOYS — RUNTIME RECOVERY</div><p style="line-height:1.5">The co-op engine did not finish attaching Katrin and Manchez. The generic Night shell was blocked instead of becoming playable.</p><div style="font-size:11px;color:#94a3b8;margin:10px 0">'+String(reason||"handoff_timeout")+'</div><button id="gb-mobile-retry" style="width:100%;min-height:52px;border:2px solid #38bdf8;border-radius:10px;background:#0a1726;color:#eef8ff;font-weight:800">RETRY CO-OP HANDOFF</button></div>';root.document.body.appendChild(o);var b=root.document.getElementById("gb-mobile-retry");if(b)b.onclick=retryPending;}catch(e){}}
+  function verifyPair(id,cb,reattach){var checks=0,maxChecks=40;function check(){repairAuthorities();if(pairReady()){markSuccess(id,reattach);return;}if(++checks<maxChecks){(root.setTimeout||setTimeout)(check,25);return;}if(!reattach&&typeof cb==="function"){try{cb();}catch(e){root.__goodBoysMobileCallbackError=String(e&&e.stack||e);}verifyPair(id,cb,true);return;}showFailure("pair_attach_failed");}check();}
+  function waitForNight(id,cb,isRetry){pending={id:id,cb:cb};launchIntent=launchIntent||{id:id,at:Date.now?Date.now():0};setGenericShellHidden(true);var token=++launchToken,tries=0,maxTries=320;function poll(){if(token!==launchToken)return;if(introVisible()){tries=0;(root.setTimeout||setTimeout)(poll,50);return;}primeNight();if(nightReady()){root.__goodBoysCoreBroken=null;try{cb&&cb();}catch(e){root.__goodBoysMobileCallbackError=String(e&&e.stack||e);showFailure("combat_callback_failed");return;}verifyPair(id,cb,!!isRetry);return;}if(++tries>=maxTries){showFailure("mobile_night_handoff_timeout");return;}(root.setTimeout||setTimeout)(poll,25);}poll();}
+  function installPlayGuard(){try{if(!root.v725||typeof root.v725.play!=="function")return false;var current=root.v725.play;if(current.__goodBoysMobileGuardV5)return true;var guarded=function(id,cb){if(!isGoodBoysCombat(id))return current.apply(this,arguments);launchIntent={id:String(id),at:Date.now?Date.now():0};setGenericShellHidden(true);var wrapped=typeof cb==="function"?function(){waitForNight(id,cb,false);}:cb;return current.call(this,id,wrapped);};guarded.__goodBoysMobileGuard=true;guarded.__goodBoysMobileGuardV5=true;guarded.__goodBoysMobileGuardBase=current;root.v725.play=guarded;return true;}catch(e){root.__goodBoysMobileGuardError=String(e&&e.stack||e);return false;}}
+  function installStartGuard(){try{if(!root.v736||typeof root.v736.start!=="function")return false;var current=root.v736.start;if(current.__goodBoysStartGuardV5)return true;var guarded=function(){var m=missionFromState()||1;launchIntent={id:"b736m"+m,at:Date.now?Date.now():0};setGenericShellHidden(true);return current.apply(this,arguments);};guarded.__goodBoysStartGuardV5=true;guarded.__goodBoysStartGuardBase=current;root.v736.start=guarded;return true;}catch(e){return false;}}
+  function watchdog(){try{installPlayGuard();installStartGuard();repairAuthorities();if(pairReady()){if(launchIntent)markSuccess(launchIntent.id,false);return;}if(!launchIntent||titleVisible())return;if(introVisible()){root.__goodBoysCoreBroken=null;setGenericShellHidden(true);launchIntent.at=Date.now?Date.now():launchIntent.at;return;}setGenericShellHidden(true);var age=(Date.now?Date.now():0)-Number(launchIntent.at||0);if(nightReady()&&age>2500&&!root.__goodBoysCoreBroken)showFailure("resume_pair_missing");else if(age>10000&&!root.__goodBoysCoreBroken)showFailure("resume_night_missing");}catch(e){root.__goodBoysMobileWatchdogError=String(e&&e.stack||e);}}
   watchdog();try{timer=root.setInterval(watchdog,80);}catch(e){}
-  root.TechOpsGoodBoysMobileLaunchGuard={VERSION:VERSION,state:state,world:world,isGoodBoysCombat:isGoodBoysCombat,missionFromState:missionFromState,nightReady:nightReady,pairReady:pairReady,primeNight:primeNight,repairAuthorities:repairAuthorities,retryPending:retryPending,waitForNight:waitForNight,verifyPair:verifyPair,install:installPlayGuard,installStartGuard:installStartGuard,watchdog:watchdog,timer:timer};
+  root.TechOpsGoodBoysMobileLaunchGuard={VERSION:VERSION,state:state,world:world,isGoodBoysCombat:isGoodBoysCombat,missionFromState:missionFromState,nightReady:nightReady,pairReady:pairReady,introVisible:introVisible,primeNight:primeNight,repairAuthorities:repairAuthorities,retryPending:retryPending,waitForNight:waitForNight,verifyPair:verifyPair,install:installPlayGuard,installStartGuard:installStartGuard,watchdog:watchdog,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
