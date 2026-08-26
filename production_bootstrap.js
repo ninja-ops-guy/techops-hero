@@ -1,11 +1,12 @@
-/* TechOps Hero — production runtime bootstrap v4.
- * Loads the complete asset registry first, then production authorities, only
- * after parser-loaded v7.36 + v7.37 gameplay wrappers are installed.
+/* TechOps Hero — production runtime bootstrap v5.
+ * Loads gameplay authorities first and freezes the composed Night wrapper chain
+ * BEFORE any heavyweight production asset preload. This prevents periodic
+ * feature installers from re-wrapping one another while assets decode.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=4,started=false,done=false;
+  var VERSION=5,started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -14,9 +15,11 @@
     "good_boys_reference_mechanics.js",
     "good_boys_canon_runtime.js",
     "good_boys_gameplay_loop.js",
+    /* Freeze the complete draw/step chain immediately after the three Good
+       Boys authorities have composed. Do not move this below asset preloads. */
+    "production_wrapper_guard.js",
     "good_boys_mobile_launch_guard.js",
     "production_runtime_safety.js",
-    "production_wrapper_guard.js",
     "production_mode_router.js",
     "production_presentation_guard.js"
   ];
@@ -27,10 +30,20 @@
     var tries=0;
     while(!(root.v736&&typeof root.v736.start==="function"&&root.v737)&&tries++<400)await new Promise(function(r){(root.setTimeout||setTimeout)(r,10);});
     root.__productionParserStackReady=!!(root.v736&&root.v737);
+
+    /* Script installation is intentionally fast and non-blocking. In v4 the
+       registry's image/script preload was awaited here, giving 100/120 ms
+       wrapper-maintenance timers enough time to create a recursive drawNM
+       graph before the wrapper guard existed. */
     for(var i=0;i<FILES.length;i++){
       await load(FILES[i]);
-      if(FILES[i]==="production_asset_registry.js")try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
+      if(FILES[i]==="production_wrapper_guard.js"){
+        try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}
+      }
     }
+
+    /* Heavy art installation begins only after the wrapper chain is frozen. */
+    try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightProductionAssets)await root.TechOpsNightProductionAssets.install();}catch(e){}
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
     try{if(root.TechOpsGoodBoysCanon)root.TechOpsGoodBoysCanon.tick();}catch(e){}
