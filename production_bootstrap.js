@@ -1,13 +1,14 @@
-/* TechOps Hero — production runtime bootstrap v6.
- * Builds the alternate-mode compositor as one transaction. Feature modules run
- * their initial installers immediately, but their periodic maintenance timers
- * are deferred until production_wrapper_guard freezes the composed draw/step
- * chain. This removes the drawNM A->B->A recursion race entirely.
+/* TechOps Hero — production runtime bootstrap v7.
+ * Builds the alternate-mode compositor exactly once. The legacy production
+ * feature modules were written with periodic "install if marker missing"
+ * maintenance loops; when multiple modules wrap the same function those loops
+ * can eventually form A -> B -> A recursion. Their initial installers are all
+ * retained, but those wrapper-maintenance intervals are intentionally parked.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=6,started=false,done=false;
+  var VERSION=7,started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -46,15 +47,15 @@
       };
       root.__productionTimersDeferred=true;
     }
-    function releaseTimers(){
+    function parkTimers(){
       if(!deferOn)return;deferOn=false;
       if(nativeSetInterval)root.setInterval=nativeSetInterval;
       if(nativeClearInterval)root.clearInterval=nativeClearInterval;
-      for(var i=0;i<deferred.length;i++){
-        var r=deferred[i];if(r.cancelled||typeof r.fn!=="function")continue;
-        try{r.real=nativeSetInterval(function(rec){return function(){return rec.fn.apply(root,rec.args);};}(r),r.ms);}catch(e){}
-      }
-      root.__productionDeferredTimerCount=deferred.filter(function(r){return !r.cancelled;}).length;
+      /* Do not restart the deferred feature-maintenance loops. Their initial
+         tick/install already ran synchronously while each module loaded, and
+         production_wrapper_guard now owns compositor liveness. */
+      for(var i=0;i<deferred.length;i++)deferred[i].cancelled=true;
+      root.__productionParkedMaintenanceTimers=deferred.length;
       root.__productionTimersDeferred=false;
     }
 
@@ -62,8 +63,6 @@
       for(var i=0;i<FILES.length;i++){
         var src=FILES[i];
         if(src===DEFER_FROM)beginTimerDeferral();
-        /* Restore the native timer API before loading the guard itself so its
-           enforcement interval starts normally. Feature timers remain parked. */
         if(src===FREEZE_AT&&deferOn){
           root.setInterval=nativeSetInterval;
           if(nativeClearInterval)root.clearInterval=nativeClearInterval;
@@ -71,19 +70,18 @@
         await load(src);
         if(src===FREEZE_AT){
           try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}
-          releaseTimers();
+          parkTimers();
         }
       }
     }finally{
-      if(deferOn)releaseTimers();
+      if(deferOn)parkTimers();
     }
 
-    /* Heavy art installation begins only after the wrapper chain is frozen. */
     try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightProductionAssets)await root.TechOpsNightProductionAssets.install();}catch(e){}
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
-    try{if(root.TechOpsGoodBoysCanon)root.TechOpsGoodBoysCanon.tick();}catch(e){}
-    try{if(root.TechOpsGoodBoysGameplayLoop)root.TechOpsGoodBoysGameplayLoop.tick();}catch(e){}
+    /* Mode-specific ticks are invoked on demand by the mode router. They no
+       longer own an independent recurring wrapper lifecycle. */
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     done=true;root.__productionBootstrapReady=true;
