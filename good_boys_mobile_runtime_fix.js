@@ -1,102 +1,36 @@
-/* Good Boys mobile runtime authority — 2026-08-27
- * Late-loaded entrypoint fix for mobile control ownership, opening progression,
- * Waldo-house stage coherence, and non-attacking locomotion presentation.
+/* Good Boys mobile runtime authority — v2
+ * Late-loaded source of truth for mobile controls, progression, stage coherence,
+ * calm locomotion, and paired-combat fallback behavior.
  */
 (function(root){
   "use strict";
-  if(!root||root.TechOpsGoodBoysMobileRuntimeFix)return;
-  var VERSION=1,style=null,lastMission=0,transitionLock=false;
+  if(!root)return;
+  if(root.TechOpsGoodBoysMobileRuntimeFix&&root.TechOpsGoodBoysMobileRuntimeFix.timer){try{root.clearInterval(root.TechOpsGoodBoysMobileRuntimeFix.timer);}catch(_){} }
+  var VERSION=2,style=null,lastMission=0,transitionLock=false,combo={step:0,last:0};
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
   function mission(){var c=cs();return Math.max(1,Math.min(8,Number(c&&c.m||root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||1)));}
-  function installStyle(){
-    try{
-      if(!root.document)return;
-      if(!style){style=root.document.getElementById("good-boys-mobile-runtime-fix-style")||root.document.createElement("style");style.id="good-boys-mobile-runtime-fix-style";(root.document.head||root.document.documentElement).appendChild(style);}
-      style.textContent=[
-        "body.good-boys-runtime-fix #good-boys-loop-controls{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}",
-        "body.good-boys-runtime-fix #touch-buttons{display:none!important}",
-        "body.good-boys-runtime-fix #good-dogs-touch{display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:fixed!important;right:max(10px,calc(env(safe-area-inset-right) + 10px))!important;bottom:max(102px,calc(env(safe-area-inset-bottom) + 102px))!important;grid-template-columns:repeat(2,64px)!important;gap:7px!important;z-index:10080!important}",
-        "body.good-boys-runtime-fix #good-dogs-touch button{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;min-width:64px!important;width:64px!important;min-height:48px!important;height:48px!important;border-radius:12px!important;touch-action:manipulation!important}",
-        "@media(max-width:390px){body.good-boys-runtime-fix #good-dogs-touch{right:max(7px,calc(env(safe-area-inset-right) + 7px))!important;bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px))!important;grid-template-columns:repeat(2,60px)!important}body.good-boys-runtime-fix #good-dogs-touch button{min-width:60px!important;width:60px!important}}"
-      ].join("");
-    }catch(e){root.__goodBoysMobileRuntimeFixError=String(e&&e.stack||e);}
-  }
-  function makeButton(id,label,fn){var b=root.document.createElement("button");b.id=id;b.textContent=label;b.type="button";b.addEventListener("pointerdown",function(e){e.preventDefault();e.stopPropagation();try{fn();}catch(_){}},{passive:false});b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();},{passive:false});return b;}
-  function ensureLegacyPad(){
-    try{
-      if(!root.document||!root.document.body)return false;
-      var pad=root.document.getElementById("good-dogs-touch");
-      try{if(!pad&&root.TechOpsGoodDogsProduction&&typeof root.TechOpsGoodDogsProduction.ensureMobileControls==="function"){root.TechOpsGoodDogsProduction.ensureMobileControls();pad=root.document.getElementById("good-dogs-touch");}}catch(_){}
-      if(!pad){
-        pad=root.document.createElement("div");pad.id="good-dogs-touch";
-        pad.appendChild(makeButton("gdf-swap","⇄ SWAP",function(){if(root.v736&&root.v736.swap)root.v736.swap();}));
-        pad.appendChild(makeButton("gdf-sync","🐾 SYNC",function(){if(root.v736&&root.v736.finisher)root.v736.finisher();}));
-        pad.appendChild(makeButton("gdf-boost","⬆ BOOST",function(){var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&m.boostJump)m.boostJump();else root.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowUp",bubbles:true}));}));
-        pad.appendChild(makeButton("gdf-air","AIR ×2",function(){var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&m.airDash)m.airDash();else root.dispatchEvent(new KeyboardEvent("keydown",{key:"Shift",bubbles:true}));}));
-        pad.appendChild(makeButton("gdf-throw","🤝 THROW",function(){var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&m.throwOrCatch)m.throwOrCatch();}));
-        pad.appendChild(makeButton("gdf-attack","🐾 ATTACK",function(){try{if(typeof root.interact==="function")root.interact();else root.dispatchEvent(new KeyboardEvent("keydown",{key:"e",bubbles:true}));}catch(_){} }));
-        root.document.body.appendChild(pad);
-      }
-      pad.inert=false;pad.removeAttribute("inert");pad.removeAttribute("aria-hidden");
-      var bs=pad.querySelectorAll("button");for(var i=0;i<bs.length;i++){bs[i].disabled=false;bs[i].inert=false;bs[i].removeAttribute("aria-hidden");bs[i].style.setProperty("pointer-events","auto","important");}
-      return true;
-    }catch(e){root.__goodBoysMobileRuntimeFixError=String(e&&e.stack||e);return false;}
-  }
-  function suppressModern(){try{var el=root.document&&root.document.getElementById("good-boys-loop-controls");if(el){el.inert=true;el.setAttribute("aria-hidden","true");el.style.setProperty("display","none","important");el.style.setProperty("visibility","hidden","important");el.style.setProperty("pointer-events","none","important");}return true;}catch(e){return false;}}
-  function fixWalkFrames(){
-    try{
-      var A=root.KATRIN_MANCHEZ;if(!A||!A.frames)return false;
-      if(!A.__goodBoysCalmWalk){
-        var k=A.frames.kat_stand||A.frames.kat_idle0,m=A.frames.man_idle0;
-        if(k)for(var i=1;i<7;i++)A.frames["kat_idle"+i]=k;
-        if(m)for(var j=1;j<7;j++)A.frames["man_idle"+j]=m;
-        A.__goodBoysCalmWalk=true;
-      }
-      return true;
-    }catch(e){return false;}
-  }
-  function configureOpening(){
-    try{
-      if(!active()||!root.NM)return false;var n=root.NM,m=mission();
-      if(m===1){
-        n.platforms=[{x:300,y:360,w:210,h:10},{x:610,y:348,w:210,h:10},{x:930,y:336,w:230,h:10},{x:1260,y:350,w:250,h:10}];
-        n._goodBoysHazards=[];
-        n._goodBoysLandmarks=[{x:1420,label:"HIDDEN BAY",kind:"shuttle"}];
-        n._goodBoysStageMission=1;n._goodBoysStageAuthority="waldo_house_grounded_v2";
-      }else if(m===2&&lastMission!==2){
-        n.platforms=[{x:260,y:350,w:240,h:10},{x:590,y:330,w:220,h:10},{x:900,y:350,w:250,h:10},{x:1240,y:320,w:260,h:10}];
-        n._goodBoysHazards=[];n._goodBoysLandmarks=[{x:1450,label:"SECRET SHIP",kind:"shuttle"}];
-        n._goodBoysStageMission=2;n._goodBoysStageAuthority="hidden_hangar_grounded_v2";
-      }
-      lastMission=m;return true;
-    }catch(e){return false;}
-  }
-  function advanceTo(next){
-    if(transitionLock)return;transitionLock=true;
-    try{
-      var c=cs();if(!c)return;c.m=next;
-      try{if(root.S){root.S.meta=root.S.meta||{};root.S.meta._v736=root.S.meta._v736||{};root.S.meta._v736.m=next;}}catch(_){}
-      if(root.NM){root.NM.x=180;root.NM.cam=0;root.NM.clear=false;root.NM._goodBoysStageMission=0;root.NM.msg=next===2?"🐾 Trail found — hidden bay unlocked.":"🐾 Route advanced.";root.NM.msgT=(root.performance&&root.performance.now?root.performance.now():Date.now())+1800;}
-      try{if(root.TechOpsGoodBoysCanon){root.TechOpsGoodBoysCanon.syncIdentity();root.TechOpsGoodBoysCanon.enforceBackground();}}catch(_){}
-      try{if(root.TechOpsGoodBoysGameplayLoop&&root.TechOpsGoodBoysGameplayLoop.configureStage)root.TechOpsGoodBoysGameplayLoop.configureStage();}catch(_){}
-      try{if(typeof root.saveGame==="function")root.saveGame();}catch(_){}
-    }finally{root.setTimeout(function(){transitionLock=false;},500);}
-  }
-  function progression(){
-    try{
-      if(!active()||!root.NM)return false;var m=mission(),n=root.NM;
-      if(m===1&&Number(n.x)>=1325){advanceTo(2);return true;}
-      return false;
-    }catch(e){return false;}
-  }
-  function tick(){
-    try{
-      var on=active();if(root.document&&root.document.body)root.document.body.classList.toggle("good-boys-runtime-fix",on);
-      if(!on)return;
-      installStyle();ensureLegacyPad();suppressModern();fixWalkFrames();configureOpening();progression();
-    }catch(e){root.__goodBoysMobileRuntimeFixError=String(e&&e.stack||e);}
-  }
-  tick();var timer=root.setInterval?root.setInterval(tick,100):null;
-  root.TechOpsGoodBoysMobileRuntimeFix={VERSION:VERSION,tick:tick,ensureLegacyPad:ensureLegacyPad,suppressModern:suppressModern,configureOpening:configureOpening,progression:progression,advanceTo:advanceTo,timer:timer};
+  function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
+  function msg(t){try{root.NM.msg=t;root.NM.msgT=now()+1000;}catch(_){} }
+  function installStyle(){try{if(!root.document)return;if(!style){style=root.document.getElementById("good-boys-mobile-runtime-fix-style")||root.document.createElement("style");style.id="good-boys-mobile-runtime-fix-style";(root.document.head||root.document.documentElement).appendChild(style);}style.textContent=[
+    "#good-boys-loop-controls{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}",
+    "body.good-boys-runtime-fix #touch-buttons{display:none!important}",
+    "body.good-boys-runtime-fix #good-dogs-touch{display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:fixed!important;right:max(10px,calc(env(safe-area-inset-right) + 10px))!important;bottom:max(102px,calc(env(safe-area-inset-bottom) + 102px))!important;width:136px!important;grid-template-columns:repeat(2,64px)!important;gap:7px!important;z-index:10080!important}",
+    "body.good-boys-runtime-fix #good-dogs-touch button{box-sizing:border-box!important;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;width:64px!important;min-width:64px!important;height:48px!important;min-height:48px!important;margin:0!important;padding:3px!important;border-width:2px!important;border-style:solid!important;border-radius:12px!important;background:#06101ddd!important;color:#eef9ff!important;font:bold 8px/1.15 monospace!important;touch-action:manipulation!important}",
+    "@media(max-width:390px){body.good-boys-runtime-fix #good-dogs-touch{right:max(7px,calc(env(safe-area-inset-right) + 7px))!important;bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px))!important;width:127px!important;grid-template-columns:repeat(2,60px)!important}body.good-boys-runtime-fix #good-dogs-touch button{width:60px!important;min-width:60px!important;font-size:7px!important}}"
+  ].join("");}catch(e){root.__goodBoysMobileRuntimeFixError=String(e&&e.stack||e);}}
+  function enemyCenter(e){return (Number(e&&e.x)||0)+(Number(e&&e.w)||28)/2;}
+  function nearestEnemy(max){try{var n=root.NM,a=n&&n.enemies,b=null,bd=max||180;if(!n||!a)return null;for(var i=0;i<a.length;i++){var e=a[i];if(!e||e.alive===false||Number(e.hp)<=0)continue;var d=Math.abs(enemyCenter(e)-((Number(n.x)||0)+(Number(n.w)||22)/2));if(d<bd){bd=d;b=e;}}return b;}catch(_){return null;}}
+  function damage(e,d,k,down){try{if(!e)return false;e.hp=Math.max(0,(Number(e.hp)||1)-d);e.hitT=Math.max(Number(e.hitT)||0,8);e.kb=(Number(root.NM&&root.NM.face)||1)*k;if(down)e.down=Math.max(Number(e.down)||0,down);if(e.hp<=0){e.alive=false;if(root.NM)root.NM.kills=(Number(root.NM.kills)||0)+1;}if(root.NM)root.NM.hitStop=Math.max(Number(root.NM.hitStop)||0,4);return true;}catch(_){return false;}}
+  function strike(){try{var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&typeof m.pairedAttack==="function")return m.pairedAttack();var t=now();if(t-combo.last>720)combo.step=0;combo.last=t;combo.step=combo.step%3+1;if(typeof root.nmJab==="function")root.nmJab();else if(typeof root.interact==="function")root.interact();var c=cs(),p=c&&c.partner,e=nearestEnemy(175);if(combo.step>=2&&p){p.face=root.NM.face||1;p.anim=18;p.vx=(root.NM.face||1)*(combo.step===3?6.8:4.5);if(e){damage(e,combo.step===3?13:7,combo.step===3?7:4,combo.step===3?14:0);p.x=enemyCenter(e)-(p.w||22)/2-(root.NM.face||1)*18;}c.sync=Math.min(100,(c.sync||0)+(combo.step===3?8:4));}msg(combo.step===1?"🐾 LEAD STRIKE":combo.step===2?"🐾 PARTNER FOLLOW":"🐾 TANDEM LAUNCH");return true;}catch(_){return false;}}
+  function throwCombo(){try{var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&Number(m.VERSION)>=2&&typeof m.throwOrCatch==="function")return m.throwOrCatch();var c=cs(),n=root.NM,p=c&&c.partner;if(!c||!n||!p)return false;var e=nearestEnemy(235);p.face=n.face||1;p.vx=(n.face||1)*10.5;p.vy=-8.8;p.onGround=false;p.anim=24;if(e){damage(e,16,8,18);p.x=enemyCenter(e)-(p.w||22)/2-(n.face||1)*10;p.y=Math.min(Number(p.y)||Number(n.y)||0,Number(e.y)||Number(n.y)||0);combo.step=2;c.sync=Math.min(100,(c.sync||0)+12);msg("🤝 THROW → IMPACT · ATTACK TO FOLLOW");}else{c.sync=Math.min(100,(c.sync||0)+7);msg("🤝 PARTNER THROW");}return true;}catch(_){return false;}}
+  function makeButton(id,label,color,fn){var b=root.document.createElement("button");b.id=id;b.textContent=label;b.type="button";b.style.borderColor=color;b.addEventListener("pointerdown",function(e){e.preventDefault();e.stopPropagation();try{fn();}catch(_){}},{passive:false});b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();},{passive:false});return b;}
+  function rebuildPad(){try{if(!root.document||!root.document.body)return false;var pad=root.document.getElementById("good-dogs-touch");if(!pad){pad=root.document.createElement("div");pad.id="good-dogs-touch";root.document.body.appendChild(pad);}if(pad.dataset.runtimePadVersion!==String(VERSION)){pad.innerHTML="";pad.appendChild(makeButton("gdf-swap","⇄ SWAP","#22b8ff",function(){if(root.v736&&root.v736.swap)root.v736.swap();}));pad.appendChild(makeButton("gdf-sync","SYNC","#ff9f1c",function(){if(root.v736&&root.v736.finisher)root.v736.finisher();}));pad.appendChild(makeButton("gdf-attack","🐾 ATTACK","#3cff78",strike));pad.appendChild(makeButton("gdf-boost","⬆ BOOST","#69d6ff",function(){var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&m.boostJump)m.boostJump();}));pad.appendChild(makeButton("gdf-air","⚡ AIR x2","#7ce8ff",function(){var m=root.TechOpsGoodBoysReferenceMechanics;if(m&&m.airDash)m.airDash();}));pad.appendChild(makeButton("gdf-throw","↗ THROW","#ffad32",throwCombo));pad.dataset.runtimePadVersion=String(VERSION);}pad.inert=false;pad.removeAttribute("inert");pad.removeAttribute("aria-hidden");pad.style.setProperty("display","grid","important");var bs=pad.querySelectorAll("button");for(var i=0;i<bs.length;i++){bs[i].disabled=false;bs[i].inert=false;bs[i].style.setProperty("pointer-events","auto","important");}return true;}catch(e){root.__goodBoysMobileRuntimeFixError=String(e&&e.stack||e);return false;}}
+  function destroyModern(){try{if(!root.document)return;var el=root.document.getElementById("good-boys-loop-controls");if(el&&el.parentNode)el.parentNode.removeChild(el);var ids=["gbl-dash","gbl-block","gbl-attack","gbl-swap","gbl-boost","gbl-throw","gbl-sync","gbl-k"];for(var i=0;i<ids.length;i++){var x=root.document.getElementById(ids[i]);if(x&&x.parentNode)x.parentNode.removeChild(x);}}catch(_){} }
+  function fixWalkFrames(){try{var A=root.KATRIN_MANCHEZ;if(!A||!A.frames)return false;if(!A.__goodBoysCalmWalk){var k=A.frames.kat_stand||A.frames.kat_idle0,m=A.frames.man_idle0;if(k)for(var i=1;i<7;i++)A.frames["kat_idle"+i]=k;if(m)for(var j=1;j<7;j++)A.frames["man_idle"+j]=m;A.__goodBoysCalmWalk=true;}return true;}catch(_){return false;}}
+  function configureOpening(){try{if(!active()||!root.NM)return false;var n=root.NM,m=mission();if(m===1){n.platforms=[{x:300,y:360,w:210,h:10},{x:610,y:348,w:210,h:10},{x:930,y:336,w:230,h:10},{x:1260,y:350,w:250,h:10}];n._goodBoysHazards=[];n._goodBoysLandmarks=[{x:1420,label:"HIDDEN BAY",kind:"shuttle"}];n._goodBoysStageMission=1;n._goodBoysStageAuthority="waldo_house_grounded_v2";}else if(m===2&&lastMission!==2){n.platforms=[{x:260,y:350,w:240,h:10},{x:590,y:330,w:220,h:10},{x:900,y:350,w:250,h:10},{x:1240,y:320,w:260,h:10}];n._goodBoysHazards=[];n._goodBoysLandmarks=[{x:1450,label:"SECRET SHIP",kind:"shuttle"}];n._goodBoysStageMission=2;n._goodBoysStageAuthority="hidden_hangar_grounded_v2";}lastMission=m;return true;}catch(_){return false;}}
+  function advanceTo(next){if(transitionLock)return;transitionLock=true;try{var c=cs();if(!c)return;c.m=next;try{if(root.S){root.S.meta=root.S.meta||{};root.S.meta._v736=root.S.meta._v736||{};root.S.meta._v736.m=next;}}catch(_){}if(root.NM){root.NM.x=180;root.NM.cam=0;root.NM.clear=false;root.NM._goodBoysStageMission=0;root.NM.msg=next===2?"🐾 Trail found — hidden bay unlocked.":"🐾 Route advanced.";root.NM.msgT=now()+1800;}try{if(root.TechOpsGoodBoysCanon){root.TechOpsGoodBoysCanon.syncIdentity();root.TechOpsGoodBoysCanon.enforceBackground();}}catch(_){}try{if(root.TechOpsGoodBoysGameplayLoop&&root.TechOpsGoodBoysGameplayLoop.configureStage)root.TechOpsGoodBoysGameplayLoop.configureStage();}catch(_){}}finally{root.setTimeout(function(){transitionLock=false;},500);}}
+  function progression(){try{if(!active()||!root.NM)return false;var m=mission(),n=root.NM;if(m===1&&Number(n.x)>=1325){advanceTo(2);return true;}return false;}catch(_){return false;}}
+  function tick(){try{var on=active();if(root.document&&root.document.body)root.document.body.classList.toggle("good-boys-runtime-fix",on);if(!on)return;installStyle();destroyModern();rebuildPad();fixWalkFrames();configureOpening();progression();}catch(e){root.__goodBoysMobileRuntimeFixError=String(e&&e.stack||e);}}
+  tick();var timer=root.setInterval?root.setInterval(tick,80):null;root.TechOpsGoodBoysMobileRuntimeFix={VERSION:VERSION,tick:tick,rebuildPad:rebuildPad,destroyModern:destroyModern,strike:strike,throwCombo:throwCombo,configureOpening:configureOpening,progression:progression,advanceTo:advanceTo,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
