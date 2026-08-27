@@ -38,7 +38,14 @@ assert.ok(/Math\.max\(92, \(NM\.h \|\| 34\) \* 2\.9\)/.test(reference),
   "Night Walker must render at the larger reference-readable scale");
 
 assert.ok(/NIGHT_WALKER_REFERENCE_V1/.test(referenceAtlas));
-assert.ok(/user_reference_0425E082/.test(referenceAtlas));
+assert.ok(/production Night Walker combat atlas v2/.test(referenceAtlas),
+  "Night Walker atlas must declare current production authority");
+assert.ok(/Static transparent PNG sprite sheet: 5x2 cells, 128x128 each/.test(referenceAtlas),
+  "Night Walker production atlas geometry must remain explicit");
+assert.ok(/src:"data:image\/png;base64,/.test(referenceAtlas),
+  "Night Walker reference must ship a static image source");
+assert.ok(/Runtime procedural player fallback is no longer the normal production path/.test(referenceAtlas),
+  "Night Walker must not silently regress to procedural player art");
 ["idle0","light0","heavy0","guard0","hit0","down0"].forEach(frame =>
   assert.ok(referenceAtlas.includes(frame + ":["), `reference atlas missing ${frame}`));
 
