@@ -25,7 +25,7 @@ async function snapshotRuntime(page) {
     try { runtime=window.eval(`(function(){
       var s=(typeof S!=='undefined'&&S)?S:null,n=(typeof NM!=='undefined'&&NM)?NM:null,c=n&&n._v736;
       var loop=n&&n._goodBoysLoop;
-      return {hasS:!!s,nightMode:!!(s&&s.nightMode),clock:s&&s.clock,char:s&&s.meta&&s.meta._char,hasNM:!!n,
+      return {hasS:!!s,nightMode:!!(s&&s.nightMode),inDialog:!!(s&&s.inDialog),clock:s&&s.clock,char:s&&s.meta&&s.meta._char,hasNM:!!n,
         nm:n?{x:n.x,y:n.y,vx:n.vx,vy:n.vy,district:n.district,street:n.street,hp:n.hp,cam:n.cam}:null,
         pair:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner),activeDog:c&&c.active,mission:c&&c.m,
         referenceHud:!!(c&&c._referenceHud),referenceScale:n&&n._goodBoysReferenceScale||null,
@@ -33,18 +33,39 @@ async function snapshotRuntime(page) {
     })()`);} catch(e){runtime={evalError:String(e&&e.stack||e)};}
     let canvas={ok:false};
     try{const cv=document.getElementById('game'),ctx=cv&&cv.getContext('2d',{willReadFrequently:true});if(cv&&ctx&&cv.width&&cv.height){const sx=Math.max(0,Math.floor(cv.width*.1)),sy=Math.max(0,Math.floor(cv.height*.1)),sw=Math.max(1,Math.floor(cv.width*.8)),sh=Math.max(1,Math.floor(cv.height*.8)),d=ctx.getImageData(sx,sy,sw,sh).data;let nonBlack=0,alpha=0,min=255,max=0;for(let i=0;i<d.length;i+=16){const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];if(a>0)alpha++;if(r+g+b>24)nonBlack++;min=Math.min(min,r,g,b);max=Math.max(max,r,g,b);}canvas={ok:true,width:cv.width,height:cv.height,nonBlack,alpha,range:max-min};}}catch(e){canvas={ok:false,error:String(e)};}
-    return {url:location.href,title:document.title,buttons:Array.from(document.querySelectorAll('button')).filter(b=>getComputedStyle(b).display!=='none').map(b=>b.textContent.trim()).filter(Boolean),titleVisible:vis('title-screen'),hudVisible:vis('hud'),touchVisible:vis('touch-ui'),recoveryVisible:!!document.getElementById('good-boys-mobile-recovery'),toast:text('toast'),bodyText:document.body.innerText.slice(0,3500),runtime,canvas,mode:window.__productionActiveMode||window.__productionDesiredMode||null,routerError:window.__productionModeRouterError||null,safetyError:window.__techOpsLastRuntimeError||null,goodBoysError:window.__goodBoysCoreBroken||null,wrapperGuard:!!window.__techopsWrapperGuardInstalled,lexicalBridge:window.__techopsLexicalBridgeVersion||0};
+    let wrapperHealth=null;
+    try{wrapperHealth=window.TechOpsProductionWrapperGuard&&typeof window.TechOpsProductionWrapperGuard.health==='function'?window.TechOpsProductionWrapperGuard.health():null;}catch(e){wrapperHealth={error:String(e)};}
+    const bodyText=document.body.innerText.slice(0,3500);
+    const cutsceneVisible=/E\s*\/\s*CLICK\s*[—-]\s*SKIP|CLICK\s*[—-]\s*SKIP|\bSKIP\s*[▶›]?/i.test(bodyText);
+    return {url:location.href,title:document.title,buttons:Array.from(document.querySelectorAll('button')).filter(b=>getComputedStyle(b).display!=='none').map(b=>b.textContent.trim()).filter(Boolean),titleVisible:vis('title-screen'),hudVisible:vis('hud'),touchVisible:vis('touch-ui'),recoveryVisible:!!document.getElementById('good-boys-mobile-recovery'),toast:text('toast'),bodyText,runtime,canvas,cutsceneVisible,mode:window.__productionActiveMode||window.__productionDesiredMode||null,routerError:window.__productionModeRouterError||null,safetyError:window.__techOpsLastRuntimeError||null,goodBoysError:window.__goodBoysCoreBroken||null,wrapperGuard:!!window.__techopsWrapperGuardInstalled,wrapperHealth,runtimeLock:!!window.__productionFeatureWrapperTimersStopped,runtimeLockError:window.__productionRuntimeLockError||null,lexicalBridge:window.__techopsLexicalBridgeVersion||0};
   });
 }
 async function clickByRegex(page,regex,timeout=2500){const buttons=page.locator('button'),n=await buttons.count();for(let i=0;i<n;i++){const b=buttons.nth(i);let txt='';try{txt=(await b.innerText()).trim();}catch{}if(regex.test(txt)){try{await b.click({timeout});return txt;}catch{}}}return null;}
-async function settle(page,ms=5000){const until=Date.now()+ms;while(Date.now()<until){await page.waitForTimeout(250);const txt=await page.locator('body').innerText().catch(()=>'');if(/SELECT SHIFT DIFFICULTY/i.test(txt))await clickByRegex(page,/Standard/i,500).catch(()=>{});if(/BEGIN THE INCIDENT/i.test(txt))await clickByRegex(page,/BEGIN THE INCIDENT/i,500).catch(()=>{});}}
+async function settle(page,ms=5000){
+  const until=Date.now()+ms;
+  while(Date.now()<until){
+    await page.waitForTimeout(250);
+    const txt=await page.locator('body').innerText().catch(()=>'');
+    if(/SELECT SHIFT DIFFICULTY/i.test(txt))await clickByRegex(page,/Standard/i,500).catch(()=>{});
+    if(/BEGIN THE INCIDENT/i.test(txt))await clickByRegex(page,/BEGIN THE INCIDENT/i,500).catch(()=>{});
+    if(/E\s*\/\s*CLICK\s*[—-]\s*SKIP|CLICK\s*[—-]\s*SKIP/i.test(txt)){
+      await page.keyboard.press('KeyE').catch(()=>{});
+      await page.waitForTimeout(300);
+    }
+  }
+}
 async function exercise(page,mode,before,profileName){
   if(!before.runtime.hasNM)return null;
+  if(before.cutsceneVisible){
+    await settle(page,2500);
+    before=await snapshotRuntime(page);
+    if(before.cutsceneVisible){fail(mode,'authored cutscene did not clear before gameplay probe',{profileName});return before;}
+  }
   const x0=Number(before.runtime.nm?.x);
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(850); await page.keyboard.up('ArrowRight'); await page.waitForTimeout(250);
   const moved=await snapshotRuntime(page); const x1=Number(moved.runtime.nm?.x);
-  repl(`${profileName} ${mode} movement`,{x0,x1,delta:x1-x0});
-  if(!Number.isFinite(x0)||!Number.isFinite(x1)||Math.abs(x1-x0)<2) fail(mode,'movement input did not move the player',{profileName,x0,x1});
+  repl(`${profileName} ${mode} movement`,{x0,x1,delta:x1-x0,inDialog:moved.runtime.inDialog});
+  if(!Number.isFinite(x0)||!Number.isFinite(x1)||Math.abs(x1-x0)<2) fail(mode,'movement input did not move the player',{profileName,x0,x1,inDialog:moved.runtime.inDialog,cutsceneVisible:moved.cutsceneVisible});
   await page.keyboard.press('ArrowUp').catch(()=>{}); await page.waitForTimeout(250);
   if(mode==='nightcrawler'){ await page.keyboard.press('Shift').catch(()=>{}); await page.keyboard.press('KeyE').catch(()=>{}); }
   else {
@@ -69,7 +90,7 @@ async function runMode(browserType,profileName,contextOptions,mode){
     await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1800);
     const clicked=mode==='nightcrawler'?await clickByRegex(page,/NIGHT\s*CRAWLER/i):await clickByRegex(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i);
     if(!clicked){const s=await snapshotRuntime(page);fail(mode,'launch button not found',{profileName,buttons:s.buttons});await page.screenshot({path:path.join(OUT,`${profileName}-${mode}-missing-button.png`),fullPage:true});return;}
-    repl(`${profileName} clicked`,clicked);await settle(page,mode==='goodboys'?8000:6000);
+    repl(`${profileName} clicked`,clicked);await settle(page,mode==='goodboys'?8000:7500);
     if(mode==='goodboys'&&await page.locator('#gb-mobile-retry').count()){warn(mode,'recovery surfaced; bot executing one retry',{profileName});await page.locator('#gb-mobile-retry').click().catch(()=>{});await settle(page,5000);}
     const s1=await snapshotRuntime(page);await page.screenshot({path:path.join(OUT,`${profileName}-${mode}.png`),fullPage:true});repl(`${profileName} ${mode} state`,s1);
 
@@ -83,6 +104,8 @@ async function runMode(browserType,profileName,contextOptions,mode){
     if(s1.canvas.ok&&(s1.canvas.nonBlack<20||s1.canvas.range<8))fail(mode,'canvas appears blank/stalled',{profileName,canvas:s1.canvas});
     if(!s1.canvas.ok)warn(mode,'canvas probe unavailable',{profileName,canvas:s1.canvas});
     if(!s1.wrapperGuard)warn(mode,'stable wrapper guard not confirmed',{profileName});
+    if(s1.wrapperHealth&&(!s1.wrapperHealth.installed||!s1.wrapperHealth.globalDrawAligned||!s1.wrapperHealth.globalStepAligned))fail(mode,'stable compositor health check failed',{profileName,wrapperHealth:s1.wrapperHealth});
+    if(s1.runtimeLockError)fail(mode,'production runtime lock reported an error',{profileName,error:s1.runtimeLockError});
     if(!s1.lexicalBridge)warn(mode,'lexical runtime bridge not confirmed',{profileName});
 
     if(mode==='nightcrawler'){
