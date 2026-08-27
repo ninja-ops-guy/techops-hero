@@ -24,7 +24,9 @@ globalThis.__setState=(v)=>{S=v};globalThis.__getState=()=>S;globalThis.__setWor
 context.v736={start(){resumeStarts++;const S=context.__getState();const m=S.meta._v736.m;context.v725.play("b736m"+m,()=>{combatCbCalls++;const NM=context.__getWorld();NM._v736={m,active:"katrin",chars:{katrin:{hp:120},manchez:{hp:120}},partner:{x:40,y:200}};});}};
 vm.runInContext(src,context,{filename:"good_boys_mobile_launch_guard.js"});
 const api=context.TechOpsGoodBoysMobileLaunchGuard;
-assert.ok(api);assert.strictEqual(api.VERSION,4);
+assert.ok(api);assert.strictEqual(api.VERSION,6);
+assert.ok(/Wrapper installation is one-shot/.test(src),"v6 must retain one-shot wrapper installation authority");
+assert.ok(/never invokes feature tick\(\) methods that can recursively re-wrap drawNM/.test(src),"watchdog must not restore recursive feature ticks");
 assert.ok(!src.includes("root.S&&root.S.nightMode"),"guard must not read lexical S through window/root");
 assert.ok(!src.includes("root.NM&&root.NM._v736"),"guard must not read lexical NM through window/root");
 assert.strictEqual(api.isGoodBoysCombat("b736m1"),true);assert.strictEqual(api.isGoodBoysCombat("b736m7"),true);assert.strictEqual(api.isGoodBoysCombat("b736m8"),false);
