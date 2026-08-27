@@ -11,6 +11,16 @@ on:
       - "package.json"
       - "scripts/runtime_bot.mjs"
       - ".github/workflows/runtime-bot.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "*.js"
+      - "*.html"
+      - "*.css"
+      - "package.json"
+      - "scripts/**"
+      - ".github/workflows/runtime-bot.yml"
+      - ".github/workflows/runtime-fixer.yml"
   schedule:
     - cron: "17 */2 * * *"
 
@@ -81,7 +91,7 @@ jobs:
           retention-days: 14
 
       - name: Report failure to GitHub issue
-        if: always() && steps.bot.outputs.exit_code != '0'
+        if: always() && github.event_name != 'pull_request' && steps.bot.outputs.exit_code != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
