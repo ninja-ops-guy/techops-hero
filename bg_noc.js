@@ -17,7 +17,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
  */
 (function(root){
   root.__productionCompositorPlanned=true;
-  var BUILD="20260827-controls-progress-v1";
+  var BUILD="20260827-goodboys-combos-v2";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
@@ -26,7 +26,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   }
   function loadGoodBoysFix(){
     try{
-      if(document.querySelector('script[data-good-boys-mobile-runtime-fix]'))return;
+      var old=document.querySelector('script[data-good-boys-mobile-runtime-fix]');if(old&&old.parentNode)old.parentNode.removeChild(old);
       var f=document.createElement('script');
       f.src='good_boys_mobile_runtime_fix.js?v='+BUILD;
       f.async=false;
