@@ -7,7 +7,8 @@ const context={console,Date,setTimeout(fn){fn();return 1;},requestAnimationFrame
 context.globalThis=context;
 vm.createContext(context);
 vm.runInContext("let S={nightMode:{}}; let NM={x:10,y:20};\n"+src,context,{filename:"production_runtime_safety.js"});
-const api=context.TechOpsRuntimeSafety;assert.ok(api);assert.strictEqual(api.VERSION,1);assert.strictEqual(api.active(),true);assert.strictEqual(api.safeDraw(),true);assert.strictEqual(drawCalls,1);assert.strictEqual(api.safeStep(16),true);assert.strictEqual(stepCalls,1);
+const api=context.TechOpsRuntimeSafety;assert.ok(api);assert.strictEqual(api.VERSION,2);assert.strictEqual(api.active(),true);assert.strictEqual(api.safeDraw(),true);assert.strictEqual(drawCalls,1);assert.strictEqual(api.safeStep(16),true);assert.strictEqual(stepCalls,1);
 context.drawNM=function(){throw new Error("boom")};assert.strictEqual(api.safeDraw(),false);assert.ok(String(context.__nightRuntimeRenderError).includes("boom"));assert.ok(ops.some(x=>x.includes("NIGHT RUNTIME RECOVERY")));
+assert.ok(src.includes("ensureVisible"),"v2 safety runtime must actively restore canvas/touch visibility");
 assert.ok(!src.includes("root.S")&&!src.includes("root.NM"),"safety runtime must use lexical S/NM bindings");
-console.log("Production runtime safety: PASS");
+console.log("Production runtime safety v2: PASS");
