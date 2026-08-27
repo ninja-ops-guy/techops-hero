@@ -18,6 +18,7 @@
     "good_boys_reference_mechanics.js",
     "good_boys_canon_runtime.js",
     "good_boys_gameplay_loop.js",
+    "good_boys_mobile_controls_layout.js",
     "good_boys_mobile_launch_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
