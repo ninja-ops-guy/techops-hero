@@ -1,11 +1,15 @@
-/* Good Boys canon runtime — production authority v5.
+/* Good Boys canon runtime — production authority v6.
  * World law: shared Night engine, independent Good Boys campaign world.
  * Route: Waldo's house -> hidden ship -> prison impact -> 118 -> 1984 -> escape -> Earth.
+ *
+ * v6: the production compositor owns Night rendering. Canon exports drawHud and
+ * syncIdentity as callbacks and never wraps drawNM when production authority is
+ * present. Legacy standalone entrypoints retain the historical wrapper path.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysCanon)return;
-  var VERSION=5,chain=false,baseLoad=null,basePlay=null,baseDraw=null,baseToast=null;
+  var VERSION=6,chain=false,baseLoad=null,basePlay=null,baseDraw=null,baseToast=null;
   var SEQ={
     1:{name:"WALDO'S HOUSE",objective:"FIND WALDO'S TRAIL · REACH THE HIDDEN BAY",zone:"WALDO'S HOUSE — EARTH",bg:"goodboys_home",district:"goodboys_home",light:"home_gold"},
     2:{name:"THE HIDDEN BAY",objective:"POWER THE SECRET SHIP · CLEAR THE HANGAR · LAUNCH",zone:"WALDO'S SECRET HANGAR",bg:"goodboys_hangar",district:"goodboys_hangar",light:"launch_blue"},
@@ -21,6 +25,7 @@
     b736m2:{title:"THE SECRET SHIP",body:"The hidden bay opens around an unregistered spacecraft. Restore the launch systems, clear the hangar, and get it airborne.",hint:"POWER COUPLERS · PARTNER THROW/CATCH · CLEAR THE BAY",asset:"goodboys_hangar",cta:"BOARD THE SHIP"},
     b736m3:{title:"NO DOCKING",body:"The orbital prison rejects the stolen ship and lights up its defense grid. The dogs choose the shortest route inside: full-speed impact.",hint:"PRISON APPROACH · DEFENSE FIRE · IMPACT VECTOR",asset:"goodboys_approach",cta:"MAKE A DOOR"}
   };
+  function productionCompositorActive(){try{return !!(root.TechOpsProductionWrapperGuard||root.__productionSingleCompositor||root.__productionCompositorPlanned);}catch(e){return false;}}
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function meta(){try{return root.S&&root.S.meta&&root.S.meta._v736?root.S.meta._v736:null;}catch(e){return null;}}
   function mission(){var c=cs(),m=c&&c.m||meta()&&meta().m||1;return Math.max(1,Math.min(8,Number(m)||1));}
@@ -57,10 +62,10 @@
   function hideLegacyUi(){try{if(!root.document)return false;var on=isChain(),ids=["hud","quest-tracker","chaos-banner","btn-twin","btn-sweep","btn-music"];ids.forEach(function(id){var el=root.document.getElementById(id);if(!el)return;if(on){if(el.dataset.gbCanonDisplay===undefined)el.dataset.gbCanonDisplay=el.style.display||"";el.style.setProperty("display","none","important");}else if(el.dataset.gbCanonDisplay!==undefined){el.style.display=el.dataset.gbCanonDisplay;delete el.dataset.gbCanonDisplay;}});if(root.document.body)root.document.body.classList.toggle("good-boys-canon",on);return true;}catch(e){return false;}}
   function enforceBackground(){try{if(!active()||!root.NM_BG734)return false;var cfg=canonical(),im=root.NM_BG734[cfg.bg];if(!im)return false;root.NM_BG734[root.NM.district]=im;root.NM_BG734.orbital=im;return true;}catch(e){return false;}}
   function drawHud(x){try{var c=cs();if(!c)return;var W=x.canvas.width,cfg=canonical(),compact=W<760;x.save();var stripY=compact?76:68,stripH=compact?38:34,edge=Math.max(6,W*.12);x.fillStyle="rgba(1,5,9,.88)";x.fillRect(edge,stripY,W-edge*2,stripH);x.strokeStyle=cfg.light==="emergency_red"?"#ef4455":cfg.light==="hack_green"?"#22c55e":cfg.light==="impact_orange"?"#ff8a4c":cfg.light==="earthfall_gold"?"#ffd166":"#38bdf8";x.lineWidth=1;x.strokeRect(edge+.5,stripY+.5,W-edge*2-1,stripH-1);x.textAlign="center";x.fillStyle="#f2f7fb";x.font="bold "+(compact?8:10)+"px monospace";x.fillText(cfg.name+" · "+cfg.objective,W/2,stripY+14);x.fillStyle="#9fdcf0";x.font="bold 7px monospace";x.fillText(cfg.zone+" · SYNC "+Math.round(c.sync||0)+"%",W/2,stripY+28);x.restore();}catch(e){}}
-  function installHudAuthority(){try{if(typeof root.drawNM!=="function"||root.drawNM.__goodBoysCanon)return false;baseDraw=root.drawNM;root.drawNM=function(){var r=baseDraw.apply(this,arguments);try{if(active()&&root.ctx)drawHud(root.ctx);}catch(_){}return r;};root.drawNM.__goodBoysCanon=true;return true;}catch(e){return false;}}
+  function installHudAuthority(){try{if(productionCompositorActive())return false;if(typeof root.drawNM!=="function"||root.drawNM.__goodBoysCanon)return false;baseDraw=root.drawNM;root.drawNM=function(){var r=baseDraw.apply(this,arguments);try{if(active()&&root.ctx)drawHud(root.ctx);}catch(_){}return r;};root.drawNM.__goodBoysCanon=true;return true;}catch(e){return false;}}
   function healthCheck(){try{if(!active())return true;var c=cs(),cfg=canonical();if(!root.NM||!c.chars||!c.chars.katrin||!c.chars.manchez){root.__goodBoysCoreBroken="missing_pair_state";return false;}if(root.NM.district!==cfg.district){try{root.nmLoadDistrict(cfg.district);}catch(_){}}if(!isFinite(root.NM.x)||!isFinite(root.NM.y)){root.__goodBoysCoreBroken="invalid_player_position";return false;}root.__goodBoysCoreBroken=null;return true;}catch(e){root.__goodBoysCoreBroken=String(e);return false;}}
   function syncIdentity(){try{if(!active())return false;var c=cs(),cfg=canonical();c.canonName=cfg.name;c.canonObjective=cfg.objective;c.canonZone=cfg.zone;c.canonLight=cfg.light;c.canonBackground=cfg.bg;c.canonDistrict=cfg.district;root.NM._goodBoysCanon=true;root.NM._goodBoysMission=mission();root.NM._goodBoysWorld="waldo-house-to-orbital-prison";return true;}catch(e){return false;}}
   function tick(){ensureAssets();cleanTitle();installStartAuthority();installDistrictAuthority();installOpeningAuthority();installHudAuthority();installToastAuthority();hideLegacyUi();suppressLegacyPresentation();syncIdentity();enforceBackground();healthCheck();}
-  tick();var timer=null;try{timer=root.setInterval(tick,120);}catch(e){}
-  root.TechOpsGoodBoysCanon={VERSION:VERSION,SEQUENCE:SEQ,INTRO:INTRO,mission:mission,canonical:canonical,latch:latch,isChain:isChain,ensureAssets:ensureAssets,cleanTitle:cleanTitle,suppressLegacyPresentation:suppressLegacyPresentation,prepareNightRuntime:prepareNightRuntime,showCampaignIntro:showCampaignIntro,installStartAuthority:installStartAuthority,installDistrictAuthority:installDistrictAuthority,installOpeningAuthority:installOpeningAuthority,installHudAuthority:installHudAuthority,installToastAuthority:installToastAuthority,enforceBackground:enforceBackground,hideLegacyUi:hideLegacyUi,healthCheck:healthCheck,tick:tick,timer:timer};
+  tick();var timer=null;try{if(!productionCompositorActive())timer=root.setInterval(tick,120);}catch(e){}
+  root.TechOpsGoodBoysCanon={VERSION:VERSION,SEQUENCE:SEQ,INTRO:INTRO,mission:mission,canonical:canonical,latch:latch,isChain:isChain,productionCompositorActive:productionCompositorActive,ensureAssets:ensureAssets,cleanTitle:cleanTitle,suppressLegacyPresentation:suppressLegacyPresentation,prepareNightRuntime:prepareNightRuntime,showCampaignIntro:showCampaignIntro,installStartAuthority:installStartAuthority,installDistrictAuthority:installDistrictAuthority,installOpeningAuthority:installOpeningAuthority,installHudAuthority:installHudAuthority,installToastAuthority:installToastAuthority,enforceBackground:enforceBackground,hideLegacyUi:hideLegacyUi,drawHud:drawHud,syncIdentity:syncIdentity,healthCheck:healthCheck,tick:tick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
