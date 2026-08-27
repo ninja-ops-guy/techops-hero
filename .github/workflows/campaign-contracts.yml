@@ -9,6 +9,7 @@ on:
       - "good_boys_*.js"
       - "good_dogs_production_runtime.js"
       - "production_*.js"
+      - "bg_noc.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -39,6 +40,7 @@ on:
       - "good_boys_*.js"
       - "good_dogs_production_runtime.js"
       - "production_*.js"
+      - "bg_noc.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -94,6 +96,8 @@ jobs:
           node --check good_dogs_production_runtime.js
           node --check production_asset_registry.js
           node --check production_wrapper_guard.js
+          node --check production_runtime_lock.js
+          node --check bg_noc.js
           node --check mike_animation_manifest.js
           node --check mike_actions.js
           node --check mike_actions.atlas.js
@@ -112,6 +116,7 @@ jobs:
           node --check test_good_boys_mobile_launch_guard.js
           node --check test_production_asset_registry.js
           node --check test_production_compositor.js
+          node --check test_production_runtime_lock.js
           node --check test_mobile_production_tester.js
           node --check test_mike_animation_manifest.js
           node --check test_campaign_day1_runtime_gate.js
@@ -148,6 +153,8 @@ jobs:
         run: node test_production_asset_registry.js
       - name: Verify single Night compositor
         run: node test_production_compositor.js
+      - name: Verify production runtime lock
+        run: node test_production_runtime_lock.js
       - name: Verify production mobile tester
         run: node test_mobile_production_tester.js
       - name: Verify Mike animation semantics
