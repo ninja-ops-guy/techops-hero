@@ -8,6 +8,7 @@ on:
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_production_runtime.js"
+      - "production_*.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -21,6 +22,7 @@ on:
       - "scripts/production_release_gate.js"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
@@ -36,6 +38,7 @@ on:
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_production_runtime.js"
+      - "production_*.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -49,6 +52,7 @@ on:
       - "scripts/production_release_gate.js"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
       - "test_v736_runtime_assets.js"
@@ -88,6 +92,8 @@ jobs:
           node --check good_boys_gameplay_loop.js
           node --check good_boys_mobile_launch_guard.js
           node --check good_dogs_production_runtime.js
+          node --check production_asset_registry.js
+          node --check production_wrapper_guard.js
           node --check mike_animation_manifest.js
           node --check mike_actions.js
           node --check mike_actions.atlas.js
@@ -104,6 +110,8 @@ jobs:
           node --check test_campaign_world_visuals.js
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_mobile_launch_guard.js
+          node --check test_production_asset_registry.js
+          node --check test_production_compositor.js
           node --check test_mobile_production_tester.js
           node --check test_mike_animation_manifest.js
           node --check test_campaign_day1_runtime_gate.js
@@ -136,6 +144,10 @@ jobs:
         run: node test_good_boys_canon_runtime.js
       - name: Verify Good Boys mobile launch recovery
         run: node test_good_boys_mobile_launch_guard.js
+      - name: Verify production asset inventory
+        run: node test_production_asset_registry.js
+      - name: Verify single Night compositor
+        run: node test_production_compositor.js
       - name: Verify production mobile tester
         run: node test_mobile_production_tester.js
       - name: Verify Mike animation semantics
