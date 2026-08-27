@@ -1,0 +1,75 @@
+{
+  "timestamp": "2026-08-27T20:28:06.144Z",
+  "baseUrl": "http://127.0.0.1:4173/",
+  "durationMs": 70195,
+  "pass": false,
+  "failures": 3,
+  "warnings": 4,
+  "findings": [
+    {
+      "severity": "WARN",
+      "mode": "nightcrawler",
+      "issue": "third-party media widget errors",
+      "profileName": "iphone-webkit",
+      "pageErrors": [
+        "InvalidStateError: The object is in an invalid state.\n    at createPattern (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:100203)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:50457)\n    at unknown (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:51648)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:80094)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:79402)"
+      ]
+    },
+    {
+      "severity": "FAIL",
+      "mode": "nightcrawler",
+      "issue": "movement input did not move the player",
+      "profileName": "iphone-webkit",
+      "x0": 110,
+      "x1": 110,
+      "inDialog": false,
+      "cutsceneVisible": false
+    },
+    {
+      "severity": "WARN",
+      "mode": "goodboys",
+      "issue": "third-party media widget errors",
+      "profileName": "iphone-webkit",
+      "pageErrors": [
+        "InvalidStateError: The object is in an invalid state.\n    at createPattern (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:100203)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:50457)\n    at unknown (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:51648)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:80094)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:79402)"
+      ]
+    },
+    {
+      "severity": "FAIL",
+      "mode": "nightcrawler",
+      "issue": "uncaught first-party page errors",
+      "profileName": "desktop-chromium",
+      "pageErrors": [
+        "RangeError: Maximum call stack size exceeded\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)"
+      ]
+    },
+    {
+      "severity": "WARN",
+      "mode": "nightcrawler",
+      "issue": "third-party media widget errors",
+      "profileName": "desktop-chromium",
+      "pageErrors": [
+        "Uncaught InvalidStateError: Failed to execute 'createPattern' on 'CanvasRenderingContext2D': The image argument is a canvas element with a width or height of 0.\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:101264)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:100198)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:50452)\n    at e.each.t.<computed> (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:51646)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:80089)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:79395)"
+      ]
+    },
+    {
+      "severity": "FAIL",
+      "mode": "nightcrawler",
+      "issue": "movement input did not move the player",
+      "profileName": "desktop-chromium",
+      "x0": 110,
+      "x1": 110,
+      "inDialog": false,
+      "cutsceneVisible": false
+    },
+    {
+      "severity": "WARN",
+      "mode": "goodboys",
+      "issue": "third-party media widget errors",
+      "profileName": "desktop-chromium",
+      "pageErrors": [
+        "Uncaught InvalidStateError: Failed to execute 'createPattern' on 'CanvasRenderingContext2D': The image argument is a canvas element with a width or height of 0.\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:101264)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:100198)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:50452)\n    at e.each.t.<computed> (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:51646)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:80089)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:79395)"
+      ]
+    }
+  ]
+}
