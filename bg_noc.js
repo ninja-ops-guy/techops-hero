@@ -17,12 +17,23 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
  */
 (function(root){
   root.__productionCompositorPlanned=true;
-  var BUILD="20260827-goodboys-ship-progress-v3";
+  var BUILD="20260827-goodboys-prison-cinematic-v1";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
     root.__techopsFinalParserChainReady=!!(root.__techopsFinalParserDrawNM&&root.__techopsFinalParserStepNM);
     return root.__techopsFinalParserChainReady;
+  }
+  function loadPrisonPatch(){
+    try{
+      var old=document.querySelector('script[data-good-boys-prison-cinematic-patch]');if(old&&old.parentNode)old.parentNode.removeChild(old);
+      var p=document.createElement('script');
+      p.src='good_boys_prison_cinematic_patch.js?v='+BUILD;
+      p.async=false;
+      p.dataset.goodBoysPrisonCinematicPatch='1';
+      p.onerror=function(){root.__goodBoysPrisonCinematicWireError='good_boys_prison_cinematic_patch.js';};
+      (document.head||document.documentElement).appendChild(p);
+    }catch(e){root.__goodBoysPrisonCinematicWireError=String(e&&e.stack||e);}
   }
   function loadDirector(){
     try{
@@ -31,9 +42,10 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
       d.src='good_boys_campaign_director.js?v='+BUILD;
       d.async=false;
       d.dataset.goodBoysCampaignDirector='1';
-      d.onerror=function(){root.__goodBoysCampaignDirectorWireError='good_boys_campaign_director.js';};
+      d.onload=loadPrisonPatch;
+      d.onerror=function(){root.__goodBoysCampaignDirectorWireError='good_boys_campaign_director.js';loadPrisonPatch();};
       (document.head||document.documentElement).appendChild(d);
-    }catch(e){root.__goodBoysCampaignDirectorWireError=String(e&&e.stack||e);}
+    }catch(e){root.__goodBoysCampaignDirectorWireError=String(e&&e.stack||e);loadPrisonPatch();}
   }
   function loadGoodBoysFix(){
     try{
