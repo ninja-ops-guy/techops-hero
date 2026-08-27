@@ -1,0 +1,12 @@
+{
+  "matched": [
+    "drawNM-recursion"
+  ],
+  "changed": [
+    "good_boys_gameplay_loop.js",
+    "good_boys_canon_runtime.js"
+  ],
+  "notes": [
+    "Stable compositor already loads before Good Boys/Good Dogs wrappers."
+  ]
+}
