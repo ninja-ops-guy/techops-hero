@@ -17,14 +17,26 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
     root.__techopsFinalParserChainReady=!!(root.__techopsFinalParserDrawNM&&root.__techopsFinalParserStepNM);
     return root.__techopsFinalParserChainReady;
   }
+  function loadRuntimeLock(){
+    try{
+      if(document.querySelector('script[data-techops-production-runtime-lock]'))return;
+      var l=document.createElement('script');
+      l.src='production_runtime_lock.js';
+      l.async=false;
+      l.dataset.techopsProductionRuntimeLock='1';
+      l.onerror=function(){root.__productionRuntimeLockWireError='production_runtime_lock.js';};
+      (document.head||document.documentElement).appendChild(l);
+    }catch(e){root.__productionRuntimeLockWireError=String(e&&e.stack||e);}
+  }
   function boot(){
     try{
-      if(document.querySelector('script[data-techops-production-bootstrap]'))return;
+      if(document.querySelector('script[data-techops-production-bootstrap]')){loadRuntimeLock();return;}
       snapshotParserChain();
       var s=document.createElement('script');
       s.src='production_bootstrap.js';
       s.async=false;
       s.dataset.techopsProductionBootstrap='1';
+      s.onload=loadRuntimeLock;
       (document.head||document.documentElement).appendChild(s);
     }catch(e){root.__productionBootstrapWireError=String(e&&e.stack||e);}
   }
