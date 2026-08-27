@@ -42,11 +42,11 @@ const registered=new Set([...api.PNG_ASSETS,...api.JSON_ASSETS]);
 for(const f of physical) assert.ok(registered.has(f),`unintegrated physical asset: ${f}`);
 for(const f of registered) assert.ok(physical.includes(f),`registered physical asset not found in assets tree: ${f}`);
 
-// Every root-level atlas/reference art authority must either be parser-loaded already
-// or explicitly loaded by the production registry. This prevents new art from silently
-// landing in the repository without becoming part of the shipped runtime.
-const rootFiles=fs.readdirSync(".").filter(f=>fs.statSync(f).isFile());
-const candidates=rootFiles.filter(f=>/\.(atlas\.js)$/.test(f)||/(reference_v\d+\.js|animation_manifest\.js)$/.test(f));
+// Every root-level runtime atlas/reference authority must either be parser-loaded
+// already or explicitly loaded by the production registry. Test fixtures and test
+// contracts are deliberately excluded from runtime asset discovery.
+const rootFiles=fs.readdirSync(".").filter(f=>fs.statSync(f).isFile()&&!f.startsWith("test_"));
+const candidates=rootFiles.filter(f=>/\.atlas\.js$/.test(f)||/(reference_v\d+\.js|animation_manifest\.js)$/.test(f));
 for(const f of candidates){
   const parserLoaded=html.includes(`src="${f}"`);
   const registryLoaded=api.SCRIPT_ASSETS.includes(f);
