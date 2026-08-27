@@ -9,8 +9,14 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
  * Before production loads, publish the exact final parser-owned Night draw/step
  * functions. The production compositor consumes these immutable snapshots
  * instead of trying to infer a clean base from mutable window bindings.
+ *
+ * IMPORTANT: advertise compositor intent synchronously. Feature runtimes use
+ * this latch to refuse legacy drawNM/stepNM ownership even before the async
+ * production bootstrap has installed the stable compositor. This closes the
+ * load-order window that allowed Good Boys wrappers to capture one another.
  */
 (function(root){
+  root.__productionCompositorPlanned=true;
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
