@@ -17,7 +17,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
  */
 (function(root){
   root.__productionCompositorPlanned=true;
-  var BUILD="20260827-goodboys-director-v1";
+  var BUILD="20260827-goodboys-ship-progress-v3";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
