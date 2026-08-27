@@ -52,7 +52,8 @@ assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics));
 assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics));
 
 const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
-assert.ok(/VERSION=5/.test(canon), "Good Boys canon runtime must be v5");
+assert.ok(/VERSION=6/.test(canon), "Good Boys canon runtime must be compositor-owned v6");
+assert.ok(/productionCompositorActive/.test(canon) && /drawHud:drawHud/.test(canon) && /syncIdentity:syncIdentity/.test(canon), "canon must expose production compositor/router callbacks");
 assert.ok(/WALDO'S HOUSE/.test(canon) && /THE HIDDEN BAY/.test(canon) && /MAKE A DOOR/.test(canon));
 assert.ok(/FIND WALDO'S TRAIL · REACH THE HIDDEN BAY/.test(canon));
 assert.ok(/INVESTIGATE THE PRISONER · VERIFY · FREE K/.test(canon));
@@ -71,7 +72,8 @@ assert.ok(/NM_DISTRICTS/.test(assets) && /installDistricts/.test(assets), "gener
 assert.ok(!/NEW HAVEN/.test(assets), "Good Boys world assets must not inherit New Haven identity");
 
 const loop = fs.readFileSync("good_boys_gameplay_loop.js", "utf8");
-assert.ok(/VERSION=3/.test(loop), "concept gameplay loop must be v3");
+assert.ok(/VERSION=4/.test(loop), "concept gameplay loop must be compositor-owned v4");
+assert.ok(/productionCompositorActive/.test(loop), "production gameplay loop must defer Night draw/step ownership to compositor");
 assert.ok(/sheet 3 = moment-to-moment HUD\/gameplay/.test(loop), "gameplay loop must declare concept-sheet authority");
 assert.ok(/CELL 118 — FREE K/.test(loop) && /CELL 1984 — FREE WALDO/.test(loop));
 assert.ok(/Run for the shuttle\. Build Sync\. Finish together\./.test(loop));
@@ -82,13 +84,13 @@ assert.ok(/drawDogCard/.test(loop) && /P1 ACTIVE/.test(loop), "concept HUD must 
 assert.ok(/drawLinkStatus/.test(loop) && /LINK!/.test(loop), "concept HUD must expose linked-pair Sync state");
 assert.ok(/#touch-buttons,body\.good-boys-loop #good-dogs-touch\{display:none!important\}/.test(loop), "generic Night/co-op buttons must not compete with Good Boys controls");
 assert.ok(/_goodBoysReferenceScale=1\.55/.test(loop), "Good Boys should retain hero-scale presentation metadata");
-assert.ok(/concept_v3/.test(loop) && /controls:8/.test(loop), "acceptance telemetry must expose concept HUD authority and control count");
+assert.ok(/concept_v4/.test(loop) && /controls:8/.test(loop), "acceptance telemetry must expose current concept HUD authority and control count");
 assert.ok(/var STAGES=/.test(loop) && /configureStage/.test(loop), "Good Boys must own authored side-view stage geometry");
 assert.ok(/_goodBoysStageAuthority="concept_geometry_v1"/.test(loop), "stage authority must be observable for QA");
 assert.ok(/HULL BREACH — BOOST \/ AIR DASH/.test(loop) && /applyHazards/.test(loop), "breach hazards must exercise reference traversal mechanics");
 assert.ok(/CELL 118/.test(loop) && /CELL 1984/.test(loop) && /MAINTENANCE SHUTTLE/.test(loop), "orbital landmarks must be visually authored into gameplay");
 assert.ok(/drawStageAccents/.test(loop) && /foreground rails\/pipes/.test(loop), "stage must include foreground depth treatment");
-assert.ok(/installStep/.test(loop) && /root\.stepNM=/.test(loop), "shared Night physics must be safely extended for Good Boys hazards");
+assert.ok(/installStep/.test(loop) && /root\.stepNM=/.test(loop), "legacy standalone Night physics extension must remain available outside production");
 assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /impact_orange/.test(canon), "mission lighting language must match campaign route");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
@@ -103,4 +105,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys Waldo-house-to-prison route v5: PASS");
+console.log("Campaign playable world visuals + Good Boys Waldo-house-to-prison route v6: PASS");
