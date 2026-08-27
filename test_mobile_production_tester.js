@@ -8,6 +8,7 @@ const mobileGuard = fs.readFileSync('good_boys_mobile_launch_guard.js', 'utf8');
 const modeRouter = fs.readFileSync('production_mode_router.js', 'utf8');
 const runtimeSafety = fs.readFileSync('production_runtime_safety.js', 'utf8');
 const wrapperGuard = fs.readFileSync('production_wrapper_guard.js', 'utf8');
+const bootstrap = fs.readFileSync('production_bootstrap.js', 'utf8');
 function has(s){assert.ok(html.includes(s),`missing mobile production marker: ${s}`);}
 function script(src){return html.indexOf(`<script src="${src}"></script>`);}
 
@@ -28,19 +29,30 @@ assert.ok(script('campaign_sector04_runtime.js') < script('campaign_native_act1.
 ['safe-area-inset-top','safe-area-inset-bottom','safe-area-inset-left','safe-area-inset-right','#hud-top','#dialogue','#dpad','#touch-buttons','min-height:44px'].forEach(marker=>assert.ok(world.includes(marker),`mobile safe-area/touch contract missing ${marker}`));
 ['night_walker_reference_v1.js','night_reference_visuals.js','loadNightReference'].forEach(marker=>assert.ok(world.includes(marker),`Night reference bootstrap missing ${marker}`));
 
+// dogs.js is the parser-time lexical bridge only. Post-parser production modules
+// are owned by production_bootstrap.js so feature wrappers cannot race the parser.
 assert.ok(script('dogs.js') !== -1,'dogs.js must be present in deployed entrypoint');
-assert.ok(dogs.includes('__techopsLexicalBridgeVersion=1'),'dogs.js must bridge lexical runtime state for production modules');
-assert.ok(dogs.includes('good_boys_mobile_launch_guard.js?v=4'),'dogs.js must cache-bust Good Boys mobile launch guard v4');
-assert.ok(dogs.includes('production_mode_router.js?v=3'),'dogs.js must bootstrap cache-busted production mode router v3');
-assert.ok(dogs.includes('production_runtime_safety.js?v=1'),'dogs.js must bootstrap production runtime safety');
-assert.ok(dogs.includes('production_wrapper_guard.js?v=1'),'dogs.js must bootstrap stable Night draw/step compositor');
-['VERSION=4','function state()','function world()','pairReady','installStartGuard','resume_pair_missing','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
+assert.ok(dogs.includes('__techopsLexicalBridgeVersion=3'),'dogs.js must expose current lexical runtime bridge v3');
+['bridge("S"','bridge("NM"','bridge("ctx"','bridge("NM_DISTRICTS"','__techopsPreProductionDrawNM','__techopsPreProductionStepNM'].forEach(marker=>assert.ok(dogs.includes(marker),`dogs.js lexical bridge missing ${marker}`));
+assert.ok(dogs.includes('production_bootstrap') && dogs.includes('sole authority'),'dogs.js must defer post-parser production loading to bootstrap');
+assert.ok(!dogs.includes('good_boys_mobile_launch_guard.js?v='),'dogs.js must not dynamically load production guards');
+
+assert.ok(/var VERSION=6/.test(mobileGuard),'Good Boys mobile launch guard must be v6');
+['function state()','function world()','pairReady','installStartGuard','resume_pair_missing','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
+assert.ok(mobileGuard.includes('Wrapper installation is one-shot'),'mobile watchdog must preserve one-shot wrapper installation');
 assert.ok(!mobileGuard.includes('root.S&&root.S.nightMode'),'Good Boys guard cannot inspect lexical S via window/root');
 assert.ok(!mobileGuard.includes('root.NM&&root.NM._v736'),'Good Boys guard cannot inspect lexical NM via window/root');
-['VERSION=3','function state()','function world()','clearErrors','launchNightCrawler','launchGoodBoys','enterNightReliably','good_boys_pair_timeout'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
-['VERSION=1','safeDraw','safeStep','NIGHT RUNTIME RECOVERY','__nightRuntimeRenderError','__nightRuntimeStepError'].forEach(marker=>assert.ok(runtimeSafety.includes(marker),`Production runtime safety missing ${marker}`));
+
+assert.ok(/var VERSION=6/.test(modeRouter),'Production mode router must be v6');
+['function state()','function world()','clearErrors','launchNightCrawler','launchGoodBoys','enterNightReliably','good_boys_pair_timeout','never calls feature tick()'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
+
+assert.ok(/var VERSION=2/.test(runtimeSafety),'Production runtime safety must be v2');
+['function state()','function world()','NIGHT RUNTIME RECOVERY','__nightRuntimeRenderError','__nightRuntimeStepError','ensureVisible'].forEach(marker=>assert.ok(runtimeSafety.includes(marker),`Production runtime safety missing ${marker}`));
 assert.ok(!runtimeSafety.includes('root.S')&&!runtimeSafety.includes('root.NM'),'Runtime safety must use lexical S/NM');
-['VERSION=1','__productionStableCompositor','__goodDogsHud','__goodBoysCanon','__goodBoysGameplayLoop','drawFeatures','stepFeatures'].forEach(marker=>assert.ok(wrapperGuard.includes(marker),`Stable wrapper guard missing ${marker}`));
+
+assert.ok(/var VERSION=5/.test(wrapperGuard),'Stable compositor authority must be v5');
+['__productionStableCompositor','__goodDogsHud','__goodBoysCanon','__goodBoysGameplayLoop','drawFeatureLayers','stepFeatureLayers','globalDrawAligned','globalStepAligned','__productionSingleCompositor'].forEach(marker=>assert.ok(wrapperGuard.includes(marker),`Stable compositor guard missing ${marker}`));
+assert.ok(bootstrap.indexOf('production_wrapper_guard.js') < bootstrap.indexOf('good_dogs_production_runtime.js'),'stable compositor must load before feature runtime wrappers');
 
 has('auto_play=false');
 has('allow="autoplay"');
