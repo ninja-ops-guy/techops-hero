@@ -54,7 +54,7 @@
       var defs={
         goodboys_home:{name:"WALDO'S HOUSE — EARTH",streets:1,danger:.1,accent:"#e4bc66",sky:"#11131b",far:"#20232b",mid:"#28251f",signs:["WALDO'S HOUSE","HIDDEN BAY"],roster:[]},
         goodboys_hangar:{name:"WALDO'S SECRET HANGAR",streets:1,danger:.4,accent:"#54d6ff",sky:"#070b12",far:"#0c1620",mid:"#111820",signs:["SECRET SHIP","LAUNCH"],roster:["guard"]},
-        goodboys_approach:{name:"ORBITAL DETENTION — APPROACH",streets:1,danger:1.4,accent:"#8e79ff",sky:"#02050b",far:"#08101c",mid:"#09111a",signs:["DOCKING DENIED","IMPACT VECTOR"],roster:["skimmer","guard"]},
+        goodboys_approach:{name:"ORBITAL DETENTION — APPROACH",streets:1,danger:1.4,accent:"#8e79ff",sky:"#02050b",far:"#08101c",mid:"#09111a",signs:["DOCKING DENIED","IMPACT VECTOR ACCEPTED"],roster:["skimmer","guard"]},
         goodboys_breach:{name:"ORBITAL DETENTION — HULL BREACH",streets:1,danger:1.7,accent:"#ff7a45",sky:"#05070b",far:"#0c1018",mid:"#11151c",signs:["HULL BREACH","LOCKDOWN"],roster:["guard","hunter"]},
         goodboys_cell118:{name:"DETENTION BLOCK — CELL 118",streets:1,danger:1.8,accent:"#39d8ff",sky:"#05080e",far:"#09101a",mid:"#0b1118",signs:["CELL 118","VERIFY K"],roster:["guard","skimmer"]},
         goodboys_core:{name:"ORPHEUS ACCESS CORE",streets:1,danger:2,accent:"#22c55e",sky:"#05080e",far:"#09101a",mid:"#0b1118",signs:["ORPHEUS","CORE ACCESS"],roster:["guard","hunter"]},
