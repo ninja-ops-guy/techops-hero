@@ -1,0 +1,152 @@
+name: Runtime Fixer
+
+on:
+  workflow_run:
+    workflows: ["Runtime bot"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Failed Runtime bot run ID to repair"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  issues: write
+
+concurrency:
+  group: runtime-fixer-${{ github.event.workflow_run.id || inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.name == 'Runtime bot' && github.event.workflow_run.conclusion == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+      FAILED_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+      RUNTIME_ARTIFACT_DIR: runtime-fixer-input
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve failed run metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          data="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")"
+          name="$(jq -r '.name' <<<"$data")"
+          conclusion="$(jq -r '.conclusion // ""' <<<"$data")"
+          sha="$(jq -r '.head_sha' <<<"$data")"
+          url="$(jq -r '.html_url' <<<"$data")"
+          if [ "$name" != "Runtime bot" ]; then
+            echo "Refusing non-Runtime-bot run: $name" >&2
+            exit 1
+          fi
+          if [ "$conclusion" != "failure" ]; then
+            echo "Run is not failed ($conclusion); nothing to repair."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Download Runtime bot evidence
+        if: steps.meta.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNTIME_ARTIFACT_DIR"
+          artifact="runtime-bot-${{ steps.meta.outputs.sha }}"
+          if ! gh run download "$RUN_ID" --name "$artifact" --dir "$RUNTIME_ARTIFACT_DIR"; then
+            echo "Artifact $artifact was unavailable; fixer will run in evidence-missing mode." >&2
+          fi
+          find "$RUNTIME_ARTIFACT_DIR" -maxdepth 2 -type f -print || true
+
+      - name: Apply known-safe runtime repairs
+        if: steps.meta.outputs.skip != 'true'
+        run: node scripts/runtime_autofix.mjs
+
+      - name: Add fixer summary
+        if: always() && steps.meta.outputs.skip != 'true'
+        shell: bash
+        run: |
+          if [ -f runtime-autofix-summary.md ]; then
+            cat runtime-autofix-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '# Runtime Autofix' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Fixer did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Check for repair
+        if: steps.meta.outputs.skip != 'true'
+        id: diff
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat
+            git diff --check
+          fi
+
+      - name: Static syntax gate
+        if: steps.diff.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in $(git diff --name-only -- '*.js' '*.mjs'); do
+            node --check "$f"
+          done
+
+      - name: Create repair branch and PR
+        if: steps.diff.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="runtime-fix/run-${RUN_ID}"
+          git config user.name "runtime-fixer[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "Autofix Runtime bot failure #${RUN_ID}"
+          git push origin "$branch"
+
+          body="$(cat <<EOF
+          Automated repair for failed Runtime bot run ${RUN_ID}.
+
+          Failed run: ${{ steps.meta.outputs.url }}
+          Failed commit: \`${{ steps.meta.outputs.sha }}\`
+
+          The fixer only applies repository-defined, known-safe transformations. This PR is intentionally not auto-merged; CI must validate the repair first.
+
+          $(cat runtime-autofix-summary.md)
+          EOF
+          )"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Runtime Fixer: repair run ${RUN_ID}" \
+            --body "$body"
+
+      - name: Record no-safe-fix outcome
+        if: steps.meta.outputs.skip != 'true' && steps.diff.outputs.changed != 'true'
+        shell: bash
+        run: |
+          echo "No repository-defined safe mutation was available for Runtime bot run ${RUN_ID}." >> "$GITHUB_STEP_SUMMARY"
+          echo "The Runtime bot issue/report remains the escalation path for this failure." >> "$GITHUB_STEP_SUMMARY"
