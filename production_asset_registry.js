@@ -1,11 +1,12 @@
-/* TechOps Hero — complete production asset registry v1.
+/* TechOps Hero — complete production asset registry v2.
  * Makes every shipped visual asset discoverable by runtime, preloads physical
- * PNG assets, and loads previously-unwired atlas/reference manifests.
+ * PNG assets, loads atlas/reference manifests, and fails closed when any
+ * required script/image/JSON asset cannot be loaded.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionAssets)return;
-  var VERSION=1;
+  var VERSION=2;
   var SCRIPT_ASSETS=[
     "campaign_bg.js","campaign_asset_pipeline.js","campaign_native_act1_visuals.js",
     "charger_reference_v1.js","duo_kw.atlas.js","env_objects.atlas.js","env_overlays.atlas.js","env_struct.atlas.js","env_terrain.atlas.js",
@@ -37,28 +38,59 @@
   var DOG_FRAMES=["kat_bark","kat_cheer","kat_crouch","kat_dizzy","kat_down","kat_down_heavy","kat_hack","kat_hack2","kat_hack_low","kat_idle0","kat_idle1","kat_idle2","kat_idle3","kat_idle4","kat_idle5","kat_idle6","kat_leap","kat_leap2","kat_leap_low","kat_look","kat_pounce","kat_pounce2","kat_pounce_low","kat_roll","kat_shield","kat_sleep","kat_stand","kat_strike","kat_wall_hit","man_bark","man_crouch","man_down","man_down_wall","man_hack","man_idle0","man_idle1","man_idle2","man_idle3","man_idle4","man_idle5","man_idle6","man_leap","man_look","man_pounce","man_roll","man_shield","man_strike","man_wall_down","man_wall_hit"];
   DOG_FRAMES.forEach(function(n){PNG_ASSETS.push("assets/v736/katrin_manchez/"+n+".png");});
   var JSON_ASSETS=["assets/campaign/production_source_manifest.json","assets/v736/katrin_manchez_manifest.json"];
-  var images={},loadedScripts={},failedScripts={},json={};
+  var images={},loadedScripts={},failedScripts={},failedImages={},failedJSON={},json={};
+
   function scriptAlready(src){try{return Array.prototype.some.call(root.document.scripts||[],function(s){return (s.getAttribute("src")||"").split("?")[0]===src;});}catch(e){return false;}}
   function loadScript(src){return new Promise(function(resolve){try{
-    if(scriptAlready(src)){loadedScripts[src]=true;resolve(true);return;}
+    if(scriptAlready(src)){loadedScripts[src]=true;delete failedScripts[src];resolve(true);return;}
     var s=root.document.createElement("script");s.src=src;s.async=false;s.dataset.productionAsset=src;
-    s.onload=function(){loadedScripts[src]=true;resolve(true);};s.onerror=function(){failedScripts[src]=true;resolve(false);};
+    s.onload=function(){loadedScripts[src]=true;delete failedScripts[src];resolve(true);};
+    s.onerror=function(){failedScripts[src]=true;resolve(false);};
     (root.document.head||root.document.documentElement).appendChild(s);
   }catch(e){failedScripts[src]=true;resolve(false);}});}
-  function preloadImage(src){return new Promise(function(resolve){try{var im=new Image();images[src]=im;im.onload=function(){resolve(true);};im.onerror=function(){resolve(false);};im.src=src;}catch(e){resolve(false);}});}
-  function loadJSON(src){return root.fetch?root.fetch(src).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(v){json[src]=v;return true;}).catch(function(){return false;}):Promise.resolve(false);}
+  function preloadImage(src){return new Promise(function(resolve){try{
+    var im=new Image();images[src]=im;
+    im.onload=function(){delete failedImages[src];resolve(true);};
+    im.onerror=function(){failedImages[src]=true;resolve(false);};
+    im.src=src;
+  }catch(e){failedImages[src]=true;resolve(false);}});}
+  function loadJSON(src){
+    if(!root.fetch){failedJSON[src]=true;return Promise.resolve(false);}
+    return root.fetch(src).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+      .then(function(v){json[src]=v;delete failedJSON[src];return true;})
+      .catch(function(){failedJSON[src]=true;return false;});
+  }
+  function failures(){return{
+    scripts:Object.keys(failedScripts),
+    images:Object.keys(failedImages),
+    json:Object.keys(failedJSON)
+  };}
+  function flatFailures(){var f=failures();return f.scripts.concat(f.images,f.json);}
+  function publish(){
+    root.__productionAssetImages=images;
+    root.__productionAssetJSON=json;
+    root.__productionAssetInventory={scripts:SCRIPT_ASSETS.slice(),sourceParts:SOURCE_PARTS.slice(),png:PNG_ASSETS.slice(),json:JSON_ASSETS.slice()};
+    root.__productionAssetFailures=failures();
+    root.__allProductionAssetsIntegrated=flatFailures().length===0;
+    return root.__allProductionAssetsIntegrated;
+  }
   async function install(){
     if(root.__allProductionAssetsIntegrated)return true;
     for(var i=0;i<SOURCE_PARTS.length;i++)await loadScript(SOURCE_PARTS[i]);
     for(var j=0;j<SCRIPT_ASSETS.length;j++)await loadScript(SCRIPT_ASSETS[j]);
     await Promise.all(PNG_ASSETS.map(preloadImage));
     await Promise.all(JSON_ASSETS.map(loadJSON));
-    root.__productionAssetImages=images;root.__productionAssetJSON=json;
-    root.__productionAssetInventory={scripts:SCRIPT_ASSETS.slice(),sourceParts:SOURCE_PARTS.slice(),png:PNG_ASSETS.slice(),json:JSON_ASSETS.slice()};
-    root.__productionAssetFailures=Object.keys(failedScripts);
-    root.__allProductionAssetsIntegrated=Object.keys(failedScripts).length===0;
-    return root.__allProductionAssetsIntegrated;
+    return publish();
   }
-  function status(){return{version:VERSION,integrated:!!root.__allProductionAssetsIntegrated,scripts:SCRIPT_ASSETS.length,sourceParts:SOURCE_PARTS.length,png:PNG_ASSETS.length,json:JSON_ASSETS.length,failures:Object.keys(failedScripts)}};
+  function status(){var f=failures();return{
+    version:VERSION,
+    integrated:!!root.__allProductionAssetsIntegrated,
+    scripts:SCRIPT_ASSETS.length,
+    sourceParts:SOURCE_PARTS.length,
+    png:PNG_ASSETS.length,
+    json:JSON_ASSETS.length,
+    failures:f,
+    failureCount:f.scripts.length+f.images.length+f.json.length
+  };}
   root.TechOpsProductionAssets={VERSION:VERSION,SCRIPT_ASSETS:SCRIPT_ASSETS,SOURCE_PARTS:SOURCE_PARTS,PNG_ASSETS:PNG_ASSETS,JSON_ASSETS:JSON_ASSETS,install:install,status:status,images:images,json:json};
 })(typeof globalThis!=="undefined"?globalThis:this);
