@@ -25,7 +25,9 @@ jobs:
   repair:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.name == 'Runtime bot' && github.event.workflow_run.conclusion == 'failure')
+      (github.event.workflow_run.name == 'Runtime bot' &&
+       github.event.workflow_run.conclusion == 'failure' &&
+       !startsWith(github.event.workflow_run.head_branch, 'runtime-fix/'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
