@@ -13,6 +13,7 @@ const tests = [
   "test_good_boys_mobile_launch_guard.js",
   "test_production_mode_router.js",
   "test_production_runtime_safety.js",
+  "test_production_compositor.js",
   "test_mobile_production_tester.js",
   "test_production_performance_budget.js",
   "test_production_asset_registry.js",
