@@ -1,23 +1,23 @@
-/* TechOps Hero — production runtime bootstrap v7.
- * Builds the alternate-mode compositor exactly once. The legacy production
- * feature modules were written with periodic "install if marker missing"
- * maintenance loops; when multiple modules wrap the same function those loops
- * can eventually form A -> B -> A recursion. Their initial installers are all
- * retained, but those wrapper-maintenance intervals are intentionally parked.
+/* TechOps Hero — production runtime bootstrap v8.
+ * Installs the stable Night compositor BEFORE any alternate-mode feature can
+ * capture drawNM/stepNM. Feature modules still run their synchronous initial
+ * setup, but their periodic wrapper-maintenance timers are parked. Because the
+ * stable compositor advertises every feature marker, later installers cannot
+ * wrap one another into an A -> B -> A recursion chain.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=7,started=false,done=false;
+  var VERSION=8,started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
     "good_boys_campaign_assets.js",
+    "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",
     "good_boys_reference_mechanics.js",
     "good_boys_canon_runtime.js",
     "good_boys_gameplay_loop.js",
-    "production_wrapper_guard.js",
     "good_boys_mobile_launch_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
@@ -51,9 +51,9 @@
       if(!deferOn)return;deferOn=false;
       if(nativeSetInterval)root.setInterval=nativeSetInterval;
       if(nativeClearInterval)root.clearInterval=nativeClearInterval;
-      /* Do not restart the deferred feature-maintenance loops. Their initial
-         tick/install already ran synchronously while each module loaded, and
-         production_wrapper_guard now owns compositor liveness. */
+      /* Do not restart deferred feature-maintenance loops. Their synchronous
+         setup already ran, and production_wrapper_guard owns compositor
+         liveness from an immutable pre-feature Night chain. */
       for(var i=0;i<deferred.length;i++)deferred[i].cancelled=true;
       root.__productionParkedMaintenanceTimers=deferred.length;
       root.__productionTimersDeferred=false;
@@ -69,6 +69,8 @@
         }
         await load(src);
         if(src===FREEZE_AT){
+          /* This now executes before feature wrappers. The captured base chain
+             is therefore immutable and cannot already contain a wrapper cycle. */
           try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}
           parkTimers();
         }
