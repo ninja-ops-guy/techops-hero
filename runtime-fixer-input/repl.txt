@@ -1,0 +1,1333 @@
+[2026-08-27T20:29:13.320Z] > launch iphone-webkit :: nightcrawler
+
+[2026-08-27T20:29:25.764Z] > iphone-webkit clicked
+"🌙 NIGHT CRAWLER"
+
+[2026-08-27T20:29:33.964Z] > iphone-webkit nightcrawler state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "🛰️",
+    "🔇",
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "🌱 Intern",
+    "🧰 Standard",
+    "🔥 On-Call",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": true,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "▲\n◀\n▶\n▼\n👊\n☰\n⚡ DASH\n🛡️ BLOCK\n🌃 NIGHT CRAWL\nNEW HAVEN STREETS — clear them, then head home\n",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "char": "nightcrawler",
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "downtown",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": false,
+    "referenceHud": false,
+    "referenceScale": null,
+    "phase": null,
+    "stageAuthority": null,
+    "loop": false
+  },
+  "canvas": {
+    "ok": true,
+    "width": 332,
+    "height": 720,
+    "nonBlack": 37505,
+    "alpha": 38160,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "nightcrawler",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:29:33.965Z] > WARN nightcrawler: third-party media widget errors
+{
+  "profileName": "iphone-webkit",
+  "pageErrors": [
+    "InvalidStateError: The object is in an invalid state.\n    at createPattern (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:100203)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:50457)\n    at unknown (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:51648)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:80094)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:79402)"
+  ]
+}
+
+[2026-08-27T20:29:35.178Z] > iphone-webkit nightcrawler movement
+{
+  "x0": 110,
+  "x1": 110,
+  "delta": 0,
+  "inDialog": false
+}
+
+[2026-08-27T20:29:35.179Z] > FAIL nightcrawler: movement input did not move the player
+{
+  "profileName": "iphone-webkit",
+  "x0": 110,
+  "x1": 110,
+  "inDialog": false,
+  "cutsceneVisible": false
+}
+
+[2026-08-27T20:29:35.527Z] > iphone-webkit nightcrawler exercised state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "🛰️",
+    "🔇",
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "🌱 Intern",
+    "🧰 Standard",
+    "🔥 On-Call",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": true,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive▲\n◀\n▶\n▼\n👊\n☰\n⚡ DASH\n🛡️ BLOCK\n🌃 NIGHT CRAWL\nNEW HAVEN STREETS — clear them, then head home\n",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "char": "nightcrawler",
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "downtown",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": false,
+    "referenceHud": false,
+    "referenceScale": null,
+    "phase": null,
+    "stageAuthority": null,
+    "loop": false
+  },
+  "canvas": {
+    "ok": true,
+    "width": 332,
+    "height": 720,
+    "nonBlack": 37504,
+    "alpha": 38160,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "nightcrawler",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:29:37.174Z] > iphone-webkit nightcrawler liveness
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "🛰️",
+    "🔇",
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "🌱 Intern",
+    "🧰 Standard",
+    "🔥 On-Call",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": true,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive▲\n◀\n▶\n▼\n👊\n☰\n⚡ DASH\n🛡️ BLOCK\n🌃 NIGHT CRAWL\nNEW HAVEN STREETS — clear them, then head home\n",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "char": "nightcrawler",
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "downtown",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": false,
+    "referenceHud": false,
+    "referenceScale": null,
+    "phase": null,
+    "stageAuthority": null,
+    "loop": false
+  },
+  "canvas": {
+    "ok": true,
+    "width": 332,
+    "height": 720,
+    "nonBlack": 36952,
+    "alpha": 38160,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "nightcrawler",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:29:38.542Z] > launch iphone-webkit :: goodboys
+
+[2026-08-27T20:29:42.097Z] > iphone-webkit clicked
+"🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY"
+
+[2026-08-27T20:29:51.027Z] > iphone-webkit goodboys state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": true,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "▲\n◀\n▶\n▼\n👊\n☰\n⚡ DASH\n🛡️ BLOCK\n⇄ SWAP\nSYNC\nK SUPPORT\n⬆ BOOST\n⚡ AIR x2\n↗ THROW",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "goodboys_home",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": true,
+    "activeDog": "katrin",
+    "mission": 1,
+    "referenceHud": true,
+    "referenceScale": 1.55,
+    "phase": "arrival",
+    "stageAuthority": "concept_geometry_v1",
+    "loop": true
+  },
+  "canvas": {
+    "ok": true,
+    "width": 332,
+    "height": 720,
+    "nonBlack": 35624,
+    "alpha": 38160,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "goodboys",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:29:51.028Z] > WARN goodboys: third-party media widget errors
+{
+  "profileName": "iphone-webkit",
+  "pageErrors": [
+    "InvalidStateError: The object is in an invalid state.\n    at createPattern (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:101278)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:100203)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:50457)\n    at unknown (https://widget.sndcdn.com/widget-9-98da480ea19c.js:53:51648)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:80094)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:1:79402)"
+  ]
+}
+
+[2026-08-27T20:29:52.199Z] > iphone-webkit goodboys movement
+{
+  "x0": 110,
+  "x1": 340.0005092125868,
+  "delta": 230.0005092125868,
+  "inDialog": false
+}
+
+[2026-08-27T20:29:52.790Z] > iphone-webkit goodboys swap
+{
+  "from": "katrin",
+  "to": "manchez"
+}
+
+[2026-08-27T20:29:52.810Z] > iphone-webkit goodboys exercised state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": true,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "▲\n◀\n▶\n▼\n👊\n☰\n⚡ DASH\n🛡️ BLOCK\n⇄ SWAP\nSYNC\nK SUPPORT\n⬆ BOOST\n⚡ AIR x2\n↗ THROW",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "hasNM": true,
+    "nm": {
+      "x": 229.7171809451295,
+      "y": 396,
+      "vx": 0.000021584299989776457,
+      "vy": 0,
+      "district": "goodboys_home",
+      "street": 1,
+      "hp": 120,
+      "cam": 91.38384761179617
+    },
+    "pair": true,
+    "activeDog": "manchez",
+    "mission": 1,
+    "referenceHud": true,
+    "referenceScale": 1.55,
+    "phase": "arrival",
+    "stageAuthority": "concept_geometry_v1",
+    "loop": true
+  },
+  "canvas": {
+    "ok": true,
+    "width": 332,
+    "height": 720,
+    "nonBlack": 35363,
+    "alpha": 38160,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "goodboys",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:29:54.447Z] > iphone-webkit goodboys liveness
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": true,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "▲\n◀\n▶\n▼\n👊\n☰\n⚡ DASH\n🛡️ BLOCK\n⇄ SWAP\nSYNC\nK SUPPORT\n⬆ BOOST\n⚡ AIR x2\n↗ THROW",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "hasNM": true,
+    "nm": {
+      "x": 229.71721269685705,
+      "y": 396,
+      "vx": 3.052286620438805e-17,
+      "vy": 0,
+      "district": "goodboys_home",
+      "street": 1,
+      "hp": 120,
+      "cam": 91.3838793635237
+    },
+    "pair": true,
+    "activeDog": "manchez",
+    "mission": 1,
+    "referenceHud": true,
+    "referenceScale": 1.55,
+    "phase": "arrival",
+    "stageAuthority": "concept_geometry_v1",
+    "loop": true
+  },
+  "canvas": {
+    "ok": true,
+    "width": 332,
+    "height": 720,
+    "nonBlack": 35651,
+    "alpha": 38160,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "goodboys",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:29:55.635Z] > launch desktop-chromium :: nightcrawler
+
+[2026-08-27T20:29:58.872Z] > desktop-chromium clicked
+"🌙 NIGHT CRAWLER"
+
+[2026-08-27T20:30:06.778Z] > desktop-chromium nightcrawler state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "🛰️",
+    "🔇",
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "🌱 Intern",
+    "🧰 Standard",
+    "🔥 On-Call",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "A",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": false,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "🌃 NIGHT CRAWL\nNEW HAVEN STREETS — clear them, then head home",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "char": "nightcrawler",
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "downtown",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": false,
+    "referenceHud": false,
+    "referenceScale": null,
+    "phase": null,
+    "stageAuthority": null,
+    "loop": false
+  },
+  "canvas": {
+    "ok": true,
+    "width": 1152,
+    "height": 720,
+    "nonBlack": 132624,
+    "alpha": 132624,
+    "range": 243
+  },
+  "cutsceneVisible": false,
+  "mode": "nightcrawler",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:30:06.778Z] > FAIL nightcrawler: uncaught first-party page errors
+{
+  "profileName": "desktop-chromium",
+  "pageErrors": [
+    "RangeError: Maximum call stack size exceeded\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_canon_runtime.js:1:1)\n    at root.drawNM (http://127.0.0.1:4173/good_boys_gameplay_loop.js:1:1)"
+  ]
+}
+
+[2026-08-27T20:30:06.778Z] > WARN nightcrawler: third-party media widget errors
+{
+  "profileName": "desktop-chromium",
+  "pageErrors": [
+    "Uncaught InvalidStateError: Failed to execute 'createPattern' on 'CanvasRenderingContext2D': The image argument is a canvas element with a width or height of 0.\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:101264)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:100198)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:50452)\n    at e.each.t.<computed> (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:51646)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:80089)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:79395)"
+  ]
+}
+
+[2026-08-27T20:30:07.978Z] > desktop-chromium nightcrawler movement
+{
+  "x0": 110,
+  "x1": 110,
+  "delta": 0,
+  "inDialog": false
+}
+
+[2026-08-27T20:30:07.978Z] > FAIL nightcrawler: movement input did not move the player
+{
+  "profileName": "desktop-chromium",
+  "x0": 110,
+  "x1": 110,
+  "inDialog": false,
+  "cutsceneVisible": false
+}
+
+[2026-08-27T20:30:08.313Z] > desktop-chromium nightcrawler exercised state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "🛰️",
+    "🔇",
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "🌱 Intern",
+    "🧰 Standard",
+    "🔥 On-Call",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "A",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": false,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive\n🌃 NIGHT CRAWL\nNEW HAVEN STREETS — clear them, then head home",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "char": "nightcrawler",
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "downtown",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": false,
+    "referenceHud": false,
+    "referenceScale": null,
+    "phase": null,
+    "stageAuthority": null,
+    "loop": false
+  },
+  "canvas": {
+    "ok": true,
+    "width": 1152,
+    "height": 720,
+    "nonBlack": 132624,
+    "alpha": 132624,
+    "range": 243
+  },
+  "cutsceneVisible": false,
+  "mode": "nightcrawler",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:30:09.935Z] > desktop-chromium nightcrawler liveness
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "🛰️",
+    "🔇",
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "🌱 Intern",
+    "🧰 Standard",
+    "🔥 On-Call",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "A",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": false,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive\n🌃 NIGHT CRAWL\nNEW HAVEN STREETS — clear them, then head home",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "char": "nightcrawler",
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "downtown",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": false,
+    "referenceHud": false,
+    "referenceScale": null,
+    "phase": null,
+    "stageAuthority": null,
+    "loop": false
+  },
+  "canvas": {
+    "ok": true,
+    "width": 1152,
+    "height": 720,
+    "nonBlack": 132624,
+    "alpha": 132624,
+    "range": 243
+  },
+  "cutsceneVisible": false,
+  "mode": "nightcrawler",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:30:10.802Z] > launch desktop-chromium :: goodboys
+
+[2026-08-27T20:30:13.762Z] > desktop-chromium clicked
+"🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY"
+
+[2026-08-27T20:30:22.317Z] > desktop-chromium goodboys state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": false,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "⚡ DASH\n🛡️ BLOCK\n⇄ SWAP\nSYNC\nK SUPPORT\n⬆ BOOST\n⚡ AIR x2\n↗ THROW",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "hasNM": true,
+    "nm": {
+      "x": 110,
+      "y": 396,
+      "vx": 0,
+      "vy": 0,
+      "district": "goodboys_home",
+      "street": 1,
+      "hp": 100,
+      "cam": 0
+    },
+    "pair": true,
+    "activeDog": "katrin",
+    "mission": 1,
+    "referenceHud": true,
+    "referenceScale": 1.55,
+    "phase": "arrival",
+    "stageAuthority": "concept_geometry_v1",
+    "loop": true
+  },
+  "canvas": {
+    "ok": true,
+    "width": 1152,
+    "height": 720,
+    "nonBlack": 125697,
+    "alpha": 132624,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "goodboys",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:30:22.317Z] > WARN goodboys: third-party media widget errors
+{
+  "profileName": "desktop-chromium",
+  "pageErrors": [
+    "Uncaught InvalidStateError: Failed to execute 'createPattern' on 'CanvasRenderingContext2D': The image argument is a canvas element with a width or height of 0.\n    at f (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:101264)\n    at draw (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:100198)\n    at i (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:50452)\n    at e.each.t.<computed> (https://widget.sndcdn.com/widget-9-98da480ea19c.js:52:51646)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:80089)\n    at update (https://widget.sndcdn.com/widget-0-6b4c6170cc3c.js:0:79395)"
+  ]
+}
+
+[2026-08-27T20:30:23.660Z] > desktop-chromium goodboys movement
+{
+  "x0": 110,
+  "x1": 383.11708053620026,
+  "delta": 273.11708053620026,
+  "inDialog": false
+}
+
+[2026-08-27T20:30:24.435Z] > desktop-chromium goodboys swap
+{
+  "from": "katrin",
+  "to": "manchez"
+}
+
+[2026-08-27T20:30:24.498Z] > desktop-chromium goodboys exercised state
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": false,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "⚡ DASH\n🛡️ BLOCK\n⇄ SWAP\nSYNC\nK SUPPORT\n⬆ BOOST\n⚡ AIR x2\n↗ THROW",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "hasNM": true,
+    "nm": {
+      "x": 276.37524822585294,
+      "y": 326,
+      "vx": 0.00036655101756879587,
+      "vy": 0,
+      "district": "goodboys_home",
+      "street": 1,
+      "hp": 120,
+      "cam": 0
+    },
+    "pair": true,
+    "activeDog": "manchez",
+    "mission": 1,
+    "referenceHud": true,
+    "referenceScale": 1.55,
+    "phase": "arrival",
+    "stageAuthority": "concept_geometry_v1",
+    "loop": true
+  },
+  "canvas": {
+    "ok": true,
+    "width": 1152,
+    "height": 720,
+    "nonBlack": 123205,
+    "alpha": 132624,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "goodboys",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
+
+[2026-08-27T20:30:26.193Z] > desktop-chromium goodboys liveness
+{
+  "url": "http://127.0.0.1:4173/",
+  "title": "TechOps Hero — Production v1.2",
+  "buttons": [
+    "⚙️",
+    "🎬",
+    "☰",
+    "–",
+    "✕",
+    "▶ CLOCK IN",
+    "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY",
+    "🌙 NIGHT CRAWLER",
+    "▲",
+    "◀",
+    "▶",
+    "▼",
+    "👊",
+    "☰",
+    "⇄ SWAP",
+    "SYNC",
+    "K SUPPORT",
+    "⬆ BOOST",
+    "⚡ AIR x2",
+    "↗ THROW",
+    "⚡ DASH",
+    "🐾 ATTACK",
+    "🛡 BLOCK",
+    "⇄ SWAP",
+    "⬆ BOOST",
+    "🤝 THROW",
+    "🐾 SYNC",
+    "K SUPPORT"
+  ],
+  "titleVisible": false,
+  "hudVisible": false,
+  "touchVisible": false,
+  "recoveryVisible": false,
+  "toast": "🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive",
+  "bodyText": "⚡ DASH\n🛡️ BLOCK\n⇄ SWAP\nSYNC\nK SUPPORT\n⬆ BOOST\n⚡ AIR x2\n↗ THROW",
+  "runtime": {
+    "hasS": true,
+    "nightMode": true,
+    "inDialog": false,
+    "clock": 1080,
+    "hasNM": true,
+    "nm": {
+      "x": 276.3763703273082,
+      "y": 326,
+      "vx": 2.55341168870922e-16,
+      "vy": 0,
+      "district": "goodboys_home",
+      "street": 1,
+      "hp": 120,
+      "cam": 0
+    },
+    "pair": true,
+    "activeDog": "manchez",
+    "mission": 1,
+    "referenceHud": true,
+    "referenceScale": 1.55,
+    "phase": "arrival",
+    "stageAuthority": "concept_geometry_v1",
+    "loop": true
+  },
+  "canvas": {
+    "ok": true,
+    "width": 1152,
+    "height": 720,
+    "nonBlack": 125680,
+    "alpha": 132624,
+    "range": 255
+  },
+  "cutsceneVisible": false,
+  "mode": "goodboys",
+  "routerError": null,
+  "safetyError": null,
+  "goodBoysError": null,
+  "wrapperGuard": true,
+  "wrapperHealth": {
+    "version": 6,
+    "installed": true,
+    "draw": true,
+    "step": true,
+    "baseSource": "final-parser",
+    "singleCompositor": true,
+    "globalDrawAligned": true,
+    "globalStepAligned": true,
+    "recursiveDrawBlocked": 0,
+    "recursiveStepBlocked": 0,
+    "staleDialogRepairs": 0,
+    "parserChainPreserved": true,
+    "installError": null
+  },
+  "runtimeLock": true,
+  "runtimeLockError": null,
+  "lexicalBridge": 3
+}
