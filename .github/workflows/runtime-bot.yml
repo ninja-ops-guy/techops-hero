@@ -9,7 +9,7 @@ on:
       - "*.html"
       - "*.css"
       - "package.json"
-      - "scripts/runtime_bot.mjs"
+      - "scripts/**"
       - ".github/workflows/runtime-bot.yml"
   pull_request:
     branches: [main]
@@ -35,7 +35,7 @@ concurrency:
 jobs:
   browser-runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
 
@@ -72,13 +72,32 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Add report to workflow summary
+      - name: Run Good Boys progression bot
+        id: progression
+        continue-on-error: true
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
+        run: |
+          set +e
+          node scripts/good_boys_progression_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Add reports to workflow summary
         if: always()
         run: |
           if [ -f runtime-bot-artifacts/report.md ]; then
             cat runtime-bot-artifacts/report.md >> "$GITHUB_STEP_SUMMARY"
           else
             printf '# Runtime bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f runtime-bot-artifacts/goodboys-progression.md ]; then
+            cat runtime-bot-artifacts/goodboys-progression.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '# Good Boys Progression Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload REPL, screenshots and traces
@@ -91,21 +110,22 @@ jobs:
           retention-days: 14
 
       - name: Report failure to GitHub issue
-        if: always() && github.event_name != 'pull_request' && steps.bot.outputs.exit_code != '0'
+        if: always() && github.event_name != 'pull_request' && (steps.bot.outputs.exit_code != '0' || steps.progression.outputs.exit_code != '0')
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           title="Runtime Bot: playable-mode regression"
-          body_file="runtime-bot-artifacts/report.md"
           issue="$(gh issue list --state open --json number,title --jq '.[] | select(.title=="Runtime Bot: playable-mode regression") | .number' | head -n1)"
           {
             echo
             echo "Commit: \`$SHA\`"
             echo "Run: $RUN_URL"
             echo
-            [ -f "$body_file" ] && cat "$body_file" || echo "Runtime bot failed before producing its report."
+            [ -f runtime-bot-artifacts/report.md ] && cat runtime-bot-artifacts/report.md || echo "Runtime mode report missing."
+            echo
+            [ -f runtime-bot-artifacts/goodboys-progression.md ] && cat runtime-bot-artifacts/goodboys-progression.md || echo "Progression report missing."
           } > /tmp/runtime-bot-issue.md
           if [ -n "$issue" ]; then
             gh issue comment "$issue" --body-file /tmp/runtime-bot-issue.md
@@ -117,3 +137,4 @@ jobs:
         if: always()
         run: |
           test "${{ steps.bot.outputs.exit_code }}" = "0"
+          test "${{ steps.progression.outputs.exit_code }}" = "0"
