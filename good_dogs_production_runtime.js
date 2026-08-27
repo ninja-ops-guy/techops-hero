@@ -1,4 +1,4 @@
-/* TechOps Hero — production Good Dogs co-op authority v2.
+/* TechOps Hero — production Good Dogs co-op authority v3.
  * Reference lock: user-supplied Katrin/Manchez sheets + Good Dogs Protocol UI direction.
  * Goals:
  *  - the 118/1984 side story always plays as Katrin + Manchez;
@@ -6,11 +6,15 @@
  *  - locomotion uses neutral dog frames only; actions use matching authored frames;
  *  - mobile HUD reads as a two-character co-op game, not the Day Shift HUD;
  *  - blue Katrin / amber Manchez visual language remains consistent.
+ *
+ * v3: production rendering is compositor-owned. This module exports its HUD
+ * callback and installs its non-render authorities once, but never wraps drawNM
+ * or starts wrapper-maintenance intervals when the production compositor exists.
  */
 (function(root){
   "use strict";
   if (!root || root.TechOpsGoodDogsProduction) return;
-  var VERSION = 2;
+  var VERSION = 3;
   var gdImage = null;
   var starting = false;
   var baseEnterNight = null;
@@ -23,6 +27,7 @@
     bg:"rgba(4,8,14,.90)", line:"rgba(120,210,255,.28)", text:"#eff8ff"
   };
 
+  function productionCompositorActive(){try{return !!(root.TechOpsProductionWrapperGuard||root.__productionSingleCompositor||root.__productionCompositorPlanned);}catch(e){return false;}}
   function atlas(){ return root.KATRIN_MANCHEZ || null; }
   function atlasReady(){
     try{
@@ -162,6 +167,7 @@
 
   function installHudAuthority(){
     try{
+      if(productionCompositorActive())return false;
       if(typeof root.drawNM!=="function"||root.drawNM.__goodDogsHud)return false;
       baseDrawNM=root.drawNM;
       root.drawNM=function(){var r=baseDrawNM.apply(this,arguments);try{if(campaign()&&root.ctx&&root.NM)drawReferenceHUD(root.ctx,root.NM);}catch(e){}return r;};
@@ -194,6 +200,6 @@
   }
 
   function tick(){normalizePartnerIdleFrames();installStartCapture();installEntryFix();installPlayerAuthority();installHudAuthority();ensureCampaignCss();ensureMobileControls();}
-  tick();var timer=null;try{timer=root.setInterval(tick,300);}catch(e){}
-  root.TechOpsGoodDogsProduction={VERSION:VERSION,COLORS:COLORS,atlasReady:atlasReady,conservativeFrame:conservativeFrame,drawActiveDog:drawActiveDog,drawReferenceHUD:drawReferenceHUD,normalizePartnerIdleFrames:normalizePartnerIdleFrames,markStarting:markStarting,installEntryFix:installEntryFix,installStartCapture:installStartCapture,installPlayerAuthority:installPlayerAuthority,installHudAuthority:installHudAuthority,ensureCampaignCss:ensureCampaignCss,ensureMobileControls:ensureMobileControls,tick:tick,timer:timer};
+  tick();var timer=null;try{if(!productionCompositorActive())timer=root.setInterval(tick,300);}catch(e){}
+  root.TechOpsGoodDogsProduction={VERSION:VERSION,COLORS:COLORS,productionCompositorActive:productionCompositorActive,atlasReady:atlasReady,conservativeFrame:conservativeFrame,drawActiveDog:drawActiveDog,drawReferenceHUD:drawReferenceHUD,normalizePartnerIdleFrames:normalizePartnerIdleFrames,markStarting:markStarting,installEntryFix:installEntryFix,installStartCapture:installStartCapture,installPlayerAuthority:installPlayerAuthority,installHudAuthority:installHudAuthority,ensureCampaignCss:ensureCampaignCss,ensureMobileControls:ensureMobileControls,tick:tick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
