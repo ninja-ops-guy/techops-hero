@@ -1,12 +1,16 @@
-/* Good Boys gameplay-loop authority v3.
+/* Good Boys gameplay-loop authority v4.
  * Approved concept sheets are production authority:
  * sheet 3 = moment-to-moment HUD/gameplay, sheet 2 = mechanics/level design,
  * sheet 1 = campaign progression/environment language.
+ *
+ * v4: production never owns drawNM/stepNM wrappers here. The stable production
+ * compositor invokes the exported draw/step callbacks, and the mode router
+ * refreshes state/UI. Legacy standalone entrypoints retain wrapper behavior.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysGameplayLoop)return;
-  var VERSION=3,baseDraw=null,baseStep=null,style=null,controls=null;
+  var VERSION=4,baseDraw=null,baseStep=null,style=null,controls=null;
   var PHASES={
     1:{id:"arrival",label:"ARRIVAL / THE INCIDENT",objective:"Cross the breach. Reach the shuttle.",accent:"#38bdf8",hazard:"pressure",bg:"orbital_gate"},
     2:{id:"traversal",label:"HULL BREACH",objective:"Use boost jumps and two air dashes to cross the transit spine.",accent:"#38bdf8",hazard:"debris",bg:"orbital_gate"},
@@ -31,6 +35,7 @@
     8:{platforms:[[300,340,240],[650,300,220],[1010,335,250],[1370,300,220]],hazards:[],landmarks:[{x:1450,label:"EARTHFALL",kind:"earth"}]}
   };
   var COLORS={katrin:"#22b8ff",manchez:"#ff9f1c",green:"#3cff78",red:"#ff4055",panel:"rgba(2,7,13,.96)",text:"#eef8ff"};
+  function productionCompositorActive(){try{return !!(root.TechOpsProductionWrapperGuard||root.__productionSingleCompositor||root.__productionCompositorPlanned);}catch(e){return false;}}
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
   function mission(){var c=cs();try{return Math.max(1,Math.min(8,Number(c&&c.m||root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||1)));}catch(e){return 1;}}
@@ -57,10 +62,10 @@
   function drawStageAccents(x){try{if(!active())return;var p=phase(),s=stage(),floor=430,cam=Number(root.NM&&root.NM.cam||0);x.save();s.hazards.forEach(function(h){var sx=h[0]-cam;x.fillStyle="rgba(255,85,30,.20)";x.fillRect(sx,floor-11,h[1],11);x.strokeStyle="#ff7a2a";x.lineWidth=2;x.beginPath();x.moveTo(sx,floor-12);x.lineTo(sx+h[1],floor-12);x.stroke();});s.landmarks.forEach(function(l){drawLandmark(x,l,p);});/* foreground rails/pipes create the concept-sheet depth layer */x.globalAlpha=.72;x.fillStyle="#071019";x.fillRect(0,floor+22,x.canvas.width,34);x.strokeStyle=p.accent;x.globalAlpha=.22;for(var q=-((cam*.35)%120);q<x.canvas.width;q+=120){x.fillRect(q,floor+8,10,52);x.strokeRect(q,floor+8,10,52);}x.restore();}catch(e){}}
   function drawLoopOverlay(x){try{if(!active())return;var p=phase(),W=x.canvas.width,H=x.canvas.height,compact=W<720;x.save();x.fillStyle="rgba(1,5,9,.97)";x.fillRect(0,0,W,compact?104:92);drawDogCard(x,"katrin",true,W,compact);drawDogCard(x,"manchez",false,W,compact);var centerW=Math.min(compact?W-286:360,W*.46),cx=(W-centerW)/2;if(centerW>80){x.fillStyle=COLORS.panel;x.strokeStyle=p.accent;x.lineWidth=1;rr(x,cx,8,centerW,compact?48:56,7);x.fill();x.stroke();x.textAlign="center";x.fillStyle=p.accent;x.font="bold "+(compact?8:10)+"px monospace";x.fillText(p.label,W/2,23);x.fillStyle="#e8f5ff";x.font="bold "+(compact?6:8)+"px monospace";x.fillText(p.objective,W/2,40);}drawLinkStatus(x,W,compact?73:67,compact);var ow=Math.min(W*.72,520),ox=(W-ow)/2,oy=compact?108:98;x.fillStyle="rgba(2,7,13,.84)";x.strokeStyle=p.accent;rr(x,ox,oy,ow,compact?26:30,6);x.fill();x.stroke();x.fillStyle="#e8f5ff";x.textAlign="center";x.font="bold "+(compact?7:8)+"px monospace";x.fillText("OBJECTIVE · "+p.objective,W/2,oy+17);x.restore();}catch(e){}}
   function enforceBackdrop(){try{if(!active()||!root.NM_BG734)return false;var p=phase(),im=root.NM_BG734[p.bg]||root.NM_BG734.orbital_gate;if(im)root.NM_BG734.orbital=im;return !!im;}catch(e){return false;}}
-  function installDraw(){try{if(typeof root.drawNM!=="function"||root.drawNM.__goodBoysGameplayLoop)return false;baseDraw=root.drawNM;root.drawNM=function(){var r=baseDraw.apply(this,arguments);try{if(active()&&root.ctx){drawStageAccents(root.ctx);drawLoopOverlay(root.ctx);}}catch(_){}return r;};root.drawNM.__goodBoysGameplayLoop=true;return true;}catch(e){return false;}}
-  function installStep(){try{if(typeof root.stepNM!=="function"||root.stepNM.__goodBoysGameplayLoop)return false;baseStep=root.stepNM;root.stepNM=function(){var r=baseStep.apply(this,arguments);try{if(active()){configureStage();applyHazards();}}catch(_){}return r;};root.stepNM.__goodBoysGameplayLoop=true;return true;}catch(e){return false;}}
-  function acceptance(){var c=cs(),n=root.NM,p=phase(),s=stage();return{active:active(),mission:mission(),phase:p.id,paired:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner),orbital:!!(n&&((n.district==="orbital")||mission()===8)),playerFinite:!!(n&&isFinite(n.x)&&isFinite(n.y)),sync:Math.round(c&&c.sync||0),hudAuthority:"concept_v3",stageAuthority:n&&n._goodBoysStageAuthority||null,platforms:s.platforms.length,hazards:s.hazards.length,controls:8,referenceScale:Number(n&&n._goodBoysReferenceScale||0)};}
+  function installDraw(){try{if(productionCompositorActive())return false;if(typeof root.drawNM!=="function"||root.drawNM.__goodBoysGameplayLoop)return false;baseDraw=root.drawNM;root.drawNM=function(){var r=baseDraw.apply(this,arguments);try{if(active()&&root.ctx){drawStageAccents(root.ctx);drawLoopOverlay(root.ctx);}}catch(_){}return r;};root.drawNM.__goodBoysGameplayLoop=true;return true;}catch(e){return false;}}
+  function installStep(){try{if(productionCompositorActive())return false;if(typeof root.stepNM!=="function"||root.stepNM.__goodBoysGameplayLoop)return false;baseStep=root.stepNM;root.stepNM=function(){var r=baseStep.apply(this,arguments);try{if(active()){configureStage();applyHazards();}}catch(_){}return r;};root.stepNM.__goodBoysGameplayLoop=true;return true;}catch(e){return false;}}
+  function acceptance(){var c=cs(),n=root.NM,p=phase(),s=stage();return{active:active(),mission:mission(),phase:p.id,paired:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner),orbital:!!(n&&((n.district==="orbital")||mission()===8)),playerFinite:!!(n&&isFinite(n.x)&&isFinite(n.y)),sync:Math.round(c&&c.sync||0),hudAuthority:"concept_v4",stageAuthority:n&&n._goodBoysStageAuthority||null,platforms:s.platforms.length,hazards:s.hazards.length,controls:8,referenceScale:Number(n&&n._goodBoysReferenceScale||0),productionManaged:productionCompositorActive()};}
   function tick(){ensureStyle();ensureControls();applyBodyMode();if(active()){repairState();enforceBackdrop();configureStage();}installDraw();installStep();}
-  tick();var timer=null;try{timer=root.setInterval(tick,100);}catch(e){}
-  root.TechOpsGoodBoysGameplayLoop={VERSION:VERSION,PHASES:PHASES,STAGES:STAGES,phase:phase,stage:stage,mission:mission,active:active,repairState:repairState,configureStage:configureStage,applyHazards:applyHazards,ensureControls:ensureControls,drawStageAccents:drawStageAccents,drawLoopOverlay:drawLoopOverlay,enforceBackdrop:enforceBackdrop,installDraw:installDraw,installStep:installStep,acceptance:acceptance,tick:tick,timer:timer};
+  tick();var timer=null;try{if(!productionCompositorActive())timer=root.setInterval(tick,100);}catch(e){}
+  root.TechOpsGoodBoysGameplayLoop={VERSION:VERSION,PHASES:PHASES,STAGES:STAGES,phase:phase,stage:stage,mission:mission,active:active,productionCompositorActive:productionCompositorActive,repairState:repairState,configureStage:configureStage,applyHazards:applyHazards,ensureControls:ensureControls,drawStageAccents:drawStageAccents,drawLoopOverlay:drawLoopOverlay,enforceBackdrop:enforceBackdrop,installDraw:installDraw,installStep:installStep,acceptance:acceptance,tick:tick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
