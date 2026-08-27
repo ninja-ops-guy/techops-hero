@@ -17,12 +17,23 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
  */
 (function(root){
   root.__productionCompositorPlanned=true;
-  var BUILD="20260827-goodboys-combos-v2";
+  var BUILD="20260827-goodboys-director-v1";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
     root.__techopsFinalParserChainReady=!!(root.__techopsFinalParserDrawNM&&root.__techopsFinalParserStepNM);
     return root.__techopsFinalParserChainReady;
+  }
+  function loadDirector(){
+    try{
+      var old=document.querySelector('script[data-good-boys-campaign-director]');if(old&&old.parentNode)old.parentNode.removeChild(old);
+      var d=document.createElement('script');
+      d.src='good_boys_campaign_director.js?v='+BUILD;
+      d.async=false;
+      d.dataset.goodBoysCampaignDirector='1';
+      d.onerror=function(){root.__goodBoysCampaignDirectorWireError='good_boys_campaign_director.js';};
+      (document.head||document.documentElement).appendChild(d);
+    }catch(e){root.__goodBoysCampaignDirectorWireError=String(e&&e.stack||e);}
   }
   function loadGoodBoysFix(){
     try{
@@ -31,9 +42,10 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
       f.src='good_boys_mobile_runtime_fix.js?v='+BUILD;
       f.async=false;
       f.dataset.goodBoysMobileRuntimeFix='1';
-      f.onerror=function(){root.__goodBoysMobileRuntimeFixWireError='good_boys_mobile_runtime_fix.js';};
+      f.onload=loadDirector;
+      f.onerror=function(){root.__goodBoysMobileRuntimeFixWireError='good_boys_mobile_runtime_fix.js';loadDirector();};
       (document.head||document.documentElement).appendChild(f);
-    }catch(e){root.__goodBoysMobileRuntimeFixWireError=String(e&&e.stack||e);}
+    }catch(e){root.__goodBoysMobileRuntimeFixWireError=String(e&&e.stack||e);loadDirector();}
   }
   function loadRuntimeLock(){
     try{
