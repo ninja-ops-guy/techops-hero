@@ -1,12 +1,17 @@
-/* Good Boys campaign asset authority v3 — production art only.
- * Reuses the painted campaign backgrounds and extracted production atlases.
+/* Good Boys campaign asset authority v4 — production art only.
+ * Bible law: exterior/earth scenes may alias painted campaign plates, while
+ * prison interiors are authored by the orbital-detention tileset and must not
+ * fall back to the old abstract orbital_eye/orbital_gate plates.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysCampaignAssets)return;
-  var VERSION=3;
+  var VERSION=4;
   var BG_SOURCE={
-    goodboys_home:"waldo_loft",goodboys_hangar:"waldo_garage",goodboys_approach:"orbital_gate",goodboys_breach:"orbital_gate",goodboys_cell118:"orbital_eye",goodboys_core:"orbital_eye",goodboys_cell1984:"orbital_eye",goodboys_escape:"orbital_gate",goodboys_earthfall:"waldo_loft"
+    goodboys_home:"waldo_loft",
+    goodboys_hangar:"waldo_garage",
+    goodboys_approach:"orbital_gate",
+    goodboys_earthfall:"waldo_loft"
   };
   var PRODUCTION={
     dogsAtlas:"assets/v736/katrin_manchez_atlas.png",dogsManifest:"assets/v736/katrin_manchez_manifest.json",katrinIdle:"assets/v736/katrin_manchez/kat_idle0.png",katrinAttack:"assets/v736/katrin_manchez/kat_strike.png",katrinShield:"assets/v736/katrin_manchez/kat_shield.png",katrinBark:"assets/v736/katrin_manchez/kat_bark.png",manchezIdle:"assets/v736/katrin_manchez/man_idle0.png",manchezAttack:"assets/v736/katrin_manchez/man_strike.png",manchezShield:"assets/v736/katrin_manchez/man_shield.png",manchezBark:"assets/v736/katrin_manchez/man_bark.png",
