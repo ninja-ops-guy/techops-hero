@@ -99,6 +99,7 @@ const accessCore = fs.readFileSync("good_boys_access_core_authority.js", "utf8")
 assert.ok(/Mission 5 is K's route-control breach/.test(accessCore));
 assert.ok(/function legacyMike/.test(accessCore) && /function purge/.test(accessCore) && /legacyMikeCount/.test(accessCore), "Access Core must continuously quarantine the legacy Mike Index boss");
 assert.ok(/_goodBoysNoMikeIndex/.test(accessCore) && /seedSecurity/.test(accessCore), "Access Core must replace the legacy boss with authored security pressure");
+assert.ok(/function syncState/.test(accessCore) && /c!==lastState/.test(accessCore) && /_gbAccessCoreSecuritySeeded=false/.test(accessCore), "Access Core retries must reset encounter seeding for each new _v736 state");
 
 const earthfall = fs.readFileSync("good_boys_earthfall_ending.js", "utf8");
 assert.ok(/ESCAPE BURN/.test(earthfall) && /EARTHFALL/.test(earthfall) && /WALDO'S PLACE/.test(earthfall) && /GOOD BOYS PROTOCOL — COMPLETE/.test(earthfall), "Earthfall must own the full return-home cinematic");
@@ -111,8 +112,9 @@ assert.ok(/good-boys-earthfall-cine/.test(progression), "Earthfall must particip
 
 const boot = fs.readFileSync("bg_noc.js", "utf8");
 assert.ok(boot.includes("good_boys_access_core_authority.js") && boot.includes("good_boys_earthfall_ending.js"), "production bootstrap must wire Access Core and Earthfall authorities");
-assert.ok(boot.indexOf("good_boys_access_core_authority.js") < boot.indexOf("good_boys_progression_authority.js"));
-assert.ok(boot.indexOf("good_boys_earthfall_ending.js") < boot.indexOf("good_boys_progression_authority.js"));
+assert.ok(/function loadAccessCore\(\)\{if\(!appendScript\([^\n]*good_boys_access_core_authority\.js[^\n]*loadEarthfall/.test(boot), "Access Core loader must hand off to Earthfall");
+assert.ok(/function loadEarthfall\(\)\{if\(!appendScript\([^\n]*good_boys_earthfall_ending\.js[^\n]*loadProgression/.test(boot), "Earthfall loader must hand off to progression");
+assert.ok(/function loadBibleWorld\(\)\{if\(!appendScript\([^\n]*good_boys_bible_world\.js[^\n]*loadAccessCore/.test(boot), "Bible World loader must hand off to Access Core");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
 assert.ok(worldSource.includes("good_dogs_production_runtime.js"));
