@@ -1,12 +1,12 @@
-/* Good Boys background authority v2.
+/* Good Boys background authority v3.
  * Campaign bible owns environment identity. One mission -> one district -> one
- * backdrop. This module is deliberately late-loaded so legacy Night/Good Boys
- * modules cannot win a background race by load order.
+ * backdrop. Persistent Good Boys campaign state is authoritative; runtime
+ * NM._v736.m is only a mirror and may be repaired by progression authority.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysBackgroundAuthority)return;
-  var VERSION=2,lastMission=0,lastKey="",repairs=0;
+  var VERSION=3,lastMission=0,lastKey="",repairs=0;
   var MAP={
     1:{key:"goodboys_home",district:"goodboys_home",scene:"WALDO'S PLACE — HOUSE / YARD / GARAGE",fallback:"waldo_loft"},
     2:{key:"goodboys_hangar",district:"goodboys_hangar",scene:"WALDO'S CONCEALED LAUNCH BAY",fallback:"waldo_garage"},
@@ -19,7 +19,7 @@
   };
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
-  function mission(){try{var c=cs(),m=c&&c.m||root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||1;return Math.max(1,Math.min(8,Number(m)||1));}catch(e){return 1;}}
+  function mission(){try{var p=root.TechOpsGoodBoysProgressionAuthority;if(p&&typeof p.mission==="function")return Number(p.mission())||1;var m=root.S&&root.S.meta&&root.S.meta._v736,c=cs(),v=Number(m&&m.m||c&&c.m||1);return Math.max(1,Math.min(8,v||1));}catch(e){return 1;}}
   function prisonPatch(){return root.TechOpsGoodBoysPrisonCinematicPatch;}
   function ensureGenerated(m){if(m<3||m>7)return true;try{var p=prisonPatch();if(p&&p.buildBackdrops)p.buildBackdrops();return !!(root.NM_BG734&&root.NM_BG734[MAP[m].key]);}catch(e){return false;}}
   function resolve(m){try{root.NM_BG734=root.NM_BG734||{};var spec=MAP[m],im=root.NM_BG734[spec.key];if(!im&&m>=3&&m<=7){ensureGenerated(m);im=root.NM_BG734[spec.key];}if(!im&&spec.fallback)im=root.NM_BG734[spec.fallback];return im||null;}catch(e){return null;}}
@@ -33,7 +33,7 @@
       if(n.district!==spec.district){n._goodBoysPreviousDistrict=n.district;n.district=spec.district;repairs++;}
       n._goodBoysCanonDistrict=spec.district;n._goodBoysCanonBackground=spec.key;n._goodBoysCanonScene=spec.scene;
       if(c){c.canonBackground=spec.key;c.canonDistrict=spec.district;c.canonScene=spec.scene;}
-      if(im){root.NM_BG734[spec.key]=im;root.NM_BG734[spec.district]=im;/* only prison missions need the legacy orbital renderer alias */if(m>=3&&m<=7)root.NM_BG734.orbital=im;}
+      if(im){root.NM_BG734[spec.key]=im;root.NM_BG734[spec.district]=im;if(m>=3&&m<=7)root.NM_BG734.orbital=im;}
       lastMission=m;lastKey=spec.key;
       return !!im;
     }catch(e){root.__goodBoysBackgroundAuthorityError=String(e&&e.stack||e);return false;}
