@@ -1,12 +1,14 @@
-/* Good Boys orbital-prison cinematic + visual patch v2.
+/* Good Boys orbital-prison cinematic + visual patch v3.
  * Owns detention artwork and mission-entry cinematics only. Campaign identity,
  * objectives, stages and progression are owned by the bible authorities.
+ * Delayed mission cards are mission-bound so an M7 card can never land on top
+ * of Earthfall after progression has already advanced to M8.
  */
 (function(root){
   "use strict";
   if(!root)return;
-  try{var old=root.TechOpsGoodBoysPrisonCinematicPatch;if(old&&old.timer&&root.clearInterval)root.clearInterval(old.timer);}catch(_){}
-  var VERSION=2,atlasImg=null,building=false,built=false,lastMission=0,cinematicOpen=false,style=null;
+  try{var old=root.TechOpsGoodBoysPrisonCinematicPatch;if(old&&old.timer&&root.clearInterval)root.clearInterval(old.timer);if(old&&old.pendingEntry&&root.clearTimeout)root.clearTimeout(old.pendingEntry);}catch(_){}
+  var VERSION=3,atlasImg=null,building=false,built=false,lastMission=0,cinematicOpen=false,cinematicMission=0,style=null,pendingEntry=0;
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
   function mission(){var c=cs();try{return Math.max(1,Math.min(8,Number(c&&c.m||root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||1)));}catch(e){return 1;}}
@@ -68,15 +70,30 @@
     if(m===6)return[{t:'CELL 1984',p:'Waldo is alive behind the surveillance lockdown. K needs time on the uplink while the block throws everything it has at the pair.',g:'DEFEND THE DECRYPT · BREAK LOCKDOWN · FREE WALDO.'}];
     return[{t:'ESCAPE VELOCITY',p:'K and Waldo are out. The Warden seals the shuttle bay and manifests through the prison control core. Break its hold, reunite the pair and reach the maintenance shuttle.',g:'BREAK THE WARDEN · REACH THE SHUTTLE · LEAVE BLACKSITE MERIDIAN.'}];
   }
-  function showPrisonCinematic(m,done){
-    if(cinematicOpen||!root.document){if(done)done();return;}cinematicOpen=true;ensureStyle();var scenes=scenesFor(m),i=0,o=root.document.createElement('div');o.id='gb-prison-cine';root.document.body.appendChild(o);try{if(root.S)root.S.inDialog=true;if(root.document.body)root.document.body.classList.add('good-boys-cinematic');}catch(e){}
-    function render(){var s=scenes[i],src=bgForMission(m);o.style.backgroundImage=src?'linear-gradient(to bottom,rgba(0,0,0,.08),rgba(0,0,0,.55)),url("'+String(src).replace(/"/g,'%22')+'")':'linear-gradient(#07111b,#02050a)';o.innerHTML='<div class="card"><div class="eyebrow">GOOD BOYS PROTOCOL · ORBITAL DETENTION</div><h2>'+s.t+'</h2><p>'+s.p+'</p><div class="goal">'+s.g+'</div><button id="gb-prison-next">'+(i===scenes.length-1?'TAKE CONTROL':'CONTINUE')+'</button></div>';o.querySelector('#gb-prison-next').addEventListener('pointerdown',next,{passive:false});}
-    function next(e){if(e){e.preventDefault();e.stopPropagation();}i++;if(i<scenes.length){render();return;}try{o.remove();}catch(_){}try{if(root.S)root.S.inDialog=false;if(root.document.body)root.document.body.classList.remove('good-boys-cinematic');}catch(_){}cinematicOpen=false;if(done)done();}
-    render();
+  function otherBlockingCinematic(){try{return !!(root.document&&(root.document.getElementById('good-boys-earthfall-cine')||root.document.getElementById('good-boys-story-cine')||root.document.getElementById('good-boys-campaign-intro')));}catch(e){return false;}}
+  function closePrisonCinematic(preserveDialog){
+    try{var o=root.document&&root.document.getElementById('gb-prison-cine');if(o&&o.parentNode)o.parentNode.removeChild(o);}catch(_){}
+    cinematicOpen=false;cinematicMission=0;
+    try{if(root.document&&root.document.body&&!otherBlockingCinematic())root.document.body.classList.remove('good-boys-cinematic');if(root.S&&!preserveDialog&&!otherBlockingCinematic())root.S.inDialog=false;}catch(_){}
+    return true;
   }
-  function missionEntry(){if(!active())return;var m=mission();if(m===lastMission)return;lastMission=m;if(m<3||m>7)return;try{if(root.NM){root.NM.msg=m===3?'CELL 118 IS YOUR FIRST LEAD':m===4?'VERIFY THE PRISONER IN CELL 118':m===5?'K IS THE ROUTE KEY':m===6?'WALDO IS IN CELL 1984':'REACH THE MAINTENANCE SHUTTLE';root.NM.msgT=(root.performance&&root.performance.now?root.performance.now():Date.now())+2600;}}catch(e){}root.setTimeout(function(){showPrisonCinematic(m);},180);}
+  function showPrisonCinematic(m,done){
+    if(!active()||m<3||m>7||mission()!==m){if(done)done();return false;}
+    if(cinematicOpen){if(cinematicMission===m)return true;closePrisonCinematic(true);}
+    if(!root.document){if(done)done();return false;}cinematicOpen=true;cinematicMission=m;ensureStyle();var scenes=scenesFor(m),i=0,o=root.document.createElement('div');o.id='gb-prison-cine';root.document.body.appendChild(o);try{if(root.S)root.S.inDialog=true;if(root.document.body)root.document.body.classList.add('good-boys-cinematic');}catch(e){}
+    function render(){var s=scenes[i],src=bgForMission(m);o.style.backgroundImage=src?'linear-gradient(to bottom,rgba(0,0,0,.08),rgba(0,0,0,.55)),url("'+String(src).replace(/"/g,'%22')+'")':'linear-gradient(#07111b,#02050a)';o.innerHTML='<div class="card"><div class="eyebrow">GOOD BOYS PROTOCOL · ORBITAL DETENTION</div><h2>'+s.t+'</h2><p>'+s.p+'</p><div class="goal">'+s.g+'</div><button id="gb-prison-next">'+(i===scenes.length-1?'TAKE CONTROL':'CONTINUE')+'</button></div>';o.querySelector('#gb-prison-next').addEventListener('pointerdown',next,{passive:false});}
+    function next(e){if(e){e.preventDefault();e.stopPropagation();}if(mission()!==m){closePrisonCinematic(true);if(done)done();return;}i++;if(i<scenes.length){render();return;}closePrisonCinematic(false);if(done)done();}
+    render();return true;
+  }
+  function missionEntry(){
+    if(!active())return;var m=mission();if(m===lastMission){if(cinematicOpen&&cinematicMission!==m)closePrisonCinematic(m===8);return;}
+    lastMission=m;if(pendingEntry&&root.clearTimeout){try{root.clearTimeout(pendingEntry);}catch(_){}pendingEntry=0;}
+    if(m<3||m>7){if(cinematicOpen||root.document&&root.document.getElementById('gb-prison-cine'))closePrisonCinematic(m===8);return;}
+    try{if(root.NM){root.NM.msg=m===3?'CELL 118 IS YOUR FIRST LEAD':m===4?'VERIFY THE PRISONER IN CELL 118':m===5?'K IS THE ROUTE KEY':m===6?'WALDO IS IN CELL 1984':'REACH THE MAINTENANCE SHUTTLE';root.NM.msgT=(root.performance&&root.performance.now?root.performance.now():Date.now())+2600;}}catch(e){}
+    var expected=m;pendingEntry=root.setTimeout(function(){pendingEntry=0;if(active()&&mission()===expected)showPrisonCinematic(expected);},180);
+  }
   function enforceBackdrop(){try{if(!active()||mission()<3||mission()>7)return;buildBackdrops();var b=root.TechOpsGoodBoysBackgroundAuthority;if(b&&b.enforce)b.enforce();else{var c=root.TechOpsGoodBoysCanon;if(c&&c.enforceBackground)c.enforceBackground();}}catch(e){}}
-  function tick(){try{image();buildBackdrops();syncBible();missionEntry();enforceBackdrop();}catch(e){root.__goodBoysPrisonPatchError=String(e&&e.stack||e);}}
+  function tick(){try{image();buildBackdrops();syncBible();missionEntry();if(cinematicOpen&&(mission()<3||mission()>7||cinematicMission!==mission()))closePrisonCinematic(mission()===8);enforceBackdrop();}catch(e){root.__goodBoysPrisonPatchError=String(e&&e.stack||e);}}
   tick();var timer=root.setInterval?root.setInterval(tick,180):null;
-  root.TechOpsGoodBoysPrisonCinematicPatch={VERSION:VERSION,tick:tick,buildBackdrops:buildBackdrops,syncBible:syncBible,showPrisonCinematic:showPrisonCinematic,enforceBackdrop:enforceBackdrop,timer:timer};
+  root.TechOpsGoodBoysPrisonCinematicPatch={VERSION:VERSION,tick:tick,buildBackdrops:buildBackdrops,syncBible:syncBible,showPrisonCinematic:showPrisonCinematic,closePrisonCinematic:closePrisonCinematic,enforceBackdrop:enforceBackdrop,get pendingEntry(){return pendingEntry;},timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
