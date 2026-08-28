@@ -10,6 +10,10 @@ on:
       - "good_dogs_production_runtime.js"
       - "production_*.js"
       - "bg_noc.js"
+      - "orbital_tiles.source.js"
+      - "orbital_tiles.atlas.js"
+      - "shuttle.atlas.js"
+      - "parts/shuttle_q001.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -39,6 +43,10 @@ on:
       - "good_dogs_production_runtime.js"
       - "production_*.js"
       - "bg_noc.js"
+      - "orbital_tiles.source.js"
+      - "orbital_tiles.atlas.js"
+      - "shuttle.atlas.js"
+      - "parts/shuttle_q001.js"
       - "mike_animation_manifest.js"
       - "mike_actions.js"
       - "mike_actions.atlas.js"
@@ -102,6 +110,10 @@ jobs:
           node --check production_wrapper_guard.js
           node --check production_runtime_lock.js
           node --check bg_noc.js
+          node --check orbital_tiles.source.js
+          node --check orbital_tiles.atlas.js
+          node --check shuttle.atlas.js
+          node --check parts/shuttle_q001.js
           node --check mike_animation_manifest.js
           node --check mike_actions.js
           node --check mike_actions.atlas.js
@@ -110,6 +122,7 @@ jobs:
           node --check v736_hooks.js
           node --check v737_hooks.js
           node --check scripts/production_release_gate.js
+          node --check scripts/runtime_bot.mjs
           node --check scripts/good_boys_progression_bot.mjs
           node --check scripts/good_boys_background_bible_bot.mjs
           node --check test_campaign_act2.js
