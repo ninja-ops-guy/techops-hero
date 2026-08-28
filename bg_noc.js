@@ -4,7 +4,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__productionCompositorPlanned=true;
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
-  var BUILD="20260828-goodboys-earthfall-accesscore-v1";
+  var BUILD="20260828-goodboys-compositor-assets-v1";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
