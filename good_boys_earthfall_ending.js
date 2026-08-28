@@ -1,4 +1,4 @@
-/* Good Boys Earthfall ending authority v2.
+/* Good Boys Earthfall ending authority v3.
  * Owns the M8 return-home sequence and campaign completion. This prevents the
  * authored route from falling back into the legacy v7.36 b736m8 canvas reel.
  */
@@ -6,7 +6,7 @@
   "use strict";
   if(!root)return;
   try{var old=root.TechOpsGoodBoysEarthfallEnding;if(old&&old.timer&&root.clearInterval)root.clearInterval(old.timer);if(old&&old.detachInput)old.detachInput();}catch(_){}
-  var VERSION=2,running=false,complete=false,scene=0,overlay=null,canvas=null,ctx=null,raf=0,img=null,lastFrame="",timer=null,inputAttached=false;
+  var VERSION=3,running=false,complete=false,scene=0,overlay=null,canvas=null,ctx=null,raf=0,img=null,lastFrame="",timer=null,inputAttached=false;
   var SCENES=[
     {title:"ESCAPE BURN",kicker:"BLACKSITE MERIDIAN · SHUTTLE BAY",body:"The Warden is down. K drags the route controls offline while Waldo seals the maintenance hatch. Katrin and Manchez are aboard before the prison can rebuild its lock.",goal:"K · WALDO · KATRIN · MANCHEZ — ACCOUNTED FOR",frames:["sh_takeoff","sh_climb","sh_thrust2"]},
     {title:"EARTHFALL",kicker:"REENTRY CORRIDOR",body:"The stolen shuttle was built for maintenance hops, not atmospheric return. Heat eats the telemetry. K keeps the guidance alive. Waldo points at the only patch of ground they all recognize.",goal:"HOLD THE LINE · KEEP THE SHIP TOGETHER",frames:["sh_reentry","sh_damage0","sh_damage1"]},
@@ -14,7 +14,7 @@
     {title:"GOOD BOYS PROTOCOL — COMPLETE",kicker:"118 FREE · 1984 FREE",body:"K walks out under his own name. Waldo walks back through his own door. Katrin and Manchez do what they came to do: bring everyone home.",goal:"BREAKOUT COMPLETE · KATRIN + MANCHEZ UNLOCKED",frames:["sh_wreck"],cta:"END OPERATION"}
   ];
   function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
-  function meta(){try{if(!root.S)return null;root.S.meta=root.S.meta||{};return root.S.meta._v736||(root.S.meta._v736={m:1,evidence:[],k:false,waldo:false,done:false});}catch(e){return null;}}
+  function meta(){try{if(!root.S)return null;root.S.meta=root.S.meta||{};var m=root.S.meta._v736||(root.S.meta._v736={m:1,evidence:[],k:false,waldo:false,done:false});if(m.done&&Number(m.m)>8){m.m=8;root.__goodBoysTerminalMissionNormalized=true;}return m;}catch(e){return null;}}
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function mission(){try{var c=cs(),m=meta();return Number(c&&c.m||m&&m.m||0)||0;}catch(e){return 0;}}
   function save(){try{if(typeof root.save==="function")root.save();else if(typeof root.saveGame==="function")root.saveGame();}catch(_){} }
@@ -45,7 +45,7 @@
     if(!overlay)return;var s=SCENES[scene];var card=overlay.querySelector(".gbe-card");if(!card)return;card.innerHTML='<div class="gbe-kicker">GOOD BOYS PROTOCOL · '+s.kicker+' · '+(scene+1)+' / '+SCENES.length+'</div><h2>'+s.title+'</h2><p>'+s.body+'</p><div class="gbe-goal">'+s.goal+'</div><button id="gbe-next">'+(s.cta||(scene===SCENES.length-1?'END OPERATION':'CONTINUE'))+'</button>';var b=card.querySelector("#gbe-next");if(b)b.addEventListener("click",next);
   }
   function finishFlags(){
-    try{var m=meta();if(!m)return false;m.k=true;m.waldo=true;m.done=true;m.m=9;root.S.meta._v736breakout=true;root.S.meta._v736pair=true;try{root.localStorage&&root.localStorage.setItem("techops_char_1181984","katrin_manchez");}catch(_){}var c=cs();if(c)c.ending=true;if(root.NM){root.NM.enemies=[];root.NM.clear=false;root.NM._gbEarthfallComplete=true;}complete=true;root.__goodBoysEarthfallCompleteAt=Date.now();save();return true;}catch(e){root.__goodBoysEarthfallCompleteError=String(e&&e.stack||e);return false;}
+    try{var m=meta();if(!m)return false;m.k=true;m.waldo=true;m.done=true;m.m=8;root.S.meta._v736breakout=true;root.S.meta._v736pair=true;try{root.localStorage&&root.localStorage.setItem("techops_char_1181984","katrin_manchez");}catch(_){}var c=cs();if(c){c.m=8;c.ending=true;}if(root.NM){root.NM.enemies=[];root.NM.clear=false;root.NM._gbEarthfallComplete=true;}complete=true;root.__goodBoysEarthfallCompleteAt=Date.now();save();return true;}catch(e){root.__goodBoysEarthfallCompleteError=String(e&&e.stack||e);return false;}
   }
   function detachInput(){try{if(inputAttached&&root.document)root.document.removeEventListener("keydown",onKey,true);}catch(_){}inputAttached=false;}
   function close(){try{if(raf&&root.cancelAnimationFrame)root.cancelAnimationFrame(raf);}catch(_){}raf=0;detachInput();try{if(overlay&&overlay.parentNode)overlay.parentNode.removeChild(overlay);}catch(_){}overlay=null;canvas=null;ctx=null;running=false;try{if(root.document&&root.document.body){root.document.body.classList.remove("good-boys-earthfall-active");root.document.body.classList.remove("good-boys-cinematic");}if(root.S)root.S.inDialog=false;}catch(_){} }
@@ -58,7 +58,7 @@
     }catch(e){root.__goodBoysEarthfallError=String(e&&e.stack||e);running=false;detachInput();return false;}
   }
   function tick(){try{var m=meta();if(!m)return;if(m.done){complete=true;return;}if(mission()===8&&!running)begin();}catch(e){root.__goodBoysEarthfallError=String(e&&e.stack||e);}}
-  function acceptance(){var m=meta();return{version:VERSION,running:running,scene:scene+1,sceneCount:SCENES.length,lastFrame:lastFrame,mission:mission(),done:!!(m&&m.done),k:!!(m&&m.k),waldo:!!(m&&m.waldo),breakout:!!(root.S&&root.S.meta&&root.S.meta._v736breakout),pair:!!(root.S&&root.S.meta&&root.S.meta._v736pair),overlay:!!(root.document&&root.document.getElementById("good-boys-earthfall-cine")),complete:complete};}
+  function acceptance(){var m=meta();return{version:VERSION,running:running,scene:scene+1,sceneCount:SCENES.length,lastFrame:lastFrame,mission:mission(),done:!!(m&&m.done),k:!!(m&&m.k),waldo:!!(m&&m.waldo),breakout:!!(root.S&&root.S.meta&&root.S.meta._v736breakout),pair:!!(root.S&&root.S.meta&&root.S.meta._v736pair),overlay:!!(root.document&&root.document.getElementById("good-boys-earthfall-cine")),complete:complete,terminalMissionNormalized:!!root.__goodBoysTerminalMissionNormalized};}
   timer=root.setInterval?root.setInterval(tick,90):null;
   root.TechOpsGoodBoysEarthfallEnding={VERSION:VERSION,SCENES:SCENES,begin:begin,next:next,finishFlags:finishFlags,tick:tick,acceptance:acceptance,detachInput:detachInput,timer:timer};
   tick();
