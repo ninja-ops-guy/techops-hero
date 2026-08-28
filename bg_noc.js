@@ -3,7 +3,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
 (function(root){
   root.__productionCompositorPlanned=true;
   root.__goodBoysDirectorPlanned=true;
-  var BUILD="20260827-goodboys-progression-v2";
+  var BUILD="20260827-goodboys-background-bible-v1";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
@@ -17,7 +17,8 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
     }catch(e){return false;}
   }
   function loadProgression(){if(!appendScript('data-good-boys-progression-authority','good_boys_progression_authority.js',null,function(){root.__goodBoysProgressionWireError='good_boys_progression_authority.js';}))root.__goodBoysProgressionWireError='append_failed';}
-  function loadPrisonPatch(){if(!appendScript('data-good-boys-prison-cinematic-patch','good_boys_prison_cinematic_patch.js',loadProgression,function(){root.__goodBoysPrisonCinematicWireError='good_boys_prison_cinematic_patch.js';loadProgression();}))loadProgression();}
+  function loadBackgroundAuthority(){if(!appendScript('data-good-boys-background-authority','good_boys_background_authority.js',loadProgression,function(){root.__goodBoysBackgroundWireError='good_boys_background_authority.js';loadProgression();}))loadProgression();}
+  function loadPrisonPatch(){if(!appendScript('data-good-boys-prison-cinematic-patch','good_boys_prison_cinematic_patch.js',loadBackgroundAuthority,function(){root.__goodBoysPrisonCinematicWireError='good_boys_prison_cinematic_patch.js';loadBackgroundAuthority();}))loadBackgroundAuthority();}
   function loadDirector(){if(!appendScript('data-good-boys-campaign-director','good_boys_campaign_director.js',loadPrisonPatch,function(){root.__goodBoysCampaignDirectorWireError='good_boys_campaign_director.js';loadPrisonPatch();}))loadPrisonPatch();}
   function loadRuntimeLock(){
     try{
