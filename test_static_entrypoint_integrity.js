@@ -13,24 +13,24 @@ function attrs(tag) {
 function isExternal(ref) {
   return /^(https?:)?\/\//.test(ref) || ref.startsWith("data:") || ref.startsWith("#");
 }
-
+function localPath(ref) { return ref.split(/[?#]/, 1)[0]; }
 function assertLocalFile(ref, owner) {
-  assert.ok(!ref.includes("?"), `${owner} must not use cache-busting query strings for local static files: ${ref}`);
-  assert.ok(fs.existsSync(path.join(__dirname, ref)), `${owner} references missing local file: ${ref}`);
+  if (ref.includes("?")) assert.ok(/^bg_noc\.js\?v=[A-Za-z0-9._-]+$/.test(ref), `${owner} may version only the production bg_noc bootstrap: ${ref}`);
+  assert.ok(fs.existsSync(path.join(__dirname, localPath(ref))), `${owner} references missing local file: ${ref}`);
 }
 
 const scriptTags = [...html.matchAll(/<script\b[^>]*><\/script>/g)].map((m) => m[0]);
+const localScriptRefs = [];
 const localScripts = [];
-
 for (const tag of scriptTags) {
   const src = attrs(tag).src;
   if (!src || isExternal(src)) continue;
-  localScripts.push(src);
-  assertLocalFile(src, "index.html script");
+  localScriptRefs.push(src);localScripts.push(localPath(src));assertLocalFile(src, "index.html script");
 }
-
 const duplicateScripts = localScripts.filter((src, index) => localScripts.indexOf(src) !== index);
 assert.deepStrictEqual(duplicateScripts, [], "index.html must not load duplicate local scripts");
+const bgNocRef=localScriptRefs.find(ref=>localPath(ref)==="bg_noc.js");
+assert.ok(/^bg_noc\.js\?v=/.test(bgNocRef||""),"production bootstrap entrypoint must be cache-versioned");
 
 const stylesheetTags = [...html.matchAll(/<link\b[^>]*>/g)].map((m) => m[0]);
 for (const tag of stylesheetTags) {
@@ -48,11 +48,7 @@ for (const tag of stylesheetTags) {
   "campaign_sector04_runtime.js",
   "campaign_native_act1.js"
 ].forEach((src) => {
-  assert.strictEqual(
-    localScripts.filter((candidate) => candidate === src).length,
-    1,
-    `${src} must be loaded exactly once`
-  );
+  assert.strictEqual(localScripts.filter((candidate) => candidate === src).length,1,`${src} must be loaded exactly once`);
 });
 
 const order = (src) => localScripts.indexOf(src);
