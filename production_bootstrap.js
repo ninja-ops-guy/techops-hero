@@ -1,14 +1,14 @@
-/* TechOps Hero — production runtime bootstrap v8.
+/* TechOps Hero — production runtime bootstrap v9.
  * Installs the stable Night compositor BEFORE any alternate-mode feature can
  * capture drawNM/stepNM. Feature modules still run their synchronous initial
- * setup, but their periodic wrapper-maintenance timers are parked. Because the
- * stable compositor advertises every feature marker, later installers cannot
- * wrap one another into an A -> B -> A recursion chain.
+ * setup, but their periodic wrapper-maintenance timers are parked. Dynamic
+ * production modules are cache-versioned so mobile Safari cannot retain an old
+ * compositor behind a newly deployed entrypoint.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=8,started=false,done=false;
+  var VERSION=9,BUILD="20260828-production-v9",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -26,7 +26,7 @@
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
-  function load(src){return new Promise(function(resolve){try{if(!root.document||has(src)){resolve(true);return;}var s=root.document.createElement("script");s.src=src;s.async=false;s.dataset.productionBootstrap=src;s.onload=function(){resolve(true);};s.onerror=function(){root.__productionBootstrapError=src;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){root.__productionBootstrapError=String(e&&e.stack||e);resolve(false);}});}
+  function load(src){return new Promise(function(resolve){try{if(!root.document||has(src)){resolve(true);return;}var s=root.document.createElement("script");s.src=src+"?v="+BUILD;s.async=false;s.dataset.productionBootstrap=src;s.onload=function(){resolve(true);};s.onerror=function(){root.__productionBootstrapError=src;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){root.__productionBootstrapError=String(e&&e.stack||e);resolve(false);}});}
   async function start(){
     if(started)return;started=true;
     var tries=0;
@@ -52,9 +52,6 @@
       if(!deferOn)return;deferOn=false;
       if(nativeSetInterval)root.setInterval=nativeSetInterval;
       if(nativeClearInterval)root.clearInterval=nativeClearInterval;
-      /* Do not restart deferred feature-maintenance loops. Their synchronous
-         setup already ran, and production_wrapper_guard owns compositor
-         liveness from an immutable pre-feature Night chain. */
       for(var i=0;i<deferred.length;i++)deferred[i].cancelled=true;
       root.__productionParkedMaintenanceTimers=deferred.length;
       root.__productionTimersDeferred=false;
@@ -64,31 +61,22 @@
       for(var i=0;i<FILES.length;i++){
         var src=FILES[i];
         if(src===DEFER_FROM)beginTimerDeferral();
-        if(src===FREEZE_AT&&deferOn){
-          root.setInterval=nativeSetInterval;
-          if(nativeClearInterval)root.clearInterval=nativeClearInterval;
-        }
+        if(src===FREEZE_AT&&deferOn){root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;}
         await load(src);
         if(src===FREEZE_AT){
-          /* This now executes before feature wrappers. The captured base chain
-             is therefore immutable and cannot already contain a wrapper cycle. */
           try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}
           parkTimers();
         }
       }
-    }finally{
-      if(deferOn)parkTimers();
-    }
+    }finally{if(deferOn)parkTimers();}
 
     try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightProductionAssets)await root.TechOpsNightProductionAssets.install();}catch(e){}
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
-    /* Mode-specific ticks are invoked on demand by the mode router. They no
-       longer own an independent recurring wrapper lifecycle. */
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
-    done=true;root.__productionBootstrapReady=true;
+    done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;
   }
-  root.TechOpsProductionBootstrap={VERSION:VERSION,FILES:FILES,start:start,ready:function(){return done;}};
+  root.TechOpsProductionBootstrap={VERSION:VERSION,BUILD:BUILD,FILES:FILES,start:start,ready:function(){return done;}};
   start();
 })(typeof globalThis!=="undefined"?globalThis:this);
