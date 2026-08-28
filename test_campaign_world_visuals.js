@@ -41,7 +41,9 @@ assert.strictEqual(typeof visuals.loadGoodBoysCanon, "function");
 assert.strictEqual(typeof visuals.loadGoodBoysGameplayLoop, "function");
 
 const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
-assert.ok(/VERSION = 2/.test(goodDogs));
+const goodDogsVersion = Number((goodDogs.match(/var\s+VERSION\s*=\s*(\d+)/)||[])[1]||0);
+assert.ok(goodDogsVersion >= 3, "Good Dogs production runtime must retain compositor-owned v3+ architecture");
+assert.ok(/productionCompositorActive/.test(goodDogs), "Good Dogs production runtime must defer render ownership to the production compositor");
 assert.ok(/drawActiveDog/.test(goodDogs) && /KATRIN_MANCHEZ/.test(goodDogs));
 assert.ok(/never substitute attack\/crouch\/knockdown art for walk/.test(goodDogs));
 assert.ok(/drawReferenceHUD/.test(goodDogs) && /GOOD DOGS PROTOCOL/.test(goodDogs));
