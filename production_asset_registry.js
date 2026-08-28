@@ -1,18 +1,18 @@
-/* TechOps Hero — complete production asset registry v2.
+/* TechOps Hero — complete production asset registry v3.
  * Makes every shipped visual asset discoverable by runtime, preloads physical
- * PNG assets, loads atlas/reference manifests, and fails closed when any
- * required script/image/JSON asset cannot be loaded.
+ * PNG assets, loads source payloads before atlas/reference manifests, and
+ * fails closed when any required script/image/JSON asset cannot be loaded.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionAssets)return;
-  var VERSION=2;
+  var VERSION=3;
   var SCRIPT_ASSETS=[
     "campaign_bg.js","campaign_asset_pipeline.js","campaign_native_act1_visuals.js",
     "charger_reference_v1.js","duo_kw.atlas.js","env_objects.atlas.js","env_overlays.atlas.js","env_struct.atlas.js","env_terrain.atlas.js",
     "interiors.js","interiors.atlas.js","k_full.atlas.js","manchez_katrin_hits_p1.js","manchez_katrin_hits_p2.js","manchez_katrin_hits_p3.js","manchez_katrin_hits_p4.js",
     "mike_animation_manifest.js","night_walker_payload_p3.js","night_walker_payload_p4.js","night_walker_payload_p5.js","night_walker_payload_p7.js","night_walker.atlas.js","night_walker_reference_v1.js",
-    "orbital_tiles.atlas.js","shuttle.atlas.js","parts/shuttle_q001.js","ui_lobby.js","ui_lobby.atlas.js",
+    "orbital_tiles.source.js","orbital_tiles.atlas.js","parts/shuttle_q001.js","shuttle.atlas.js","ui_lobby.js","ui_lobby.atlas.js",
     "waldo_b.atlas.js","waldo_full.atlas.js","waldo_ui.atlas.js","warden.atlas.js","weather_ov.atlas.js",
     "campaign_ui_payload_p2.js","campaign_ui_payload_p4.js","campaign_ui_payload_p5.js","campaign_ui_payload_p8.js","campaign_ui_payload_p9.js","campaign_ui.atlas.js"
   ];
