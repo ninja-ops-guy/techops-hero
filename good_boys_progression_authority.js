@@ -1,4 +1,4 @@
-/* Good Boys deterministic progression authority v4.
+/* Good Boys deterministic progression authority v5.
  * Owns campaign handoffs, cinematic input blocking, and control-surface cleanup.
  * Production does not depend on NM.clear side effects to move authored beats.
  */
@@ -6,7 +6,7 @@
   "use strict";
   if(!root)return;
   try{var prior=root.TechOpsGoodBoysProgressionAuthority;if(prior&&prior.timer&&root.clearInterval)root.clearInterval(prior.timer);if(prior&&prior.observer)prior.observer.disconnect();}catch(_){}
-  var VERSION=4,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0;
+  var VERSION=5,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0;
   function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function meta(){try{if(!root.S)return null;root.S.meta=root.S.meta||{};return root.S.meta._v736||(root.S.meta._v736={m:1,evidence:[],k:false,waldo:false,done:false});}catch(e){return null;}}
@@ -40,8 +40,8 @@
   function tick(){
     try{
       installObserver();stopLegacyMobileTimer();removeCompetingPads();enforceCinematicBlock();
-      var c=cs(),n=root.NM;if(!c||!n){missionSeen=0;seenEnemy=false;emptySince=0;return;}
-      var m=mission();if(m!==missionSeen){missionSeen=m;seenEnemy=false;emptySince=0;transition=false;}
+      var c=cs(),n=root.NM;if(!c||!n){missionSeen=0;seenEnemy=false;emptySince=0;lastAdvance=0;return;}
+      var m=mission();if(m!==missionSeen){missionSeen=m;seenEnemy=false;emptySince=0;transition=false;lastAdvance=0;}
       if(m===8){var end=root.TechOpsGoodBoysEarthfallEnding;if(end&&typeof end.begin==="function")end.begin();return;}
       /* M1 is the authored Waldo-property traversal. No random fight can satisfy
          or suppress it: the dogs must expose the false wall / hidden bay. */
@@ -63,7 +63,18 @@
     }catch(e){root.__goodBoysProgressionError=String(e&&e.stack||e);}
   }
   function acceptance(){var end=root.TechOpsGoodBoysEarthfallEnding;return{version:VERSION,active:!!cs(),mission:mission(),living:living(),pending:pending(),seenEnemy:seenEnemy,emptyFor:emptySince?Math.round(now()-emptySince):0,transition:transition,last:root.__goodBoysLastProgression||null,cinematicVisible:cinematicVisible(),cinematicBlocked:!!(cinematicVisible()&&root.S&&root.S.inDialog),legacyMobileTimerStopped:!!root.__goodBoysLegacyMobileTimerStopped,directorPads:root.document?root.document.querySelectorAll("#good-boys-director-controls").length:0,legacyPads:root.document?root.document.querySelectorAll("#good-dogs-touch,#good-boys-loop-controls").length:0,waldoTrailComplete:!!(root.NM&&root.NM._gbWaldoTrailComplete),earthfall:end&&end.acceptance?end.acceptance():null};}
-  function testPrimeClear(){try{var n=root.NM;if(!cs()||!n)return false;n.enemies=[{x:(n.x||100)+40,y:n.y||300,w:28,h:38,hp:1,alive:true}];tick();n.enemies[0].hp=0;n.enemies[0].alive=false;emptySince=now()-1000;tick();return true;}catch(e){return false;}}
+  function testPrimeClear(){
+    try{
+      var n=root.NM,c=cs(),before=mission();if(!c||!n||before<3||before>7)return false;
+      n.enemies=[{x:(n.x||100)+40,y:n.y||300,w:28,h:38,hp:1,alive:true,kind:"test-clear"}];
+      tick();
+      for(var i=0;i<n.enemies.length;i++){if(n.enemies[i]){n.enemies[i].hp=0;n.enemies[i].alive=false;}}
+      c.pendingSpawn=null;c.spawnT=0;c.wavePending=false;n.spawnT=0;n.wavePending=false;
+      emptySince=now()-1000;
+      tick();
+      return mission()===before+1;
+    }catch(e){root.__goodBoysProgressionTestError=String(e&&e.stack||e);return false;}
+  }
   installObserver();timer=root.setInterval?root.setInterval(tick,60):null;
   root.TechOpsGoodBoysProgressionAuthority={VERSION:VERSION,tick:tick,advance:advance,revealShip:revealShip,startNext:startNext,acceptance:acceptance,testPrimeClear:testPrimeClear,cinematicVisible:cinematicVisible,enforceCinematicBlock:enforceCinematicBlock,removeCompetingPads:removeCompetingPads,observer:observer,timer:timer};
   tick();
