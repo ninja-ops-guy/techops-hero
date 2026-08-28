@@ -52,8 +52,9 @@ assert.ok(/var VERSION=2/.test(runtimeSafety),'Production runtime safety must be
 ['function state()','function world()','NIGHT RUNTIME RECOVERY','__nightRuntimeRenderError','__nightRuntimeStepError','ensureVisible'].forEach(marker=>assert.ok(runtimeSafety.includes(marker),`Production runtime safety missing ${marker}`));
 assert.ok(!runtimeSafety.includes('root.S')&&!runtimeSafety.includes('root.NM'),'Runtime safety must use lexical S/NM');
 
-assert.ok(/var VERSION=6/.test(wrapperGuard),'Stable compositor authority must be v6');
-['__productionStableCompositor','__goodDogsHud','__goodBoysCanon','__goodBoysGameplayLoop','drawFeatureLayers','stepFeatureLayers','globalDrawAligned','globalStepAligned','__productionSingleCompositor','__techopsFinalParserDrawNM','baseSource'].forEach(marker=>assert.ok(wrapperGuard.includes(marker),`Stable compositor guard missing ${marker}`));
+const compositorVersion = Number((wrapperGuard.match(/var\s+VERSION\s*=\s*(\d+)/)||[])[1]||0);
+assert.ok(compositorVersion >= 7,'Stable compositor authority must retain v7+ immutable single-owner architecture');
+['__productionStableCompositor','__goodDogsHud','__goodBoysCanon','__goodBoysGameplayLoop','drawFeatureLayers','stepFeatureLayers','globalDrawAligned','globalStepAligned','__productionSingleCompositor','__techopsFinalParserDrawNM','baseSource','repairStaleDialog'].forEach(marker=>assert.ok(wrapperGuard.includes(marker),`Stable compositor guard missing ${marker}`));
 assert.ok(bootstrap.indexOf('production_wrapper_guard.js') < bootstrap.indexOf('good_dogs_production_runtime.js'),'stable compositor must load before feature runtime wrappers');
 
 has('auto_play=false');
