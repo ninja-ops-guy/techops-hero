@@ -4,7 +4,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__productionCompositorPlanned=true;
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
-  var BUILD="20260828-goodboys-compositor-assets-v1";
+  var BUILD="20260828-goodboys-depth-lite-v1";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
@@ -17,7 +17,8 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
       var s=document.createElement('script');s.src=src+'?v='+BUILD;s.async=false;s.setAttribute(attr,'1');s.onload=onload||null;s.onerror=onerror||null;(document.head||document.documentElement).appendChild(s);return true;
     }catch(e){return false;}
   }
-  function loadProgression(){if(!appendScript('data-good-boys-progression-authority','good_boys_progression_authority.js',null,function(){root.__goodBoysProgressionWireError='good_boys_progression_authority.js';}))root.__goodBoysProgressionWireError='append_failed';}
+  function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',null,function(){root.__goodBoysDepthLiteWireError='good_boys_depth_lite.js';}))root.__goodBoysDepthLiteWireError='append_failed';}
+  function loadProgression(){if(!appendScript('data-good-boys-progression-authority','good_boys_progression_authority.js',loadDepthLite,function(){root.__goodBoysProgressionWireError='good_boys_progression_authority.js';loadDepthLite();}))loadDepthLite();}
   function loadEarthfall(){if(!appendScript('data-good-boys-earthfall-ending','good_boys_earthfall_ending.js',loadProgression,function(){root.__goodBoysEarthfallWireError='good_boys_earthfall_ending.js';loadProgression();}))loadProgression();}
   function loadAccessCore(){if(!appendScript('data-good-boys-access-core-authority','good_boys_access_core_authority.js',loadEarthfall,function(){root.__goodBoysAccessCoreWireError='good_boys_access_core_authority.js';loadEarthfall();}))loadEarthfall();}
   function loadBibleWorld(){if(!appendScript('data-good-boys-bible-world','good_boys_bible_world.js',loadAccessCore,function(){root.__goodBoysBibleWorldWireError='good_boys_bible_world.js';loadAccessCore();}))loadAccessCore();}
