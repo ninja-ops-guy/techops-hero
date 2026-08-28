@@ -91,6 +91,8 @@ jobs:
           node --check good_boys_prison_cinematic_patch.js
           node --check good_boys_background_authority.js
           node --check good_boys_bible_world.js
+          node --check good_boys_access_core_authority.js
+          node --check good_boys_earthfall_ending.js
           node --check good_boys_progression_authority.js
           node --check good_boys_reference_mechanics.js
           node --check good_boys_gameplay_loop.js
