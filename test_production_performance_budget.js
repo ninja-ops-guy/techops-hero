@@ -9,7 +9,11 @@ const local = scripts.filter(s => !/^https?:\/\//.test(s));
 const duplicates = local.filter((s, i) => local.indexOf(s) !== i);
 assert.deepStrictEqual(duplicates, [], "duplicate local script tags increase startup work");
 
-const missing = local.filter(s => !fs.existsSync(s));
+// Browser cache-version query/hash components are not part of the filesystem path.
+// Keep the versioned URL in the startup contract while normalizing only for local
+// existence/stat checks.
+const localFiles = local.map(s => s.split(/[?#]/, 1)[0]);
+const missing = local.filter((s, i) => !fs.existsSync(localFiles[i]));
 assert.deepStrictEqual(missing, [], "every startup script must exist");
 
 const indexBytes = fs.statSync("index.html").size;
@@ -20,11 +24,13 @@ assert.ok(local.length <= 260, `startup script count ${local.length} exceeds con
 
 let startupBytes = 0;
 let largest = { file: "", bytes: 0 };
-for (const file of local) {
+for (let i = 0; i < local.length; i++) {
+  const url = local[i];
+  const file = localFiles[i];
   const bytes = fs.statSync(file).size;
   startupBytes += bytes;
-  if (bytes > largest.bytes) largest = { file, bytes };
-  assert.ok(bytes < 3 * 1024 * 1024, `${file} exceeds 3 MiB single-script decode/parse guard`);
+  if (bytes > largest.bytes) largest = { file: url, bytes };
+  assert.ok(bytes < 3 * 1024 * 1024, `${url} exceeds 3 MiB single-script decode/parse guard`);
 }
 assert.ok(startupBytes < 40 * 1024 * 1024, `local startup JS exceeds 40 MiB structural ceiling: ${startupBytes}`);
 
