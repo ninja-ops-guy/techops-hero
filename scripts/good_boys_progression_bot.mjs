@@ -11,7 +11,17 @@ const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data)
 
 async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.click({timeout:500});return true;}catch{}}}return false;}
 async function dismiss(page,ms=5000){const until=Date.now()+ms;while(Date.now()<until){
-  const dom=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');if(await dom.count()){await dom.first().click({timeout:500}).catch(()=>{});await page.waitForTimeout(100);continue;}
+  // Cinematic shells are intentionally retained/reused by some production layers.
+  // Do not click the first matching DOM button: a stale lower-z-index intro button
+  // can remain "visible" while a prison/Earthfall card owns the interaction surface.
+  // Prefer the active top-level authored surfaces in production z-order.
+  let handled=false;
+  for(const selector of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){
+    const b=page.locator(selector).last();
+    if(!await b.count())continue;
+    try{await b.click({timeout:700});handled=true;break;}catch{}
+  }
+  if(handled){await page.waitForTimeout(100);continue;}
   const txt=await page.locator('body').innerText().catch(()=>'');
   if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickText(page,/Standard/i);await page.waitForTimeout(100);continue;}
   if(/BEGIN THE INCIDENT/i.test(txt)){await clickText(page,/BEGIN THE INCIDENT/i);await page.waitForTimeout(100);continue;}
