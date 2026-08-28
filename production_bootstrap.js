@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v9.
+/* TechOps Hero — production runtime bootstrap v10.
  * Installs the stable Night compositor BEFORE any alternate-mode feature can
  * capture drawNM/stepNM. Feature modules still run their synchronous initial
  * setup, but their periodic wrapper-maintenance timers are parked. Dynamic
@@ -8,11 +8,12 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=9,BUILD="20260828-production-v9",started=false,done=false;
+  var VERSION=10,BUILD="20260828-production-v10-depth-hud",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
     "good_boys_campaign_assets.js",
+    "good_boys_legacy_hud_filter.js",
     "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",
     "good_boys_reference_mechanics.js",
@@ -26,7 +27,7 @@
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
-  function load(src){return new Promise(function(resolve){try{if(!root.document||has(src)){resolve(true);return;}var s=root.document.createElement("script");s.src=src+"?v="+BUILD;s.async=false;s.dataset.productionBootstrap=src;s.onload=function(){resolve(true);};s.onerror=function(){root.__productionBootstrapError=src;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){root.__productionBootstrapError=String(e&&e.stack||e);resolve(false);}});}
+  function load(src){return new Promise(function(resolve){try{if(!root.document||has(src)){resolve(true);return;}var s=document.createElement("script");s.src=src+"?v="+BUILD;s.async=false;s.dataset.productionBootstrap=src;s.onload=function(){resolve(true);};s.onerror=function(){root.__productionBootstrapError=src;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){root.__productionBootstrapError=String(e&&e.stack||e);resolve(false);}});}
   async function start(){
     if(started)return;started=true;
     var tries=0;
