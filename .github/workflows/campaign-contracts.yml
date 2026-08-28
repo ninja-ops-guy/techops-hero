@@ -18,9 +18,7 @@ on:
       - "katrin_manchez.atlas.js"
       - "v736_hooks.js"
       - "v737_hooks.js"
-      - "scripts/generate_sector04_assets.py"
-      - "scripts/extract_katrin_manchez_assets.py"
-      - "scripts/production_release_gate.js"
+      - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
       - "test_production_*.js"
@@ -49,9 +47,7 @@ on:
       - "katrin_manchez.atlas.js"
       - "v736_hooks.js"
       - "v737_hooks.js"
-      - "scripts/generate_sector04_assets.py"
-      - "scripts/extract_katrin_manchez_assets.py"
-      - "scripts/production_release_gate.js"
+      - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
       - "test_production_*.js"
@@ -90,6 +86,12 @@ jobs:
           node --check campaign_visual_direction.js
           node --check campaign_world_visuals.js
           node --check good_boys_canon_runtime.js
+          node --check good_boys_campaign_assets.js
+          node --check good_boys_campaign_director.js
+          node --check good_boys_prison_cinematic_patch.js
+          node --check good_boys_background_authority.js
+          node --check good_boys_bible_world.js
+          node --check good_boys_progression_authority.js
           node --check good_boys_reference_mechanics.js
           node --check good_boys_gameplay_loop.js
           node --check good_boys_mobile_launch_guard.js
@@ -106,6 +108,8 @@ jobs:
           node --check v736_hooks.js
           node --check v737_hooks.js
           node --check scripts/production_release_gate.js
+          node --check scripts/good_boys_progression_bot.mjs
+          node --check scripts/good_boys_background_bible_bot.mjs
           node --check test_campaign_act2.js
           node --check test_campaign_act2_reload_gates.js
           node --check test_campaign_native_act1.js
