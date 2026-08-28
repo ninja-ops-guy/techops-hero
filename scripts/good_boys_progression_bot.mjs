@@ -11,17 +11,16 @@ const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data)
 
 async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.click({timeout:500});return true;}catch{}}}return false;}
 async function dismiss(page,ms=5000){const until=Date.now()+ms;while(Date.now()<until){
-  const dom=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button');if(await dom.count()){await dom.first().click({timeout:500}).catch(()=>{});await page.waitForTimeout(100);continue;}
+  const dom=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');if(await dom.count()){await dom.first().click({timeout:500}).catch(()=>{});await page.waitForTimeout(100);continue;}
   const txt=await page.locator('body').innerText().catch(()=>'');
   if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickText(page,/Standard/i);await page.waitForTimeout(100);continue;}
   if(/BEGIN THE INCIDENT/i.test(txt)){await clickText(page,/BEGIN THE INCIDENT/i);await page.waitForTimeout(100);continue;}
   if(/CLICK\s*[—-]\s*SKIP|E\s*\/\s*CLICK\s*[—-]\s*SKIP|SKIP CINEMATIC/i.test(txt)){await page.keyboard.press('KeyE').catch(()=>{});await page.waitForTimeout(120);continue;}
   await page.waitForTimeout(120);
 }}
-async function skipCanvasCinematic(page,steps=12){for(let i=0;i<steps;i++){await page.keyboard.press('KeyE').catch(()=>{});await page.mouse.click(640,360).catch(()=>{});await page.waitForTimeout(140);}}
-async function state(page){return page.evaluate(()=>{let r={};try{r=window.eval(`(function(){var s=(typeof S!=='undefined'&&S)?S:null,n=(typeof NM!=='undefined'&&NM)?NM:null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysProgressionAuthority,w=window.TechOpsGoodBoysBibleWorld,b=window.TechOpsGoodBoysBackgroundAuthority;return {night:!!(s&&s.nightMode),inDialog:!!(s&&s.inDialog),mission:Number(c&&c.m||m&&m.m||0),metaMission:Number(m&&m.m||0),done:!!(m&&m.done),k:!!(m&&m.k),waldo:!!(m&&m.waldo),active:!!c,x:n&&n.x,ship:!!(n&&n._gbShipRevealed),trailStep:Number(n&&n._gbWaldoTrailStep||0),trailComplete:!!(n&&n._gbWaldoTrailComplete),property:!!(n&&n._gbWaldoPropertyCanonical),living:n&&n.enemies?(n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).length):0,enemyKinds:n&&n.enemies?n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).map(e=>e.kind||e.name):[],authority:!!a,bibleWorld:!!w,worldAcceptance:w&&w.acceptance?w.acceptance():null,backgroundAcceptance:b&&b.acceptance?b.acceptance():null,acceptance:a&&a.acceptance?a.acceptance():null};})()`);}catch(e){r.error=String(e&&e.stack||e);}return {...r,directorCines:document.querySelectorAll('#good-boys-story-cine').length,prisonCines:document.querySelectorAll('#gb-prison-cine').length,directorPads:document.querySelectorAll('#good-boys-director-controls').length,legacyPads:document.querySelectorAll('#good-dogs-touch,#good-boys-loop-controls').length};});}
+async function state(page){return page.evaluate(()=>{let r={};try{r=window.eval(`(function(){var s=(typeof S!=='undefined'&&S)?S:null,n=(typeof NM!=='undefined'&&NM)?NM:null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysProgressionAuthority,w=window.TechOpsGoodBoysBibleWorld,b=window.TechOpsGoodBoysBackgroundAuthority,q=window.TechOpsGoodBoysAccessCoreAuthority,e=window.TechOpsGoodBoysEarthfallEnding;return {night:!!(s&&s.nightMode),inDialog:!!(s&&s.inDialog),mission:Number(c&&c.m||m&&m.m||0),metaMission:Number(m&&m.m||0),done:!!(m&&m.done),k:!!(m&&m.k),waldo:!!(m&&m.waldo),breakout:!!(s&&s.meta&&s.meta._v736breakout),pair:!!(s&&s.meta&&s.meta._v736pair),active:!!c,x:n&&n.x,ship:!!(n&&n._gbShipRevealed),trailStep:Number(n&&n._gbWaldoTrailStep||0),trailComplete:!!(n&&n._gbWaldoTrailComplete),property:!!(n&&n._gbWaldoPropertyCanonical),living:n&&n.enemies?(n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).length):0,enemyKinds:n&&n.enemies?n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).map(e=>e.kind||e.name):[],authority:!!a,bibleWorld:!!w,accessCore:!!q,earthfall:!!e,worldAcceptance:w&&w.acceptance?w.acceptance():null,backgroundAcceptance:b&&b.acceptance?b.acceptance():null,accessAcceptance:q&&q.acceptance?q.acceptance():null,earthfallAcceptance:e&&e.acceptance?e.acceptance():null,acceptance:a&&a.acceptance?a.acceptance():null};})()`);}catch(e){r.error=String(e&&e.stack||e);}return {...r,directorCines:document.querySelectorAll('#good-boys-story-cine').length,prisonCines:document.querySelectorAll('#gb-prison-cine').length,earthfallCines:document.querySelectorAll('#good-boys-earthfall-cine').length,directorPads:document.querySelectorAll('#good-boys-director-controls').length,legacyPads:document.querySelectorAll('#good-dogs-touch,#good-boys-loop-controls').length};});}
 async function waitMission(page,want,ms=7000){const until=Date.now()+ms;let s;while(Date.now()<until){s=await state(page);if(s.done||s.mission===want||s.metaMission===want)return s;await dismiss(page,260);await page.waitForTimeout(80);}return s||await state(page);}
-async function forceMission(page,m){await page.evaluate((mission)=>{var n=window.NM,s=window.S;if(n&&n._v736)n._v736.m=mission;if(s&&s.meta&&s.meta._v736)s.meta._v736.m=mission;var w=window.TechOpsGoodBoysBibleWorld;if(w)w.tick();var b=window.TechOpsGoodBoysBackgroundAuthority;if(b)b.enforce();var a=window.TechOpsGoodBoysProgressionAuthority;if(a)a.tick();},m);}
+async function forceMission(page,m){await page.evaluate((mission)=>{var n=window.NM,s=window.S;if(n&&n._v736)n._v736.m=mission;if(s&&s.meta&&s.meta._v736)s.meta._v736.m=mission;var w=window.TechOpsGoodBoysBibleWorld;if(w)w.tick();var q=window.TechOpsGoodBoysAccessCoreAuthority;if(q)q.tick();var b=window.TechOpsGoodBoysBackgroundAuthority;if(b)b.enforce();var a=window.TechOpsGoodBoysProgressionAuthority;if(a)a.tick();},m);}
 
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
 try{
@@ -35,7 +34,7 @@ try{
     if(!/WALDO'S PLACE/i.test(premise))fail('opening-does-not-establish-waldo-house',{premise});
   }
   await dismiss(page,7500);
-  let s=await state(page);log('started',s);if(!s.active||!s.authority||!s.bibleWorld)fail('campaign-authorities-not-attached',s);
+  let s=await state(page);log('started',s);if(!s.active||!s.authority||!s.bibleWorld||!s.accessCore||!s.earthfall)fail('campaign-authorities-not-attached',s);
   if(s.directorPads!==1)fail('director-pad-count',{count:s.directorPads});if(s.legacyPads!==0)fail('legacy-control-pads-remain',{count:s.legacyPads});
 
   if(s.mission!==1){await forceMission(page,1);await page.waitForTimeout(250);}
@@ -57,7 +56,10 @@ try{
 
   for(let m=3;m<=7;m++){
     let cur=await waitMission(page,m,3500);if(cur.done)break;if(cur.mission!==m&&cur.metaMission!==m){fail('unexpected-mission-before-clear',{expected:m,state:cur});break;}
-    if(m===5){await page.waitForTimeout(350);cur=await state(page);log('access-core-roster',{kinds:cur.enemyKinds,world:cur.worldAcceptance});if(cur.enemyKinds.some(k=>String(k).toLowerCase().includes('mikeindex')||String(k).toLowerCase().includes('mike index')))fail('m5-legacy-mike-index-still-active',cur);}
+    if(m===5){
+      await page.waitForTimeout(350);cur=await state(page);log('access-core-roster',{kinds:cur.enemyKinds,access:cur.accessAcceptance,world:cur.worldAcceptance});if(cur.enemyKinds.some(k=>String(k).toLowerCase().replace(/[\s_-]+/g,'').includes('mikeindex')))fail('m5-legacy-mike-index-still-active',cur);
+      await page.evaluate(()=>{var n=window.NM,q=window.TechOpsGoodBoysAccessCoreAuthority;n.enemies.push({kind:'mikeindex',name:'THE MIKE INDEX',x:n.x+80,y:n.y,w:30,h:40,hp:99,maxHp:99,alive:true,boss:true});if(q)q.tick();});await page.waitForTimeout(120);cur=await state(page);log('access-core-injected-mike-quarantine',{kinds:cur.enemyKinds,access:cur.accessAcceptance});if(cur.enemyKinds.some(k=>String(k).toLowerCase().replace(/[\s_-]+/g,'').includes('mikeindex'))||Number(cur.accessAcceptance&&cur.accessAcceptance.legacyMikeCount)>0)fail('m5-legacy-mike-index-respawn-not-quarantined',cur);
+    }
     const primed=await page.evaluate(()=>window.TechOpsGoodBoysProgressionAuthority&&window.TechOpsGoodBoysProgressionAuthority.testPrimeClear());
     log('prime-clear',{mission:m,primed});if(!primed){fail('could-not-prime-clear',{mission:m});break;}
     await dismiss(page,3500);
@@ -65,12 +67,16 @@ try{
     if(!cur.done&&cur.mission!==next&&cur.metaMission!==next){fail('mission-did-not-advance',{from:m,to:next,state:cur});break;}
     if(m===4&&!cur.k)fail('k-not-unlocked-after-cell-118',cur);
     if(m===6&&!cur.waldo)fail('waldo-not-unlocked-after-cell-1984',cur);
-    await dismiss(page,2200);
+    if(m<7)await dismiss(page,2200);
   }
 
   s=await state(page);log('earthfall-entered',s);if(!s.done&&s.metaMission!==8&&s.mission!==8)fail('campaign-did-not-reach-earthfall',s);
-  if(!s.done){await skipCanvasCinematic(page,18);await dismiss(page,1800);for(let i=0;i<30;i++){s=await state(page);if(s.done)break;await page.keyboard.press('KeyE').catch(()=>{});await page.mouse.click(640,360).catch(()=>{});await page.waitForTimeout(120);}}
-  s=await state(page);log('final',s);if(!s.done)fail('earthfall-did-not-complete-campaign',s);if(!s.k||!s.waldo)fail('ending-missing-rescued-party-flags',s);
+  if(!s.done){
+    await page.waitForTimeout(250);s=await state(page);const earthText=await page.locator('#good-boys-earthfall-cine').innerText().catch(()=>'');log('earthfall-cinematic',{count:s.earthfallCines,blocked:s.inDialog,text:earthText.slice(0,220),acceptance:s.earthfallAcceptance});if(s.earthfallCines!==1)fail('authored-earthfall-cinematic-missing',s);if(!s.inDialog)fail('earthfall-cinematic-does-not-block-gameplay',s);if(!/EARTHFALL|WALDO'S PLACE|GOOD BOYS/i.test(earthText))fail('earthfall-story-contract-missing',{text:earthText});
+    await dismiss(page,5000);
+  }
+  for(let i=0;i<30;i++){s=await state(page);if(s.done)break;await dismiss(page,250);await page.waitForTimeout(100);}
+  s=await state(page);log('final',s);if(!s.done)fail('earthfall-did-not-complete-campaign',s);if(!s.k||!s.waldo)fail('ending-missing-rescued-party-flags',s);if(!s.breakout||!s.pair)fail('ending-missing-breakout-unlock-flags',s);if(s.earthfallCines!==0)fail('earthfall-overlay-did-not-close',s);
   if(s.directorPads>1)fail('duplicate-director-pads-at-end',{count:s.directorPads});if(s.legacyPads!==0)fail('legacy-pads-returned',{count:s.legacyPads});
   await page.screenshot({path:path.join(OUT,'goodboys-progression-final.png'),fullPage:true});
 }catch(e){fail('bot-exception',{error:String(e&&e.stack||e)});await page.screenshot({path:path.join(OUT,'goodboys-progression-exception.png'),fullPage:true}).catch(()=>{});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-progression-trace.zip')}).catch(()=>{});await browser.close();}
