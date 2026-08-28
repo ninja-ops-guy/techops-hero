@@ -49,8 +49,8 @@ assert.ok(/never substitute attack\/crouch\/knockdown art for walk/.test(goodDog
 assert.ok(/drawReferenceHUD/.test(goodDogs) && /GOOD DOGS PROTOCOL/.test(goodDogs));
 
 const mechanics = fs.readFileSync("good_boys_reference_mechanics.js", "utf8");
-assert.ok(/3x boost jump/.test(mechanics) && /boostJump/.test(mechanics));
-assert.ok(/two mid-air dashes/.test(mechanics) && /airDashes/.test(mechanics));
+assert.ok(/Three boost jumps/i.test(mechanics) && /function boostJump/.test(mechanics) && /n\.jumps=3/.test(mechanics), "Good Boys must retain the three-jump partner boost contract");
+assert.ok(/two air dashes/i.test(mechanics) && /state\.airDashes>=2/.test(mechanics) && /function airDash/.test(mechanics), "Good Boys must retain two airborne dashes");
 assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics));
 
 const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
@@ -95,6 +95,25 @@ assert.ok(/drawStageAccents/.test(loop) && /foreground rails\/pipes/.test(loop),
 assert.ok(/installStep/.test(loop) && /root\.stepNM=/.test(loop), "legacy standalone Night physics extension must remain available outside production");
 assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /impact_orange/.test(canon), "mission lighting language must match campaign route");
 
+const accessCore = fs.readFileSync("good_boys_access_core_authority.js", "utf8");
+assert.ok(/Mission 5 is K's route-control breach/.test(accessCore));
+assert.ok(/function legacyMike/.test(accessCore) && /function purge/.test(accessCore) && /legacyMikeCount/.test(accessCore), "Access Core must continuously quarantine the legacy Mike Index boss");
+assert.ok(/_goodBoysNoMikeIndex/.test(accessCore) && /seedSecurity/.test(accessCore), "Access Core must replace the legacy boss with authored security pressure");
+
+const earthfall = fs.readFileSync("good_boys_earthfall_ending.js", "utf8");
+assert.ok(/ESCAPE BURN/.test(earthfall) && /EARTHFALL/.test(earthfall) && /WALDO'S PLACE/.test(earthfall) && /GOOD BOYS PROTOCOL — COMPLETE/.test(earthfall), "Earthfall must own the full return-home cinematic");
+assert.ok(/sh_takeoff/.test(earthfall) && /sh_reentry/.test(earthfall) && /sh_crash/.test(earthfall) && /sh_wreck/.test(earthfall), "Earthfall must animate the real shuttle atlas states");
+assert.ok(/m\.done=true/.test(earthfall) && /_v736breakout=true/.test(earthfall) && /_v736pair=true/.test(earthfall), "Earthfall must commit campaign completion and pair unlocks");
+
+const progression = fs.readFileSync("good_boys_progression_authority.js", "utf8");
+assert.ok(/next===8/.test(progression) && /TechOpsGoodBoysEarthfallEnding/.test(progression) && /\.begin\(\)/.test(progression), "M7 completion must route directly into authored Earthfall");
+assert.ok(/good-boys-earthfall-cine/.test(progression), "Earthfall must participate in gameplay input blocking");
+
+const boot = fs.readFileSync("bg_noc.js", "utf8");
+assert.ok(boot.includes("good_boys_access_core_authority.js") && boot.includes("good_boys_earthfall_ending.js"), "production bootstrap must wire Access Core and Earthfall authorities");
+assert.ok(boot.indexOf("good_boys_access_core_authority.js") < boot.indexOf("good_boys_progression_authority.js"));
+assert.ok(boot.indexOf("good_boys_earthfall_ending.js") < boot.indexOf("good_boys_progression_authority.js"));
+
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
 assert.ok(worldSource.includes("good_dogs_production_runtime.js"));
 assert.ok(worldSource.includes("good_boys_reference_mechanics.js"));
@@ -107,4 +126,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys Waldo-house-to-prison route v6: PASS");
+console.log("Campaign playable world visuals + Good Boys Waldo-house-to-Earthfall route v7: PASS");
