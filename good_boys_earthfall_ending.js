@@ -18,7 +18,7 @@
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function mission(){try{var c=cs(),m=meta();return Number(c&&c.m||m&&m.m||0)||0;}catch(e){return 0;}}
   function save(){try{if(typeof root.save==="function")root.save();else if(typeof root.saveGame==="function")root.saveGame();}catch(_){} }
-  function bgSrc(){try{var b=root.NM_BG734&&root.NM_BG734.goodboys_earthfall;if(b&&b.src)return b.src;var map=root.GOOD_BOYS_CAMPAIGN_BACKGROUND_SOURCE,k=map&&map.goodboys_earthfall,im=k&&root.NM_BG734&&root.NM_BG734[k];return im&&im.src||"";}catch(e){return "";}}
+  function bgSrc(){try{var p=root.GOOD_BOYS_CUTSCENE_PLATES,keys=["warden_shuttle_bay","earthfall","crash_site","waldo_house"];if(p&&p[keys[scene]||"earthfall"])return p[keys[scene]||"earthfall"];var b=root.NM_BG734&&root.NM_BG734.goodboys_earthfall;if(b&&b.src)return b.src;var map=root.GOOD_BOYS_CAMPAIGN_BACKGROUND_SOURCE,k=map&&map.goodboys_earthfall,im=k&&root.NM_BG734&&root.NM_BG734[k];return im&&im.src||"";}catch(e){return "";}}
   function atlas(){try{return root.SHUTTLE&&root.SHUTTLE.src&&root.SHUTTLE.frames?root.SHUTTLE:null;}catch(e){return null;}}
   function atlasImage(){try{var a=atlas();if(!a)return null;if(!img||img.src!==a.src){img=new root.Image();img.src=a.src;}return img.complete&&img.naturalWidth?img:null;}catch(e){return null;}}
   function installStyle(){
@@ -30,7 +30,7 @@
       "#good-boys-earthfall-cine .gbe-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(1,4,8,.12),rgba(1,4,8,.28) 45%,rgba(1,4,8,.96))}",
       "#good-boys-earthfall-cine .gbe-card{position:absolute;z-index:5;left:50%;bottom:max(9vh,calc(env(safe-area-inset-bottom) + 28px));transform:translateX(-50%);width:min(720px,92vw);box-sizing:border-box;padding:16px 18px;border:2px solid #ffd166;border-radius:14px;background:rgba(2,7,13,.94);box-shadow:0 0 42px #000c}",
       "#good-boys-earthfall-cine .gbe-kicker{color:#ffd166;font:700 10px/1.3 monospace;letter-spacing:.09em}#good-boys-earthfall-cine h2{margin:7px 0 9px;color:#fff;font:800 21px/1.1 monospace}#good-boys-earthfall-cine p{margin:0 0 10px;color:#d9edf7;font:13px/1.5 monospace}#good-boys-earthfall-cine .gbe-goal{padding:8px 10px;margin:0 0 12px;border-left:3px solid #55dfff;background:#07131ddd;color:#bfeaff;font:800 10px/1.4 monospace}#good-boys-earthfall-cine button{width:100%;min-height:50px;border:2px solid #ffd166;border-radius:10px;background:#171107;color:#fff5d6;font:800 12px monospace;touch-action:manipulation}",
-      "body.good-boys-earthfall-active #good-boys-director-controls{display:none!important;pointer-events:none!important}"
+      "body.good-boys-earthfall-active #good-boys-director-controls,body.good-boys-earthfall-active #good-dogs-touch,body.good-boys-earthfall-active #good-boys-loop-controls,body.good-boys-earthfall-active #touch-buttons{display:none!important;visibility:hidden!important;pointer-events:none!important}"
     ].join("");(root.document.head||root.document.documentElement).appendChild(s);
   }
   function drawFrame(t){

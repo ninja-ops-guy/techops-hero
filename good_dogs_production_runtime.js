@@ -140,6 +140,7 @@
   }
 
   function drawReferenceHUD(x,NM){
+    if(root.__goodBoysHideHud)return;
     var cs=campaign();if(!cs)return;
     var W=(root.cv&&root.cv.width)||x.canvas.width,H=(root.cv&&root.cv.height)||x.canvas.height;
     var compact=W<700,pad=compact?10:16,cardW=compact?Math.min(150,(W-34)/2):188,cardH=compact?55:64;

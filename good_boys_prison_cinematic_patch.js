@@ -51,6 +51,7 @@
   }
   function syncBible(){try{var w=root.TechOpsGoodBoysBibleWorld;if(w&&w.syncDefinitions)return w.syncDefinitions();var b=root.TechOpsGoodBoysBackgroundAuthority;if(b&&b.syncCanon)return b.syncCanon();return false;}catch(e){return false;}}
   function ensureStyle(){if(!root.document||style)return;style=root.document.getElementById('good-boys-prison-cine-style')||root.document.createElement('style');style.id='good-boys-prison-cine-style';style.textContent=[
+    'body.good-boys-cinematic #good-dogs-touch,body.good-boys-cinematic #good-boys-loop-controls,body.good-boys-cinematic #touch-buttons,body.good-boys-cinematic #good-boys-director-controls{display:none!important;visibility:hidden!important;pointer-events:none!important}',
     '#gb-prison-cine{position:fixed;inset:0;z-index:130000;background:#02050a center/cover no-repeat;display:flex;align-items:flex-end;justify-content:center;padding:0 14px max(24px,env(safe-area-inset-bottom));font-family:monospace;color:#eef8ff}',
     '#gb-prison-cine:before,#gb-prison-cine:after{content:"";position:absolute;left:0;right:0;height:9vh;background:#000;z-index:1}#gb-prison-cine:before{top:0}#gb-prison-cine:after{bottom:0}',
     '#gb-prison-cine .card{position:relative;z-index:2;width:min(720px,94vw);margin-bottom:8vh;background:rgba(1,6,11,.94);border:1px solid #6bdcff;padding:17px 18px;border-radius:10px;box-shadow:0 0 42px #000}',
@@ -58,7 +59,7 @@
     '#gb-prison-cine .goal{padding:9px 10px;border-left:3px solid #38bdf8;background:#07131ddd;color:#bfeaff;font:700 10px/1.4 monospace;margin-bottom:12px}',
     '#gb-prison-cine button{width:100%;height:50px;border:1px solid #6bdcff;border-radius:8px;background:#071624;color:#fff;font:700 11px monospace}'
   ].join('');if(!style.parentNode)(root.document.head||root.document.documentElement).appendChild(style);}
-  function bgForMission(m){try{buildBackdrops();var k=m===3?'goodboys_breach':m===4?'goodboys_cell118':m===5?'goodboys_core':m===6?'goodboys_cell1984':'goodboys_escape',im=root.NM_BG734&&root.NM_BG734[k];return im&&im.src?im.src:'';}catch(e){return '';}}
+  function bgForMission(m){try{var p=root.GOOD_BOYS_CUTSCENE_PLATES,pk=m===3?'orbital_approach':m===4?'cell_118':m===5?'access_core':m===6?'cell_1984':'warden_shuttle_bay';if(p&&p[pk])return p[pk];buildBackdrops();var k=m===3?'goodboys_breach':m===4?'goodboys_cell118':m===5?'goodboys_core':m===6?'goodboys_cell1984':'goodboys_escape',im=root.NM_BG734&&root.NM_BG734[k];return im&&im.src?im.src:'';}catch(e){return '';}}
   function scenesFor(m){
     if(m===3)return[
       {t:'IMPACT VECTOR',p:'Blacksite Meridian rejects the stolen ship. Katrin and Manchez do not dock — they ram the maintenance hull and tear an entrance through the prison skin.',g:'SURVIVE IMPACT · CROSS THE HULL BREACH.'},
