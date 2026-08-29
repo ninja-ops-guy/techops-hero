@@ -18,7 +18,6 @@ function before(a, b) {
 }
 
 has("k_action.atlas.js?v=20260829-goodboys-art-ui-v2");
-has("assets/v736");
 has("v742_hooks.js?v=20260829-goodboys-art-ui-v2");
 has("good_boys_prison_cinematic_patch.js?v=20260829-goodboys-art-ui-v2");
 has("good_boys_earthfall_ending.js?v=20260829-goodboys-art-ui-v2");
