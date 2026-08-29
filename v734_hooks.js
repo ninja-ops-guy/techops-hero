@@ -42,18 +42,67 @@
   }
 
   // ---------- atlas helpers ----------
-  let kImg = null, nsImg = null;
-  function drawK734(x, key, dx, dy, h, flip) {
+  let nsImg = null;
+  const K_IMG734 = {};
+  const K_POSES734 = {
+    idle: ["studio0", "studio6", "action28", "action0"],
+    deck: ["studio0", "studio6", "action28", "action0"],
+    fist: ["studio11", "studio22", "action21", "action22"],
+    piano: ["studio3", "studio2", "action14", "action21"],
+    crouch: ["action6", "studio15", "action13"],
+    down: ["studio17", "action8", "action26"],
+    fork: ["action21", "action22", "studio22", "studio11"],
+  };
+  function imgK734(globalName) {
+    if (K_IMG734[globalName] !== undefined) return K_IMG734[globalName];
+    let im = null;
     try {
-      if (typeof TO_K_STUDIO === "undefined" || typeof K_STUDIO === "undefined" || !TO_K_STUDIO) throw 0;
-      if (!kImg) { kImg = new Image(); kImg.src = TO_K_STUDIO; }
-      if (!kImg.complete || !kImg.naturalWidth) throw 0;
-      const fr = K_STUDIO.frames[key] || K_STUDIO.frames[Object.keys(K_STUDIO.frames)[0]], C = K_STUDIO.cell;
+      const src = (typeof window[globalName] !== "undefined") ? window[globalName] : null;
+      if (src && typeof src === "string") { im = new Image(); im.src = src; }
+    } catch (e) { }
+    K_IMG734[globalName] = im;
+    return im;
+  }
+  function drawKFrame734(x, globalSrc, atlas, key, dx, dy, h, flip) {
+    try {
+      const A = window[atlas], im = imgK734(globalSrc);
+      if (!A || !A.frames || !A.frames[key] || !im || !im.complete || !im.naturalWidth) return false;
+      const fr = A.frames[key];
+      const sx = A.cell ? fr[0] * A.cell : fr[0];
+      const sy = A.cell ? fr[1] * (A.cellH || A.cell) : fr[1];
+      const sw = A.cell || fr[2];
+      const sh = A.cell ? (A.cellH || A.cell) : fr[3];
+      const w = h * (sw / sh);
       x.imageSmoothingEnabled = false;
-      if (flip) { x.save(); x.translate(dx, 0); x.scale(-1, 1); x.drawImage(kImg, fr[0] * C, fr[1] * C, C, C, -h / 2, dy - h, h, h); x.restore(); }
-      else x.drawImage(kImg, fr[0] * C, fr[1] * C, C, C, dx - h / 2, dy - h, h, h);
+      if (flip) {
+        x.save();
+        x.translate(dx, 0);
+        x.scale(-1, 1);
+        x.drawImage(im, sx, sy, sw, sh, -w / 2, dy - h, w, h);
+        x.restore();
+      } else {
+        x.drawImage(im, sx, sy, sw, sh, dx - w / 2, dy - h, w, h);
+      }
       return true;
     } catch (e) { return false; }
+  }
+  function drawK734(x, key, dx, dy, h, flip) {
+    const raw = Array.isArray(key) ? key : (K_POSES734[key] || [key]);
+    const candidates = [];
+    raw.forEach(k => {
+      candidates.push(k);
+      if (/^f\d+$/.test(k)) {
+        const n = Math.max(0, parseInt(k.slice(1), 10));
+        candidates.push("studio" + n, "action" + n);
+      }
+    });
+    for (const k of candidates) {
+      if (/^action/.test(k) && drawKFrame734(x, "TO_K_ACTION", "K_ACTION", k, dx, dy, h, flip)) return true;
+      if (/^studio/.test(k) && drawKFrame734(x, "TO_K_STUDIO", "K_STUDIO", k, dx, dy, h, flip)) return true;
+      if (drawKFrame734(x, "TO_K_STUDIO", "K_STUDIO", k, dx, dy, h, flip)) return true;
+      if (drawKFrame734(x, "TO_K_ACTION", "K_ACTION", k, dx, dy, h, flip)) return true;
+    }
+    return false;
   }
   function drawShepherd734(x, dx, dy, h, row, fi, flip) {
     try {
@@ -214,7 +263,7 @@
     }
     // K at Waldo's porch + the good dogs (post-gk6)
     if (NM.district === "waldo" && meta734() && meta734()._v734k) {
-      if (!drawK734(ctx, "f003", 980 - NM.cam, NM_FLOOR, 44, false)) { try { v725.h.k(ctx, 980 - NM.cam, NM_FLOOR, 44, "deck"); } catch (e) { } }
+      if (!drawK734(ctx, "piano", 980 - NM.cam, NM_FLOOR, 44, false)) { try { v725.h.k(ctx, 980 - NM.cam, NM_FLOOR, 44, "deck"); } catch (e) { } }
       // piano glow
       ctx.fillStyle = "rgba(57,255,136,.12)"; ctx.beginPath(); ctx.arc(980 - NM.cam, NM_FLOOR - 30, 40, 0, 7); ctx.fill();
       dog734(ctx, 900 - NM.cam, NM_FLOOR, "#f59e0b", now);       // Manchez — amber
@@ -270,7 +319,7 @@
       for (let i = 0; i < 5; i++) { x.fillStyle = "#1a1430"; x.fillRect(LW / 2 - 160 + i * 70, BAR + 130, 26, 270); }
       H.txt(x, "CELL " + num, LW / 2, BAR + 90, 18, col || PUR, "center", true);
     }
-    function kFig734(x, dx, dy, h, pose) { if (!drawK734(x, pose === "piano" ? "f003" : "f000", dx, dy, h, false)) H.k(x, dx, dy, h, pose === "fist" ? "fist" : "deck"); }
+    function kFig734(x, dx, dy, h, pose) { if (!drawK734(x, pose || "deck", dx, dy, h, false)) H.k(x, dx, dy, h, pose === "fist" ? "fist" : "deck"); }
     function dogs734(x, tm) { dog734(x, LW / 2 - 260, LH - BAR - 36, "#f59e0b", tm); dog734(x, LW / 2 - 210, LH - BAR - 36, "#3fa9f5", tm + 300); }
     const GK_SHOTS = {
       gk1: [

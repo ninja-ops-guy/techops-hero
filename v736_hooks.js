@@ -80,12 +80,18 @@
 
     // ============ generic variable-rect atlas consumer (guarded; new v7.36 contracts) ============
     const _atlasCache736 = {};
+    function atlasSrc736(name, A) {
+      try {
+        if (A && A.src) return A.src;
+        return window["TO_" + name] || null;
+      } catch (e) { return null; }
+    }
     function atlasImg736(name) {
       try {
-        const A = window[name];
-        if (!A || !A.src) return null;
+        const A = window[name], src = atlasSrc736(name, A);
+        if (!A || !src) return null;
         let im = _atlasCache736[name];
-        if (!im) { im = new Image(); im.src = A.src; _atlasCache736[name] = im; }
+        if (!im || im.src !== src) { im = new Image(); im.src = src; _atlasCache736[name] = im; }
         return (im.complete && im.naturalWidth) ? im : null;
       } catch (e) { return null; }
     }
@@ -319,7 +325,43 @@
       x.fillStyle = "#141a30"; x.beginPath(); x.arc(dx - 5 * u, dy - 77 * u, 2.2 * u, 0, 7); x.arc(dx + 5 * u, dy - 77 * u, 2.2 * u, 0, 7); x.fill();
       }
     }
-    function kFig736(x, dx, dy, h, pose) { // K_FULL contract first (guarded); v725 helper / silhouette otherwise
+    const K_POSES736 = {
+      idle: ["studio0", "studio6", "action28", "action0"],
+      deck: ["studio0", "studio6", "action28", "action0"],
+      fist: ["studio11", "studio22", "action21", "action22"],
+      piano: ["studio3", "studio2", "action14", "action21"],
+      orb: ["action14", "action15", "studio3"],
+      burst: ["action21", "action22", "studio22"],
+      shield: ["studio16", "action16", "action17"],
+      crouch: ["action6", "studio15", "action13"],
+      down: ["studio17", "action8", "action26"],
+      fork: ["action21", "action22", "studio22", "studio11"],
+    };
+    function kAtlasFrame736(x, key, dx, dy, h, flip) {
+      const names = /^action/.test(key) ? ["K_ACTION", "K_STUDIO"] : /^studio/.test(key) ? ["K_STUDIO", "K_ACTION"] : ["K_STUDIO", "K_ACTION"];
+      for (const name of names) {
+        const A = window[name];
+        const fr = A && A.frames && A.frames[key];
+        if (!fr) continue;
+        const C = A.cell || 64;
+        const sw = fr.length >= 4 ? fr[2] : C;
+        const sh = fr.length >= 4 ? fr[3] : (A.cellH || C);
+        const w = h * (sw / sh);
+        if (atlasFrame736(name, key, x, dx - w / 2, dy - h, w, h, flip)) return true;
+      }
+      return false;
+    }
+    function kFig736(x, dx, dy, h, pose) { // concept K first; K_FULL support FX / v725 fallback otherwise
+      const raw = Array.isArray(pose) ? pose : (K_POSES736[pose || "deck"] || [pose || "deck"]);
+      const candidates = [];
+      raw.forEach(k => {
+        candidates.push(k);
+        if (/^f\d+$/.test(k)) {
+          const n = Math.max(0, parseInt(k.slice(1), 10));
+          candidates.push("studio" + n, "action" + n);
+        }
+      });
+      for (const key of candidates) if (kAtlasFrame736(x, key, dx, dy, h, false)) return;
       if (atlasFrame736("K_FULL", pose === "orb" ? "k_orb" : pose === "burst" ? "k_burst" : pose === "shield" ? "k_shield" : "k_emerald", x, dx - h * 0.36, dy - h, h * 0.72, h)) return;
       try { if (window.v725 && v725.h && v725.h.k) { v725.h.k(x, dx, dy, h, pose || "deck"); return; } } catch (e) { }
       try { if (window.v725 && v725.h && v725.h.silhouette) v725.h.silhouette(x, dx, dy, h, "#101a14"); } catch (e) { }
