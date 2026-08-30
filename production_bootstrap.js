@@ -1,11 +1,11 @@
-/* TechOps Hero — production runtime bootstrap v17.
- * Stable production stack. v17 makes the modern Good Boys touch layout the
- * sole gameplay-control authority and balances linked-pair render scale.
+/* TechOps Hero — production runtime bootstrap v18.
+ * Stable production stack. v18 keeps unified Good Boys touch/render authority
+ * and refreshes the complete production asset inventory for live browsers.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=17,BUILD="20260830-production-v17-unified-goodboys-ui",started=false,done=false;
+  var VERSION=18,BUILD="20260830-production-v18-unified-goodboys-ui",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
