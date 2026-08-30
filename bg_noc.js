@@ -4,7 +4,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__productionCompositorPlanned=true;
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
-  var BUILD="20260828-goodboys-depth-lite-v2";
+  var BUILD="20260829-goodboys-visual-polish-v4";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
@@ -18,7 +18,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
     }catch(e){return false;}
   }
   function loadHudLite(){if(!appendScript('data-good-boys-hud-lite','good_boys_hud_lite.js',null,function(){root.__goodBoysHudLiteWireError='good_boys_hud_lite.js';}))root.__goodBoysHudLiteWireError='append_failed';}
-  function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',loadHudLite,function(){root.__goodBoysDepthLiteWireError='good_boys_depth_lite.js';loadHudLite();}))loadHudLite();}
+  function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',loadHudLite,function(){root.__goodBoysDepthLiteWireError='good_boys_depth-lite.js';loadHudLite();}))loadHudLite();}
   function loadProgression(){if(!appendScript('data-good-boys-progression-authority','good_boys_progression_authority.js',loadDepthLite,function(){root.__goodBoysProgressionWireError='good_boys_progression_authority.js';loadDepthLite();}))loadDepthLite();}
   function loadEarthfall(){if(!appendScript('data-good-boys-earthfall-ending','good_boys_earthfall_ending.js',loadProgression,function(){root.__goodBoysEarthfallWireError='good_boys_earthfall_ending.js';loadProgression();}))loadProgression();}
   function loadAccessCore(){if(!appendScript('data-good-boys-access-core-authority','good_boys_access_core_authority.js',loadEarthfall,function(){root.__goodBoysAccessCoreWireError='good_boys_access_core_authority.js';loadEarthfall();}))loadEarthfall();}
