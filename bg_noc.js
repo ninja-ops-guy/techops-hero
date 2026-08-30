@@ -4,10 +4,8 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__productionCompositorPlanned=true;
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
-  /* This key must move with production_bootstrap. Otherwise Safari can retain an
-     older bootstrap even when the HTML changed, leaving obsolete Good Boys UI
-     authorities alive for the whole session. */
-  var BUILD="20260830-production-v17-mobile-authority";
+  /* Move with production_bootstrap so Safari cannot retain older authority files. */
+  var BUILD="20260830-production-v18-unified-goodboys-ui";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
