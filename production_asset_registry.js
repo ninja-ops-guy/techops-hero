@@ -1,4 +1,4 @@
-/* TechOps Hero — complete production asset registry v4.
+/* TechOps Hero — complete production asset registry v5.
  * Makes every shipped visual asset discoverable by runtime, preloads physical
  * PNG assets, loads source payloads before atlas/reference manifests, and
  * fails closed when any required script/image/JSON asset cannot be loaded.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionAssets)return;
-  var VERSION=4;
+  var VERSION=5;
   var SCRIPT_ASSETS=[
     "campaign_bg.js","campaign_asset_pipeline.js","campaign_native_act1_visuals.js",
     "charger_reference_v1.js","duo_kw.atlas.js","env_objects.atlas.js","env_overlays.atlas.js","env_struct.atlas.js","env_terrain.atlas.js",
@@ -33,8 +33,10 @@
     "assets/campaign/shipping.clerk.idle.png","assets/campaign/shipping.dock_background.png","assets/campaign/shipping.label_printer.png","assets/campaign/shipping.printed_label_success.png",
     "assets/campaign/ui.standup.board.png","assets/campaign/ui.standup.owner_badge.png","assets/campaign/ui.standup.ticket_card.png",
     "assets/campaign/workstation.corporate_aircraft_panel.png","assets/campaign/workstation.felicia.video_frame.png","assets/campaign/workstation.orpheus.glitch_frame.png",
-    "assets/v736/katrin_manchez_atlas.png",
-    "assets/v736/k_action_atlas.png","assets/v736/k_studio_atlas.png"
+    "assets/v736/katrin_manchez_atlas.png","assets/v736/k_action_atlas.png","assets/v736/k_studio_atlas.png",
+    "assets/v742/cutscenes/access_core.png","assets/v742/cutscenes/cell_118.png","assets/v742/cutscenes/cell_1984.png","assets/v742/cutscenes/crash_site.png",
+    "assets/v742/cutscenes/earthfall.png","assets/v742/cutscenes/hidden_bay.png","assets/v742/cutscenes/orbital_approach.png","assets/v742/cutscenes/secret_ship_interior.png",
+    "assets/v742/cutscenes/waldo_dialogue.png","assets/v742/cutscenes/waldo_garage.png","assets/v742/cutscenes/waldo_house.png","assets/v742/cutscenes/warden_shuttle_bay.png"
   ];
   var DOG_FRAMES=["kat_bark","kat_cheer","kat_crouch","kat_dizzy","kat_down","kat_down_heavy","kat_hack","kat_hack2","kat_hack_low","kat_idle0","kat_idle1","kat_idle2","kat_idle3","kat_idle4","kat_idle5","kat_idle6","kat_leap","kat_leap2","kat_leap_low","kat_look","kat_pounce","kat_pounce2","kat_pounce_low","kat_roll","kat_shield","kat_sleep","kat_stand","kat_strike","kat_wall_hit","man_bark","man_crouch","man_down","man_down_wall","man_hack","man_idle0","man_idle1","man_idle2","man_idle3","man_idle4","man_idle5","man_idle6","man_leap","man_look","man_pounce","man_roll","man_shield","man_strike","man_wall_down","man_wall_hit"];
   DOG_FRAMES.forEach(function(n){PNG_ASSETS.push("assets/v736/katrin_manchez/"+n+".png");});
