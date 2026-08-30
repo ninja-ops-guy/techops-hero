@@ -1,11 +1,11 @@
-/* TechOps Hero — production runtime bootstrap v15.
- * Stable production stack. v15 separates ordinary day-run cinematics from
- * Good Boys/Waldo concept-art plates and refreshes mobile Safari caches.
+/* TechOps Hero — production runtime bootstrap v16.
+ * Stable production stack. v16 adds fail-safe touch controls and cleanup for
+ * normal-day v7.25 cinematics while preserving the Good Boys-specific stack.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=15,BUILD="20260830-production-v15-day-cinematic-scope",started=false,done=false;
+  var VERSION=16,BUILD="20260830-production-v16-day-cinematic-touch",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -20,6 +20,7 @@
     "good_boys_gameplay_loop.js",
     "good_boys_mobile_controls_layout.js",
     "good_boys_mobile_launch_guard.js",
+    "day_cinematic_mobile_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
     "production_presentation_guard.js"
@@ -43,6 +44,7 @@
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
     try{if(root.TechOpsGoodBoysVisualPolish)root.TechOpsGoodBoysVisualPolish.install();}catch(e){root.__productionVisualPolishInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileCinematicPolish)root.TechOpsGoodBoysMobileCinematicPolish.apply();}catch(e){root.__productionMobileCinePolishError=String(e&&e.stack||e);}
+    try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;
