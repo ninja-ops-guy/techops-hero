@@ -1,11 +1,10 @@
 /* ==========================================================================
    v7.42 - CONCEPT CUTSCENE STYLE PASS
-   Uses the integrated approved mission asset pack as runtime cutscene backdrops
-   while preserving the shared v7.25 cinematic engine, choices, cues and rewards.
-   v7.42.1: contain-safe composition keeps authored panels readable on portrait.
+   Uses approved mission art only where that art actually matches the scene.
+   v7.42.2: removes cross-story Good Boys plates from ordinary day-run scenes.
    ========================================================================== */
 (function () {
-  const VER = "7.42.1";
+  const VER = "7.42.2";
   if (window.v742) return;
   if (!window.v725 || !v725.defs || !v725.h) return;
 
@@ -19,10 +18,39 @@
     crash_site: BASE + "crash_site.png", cell_1984: BASE + "cell_1984.png", waldo_dialogue: BASE + "waldo_dialogue.png"
   };
   const PANEL_LABEL = {waldo_house:"WALDO'S HOUSE",waldo_garage:"WALDO'S GARAGE",hidden_bay:"HIDDEN BAY",secret_ship_interior:"SECRET SHIP",orbital_approach:"ORBITAL APPROACH",cell_118:"CELL 118",access_core:"ACCESS CORE",warden_shuttle_bay:"SHUTTLE BAY",earthfall:"EARTHFALL",crash_site:"CRASH SITE",cell_1984:"CELL 1984",waldo_dialogue:"WALDO LINK"};
+
+  /* IMPORTANT: these are the only scenes whose approved visual references are
+     represented by the v7.42 Good Boys/Waldo plate pack. Ordinary workday,
+     Felicia, Orpheus, promotion and city cinematics keep their own authored
+     renderer until a matching approved reference exists. */
   const SCENE_PANELS = {
-    coffee:["waldo_garage","waldo_garage","access_core","access_core","waldo_garage","waldo_garage","waldo_garage"],mentor:["access_core","access_core","waldo_dialogue","access_core","access_core","access_core","access_core"],betrayal:["access_core","secret_ship_interior","secret_ship_interior","warden_shuttle_bay","access_core","warden_shuttle_bay","secret_ship_interior","secret_ship_interior","access_core"],city:["hidden_bay","access_core","secret_ship_interior","access_core","access_core","secret_ship_interior","orbital_approach","warden_shuttle_bay","hidden_bay"],racks:["access_core","access_core","access_core","access_core","access_core"],citylife:["hidden_bay","hidden_bay","waldo_dialogue","hidden_bay","hidden_bay"],promotion:["access_core","access_core","access_core","access_core"],krun:["hidden_bay","hidden_bay","hidden_bay","hidden_bay","hidden_bay","hidden_bay"],wires:["access_core","access_core","hidden_bay","access_core","access_core"],signal:["hidden_bay","hidden_bay","orbital_approach","hidden_bay","waldo_dialogue"],orpheus:["access_core","access_core","secret_ship_interior","orbital_approach","access_core","warden_shuttle_bay"],badge:["access_core","secret_ship_interior","warden_shuttle_bay","access_core","access_core"],emerald:["access_core","secret_ship_interior","waldo_dialogue","hidden_bay","access_core","hidden_bay"],gs1:["waldo_garage","waldo_garage","access_core","access_core"],waldo_meet:["waldo_house","waldo_house","waldo_house","orbital_approach","waldo_house"],waldo_grass:["waldo_house","waldo_house","waldo_house","orbital_approach"],waldo_smoke:["waldo_house","waldo_dialogue","orbital_approach","waldo_house","waldo_house"],waldo_tracker:["waldo_garage","waldo_garage","waldo_garage","waldo_garage","waldo_dialogue","waldo_garage"],w_parts:["hidden_bay","hidden_bay","hidden_bay","waldo_garage"],w_nowhere:["hidden_bay","hidden_bay","hidden_bay","waldo_house"],w_party:["waldo_house","waldo_dialogue","waldo_house","waldo_dialogue","waldo_house"],w_brothers:["waldo_house","waldo_dialogue","access_core","warden_shuttle_bay"],w_housecall:["waldo_house","waldo_dialogue","waldo_house","waldo_house"],w_family:["waldo_house","hidden_bay","waldo_dialogue","orbital_approach"],w_bird:["orbital_approach","orbital_approach","earthfall","crash_site"],gk1:["cell_118","cell_118","cell_118","cell_118","cell_118"],gk2:["cell_118","cell_118","cell_118","cell_118","cell_118"],gk3:["access_core","access_core","access_core","access_core","access_core"],gk4:["cell_1984","cell_1984","cell_1984","cell_1984"],gk5:["access_core","access_core","access_core","access_core","warden_shuttle_bay"],gk6:["warden_shuttle_bay","access_core","secret_ship_interior","cell_1984","secret_ship_interior"],b736m1:["waldo_house","waldo_garage","hidden_bay","orbital_approach"],b736m2:["hidden_bay","secret_ship_interior","orbital_approach"],b736m3:["orbital_approach","cell_118","cell_118"],b736m4:["cell_118","cell_118","cell_118","cell_118"],b736m5:["access_core","access_core"],b736m6:["cell_1984","cell_1984","cell_1984"],b736m7:["warden_shuttle_bay","warden_shuttle_bay","secret_ship_interior"],b736m8:["earthfall","crash_site","waldo_dialogue","cell_118","access_core"]
+    waldo_meet:["waldo_house","waldo_house","waldo_house","waldo_house","waldo_house"],
+    waldo_grass:["waldo_house","waldo_house","waldo_house","waldo_house"],
+    waldo_smoke:["waldo_house","waldo_dialogue","waldo_house","waldo_house","waldo_house"],
+    waldo_tracker:["waldo_garage","waldo_garage","waldo_garage","waldo_garage","waldo_dialogue","waldo_garage"],
+    w_parts:["hidden_bay","hidden_bay","hidden_bay","waldo_garage"],
+    w_nowhere:["hidden_bay","hidden_bay","hidden_bay","waldo_house"],
+    w_party:["waldo_house","waldo_dialogue","waldo_house","waldo_dialogue","waldo_house"],
+    w_brothers:["waldo_house","waldo_dialogue","waldo_house","waldo_house"],
+    w_housecall:["waldo_house","waldo_dialogue","waldo_house","waldo_house"],
+    w_family:["waldo_house","waldo_house","waldo_dialogue","waldo_house"],
+    w_bird:["waldo_house","waldo_house","earthfall","crash_site"],
+    gk1:["cell_118","cell_118","cell_118","cell_118","cell_118"],
+    gk2:["cell_118","cell_118","cell_118","cell_118","cell_118"],
+    gk3:["access_core","access_core","access_core","access_core","access_core"],
+    gk4:["cell_1984","cell_1984","cell_1984","cell_1984"],
+    gk5:["access_core","access_core","access_core","access_core","warden_shuttle_bay"],
+    gk6:["warden_shuttle_bay","access_core","secret_ship_interior","cell_1984","secret_ship_interior"],
+    b736m1:["waldo_house","waldo_garage","hidden_bay","orbital_approach"],
+    b736m2:["hidden_bay","secret_ship_interior","orbital_approach"],
+    b736m3:["orbital_approach","cell_118","cell_118"],
+    b736m4:["cell_118","cell_118","cell_118","cell_118"],
+    b736m5:["access_core","access_core"],
+    b736m6:["cell_1984","cell_1984","cell_1984"],
+    b736m7:["warden_shuttle_bay","warden_shuttle_bay","secret_ship_interior"],
+    b736m8:["earthfall","crash_site","waldo_dialogue","cell_118","access_core"]
   };
-  const HUD_CAST={waldo:["WALDO","MIKE"],w_:["WALDO","MIKE"],gk:["KATRIN","MANCHEZ"],b736m1:["KATRIN","MANCHEZ"],b736m2:["KATRIN","MANCHEZ"],b736m3:["KATRIN","MANCHEZ"],b736m4:["K","KATRIN + MANCHEZ"],b736m5:["K","KATRIN + MANCHEZ"],b736m6:["WALDO","K"],b736m7:["K","WALDO"],b736m8:["K","WALDO"],signal:["FELICIA","K"],krun:["K","MIKE"],emerald:["K","MIKE"],orpheus:["ORPHEUS","K"],betrayal:["MIKE","FELICIA"]};
+  const HUD_CAST={waldo:["WALDO","MIKE"],w_:["WALDO","MIKE"],gk:["KATRIN","MANCHEZ"],b736m1:["KATRIN","MANCHEZ"],b736m2:["KATRIN","MANCHEZ"],b736m3:["KATRIN","MANCHEZ"],b736m4:["K","KATRIN + MANCHEZ"],b736m5:["K","KATRIN + MANCHEZ"],b736m6:["WALDO","K"],b736m7:["K","WALDO"],b736m8:["K","WALDO"]};
   const IMG={};
   function im(key){if(IMG[key]!==undefined)return IMG[key];let out=null;try{out=new Image();out.src=PANEL_SRC[key];}catch(e){}IMG[key]=out;return out;}
   function ready(img){return !!(img&&img.complete&&img.naturalWidth);}
@@ -30,16 +58,12 @@
   function drawConceptBackdrop(x,key,tm,tint){
     rawBg(x,tint);const img=im(key);
     if(ready(img)){
-      /* Contain, never cover: concept panels often contain authored framing/text
-         near their edges. Cropping those panels was the source of the portrait
-         ORBITAL APPROACH failure. Motion stays inside the available matte. */
       const pad=18,availW=LW-pad*2,availH=SCENE_H-pad*2;
       const scale=Math.min(availW/img.naturalWidth,availH/img.naturalHeight);
       const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
       const drift=Math.round(Math.sin((tm||0)/3200)*3),bob=Math.round(Math.cos((tm||0)/3800)*2);
       const dx=Math.round((LW-w)/2+drift),dy=Math.round(BAR+(SCENE_H-h)/2+bob);
       x.save();x.imageSmoothingEnabled=false;x.fillStyle="#02050b";x.fillRect(0,BAR,LW,SCENE_H);x.drawImage(img,dx,dy,w,h);
-      /* Soft matte instead of stretching/cropping to fill widescreen. */
       x.fillStyle="rgba(3,8,16,.72)";if(dx>0){x.fillRect(0,BAR,dx,SCENE_H);x.fillRect(dx+w,BAR,LW-(dx+w),SCENE_H);}if(dy>BAR){x.fillRect(0,BAR,LW,dy-BAR);x.fillRect(0,dy+h,LW,LH-BAR-(dy+h));}x.restore();
     }else{for(let i=0;i<34;i++){x.fillStyle=i%3?"rgba(57,211,255,.08)":"rgba(255,68,85,.06)";x.fillRect((i*149)%LW,BAR+30+(i*61)%(SCENE_H-80),26+(i%4)*14,2+(i%2)*10);}}
   }
@@ -53,5 +77,5 @@
   function patchScene(id){const defs=v725.defs();const def=defs&&defs[id];if(!def||!Array.isArray(def.shots)||!SCENE_PANELS[id])return 0;let n=0;def.shots.forEach((sh,i)=>{if(patchShot(id,sh,i))n++;});def._v742ConceptStyle=true;return n;}
   Object.keys(PANEL_SRC).forEach(im);const PATCHED={};Object.keys(SCENE_PANELS).forEach(id=>{PATCHED[id]=patchScene(id);});window.GOOD_BOYS_CUTSCENE_PLATES=Object.assign({},PANEL_SRC);
   window.v742={version:VER,panels:()=>Object.keys(PANEL_SRC),scenes:()=>Object.keys(SCENE_PANELS),patched:()=>Object.assign({},PATCHED),ready:()=>Object.keys(PANEL_SRC).filter(k=>ready(IMG[k])),drawConceptBackdrop};
-  console.log("[v7.42.1] Concept cutscene style loaded - contain-safe approved mission art");
+  console.log("[v7.42.2] Approved concept art scoped to matching Waldo/Good Boys scenes");
 })();
