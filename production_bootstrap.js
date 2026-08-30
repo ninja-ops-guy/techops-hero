@@ -1,14 +1,11 @@
-/* TechOps Hero — production runtime bootstrap v14.
- * Installs the stable Night compositor BEFORE any alternate-mode feature can
- * capture drawNM/stepNM. Feature modules still run their synchronous initial
- * setup, but their periodic wrapper-maintenance timers are parked. Dynamic
- * production modules are cache-versioned so mobile Safari cannot retain an old
- * compositor behind a newly deployed entrypoint.
+/* TechOps Hero — production runtime bootstrap v15.
+ * Stable production stack. v15 separates ordinary day-run cinematics from
+ * Good Boys/Waldo concept-art plates and refreshes mobile Safari caches.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=14,BUILD="20260830-production-v14-cell118-touch",started=false,done=false;
+  var VERSION=15,BUILD="20260830-production-v15-day-cinematic-scope",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
