@@ -1,11 +1,11 @@
-/* TechOps Hero — production runtime bootstrap v16.
- * Stable production stack. v16 adds fail-safe touch controls and cleanup for
- * normal-day v7.25 cinematics while preserving the Good Boys-specific stack.
+/* TechOps Hero — production runtime bootstrap v17.
+ * Stable production stack. v17 makes the modern Good Boys touch layout the
+ * sole gameplay-control authority and balances linked-pair render scale.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=16,BUILD="20260830-production-v16-day-cinematic-touch",started=false,done=false;
+  var VERSION=17,BUILD="20260830-production-v17-unified-goodboys-ui",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -44,6 +44,7 @@
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
     try{if(root.TechOpsGoodBoysVisualPolish)root.TechOpsGoodBoysVisualPolish.install();}catch(e){root.__productionVisualPolishInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileCinematicPolish)root.TechOpsGoodBoysMobileCinematicPolish.apply();}catch(e){root.__productionMobileCinePolishError=String(e&&e.stack||e);}
+    try{if(root.TechOpsGoodBoysMobileControlsLayout)root.TechOpsGoodBoysMobileControlsLayout.apply();}catch(e){root.__productionGoodBoysControlLayoutError=String(e&&e.stack||e);}
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
