@@ -1,4 +1,4 @@
-/* Good Boys deterministic progression authority v6.
+/* Good Boys deterministic progression authority v7.
  * Owns campaign handoffs, cinematic input blocking, control-surface cleanup,
  * and the canonical persisted mission counter. Runtime NM._v736.m is a mirror.
  */
@@ -6,12 +6,11 @@
   "use strict";
   if(!root)return;
   try{var prior=root.TechOpsGoodBoysProgressionAuthority;if(prior&&prior.timer&&root.clearInterval)root.clearInterval(prior.timer);if(prior&&prior.observer)prior.observer.disconnect();}catch(_){}
-  var VERSION=6,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0,repairs=0;
+  var VERSION=7,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0,repairs=0;
   function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function meta(){try{if(!root.S)return null;root.S.meta=root.S.meta||{};return root.S.meta._v736||(root.S.meta._v736={m:1,evidence:[],k:false,waldo:false,done:false});}catch(e){return null;}}
   function clampMission(v){v=Number(v);return Math.max(1,Math.min(8,isFinite(v)&&v>0?v:1));}
-  /* Persistent campaign meta is authoritative. Runtime _v736.m is only a mirror. */
   function mission(){var m=meta();if(m&&Number(m.m)>0)return clampMission(m.m);var c=cs();return clampMission(c&&c.m||1);}
   function reconcileMission(reason){
     try{
@@ -50,15 +49,19 @@
     try{
       if(transition||now()-lastAdvance<700)return false;var c=cs(),m=meta();if(!c||!m)return false;
       reconcileMission("pre-transition");
-      var from=mission();next=Math.max(from+1,Math.min(8,Number(next)||from+1));
+      var from=mission();if(from>=8)return false;
+      /* One accepted clear may advance exactly one mission. Callers cannot skip. */
+      next=Math.min(8,from+1);
       transition=true;lastAdvance=now();
       if(from===4)m.k=true;if(from===6)m.waldo=true;
-      /* Commit persistent authority first, then mirror to runtime. */
       m.m=next;c.m=next;
       resetWorldForHandoff();save();
       root.__goodBoysLastProgression={from:from,to:next,reason:reason||"clear",at:Date.now()};
       setMsg("MISSION "+from+" COMPLETE · M"+next+" UNLOCKED",2200);
-      var restart=function(){try{startNext(next);reconcileMission("handoff-complete");}finally{root.setTimeout(function(){transition=false;},500);}};
+      var restart=function(){
+        try{startNext(next);reconcileMission("handoff-complete");}
+        finally{root.setTimeout(function(){transition=false;},500);}
+      };
       root.setTimeout(restart,120);
       return true;
     }catch(e){root.__goodBoysProgressionError=String(e&&e.stack||e);transition=false;return false;}
@@ -67,11 +70,16 @@
   function tick(){
     try{
       installObserver();stopLegacyMobileTimer();reconcileMission("tick");removeCompetingPads();enforceCinematicBlock();
-      var c=cs(),n=root.NM;if(!c||!n){missionSeen=0;seenEnemy=false;emptySince=0;lastAdvance=0;return;}
-      var m=mission();if(m!==missionSeen){missionSeen=m;seenEnemy=false;emptySince=0;transition=false;lastAdvance=0;}
+      var c=cs(),n=root.NM;if(!c||!n){missionSeen=0;seenEnemy=false;emptySince=0;lastAdvance=0;transition=false;return;}
+      var m=mission();
+      if(m!==missionSeen){
+        missionSeen=m;seenEnemy=false;emptySince=0;
+        /* Do not clear transition/lastAdvance here. A mission counter change is
+           part of the handoff that advance() is still protecting. Clearing the
+           lock here allowed the next mission to consume the same clear event. */
+      }
+      if(transition)return;
       if(m===8){var end=root.TechOpsGoodBoysEarthfallEnding;if(end&&typeof end.begin==="function")end.begin();return;}
-      /* M1 is the authored Waldo-property traversal. No random fight can satisfy
-         or suppress it: the dogs must expose the false wall / hidden bay. */
       if(m===1){var w=root.TechOpsGoodBoysBibleWorld;if(w&&w.updateWaldoTrail)w.updateWaldoTrail();if(n._gbWaldoTrailComplete&&Number(n.x)>=1425)advance(2,"found-hidden-bay-behind-waldo-garage");return;}
       var alive=living();
       if(m===2){
@@ -89,17 +97,17 @@
       }
     }catch(e){root.__goodBoysProgressionError=String(e&&e.stack||e);}
   }
-  function acceptance(){var end=root.TechOpsGoodBoysEarthfallEnding,c=cs(),m=meta(),canonical=mission(),runtime=Number(c&&c.m||0),persisted=Number(m&&m.m||0);return{version:VERSION,active:!!c,mission:canonical,runtimeMission:runtime,metaMission:persisted,missionDiverged:!!(c&&m&&runtime!==persisted),missionRepairs:repairs,lastMissionRepair:root.__goodBoysMissionRepair||null,living:living(),pending:pending(),seenEnemy:seenEnemy,emptyFor:emptySince?Math.round(now()-emptySince):0,transition:transition,last:root.__goodBoysLastProgression||null,cinematicVisible:cinematicVisible(),cinematicBlocked:!!(cinematicVisible()&&root.S&&root.S.inDialog),legacyMobileTimerStopped:!!root.__goodBoysLegacyMobileTimerStopped,directorPads:root.document?root.document.querySelectorAll("#good-boys-director-controls").length:0,legacyPads:root.document?root.document.querySelectorAll("#good-dogs-touch,#good-boys-loop-controls").length:0,waldoTrailComplete:!!(root.NM&&root.NM._gbWaldoTrailComplete),earthfall:end&&end.acceptance?end.acceptance():null};}
+  function acceptance(){var end=root.TechOpsGoodBoysEarthfallEnding,c=cs(),m=meta(),canonical=mission(),runtime=Number(c&&c.m||0),persisted=Number(m&&m.m||0);return{version:VERSION,active:!!c,mission:canonical,runtimeMission:runtime,metaMission:persisted,missionDiverged:!!(c&&m&&runtime!==persisted),missionRepairs:repairs,lastMissionRepair:root.__goodBoysMissionRepair||null,living:living(),pending:pending(),seenEnemy:seenEnemy,emptyFor:emptySince?Math.round(now()-emptySince):0,transition:transition,lastAdvanceAge:lastAdvance?Math.round(now()-lastAdvance):null,last:root.__goodBoysLastProgression||null,cinematicVisible:cinematicVisible(),cinematicBlocked:!!(cinematicVisible()&&root.S&&root.S.inDialog),legacyMobileTimerStopped:!!root.__goodBoysLegacyMobileTimerStopped,directorPads:root.document?root.document.querySelectorAll("#good-boys-director-controls").length:0,legacyPads:root.document?root.document.querySelectorAll("#good-dogs-touch,#good-boys-loop-controls").length:0,waldoTrailComplete:!!(root.NM&&root.NM._gbWaldoTrailComplete),earthfall:end&&end.acceptance?end.acceptance():null};}
   function testPrimeClear(){
     try{
-      reconcileMission("test-prime");var n=root.NM,c=cs(),before=mission();if(!c||!n||before<3||before>7)return false;
+      reconcileMission("test-prime");var n=root.NM,c=cs(),before=mission();if(!c||!n||before<3||before>7||transition||now()-lastAdvance<700)return false;
       n.enemies=[{x:(n.x||100)+40,y:n.y||300,w:28,h:38,hp:1,alive:true,kind:"test-clear"}];
       tick();
       for(var i=0;i<n.enemies.length;i++){if(n.enemies[i]){n.enemies[i].hp=0;n.enemies[i].alive=false;}}
       c.pendingSpawn=null;c.spawnT=0;c.wavePending=false;n.spawnT=0;n.wavePending=false;
       emptySince=now()-1000;
       tick();
-      return mission()===before+1;
+      return mission()===before+1&&root.__goodBoysLastProgression&&root.__goodBoysLastProgression.from===before&&root.__goodBoysLastProgression.to===before+1;
     }catch(e){root.__goodBoysProgressionTestError=String(e&&e.stack||e);return false;}
   }
   installObserver();timer=root.setInterval?root.setInterval(tick,60):null;
