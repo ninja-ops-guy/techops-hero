@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v12.
+/* TechOps Hero — production runtime bootstrap v13.
  * Installs the stable Night compositor BEFORE any alternate-mode feature can
  * capture drawNM/stepNM. Feature modules still run their synchronous initial
  * setup, but their periodic wrapper-maintenance timers are parked. Dynamic
@@ -8,7 +8,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=12,BUILD="20260829-production-v12-mobile-cinematics",started=false,done=false;
+  var VERSION=13,BUILD="20260830-production-v13-mobile-brawler-ui",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
