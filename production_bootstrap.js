@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v10.
+/* TechOps Hero — production runtime bootstrap v11.
  * Installs the stable Night compositor BEFORE any alternate-mode feature can
  * capture drawNM/stepNM. Feature modules still run their synchronous initial
  * setup, but their periodic wrapper-maintenance timers are parked. Dynamic
@@ -8,7 +8,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=10,BUILD="20260828-production-v10-depth-hud",started=false,done=false;
+  var VERSION=11,BUILD="20260829-production-v11-visual-cohesion",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -16,6 +16,7 @@
     "good_boys_legacy_hud_filter.js",
     "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",
+    "good_boys_visual_polish.js",
     "good_boys_reference_mechanics.js",
     "good_boys_canon_runtime.js",
     "good_boys_gameplay_loop.js",
@@ -74,6 +75,7 @@
     try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightProductionAssets)await root.TechOpsNightProductionAssets.install();}catch(e){}
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
+    try{if(root.TechOpsGoodBoysVisualPolish)root.TechOpsGoodBoysVisualPolish.install();}catch(e){root.__productionVisualPolishInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;
