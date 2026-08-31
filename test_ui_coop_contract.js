@@ -1,3 +1,4 @@
+// Revalidation trigger: Good Dogs v2.2 source-master cinematic handoff + browser bot integration.
 const assert = require("assert");
 const fs = require("fs");
 const vm = require("vm");
