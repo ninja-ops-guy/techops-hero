@@ -16,6 +16,8 @@ assert.ok(source.includes('flex:1 1 auto;min-height:0'), "card zone must consume
 assert.ok(source.includes('btn.addEventListener("click",advance'), "slide progression must use click semantics for iOS Safari");
 assert.ok(!source.includes('btn.addEventListener("pointerdown",advance'), "repaired intro must not regress to pointerdown-only progression");
 assert.ok(source.includes('if(advancing||!active)return'), "slide progression must reject double taps/re-entrancy");
+assert.ok(source.includes('Object.defineProperty(s,"inDialog"'), "intro must own the authoritative dialogue lock while visible");
+assert.ok(source.includes('get:function(){return active?true:'), "legacy writers must not clear the intro dialogue lock");
 
 // Final-card regression: remove the blocker, invoke canonical v736 start, then verify attachment.
 const launch = source.indexOf("function launchCampaign()");
@@ -26,5 +28,6 @@ assert.ok(source.includes('function campaignAttached(){try{return !!(root.NM&&ro
 assert.ok(source.includes('if(attempt<2){invokeStart();'), "final CTA needs one bounded retry instead of deadlocking");
 assert.ok(source.includes('dataset.gbdBypass="1"'), "legacy director click interception must be bypassed intentionally");
 assert.ok(source.includes('root.__gbiSkipBuiltinM1=true'), "legacy duplicate mission-1 cinematic must be skipped during repaired handoff");
+assert.ok(source.includes('(root.setTimeout||setTimeout)(function(){'), "final CTA must defer heavy campaign bootstrap until after the tap event returns");
 
 console.log("Good Boys intro repair contract: PASS");

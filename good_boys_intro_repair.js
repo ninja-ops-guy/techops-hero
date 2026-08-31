@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Boys intro repair v1
+/* TechOps Hero — Good Boys intro repair v2
  * Repairs the pre-campaign four-card opening on mobile without changing the
  * canonical campaign/progression authority. The legacy director is bypassed
  * via its documented data-gbd-bypass hook; the familiar cinematic DOM id is
@@ -8,9 +8,9 @@
   "use strict";
   if(!root||root.TechOpsGoodBoysIntroRepair)return;
 
-  var VERSION=1;
+  var VERSION=2;
   var active=false,index=0,launching=false,advancing=false,watchdog=null;
-  var overlay=null,style=null;
+  var overlay=null,style=null,dialogLock=null;
   var SCENES=[
     {k:"goodboys_home",t:"WALDO'S PLACE",p:"The porch lights are on. The grill is cold. The dish is tracking something overhead — but Waldo is gone. Katrin and Manchez pick up his trail in the yard.",g:"SEARCH THE PROPERTY · FOLLOW WALDO'S TRAIL"},
     {k:"goodboys_home",t:"THE GARAGE WALL",p:"The trail crosses the porch and dies inside Waldo's garage. Fresh scrape marks trace a tool wall that should not move.",g:"YARD → PORCH → GARAGE → FALSE WALL"},
@@ -58,13 +58,39 @@
   function armLaunchButton(){
     try{var b=root.document&&root.document.getElementById("btn-v736");if(!b)return false;b.dataset.gbdBypass="1";b.dataset.gbiRepair="1";return true;}catch(e){return false;}
   }
-  function setDialog(on){try{if(root.S)root.S.inDialog=!!on;}catch(_){} }
+  function gameState(){try{return root.S||null;}catch(_){return null;}}
+  function lockDialog(){
+    try{
+      var s=gameState();if(!s)return false;
+      if(dialogLock&&dialogLock.state===s){try{s.inDialog=true;}catch(_){}return true;}
+      unlockDialog(false);
+      var d=Object.getOwnPropertyDescriptor(s,"inDialog"),backing=!!s.inDialog;
+      if(!d||d.configurable){
+        dialogLock={state:s,descriptor:d,backing:backing};
+        Object.defineProperty(s,"inDialog",{configurable:true,enumerable:d?d.enumerable:true,get:function(){return active?true:!!(dialogLock&&dialogLock.backing);},set:function(v){if(dialogLock)dialogLock.backing=!!v;}});
+        return true;
+      }
+      s.inDialog=true;return false;
+    }catch(e){root.__goodBoysIntroDialogLockError=String(e&&e.stack||e);return false;}
+  }
+  function unlockDialog(next){
+    var l=dialogLock;dialogLock=null;
+    if(!l){try{var s=gameState();if(s)s.inDialog=!!next;}catch(_){}return;}
+    try{
+      if(l.descriptor){
+        var d=l.descriptor;
+        if(Object.prototype.hasOwnProperty.call(d,"value")){d.value=!!next;Object.defineProperty(l.state,"inDialog",d);}
+        else{Object.defineProperty(l.state,"inDialog",d);try{l.state.inDialog=!!next;}catch(_){}}
+      }else{delete l.state.inDialog;l.state.inDialog=!!next;}
+    }catch(e){try{l.state.inDialog=!!next;}catch(_){}root.__goodBoysIntroDialogUnlockError=String(e&&e.stack||e);}
+  }
+  function setDialog(on){if(on){if(!lockDialog()){try{var s=gameState();if(s)s.inDialog=true;}catch(_){}}}else unlockDialog(false);}
   function cleanup(){
     if(watchdog){root.clearTimeout(watchdog);watchdog=null;}
     try{if(overlay&&overlay.parentNode)overlay.remove();}catch(_){}
     overlay=null;active=false;advancing=false;
     try{if(root.document&&root.document.body)root.document.body.classList.remove("good-boys-cinematic");}catch(_){}
-    setDialog(false);
+    unlockDialog(false);
   }
   function escape(s){return String(s==null?"":s).replace(/[&<>\"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 
@@ -104,8 +130,17 @@
     try{var b=root.document&&root.document.getElementById("btn-v736");if(b){b.dataset.gbdBypass="1";b.textContent="🛰 RETRY 118 / 1984 BREAKOUT";}}catch(_){}
   }
   function launchCampaign(){
-    if(launching||campaignAttached())return;
-    launching=true;cleanup();ensureBuiltinM1Skip();invokeStart();watchdog=root.setTimeout(function(){verifyLaunch(0);},250);
+    if(launching||campaignAttached())return false;
+    launching=true;cleanup();
+    /* Return from the user gesture before v736.start performs the shared Night
+       handoff. iOS/WebKit otherwise keeps the final button gesture pending while
+       synchronous campaign bootstrap work runs, presenting as a dead CTA. */
+    (root.setTimeout||setTimeout)(function(){
+      ensureBuiltinM1Skip();
+      if(!invokeStart()){launching=false;root.__goodBoysIntroRepairLaunch={ok:false,attempt:0,at:Date.now(),error:root.__goodBoysIntroRepairStartError||"v736 start missing"};return;}
+      watchdog=root.setTimeout(function(){verifyLaunch(0);},250);
+    },0);
+    return true;
   }
   function advance(e){
     if(e){try{e.preventDefault();e.stopPropagation();}catch(_){}}
