@@ -82,7 +82,7 @@ async function exercise(page,mode,before,profileName){
 
 async function runMode(browserType,profileName,contextOptions,mode){
   repl(`launch ${profileName} :: ${mode}`);
-  const browser=await browserType.launch({headless:true}),context=await browser.newContext(contextOptions);await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
+  const browser=await browserType.launch({headless:true}),context=await browser.newContext(contextOptions);await context.tracing.start({screenshots:true,snapshots:false,sources:false});const page=await context.newPage();
   const consoleErrors=[],pageErrors=[],requestFailures=[],badResponses=[];
   page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});page.on('pageerror',e=>pageErrors.push(String(e&&e.stack||e)));page.on('requestfailed',r=>requestFailures.push({url:r.url(),error:r.failure()?.errorText||''}));page.on('response',r=>{if(r.status()>=400)badResponses.push({url:r.url(),status:r.status()});});
   try{
