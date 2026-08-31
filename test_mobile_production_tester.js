@@ -47,8 +47,9 @@ assert.ok(mobileGuard.includes('every authored Good Boys cinematic as a hard han
 assert.ok(!mobileGuard.includes('root.S&&root.S.nightMode'),'Good Boys guard cannot inspect lexical S via window/root');
 assert.ok(!mobileGuard.includes('root.NM&&root.NM._v736'),'Good Boys guard cannot inspect lexical NM via window/root');
 
-assert.ok(/var VERSION=6/.test(modeRouter),'Production mode router must be v6');
-['function state()','function world()','clearErrors','launchNightCrawler','launchGoodBoys','enterNightReliably','good_boys_pair_timeout','never calls feature tick()'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
+const modeRouterVersion=Number((modeRouter.match(/var\s+VERSION\s*=\s*(\d+)/)||[])[1]||0);
+assert.ok(modeRouterVersion>=7,`Production mode router must retain v7+ single-authority Good Boys launch routing (found v${modeRouterVersion})`);
+['function state()','function world()','clearErrors','launchNightCrawler','launchGoodBoys','enterNightReliably','good_boys_pair_timeout','never calls feature tick()','defers authored Good Boys title-button launches to the campaign director'].forEach(marker=>assert.ok(modeRouter.includes(marker),`Production mode router missing ${marker}`));
 
 assert.ok(/var VERSION=2/.test(runtimeSafety),'Production runtime safety must be v2');
 ['function state()','function world()','NIGHT RUNTIME RECOVERY','__nightRuntimeRenderError','__nightRuntimeStepError','ensureVisible'].forEach(marker=>assert.ok(runtimeSafety.includes(marker),`Production runtime safety missing ${marker}`));
