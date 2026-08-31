@@ -1,0 +1,91 @@
+name: Import Good Dogs v2.2 source masters
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/import-good-dogs-v2-2-masters.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: good-dogs-v2-2-master-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    if: github.event.head_commit.message == 'Stage Good Dogs master import'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download exact Dropbox staging ZIP
+        env:
+          ZIP_URL: "https://uc40e791a36ccf788f7e9c245ec8.dl.dropboxusercontent.com/cd/0/get/DHTwl7gMDw-gRek8746jxmOjQhQ2FmLSPsTmV7X-ib9Em5-xZmX68MJxqz6j62ZEyrhGUK5gxM03b3OhmFnnd-7PdCWxDxMiWseYyjuz2hT3XTWWAHXyPVTBApqFFfc1jo6YcjP91lsukLs9KBiYIGaPw8pLgLy1N6_WBPjlzyyqTg/file?c_luid=fc222061"
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error "$ZIP_URL" --output /tmp/gooddogs.zip
+          echo "cdf91d0ed0cf342cfbf3f4f53f40467bf7caf3bc609a1604cea28d17266dc040  /tmp/gooddogs.zip" | sha256sum --check --strict
+
+      - name: Extract and verify source masters
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gooddogs
+          mkdir -p /tmp/gooddogs
+          unzip -q /tmp/gooddogs.zip -d /tmp/gooddogs
+          SRC=/tmp/gooddogs/good_dogs_pixel_cutscenes_v2_2
+          test -d "$SRC"
+          cd "$SRC"
+          cat > /tmp/gooddogs.sha256 <<'EOF'
+          a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe  01_signal_beyond_earth_pixel.mp4
+          55271e67329053420b5f630e711a235337cbd6c960585de4cb0f60ad9a8d43f9  02_signal_pull_transition_pixel.mp4
+          687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4  03_orbital_approach_pixel.mp4
+          60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2  04_cell118_triple_jump_to_terminal_pixel.mp4
+          ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf  05_cell118_approach_k_reveal_pixel.mp4
+          4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94  06_k_freed_prison_escort_pixel.mp4
+          53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838  07_cell1984_hack_pixel.mp4
+          24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01  08_team_reunited_exit_pixel.mp4
+          EOF
+          sha256sum --check --strict /tmp/gooddogs.sha256
+
+      - name: Replace proxies with exact source bundle
+        run: |
+          set -euo pipefail
+          SRC=/tmp/gooddogs/good_dogs_pixel_cutscenes_v2_2
+          DEST=assets/cutscenes/good_dogs
+          mkdir -p "$DEST"
+          cp "$SRC"/*.mp4 "$DEST"/
+          cp "$SRC/INTEGRATION_v2_2.md" "$DEST/INTEGRATION_v2_2.md"
+          cp "$SRC/campaign_clip_manifest_v2_2_pixel.json" "$DEST/campaign_clip_manifest_v2_2_pixel.json"
+          cp "$SRC/good_dogs_cutscenes_v2_2.js" good_dogs_cutscenes_v2_2.js
+
+      - name: Verify repository copies byte-for-byte
+        run: |
+          set -euo pipefail
+          cd assets/cutscenes/good_dogs
+          cat > /tmp/repo-gooddogs.sha256 <<'EOF'
+          a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe  01_signal_beyond_earth_pixel.mp4
+          55271e67329053420b5f630e711a235337cbd6c960585de4cb0f60ad9a8d43f9  02_signal_pull_transition_pixel.mp4
+          687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4  03_orbital_approach_pixel.mp4
+          60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2  04_cell118_triple_jump_to_terminal_pixel.mp4
+          ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf  05_cell118_approach_k_reveal_pixel.mp4
+          4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94  06_k_freed_prison_escort_pixel.mp4
+          53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838  07_cell1984_hack_pixel.mp4
+          24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01  08_team_reunited_exit_pixel.mp4
+          EOF
+          sha256sum --check --strict /tmp/repo-gooddogs.sha256
+
+      - name: Commit source masters and remove importer
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/import-good-dogs-v2-2-masters.yml
+          git add -A
+          git status --short
+          git commit -m "Replace Good Dogs cutscene proxies with source masters"
+          git push origin HEAD:main
