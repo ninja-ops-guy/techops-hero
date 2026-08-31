@@ -39,9 +39,11 @@ assert.ok(!dogs.includes('good_boys_mobile_launch_guard.js?v='),'dogs.js must no
 assert.ok(bgNoc.includes('__techopsFinalParserDrawNM')&&bgNoc.includes('__techopsFinalParserStepNM'),'bootstrap entrypoint must snapshot final parser Night chain');
 assert.ok(bgNoc.includes('snapshotParserChain();'),'final parser snapshot must occur immediately before bootstrap injection');
 
-assert.ok(/var VERSION=6/.test(mobileGuard),'Good Boys mobile launch guard must be v6');
-['function state()','function world()','pairReady','installStartGuard','resume_pair_missing','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
+const mobileGuardVersion=Number((mobileGuard.match(/var\s+VERSION\s*=\s*(\d+)/)||[])[1]||0);
+assert.ok(mobileGuardVersion>=7,`Good Boys mobile launch guard must retain v7+ cinematic handoff protection (found v${mobileGuardVersion})`);
+['function state()','function world()','pairReady','installStartGuard','resume_pair_missing','RETRY CO-OP HANDOFF','pair_attach_failed','mobile_night_handoff_timeout','introVisible'].forEach(marker=>assert.ok(mobileGuard.includes(marker),`Good Boys mobile recovery contract missing ${marker}`));
 assert.ok(mobileGuard.includes('Wrapper installation is one-shot'),'mobile watchdog must preserve one-shot wrapper installation');
+assert.ok(mobileGuard.includes('every authored Good Boys cinematic as a hard handoff blocker'),'v7+ mobile guard must block Night priming beneath authored cinematics');
 assert.ok(!mobileGuard.includes('root.S&&root.S.nightMode'),'Good Boys guard cannot inspect lexical S via window/root');
 assert.ok(!mobileGuard.includes('root.NM&&root.NM._v736'),'Good Boys guard cannot inspect lexical NM via window/root');
 
