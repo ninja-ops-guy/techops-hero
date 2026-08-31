@@ -59,6 +59,19 @@ jobs:
           cat /tmp/techops-runtime-server.log
           exit 1
 
+      - name: Run Good Boys iPhone intro regression
+        id: intro
+        continue-on-error: true
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
+        run: |
+          set +e
+          timeout 90s node scripts/good_boys_intro_mobile_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Run Night Crawler + Good Boys REPL bot
         id: bot
         continue-on-error: true
@@ -67,7 +80,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          npm run runtime-bot
+          timeout 180s npm run runtime-bot
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -101,6 +114,12 @@ jobs:
       - name: Add reports to workflow summary
         if: always()
         run: |
+          if [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ]; then
+            cat runtime-bot-artifacts/goodboys-intro-mobile.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '# Good Boys iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [ -f runtime-bot-artifacts/report.md ]; then
             cat runtime-bot-artifacts/report.md >> "$GITHUB_STEP_SUMMARY"
           else
@@ -129,7 +148,7 @@ jobs:
           retention-days: 14
 
       - name: Report failure to GitHub issue
-        if: always() && github.event_name != 'pull_request' && (steps.bot.outputs.exit_code != '0' || steps.progression.outputs.exit_code != '0' || steps.backgrounds.outputs.exit_code != '0')
+        if: always() && github.event_name != 'pull_request' && (steps.intro.outputs.exit_code != '0' || steps.bot.outputs.exit_code != '0' || steps.progression.outputs.exit_code != '0' || steps.backgrounds.outputs.exit_code != '0')
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
@@ -141,6 +160,8 @@ jobs:
             echo
             echo "Commit: \`$SHA\`"
             echo "Run: $RUN_URL"
+            echo
+            [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ] && cat runtime-bot-artifacts/goodboys-intro-mobile.md || echo "Good Boys iPhone intro report missing."
             echo
             [ -f runtime-bot-artifacts/report.md ] && cat runtime-bot-artifacts/report.md || echo "Runtime mode report missing."
             echo
@@ -157,6 +178,7 @@ jobs:
       - name: Enforce runtime bot result
         if: always()
         run: |
+          test "${{ steps.intro.outputs.exit_code }}" = "0"
           test "${{ steps.bot.outputs.exit_code }}" = "0"
           test "${{ steps.progression.outputs.exit_code }}" = "0"
           test "${{ steps.backgrounds.outputs.exit_code }}" = "0"
