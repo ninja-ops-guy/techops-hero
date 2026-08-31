@@ -1,0 +1,55 @@
+name: Patch Good Boys QA trace stalls
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-good-boys-qa-traces.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove always-on traces from focused Good Boys bots
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          targets = {
+            'scripts/good_boys_progression_bot.mjs': [
+              ("const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();",
+               "const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();"),
+              ("}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-progression-trace.zip')}).catch(()=>{});await browser.close();}",
+               "}finally{await browser.close();}")
+            ],
+            'scripts/good_boys_background_bible_bot.mjs': [
+              ("const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();",
+               "const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();"),
+              ("}catch(e){fail(0,'bot-exception',{error:String(e&&e.stack||e)});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-background-bible-trace.zip')}).catch(()=>{});await browser.close();}",
+               "}catch(e){fail(0,'bot-exception',{error:String(e&&e.stack||e)});}finally{await browser.close();}")
+            ]
+          }
+
+          for name, replacements in targets.items():
+            p = Path(name)
+            text = p.read_text()
+            for old, new in replacements:
+              if old not in text:
+                raise SystemExit(f'expected patch anchor missing in {name}')
+              text = text.replace(old, new, 1)
+            p.write_text(text)
+          PY
+          node --check scripts/good_boys_progression_bot.mjs
+          node --check scripts/good_boys_background_bible_bot.mjs
+      - name: Commit focused QA patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/patch-good-boys-qa-traces.yml
+          git add scripts/good_boys_progression_bot.mjs scripts/good_boys_background_bible_bot.mjs
+          git commit -m 'Remove focused Good Boys Playwright trace stalls'
+          git push origin HEAD:main
