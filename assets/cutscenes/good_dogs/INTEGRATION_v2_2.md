@@ -39,6 +39,3 @@ game pixels without changing scene content or audio.
 ## Live repo note
 This package is prepared for direct integration, but the GitHub connector was unavailable during
 this pass, so no claim is made that these files have already been committed to the repository.
-
-## Connected GitHub delivery status
-The MP4 files committed through the connected GitHub write path are **preview proxies only**. They preserve filenames, ordering, durations, and enough visual motion to validate runtime wiring, but they are intentionally low-bandwidth and silent. The uploaded v2.2 ZIP remains the source-quality master. Replace the preview files with the ZIP's MP4s before final production release.
