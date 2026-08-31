@@ -1,0 +1,63 @@
+name: Patch Good Dogs runtime bots
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/patch-good-dogs-runtime-bots.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Teach runtime bots to dismiss source-master overlay
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p=Path(path)
+              s=p.read_text()
+              if old not in s:
+                  raise SystemExit(f"expected patch marker missing in {path}: {old[:100]!r}")
+              p.write_text(s.replace(old,new,1))
+
+          replace(
+              "scripts/runtime_bot.mjs",
+              "const blockerIds=['good-boys-story-cine','gb-prison-cine','good-boys-campaign-intro','good-boys-earthfall-cine','good-boys-mobile-recovery'];",
+              "const blockerIds=['good-dogs-cutscene-overlay','good-boys-story-cine','gb-prison-cine','good-boys-campaign-intro','good-boys-earthfall-cine','good-boys-mobile-recovery'];"
+          )
+          replace(
+              "scripts/runtime_bot.mjs",
+              "const authored=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');",
+              "const authored=page.locator('#good-dogs-cutscene-overlay .gd-film-skip,#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');"
+          )
+          replace(
+              "scripts/good_boys_progression_bot.mjs",
+              "for(const selector of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){",
+              "for(const selector of ['#good-dogs-cutscene-overlay .gd-film-skip','#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){"
+          )
+          replace(
+              "scripts/good_boys_background_bible_bot.mjs",
+              "for(const sel of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){",
+              "for(const sel of ['#good-dogs-cutscene-overlay .gd-film-skip','#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){"
+          )
+          PY
+          node --check scripts/runtime_bot.mjs
+          node --check scripts/good_boys_progression_bot.mjs
+          node --check scripts/good_boys_background_bible_bot.mjs
+          rm .github/workflows/patch-good-dogs-runtime-bots.yml
+          git diff --check
+      - name: Commit bot integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Teach runtime bots Good Dogs video handoff"
+          git push origin HEAD:main
