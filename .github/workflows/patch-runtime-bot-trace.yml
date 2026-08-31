@@ -1,0 +1,40 @@
+name: Patch runtime bot trace overhead
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/patch-runtime-bot-trace.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Slim broad Playwright trace
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/runtime_bot.mjs')
+          s = p.read_text()
+          old = "await context.tracing.start({screenshots:true,snapshots:true,sources:true});"
+          new = "await context.tracing.start({screenshots:true,snapshots:false,sources:false});"
+          if old not in s:
+              raise SystemExit('expected broad trace start not found')
+          s = s.replace(old, new)
+          p.write_text(s)
+          PY
+          node --check scripts/runtime_bot.mjs
+      - name: Commit optimized harness
+        run: |
+          rm .github/workflows/patch-runtime-bot-trace.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/runtime_bot.mjs .github/workflows/patch-runtime-bot-trace.yml
+          git commit -m 'Reduce Runtime Bot Playwright trace overhead'
+          git push origin HEAD:main
