@@ -47,6 +47,7 @@ for (const tag of stylesheetTags) {
   "campaign_sector04.js",
   "campaign_sector04_runtime.js",
   "campaign_native_act1.js",
+  "good_boys_intro_repair.js",
   "good_dogs_cutscenes_v2_2.js",
   "good_dogs_cutscene_bridge.js"
 ].forEach((src) => {
@@ -58,9 +59,21 @@ assert.ok(order("campaign_act1.js") < order("campaign_runtime.js"), "campaign ru
 assert.ok(order("campaign_assets.js") < order("campaign_sector04_runtime.js"), "Sector 04 runtime must load after campaign_assets.js");
 assert.ok(order("campaign_sector04.js") < order("campaign_sector04_runtime.js"), "Sector 04 runtime must load after campaign_sector04.js");
 assert.ok(order("campaign_sector04_runtime.js") < order("campaign_native_act1.js"), "native Act I must load after Sector 04 runtime");
+assert.ok(order("good_boys_campaign_director.js") < order("good_boys_intro_repair.js"), "Good Boys intro repair must load after the legacy director so the director can observe its documented bypass hook");
+assert.ok(order("good_boys_intro_repair.js") < order("good_dogs_cutscenes_v2_2.js"), "Good Boys intro repair must arm before source-master mission cutscenes begin");
 assert.ok(order("good_boys_prison_cinematic_patch.js") < order("good_dogs_cutscene_bridge.js"), "Good Dogs cutscene bridge must load after the legacy prison cinematic patch so it can suppress overlapping cards");
 assert.ok(order("good_boys_progression_authority.js") < order("good_dogs_cutscene_bridge.js"), "Good Dogs cutscene bridge must load after canonical Good Boys progression");
 assert.ok(order("good_dogs_cutscenes_v2_2.js") < order("good_dogs_cutscene_bridge.js"), "Good Dogs cutscene player must load before the campaign bridge");
+
+const introSource = fs.readFileSync(path.join(__dirname, "good_boys_intro_repair.js"), "utf8");
+new Function(introSource);
+assert.ok(introSource.includes('dataset.gbdBypass="1"'), "intro repair must bypass the legacy director start interceptor");
+assert.ok(introSource.includes('id="good-boys-story-cine"') || introSource.includes('overlay.id="good-boys-story-cine"'), "intro repair must retain the authored blocker DOM contract");
+assert.ok(introSource.includes('class="gbi-visual"'), "intro repair must use a contiguous visual stage instead of the legacy dead-space portrait layout");
+assert.ok(introSource.includes('addEventListener("click",advance'), "intro progression must use a normal click path that works reliably on iOS Safari");
+assert.ok(introSource.includes('verifyLaunch(attempt)'), "intro final CTA must verify campaign attachment rather than assuming v736.start succeeded");
+assert.ok(introSource.includes('attempt<2'), "intro final CTA must have a bounded retry path");
+assert.strictEqual((introSource.match(/\{k:"goodboys_/g)||[]).length,4,"repaired intro must retain exactly four authored cards");
 
 const bridgeSource = fs.readFileSync(path.join(__dirname, "good_dogs_cutscene_bridge.js"), "utf8");
 new Function(bridgeSource);
