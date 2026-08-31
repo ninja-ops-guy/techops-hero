@@ -15,7 +15,7 @@ function isExternal(ref) {
 }
 function localPath(ref) { return ref.split(/[?#]/, 1)[0]; }
 function assertLocalFile(ref, owner) {
-  if (ref.includes("?")) assert.ok(/^bg_noc\.js\?v=[A-Za-z0-9._-]+$/.test(ref), `${owner} may version only the production bg_noc bootstrap: ${ref}`);
+  if (ref.includes("?")) assert.ok(/^[A-Za-z0-9_./-]+\.(?:js|css)\?v=[A-Za-z0-9._-]+$/.test(ref), `${owner} uses an invalid cache-version query: ${ref}`);
   assert.ok(fs.existsSync(path.join(__dirname, localPath(ref))), `${owner} references missing local file: ${ref}`);
 }
 
@@ -46,7 +46,9 @@ for (const tag of stylesheetTags) {
   "campaign_runtime.js",
   "campaign_sector04.js",
   "campaign_sector04_runtime.js",
-  "campaign_native_act1.js"
+  "campaign_native_act1.js",
+  "good_dogs_cutscenes_v2_2.js",
+  "good_dogs_cutscene_bridge.js"
 ].forEach((src) => {
   assert.strictEqual(localScripts.filter((candidate) => candidate === src).length,1,`${src} must be loaded exactly once`);
 });
@@ -56,5 +58,21 @@ assert.ok(order("campaign_act1.js") < order("campaign_runtime.js"), "campaign ru
 assert.ok(order("campaign_assets.js") < order("campaign_sector04_runtime.js"), "Sector 04 runtime must load after campaign_assets.js");
 assert.ok(order("campaign_sector04.js") < order("campaign_sector04_runtime.js"), "Sector 04 runtime must load after campaign_sector04.js");
 assert.ok(order("campaign_sector04_runtime.js") < order("campaign_native_act1.js"), "native Act I must load after Sector 04 runtime");
+assert.ok(order("good_boys_prison_cinematic_patch.js") < order("good_dogs_cutscene_bridge.js"), "Good Dogs cutscene bridge must load after the legacy prison cinematic patch so it can suppress overlapping cards");
+assert.ok(order("good_boys_progression_authority.js") < order("good_dogs_cutscene_bridge.js"), "Good Dogs cutscene bridge must load after canonical Good Boys progression");
+assert.ok(order("good_dogs_cutscenes_v2_2.js") < order("good_dogs_cutscene_bridge.js"), "Good Dogs cutscene player must load before the campaign bridge");
+
+const bridgeSource = fs.readFileSync(path.join(__dirname, "good_dogs_cutscene_bridge.js"), "utf8");
+new Function(bridgeSource);
+[
+  '1:["GD_CUT_01"]',
+  '3:["GD_CUT_02","GD_CUT_03"]',
+  '4:["GD_CUT_04","GD_CUT_05"]',
+  '5:["GD_CUT_06"]',
+  '6:["GD_CUT_07"]',
+  '7:["GD_CUT_08"]'
+].forEach((contract) => assert.ok(bridgeSource.includes(contract), `Good Dogs mission/cutscene contract missing: ${contract}`));
+assert.ok(bridgeSource.includes('write("k_identity_status","K_pending")'), "K reveal must persist K_pending identity state");
+assert.ok(bridgeSource.includes('m===4)return false'), "Cell 118 legacy mission card must remain suppressed after the canonical terminal-to-K reveal pair");
 
 console.log("Static entrypoint integrity: PASS");
