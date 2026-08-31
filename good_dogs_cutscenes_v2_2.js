@@ -29,10 +29,13 @@
     if(root) return root;
     root=document.createElement("div");
     root.id="good-dogs-cutscene-overlay";
+    root.setAttribute("role","dialog");
+    root.setAttribute("aria-modal","true");
+    root.setAttribute("aria-label","Good Dogs Protocol cutscene");
     root.innerHTML=`
       <div class="gd-film-frame">
         <div class="gd-film-title">GOOD DOGS PROTOCOL</div>
-        <video class="gd-film-video" playsinline preload="auto"></video>
+        <video class="gd-film-video" playsinline webkit-playsinline preload="auto"></video>
         <button class="gd-film-skip" type="button">SKIP</button>
       </div>`;
     document.body.appendChild(root);
@@ -41,8 +44,8 @@
 
   const css=document.createElement("style");
   css.textContent=`
-    #good-dogs-cutscene-overlay{position:fixed;inset:0;z-index:100000;background:#02050a;
-      display:none;align-items:center;justify-content:center;overscroll-behavior:none}
+    #good-dogs-cutscene-overlay{position:fixed;inset:0;z-index:150000;background:#02050a;
+      display:none;align-items:center;justify-content:center;overscroll-behavior:none;touch-action:manipulation}
     #good-dogs-cutscene-overlay.active{display:flex}
     .gd-film-frame{position:relative;width:min(100vw,1100px);height:min(100vh,720px);
       background:#050911;border:2px solid #263848;box-shadow:0 0 0 3px #070b10,0 0 32px #6724a955;
@@ -64,6 +67,9 @@
     const state=ensureState();
     const priorOverflow=document.body.style.overflow;
     root.classList.add("active"); document.body.style.overflow="hidden";
+    video.controls=false;
+    video.setAttribute("playsinline","");
+    video.setAttribute("webkit-playsinline","");
     let done=false;
     return new Promise((resolve)=>{
       const finish=(skipped)=>{
