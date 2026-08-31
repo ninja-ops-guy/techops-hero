@@ -32,7 +32,7 @@ async function state(page){return page.evaluate(()=>{let r={};try{r=window.eval(
 async function waitMission(page,want,ms=7000){const until=Date.now()+ms;let s;while(Date.now()<until){s=await state(page);if(s.done||s.mission===want||s.metaMission===want)return s;await dismiss(page,260);await page.waitForTimeout(80);}return s||await state(page);}
 async function forceMission(page,m){await page.evaluate((mission)=>{var n=window.NM,s=window.S;if(n&&n._v736)n._v736.m=mission;if(s&&s.meta&&s.meta._v736)s.meta._v736.m=mission;var w=window.TechOpsGoodBoysBibleWorld;if(w)w.tick();var q=window.TechOpsGoodBoysAccessCoreAuthority;if(q)q.tick();var b=window.TechOpsGoodBoysBackgroundAuthority;if(b)b.enforce();var a=window.TechOpsGoodBoysProgressionAuthority;if(a)a.tick();},m);}
 
-const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
+const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i)){fail('launch-button-missing');throw new Error('Good Boys launch button missing');}
@@ -89,5 +89,5 @@ try{
   s=await state(page);log('final',s);if(!s.done)fail('earthfall-did-not-complete-campaign',s);if(!s.k||!s.waldo)fail('ending-missing-rescued-party-flags',s);if(!s.breakout||!s.pair)fail('ending-missing-breakout-unlock-flags',s);if(s.earthfallCines!==0)fail('earthfall-overlay-did-not-close',s);
   if(s.directorPads>1)fail('duplicate-director-pads-at-end',{count:s.directorPads});if(s.legacyPads!==0)fail('legacy-pads-returned',{count:s.legacyPads});
   await page.screenshot({path:path.join(OUT,'goodboys-progression-final.png'),fullPage:true});
-}catch(e){fail('bot-exception',{error:String(e&&e.stack||e)});await page.screenshot({path:path.join(OUT,'goodboys-progression-exception.png'),fullPage:true}).catch(()=>{});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-progression-trace.zip')}).catch(()=>{});await browser.close();}
+}catch(e){fail('bot-exception',{error:String(e&&e.stack||e)});await page.screenshot({path:path.join(OUT,'goodboys-progression-exception.png'),fullPage:true}).catch(()=>{});}finally{await browser.close();}
 const report={pass:failures.length===0,failures,events};fs.writeFileSync(path.join(OUT,'goodboys-progression.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-progression.md'),['# Good Boys Progression Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Failures: ${failures.length}`,'','## Authored progression','',...events.map(e=>`- ${e.name}: \`${JSON.stringify(e)}\``)].join('\n'));if(!report.pass)process.exitCode=1;

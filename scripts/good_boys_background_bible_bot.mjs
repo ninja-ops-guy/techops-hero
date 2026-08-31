@@ -18,7 +18,7 @@ const expected={
 const findings=[];const fail=(mission,issue,data={})=>findings.push({mission,issue,...data});
 async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.click({timeout:500});return true;}catch{}}}return false;}
 async function dismiss(page,ms=6500){const until=Date.now()+ms;while(Date.now()<until){for(const sel of ['#good-dogs-cutscene-overlay .gd-film-skip','#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){const b=page.locator(sel);if(await b.count()){const visible=await b.first().isVisible().catch(()=>false);if(visible){await b.first().click({timeout:500}).catch(()=>{});await page.waitForTimeout(100);continue;}}}const txt=await page.locator('body').innerText().catch(()=>'');if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickText(page,/Standard/i);continue;}if(/BEGIN THE INCIDENT/i.test(txt)){await clickText(page,/BEGIN THE INCIDENT/i);continue;}break;}}
-const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
+const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
@@ -47,5 +47,5 @@ try{
     if(st.phase&&st.phase.bg!==e.key)fail(m,'gameplay-phase-background-drift',{expected:e.key,actual:st.phase.bg});
     await page.screenshot({path:path.join(OUT,`goodboys-bible-m${m}.png`),fullPage:false});
   }
-}catch(e){fail(0,'bot-exception',{error:String(e&&e.stack||e)});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-background-bible-trace.zip')}).catch(()=>{});await browser.close();}
+}catch(e){fail(0,'bot-exception',{error:String(e&&e.stack||e)});}finally{await browser.close();}
 const report={pass:findings.length===0,expected,findings};fs.writeFileSync(path.join(OUT,'goodboys-background-bible.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-background-bible.md'),['# Good Boys Background Bible Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Findings: ${findings.length}`,'','## Canon route','',...Object.entries(expected).map(([m,e])=>`- M${m}: ${e.scene} — \`${e.key}\` / \`${e.district}\``),'',...(findings.length?['## Findings','',...findings.map(f=>`- ${JSON.stringify(f)}`)]:[])].join('\n'));if(!report.pass)process.exitCode=1;
