@@ -93,7 +93,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          node scripts/good_boys_progression_bot.mjs
+          timeout 180s node scripts/good_boys_progression_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -106,7 +106,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          node scripts/good_boys_background_bible_bot.mjs
+          timeout 120s node scripts/good_boys_background_bible_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
