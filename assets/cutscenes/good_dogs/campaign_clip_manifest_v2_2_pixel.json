@@ -1,5 +1,5 @@
 {
-  "package": "TechOps Hero \u2014 Good Dogs Campaign Clips v2.2 PIXEL",
+  "package": "TechOps Hero — Good Dogs Campaign Clips v2.2 PIXEL",
   "version": "2.2",
   "notes": [
     "Canonical Triple Jump clip replaced with the 7.03s 910x512 upload supplied on 2026-08-31. It begins in Sector 04 Docking Bay, shows the linked dog traversal through the laser grid, and ends at the Cell 118 MIKE OLIVEFIELD terminal.",
@@ -17,10 +17,7 @@
       "placement": "After Garage Receiver",
       "trigger": "good_dogs_campaign_started == true",
       "purpose": "First indication that the dogs' rescue signal extends beyond Earth.",
-      "writes": [
-        "good_dogs_signal_heard",
-        "signal_beyond_earth_seen"
-      ],
+      "writes": ["good_dogs_signal_heard", "signal_beyond_earth_seen"],
       "exit": "Shuttle Launch",
       "source_file": "01_signal_beyond_earth.mp4",
       "pixel_filtered": true
@@ -32,9 +29,7 @@
       "placement": "Between Shuttle Launch and orbital sequence",
       "trigger": "shuttle_launch_started == true",
       "purpose": "Very short connective bridge out of Earth-side launch.",
-      "writes": [
-        "signal_pull_seen"
-      ],
+      "writes": ["signal_pull_seen"],
       "exit": "GD_CUT_03",
       "source_file": "02_signal_pull_transition.mp4",
       "pixel_filtered": true
@@ -46,9 +41,7 @@
       "placement": "Immediately after launch, before Dock Infiltration",
       "trigger": "shuttle_launched == true",
       "purpose": "Establishes the improvised shuttle and orbital detention ring as the true destination.",
-      "writes": [
-        "orbital_detention_seen"
-      ],
+      "writes": ["orbital_detention_seen"],
       "exit": "Dock Infiltration",
       "source_file": "03_orbital_approach.mp4",
       "pixel_filtered": true
@@ -56,15 +49,11 @@
     {
       "id": "GD_CUT_04",
       "file": "04_cell118_triple_jump_to_terminal_pixel.mp4",
-      "title": "Triple Jump \u2192 Cell 118 Terminal",
+      "title": "Triple Jump → Cell 118 Terminal",
       "placement": "After Dock Infiltration / traversal setup, immediately before K Reveal",
       "trigger": "triple_jump_route_ready == true",
       "purpose": "Canonical traversal handoff: Katrin and Manchez execute the linked three-jump route through the Sector 04 laser grid and arrive at the Cell 118 terminal.",
-      "writes": [
-        "triple_jump_cinematic_seen",
-        "cell118_outer_access_seen",
-        "cell118_terminal_seen"
-      ],
+      "writes": ["triple_jump_cinematic_seen", "cell118_outer_access_seen", "cell118_terminal_seen"],
       "exit": "GD_CUT_05",
       "cohesion_rules": [
         "This clip owns the successful traversal payoff; do not immediately replay another jump montage.",
@@ -78,7 +67,7 @@
         "width": 910,
         "height": 512,
         "fps": 30,
-        "sha256": "e75f99df0b54252153e57300915bb912b57e88cf9d05d81208b65fabef8a8880"
+        "sha256": "60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2"
       },
       "source_file": "04_cell118_triple_jump_to_terminal.mp4",
       "pixel_filtered": true
@@ -90,11 +79,7 @@
       "placement": "Immediately after GD_CUT_04",
       "trigger": "cell118_terminal_seen == true",
       "purpose": "Pre-rendered discovery of K. Hands back to canonical dialogue and K-support setup.",
-      "writes": [
-        "k_seen",
-        "k_freed",
-        "k_identity_status=K_pending"
-      ],
+      "writes": ["k_seen", "k_freed", "k_identity_status=K_pending"],
       "exit": "Mike Index",
       "source_file": "05_cell118_approach_k_reveal.mp4",
       "pixel_filtered": true
@@ -106,10 +91,7 @@
       "placement": "After K is freed and Mike Index resolves",
       "trigger": "k_freed == true",
       "purpose": "Shows K becoming part of the group before the route to 1984.",
-      "writes": [
-        "k_joined_party",
-        "escort_started"
-      ],
+      "writes": ["k_joined_party", "escort_started"],
       "exit": "Route to 1984",
       "source_file": "06_k_freed_prison_escort.mp4",
       "pixel_filtered": true
@@ -121,10 +103,7 @@
       "placement": "Before Hold the Door",
       "trigger": "cell1984_reached == true",
       "purpose": "K works the prison terminal while the game prepares the defense encounter.",
-      "writes": [
-        "cell1984_hack_started",
-        "hold_the_door_seeded"
-      ],
+      "writes": ["cell1984_hack_started", "hold_the_door_seeded"],
       "exit": "Hold the Door",
       "source_file": "07_cell1984_hack.mp4",
       "pixel_filtered": true
@@ -136,10 +115,7 @@
       "placement": "After Waldo is freed",
       "trigger": "waldo_freed == true",
       "purpose": "Reunited party beat before Release Was Expected and Warden NULL.",
-      "writes": [
-        "waldo_reunited",
-        "release_was_expected_ready"
-      ],
+      "writes": ["waldo_reunited", "release_was_expected_ready"],
       "exit": "Release Was Expected",
       "source_file": "08_team_reunited_exit.mp4",
       "pixel_filtered": true
@@ -148,8 +124,8 @@
   "cell118_continuity": {
     "ordered_flow": [
       "Playable Dock Infiltration / traversal setup",
-      "GD_CUT_04 \u2014 Triple Jump \u2192 Cell 118 Terminal (canonical 7.03s clip)",
-      "GD_CUT_05 \u2014 Cell 118 / K Reveal",
+      "GD_CUT_04 — Triple Jump → Cell 118 Terminal (canonical 7.03s clip)",
+      "GD_CUT_05 — Cell 118 / K Reveal",
       "Canonical K dialogue and support handoff",
       "Mike Index interactive beat"
     ],
@@ -180,101 +156,13 @@
     "runtime_note": "Use these prefiltered files directly; no browser blur/interpolation filter is required."
   },
   "processed_media": [
-    {
-      "source": "01_signal_beyond_earth.mp4",
-      "pixel_file": "01_signal_beyond_earth_pixel.mp4",
-      "width": 512,
-      "height": 910,
-      "pixel_grid_source": [
-        128,
-        228
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe"
-    },
-    {
-      "source": "02_signal_pull_transition.mp4",
-      "pixel_file": "02_signal_pull_transition_pixel.mp4",
-      "width": 512,
-      "height": 910,
-      "pixel_grid_source": [
-        128,
-        228
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "55271e67329053420b5f630e711a235337cbd6c960585de4cb0f60ad9a8d43f9"
-    },
-    {
-      "source": "03_orbital_approach.mp4",
-      "pixel_file": "03_orbital_approach_pixel.mp4",
-      "width": 910,
-      "height": 512,
-      "pixel_grid_source": [
-        228,
-        128
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4"
-    },
-    {
-      "source": "04_cell118_triple_jump_to_terminal.mp4",
-      "pixel_file": "04_cell118_triple_jump_to_terminal_pixel.mp4",
-      "width": 910,
-      "height": 512,
-      "pixel_grid_source": [
-        228,
-        128
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2"
-    },
-    {
-      "source": "05_cell118_approach_k_reveal.mp4",
-      "pixel_file": "05_cell118_approach_k_reveal_pixel.mp4",
-      "width": 512,
-      "height": 910,
-      "pixel_grid_source": [
-        128,
-        228
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf"
-    },
-    {
-      "source": "06_k_freed_prison_escort.mp4",
-      "pixel_file": "06_k_freed_prison_escort_pixel.mp4",
-      "width": 512,
-      "height": 910,
-      "pixel_grid_source": [
-        128,
-        228
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94"
-    },
-    {
-      "source": "07_cell1984_hack.mp4",
-      "pixel_file": "07_cell1984_hack_pixel.mp4",
-      "width": 512,
-      "height": 910,
-      "pixel_grid_source": [
-        128,
-        228
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838"
-    },
-    {
-      "source": "08_team_reunited_exit.mp4",
-      "pixel_file": "08_team_reunited_exit_pixel.mp4",
-      "width": 512,
-      "height": 910,
-      "pixel_grid_source": [
-        128,
-        228
-      ],
-      "style": "4x nearest-neighbor pixelation + subtle contrast/saturation lift",
-      "sha256": "24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01"
-    }
+    {"source":"01_signal_beyond_earth.mp4","pixel_file":"01_signal_beyond_earth_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe"},
+    {"source":"02_signal_pull_transition.mp4","pixel_file":"02_signal_pull_transition_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"55271e67329053420b5f630e711a235337cbd6c960585de4cb0f60ad9a8d43f9"},
+    {"source":"03_orbital_approach.mp4","pixel_file":"03_orbital_approach_pixel.mp4","width":910,"height":512,"pixel_grid_source":[228,128],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4"},
+    {"source":"04_cell118_triple_jump_to_terminal.mp4","pixel_file":"04_cell118_triple_jump_to_terminal_pixel.mp4","width":910,"height":512,"pixel_grid_source":[228,128],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2"},
+    {"source":"05_cell118_approach_k_reveal.mp4","pixel_file":"05_cell118_approach_k_reveal_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf"},
+    {"source":"06_k_freed_prison_escort.mp4","pixel_file":"06_k_freed_prison_escort_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94"},
+    {"source":"07_cell1984_hack.mp4","pixel_file":"07_cell1984_hack_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838"},
+    {"source":"08_team_reunited_exit.mp4","pixel_file":"08_team_reunited_exit_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01"}
   ]
 }
