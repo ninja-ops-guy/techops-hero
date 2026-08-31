@@ -2,13 +2,22 @@
 const assert=require("assert"),fs=require("fs"),vm=require("vm");
 const src=fs.readFileSync("production_mode_router.js","utf8");
 const q=[];function flush(limit=2000){let n=0;while(q.length&&n++<limit)q.shift()();if(n>=limit)throw new Error("timer runaway");}
-const styles={};function el(){return{style:{setProperty(k,v){styles[k]=v;},removeProperty(){}},textContent:"",classList:{add(){},remove(){},contains(){return false;}},addEventListener(){}};}
-const elements={hud:el(),"touch-ui":el(),dialogue:el(),panel:el(),battle:el(),eod:el(),"title-screen":el()};
+const styles={};
+function el(initialHidden=false){
+  const classes=new Set(initialHidden?["hidden"]:[]);
+  return{
+    style:{setProperty(k,v){styles[k]=v;this[k]=v;},removeProperty(k){delete this[k];}},
+    textContent:"",
+    classList:{add(k){classes.add(k);},remove(k){classes.delete(k);},contains(k){return classes.has(k);}},
+    addEventListener(){}
+  };
+}
+const elements={hud:el(),"touch-ui":el(true),dialogue:el(),panel:el(),battle:el(),eod:el(),"title-screen":el()};
 let enterCalls=0,startCalls=0,v736Calls=0;
 const context={console,setInterval(){return 1;},clearInterval(){},setTimeout(fn){q.push(fn);return q.length;},isFinite,
   localStorage:{data:{},setItem(k,v){this.data[k]=v;},getItem(k){return this.data[k]||null;},removeItem(k){delete this.data[k];}},
   document:{getElementById(id){return elements[id]||null;},addEventListener(){}},
-  getComputedStyle(){return{display:"block",visibility:"visible",opacity:"1"};},
+  getComputedStyle(node){return{display:node&&node.style&&node.style.display||"block",visibility:"visible",opacity:"1"};},
   S:null,NM:null,drawNM(){},stepNM(){},
   startRun(){startCalls++;context.S={nightMode:false,clock:540,meta:{},inDialog:true};},
   enterNight(){enterCalls++;context.S.nightMode=true;context.NM={x:100,y:220};},
@@ -20,6 +29,9 @@ const api=context.TechOpsProductionModeRouter;assert.ok(api);assert.ok(api.VERSI
 context.__productionModeRouterError="stale";api.setDesired("nightcrawler");api.launchNightCrawler();flush();
 assert.ok(context.S.nightMode,"Night Crawler launch must end in night mode");assert.ok(context.NM,"Night Crawler launch must create Night world");assert.strictEqual(context.S.inDialog,false,"Night launch must clear the CIO/dialogue input lock before stepNM");assert.strictEqual(context.S.meta._char,"nightcrawler");assert.strictEqual(context.localStorage.getItem("techops_char"),"nightcrawler");assert.ok(enterCalls>=1);assert.strictEqual(context.__productionModeRouterError,null,"successful Night launch clears stale errors");
 
+// Reset the mocked legacy dialogue to visible to prove the Good Boys handoff also
+// clears a real blocking shell instead of benefiting from the previous launch.
+elements.dialogue.classList.remove("hidden");
 context.S={nightMode:false,meta:{_v736:{m:6}},inDialog:true};context.NM=null;context.__productionModeRouterError="good_boys_pair_timeout";api.launchGoodBoys();flush();
 assert.ok(context.S.nightMode,"Good Boys resume must enter Night engine");assert.ok(api.pairReady(),"Good Boys resume must attach Katrin and Manchez");assert.strictEqual(context.S.inDialog,false,"Good Boys handoff must not leave a hidden dialog blocking pair input");assert.ok(v736Calls>=1);assert.strictEqual(context.localStorage.getItem("techops_char"),null,"Good Boys cannot inherit Night Crawler character selection");assert.strictEqual(context.__productionModeRouterError,null,"successful pair attach clears stale timeout telemetry");
 
