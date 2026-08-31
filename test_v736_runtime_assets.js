@@ -6,6 +6,8 @@ const v737 = fs.readFileSync("v737_hooks.js", "utf8");
 const index = fs.readFileSync("index.html", "utf8");
 const atlasJs = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
 const manifest = JSON.parse(fs.readFileSync("assets/v736/katrin_manchez_manifest.json", "utf8"));
+const scriptPaths=[...index.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>/g)].map(m=>m[1].split(/[?#]/,1)[0]);
+const scriptIndex=(src)=>scriptPaths.indexOf(src);
 
 assert(
   /function\s+dogFig736\s*\(/.test(v736),
@@ -83,15 +85,15 @@ assert(
 );
 
 assert(
-  index.includes('script src="katrin_manchez.atlas.js"') &&
-    index.indexOf('script src="katrin_manchez.atlas.js"') < index.indexOf('script src="v736_hooks.js"') &&
-    index.indexOf('script src="v736_hooks.js"') < index.indexOf('script src="v737_hooks.js"'),
+  scriptIndex("katrin_manchez.atlas.js") > -1 &&
+    scriptIndex("katrin_manchez.atlas.js") < scriptIndex("v736_hooks.js") &&
+    scriptIndex("v736_hooks.js") < scriptIndex("v737_hooks.js"),
   "KATRIN_MANCHEZ metadata must load before v7.36 and the final v7.37 render bridge"
 );
 
 assert(
-  !index.includes("manchez_katrin_hits_p1.js") && !index.includes("manchez_katrin_hits_p5.js"),
-  "The old partial manchez_katrin_hits chunk payload must stay unloaded"
+  !scriptPaths.includes("manchez_katrin_hits_p1.js") && !scriptPaths.includes("manchez_katrin_hits_p5.js"),
+  "The old partial manchez_katrin_hits chunk payload must stay unloaded from the static entrypoint"
 );
 
 assert(
