@@ -20,7 +20,7 @@ assert.ok(source.includes('if(advancing||!active)return'), "slide progression mu
 // Final-card regression: remove the blocker, invoke canonical v736 start, then verify attachment.
 const launch = source.indexOf("function launchCampaign()");
 const cleanup = source.indexOf("cleanup();", launch);
-const start = source.indexOf("invokeStart();", launch);
+const start = source.indexOf("invokeStart()", launch);
 assert.ok(launch >= 0 && cleanup > launch && start > cleanup, "final CTA must clear the intro before starting the campaign");
 assert.ok(source.includes('function campaignAttached(){try{return !!(root.NM&&root.NM._v736);'), "final CTA must verify the canonical campaign actually attached");
 assert.ok(source.includes('if(attempt<2){invokeStart();'), "final CTA needs one bounded retry instead of deadlocking");
