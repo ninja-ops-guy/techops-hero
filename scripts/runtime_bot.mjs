@@ -21,7 +21,7 @@ async function snapshotRuntime(page) {
   return page.evaluate(() => {
     const text=id=>document.getElementById(id)?.textContent?.trim()||'';
     const vis=id=>{const e=document.getElementById(id);if(!e)return false;const s=getComputedStyle(e);return !e.classList.contains('hidden')&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)!==0;};
-    const blockerIds=['good-boys-story-cine','gb-prison-cine','good-boys-campaign-intro','good-boys-earthfall-cine','good-boys-mobile-recovery'];
+    const blockerIds=['good-dogs-cutscene-overlay','good-boys-story-cine','gb-prison-cine','good-boys-campaign-intro','good-boys-earthfall-cine','good-boys-mobile-recovery'];
     const blockerId=blockerIds.find(vis)||null;
     let runtime={};
     try { runtime=window.eval(`(function(){
@@ -48,7 +48,7 @@ async function settle(page,ms=5000){
   const until=Date.now()+ms;
   while(Date.now()<until){
     await page.waitForTimeout(180);
-    const authored=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');
+    const authored=page.locator('#good-dogs-cutscene-overlay .gd-film-skip,#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');
     if(await authored.count()){await authored.first().click({timeout:600}).catch(()=>{});await page.waitForTimeout(120);continue;}
     const txt=await page.locator('body').innerText().catch(()=>'');
     if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickByRegex(page,/Standard/i,500).catch(()=>{});continue;}

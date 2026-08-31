@@ -16,7 +16,7 @@ async function dismiss(page,ms=5000){const until=Date.now()+ms;while(Date.now()<
   // can remain "visible" while a prison/Earthfall card owns the interaction surface.
   // Prefer the active top-level authored surfaces in production z-order.
   let handled=false;
-  for(const selector of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){
+  for(const selector of ['#good-dogs-cutscene-overlay .gd-film-skip','#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){
     const b=page.locator(selector).last();
     if(!await b.count())continue;
     try{await b.click({timeout:700});handled=true;break;}catch{}
