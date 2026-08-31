@@ -1,0 +1,55 @@
+name: Good Dogs cutscene gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/cutscenes/good_dogs/**"
+      - "good_dogs_cutscenes_v2_2.js"
+      - "good_dogs_cutscene_bridge.js"
+      - "index.html"
+      - "test_static_entrypoint_integrity.js"
+      - ".github/workflows/good-dogs-cutscenes.yml"
+  pull_request:
+    paths:
+      - "assets/cutscenes/good_dogs/**"
+      - "good_dogs_cutscenes_v2_2.js"
+      - "good_dogs_cutscene_bridge.js"
+      - "index.html"
+      - "test_static_entrypoint_integrity.js"
+      - ".github/workflows/good-dogs-cutscenes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cutscene-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate cutscene runtime syntax
+        run: |
+          node --check good_dogs_cutscenes_v2_2.js
+          node --check good_dogs_cutscene_bridge.js
+          node --check test_static_entrypoint_integrity.js
+      - name: Verify production entrypoint wiring
+        run: node test_static_entrypoint_integrity.js
+      - name: Verify exact Good Dogs source masters
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/good-dogs.sha256 <<'SUMS'
+          a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe  assets/cutscenes/good_dogs/01_signal_beyond_earth_pixel.mp4
+          55271e67329053420b5f630e711a235337cbd6c960585de4cb0f60ad9a8d43f9  assets/cutscenes/good_dogs/02_signal_pull_transition_pixel.mp4
+          687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4  assets/cutscenes/good_dogs/03_orbital_approach_pixel.mp4
+          60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2  assets/cutscenes/good_dogs/04_cell118_triple_jump_to_terminal_pixel.mp4
+          ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf  assets/cutscenes/good_dogs/05_cell118_approach_k_reveal_pixel.mp4
+          4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94  assets/cutscenes/good_dogs/06_k_freed_prison_escort_pixel.mp4
+          53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838  assets/cutscenes/good_dogs/07_cell1984_hack_pixel.mp4
+          24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01  assets/cutscenes/good_dogs/08_team_reunited_exit_pixel.mp4
+          SUMS
+          sha256sum -c /tmp/good-dogs.sha256
