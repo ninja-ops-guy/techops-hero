@@ -1,4 +1,4 @@
-/* TechOps Hero — complete production asset registry v7.
+/* TechOps Hero — complete production asset registry v8.
  * Makes every shipped visual asset discoverable by runtime, preloads physical
  * PNG assets, loads source payloads before atlas/reference manifests, and
  * fails closed when any required script/image/JSON asset cannot be loaded.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionAssets)return;
-  var VERSION=7;
+  var VERSION=8;
   var SCRIPT_ASSETS=[
     "campaign_bg.js","campaign_asset_pipeline.js","campaign_native_act1_visuals.js",
     "charger_reference_v1.js","duo_kw.atlas.js","env_objects.atlas.js","env_overlays.atlas.js","env_struct.atlas.js","env_terrain.atlas.js",
@@ -40,7 +40,7 @@
   ];
   var DOG_FRAMES=["kat_bark","kat_cheer","kat_crouch","kat_dizzy","kat_down","kat_down_heavy","kat_hack","kat_hack2","kat_hack_low","kat_idle0","kat_idle1","kat_idle2","kat_idle3","kat_idle4","kat_idle5","kat_idle6","kat_leap","kat_leap2","kat_leap_low","kat_look","kat_pounce","kat_pounce2","kat_pounce_low","kat_roll","kat_shield","kat_sleep","kat_stand","kat_strike","kat_wall_hit","man_bark","man_crouch","man_down","man_down_wall","man_hack","man_idle0","man_idle1","man_idle2","man_idle3","man_idle4","man_idle5","man_idle6","man_leap","man_look","man_pounce","man_roll","man_shield","man_strike","man_wall_down","man_wall_hit"];
   DOG_FRAMES.forEach(function(n){PNG_ASSETS.push("assets/v736/katrin_manchez/"+n+".png");});
-  var JSON_ASSETS=["assets/campaign/production_source_manifest.json","assets/v736/katrin_manchez_manifest.json"];
+  var JSON_ASSETS=["assets/campaign/production_source_manifest.json","assets/v736/katrin_manchez_manifest.json","assets/cutscenes/good_dogs/campaign_clip_manifest_v2_2_pixel.json"];
   var images={},loadedScripts={},failedScripts={},failedImages={},failedJSON={},json={};
   function scriptAlready(src){try{return Array.prototype.some.call(root.document.scripts||[],function(s){return (s.getAttribute("src")||"").split("?")[0]===src;});}catch(e){return false;}}
   function loadScript(src){return new Promise(function(resolve){try{if(scriptAlready(src)){loadedScripts[src]=true;delete failedScripts[src];resolve(true);return;}var s=root.document.createElement("script");s.src=src;s.async=false;s.dataset.productionAsset=src;s.onload=function(){loadedScripts[src]=true;delete failedScripts[src];resolve(true);};s.onerror=function(){failedScripts[src]=true;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){failedScripts[src]=true;resolve(false);}});}
