@@ -1,20 +1,20 @@
-/* TechOps Hero — production mode router v8.
+/* TechOps Hero — production mode router v9.
  * Owns alternate-mode convergence and clears legacy dialogue state before
  * handing input to the Night engine. Production wrapper installation is a
  * one-shot bootstrap concern; this router only refreshes mode state/UI and
  * never calls feature tick() functions that can re-wrap drawNM/stepNM.
- * v8 serializes Night Crawler launch ownership across the title gesture,
- * Night Drive cinematic and Night runtime attachment. It also preserves v7,
- * which defers authored Good Boys title-button launches to the campaign director
- * so one user gesture cannot start the co-op runtime from multiple authorities.
+ * v9 keeps the v8 serialized Night Crawler transaction, but restores the
+ * canonical title initialization boundary: the router capture owner invokes
+ * #btn-start exactly once so newState()/difficulty selection create S before
+ * any enterNight request. It also preserves intent telemetry across launch.
  */
 (function(root){
   "use strict";
   if(!root)return;
   try{if(root.TechOpsProductionModeRouter&&root.TechOpsProductionModeRouter.timer)root.clearInterval(root.TechOpsProductionModeRouter.timer);}catch(e){}
-  var VERSION=8,desired=null,timer=null,introAutomationAt=0,
+  var VERSION=9,desired=null,timer=null,introAutomationAt=0,
       nightLaunchPhase="idle",nightLaunchIssued=false,nightPollActive=false,
-      nightCallbacks=[],nightTraceSeq=0;
+      nightCallbacks=[],nightTraceSeq=0,nightTitleStartIssued=false;
 
   function textOf(node){try{return String(node&&node.textContent||"").toUpperCase();}catch(e){return"";}}
   function setDesired(mode){desired=mode||null;root.__productionDesiredMode=desired;return desired;}
@@ -22,6 +22,7 @@
   function world(){try{return (typeof NM!=="undefined"&&NM)?NM:(root.NM||null);}catch(e){return root.NM||null;}}
   function enterNightFn(){try{return typeof enterNight==="function"?enterNight:(typeof root.enterNight==="function"?root.enterNight:null);}catch(e){return null;}}
   function startRunFn(){try{return typeof startRun==="function"?startRun:(typeof root.startRun==="function"?root.startRun:null);}catch(e){return null;}}
+  function runInitialized(){try{var s=state();return !!(s&&s.map&&s.map.length);}catch(e){return false;}}
   function pairReady(){try{var n=world(),c=n&&n._v736;return !!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner&&(c.active==="katrin"||c.active==="manchez"));}catch(e){return false;}}
   function clearErrors(){root.__productionModeRouterError=null;root.__productionModeRouterEnterNightError=null;root.__productionModeRouterNightStartError=null;root.__productionModeRouterGoodBoysStartError=null;}
   function visible(el){try{if(!el||el.classList.contains("hidden"))return false;var s=root.getComputedStyle?root.getComputedStyle(el):el.style;return !s||(s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity||1)!==0);}catch(e){return false;}}
@@ -38,18 +39,14 @@
   function hideLegacyShell(){try{var d=root.document;if(!d)return;["hud","dialogue","panel","battle","eod"].forEach(function(id){var el=d.getElementById(id);if(el&&el.style)el.style.setProperty("display","none","important");});}catch(e){}}
   function showTouch(){try{var t=root.document&&root.document.getElementById("touch-ui");if(t){t.classList.remove("hidden");t.style.removeProperty("display");}}catch(e){}}
 
-  function nightSnapshot(event,extra){var s=state(),n=world(),o={seq:++nightTraceSeq,at:(root.performance&&typeof root.performance.now==="function")?root.performance.now():(Date.now?Date.now():0),event:event||"snapshot",phase:nightLaunchPhase,desired:desired,inDialog:!!(s&&s.inDialog),nightMode:!!(s&&s.nightMode),hasNM:!!n,cinematic:nightCinematicVisible(),runtimeMounted:nightRuntimeMounted()};if(extra)for(var k in extra)if(Object.prototype.hasOwnProperty.call(extra,k))o[k]=extra[k];return o;}
+  function nightSnapshot(event,extra){var s=state(),n=world(),o={seq:++nightTraceSeq,at:(root.performance&&typeof root.performance.now==="function")?root.performance.now():(Date.now?Date.now():0),event:event||"snapshot",phase:nightLaunchPhase,desired:desired,inDialog:!!(s&&s.inDialog),nightMode:!!(s&&s.nightMode),hasS:!!s,hasNM:!!n,runInitialized:runInitialized(),cinematic:nightCinematicVisible(),runtimeMounted:nightRuntimeMounted()};if(extra)for(var k in extra)if(Object.prototype.hasOwnProperty.call(extra,k))o[k]=extra[k];return o;}
   function nightTrace(event,extra){var a=root.__productionNightLaunchTrace||(root.__productionNightLaunchTrace=[]),o=nightSnapshot(event,extra);a.push(o);if(a.length>160)a.splice(0,a.length-160);root.__productionNightLaunchPhase=nightLaunchPhase;return o;}
   function setNightPhase(phase,event,extra){nightLaunchPhase=phase;root.__productionNightLaunchPhase=phase;return nightTrace(event||("phase."+phase),extra);}
-  function beginNightLaunch(){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;setNightPhase("launch","launch.begin");}
+  function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
   function runNightCallbacks(){var cbs=nightCallbacks.splice(0);for(var i=0;i<cbs.length;i++)try{cbs[i]();}catch(e){}}
   function finishNightLaunch(){clearBlockingDialog();forceNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionNightLaunchOk=true;root.__productionActiveMode="nightcrawler";setNightPhase("ready","router.ready");runNightCallbacks();}
   function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];}
 
-  /* State/UI refresh only. Do NOT call GoodDogs/Canon/GameplayLoop.tick() here:
-     those tick functions contain installer checks and were the source of the
-     production drawNM A->B->A recursion. Their wrappers are installed once by
-     production_bootstrap; the safe public helpers below are non-wrapping. */
   function restoreRuntimeUi(){
     showTouch();
     try{if(root.TechOpsNightProductionAssets)root.TechOpsNightProductionAssets.install();}catch(e){}
@@ -61,11 +58,29 @@
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
   }
 
+  function issueCanonicalTitleStart(){
+    if(state()||nightTitleStartIssued)return !!state();
+    nightTitleStartIssued=true;
+    var b=null;try{b=root.document&&root.document.getElementById("btn-start");}catch(e){}
+    if(b&&typeof b.click==="function"){
+      setNightPhase("start-run","startRun.request",{route:"btn-start"});
+      try{b.click();forceNightIdentity();nightTrace("startRun.state-created",{route:"btn-start"});return !!state();}
+      catch(e){root.__productionModeRouterNightStartError=String(e&&e.stack||e);nightTrace("startRun.error",{route:"btn-start",error:root.__productionModeRouterNightStartError});return false;}
+    }
+    var start=startRunFn();
+    if(start){
+      setNightPhase("start-run","startRun.request",{route:"direct-fallback"});
+      try{start();forceNightIdentity();nightTrace("startRun.return",{route:"direct-fallback"});return !!state();}
+      catch(e){root.__productionModeRouterNightStartError=String(e&&e.stack||e);nightTrace("startRun.error",{route:"direct-fallback",error:root.__productionModeRouterNightStartError});return false;}
+    }
+    root.__productionModeRouterNightStartError="canonical_start_missing";nightTrace("startRun.missing");return false;
+  }
+
   function issueNightEnter(){
     if(nightLaunchIssued||nightCinematicVisible()||goodBoysCinematicVisible()||nightRuntimeMounted())return false;
-    var s=state(),f=enterNightFn();if(!s||s.nightMode||!f)return false;
+    var s=state(),f=enterNightFn();if(!s||!runInitialized()||s.nightMode||!f)return false;
     nightLaunchIssued=true;setNightPhase("enter-requested","enterNight.request");
-    try{clearBlockingDialog();f();if(nightCinematicVisible())setNightPhase("cinematic","v722.begin");else if(nightRuntimeMounted())setNightPhase("mounting","enterNight.return",{mounted:true});else nightTrace("enterNight.return",{mounted:false});return true;}
+    try{clearBlockingDialog();f();if(nightCinematicVisible())setNightPhase("cinematic","v722.begin");else if(nightRuntimeMounted())setNightPhase("mounting","runtime.attached");else nightTrace("enterNight.return",{mounted:false});return true;}
     catch(e){root.__productionModeRouterEnterNightError=String(e&&e.stack||e);nightTrace("enterNight.error",{error:root.__productionModeRouterEnterNightError});return false;}
   }
 
@@ -79,7 +94,9 @@
       var cine=nightCinematicVisible();
       if(cine){if(!wasCinematic)nightTrace("v722.begin");wasCinematic=true;nightLaunchIssued=true;nightLaunchPhase="cinematic";root.__productionNightLaunchPhase=nightLaunchPhase;}
       else if(wasCinematic){wasCinematic=false;setNightPhase("mounting","v722.end");}
+      if(nightRuntimeMounted()&&!cine&&nightLaunchPhase!=="ready"&&nightLaunchPhase!=="mounting")setNightPhase("mounting","runtime.attached");
       if(nightWorldReady()){nightPollActive=false;finishNightLaunch();return;}
+      if(!state())issueCanonicalTitleStart();
       if(!cine&&!nightRuntimeMounted()&&!nightLaunchIssued)issueNightEnter();
       if(nightRuntimeMounted()&&!cine){clearBlockingDialog();if(nightWorldReady()){nightPollActive=false;finishNightLaunch();return;}}
       if(++tries>=max){failNightLaunch("night_runtime_timeout",{tries:tries});return;}
@@ -88,9 +105,6 @@
     (root.setTimeout||setTimeout)(poll,25);return true;
   }
 
-  /* Good Boys uses the same Night engine as a substrate, but must never inherit
-     Night Crawler identity or completion side effects. This support primer is
-     one-shot and cinematic-aware, independent of the Night Crawler transaction. */
   function primeNightRuntime(done){
     var tries=0,max=600,issued=false;
     function poll(){
@@ -107,13 +121,14 @@
   }
   function enterNightReliably(done){return desired==="nightcrawler"?enterNightCrawlerReliably(done):primeNightRuntime(done);}
 
-  function launchNightCrawler(){
+  function launchNightCrawler(fromCapture){
     if((nightLaunchPhase==="launch"||nightLaunchPhase==="start-run"||nightLaunchPhase==="enter-requested"||nightLaunchPhase==="cinematic"||nightLaunchPhase==="mounting")&&desired==="nightcrawler"){nightTrace("launch.coalesced");enterNightCrawlerReliably();return true;}
-    setDesired("nightcrawler");beginNightLaunch();clearGoodBoysState();forceNightIdentity();hideLegacyShell();
+    setDesired("nightcrawler");beginNightLaunch(!!fromCapture);clearGoodBoysState();forceNightIdentity();hideLegacyShell();
     try{
-      var s=state(),start=startRunFn();
-      if(!s&&start){setNightPhase("start-run","startRun.request");start();s=state();forceNightIdentity();nightTrace("startRun.return");if(nightCinematicVisible()){nightLaunchIssued=true;setNightPhase("cinematic","v722.begin");}else if(nightRuntimeMounted()){nightLaunchIssued=true;setNightPhase("mounting","runtime.attached");}}
-      if(s&&!s.nightMode&&!nightCinematicVisible()&&!nightRuntimeMounted())issueNightEnter();
+      var s=state();
+      if(!s){issueCanonicalTitleStart();s=state();}
+      if(s&&runInitialized()&&!s.nightMode&&!nightCinematicVisible()&&!nightRuntimeMounted())issueNightEnter();
+      else if(s&&!runInitialized())nightTrace("startRun.awaiting-difficulty");
     }catch(e){root.__productionModeRouterNightStartError=String(e&&e.stack||e);nightTrace("launch.error",{error:root.__productionModeRouterNightStartError});}
     enterNightCrawlerReliably();return true;
   }
@@ -140,17 +155,19 @@
   }
 
   function captureIntent(ev){
-    var t=textOf(ev&&ev.target);
-    if(t.indexOf("NIGHT CRAWLER")>=0){try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();ev&&ev.stopImmediatePropagation&&ev.stopImmediatePropagation();}catch(e){}setDesired("nightcrawler");forceNightIdentity();nightTrace("intent.capture");(root.setTimeout||setTimeout)(launchNightCrawler,0);return;}
+    var target=ev&&ev.target,nightButton=null;
+    try{nightButton=target&&typeof target.closest==="function"?target.closest("#btn-nightcrawler"):null;}catch(e){}
+    var t=textOf(target);
+    if(nightButton||t.indexOf("NIGHT CRAWLER")>=0){try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();ev&&ev.stopImmediatePropagation&&ev.stopImmediatePropagation();}catch(e){}setDesired("nightcrawler");forceNightIdentity();launchNightCrawler(true);return;}
     if(t.indexOf("118/1984")>=0||t.indexOf("BREAKOUT")>=0||t.indexOf("GOOD BOYS")>=0){setDesired("goodboys");clearNightIdentity();var director=root.TechOpsGoodBoysCampaignDirector;if(director&&typeof director.showOpening==="function"){root.__productionGoodBoysLaunchOwner="campaign_director";return;}(root.setTimeout||setTimeout)(launchGoodBoys,0);}
   }
   function healthTick(){
-    if(desired==="nightcrawler"){forceNightIdentity();hideLegacyShell();if(nightWorldReady()){if(nightLaunchPhase!=="ready")finishNightLaunch();}else enterNightCrawlerReliably();}
+    if(desired==="nightcrawler"){forceNightIdentity();hideLegacyShell();if(nightWorldReady()){if(nightLaunchPhase!=="ready")finishNightLaunch();}else{if(!state())issueCanonicalTitleStart();enterNightCrawlerReliably();}}
     else if(desired==="goodboys"){hideLegacyShell();if(goodBoysCinematicVisible()){confirmAutomationIntro();return;}if(nightRuntimeMounted()&&pairReady())finishGoodBoys();}
     else if(root.__productionActiveMode==="nightcrawler"&&nightWorldReady()){clearBlockingDialog();clearErrors();}
     else if(root.__productionActiveMode==="goodboys"&&nightRuntimeMounted()&&pairReady()){clearBlockingDialog();clearErrors();}
   }
   try{root.document&&root.document.addEventListener("click",captureIntent,true);}catch(e){}
   timer=root.setInterval?root.setInterval(healthTick,100):null;
-  root.TechOpsProductionModeRouter={VERSION:VERSION,setDesired:setDesired,state:state,world:world,nightRuntimeMounted:nightRuntimeMounted,nightWorldReady:nightWorldReady,nightCinematicVisible:nightCinematicVisible,pairReady:pairReady,clearErrors:clearErrors,clearBlockingDialog:clearBlockingDialog,restoreRuntimeUi:restoreRuntimeUi,launchNightCrawler:launchNightCrawler,launchGoodBoys:launchGoodBoys,enterNightReliably:enterNightReliably,goodBoysIntroVisible:goodBoysIntroVisible,goodBoysCinematicVisible:goodBoysCinematicVisible,confirmAutomationIntro:confirmAutomationIntro,healthTick:healthTick,timer:timer};
+  root.TechOpsProductionModeRouter={VERSION:VERSION,setDesired:setDesired,state:state,world:world,runInitialized:runInitialized,nightRuntimeMounted:nightRuntimeMounted,nightWorldReady:nightWorldReady,nightCinematicVisible:nightCinematicVisible,pairReady:pairReady,clearErrors:clearErrors,clearBlockingDialog:clearBlockingDialog,restoreRuntimeUi:restoreRuntimeUi,launchNightCrawler:launchNightCrawler,launchGoodBoys:launchGoodBoys,enterNightReliably:enterNightReliably,goodBoysIntroVisible:goodBoysIntroVisible,goodBoysCinematicVisible:goodBoysCinematicVisible,confirmAutomationIntro:confirmAutomationIntro,healthTick:healthTick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
