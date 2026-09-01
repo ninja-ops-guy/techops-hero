@@ -1,11 +1,12 @@
-/* TechOps Hero — MORNINGSTAR progressive build authority v1
+/* TechOps Hero — MORNINGSTAR progressive build authority v2
  * Main-campaign state only. Never writes Good Boys S.meta._v736 progression.
  * Five authored build phases combine day-ticket work with Night Walker recovery.
+ * Maintenance is owned by campaign_completion_runtime.js (no private timer).
  */
 (function(root){
   "use strict";
   if(!root || root.TechOpsMORNINGSTARBuild) return;
-  var VERSION=1, wrappedResolve=false, wrappedSetup=false, wrappedNight=false, injectedDay=-1;
+  var VERSION=2, wrappedResolve=false, wrappedSetup=false, wrappedNight=false, injectedDay=-1;
   var PHASES=[
     {id:"airframe",name:"Airframe Recovery",dayTickets:["hangar_allocation_dispute","decommissioned_aircraft_audit"],nightRecovery:"airframe_recovered",nightGate:{district:"industrial",stage:1},unlocks:["aircraft_silhouette","flight_paths_map","hangar_access"]},
     {id:"signals_lab",name:"Signals Laboratory",dayTickets:["sdr_procurement","telemetry_calibration","antenna_switching_failure"],nightRecovery:"signals_lab_recovered",nightGate:{district:"airport",stage:1},unlocks:["spectrum_map","wide_area_scan","direction_finding"]},
@@ -25,16 +26,17 @@
   function store(s){s.lateGame=s.lateGame||{};return s.lateGame.morningstar||(s.lateGame.morningstar={phase:0,completedDayTickets:[],nightRecoveredItems:[],unlocks:[],history:[]});}
   function current(s){return Math.max(0,Math.min(PHASES.length,Number(store(s).phase)||0));}
   function activePhase(s){var i=current(s);return i<PHASES.length?PHASES[i]:null;}
-  function facts(s){s.story=s.story||{completedActs:[],facts:{}};s.story.facts=s.story.facts||{};return s.story.facts;}
+  function facts(s){s.story=s.story||{completedActs:[],facts:{}};s.story.completedActs=s.story.completedActs||[];s.story.facts=s.story.facts||{};return s.story.facts;}
   function eligible(s){try{var snap=root.TechOpsCampaignAct2&&root.TechOpsCampaignAct2.snapshot?root.TechOpsCampaignAct2.snapshot(s):{};return !!(snap.morningstarSignatureFound||facts(s).morningstar_signature_found||facts(s).violinist_revealed);}catch(e){return !!facts(s).morningstar_signature_found;}}
   function dayComplete(s,p){var st=store(s);return p.dayTickets.every(function(id){return st.completedDayTickets.indexOf(id)>=0;});}
   function nightComplete(s,p){return store(s).nightRecoveredItems.indexOf(p.nightRecovery)>=0;}
   function canAdvance(s){s=s||campaign();var p=s&&activePhase(s);return !!(s&&p&&eligible(s)&&dayComplete(s,p)&&nightComplete(s,p));}
   function applyStoryFacts(s,phaseIndex){var f=facts(s);if(phaseIndex>=1)f.morningstar_hangar_revealed=true;if(phaseIndex>=4){f.morningstar_reconstructed=true;f.morningstar_airborne=true;f.mike_model_discovered=true;}if(phaseIndex>=5)f.watchdog_configured=true;}
+  function syncStoryAct(s,phaseIndex){try{if(phaseIndex<4||!root.TechOpsStory||typeof root.TechOpsStory.eligibleActs!=="function"||typeof root.TechOpsStory.completeAct!=="function")return false;if((s.story.completedActs||[]).indexOf("act_5")>=0)return true;if(root.TechOpsStory.eligibleActs(s).indexOf("act_5")<0)return false;root.TechOpsStory.completeAct(s,"act_5");return true;}catch(e){root.__morningstarStorySyncError=String(e&&e.stack||e);return false;}}
   function advance(){
     var s=campaign();if(!s||!canAdvance(s))return{success:false,reason:"requirements_not_met"};
     var st=store(s),idx=current(s),p=PHASES[idx];st.phase=idx+1;
-    p.unlocks.forEach(function(u){if(st.unlocks.indexOf(u)<0)st.unlocks.push(u);});st.history.push({type:"phase_completed",phase:p.id,at:new Date().toISOString()});applyStoryFacts(s,st.phase);save(s);
+    p.unlocks.forEach(function(u){if(st.unlocks.indexOf(u)<0)st.unlocks.push(u);});st.history.push({type:"phase_completed",phase:p.id,at:new Date().toISOString()});applyStoryFacts(s,st.phase);syncStoryAct(s,st.phase);save(s);
     root.__morningstarPhaseComplete={phase:st.phase,id:p.id,unlocks:p.unlocks.slice(),at:Date.now()};try{if(typeof root.toast==="function")root.toast("MORNINGSTAR "+st.phase+"/5 · "+p.name+" COMPLETE",4200);}catch(e){}
     return{success:true,phase:st.phase,id:p.id,unlocks:p.unlocks.slice()};
   }
@@ -57,5 +59,5 @@
   function snapshot(){var s=campaign();if(!s)return null;var st=store(s),p=activePhase(s);return{version:VERSION,currentPhase:current(s),currentPhaseName:p?p.name:"Complete",totalPhases:PHASES.length,unlocks:st.unlocks.slice(),completedDayTickets:st.completedDayTickets.slice(),nightRecoveredItems:st.nightRecoveredItems.slice(),canAdvance:canAdvance(s),requirements:requirements(s)};}
   function install(){installResolveHook();installSetupHook();installNightHook();injectPhaseTicket();return true;}
   root.TechOpsMORNINGSTARBuild={VERSION:VERSION,PHASES:PHASES,getCurrentPhase:function(){var s=campaign();return s?current(s):0;},getPhase:function(i){return PHASES[i]||null;},canAdvance:function(){var s=campaign();return !!(s&&canAdvance(s));},advance:advance,onTicketResolved:onTicketResolved,onNightRecovery:onNightRecovery,openHub:openHub,snapshot:snapshot,install:install};
-  (root.setInterval||setInterval)(install,500);install();
+  install();
 })(typeof globalThis!=="undefined"?globalThis:this);
