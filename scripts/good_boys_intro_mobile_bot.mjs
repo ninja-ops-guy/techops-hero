@@ -16,22 +16,42 @@ async function clickLaunch(page){
   }
   return null;
 }
-async function introSnapshot(page){
+async function filmSnapshot(page){
   return page.evaluate(()=>{
-    const o=document.querySelector('#good-boys-story-cine.gbi-repaired');
-    const v=o&&o.querySelector('.gbi-visual'),z=o&&o.querySelector('.gbi-card-zone'),c=o&&o.querySelector('.gb-card'),b=o&&o.querySelector('#gb-cine-next');
-    const r=e=>e?e.getBoundingClientRect():null;
-    const rr=x=>x?{top:x.top,bottom:x.bottom,left:x.left,right:x.right,width:x.width,height:x.height}:null;
-    const or=r(o),vr=r(v),zr=r(z),cr=r(c),br=r(b);
-    return {
+    const o=document.getElementById('good-dogs-cutscene-overlay');
+    const v=o&&o.querySelector('.gd-film-video'),b=o&&o.querySelector('.gd-film-skip');
+    const r=e=>{if(!e)return null;const x=e.getBoundingClientRect();return{top:x.top,bottom:x.bottom,left:x.left,right:x.right,width:x.width,height:x.height};};
+    const style=o&&getComputedStyle(o);
+    return{
       exists:!!o,
-      viewport:{w:innerWidth,h:innerHeight},
-      overlay:rr(or),visual:rr(vr),zone:rr(zr),card:rr(cr),button:rr(br),
-      text:o?o.innerText:'',
+      active:!!(o&&o.classList.contains('active')&&style&&style.display!=='none'),
+      overlay:r(o),video:r(v),skip:r(b),
+      src:v?(v.currentSrc||v.getAttribute('src')||''):'',
+      readyState:v?Number(v.readyState):0,
+      paused:v?!!v.paused:true,
       repairVersion:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,
-      repairIndex:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.index,
-      active:!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.active),
-      inDialog:!!(window.S&&window.S.inDialog)
+      launching:!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching),
+      titleVisible:(()=>{const t=document.getElementById('title-screen');return !!(t&&!t.classList.contains('hidden')&&getComputedStyle(t).display!=='none');})(),
+      stateExists:!!window.S
+    };
+  });
+}
+async function campaignSnapshot(page){
+  return page.evaluate(()=>{
+    const s=window.S,n=window.NM,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,o=document.getElementById('good-dogs-cutscene-overlay');
+    const title=document.getElementById('title-screen');
+    return{
+      stateExists:!!s,
+      night:!!(s&&s.nightMode),
+      campaignAttached:!!c,
+      pair:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez&&c.partner),
+      mission:Number(c&&c.m||m&&m.m||0),
+      filmActive:!!(o&&o.classList.contains('active')&&getComputedStyle(o).display!=='none'),
+      titleVisible:!!(title&&!title.classList.contains('hidden')&&getComputedStyle(title).display!=='none'),
+      launch:window.__goodBoysDirectIntro||null,
+      mediaError:window.__goodBoysDirectIntroMediaError||null,
+      clockInError:window.__goodBoysDirectIntroClockInError||null,
+      startError:window.__goodBoysDirectIntroStartError||null
     };
   });
 }
@@ -44,43 +64,32 @@ try{
   await page.waitForTimeout(1800);
   const clicked=await clickLaunch(page);if(!clicked){fail('launch-button-missing');throw new Error('Good Boys launch button missing');}
   log('launch-clicked',{clicked});
-  await page.waitForSelector('#good-boys-story-cine.gbi-repaired',{state:'visible',timeout:3000});
-  await page.screenshot({path:path.join(OUT,'goodboys-intro-mobile-slide1.png'),fullPage:true});
 
-  const titles=["WALDO'S PLACE","THE GARAGE WALL","THE HIDDEN BAY","118 / 1984"];
-  for(let i=0;i<4;i++){
-    const s=await introSnapshot(page);log('slide',{slide:i+1,state:s});
-    if(!s.exists)fail('intro-overlay-missing',{slide:i+1});
-    if(s.repairVersion<1)fail('intro-repair-not-active',{slide:i+1,version:s.repairVersion});
-    if(!s.inDialog)fail('intro-does-not-block-gameplay',{slide:i+1});
-    if(!s.text.includes(`${i+1} / 4`))fail('slide-counter-wrong',{slide:i+1,text:s.text});
-    if(!s.text.includes(titles[i]))fail('slide-title-wrong',{slide:i+1,text:s.text});
-    if(s.visual&&s.card){
-      const gap=s.card.top-s.visual.bottom;log('composition',{slide:i+1,gap,visualHeight:s.visual.height,cardHeight:s.card.height,viewportHeight:s.viewport.h});
-      if(gap>48)fail('intro-giant-vertical-gap',{slide:i+1,gap});
-      if(s.visual.height<135||s.visual.height>s.viewport.h*.55)fail('intro-visual-height-out-of-range',{slide:i+1,visualHeight:s.visual.height,viewportHeight:s.viewport.h});
-      if(s.card.bottom>s.viewport.h+2)fail('intro-card-offscreen',{slide:i+1,cardBottom:s.card.bottom,viewportHeight:s.viewport.h});
-    }
-    const btn=page.locator('#good-boys-story-cine.gbi-repaired #gb-cine-next');
-    if(!await btn.count()){fail('intro-next-button-missing',{slide:i+1});break;}
-    await btn.click({timeout:1500});
-    await page.waitForTimeout(180);
-  }
+  await page.waitForSelector('#good-dogs-cutscene-overlay.active',{state:'visible',timeout:3500});
+  const film=await filmSnapshot(page);log('opening-film',film);
+  if(film.repairVersion<5)fail('direct-intro-v5-not-active',{version:film.repairVersion});
+  if(!film.active)fail('opening-film-not-active',film);
+  if(!/assets\/cutscenes\/good_dogs\/01_signal_beyond_earth_pixel\.mp4(?:$|[?#])/i.test(film.src))fail('wrong-opening-master',{src:film.src});
+  if(!film.skip||film.skip.width<40||film.skip.height<30)fail('opening-skip-not-tappable',{skip:film.skip});
+  if(film.overlay&&(film.overlay.width<380||film.overlay.height<800))fail('opening-film-not-full-mobile-frame',{overlay:film.overlay});
+  await page.screenshot({path:path.join(OUT,'goodboys-intro-mobile-gd-cut-01.png'),fullPage:true});
 
-  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:5000}).catch(()=>{});
-  const end=await page.evaluate(()=>({
-    campaignAttached:!!(window.NM&&window.NM._v736),
-    mission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||window.S&&window.S.meta&&window.S.meta._v736&&window.S.meta._v736.m||0),
-    introPresent:!!document.querySelector('#good-boys-story-cine.gbi-repaired'),
-    introActive:!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.active),
-    launch:window.__goodBoysIntroRepairLaunch||null,
-    filmVisible:!!document.querySelector('#good-dogs-cutscene-overlay.active')
-  }));
-  log('post-fourth-slide',end);
-  if(!end.campaignAttached)fail('fourth-slide-did-not-launch-campaign',end);
-  if(end.introPresent||end.introActive)fail('intro-overlay-did-not-close',end);
+  const skip=page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip');
+  const tapStarted=Date.now();
+  await skip.click({timeout:1500});
+  const tapMs=Date.now()-tapStarted;log('film-skip-tap',{tapMs});
+  if(tapMs>=1400)fail('film-skip-tap-too-slow',{tapMs});
+
+  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:8000}).catch(()=>{});
+  await page.waitForTimeout(250);
+  const end=await campaignSnapshot(page);log('post-film-campaign',end);
+  if(!end.stateExists)fail('clock-in-state-not-created',end);
+  if(!end.campaignAttached)fail('film-did-not-launch-campaign',end);
   if(end.mission!==1)fail('campaign-started-on-wrong-mission',end);
-  await page.screenshot({path:path.join(OUT,'goodboys-intro-mobile-after-launch.png'),fullPage:true});
+  if(end.filmActive)fail('opening-film-did-not-close',end);
+  if(end.titleVisible)fail('title-screen-remained-after-opening-film',end);
+  if(end.clockInError||end.startError)fail('direct-intro-handoff-error',end);
+  await page.screenshot({path:path.join(OUT,'goodboys-intro-mobile-after-gd-cut-01.png'),fullPage:true});
 }catch(e){fail('bot-exception',{error:String(e&&e.stack||e)});await page.screenshot({path:path.join(OUT,'goodboys-intro-mobile-exception.png'),fullPage:true}).catch(()=>{});}finally{await browser.close();}
 const report={pass:failures.length===0,failures,events};
 fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.json'),JSON.stringify(report,null,2));
