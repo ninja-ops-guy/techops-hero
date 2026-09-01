@@ -1,13 +1,15 @@
-/* Good Boys deterministic progression authority v10.
+/* Good Boys deterministic progression authority v11.
  * Canonical campaign state lives in S.meta._v736. Runtime NM._v736 is a mirror.
- * Mission metadata may advance before an authored cinematic mounts the next runtime;
- * handoff completion therefore requires a fresh, non-ending runtime owner.
+ * Normal mission handoffs are async-safe across authored cinematics. The custom
+ * opening may request directGameplay for M2; the canonical v736.start wrapper then
+ * skips its redundant registered briefing through the public v725 engine so the
+ * existing startCombat736 callback mounts a fresh runtime synchronously.
  */
 (function(root){
   "use strict";
   if(!root)return;
   try{var prior=root.TechOpsGoodBoysProgressionAuthority;if(prior&&prior.timer&&root.clearInterval)root.clearInterval(prior.timer);if(prior&&prior.observer)prior.observer.disconnect();}catch(_){}
-  var VERSION=10,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0,repairs=0;
+  var VERSION=11,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0,repairs=0;
   function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
   function runtime(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function clampMission(v){v=Number(v);return Math.max(1,Math.min(8,isFinite(v)&&v>0?v:1));}
@@ -63,9 +65,19 @@
         if(m&&Object.prototype.hasOwnProperty.call(options,"k"))m.k=!!options.k;
         if(m&&Object.prototype.hasOwnProperty.call(options,"waldo"))m.waldo=!!options.waldo;
         if(m&&Array.isArray(options.evidence))m.evidence=options.evidence.slice();
-        var r=base.call(this,options),c=cs(),expected=m?clampMission(m.m):clampMission(options.mission||1);
-        if(c&&!c.ending){if(Number(c.m)!==expected)c.m=expected;reconcileMission("v736-start-wrapper");invariant(expected,"v736-start-wrapper");}
-        else root.__goodBoysRuntimePending={mission:expected,status:c&&c.ending?"awaiting-fresh-runtime":"awaiting-runtime",source:"v736-start-wrapper",at:Date.now()};
+        var expected=m?clampMission(m.m):clampMission(options.mission||1),r=base.call(this,options);
+        if(options.directGameplay){
+          try{
+            var cine=root.v725,active=!!(cine&&typeof cine.active==="function"&&cine.active());
+            if(active&&typeof cine.skip==="function"){
+              root.__goodBoysDirectGameplay={mission:expected,requested:true,cinematicActive:true,skipped:true,at:Date.now()};
+              cine.skip();
+            }else root.__goodBoysDirectGameplay={mission:expected,requested:true,cinematicActive:active,skipped:false,reason:active?"skip-unavailable":"no-registered-cinematic",at:Date.now()};
+          }catch(skipError){root.__goodBoysDirectGameplay={mission:expected,requested:true,skipped:false,error:String(skipError&&skipError.stack||skipError),at:Date.now()};}
+        }
+        var c=cs();
+        if(c&&!c.ending){if(Number(c.m)!==expected)c.m=expected;reconcileMission("v736-start-wrapper");invariant(expected,"v736-start-wrapper");if(options.directGameplay&&root.__goodBoysDirectGameplay)root.__goodBoysDirectGameplay.runtimeMission=Number(c.m||0);}
+        else if(root.__goodBoysHandoffInProgress)root.__goodBoysRuntimePending={mission:expected,status:c&&c.ending?"awaiting-fresh-runtime":"awaiting-runtime",source:"v736-start-wrapper",at:Date.now()};
         return r;
       };
       wrapped.__goodBoysCanonicalStart=true;wrapped.__baseStart=base;root.v736.start=wrapped;return true;
@@ -81,16 +93,17 @@
       var observed=Number(c.m||0);if(observed!==expected){c.m=expected;root.__goodBoysForcedRepair={expected:expected,observed:observed,at:Date.now(),source:reason||"handoff"};}
       reconcileMission(reason||"handoff-finalize");if(!invariant(expected,reason||"handoff-finalize"))return false;
       var validator=root.TechOpsStateValidator;if(validator&&typeof validator.validateCampaign==="function"){var vr=validator.validateCampaign(m,c);if(!vr.valid){root.__stateValidationFailure=vr;throw new Error("Good Boys state validator failed: "+vr.errors.join(" | "));}}
-      root.__goodBoysHandoffComplete={mission:expected,startedAt:h.at,completedAt:Date.now(),reason:reason||"handoff-finalize"};root.__goodBoysHandoffInProgress=null;root.__goodBoysRuntimePending=null;root.__goodBoysHandoffError=null;root.__goodBoysProgressionError=null;return true;
+      root.__goodBoysHandoffComplete={mission:expected,startedAt:h.at,completedAt:Date.now(),reason:reason||"handoff-finalize",directGameplay:!!h.directGameplay};root.__goodBoysHandoffInProgress=null;root.__goodBoysRuntimePending=null;root.__goodBoysHandoffError=null;root.__goodBoysProgressionError=null;return true;
     }catch(e){root.__goodBoysHandoffError=String(e&&e.stack||e);root.__goodBoysProgressionError=root.__goodBoysHandoffError;return false;}
   }
 
-  function startNext(next){
+  function startNext(next,options){
+    options=options||{};
     try{var m=meta();if(!m)return false;next=clampMission(next);hardenStart();if(root.S&&!cinematicVisible())root.S.inDialog=false;
       if(next===8&&root.TechOpsGoodBoysEarthfallEnding&&typeof root.TechOpsGoodBoysEarthfallEnding.begin==="function"){reconcileMission("before-earthfall");root.TechOpsGoodBoysEarthfallEnding.begin();return true;}
       if(root.v736&&typeof root.v736.start==="function"){
-        root.__goodBoysHandoffInProgress={mission:next,at:Date.now()};root.__goodBoysHandoffError=null;root.__goodBoysProgressionError=null;
-        root.v736.start({mission:next,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice()});
+        root.__goodBoysHandoffInProgress={mission:next,directGameplay:!!options.directGameplay,at:Date.now()};root.__goodBoysHandoffError=null;root.__goodBoysProgressionError=null;
+        root.v736.start({mission:next,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice(),directGameplay:!!options.directGameplay});
         if(!finalizeHandoff("after-v736-start"))root.__goodBoysRuntimePending=root.__goodBoysRuntimePending||{mission:next,status:"awaiting-runtime",source:"v736.start",at:Date.now()};
         return true;
       }
@@ -106,7 +119,7 @@
   function revealShip(){try{var n=root.NM;if(!n)return false;if(!n._gbShipRevealed){n._gbShipRevealed=true;n.clear=false;setMsg("HANGAR CLEAR · SECRET SHIP REVEALED",2400);root.__goodBoysShipRevealAt=Date.now();}return true;}catch(e){return false;}}
   function runAccessCore(){try{var a=root.TechOpsGoodBoysAccessCoreAuthority;if(a&&typeof a.tick==="function")a.tick();}catch(e){root.__goodBoysAccessCoreUnifiedTickError=String(e&&e.stack||e);}}
   function tick(){try{installObserver();hardenStart();stopLegacyMobileTimer();reconcileMission("tick");removeCompetingPads();enforceCinematicBlock();runAccessCore();finalizeHandoff("tick-handoff");var c=cs(),n=root.NM;if(!c||!n||c.ending){missionSeen=0;seenEnemy=false;emptySince=0;if(!root.__goodBoysHandoffInProgress)lastAdvance=0;if(!root.__goodBoysHandoffInProgress)transition=false;return;}var m=mission();if(m!==missionSeen){missionSeen=m;seenEnemy=false;emptySince=0;}if(transition)return;if(m===8){var end=root.TechOpsGoodBoysEarthfallEnding;if(end&&typeof end.begin==="function")end.begin();return;}if(m===1)return;var alive=living();if(m===2){if(alive>0){seenEnemy=true;emptySince=0;return;}var wavesComplete=Number(c.wave)>=2;if((seenEnemy||wavesComplete)&&!pending())revealShip();if(n._gbShipRevealed&&Number(n.x)>=1255)advance(3,"boarded-secret-ship");return;}if(alive>0){seenEnemy=true;emptySince=0;return;}if(m>=3&&m<=7){if(!seenEnemy||pending())return;if(!emptySince)emptySince=now();if(now()-emptySince>=900)advance(m+1,m===4?"freed-k":m===6?"freed-waldo":m===7?"warden-defeated-shuttle-reached":"encounter-clear");}}catch(e){root.__goodBoysProgressionError=String(e&&e.stack||e);}}
-  function acceptance(){var end=root.TechOpsGoodBoysEarthfallEnding,c=cs(),m=meta(),canonical=mission(),rm=Number(c&&c.m||0),pm=Number(m&&m.m||0);return{version:VERSION,active:!!(c&&!c.ending),mission:canonical,runtimeMission:rm,metaMission:pm,missionDiverged:!!(c&&m&&rm!==pm),missionRepairs:repairs,lastMissionRepair:root.__goodBoysReconcile||null,invariant:root.__goodBoysMissionInvariant||null,forcedRepair:root.__goodBoysForcedRepair||null,handoff:root.__goodBoysHandoffInProgress||null,handoffComplete:root.__goodBoysHandoffComplete||null,runtimePending:root.__goodBoysRuntimePending||null,handoffError:root.__goodBoysHandoffError||null,campaignTransition:root.__goodBoysTransition||null,living:living(),pending:pending(),seenEnemy:seenEnemy,emptyFor:emptySince?Math.round(now()-emptySince):0,transition:transition,lastAdvanceAge:lastAdvance?Math.round(now()-lastAdvance):null,last:root.__goodBoysLastProgression||null,cinematicVisible:cinematicVisible(),cinematicBlocked:!!(cinematicVisible()&&root.S&&root.S.inDialog),legacyMobileTimerStopped:!!root.__goodBoysLegacyMobileTimerStopped,directorPads:root.document?root.document.querySelectorAll("#good-boys-director-controls").length:0,legacyPads:root.document?root.document.querySelectorAll("#good-dogs-touch,#good-boys-loop-controls").length:0,canonicalState:true,unifiedAuthorityTick:true,earthfall:end&&end.acceptance?end.acceptance():null};}
+  function acceptance(){var end=root.TechOpsGoodBoysEarthfallEnding,c=cs(),m=meta(),canonical=mission(),rm=Number(c&&c.m||0),pm=Number(m&&m.m||0);return{version:VERSION,active:!!(c&&!c.ending),mission:canonical,runtimeMission:rm,metaMission:pm,missionDiverged:!!(c&&m&&rm!==pm),missionRepairs:repairs,lastMissionRepair:root.__goodBoysReconcile||null,invariant:root.__goodBoysMissionInvariant||null,forcedRepair:root.__goodBoysForcedRepair||null,handoff:root.__goodBoysHandoffInProgress||null,handoffComplete:root.__goodBoysHandoffComplete||null,runtimePending:root.__goodBoysRuntimePending||null,handoffError:root.__goodBoysHandoffError||null,directGameplay:root.__goodBoysDirectGameplay||null,campaignTransition:root.__goodBoysTransition||null,living:living(),pending:pending(),seenEnemy:seenEnemy,emptyFor:emptySince?Math.round(now()-emptySince):0,transition:transition,lastAdvanceAge:lastAdvance?Math.round(now()-lastAdvance):null,last:root.__goodBoysLastProgression||null,cinematicVisible:cinematicVisible(),cinematicBlocked:!!(cinematicVisible()&&root.S&&root.S.inDialog),legacyMobileTimerStopped:!!root.__goodBoysLegacyMobileTimerStopped,directorPads:root.document?root.document.querySelectorAll("#good-boys-director-controls").length:0,legacyPads:root.document?root.document.querySelectorAll("#good-dogs-touch,#good-boys-loop-controls").length:0,canonicalState:true,unifiedAuthorityTick:true,earthfall:end&&end.acceptance?end.acceptance():null};}
   function testPrimeClear(){try{reconcileMission("test-prime");var n=root.NM,c=cs(),before=mission();if(!c||!n||before<3||before>7||transition||now()-lastAdvance<700)return false;n.enemies=[{x:(n.x||100)+40,y:n.y||300,w:28,h:38,hp:1,alive:true,kind:"test-clear"}];tick();for(var i=0;i<n.enemies.length;i++){if(n.enemies[i]){n.enemies[i].hp=0;n.enemies[i].alive=false;}}c.pendingSpawn=null;c.spawnT=0;c.wavePending=false;n.spawnT=0;n.wavePending=false;emptySince=now()-1000;tick();return mission()===before+1&&root.__goodBoysLastProgression&&root.__goodBoysLastProgression.from===before&&root.__goodBoysLastProgression.to===before+1;}catch(e){root.__goodBoysProgressionTestError=String(e&&e.stack||e);return false;}}
   installObserver();hardenStart();timer=root.setInterval?root.setInterval(tick,50):null;root.TechOpsGoodBoysProgressionAuthority={VERSION:VERSION,tick:tick,advance:advance,revealShip:revealShip,startNext:startNext,finalizeHandoff:finalizeHandoff,mission:mission,reconcileMission:reconcileMission,invariant:invariant,hardenStart:hardenStart,acceptance:acceptance,testPrimeClear:testPrimeClear,cinematicVisible:cinematicVisible,enforceCinematicBlock:enforceCinematicBlock,releaseCinematicBlock:releaseCinematicBlock,removeCompetingPads:removeCompetingPads,observer:observer,timer:timer};tick();
 })(typeof globalThis!=="undefined"?globalThis:this);
