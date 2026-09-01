@@ -1,0 +1,58 @@
+name: Story Bible completion
+
+on:
+  pull_request:
+    paths:
+      - "campaign_bible_gap_pass.js"
+      - "campaign_completion_runtime.js"
+      - "chapters_vii_x.js"
+      - "felicia_first_office.js"
+      - "morningstar_build.js"
+      - "swarm_doctrine.js"
+      - "state_validator.js"
+      - "production_bootstrap.js"
+      - "test_campaign_late_game_contracts.js"
+      - ".github/workflows/story-bible-completion.yml"
+  push:
+    branches: [main]
+    paths:
+      - "campaign_bible_gap_pass.js"
+      - "campaign_completion_runtime.js"
+      - "chapters_vii_x.js"
+      - "felicia_first_office.js"
+      - "morningstar_build.js"
+      - "swarm_doctrine.js"
+      - "state_validator.js"
+      - "production_bootstrap.js"
+      - "test_campaign_late_game_contracts.js"
+      - ".github/workflows/story-bible-completion.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Parse completion modules
+        run: |
+          node --check campaign_bible_gap_pass.js
+          node --check campaign_completion_runtime.js
+          node --check chapters_vii_x.js
+          node --check felicia_first_office.js
+          node --check morningstar_build.js
+          node --check swarm_doctrine.js
+          node --check state_validator.js
+          node --check production_bootstrap.js
+          node --check test_campaign_late_game_contracts.js
+      - name: Verify completion contracts
+        run: node test_campaign_late_game_contracts.js
+      - name: Verify existing campaign story contract
+        run: node test_campaign_story.js
+      - name: Verify production aggregate gate
+        run: node scripts/production_release_gate.js
