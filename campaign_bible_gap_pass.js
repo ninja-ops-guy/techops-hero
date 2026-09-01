@@ -40,9 +40,9 @@
   }
 
   var DiegeticMusic=(function(){
-    var widget=null,redActive=false,ducked=false,restoreVolume=18,trackIndex=-1,trackTitle="",lastError=null;
+    var widget=null,redActive=false,ducked=false,restoreVolume=18,trackIndex=-1,trackTitle="",lastError=null,priming=false,nextPrimeAt=0,readyBound=false;
     function diag(extra){
-      var d={version:1,redActive:redActive,ducked:ducked,restoreVolume:restoreVolume,trackIndex:trackIndex,trackTitle:trackTitle,lastError:lastError,at:now()};
+      var d={version:1,redActive:redActive,ducked:ducked,restoreVolume:restoreVolume,trackIndex:trackIndex,trackTitle:trackTitle,lastError:lastError,priming:priming,at:now()};
       if(extra)Object.keys(extra).forEach(function(k){d[k]=extra[k];});
       root.__techopsDiegeticMusic=d;return d;
     }
@@ -51,27 +51,49 @@
       try{
         var frame=root.document&&root.document.getElementById("sc-widget");
         if(!frame||!root.SC||typeof root.SC.Widget!=="function")return null;
-        widget=root.SC.Widget(frame);return widget;
+        widget=root.SC.Widget(frame);
+        if(!readyBound&&root.SC.Widget.Events&&typeof widget.bind==="function"){
+          readyBound=true;widget.bind(root.SC.Widget.Events.READY,function(){nextPrimeAt=0;prime();});
+        }
+        return widget;
       }catch(e){lastError=String(e&&e.stack||e);diag();return null;}
     }
     function setVolume(value){var w=getWidget();if(!w)return false;try{w.setVolume(value);return true;}catch(e){lastError=String(e&&e.stack||e);diag();return false;}}
-    function playRed(){
-      var w=getWidget();if(!w){lastError="SoundCloud widget unavailable";diag({requested:true});return false;}
+    function findTrack(sounds){
+      sounds=Array.isArray(sounds)?sounds:[];
+      for(var i=0;i<sounds.length;i++){
+        var title=String(sounds[i]&&sounds[i].title||""),permalink=String(sounds[i]&&sounds[i].permalink_url||"");
+        if(/red\s+in\s+the\s+mirror/i.test(title)||/red[-_]?in[-_]?the[-_]?mirror/i.test(permalink)){trackIndex=i;trackTitle=title||"Red in the Mirror";lastError=null;return true;}
+      }
+      return false;
+    }
+    function prime(){
+      if(trackIndex>=0||priming||now()<nextPrimeAt)return trackIndex>=0;
+      var w=getWidget();if(!w)return false;priming=true;
       try{
         w.getSounds(function(sounds){
-          try{
-            sounds=Array.isArray(sounds)?sounds:[];var idx=-1;
-            for(var i=0;i<sounds.length;i++){
-              var title=String(sounds[i]&&sounds[i].title||"");var permalink=String(sounds[i]&&sounds[i].permalink_url||"");
-              if(/red\s+in\s+the\s+mirror/i.test(title)||/red[-_]?in[-_]?the[-_]?mirror/i.test(permalink)){idx=i;trackTitle=title||"Red in the Mirror";break;}
-            }
-            if(idx<0){lastError="Red in the Mirror not found in SoundCloud playlist";redActive=false;diag({requested:true,found:false});return;}
-            trackIndex=idx;lastError=null;
-            var start=function(){try{w.setVolume(18);w.play();redActive=true;ducked=false;restoreVolume=18;root.__techopsRedMirrorPlayback={playing:true,index:idx,title:trackTitle,context:"ordinary_listening",at:now()};diag({requested:true,found:true});}catch(e){lastError=String(e&&e.stack||e);diag();}};
-            try{w.skip(idx);root.setTimeout(start,80);}catch(_){start();}
-          }catch(e){lastError=String(e&&e.stack||e);diag();}
-        });
-        return true;
+          priming=false;if(!findTrack(sounds)){lastError="Red in the Mirror not found in SoundCloud playlist";nextPrimeAt=now()+2500;}diag({primed:trackIndex>=0});
+        });return true;
+      }catch(e){priming=false;nextPrimeAt=now()+2500;lastError=String(e&&e.stack||e);diag();return false;}
+    }
+    function startKnownTrack(w,source){
+      if(trackIndex<0)return false;
+      try{
+        w.skip(trackIndex);w.setVolume(18);w.play();redActive=true;ducked=false;restoreVolume=18;
+        root.__techopsRedMirrorPlayback={playing:true,index:trackIndex,title:trackTitle||"Red in the Mirror",context:"ordinary_listening",source:source||"workstation",at:now()};
+        diag({requested:true,found:true,gesturePath:source||"workstation"});return true;
+      }catch(e){lastError=String(e&&e.stack||e);diag();return false;}
+    }
+    function playRed(){
+      var w=getWidget();if(!w){lastError="SoundCloud widget unavailable";diag({requested:true});return false;}
+      // Preferred path: track index was resolved before the player taps MUSIC, so skip/play
+      // both execute inside the same iPhone user gesture that invoked hearRedInMirror().
+      if(trackIndex>=0)return startKnownTrack(w,"primed-user-gesture");
+      try{
+        w.getSounds(function(sounds){
+          try{if(!findTrack(sounds)){lastError="Red in the Mirror not found in SoundCloud playlist";redActive=false;diag({requested:true,found:false});return;}startKnownTrack(w,"async-fallback");}
+          catch(e){lastError=String(e&&e.stack||e);diag();}
+        });return true;
       }catch(e){lastError=String(e&&e.stack||e);diag();return false;}
     }
     function duck(reason){
@@ -83,7 +105,7 @@
     }
     function resume(reason){if(!redActive||!ducked)return false;ducked=false;setVolume(restoreVolume||18);diag({reason:reason||"dialogue-closed"});return true;}
     function acceptance(){return diag();}
-    return{VERSION:1,playRed:playRed,duck:duck,resume:resume,acceptance:acceptance};
+    return{VERSION:1,prime:prime,playRed:playRed,duck:duck,resume:resume,acceptance:acceptance};
   })();
   root.TechOpsDiegeticMusic=DiegeticMusic;
 
@@ -145,7 +167,7 @@
     return{version:VERSION,canonicalDay1:day1,day1Guaranteed:!!(day1&&day1.guaranteed),music:DiegeticMusic.acceptance(),redMirrorHooked:!!(campaign()&&campaign().hearRedInMirror&&campaign().hearRedInMirror.__techopsDiegeticRed),feliciaVideoVisible:feliciaVideoVisible,kRecognitionInjected:!!root.__techopsKRecognitionInjected,kRecognitionCommitted:!!(gameState()&&gameState().meta&&gameState().meta._v734recognitionCommitted),recognitionSaved:recognitionSaved};
   }
 
-  function tick(){try{patchRedInMirror();ensureDay1Spine();watchFeliciaVideo();injectKRecognition();commitKRecognition();}catch(e){root.__techopsBibleGapTickError=String(e&&e.stack||e);}}
+  function tick(){try{patchRedInMirror();DiegeticMusic.prime();ensureDay1Spine();watchFeliciaVideo();injectKRecognition();commitKRecognition();}catch(e){root.__techopsBibleGapTickError=String(e&&e.stack||e);}}
 
   root.TechOpsCampaignBibleGapPass={VERSION:VERSION,CANONICAL_DAY1:CANONICAL_DAY1.slice(),ensureDay1Spine:ensureDay1Spine,music:DiegeticMusic,patchRedInMirror:patchRedInMirror,injectKRecognition:injectKRecognition,commitKRecognition:commitKRecognition,acceptance:acceptance,tick:tick};
   tick();if(root.setInterval)timer=root.setInterval(tick,250);root.TechOpsCampaignBibleGapPass.timer=timer;
