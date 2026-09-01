@@ -67,13 +67,14 @@ assert.ok(order("good_dogs_cutscenes_v2_2.js") < order("good_dogs_cutscene_bridg
 
 const introSource = fs.readFileSync(path.join(__dirname, "good_boys_intro_repair.js"), "utf8");
 new Function(introSource);
-assert.ok(introSource.includes('dataset.gbdBypass="1"'), "intro repair must bypass the legacy director start interceptor");
-assert.ok(introSource.includes('id="good-boys-story-cine"') || introSource.includes('overlay.id="good-boys-story-cine"'), "intro repair must retain the authored blocker DOM contract");
-assert.ok(introSource.includes('class="gbi-visual"'), "intro repair must use a contiguous visual stage instead of the legacy dead-space portrait layout");
-assert.ok(introSource.includes('addEventListener("click",advance'), "intro progression must use a normal click path that works reliably on iOS Safari");
-assert.ok(introSource.includes('verifyLaunch(attempt)'), "intro final CTA must verify campaign attachment rather than assuming v736.start succeeded");
-assert.ok(introSource.includes('attempt<2'), "intro final CTA must have a bounded retry path");
-assert.strictEqual((introSource.match(/\{k:"goodboys_/g)||[]).length,4,"repaired intro must retain exactly four authored cards");
+assert.ok(introSource.includes('dataset.gbdBypass="1"'), "direct intro must bypass the legacy director start interceptor");
+assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_01")'), "Good Boys must open with the exact source-master GD_CUT_01 cinematic");
+assert.ok(!introSource.includes('SCENES=['), "retired four-card preamble must not return");
+assert.ok(introSource.includes('e.stopImmediatePropagation()'), "direct intro launch must isolate the title click from legacy delegated listeners");
+assert.ok(introSource.includes('start.click()'), "direct intro must use canonical CLOCK IN state initialization after the movie");
+assert.ok(introSource.includes('root.v736.start()'), "direct intro must hand off into the canonical Good Boys campaign");
+assert.ok(introSource.includes('function verify(attempt)'), "direct intro must verify campaign attachment after the movie");
+assert.ok(introSource.includes('attempt<2'), "direct intro attachment retry must remain bounded");
 
 const bridgeSource = fs.readFileSync(path.join(__dirname, "good_dogs_cutscene_bridge.js"), "utf8");
 new Function(bridgeSource);
