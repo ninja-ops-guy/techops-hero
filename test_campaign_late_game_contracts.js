@@ -50,6 +50,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.match(runtime,/TechOpsMORNINGSTARBuild\.openHub/);
   assert.match(runtime,/v64-swarm/);
   assert.match(runtime,/TechOpsSwarmDoctrine\.issueCommand/);
+  assert.match(runtime,/Mike can issue bounded, nonlethal swarm commands/);
   assert.match(runtime,/INTERCEPT/);
   assert.match(runtime,/nmNextStage/);
   assert.match(runtime,/checkQuestioningMoment/);
