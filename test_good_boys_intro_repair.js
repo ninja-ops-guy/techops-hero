@@ -1,11 +1,13 @@
 const assert = require("assert");
 const fs = require("fs");
 const source = fs.readFileSync("good_boys_intro_repair.js", "utf8");
+const progression = fs.readFileSync("good_boys_progression_authority.js", "utf8");
 new Function(source);
+new Function(progression);
 
 // Canonical opening: Clip 1 -> deterministic 3-system ship interaction -> Clip 2
-// -> one premise -> TAKE CONTROL -> canonical Standard CLOCK IN -> CIO Dispatch -> numeric M2 handoff.
-assert.ok(source.includes('VERSION=13'), "direct Good Boys opening must be v13");
+// -> one premise -> TAKE CONTROL -> canonical Standard CLOCK IN -> CIO Dispatch -> async-safe M2 handoff.
+assert.ok(source.includes('VERSION=14'), "direct Good Boys opening must be v14");
 assert.ok(!source.includes('SCENES=['), "legacy four-card intro must remain retired");
 assert.ok(source.includes('GoodDogsCutscenes.play("GD_CUT_01"'), "opening must begin with GD_CUT_01");
 assert.ok(source.includes('GoodDogsCutscenes.play("GD_CUT_02"'), "opening must resolve with GD_CUT_02");
@@ -41,7 +43,21 @@ assert.ok(source.includes('usedDispatch:usedDispatch'), "clock-in diagnostics mu
 assert.ok(source.includes('state.diff===1&&!state.inDialog'), "Good Boys may not start M2 until Standard startup dialogs are fully resolved");
 assert.ok(source.includes('__goodBoysCanonicalClockIn'), "clock-in completion must expose a diagnostic contract");
 assert.ok(source.includes('root.__gbiSkipBuiltinM1=true'), "duplicate legacy mission-1 cinematic must remain suppressed");
-assert.ok(source.includes('gbiRepairInstalled==="13"'), "launch listener must install idempotently at v13");
+assert.ok(source.includes('gbiRepairInstalled==="14"'), "launch listener must install idempotently at v14");
 assert.ok(source.includes('if(launching||attached())return false'), "launch must remain single-flight");
+
+// Regression: metadata can reach M2 before the M2 cinematic mounts NM._v736.
+assert.ok(progression.includes('VERSION=10'), "progression authority must expose async-safe v10 handoff semantics");
+assert.ok(progression.includes('function finalizeHandoff(reason)'), "progression authority must expose handoff finalization");
+assert.ok(progression.includes('if(!c||c.ending)'), "handoff must reject absent or stale ending runtimes");
+assert.ok(progression.includes('status:c&&c.ending?"awaiting-fresh-runtime":"awaiting-runtime"'), "handoff diagnostics must distinguish stale runtime from missing runtime");
+assert.ok(progression.includes('finalizeHandoff("tick-handoff")'), "authority tick must settle the handoff when the fresh runtime appears");
+assert.ok(progression.includes('root.__goodBoysHandoffInProgress={mission:next'), "runtime launch must remain explicitly owned until fresh attachment");
+assert.ok(!progression.includes('throw new Error("Good Boys mission invariant failed after v736.start")'), "v736.start must not require synchronous runtime attachment");
+assert.ok(source.includes('function liveM2()'), "intro owner must distinguish a live M2 runtime from metadata-only M2");
+assert.ok(source.includes('board&&!liveM2()'), "stale BOARD THE SHIP surface must be removed outside live M2 ownership");
+assert.ok(source.includes('suppressStaleBoard'), "stale boarding clicks must be captured before legacy handlers can intercept the handoff");
+assert.ok(source.includes('attempt<240'), "attachment verifier must wait for authored cinematic completion rather than restarting M2");
+assert.ok(!source.includes('if(attempt<3){startCampaign();'), "attachment verification must never relaunch the campaign while a handoff is pending");
 
 console.log("Good Boys canonical opening contract: PASS");
