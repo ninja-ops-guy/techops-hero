@@ -11,7 +11,8 @@ const runtimeSafety = fs.readFileSync('production_runtime_safety.js', 'utf8');
 const wrapperGuard = fs.readFileSync('production_wrapper_guard.js', 'utf8');
 const bootstrap = fs.readFileSync('production_bootstrap.js', 'utf8');
 function has(s){assert.ok(html.includes(s),`missing mobile production marker: ${s}`);}
-function script(src){return html.indexOf(`<script src="${src}"></script>`);}
+const scriptPaths=[...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>/g)].map(m=>m[1].split(/[?#]/,1)[0]);
+function script(src){return scriptPaths.indexOf(src);}
 
 ['width=device-width','maximum-scale=1.0','user-scalable=no','viewport-fit=cover','apple-mobile-web-app-capable','mobile-web-app-capable'].forEach(has);
 has('<title>TechOps Hero — Production v1.2</title>');
