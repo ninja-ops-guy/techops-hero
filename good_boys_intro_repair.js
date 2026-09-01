@@ -1,17 +1,18 @@
-/* TechOps Hero — Good Boys direct cinematic intro v11
+/* TechOps Hero — Good Boys direct cinematic intro v12
  * Canon opening: clip 01 -> three-system ship inspection -> clip 02 -> one premise -> M2.
  * Opening phases are ephemeral; numeric campaign mission state changes only through
  * TechOpsGoodBoysCampaignState after the authored opening has completed.
  * Ship movement is time-based and pointer-captured so mobile/WebKit frame rate and
  * minor finger drift cannot change traversal speed or cancel a valid hold.
+ * TAKE CONTROL completes the canonical CLOCK IN -> Standard -> startRun path before M2.
  */
 (function(root){
   "use strict";
   if(!root)return;
   var PRIOR=root.TechOpsGoodBoysIntroRepair;
-  if(PRIOR&&Number(PRIOR.VERSION||0)>=11)return;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=12)return;
   try{if(PRIOR&&PRIOR.timer&&root.clearInterval)root.clearInterval(PRIOR.timer);if(PRIOR&&PRIOR.observer)PRIOR.observer.disconnect();}catch(_){}
-  var VERSION=11,launching=false,premise=null,interlude=null,installedButton=null,launchEpoch=0,observer=null;
+  var VERSION=12,launching=false,premise=null,interlude=null,installedButton=null,launchEpoch=0,observer=null;
   function button(){return root.document&&root.document.getElementById("btn-v736");}
   function bypass(){var b=button();if(!b)return false;b.dataset.gbdBypass="1";b.dataset.gbiRepair="1";return true;}
   function attached(){try{return !!(root.NM&&root.NM._v736);}catch(_){return false;}}
@@ -20,7 +21,21 @@
   function rescueLegacyFollow(e){var b=legacyFollowTarget(e&&e.target);if(!b)return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}dismissLegacy();root.__goodBoysLegacyFollowRescued={at:Date.now()};if(!launching&&!attached())launch();}
   function guardOwnership(){try{bypass();var legacy=root.document&&root.document.getElementById("good-boys-story-cine");if(legacy)legacy.remove();if(launching||premise||interlude||!attached())dismissLegacy();return true;}catch(e){root.__goodBoysIntroOwnershipError=String(e&&e.stack||e);return false;}}
   function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,at:Date.now()},extra||{});}
-  function canonicalClockIn(){try{var title=root.document&&root.document.getElementById("title-screen");if(title&&!title.classList.contains("hidden")){var start=root.document.getElementById("btn-start");if(start){start.click();return true;}}return true;}catch(e){root.__goodBoysDirectIntroClockInError=String(e&&e.stack||e);return false;}}
+  function canonicalClockIn(){
+    try{
+      var title=root.document&&root.document.getElementById("title-screen");
+      if(title&&!title.classList.contains("hidden")){
+        var start=root.document.getElementById("btn-start");if(!start)throw new Error("canonical CLOCK IN unavailable");
+        start.click();
+        var opts=root.document.getElementById("dlg-options"),buttons=opts?Array.prototype.slice.call(opts.querySelectorAll("button")):[];
+        var standard=null;for(var i=0;i<buttons.length;i++){if(/Standard/i.test(buttons[i].textContent||"")){standard=buttons[i];break;}}
+        if(!standard)throw new Error("canonical Standard difficulty unavailable after CLOCK IN");
+        standard.click();
+        root.__goodBoysCanonicalClockIn={ok:true,difficulty:"standard",at:Date.now()};
+      }
+      return true;
+    }catch(e){root.__goodBoysDirectIntroClockInError=String(e&&e.stack||e);root.__goodBoysCanonicalClockIn={ok:false,error:root.__goodBoysDirectIntroClockInError,at:Date.now()};return false;}
+  }
   function startCampaign(){
     try{
       if(!canonicalClockIn())return false;
@@ -77,7 +92,7 @@
     phase("clip2");var second=await root.GoodDogsCutscenes.play("GD_CUT_02",{force:true,muted:true});root.__goodBoysOpeningClipResult=second||null;return second||gameplay||first||null;
   }
   function launch(e){if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}if(launching||attached())return false;var epoch=++launchEpoch;launching=true;bypass();dismissLegacy();var b=button(),old=b&&b.textContent;if(b){b.disabled=true;b.textContent="OPENING TRANSMISSION…";}phase("opening");root.__goodBoysDirectIntro={ok:null,status:"opening",at:Date.now(),epoch:epoch};Promise.resolve().then(playOpening).catch(function(err){root.__goodBoysDirectIntroMediaError=String(err&&err.stack||err);}).then(function(){if(epoch!==launchEpoch)return;dismissLegacy();return showPremise();}).catch(function(err2){root.__goodBoysPremiseError=String(err2&&err2.stack||err2);}).then(function(){if(epoch!==launchEpoch)return;if(b){b.disabled=false;b.textContent=old||"🐕 GOOD BOYS — 118 / 1984 BREAKOUT";}root.__goodBoysDirectIntro={ok:null,status:"handoff",at:Date.now(),epoch:epoch};root.setTimeout(function(){if(epoch!==launchEpoch)return;dismissLegacy();startCampaign();root.setTimeout(function(){verify(1,epoch);},350);},0);});return true;}
-  function install(){var b=button();if(!b)return false;bypass();if(installedButton===b&&b.dataset.gbiRepairInstalled==="11")return true;if(installedButton)try{installedButton.removeEventListener("click",launch,true);}catch(_){}b.addEventListener("click",launch,true);b.dataset.gbiRepairInstalled="11";installedButton=b;return true;}
+  function install(){var b=button();if(!b)return false;bypass();if(installedButton===b&&b.dataset.gbiRepairInstalled==="12")return true;if(installedButton)try{installedButton.removeEventListener("click",launch,true);}catch(_){}b.addEventListener("click",launch,true);b.dataset.gbiRepairInstalled="12";installedButton=b;return true;}
   function installObserver(){try{if(observer||!root.MutationObserver||!root.document)return;observer=new root.MutationObserver(function(){install();guardOwnership();});observer.observe(root.document.documentElement,{subtree:true,childList:true});}catch(e){root.__goodBoysIntroObserverError=String(e&&e.stack||e);}}
   if(root.document){root.document.addEventListener("pointerdown",rescueLegacyFollow,true);root.document.addEventListener("click",rescueLegacyFollow,true);}var timer=root.setInterval(function(){install();guardOwnership();},80);installObserver();install();guardOwnership();
   root.TechOpsGoodBoysIntroRepair={VERSION:VERSION,launch:launch,install:install,playOpening:playOpening,showShipInterlude:showShipInterlude,startCampaign:startCampaign,guardOwnership:guardOwnership,timer:timer,observer:observer,get launching(){return launching;},get premise(){return premise;},get interlude(){return interlude;}};
