@@ -71,11 +71,20 @@ try{
   if(!a.morningstarButton.exists)fail('morningstar-hud-button-missing',a);
   if(!a.swarmButton.exists||a.swarmButton.display==='none'||a.swarmButton.computed==='none')fail('shared-swarm-hud-button-hidden',a);
 
-  await page.evaluate(()=>document.getElementById('btn-swarm-command').click());
-  await page.waitForFunction(()=>/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(document.body.innerText),null,{timeout:2500});
-  const dialogText=await page.locator('body').innerText();
-  log('swarm-dialog',{bounded:/bounded/i.test(dialogText),nonlethal:/nonlethal/i.test(dialogText)});
-  if(!/bounded/i.test(dialogText)||!/nonlethal/i.test(dialogText))fail('mike-swarm-dialog-copy-missing');
+  await page.locator('#btn-swarm-command').click({timeout:2000,force:true});
+  await page.waitForFunction(()=>{
+    const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
+    return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
+  },null,{timeout:3000});
+  const dialog=await page.evaluate(()=>({
+    name:(document.getElementById('dlg-name')&&document.getElementById('dlg-name').textContent)||'',
+    text:(document.getElementById('dlg-text')&&document.getElementById('dlg-text').textContent)||'',
+    hidden:document.getElementById('dialogue')?document.getElementById('dialogue').classList.contains('hidden'):true,
+    inDialog:!!(window.S&&S.inDialog)
+  }));
+  log('swarm-dialog',dialog);
+  if(dialog.hidden||!dialog.inDialog)fail('swarm-dialog-not-canonical',dialog);
+  if(!/bounded/i.test(dialog.text)||!/nonlethal/i.test(dialog.text))fail('mike-swarm-dialog-copy-missing',dialog);
   await page.screenshot({path:path.join(OUT,'late-game-swarm-mobile.png')});
   await page.evaluate(()=>{if(typeof window.closeDlg==='function')window.closeDlg();});
 
