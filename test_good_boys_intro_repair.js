@@ -3,9 +3,11 @@ const fs = require("fs");
 const source = fs.readFileSync("good_boys_intro_repair.js", "utf8");
 const progression = fs.readFileSync("good_boys_progression_authority.js", "utf8");
 const board = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
+const core = fs.readFileSync("v736_hooks.js", "utf8");
 new Function(source);
 new Function(progression);
 new Function(board);
+new Function(core);
 
 // Canonical opening: Clip 1 -> deterministic 3-system ship interaction -> Clip 2
 // -> one premise -> TAKE CONTROL -> canonical Standard CLOCK IN -> CIO Dispatch -> direct M2 gameplay.
@@ -49,15 +51,18 @@ assert.ok(source.includes('gbiRepairInstalled==="15"'), "launch listener must in
 assert.ok(source.includes('if(launching||attached())return false'), "launch must remain single-flight");
 
 // Handoff contract: M2 gets a synchronous fast path; later missions remain async-safe.
-assert.ok(progression.includes('VERSION=11'), "progression authority must expose v11 direct-M2 + async-safe handoff semantics");
+assert.ok(progression.includes('VERSION=12'), "progression authority must expose v12 core-owned direct-M2 + async-safe handoff semantics");
 assert.ok(progression.includes('function finalizeHandoff(reason)'), "progression authority must expose handoff finalization");
 assert.ok(progression.includes('if(!c||c.ending)'), "handoff must reject absent or stale ending runtimes");
 assert.ok(progression.includes('status:c&&c.ending?"awaiting-fresh-runtime":"awaiting-runtime"'), "handoff diagnostics must distinguish stale runtime from missing runtime");
 assert.ok(progression.includes('finalizeHandoff("tick-handoff")'), "authority tick must settle later cinematic handoffs when the fresh runtime appears");
 assert.ok(progression.includes('function startNext(next,options)'), "canonical runtime start must accept explicit handoff options");
 assert.ok(progression.includes('directGameplay:!!options.directGameplay'), "directGameplay must be forwarded through the v736 start contract");
-assert.ok(progression.includes('if(options.directGameplay)'), "only opted-in starts may take the direct gameplay fast path");
-assert.ok(progression.includes('cine.skip()'), "direct M2 gameplay must use the existing cinematic callback to mount combat synchronously");
+assert.ok(!progression.includes('cine.skip()'), "progression authority must not emulate direct gameplay by skipping the cinematic engine");
+assert.ok(core.includes('function start736(options)'), "v736 core must accept explicit start options");
+assert.ok(core.includes('if (options.directGameplay)'), "v736 core must own the direct gameplay branch");
+assert.ok(core.includes('startCombat736(mission)'), "direct M2 gameplay must mount combat from inside v736 core");
+assert.ok(core.includes('source: "v736-core"'), "direct M2 diagnostics must identify the core runtime owner");
 assert.ok(progression.includes('var restart=function(){try{startNext(next);'), "ordinary M3+ progression must not opt into directGameplay");
 assert.ok(!progression.includes('throw new Error("Good Boys mission invariant failed after v736.start")'), "v736.start must not require synchronous runtime attachment on ordinary cinematic paths");
 assert.ok(source.includes('function liveM2()'), "intro owner must distinguish a live M2 runtime from metadata-only M2");

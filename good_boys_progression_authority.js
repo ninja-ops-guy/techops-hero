@@ -1,15 +1,15 @@
-/* Good Boys deterministic progression authority v11.
+/* Good Boys deterministic progression authority v12.
  * Canonical campaign state lives in S.meta._v736. Runtime NM._v736 is a mirror.
  * Normal mission handoffs are async-safe across authored cinematics. The custom
- * opening may request directGameplay for M2; the canonical v736.start wrapper then
- * skips its redundant registered briefing through the public v725 engine so the
- * existing startCombat736 callback mounts a fresh runtime synchronously.
+ * opening may request directGameplay for M2; v736_hooks.js owns that fast path
+ * and mounts startCombat736 directly. Later authored mission cinematics remain
+ * asynchronous and are settled by finalizeHandoff when their runtime appears.
  */
 (function(root){
   "use strict";
   if(!root)return;
   try{var prior=root.TechOpsGoodBoysProgressionAuthority;if(prior&&prior.timer&&root.clearInterval)root.clearInterval(prior.timer);if(prior&&prior.observer)prior.observer.disconnect();}catch(_){}
-  var VERSION=11,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0,repairs=0;
+  var VERSION=12,timer=null,observer=null,missionSeen=0,seenEnemy=false,emptySince=0,transition=false,lastAdvance=0,repairs=0;
   function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
   function runtime(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function clampMission(v){v=Number(v);return Math.max(1,Math.min(8,isFinite(v)&&v>0?v:1));}
@@ -66,15 +66,6 @@
         if(m&&Object.prototype.hasOwnProperty.call(options,"waldo"))m.waldo=!!options.waldo;
         if(m&&Array.isArray(options.evidence))m.evidence=options.evidence.slice();
         var expected=m?clampMission(m.m):clampMission(options.mission||1),r=base.call(this,options);
-        if(options.directGameplay){
-          try{
-            var cine=root.v725,active=!!(cine&&typeof cine.active==="function"&&cine.active());
-            if(active&&typeof cine.skip==="function"){
-              root.__goodBoysDirectGameplay={mission:expected,requested:true,cinematicActive:true,skipped:true,at:Date.now()};
-              cine.skip();
-            }else root.__goodBoysDirectGameplay={mission:expected,requested:true,cinematicActive:active,skipped:false,reason:active?"skip-unavailable":"no-registered-cinematic",at:Date.now()};
-          }catch(skipError){root.__goodBoysDirectGameplay={mission:expected,requested:true,skipped:false,error:String(skipError&&skipError.stack||skipError),at:Date.now()};}
-        }
         var c=cs();
         if(c&&!c.ending){if(Number(c.m)!==expected)c.m=expected;reconcileMission("v736-start-wrapper");invariant(expected,"v736-start-wrapper");if(options.directGameplay&&root.__goodBoysDirectGameplay)root.__goodBoysDirectGameplay.runtimeMission=Number(c.m||0);}
         else if(root.__goodBoysHandoffInProgress)root.__goodBoysRuntimePending={mission:expected,status:c&&c.ending?"awaiting-fresh-runtime":"awaiting-runtime",source:"v736-start-wrapper",at:Date.now()};

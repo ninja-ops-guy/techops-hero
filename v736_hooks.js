@@ -620,7 +620,8 @@
       if (m >= 8) { playCine736("b736m8", completeCampaign736); return; }
       playCine736("b736m" + m, () => startCombat736(m));
     }
-    function start736() {
+    function start736(options) {
+      options = options || {};
       try {
         const ts = document.getElementById("title-screen");
         if ((typeof S === "undefined" || !S) || (ts && !ts.classList.contains("hidden"))) {
@@ -630,10 +631,20 @@
           try { showTouchUI(); } catch (e) { }
           try { updateHUD(); } catch (e) { }
         }
-        const mt = meta736(); if (!mt) return;
-        if (mt.done) { playCine736("b736m8", null); return; }
+        const mt = meta736(); if (!mt) return false;
+        if (options.mission != null) mt.m = Number(options.mission) || mt.m || 1;
+        if (mt.done) { playCine736("b736m8", null); return true; }
+        if (options.directGameplay) {
+          const mission = mt.m || 1;
+          startCombat736(mission);
+          let runtimeMission = 0;
+          try { runtimeMission = Number(NM && NM._v736 && NM._v736.m || 0); } catch (e) { }
+          window.__goodBoysDirectGameplay = { mission, requested: true, mounted: runtimeMission === mission, runtimeMission, source: "v736-core", at: Date.now() };
+          return runtimeMission === mission;
+        }
         runMission736(mt.m || 1);
-      } catch (e) { window.__err736s = String(e && e.stack || e); }
+        return true;
+      } catch (e) { window.__err736s = String(e && e.stack || e); return false; }
     }
     function missionWin736() {
       const cs = NM._v736, m = cs.m, mt = meta736();

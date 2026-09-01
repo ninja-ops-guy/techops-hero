@@ -70,14 +70,18 @@ assert.ok(!directorSource.includes('FOLLOW THE TRAIL'),"legacy FOLLOW THE TRAIL 
 assert.ok(!directorSource.includes('installStartCinematic'),"legacy director start capture must be removed");
 
 const progressionSource=fs.readFileSync(path.join(__dirname,"good_boys_progression_authority.js"),"utf8");new Function(progressionSource);
-assert.ok(progressionSource.includes('VERSION=11'),"Good Boys progression must expose v11 direct-M2 plus async-safe state authority");
+const v736Source=fs.readFileSync(path.join(__dirname,"v736_hooks.js"),"utf8");new Function(v736Source);
+assert.ok(progressionSource.includes('VERSION=12'),"Good Boys progression must expose v12 core-owned direct-M2 plus async-safe state authority");
 assert.ok(progressionSource.includes('root.TechOpsGoodBoysCampaignState=CampaignState'),"canonical campaign state API must be globally available");
 assert.ok(progressionSource.includes('CampaignState.transition(from,next'),"mission advancement must go through canonical transition()");
 assert.ok(progressionSource.includes('function startNext(next,options)'),"canonical runtime handoff must accept explicit options");
 assert.ok(progressionSource.includes('root.v736.start({mission:next'),"v736 runtime start must receive explicit canonical mission options");
 assert.ok(progressionSource.includes('directGameplay:!!options.directGameplay'),"directGameplay must be forwarded only when explicitly requested");
-assert.ok(progressionSource.includes('if(options.directGameplay)'),"canonical v736 wrapper must expose the direct gameplay fast path");
-assert.ok(progressionSource.includes('cine.skip()'),"direct gameplay must use the existing registered-cinematic callback to mount combat");
+assert.ok(!progressionSource.includes('cine.skip()'),"progression authority must not skip the cinematic engine to synthesize direct gameplay");
+assert.ok(v736Source.includes('function start736(options)'),"v736 core start must accept handoff options");
+assert.ok(v736Source.includes('if (options.directGameplay)'),"v736 core must own the direct gameplay branch");
+assert.ok(v736Source.includes('startCombat736(mission)'),"direct M2 must synchronously mount combat inside v736 core");
+assert.ok(v736Source.includes('source: "v736-core"'),"v736 direct M2 diagnostics must identify the core owner");
 assert.ok(progressionSource.includes('var restart=function(){try{startNext(next);'),"ordinary mission progression must retain authored cinematic handoffs");
 assert.ok(progressionSource.includes('function finalizeHandoff(reason)'),"progression authority must wait for a fresh runtime on normal cinematic handoffs");
 assert.ok(progressionSource.includes('if(!c||c.ending)'),"stale ending runtime must not satisfy handoff ownership");
