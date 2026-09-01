@@ -1,12 +1,13 @@
-/* TechOps Hero — Felicia first-office "Marketing" beat v2
+/* TechOps Hero — Felicia first-office "Marketing" beat v3
  * Intercepts only Felicia's first daylight interaction after the company video.
- * install() is idempotent but reclaims the outer interaction layer if a later
- * parser/native wrapper replaces it, avoiding order-dependent loss of the beat.
+ * install() is idempotent and may reclaim the outer interaction layer if a later
+ * parser/native wrapper replaces it. Maintenance is owned centrally by
+ * campaign_completion_runtime.js (no private timer).
  */
 (function(root){
   "use strict";
   if(!root || root.TechOpsFeliciaFirstOfficeDialogue) return;
-  var VERSION=2;
+  var VERSION=3;
   var LINES=[
     ["MIKE","You're the one from the company video."],
     ["FELICIA","Depends which video. I've been in a few."],
@@ -52,7 +53,6 @@
     var fn=function(){if(canTrigger()&&adjacentFelicia())return trigger();return base.apply(this,arguments);};
     fn.__feliciaOfficeWrapped=true;fn.__base=base;root.interact=fn;root.__feliciaOfficeInteractionOwnerAt=Date.now();return true;
   }
-  var timer=(root.setInterval||setInterval)(install,250);
-  root.TechOpsFeliciaFirstOfficeDialogue={VERSION:VERSION,LINES:LINES,canTrigger:canTrigger,trigger:trigger,install:install,timer:timer};
+  root.TechOpsFeliciaFirstOfficeDialogue={VERSION:VERSION,LINES:LINES,canTrigger:canTrigger,trigger:trigger,install:install};
   install();
 })(typeof globalThis!=="undefined"?globalThis:this);
