@@ -4,8 +4,8 @@ const source = fs.readFileSync("good_boys_intro_repair.js", "utf8");
 new Function(source);
 
 // Canonical opening: Clip 1 -> deterministic 3-system ship interaction -> Clip 2
-// -> one premise -> TAKE CONTROL -> canonical numeric M2 handoff.
-assert.ok(source.includes('VERSION=11'), "direct Good Boys opening must be v11");
+// -> one premise -> TAKE CONTROL -> canonical Standard CLOCK IN -> numeric M2 handoff.
+assert.ok(source.includes('VERSION=12'), "direct Good Boys opening must be v12");
 assert.ok(!source.includes('SCENES=['), "legacy four-card intro must remain retired");
 assert.ok(source.includes('GoodDogsCutscenes.play("GD_CUT_01"'), "opening must begin with GD_CUT_01");
 assert.ok(source.includes('GoodDogsCutscenes.play("GD_CUT_02"'), "opening must resolve with GD_CUT_02");
@@ -33,8 +33,11 @@ assert.ok(source.includes('legacyFollowTarget'), "stale FOLLOW THE TRAIL surface
 assert.ok(source.includes('legacy.remove()'), "obsolete director overlay must be removed when detected");
 assert.ok(source.includes('e.stopImmediatePropagation()'), "launch must not leak into the legacy director");
 assert.ok(source.includes('start.click()'), "handoff must use canonical CLOCK IN initialization");
+assert.ok(source.includes('/Standard/i.test'), "Good Boys TAKE CONTROL must choose the canonical Standard difficulty");
+assert.ok(source.includes('standard.click()'), "canonical Standard selection must complete startRun before M2 attachment");
+assert.ok(source.includes('__goodBoysCanonicalClockIn'), "clock-in completion must expose a diagnostic contract");
 assert.ok(source.includes('root.__gbiSkipBuiltinM1=true'), "duplicate legacy mission-1 cinematic must remain suppressed");
-assert.ok(source.includes('gbiRepairInstalled==="11"'), "launch listener must install idempotently at v11");
+assert.ok(source.includes('gbiRepairInstalled==="12"'), "launch listener must install idempotently at v12");
 assert.ok(source.includes('if(launching||attached())return false'), "launch must remain single-flight");
 
 console.log("Good Boys canonical opening contract: PASS");
