@@ -50,9 +50,12 @@ async function completeShipInteraction(page){
   if(!await page.locator('#good-boys-ship-interlude').count())return false;
   for(const id of ['nav','flight','dock']){
     const already=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(already)continue;
-    await page.keyboard.down('ArrowRight');
-    try{await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&s.near&&s.targetId===target);},id,{timeout:4500});}finally{await page.keyboard.up('ArrowRight').catch(()=>{});}
-    await page.keyboard.press('KeyE');
+    const right=page.locator('#good-boys-ship-interlude [data-move="right"]'),interact=page.locator('#good-boys-ship-interlude [data-interact]');
+    if(!await right.count())throw new Error('mobile right control missing');
+    await right.dispatchEvent('pointerdown',{pointerType:'touch',isPrimary:true,buttons:1});
+    try{await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&s.near&&s.targetId===target);},id,{timeout:7000});}finally{await right.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});}
+    await page.waitForFunction(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');return !!(b&&!b.disabled);},null,{timeout:1000});
+    await interact.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,buttons:0});
     await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id,{timeout:2000});
   }
   return true;
