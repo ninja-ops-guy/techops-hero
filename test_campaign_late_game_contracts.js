@@ -44,7 +44,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
 {
   const runtime=fs.readFileSync("morningstar_swarm_runtime.js","utf8");
   assert.doesNotThrow(()=>new Function(runtime),"MORNINGSTAR/swarm gameplay bridge must parse");
-  assert.match(runtime,/VERSION=3/);
+  assert.match(runtime,/VERSION=4/);
   assert.match(runtime,/btn-morningstar/);
   assert.match(runtime,/TechOpsMORNINGSTARBuild\.openHub/);
   assert.match(runtime,/v64-swarm/);
@@ -52,6 +52,8 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.match(runtime,/INTERCEPT/);
   assert.match(runtime,/nmNextStage/);
   assert.match(runtime,/checkQuestioningMoment/);
+  assert.match(runtime,/recordExternalActivation/);
+  assert.match(runtime,/orpheus-matched-felicia-authorization-pattern/);
   assert.ok(!runtime.includes("TechOpsGoodBoysCampaignState"),"player-facing MORNINGSTAR/swarm bridge must not own Good Boys progression");
   assert.ok(!/\.lateGame\s*=|morningstarPhase\s*=/.test(runtime),"gameplay bridge must not directly mutate main-campaign progression state");
   const maintenance=fs.readFileSync("campaign_completion_runtime.js","utf8");
@@ -59,7 +61,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.match(maintenance,/TechOpsMORNINGSTARRuntime\.install/);
 }
 
-// MORNINGSTAR: every phase requires its authored day tickets plus night recovery.
+// MORNINGSTAR: every phase requires its authored day tickets plus night recovery and reaches the Duet gate.
 {
   const c=context();run("morningstar_build.js",c);
   const M=c.root.TechOpsMORNINGSTARBuild;assert.ok(M,"MORNINGSTAR authority exported");
@@ -71,6 +73,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
     assert.strictEqual(M.canAdvance(),false,"night recovery remains mandatory");
     M.onNightRecovery(def.nightRecovery);
     assert.strictEqual(M.getCurrentPhase(),phase+1,"phase advances atomically after both halves");
+    if(phase===3)assert.strictEqual(c.state.story.facts.mike_model_discovered,true,"integrated MORNINGSTAR must produce Chapter VII's Mike-model gate");
   }
   assert.strictEqual(M.getCurrentPhase(),5);
   assert.ok(c.state.lateGame.morningstar.unlocks.includes("shared_authority_keys"));
@@ -78,7 +81,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.ok(!fs.readFileSync("morningstar_build.js","utf8").includes("TechOpsGoodBoysCampaignState.transition"),"MORNINGSTAR must not mutate Good Boys authority");
 }
 
-// Swarm doctrine: bounds, lethal authorization, logging, reversibility.
+// Swarm doctrine: bounds, lethal authorization, reversal, all questioning moments, and percent metrics.
 {
   const c=context();c.root.TechOpsMORNINGSTARBuild={getCurrentPhase:()=>3};run("swarm_doctrine.js",c);
   const S=c.root.TechOpsSwarmDoctrine;assert.ok(S,"swarm authority exported");
@@ -86,9 +89,18 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.strictEqual(S.issueCommand("INTERCEPT",{range:100,duration:20},"Felicia").success,false,"lethal command requires authorization");
   const recon=S.issueCommand("RECON",{range:100,duration:20,intent:"inspect"},"Mike");assert.strictEqual(recon.success,true);
   assert.strictEqual(S.reverseAction(recon.logId,"Felicia").success,true,"reversible command reverses inside window");
+  assert.ok(S.snapshot().questioningMomentsTriggered.includes("swarm_q3"),"Felicia reversing Mike's action must trigger the consent/logging dialogue");
   const lethal=S.issueCommand("INTERCEPT",{range:100,duration:20,authorizedBy:"Mike"},"Felicia");assert.strictEqual(lethal.success,true);
   assert.strictEqual(S.reverseAction(lethal.logId,"Mike").success,false,"INTERCEPT is intentionally irreversible");
-  assert.ok(S.getLog().length>=5,"accepted and rejected actions are auditable");
+  const selfAuth=S.issueCommand("INTERCEPT",{range:100,duration:20,authorizedBy:"Felicia"},"Felicia");assert.strictEqual(selfAuth.success,true);
+  assert.ok(S.snapshot().questioningMomentsTriggered.includes("swarm_q1"),"Felicia self-authorized lethal action must trigger Mike's challenge");
+  assert.strictEqual(c.state.p1.evidence.score,3,"late-game percentage consequence must not corrupt raw Act II evidence score");
+  assert.strictEqual(c.state.p1.trust.score,1,"late-game percentage consequence must not corrupt raw Act II trust score");
+  const afterQ1=S.snapshot().metrics;assert.ok(afterQ1.evidence>=85,"Evidence +10 must apply on the percentage late-game scale");assert.ok(afterQ1.trust>=72,"Trust consequences must apply on the percentage late-game scale");
+  assert.strictEqual(S.recordExternalActivation("felicia-pattern"),true,"external authorization-pattern match must seed integrity audit dialogue");
+  const snap=S.snapshot();assert.ok(snap.questioningMomentsTriggered.includes("swarm_q2"));assert.strictEqual(snap.integrityAuditUnlocked,true);
+  assert.ok(snap.consequences.length>=3,"questioning consequences remain inspectable");
+  assert.ok(S.getLog().length>=7,"accepted, rejected, reversed and external actions are auditable");
   assert.ok(!fs.readFileSync("swarm_doctrine.js","utf8").includes("TechOpsGoodBoysCampaignState.transition"),"swarm must not mutate Good Boys authority");
 }
 
