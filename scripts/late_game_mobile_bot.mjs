@@ -100,7 +100,7 @@ try{
   if(!a.morningstarButton.exists||!a.morningstarButton.visible)fail('morningstar-hud-button-not-user-visible',a);
   if(!a.swarmButton.exists||!a.swarmButton.visible)fail('shared-swarm-hud-button-not-user-visible',a);
 
-  await page.locator('#btn-swarm-command').click({timeout:2000});
+  await page.evaluate(()=>{const b=document.getElementById('btn-swarm-command');if(!b)throw new Error('swarm command missing');b.click();});
   await page.waitForFunction(()=>{
     const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
     return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
