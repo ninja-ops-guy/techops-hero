@@ -19,7 +19,8 @@ async function waitForLateGame(page){
 async function activateBaseRun(page,preferContinue=false){
   const activated=await page.evaluate(prefer=>{
     const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
-    const option=re=>[...(document.querySelectorAll('#dlg-options button')||[])].find(b=>re.test(b.textContent||''));
+    const option=re=>[...document.querySelectorAll('#dlg-options button')].find(b=>re.test(b.textContent||''));
+    const hasLexicalS=()=>{try{return !!window.eval(`(typeof S!=='undefined'&&S)`);}catch{return false;}};
     let route='';
     const cont=document.getElementById('btn-continue');
     if(prefer&&visible(cont)){cont.click();route='continue';}
@@ -29,21 +30,21 @@ async function activateBaseRun(page,preferContinue=false){
     }
     const clockIn=option(/Clock in/i);if(clockIn)clockIn.click();
     if(window.TechOpsMORNINGSTARRuntime&&typeof window.TechOpsMORNINGSTARRuntime.install==='function')window.TechOpsMORNINGSTARRuntime.install();
-    return {route,hud:visible(document.getElementById('hud')),dialog:visible(document.getElementById('dialogue')),hasS:!!window.S};
+    return {route,hud:visible(document.getElementById('hud')),dialog:visible(document.getElementById('dialogue')),hasS:hasLexicalS()};
   },preferContinue);
   log('base-run-activation',activated);
-  await page.waitForFunction(()=>{const h=document.getElementById('hud');return !!(window.S&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:3000});
+  await page.waitForFunction(()=>{const h=document.getElementById('hud');let s=false;try{s=!!window.eval(`(typeof S!=='undefined'&&S)`);}catch{}return !!(s&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:3000});
   return activated;
 }
 
 async function snapshot(page){
   return page.evaluate(()=>{
     const button=id=>{const b=document.getElementById(id);if(!b)return{exists:false};const cs=getComputedStyle(b);return{exists:true,display:b.style.display||'',computed:cs.display,visibility:cs.visibility,visible:!!(b.getClientRects().length&&cs.display!=='none'&&cs.visibility!=='hidden'),disabled:!!b.disabled};};
-    let campaign=null,swarm=null,acceptance=null,gb=null;
+    let campaign=null,swarm=null,acceptance=null,lexical={state:false,goodBoys:null,character:null,inDialog:false};
     try{campaign=window.TechOpsCampaign&&window.TechOpsCampaign.load?window.TechOpsCampaign.load(localStorage):null;}catch(e){campaign={error:String(e&&e.stack||e)};}
     try{swarm=window.TechOpsSwarmDoctrine&&window.TechOpsSwarmDoctrine.snapshot?window.TechOpsSwarmDoctrine.snapshot():null;}catch(e){swarm={error:String(e&&e.stack||e)};}
     try{acceptance=window.TechOpsMORNINGSTARRuntime&&window.TechOpsMORNINGSTARRuntime.acceptance?window.TechOpsMORNINGSTARRuntime.acceptance():null;}catch(e){acceptance={error:String(e&&e.stack||e)};}
-    try{gb=window.S&&S.meta&&S.meta._v736?JSON.parse(JSON.stringify(S.meta._v736)):null;}catch(e){gb={error:String(e&&e.stack||e)};}
+    try{lexical=window.eval(`(function(){var s=(typeof S!=='undefined'&&S)?S:null;return{state:!!s,goodBoys:s&&s.meta&&s.meta._v736?JSON.parse(JSON.stringify(s.meta._v736)):null,character:s&&s.meta&&s.meta._char||null,inDialog:!!(s&&s.inDialog)};})()`);}catch(e){lexical={error:String(e&&e.stack||e),state:false,goodBoys:null,character:null,inDialog:false};}
     const hud=document.getElementById('hud'),hcs=hud?getComputedStyle(hud):null;
     return {
       runtimeVersion:window.TechOpsMORNINGSTARRuntime&&window.TechOpsMORNINGSTARRuntime.VERSION||0,
@@ -56,8 +57,10 @@ async function snapshot(page){
       persistedSwarmLog:campaign&&campaign.lateGame&&campaign.lateGame.swarm&&Array.isArray(campaign.lateGame.swarm.log)?campaign.lateGame.swarm.log.length:0,
       swarm,
       acceptance,
-      goodBoys:gb,
-      character:window.S&&S.meta&&S.meta._char||null,
+      goodBoys:lexical.goodBoys,
+      stateAttached:lexical.state,
+      character:lexical.character,
+      inDialog:lexical.inDialog,
       isFelicia:typeof window.isFel==='function'?!!window.isFel():null
     };
   });
@@ -80,10 +83,11 @@ try{
     s.lateGame=s.lateGame||{};
     s.lateGame.morningstar={phase:3,completedDayTickets:[],nightRecoveredItems:[],unlocks:['swarm_commands'],history:[]};
     c.save(s,localStorage);
-    if(window.S){S.meta=S.meta||{};S.meta._char='mike';}
+    window.eval(`if(typeof S!=='undefined'&&S){S.meta=S.meta||{};S.meta._char='mike';}`);
     localStorage.setItem('techops_char','mike');
     window.TechOpsMORNINGSTARRuntime.install();
-    return {saveKey:c.SAVE_KEY,phase:window.TechOpsMORNINGSTARBuild.getCurrentPhase(),goodBoys:window.S&&S.meta&&S.meta._v736?JSON.stringify(S.meta._v736):null};
+    const gb=window.eval(`(typeof S!=='undefined'&&S&&S.meta&&S.meta._v736)?JSON.stringify(S.meta._v736):null`);
+    return {saveKey:c.SAVE_KEY,phase:window.TechOpsMORNINGSTARBuild.getCurrentPhase(),goodBoys:gb};
   });
   log('seeded',seeded);
   await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:2500});
@@ -91,6 +95,7 @@ try{
   if(a.runtimeVersion<5)fail('runtime-v5-missing',a);
   if(!(a.bootstrap&&a.bootstrap.ready))fail('late-game-bootstrap-not-ready',a);
   if(a.phase!==3||a.campaignPhase!==3)fail('canonical-phase3-seed-failed',a);
+  if(!a.stateAttached||a.character!=='mike')fail('canonical-mike-run-not-active',a);
   if(!a.hudVisible)fail('base-hud-not-visible',a);
   if(!a.morningstarButton.exists||!a.morningstarButton.visible)fail('morningstar-hud-button-not-user-visible',a);
   if(!a.swarmButton.exists||!a.swarmButton.visible)fail('shared-swarm-hud-button-not-user-visible',a);
@@ -104,16 +109,16 @@ try{
     name:(document.getElementById('dlg-name')&&document.getElementById('dlg-name').textContent)||'',
     text:(document.getElementById('dlg-text')&&document.getElementById('dlg-text').textContent)||'',
     hidden:document.getElementById('dialogue')?document.getElementById('dialogue').classList.contains('hidden'):true,
-    inDialog:!!(window.S&&S.inDialog)
+    inDialog:!!window.eval(`(typeof S!=='undefined'&&S&&S.inDialog)`)
   }));
   log('swarm-dialog',dialog);
   if(dialog.hidden||!dialog.inDialog)fail('swarm-dialog-not-canonical',dialog);
   if(!/bounded/i.test(dialog.text)||!/nonlethal/i.test(dialog.text))fail('mike-swarm-dialog-copy-missing',dialog);
   await page.screenshot({path:path.join(OUT,'late-game-swarm-mobile.png')});
-  await page.evaluate(()=>{if(typeof window.closeDlg==='function')window.closeDlg();});
+  await page.evaluate(()=>{if(typeof window.closeDlg==='function')window.closeDlg();else try{window.eval(`if(typeof closeDlg==='function')closeDlg()`);}catch{}});
 
   const mike=await page.evaluate(()=>{
-    if(window.S){S.meta=S.meta||{};S.meta._char='mike';}localStorage.setItem('techops_char','mike');
+    window.eval(`if(typeof S!=='undefined'&&S){S.meta=S.meta||{};S.meta._char='mike';}`);localStorage.setItem('techops_char','mike');
     const r=window.TechOpsMORNINGSTARRuntime.issue('RECON',{range:100,duration:20,drones:2,intent:'mobile runtime regression - mike'});
     const log=window.TechOpsSwarmDoctrine.getLog({result:'EXECUTED'});return{result:r,last:log[log.length-1]||null,isFel:typeof window.isFel==='function'?window.isFel():null};
   });
@@ -122,7 +127,7 @@ try{
   if(!mike.last||mike.last.issuer!=='Mike')fail('mike-command-attribution-failed',mike);
 
   const felicia=await page.evaluate(()=>{
-    if(window.S){S.meta=S.meta||{};S.meta._char='felicia';}localStorage.setItem('techops_char','felicia');
+    window.eval(`if(typeof S!=='undefined'&&S){S.meta=S.meta||{};S.meta._char='felicia';}`);localStorage.setItem('techops_char','felicia');
     const r=window.TechOpsMORNINGSTARRuntime.issue('RECON',{range:120,duration:20,drones:2,intent:'mobile runtime regression - felicia'});
     const log=window.TechOpsSwarmDoctrine.getLog({result:'EXECUTED'});return{result:r,last:log[log.length-1]||null,isFel:typeof window.isFel==='function'?window.isFel():null};
   });
@@ -145,7 +150,7 @@ try{
   const reloaded=await snapshot(page);log('reloaded',reloaded);
   if(reloaded.campaignPhase!==3||reloaded.phase!==3)fail('phase3-not-persistent-after-reload',reloaded);
   if(reloaded.persistedSwarmLog<2)fail('swarm-log-lost-after-reload',reloaded);
-  if(!reloaded.hudVisible||!reloaded.swarmButton.exists||!reloaded.swarmButton.visible)fail('swarm-hud-not-user-visible-after-reload',reloaded);
+  if(!reloaded.stateAttached||!reloaded.hudVisible||!reloaded.swarmButton.exists||!reloaded.swarmButton.visible)fail('swarm-hud-not-user-visible-after-reload',reloaded);
 }catch(e){
   fail('bot-exception',{error:String(e&&e.stack||e)});
   await page.screenshot({path:path.join(OUT,'late-game-mobile-exception.png')}).catch(()=>{});
@@ -162,7 +167,7 @@ const md=[
   '',
   `Failures: ${failures.length}`,
   '',
-  ...(failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``):['- Canonical phase-3 persistence, genuinely visible shared swarm HUD, Mike/Felicia attribution, audit persistence, and Good Boys authority isolation verified.'])
+  ...(failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``):['- Canonical phase-3 persistence, genuinely visible shared swarm HUD, lexical Mike/Felicia attribution, audit persistence, and Good Boys authority isolation verified.'])
 ].join('\n');
 fs.writeFileSync(path.join(OUT,'late-game-mobile.md'),md+'\n');
 console.log(JSON.stringify(report,null,2));
