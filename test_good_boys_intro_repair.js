@@ -11,6 +11,7 @@ new Function(core);
 
 // Certification trigger: core-owned direct M2 handoff after ff11c91.
 // Certification trigger: runtime harness phase-race fix after 35c27a6.
+// Certification trigger: canonical mobile-pad ownership after c47a9fc.
 // Canonical opening: Clip 1 -> deterministic 3-system ship interaction -> Clip 2
 // -> one premise -> TAKE CONTROL -> canonical Standard CLOCK IN -> CIO Dispatch -> direct M2 gameplay.
 assert.ok(source.includes('VERSION=15'), "direct Good Boys opening must be v15");
