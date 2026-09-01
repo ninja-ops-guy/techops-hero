@@ -1,15 +1,16 @@
-/* TechOps Hero — production runtime bootstrap v18.
- * Stable production stack. v18 keeps unified Good Boys touch/render authority
- * and refreshes the complete production asset inventory for live browsers.
+/* TechOps Hero — production runtime bootstrap v19.
+ * Stable production stack. v19 adds campaign state validation before Good Boys
+ * production wrappers and preserves unified touch/render authority.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=18,BUILD="20260830-production-v18-unified-goodboys-ui",started=false,done=false;
+  var VERSION=19,BUILD="20260901-production-v19-canonical-goodboys-state",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
     "good_boys_campaign_assets.js",
+    "state_validator.js",
     "good_boys_legacy_hud_filter.js",
     "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",
