@@ -1,4 +1,4 @@
-name: Apply Good Boys canonical control ownership fix
+name: Apply Good Boys persistence certification fix
 
 on:
   push:
@@ -18,22 +18,24 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Apply canonical control ownership fix
-        run: python3 .github/apply_good_boys_control_ownership_fix.py
+      - name: Apply persistence and certification fix
+        run: python3 .github/apply_good_boys_persistence_cert_fix.py
 
       - name: Validate patched runtime and contracts
         run: |
-          node --check good_boys_progression_authority.js
-          node --check good_boys_campaign_director.js
+          node --check dogs.js
+          node --check good_boys_intro_repair.js
           node --check scripts/good_boys_progression_bot.mjs
+          node --check scripts/good_boys_background_bible_bot.mjs
           node test_good_boys_intro_repair.js
+          node test_mobile_production_tester.js
           node test_static_entrypoint_integrity.js
 
-      - name: Commit production ownership fix
+      - name: Commit persistence and certification fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add good_boys_progression_authority.js good_boys_campaign_director.js scripts/good_boys_progression_bot.mjs test_good_boys_intro_repair.js test_static_entrypoint_integrity.js
+          git add dogs.js good_boys_intro_repair.js scripts/good_boys_progression_bot.mjs scripts/good_boys_background_bible_bot.mjs test_good_boys_intro_repair.js test_mobile_production_tester.js
           git diff --cached --check
-          git commit -m "Fix Good Boys canonical mobile control ownership"
+          git commit -m "Persist Good Boys M2 and align certification ownership"
           git push origin HEAD:main
