@@ -17,12 +17,39 @@ const expected={
 };
 const findings=[];const fail=(mission,issue,data={})=>findings.push({mission,issue,...data});
 async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.click({timeout:500});return true;}catch{}}}return false;}
-async function dismiss(page,ms=6500){const until=Date.now()+ms;while(Date.now()<until){for(const sel of ['#good-dogs-cutscene-overlay .gd-film-skip','#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){const b=page.locator(sel);if(await b.count()){const visible=await b.first().isVisible().catch(()=>false);if(visible){await b.first().click({timeout:500}).catch(()=>{});await page.waitForTimeout(100);continue;}}}const txt=await page.locator('body').innerText().catch(()=>'');if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickText(page,/Standard/i);continue;}if(/BEGIN THE INCIDENT/i.test(txt)){await clickText(page,/BEGIN THE INCIDENT/i);continue;}break;}}
+async function domClick(page,selector){return page.locator(selector).evaluate(el=>{el.click();return true;}).catch(()=>false);}
+async function moveShipTo(page,id){
+  const result=await page.evaluate(async target=>{
+    const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
+    const interact=document.querySelector('#good-boys-ship-interlude [data-interact]');
+    if(!right||!interact)return {ok:false,error:'ship controls missing'};
+    const before=window.__goodBoysOpeningGameplay||{},xStart=Number(before.x||0),pointerId=71;
+    const fire=(el,type,buttons)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId,pointerType:'touch',isPrimary:true,buttons}));
+    fire(right,'pointerdown',1);let last=xStart;
+    try{const deadline=performance.now()+5000;while(performance.now()<deadline){await new Promise(r=>setTimeout(r,40));const s=window.__goodBoysOpeningGameplay||{};last=Number(s.x||last);if(s.near&&s.targetId===target)return{ok:true,xStart,xEnd:last,target};}return{ok:false,xStart,xEnd:last,target,error:'target proximity not reached'};}finally{fire(right,'pointerup',0);}
+  },id);
+  if(!result.ok)throw new Error('ship movement failed: '+JSON.stringify(result));
+  await page.waitForFunction(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');return !!(b&&!b.disabled);},null,{timeout:1200});
+  await page.evaluate(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');if(!b||b.disabled)throw new Error('INTERACT unavailable');b.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:72,pointerType:'touch',isPrimary:true,buttons:0}));});
+  await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id,{timeout:2200});
+}
+async function completeShip(page){if(!await page.locator('#good-boys-ship-interlude').count())return false;for(const id of ['nav','flight','dock']){const done=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(!done)await moveShipTo(page,id);}return true;}
+async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(Date.now()<until){
+  if(await page.locator('#good-boys-ship-interlude').count()){idle=0;await completeShip(page);await page.waitForTimeout(100);continue;}
+  const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){idle=0;await domClick(page,film);await page.waitForTimeout(100);continue;}
+  let handled=false;for(const sel of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){const b=page.locator(sel).first();if(!await b.count())continue;if(await b.isVisible().catch(()=>false)){await b.evaluate(el=>el.click()).catch(()=>{});handled=true;break;}}
+  if(handled){idle=0;await page.waitForTimeout(100);continue;}
+  const txt=await page.locator('body').innerText().catch(()=>'');if(/SELECT SHIFT DIFFICULTY/i.test(txt)){idle=0;await clickText(page,/Standard/i);continue;}if(/BEGIN THE INCIDENT/i.test(txt)){idle=0;await clickText(page,/BEGIN THE INCIDENT/i);continue;}
+  const generic=page.locator('#dialogue:not(.hidden) #dlg-options button').first();if(await generic.count()&&await generic.isVisible().catch(()=>false)){idle=0;await generic.evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(80);continue;}
+  idle++;if(idle>=3)return true;await page.waitForTimeout(100);
+}return false;}
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
-  await dismiss(page,8000);await page.waitForTimeout(650);
+  await dismiss(page,12000);await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:7000});await page.waitForTimeout(300);
+  const opening=await page.evaluate(()=>({repair:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,ship:window.TechOpsShipInteraction&&window.TechOpsShipInteraction.VERSION||0,state:window.__goodBoysOpeningGameplay||null}));
+  if(opening.repair<11||opening.ship<2||!opening.state||!opening.state.completed||opening.state.count!==3)fail(0,'canonical-opening-not-complete',opening);
   /* This bot samples the eight authored environments out of sequence. Pause the
      live progression timer so combat-clear state cannot legitimately advance a
      manually selected sample while its background contract is being observed. */
