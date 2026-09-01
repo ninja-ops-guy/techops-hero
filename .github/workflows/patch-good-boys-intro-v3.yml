@@ -1,0 +1,83 @@
+name: Patch Good Boys intro v3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/patch-good-boys-intro-v3.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch canonical title state handoff
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('good_boys_intro_repair.js')
+          s=p.read_text()
+          s=s.replace('/* TechOps Hero — Good Boys intro repair v2', '/* TechOps Hero — Good Boys intro repair v3')
+          s=s.replace('var VERSION=2;', 'var VERSION=3;')
+
+          anchor='''  function gameState(){try{return root.S||null;}catch(_){return null;}}\n'''
+          insert='''  function gameState(){try{return root.S||null;}catch(_){return null;}}\n  function ensureGameState(){\n    try{\n      var s=gameState();if(s)return s;\n      var make=null;\n      try{if(typeof newState==="function")make=newState;}catch(_){}\n      if(!make&&typeof root.newState==="function")make=root.newState;\n      if(!make){root.__goodBoysIntroStateInitError="newState missing";return null;}\n      root.S=make();\n      s=gameState();\n      if(!s)root.__goodBoysIntroStateInitError="lexical S bridge did not publish state";\n      return s;\n    }catch(e){root.__goodBoysIntroStateInitError=String(e&&e.stack||e);return null;}\n  }\n'''
+          if 'function ensureGameState()' not in s:
+              if anchor not in s: raise SystemExit('gameState anchor missing')
+              s=s.replace(anchor,insert,1)
+
+          old='''  function campaignAttached(){try{return !!(root.NM&&root.NM._v736);}catch(e){return false;}}\n  function invokeStart(){\n'''
+          new='''  function campaignAttached(){try{return !!(root.NM&&root.NM._v736);}catch(e){return false;}}\n  function primeRunShell(){\n    try{\n      var s=ensureGameState();if(!s)return false;\n      var title=root.document&&root.document.getElementById("title-screen");\n      var needsStart=!!(title&&!title.classList.contains("hidden"));\n      if(needsStart){\n        var run=null;try{if(typeof startRun==="function")run=startRun;}catch(_){}\n        if(!run&&typeof root.startRun==="function")run=root.startRun;\n        if(!run){root.__goodBoysIntroRunPrimeError="startRun missing";return false;}\n        run();\n      }\n      return !!gameState();\n    }catch(e){root.__goodBoysIntroRunPrimeError=String(e&&e.stack||e);return false;}\n  }\n  function invokeStart(){\n'''
+          if 'function primeRunShell()' not in s:
+              if old not in s: raise SystemExit('campaignAttached anchor missing')
+              s=s.replace(old,new,1)
+
+          old_show='''    root.document.body.appendChild(overlay);index=0;active=true;advancing=false;setDialog(true);\n'''
+          new_show='''    root.document.body.appendChild(overlay);index=0;active=true;advancing=false;ensureGameState();setDialog(true);\n'''
+          if old_show in s:s=s.replace(old_show,new_show,1)
+          elif 'active=true;advancing=false;ensureGameState();setDialog(true);' not in s: raise SystemExit('showOpening anchor missing')
+
+          old_launch='''      ensureBuiltinM1Skip();\n      if(!invokeStart()){launching=false;root.__goodBoysIntroRepairLaunch={ok:false,attempt:0,at:Date.now(),error:root.__goodBoysIntroRepairStartError||"v736 start missing"};return;}\n'''
+          new_launch='''      ensureBuiltinM1Skip();\n      if(!primeRunShell()){launching=false;root.__goodBoysIntroRepairLaunch={ok:false,attempt:0,at:Date.now(),error:root.__goodBoysIntroRunPrimeError||root.__goodBoysIntroStateInitError||"run shell prime failed"};return;}\n      if(!invokeStart()){launching=false;root.__goodBoysIntroRepairLaunch={ok:false,attempt:0,at:Date.now(),error:root.__goodBoysIntroRepairStartError||"v736 start missing"};return;}\n'''
+          if old_launch in s:s=s.replace(old_launch,new_launch,1)
+          elif 'if(!primeRunShell())' not in s: raise SystemExit('deferred launch anchor missing')
+          p.write_text(s)
+
+          t=Path('test_good_boys_intro_repair.js')
+          q=t.read_text()
+          anchor_test='''assert.ok(source.includes('get:function(){return active?true:'), "legacy writers must not clear the intro dialogue lock");\n'''
+          extra='''assert.ok(source.includes('function ensureGameState()'), "Good Boys title launch must create the canonical game state before cinematic locking");\nassert.ok(source.includes('root.S=make();'), "state initialization must write through the lexical S bridge");\nassert.ok(source.includes('active=true;advancing=false;ensureGameState();setDialog(true);'), "opening cinematic must initialize state before acquiring the gameplay block");\n'''
+          if extra not in q:
+              if anchor_test not in q: raise SystemExit('state test anchor missing')
+              q=q.replace(anchor_test,anchor_test+extra)
+          anchor_launch='''assert.ok(source.includes('(root.setTimeout||setTimeout)(function(){'), "final CTA must defer heavy campaign bootstrap until after the tap event returns");\n'''
+          extra2='''assert.ok(source.includes('function primeRunShell()'), "final handoff must prime the canonical run shell from title state");\nassert.ok(source.includes('if(typeof startRun==="function")run=startRun;'), "run-shell priming must use the canonical startRun path");\nconst prime = source.indexOf('if(!primeRunShell())', launch);\nconst invoke = source.indexOf('if(!invokeStart())', launch);\nassert.ok(prime > cleanup && invoke > prime, "deferred handoff must prime the run shell before v736.start");\n'''
+          if extra2 not in q:
+              if anchor_launch not in q: raise SystemExit('prime test anchor missing')
+              q=q.replace(anchor_launch,anchor_launch+extra2)
+          t.write_text(q)
+
+          i=Path('index.html')
+          h=i.read_text()
+          if 'good_boys_intro_repair.js?v=20260831-goodboys-intro-v2' in h:
+              h=h.replace('good_boys_intro_repair.js?v=20260831-goodboys-intro-v2','good_boys_intro_repair.js?v=20260831-goodboys-intro-v3',1)
+          elif 'good_boys_intro_repair.js?v=20260831-goodboys-intro-v3' not in h:
+              raise SystemExit('index cache key anchor missing')
+          i.write_text(h)
+          PY
+          node --check good_boys_intro_repair.js
+          node test_good_boys_intro_repair.js
+          node test_static_entrypoint_integrity.js
+      - name: Commit production fix
+        run: |
+          rm .github/workflows/patch-good-boys-intro-v3.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add good_boys_intro_repair.js test_good_boys_intro_repair.js index.html .github/workflows/patch-good-boys-intro-v3.yml
+          git commit -m 'Initialize Good Boys title state before campaign handoff'
+          git push origin HEAD:main
