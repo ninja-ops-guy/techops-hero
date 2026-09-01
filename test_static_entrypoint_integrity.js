@@ -30,7 +30,7 @@ assert.ok(order("good_boys_progression_authority.js")<order("good_dogs_cutscene_
 assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs cutscene player must load before the bridge");
 
 const introSource=fs.readFileSync(path.join(__dirname,"good_boys_intro_repair.js"),"utf8");new Function(introSource);
-assert.ok(introSource.includes('VERSION=13'),"direct intro must expose the v13 canonical mobile handoff contract");
+assert.ok(introSource.includes('VERSION=14'),"direct intro must expose the v14 async-safe mobile handoff contract");
 assert.ok(introSource.includes('dataset.gbdBypass="1"'),"direct intro must bypass obsolete director start interception");
 assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_01"'),"Good Boys must open with GD_CUT_01");
 assert.ok(introSource.includes('function showShipInterlude()'),"Good Boys opening must include the playable ship inspection beat");
@@ -57,8 +57,11 @@ assert.ok(introSource.includes('__goodBoysCanonicalClockIn'),"direct intro must 
 assert.ok(introSource.includes('state.transition(1,2,"clip2-ended"'),"opening must commit canonical M1->M2 only at the final handoff");
 assert.ok(introSource.includes('authority.startNext(current)'),"canonical progression authority must start the persisted mission");
 assert.ok(introSource.includes('function verify(attempt,epoch)'),"direct intro must verify campaign attachment against a single launch epoch");
-assert.ok(introSource.includes('attempt<3'),"direct intro attachment retry must remain bounded");
-assert.ok(introSource.includes('gbiRepairInstalled==="13"'),"direct intro listener installation must be idempotent");
+assert.ok(introSource.includes('attempt<240'),"direct intro attachment verification must wait for authored cinematic completion");
+assert.ok(!introSource.includes('if(attempt<3){startCampaign();'),"direct intro verifier must not relaunch the campaign during an async handoff");
+assert.ok(introSource.includes('gbiRepairInstalled==="14"'),"direct intro listener installation must be idempotent");
+assert.ok(introSource.includes('function liveM2()'),"direct intro must require live M2 runtime ownership");
+assert.ok(introSource.includes('suppressStaleBoard'),"direct intro must suppress stale BOARD THE SHIP interception");
 
 const directorSource=fs.readFileSync(path.join(__dirname,"good_boys_campaign_director.js"),"utf8");new Function(directorSource);
 assert.ok(directorSource.includes('VERSION=6'),"Good Boys director must be presentation-only v6");
@@ -67,10 +70,14 @@ assert.ok(!directorSource.includes('FOLLOW THE TRAIL'),"legacy FOLLOW THE TRAIL 
 assert.ok(!directorSource.includes('installStartCinematic'),"legacy director start capture must be removed");
 
 const progressionSource=fs.readFileSync(path.join(__dirname,"good_boys_progression_authority.js"),"utf8");new Function(progressionSource);
-assert.ok(progressionSource.includes('VERSION=9'),"Good Boys progression must expose v9 canonical state authority");
+assert.ok(progressionSource.includes('VERSION=10'),"Good Boys progression must expose v10 async-safe canonical state authority");
 assert.ok(progressionSource.includes('root.TechOpsGoodBoysCampaignState=CampaignState'),"canonical campaign state API must be globally available");
 assert.ok(progressionSource.includes('CampaignState.transition(from,next'),"mission advancement must go through canonical transition()");
 assert.ok(progressionSource.includes('root.v736.start({mission:next'),"v736 runtime start must receive explicit canonical mission options");
+assert.ok(progressionSource.includes('function finalizeHandoff(reason)'),"progression authority must wait for a fresh runtime before completing a handoff");
+assert.ok(progressionSource.includes('if(!c||c.ending)'),"stale ending runtime must not satisfy handoff ownership");
+assert.ok(progressionSource.includes('finalizeHandoff("tick-handoff")'),"runtime attachment must be finalized by the authority tick");
+assert.ok(!progressionSource.includes('throw new Error("Good Boys mission invariant failed after v736.start")'),"runtime start may not enforce a synchronous attachment invariant");
 assert.ok(!progressionSource.includes('_gbWaldoTrailComplete'),"retired Waldo trail completion flag must not drive progression");
 
 const accessSource=fs.readFileSync(path.join(__dirname,"good_boys_access_core_authority.js"),"utf8");new Function(accessSource);
