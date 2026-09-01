@@ -16,18 +16,40 @@ async function waitForLateGame(page){
   },null,{timeout:12000});
 }
 
+async function activateBaseRun(page,preferContinue=false){
+  const activated=await page.evaluate(prefer=>{
+    const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
+    const option=re=>[...(document.querySelectorAll('#dlg-options button')||[])].find(b=>re.test(b.textContent||''));
+    let route='';
+    const cont=document.getElementById('btn-continue');
+    if(prefer&&visible(cont)){cont.click();route='continue';}
+    else{
+      const start=document.getElementById('btn-start');if(!start)throw new Error('CLOCK IN unavailable');start.click();route='clock-in';
+      const standard=option(/Standard/i);if(!standard)throw new Error('Standard difficulty unavailable');standard.click();
+    }
+    const clockIn=option(/Clock in/i);if(clockIn)clockIn.click();
+    if(window.TechOpsMORNINGSTARRuntime&&typeof window.TechOpsMORNINGSTARRuntime.install==='function')window.TechOpsMORNINGSTARRuntime.install();
+    return {route,hud:visible(document.getElementById('hud')),dialog:visible(document.getElementById('dialogue')),hasS:!!window.S};
+  },preferContinue);
+  log('base-run-activation',activated);
+  await page.waitForFunction(()=>{const h=document.getElementById('hud');return !!(window.S&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:3000});
+  return activated;
+}
+
 async function snapshot(page){
   return page.evaluate(()=>{
-    const button=id=>{const b=document.getElementById(id);return b?{exists:true,display:b.style.display||'',computed:getComputedStyle(b).display,disabled:!!b.disabled}: {exists:false};};
+    const button=id=>{const b=document.getElementById(id);if(!b)return{exists:false};const cs=getComputedStyle(b);return{exists:true,display:b.style.display||'',computed:cs.display,visibility:cs.visibility,visible:!!(b.getClientRects().length&&cs.display!=='none'&&cs.visibility!=='hidden'),disabled:!!b.disabled};};
     let campaign=null,swarm=null,acceptance=null,gb=null;
     try{campaign=window.TechOpsCampaign&&window.TechOpsCampaign.load?window.TechOpsCampaign.load(localStorage):null;}catch(e){campaign={error:String(e&&e.stack||e)};}
     try{swarm=window.TechOpsSwarmDoctrine&&window.TechOpsSwarmDoctrine.snapshot?window.TechOpsSwarmDoctrine.snapshot():null;}catch(e){swarm={error:String(e&&e.stack||e)};}
     try{acceptance=window.TechOpsMORNINGSTARRuntime&&window.TechOpsMORNINGSTARRuntime.acceptance?window.TechOpsMORNINGSTARRuntime.acceptance():null;}catch(e){acceptance={error:String(e&&e.stack||e)};}
     try{gb=window.S&&S.meta&&S.meta._v736?JSON.parse(JSON.stringify(S.meta._v736)):null;}catch(e){gb={error:String(e&&e.stack||e)};}
+    const hud=document.getElementById('hud'),hcs=hud?getComputedStyle(hud):null;
     return {
       runtimeVersion:window.TechOpsMORNINGSTARRuntime&&window.TechOpsMORNINGSTARRuntime.VERSION||0,
       bootstrap:window.TechOpsLateGameBootstrap&&window.TechOpsLateGameBootstrap.acceptance?window.TechOpsLateGameBootstrap.acceptance():null,
       phase:window.TechOpsMORNINGSTARBuild&&window.TechOpsMORNINGSTARBuild.getCurrentPhase?window.TechOpsMORNINGSTARBuild.getCurrentPhase():-1,
+      hudVisible:!!(hud&&hud.getClientRects().length&&!hud.classList.contains('hidden')&&hcs&&hcs.display!=='none'),
       morningstarButton:button('btn-morningstar'),
       swarmButton:button('btn-swarm-command'),
       campaignPhase:campaign&&campaign.lateGame&&campaign.lateGame.morningstar&&Number(campaign.lateGame.morningstar.phase),
@@ -48,6 +70,7 @@ const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});
   await waitForLateGame(page);
+  await activateBaseRun(page,false);
   const seeded=await page.evaluate(()=>{
     const c=window.TechOpsCampaign,s=c.load(localStorage);
     s.story=s.story||{schemaVersion:1,completedActs:[],facts:{}};
@@ -63,15 +86,16 @@ try{
     return {saveKey:c.SAVE_KEY,phase:window.TechOpsMORNINGSTARBuild.getCurrentPhase(),goodBoys:window.S&&S.meta&&S.meta._v736?JSON.stringify(S.meta._v736):null};
   });
   log('seeded',seeded);
-  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.style.display!=='none');},null,{timeout:2500});
+  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:2500});
   let a=await snapshot(page);log('phase3-ui',a);
   if(a.runtimeVersion<5)fail('runtime-v5-missing',a);
   if(!(a.bootstrap&&a.bootstrap.ready))fail('late-game-bootstrap-not-ready',a);
   if(a.phase!==3||a.campaignPhase!==3)fail('canonical-phase3-seed-failed',a);
-  if(!a.morningstarButton.exists)fail('morningstar-hud-button-missing',a);
-  if(!a.swarmButton.exists||a.swarmButton.display==='none'||a.swarmButton.computed==='none')fail('shared-swarm-hud-button-hidden',a);
+  if(!a.hudVisible)fail('base-hud-not-visible',a);
+  if(!a.morningstarButton.exists||!a.morningstarButton.visible)fail('morningstar-hud-button-not-user-visible',a);
+  if(!a.swarmButton.exists||!a.swarmButton.visible)fail('shared-swarm-hud-button-not-user-visible',a);
 
-  await page.locator('#btn-swarm-command').click({timeout:2000,force:true});
+  await page.locator('#btn-swarm-command').click({timeout:2000});
   await page.waitForFunction(()=>{
     const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
     return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
@@ -115,12 +139,13 @@ try{
 
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
   await waitForLateGame(page);
+  await activateBaseRun(page,true);
   await page.waitForFunction(()=>window.TechOpsMORNINGSTARBuild&&window.TechOpsMORNINGSTARBuild.getCurrentPhase()===3,null,{timeout:3000});
-  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.style.display!=='none');},null,{timeout:3000});
+  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:3000});
   const reloaded=await snapshot(page);log('reloaded',reloaded);
   if(reloaded.campaignPhase!==3||reloaded.phase!==3)fail('phase3-not-persistent-after-reload',reloaded);
   if(reloaded.persistedSwarmLog<2)fail('swarm-log-lost-after-reload',reloaded);
-  if(!reloaded.swarmButton.exists||reloaded.swarmButton.display==='none'||reloaded.swarmButton.computed==='none')fail('swarm-hud-not-restored-after-reload',reloaded);
+  if(!reloaded.hudVisible||!reloaded.swarmButton.exists||!reloaded.swarmButton.visible)fail('swarm-hud-not-user-visible-after-reload',reloaded);
 }catch(e){
   fail('bot-exception',{error:String(e&&e.stack||e)});
   await page.screenshot({path:path.join(OUT,'late-game-mobile-exception.png')}).catch(()=>{});
@@ -137,7 +162,7 @@ const md=[
   '',
   `Failures: ${failures.length}`,
   '',
-  ...(failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``):['- Canonical phase-3 persistence, shared swarm HUD, Mike/Felicia attribution, audit persistence, and Good Boys authority isolation verified.'])
+  ...(failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``):['- Canonical phase-3 persistence, genuinely visible shared swarm HUD, Mike/Felicia attribution, audit persistence, and Good Boys authority isolation verified.'])
 ].join('\n');
 fs.writeFileSync(path.join(OUT,'late-game-mobile.md'),md+'\n');
 console.log(JSON.stringify(report,null,2));
