@@ -1,12 +1,12 @@
-/* TechOps Hero — production runtime bootstrap v21.
- * Stable production stack. v21 keeps the Good Boys compositor/state authority
- * intact while loading Story Bible completion modules under one main-campaign
- * maintenance owner.
+/* TechOps Hero — production runtime bootstrap v22.
+ * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
+ * completion is loaded by campaign_late_game_bootstrap.js after canonical
+ * campaign and native Act II dependencies exist, eliminating duplicate loaders.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=21,BUILD="20260901-production-v21-story-bible-runtime",started=false,done=false;
+  var VERSION=22,BUILD="20260901-production-v22-campaign-loader-separation",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -25,13 +25,7 @@
     "day_cinematic_mobile_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
-    "production_presentation_guard.js",
-    "campaign_bible_gap_pass.js",
-    "felicia_first_office.js",
-    "morningstar_build.js",
-    "swarm_doctrine.js",
-    "chapters_vii_x.js",
-    "campaign_completion_runtime.js"
+    "production_presentation_guard.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
@@ -56,8 +50,7 @@
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
-    try{if(root.TechOpsCampaignCompletionRuntime)root.TechOpsCampaignCompletionRuntime.tick();}catch(e){root.__productionCampaignCompletionError=String(e&&e.stack||e);}
-    done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;
+    done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
   }
   root.TechOpsProductionBootstrap={VERSION:VERSION,BUILD:BUILD,FILES:FILES,start:start,ready:function(){return done;}};
   start();
