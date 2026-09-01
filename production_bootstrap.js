@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v22.
+/* TechOps Hero — production runtime bootstrap v23.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=22,BUILD="20260901-production-v22-campaign-loader-separation",started=false,done=false;
+  var VERSION=23,BUILD="20260901-production-v23-ship-flight",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -22,6 +22,7 @@
     "good_boys_gameplay_loop.js",
     "good_boys_mobile_controls_layout.js",
     "good_boys_mobile_launch_guard.js",
+    "good_boys_ship_flight.js",
     "day_cinematic_mobile_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
@@ -47,6 +48,7 @@
     try{if(root.TechOpsGoodBoysVisualPolish)root.TechOpsGoodBoysVisualPolish.install();}catch(e){root.__productionVisualPolishInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileCinematicPolish)root.TechOpsGoodBoysMobileCinematicPolish.apply();}catch(e){root.__productionMobileCinePolishError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileControlsLayout)root.TechOpsGoodBoysMobileControlsLayout.apply();}catch(e){root.__productionGoodBoysControlLayoutError=String(e&&e.stack||e);}
+    try{if(root.TechOpsGoodBoysShipFlight)root.TechOpsGoodBoysShipFlight.install();}catch(e){root.__productionGoodBoysShipFlightError=String(e&&e.stack||e);}
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
