@@ -72,6 +72,19 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
+      - name: Run MORNINGSTAR + swarm iPhone regression
+        id: late_game
+        continue-on-error: true
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
+        run: |
+          set +e
+          timeout 90s node scripts/late_game_mobile_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Run Night Crawler + Good Boys REPL bot
         id: bot
         continue-on-error: true
@@ -120,6 +133,12 @@ jobs:
             printf '# Good Boys iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
           printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f runtime-bot-artifacts/late-game-mobile.md ]; then
+            cat runtime-bot-artifacts/late-game-mobile.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '# MORNINGSTAR + Swarm iPhone Runtime\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [ -f runtime-bot-artifacts/report.md ]; then
             cat runtime-bot-artifacts/report.md >> "$GITHUB_STEP_SUMMARY"
           else
@@ -148,7 +167,7 @@ jobs:
           retention-days: 14
 
       - name: Report failure to GitHub issue
-        if: always() && github.event_name != 'pull_request' && (steps.intro.outputs.exit_code != '0' || steps.bot.outputs.exit_code != '0' || steps.progression.outputs.exit_code != '0' || steps.backgrounds.outputs.exit_code != '0')
+        if: always() && github.event_name != 'pull_request' && (steps.intro.outputs.exit_code != '0' || steps.late_game.outputs.exit_code != '0' || steps.bot.outputs.exit_code != '0' || steps.progression.outputs.exit_code != '0' || steps.backgrounds.outputs.exit_code != '0')
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
@@ -162,6 +181,8 @@ jobs:
             echo "Run: $RUN_URL"
             echo
             [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ] && cat runtime-bot-artifacts/goodboys-intro-mobile.md || echo "Good Boys iPhone intro report missing."
+            echo
+            [ -f runtime-bot-artifacts/late-game-mobile.md ] && cat runtime-bot-artifacts/late-game-mobile.md || echo "MORNINGSTAR + swarm mobile report missing."
             echo
             [ -f runtime-bot-artifacts/report.md ] && cat runtime-bot-artifacts/report.md || echo "Runtime mode report missing."
             echo
@@ -179,8 +200,9 @@ jobs:
         if: always()
         run: |
           test "${{ steps.intro.outputs.exit_code }}" = "0"
+          test "${{ steps.late_game.outputs.exit_code }}" = "0"
           test "${{ steps.bot.outputs.exit_code }}" = "0"
           test "${{ steps.progression.outputs.exit_code }}" = "0"
           test "${{ steps.backgrounds.outputs.exit_code }}" = "0"
 
-# validation touch: good boys final CTA v4
+# validation touch: story bible gaps 4-7 runtime v1
