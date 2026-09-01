@@ -1,19 +1,20 @@
-/* TechOps Hero — Good Boys direct cinematic intro v14
+/* TechOps Hero — Good Boys direct cinematic intro v15
  * Canon opening: clip 01 -> three-system ship inspection -> clip 02 -> one premise -> M2.
  * Opening phases are ephemeral; numeric campaign mission state changes only through
  * TechOpsGoodBoysCampaignState after the authored opening has completed.
  * Ship movement is time-based and pointer-captured so mobile/WebKit frame rate and
  * minor finger drift cannot change traversal speed or cancel a valid hold.
  * TAKE CONTROL completes the canonical CLOCK IN -> Standard -> CIO Dispatch path before M2.
+ * The authored opening owns the briefing, so its M2 handoff requests directGameplay.
  * M2 ownership is valid only after a fresh NM._v736 runtime has mounted.
  */
 (function(root){
   "use strict";
   if(!root)return;
   var PRIOR=root.TechOpsGoodBoysIntroRepair;
-  if(PRIOR&&Number(PRIOR.VERSION||0)>=14)return;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=15)return;
   try{if(PRIOR&&PRIOR.timer&&root.clearInterval)root.clearInterval(PRIOR.timer);if(PRIOR&&PRIOR.observer)PRIOR.observer.disconnect();}catch(_){}
-  var VERSION=14,launching=false,premise=null,interlude=null,installedButton=null,launchEpoch=0,observer=null;
+  var VERSION=15,launching=false,premise=null,interlude=null,installedButton=null,launchEpoch=0,observer=null;
   function button(){return root.document&&root.document.getElementById("btn-v736");}
   function bypass(){var b=button();if(!b)return false;b.dataset.gbdBypass="1";b.dataset.gbiRepair="1";return true;}
   function attached(){try{var c=root.NM&&root.NM._v736;return !!(c&&!c.ending);}catch(_){return false;}}
@@ -70,8 +71,8 @@
       var current=Number(state.mission())||1;
       if(current===1){state.transition(1,2,"clip2-ended",{k:false,waldo:false});current=2;}
       if(current<2)throw new Error("Good Boys opening handoff did not reach M2");
-      phase("campaign-handoff",{mission:current});
-      return authority.startNext(current);
+      phase("campaign-handoff",{mission:current,directGameplay:current===2});
+      return authority.startNext(current,{directGameplay:current===2});
     }catch(e){root.__goodBoysDirectIntroStartError=String(e&&e.stack||e);return false;}
   }
   function verify(attempt,epoch){
@@ -80,7 +81,7 @@
     try{if(authority&&typeof authority.finalizeHandoff==="function")authority.finalizeHandoff("intro-verify");}catch(_){}
     if(attached()){
       var c=root.NM&&root.NM._v736,ok=Number(c&&c.m||0)===expected;
-      if(ok){launching=false;guardOwnership();phase("gameplay",{mission:expected});root.__goodBoysDirectIntro={ok:true,at:Date.now(),attempt:attempt,epoch:epoch,mission:expected};return;}
+      if(ok){launching=false;guardOwnership();phase("gameplay",{mission:expected});root.__goodBoysDirectIntro={ok:true,at:Date.now(),attempt:attempt,epoch:epoch,mission:expected,directGameplay:expected===2};return;}
     }
     if(attempt<240){root.__goodBoysDirectIntro={ok:null,status:"awaiting-runtime",at:Date.now(),attempt:attempt,epoch:epoch,mission:expected};root.setTimeout(function(){verify(attempt+1,epoch);},250);return;}
     launching=false;root.__goodBoysDirectIntro={ok:false,at:Date.now(),attempt:attempt,epoch:epoch,error:root.__goodBoysDirectIntroStartError||root.__goodBoysDirectIntroClockInError||root.__goodBoysHandoffError||root.__goodBoysProgressionError||"campaign did not attach"};
@@ -127,7 +128,7 @@
     phase("clip2");var second=await root.GoodDogsCutscenes.play("GD_CUT_02",{force:true,muted:true});root.__goodBoysOpeningClipResult=second||null;return second||gameplay||first||null;
   }
   function launch(e){if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}if(launching||attached())return false;var epoch=++launchEpoch;launching=true;bypass();dismissLegacy();var b=button(),old=b&&b.textContent;if(b){b.disabled=true;b.textContent="OPENING TRANSMISSION…";}phase("opening");root.__goodBoysDirectIntro={ok:null,status:"opening",at:Date.now(),epoch:epoch};Promise.resolve().then(playOpening).catch(function(err){root.__goodBoysDirectIntroMediaError=String(err&&err.stack||err);}).then(function(){if(epoch!==launchEpoch)return;dismissLegacy();return showPremise();}).catch(function(err2){root.__goodBoysPremiseError=String(err2&&err2.stack||err2);}).then(function(){if(epoch!==launchEpoch)return;if(b){b.disabled=false;b.textContent=old||"🐕 GOOD BOYS — 118 / 1984 BREAKOUT";}root.__goodBoysDirectIntro={ok:null,status:"handoff",at:Date.now(),epoch:epoch};root.setTimeout(function(){if(epoch!==launchEpoch)return;dismissLegacy();startCampaign();root.setTimeout(function(){verify(1,epoch);},250);},0);});return true;}
-  function install(){var b=button();if(!b)return false;bypass();if(installedButton===b&&b.dataset.gbiRepairInstalled==="14")return true;if(installedButton)try{installedButton.removeEventListener("click",launch,true);}catch(_){}b.addEventListener("click",launch,true);b.dataset.gbiRepairInstalled="14";installedButton=b;return true;}
+  function install(){var b=button();if(!b)return false;bypass();if(installedButton===b&&b.dataset.gbiRepairInstalled==="15")return true;if(installedButton)try{installedButton.removeEventListener("click",launch,true);}catch(_){}b.addEventListener("click",launch,true);b.dataset.gbiRepairInstalled="15";installedButton=b;return true;}
   function installObserver(){try{if(observer||!root.MutationObserver||!root.document)return;observer=new root.MutationObserver(function(){install();guardOwnership();});observer.observe(root.document.documentElement,{subtree:true,childList:true});}catch(e){root.__goodBoysIntroObserverError=String(e&&e.stack||e);}}
   if(root.document){root.document.addEventListener("pointerdown",suppressStaleBoard,true);root.document.addEventListener("click",suppressStaleBoard,true);root.document.addEventListener("pointerdown",rescueLegacyFollow,true);root.document.addEventListener("click",rescueLegacyFollow,true);}var timer=root.setInterval(function(){install();guardOwnership();},80);installObserver();install();guardOwnership();
   root.TechOpsGoodBoysIntroRepair={VERSION:VERSION,launch:launch,install:install,playOpening:playOpening,showShipInterlude:showShipInterlude,startCampaign:startCampaign,guardOwnership:guardOwnership,liveM2:liveM2,suppressStaleBoard:suppressStaleBoard,timer:timer,observer:observer,get launching(){return launching;},get premise(){return premise;},get interlude(){return interlude;}};
