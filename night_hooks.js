@@ -727,42 +727,54 @@ function drawNM() {
   }
   if (NM.block) { ctx.strokeStyle = "#7ec8ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cxp, cyp, 24, -1.2, 1.2); ctx.stroke(); }
   // ---------- sheet-style HUD ----------
+  const compactHud = W < 620;
+  const leftX = compactHud ? 6 : 10, leftY = compactHud ? 6 : 10;
+  const leftW = compactHud ? Math.max(142, Math.floor(W * .49) - 9) : 250, leftH = compactHud ? 66 : 76;
+  const rightX = compactHud ? leftX + leftW + 6 : W - 262;
+  const rightW = compactHud ? Math.max(142, W - rightX - 6) : 252, rightH = compactHud ? 66 : 62;
+  const hpX = leftX + 8, hpY = leftY + 8, hpW = compactHud ? Math.max(72, leftW - 48) : 160;
   // left: HP + FOCUS pips + cash
-  ctx.fillStyle = "#0009"; ctx.fillRect(10, 10, 250, 76);
-  ctx.fillStyle = "#333"; ctx.fillRect(18, 18, 160, 10);
-  ctx.fillStyle = NM.hp > 35 ? "#7ee787" : "#ff6b81"; ctx.fillRect(18, 18, 160 * Math.max(0, NM.hp) / 100, 10);
-  ctx.strokeStyle = "#556"; ctx.strokeRect(18, 18, 160, 10);
-  ctx.fillStyle = "#9fb7d9"; ctx.font = "11px monospace"; ctx.textAlign = "left";
-  ctx.fillText("HP", 184, 27);
-  ctx.fillText("FOCUS", 18, 46);
+  ctx.fillStyle = "#0009"; ctx.fillRect(leftX, leftY, leftW, leftH);
+  ctx.fillStyle = "#333"; ctx.fillRect(hpX, hpY, hpW, 10);
+  ctx.fillStyle = NM.hp > 35 ? "#7ee787" : "#ff6b81"; ctx.fillRect(hpX, hpY, hpW * Math.max(0, NM.hp) / 100, 10);
+  ctx.strokeStyle = "#556"; ctx.strokeRect(hpX, hpY, hpW, 10);
+  ctx.fillStyle = "#9fb7d9"; ctx.font = (compactHud ? "9px" : "11px") + " monospace"; ctx.textAlign = "left";
+  ctx.fillText("HP", leftX + leftW - (compactHud ? 22 : 76), hpY + 9);
+  ctx.fillText("FOCUS", hpX, leftY + 36);
   for (let i = 0; i < 6; i++) {
     ctx.fillStyle = i < Math.min(NM.combo, 6) ? (NM.perfectT > now ? "#ffd24a" : "#7ec8ff") : "#2a3350";
-    ctx.fillRect(66 + i * 14, 38, 10, 8);
+    ctx.fillRect(leftX + (compactHud ? 50 + i * 12 : 56 + i * 14), leftY + 28, compactHud ? 8 : 10, 8);
   }
   ctx.fillStyle = "#7dd87d";
-  ctx.fillText(`$${NM.cash}`, 18, 62);
+  ctx.fillText(`$${NM.cash}`, hpX, leftY + 54);
   if (NM.combo > 1) {
-    ctx.fillStyle = NM.perfectT > now ? "#ffd24a" : "#9fb7d9"; ctx.font = "bold 15px monospace";
-    ctx.fillText(`COMBO ×${NM.combo}${NM.perfectT > now ? " PERFECT" : ""}`, 18, 80);
+    ctx.fillStyle = NM.perfectT > now ? "#ffd24a" : "#9fb7d9"; ctx.font = compactHud ? "bold 9px monospace" : "bold 15px monospace";
+    ctx.fillText(compactHud ? `×${NM.combo}` : `COMBO ×${NM.combo}${NM.perfectT > now ? " PERFECT" : ""}`, compactHud ? leftX + leftW - 30 : 18, compactHud ? leftY + 54 : 80);
   }
   // right: district / time / danger
-  ctx.fillStyle = "#0009"; ctx.fillRect(W - 262, 10, 252, 62);
-  ctx.fillStyle = D.accent; ctx.font = "bold 13px monospace"; ctx.textAlign = "right";
-  ctx.fillText(`${D.name} · ST ${NM.street}/${D.streets}`, W - 20, 30);
-  ctx.fillStyle = "#9fb7d9"; ctx.font = "11px monospace";
-  ctx.fillText(fmtClock(S.clock), W - 20, 48);
-  ctx.fillText("DANGER", W - 160, 48);
+  ctx.fillStyle = "#0009"; ctx.fillRect(rightX, leftY, rightW, rightH);
+  ctx.fillStyle = D.accent; ctx.font = "bold " + (compactHud ? 10 : 13) + "px monospace"; ctx.textAlign = "right";
+  ctx.fillText(`${D.name} · ST ${NM.street}/${D.streets}`, rightX + rightW - 8, leftY + 20);
+  ctx.fillStyle = "#9fb7d9"; ctx.font = (compactHud ? "9px" : "11px") + " monospace";
+  ctx.fillText(fmtClock(S.clock), rightX + rightW - 8, leftY + 38);
+  ctx.textAlign = "left"; ctx.fillText("DANGER", rightX + 6, leftY + 38);
   const dp = Math.min(1, D.danger / 2);
-  ctx.fillStyle = "#333"; ctx.fillRect(W - 100, 40, 80, 8);
+  const dangerW = compactHud ? Math.min(60, rightW - 70) : 80, dangerX = rightX + rightW - dangerW - 8;
+  ctx.fillStyle = "#333"; ctx.fillRect(dangerX, leftY + 30, dangerW, 8);
   ctx.fillStyle = dp > .7 ? "#ff6b81" : dp > .4 ? "#ffb347" : "#7ee787";
-  ctx.fillRect(W - 100, 40, 80 * dp, 8);
+  ctx.fillRect(dangerX, leftY + 30, dangerW * dp, 8);
   ctx.fillStyle = "#9fb7d9";
-  ctx.fillText(`💀 ${NM.kills}`, W - 20, 64);
+  ctx.textAlign = "right"; ctx.fillText(`💀 ${NM.kills}`, rightX + rightW - 8, leftY + 56);
   // center message
   if (NM.msgT > now) {
-    ctx.fillStyle = "#000a"; ctx.fillRect(W / 2 - 260, 96, 520, 34);
-    ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center"; ctx.font = "13px monospace";
-    ctx.fillText(NM.msg, W / 2, 118);
+    const msgW = Math.min(520, W - 16), msgFont = compactHud ? 10 : 13, words = String(NM.msg || "").split(/\s+/), lines = [];
+    ctx.font = msgFont + "px monospace";
+    for (const word of words) { const last = lines.length - 1, trial = last < 0 ? word : lines[last] + " " + word; if (last < 0 || ctx.measureText(trial).width > msgW - 18) lines.push(word); else lines[last] = trial; }
+    if (lines.length > 3) { lines.length = 3; lines[2] = lines[2].replace(/[.…]*$/, "…"); }
+    const msgH = 12 + lines.length * (msgFont + 4);
+    ctx.fillStyle = "#000a"; ctx.fillRect((W - msgW) / 2, 96, msgW, msgH);
+    ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
+    lines.forEach((line, i) => ctx.fillText(line, W / 2, 106 + (i + 1) * (msgFont + 3)));
   }
   ctx.textAlign = "center";
 }

@@ -1,12 +1,13 @@
-/* TechOps Hero — Good Boys legacy HUD filter v1.
+/* TechOps Hero — Good Boys legacy HUD filter v2.
  * Loaded before the production compositor captures the parser Night draw chain.
  * Preserves all v7.36 world/combat rendering while suppressing only its old
- * duplicate duo HUD once the final single-HUD authority is active.
+ * duplicate duo HUD and the shared Night Crawler status bars once the final
+ * single-HUD authority is active. The center objective message is preserved.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysLegacyHudFilter)return;
-  var VERSION=1,base=null,installed=false,suppressed=0;
+  var VERSION=2,base=null,installed=false,suppressed=0;
   function active(){try{return !!(root.__goodBoysHudLiteInstalled&&root.NM&&root.NM._v736&&root.ctx);}catch(e){return false;}}
   function near(a,b,t){return Math.abs(Number(a)-Number(b))<=(t==null?.75:t);}
   function install(){
@@ -21,6 +22,16 @@
         var W=x.canvas&&x.canvas.width||0;
         var oFillRect=x.fillRect,oStrokeRect=x.strokeRect,oFillText=x.fillText,oDrawImage=x.drawImage;
         function blockRect(a,b,w,h){
+          /* responsive shared HUD cards used below 620px */
+          if(b<=10&&h>=60&&w>=130)return true;
+          if(b>=12&&b<=46&&h<=11&&w<=170)return true;
+          /* shared Night Crawler left status card / HP / focus pips */
+          if(near(a,10)&&near(b,10)&&near(w,250)&&near(h,76))return true;
+          if(near(a,18)&&near(b,18)&&w<=161&&near(h,10))return true;
+          if(a>=65&&a<=147&&near(b,38)&&w<=11&&h<=9)return true;
+          /* shared Night Crawler district/danger card */
+          if(W&&near(a,W-262)&&near(b,10)&&near(w,252)&&near(h,62))return true;
+          if(W&&near(a,W-100)&&near(b,40)&&w<=81&&h<=9)return true;
           /* v7.36 duo card */
           if(near(a,10)&&near(b,92)&&near(w,250)&&near(h,66))return true;
           /* v7.36 duo HP rows */
@@ -33,6 +44,8 @@
         }
         function blockText(text,a,b){
           var s=String(text||"");
+          if(b<90&&(s==="HP"||s==="FOCUS"||s==="DANGER"||/^\$/.test(s)||/^COMBO\s×/.test(s)||/^×\d+/.test(s)))return true;
+          if(W&&a>=W*.48&&b<90)return true;
           if(a<=220&&b>=98&&b<=136&&(/^(?:▶\s*)?(?:KATRIN|MANCHEZ)$/.test(s)||/^DOWN\s/.test(s)||s==="OUT"))return true;
           if(a<=260&&b>=158&&b<=170&&(/^SYNC(?:\s|$)/.test(s)||/^K\s(?:READY|⏳)/.test(s)))return true;
           if(W&&a>=W-30&&b>=86&&b<=98&&/^118\/1984\s·\sM/.test(s))return true;

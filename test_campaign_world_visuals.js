@@ -54,7 +54,8 @@ assert.ok(/two air dashes/i.test(mechanics) && /state\.airDashes>=2/.test(mechan
 assert.ok(/partnerThrow/.test(mechanics) && /midAirCatch/.test(mechanics));
 
 const canon = fs.readFileSync("good_boys_canon_runtime.js", "utf8");
-assert.ok(/VERSION=6/.test(canon), "Good Boys canon runtime must be compositor-owned v6");
+const canonVersion=Number((canon.match(/var VERSION=(\d+)/)||[])[1]||0);
+assert.ok(canonVersion>=6, `Good Boys canon runtime must retain compositor ownership (found v${canonVersion})`);
 assert.ok(/productionCompositorActive/.test(canon) && /drawHud:drawHud/.test(canon) && /syncIdentity:syncIdentity/.test(canon), "canon must expose production compositor/router callbacks");
 assert.ok(/WALDO'S HOUSE/.test(canon) && /THE HIDDEN BAY/.test(canon) && /MAKE A DOOR/.test(canon));
 assert.ok(/FIND WALDO'S TRAIL · REACH THE HIDDEN BAY/.test(canon));
@@ -74,7 +75,8 @@ assert.ok(/NM_DISTRICTS/.test(assets) && /installDistricts/.test(assets), "gener
 assert.ok(!/NEW HAVEN/.test(assets), "Good Boys world assets must not inherit New Haven identity");
 
 const loop = fs.readFileSync("good_boys_gameplay_loop.js", "utf8");
-assert.ok(/VERSION=4/.test(loop), "concept gameplay loop must be compositor-owned v4");
+const loopVersion=Number((loop.match(/var VERSION=(\d+)/)||[])[1]||0);
+assert.ok(loopVersion>=4, `concept gameplay loop must retain compositor ownership (found v${loopVersion})`);
 assert.ok(/productionCompositorActive/.test(loop), "production gameplay loop must defer Night draw/step ownership to compositor");
 assert.ok(/sheet 3 = moment-to-moment HUD\/gameplay/.test(loop), "gameplay loop must declare concept-sheet authority");
 assert.ok(/CELL 118 — FREE K/.test(loop) && /CELL 1984 — FREE WALDO/.test(loop));

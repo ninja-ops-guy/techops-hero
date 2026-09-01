@@ -1,15 +1,15 @@
-/* Good Boys canon runtime — production authority v6.
+/* Good Boys canon runtime — production authority v7.
  * World law: shared Night engine, independent Good Boys campaign world.
  * Route: Waldo's house -> hidden ship -> prison impact -> 118 -> 1984 -> escape -> Earth.
  *
- * v6: the production compositor owns Night rendering. Canon exports drawHud and
+ * v7: the production compositor owns Night rendering. Canon exports drawHud and
  * syncIdentity as callbacks and never wraps drawNM when production authority is
  * present. Legacy standalone entrypoints retain the historical wrapper path.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysCanon)return;
-  var VERSION=6,chain=false,baseLoad=null,basePlay=null,baseDraw=null,baseToast=null;
+  var VERSION=7,chain=false,baseLoad=null,basePlay=null,baseDraw=null,baseToast=null;
   var SEQ={
     1:{name:"WALDO'S HOUSE",objective:"FIND WALDO'S TRAIL · REACH THE HIDDEN BAY",zone:"WALDO'S HOUSE — EARTH",bg:"goodboys_home",district:"goodboys_home",light:"home_gold"},
     2:{name:"THE HIDDEN BAY",objective:"POWER THE SECRET SHIP · CLEAR THE HANGAR · LAUNCH",zone:"WALDO'S SECRET HANGAR",bg:"goodboys_hangar",district:"goodboys_hangar",light:"launch_blue"},
@@ -39,10 +39,10 @@
     try{if(!root.document)return false;var ts=root.document.getElementById("title-screen");if(!ts)return false;var all=ts.querySelectorAll("button,a,div,span,p");for(var i=0;i<all.length;i++){var el=all[i],t=(el.textContent||"").replace(/\s+/g," ").trim().toLowerCase();if(t.indexOf("play as mike instead")>=0){el.style.setProperty("display","none","important");el.setAttribute("aria-hidden","true");}}return true;}catch(e){return false;}
   }
   function suppressLegacyPresentation(){
-    try{if(!isChain()||!root.document)return false;var toast=root.document.getElementById("toast");if(toast){var t=(toast.textContent||"").toUpperCase();if(t.indexOf("NIGHT CRAWL")>=0||t.indexOf("NEW HAVEN STREETS")>=0){toast.classList.add("hidden");toast.textContent="";}}var body=root.document.body;if(body)body.classList.add("good-boys-canon");return true;}catch(e){return false;}
+    try{if(!isChain()||!root.document)return false;var toast=root.document.getElementById("toast");if(toast){var t=(toast.textContent||"").toUpperCase();if(t.indexOf("NIGHT CRAWL")>=0||t.indexOf("NEW HAVEN STREETS")>=0||t.indexOf("NEW HAVEN AFTER DARK")>=0){toast.classList.add("hidden");toast.textContent="";}}var body=root.document.body;if(body)body.classList.add("good-boys-canon");return true;}catch(e){return false;}
   }
   function installToastAuthority(){
-    try{if(typeof root.toast!=="function"||root.toast.__goodBoysCanon)return false;baseToast=root.toast;root.toast=function(msg){var t=String(msg||"").toUpperCase();if(isChain()&&(t.indexOf("NIGHT CRAWL")>=0||t.indexOf("NEW HAVEN STREETS")>=0))return;return baseToast.apply(this,arguments);};root.toast.__goodBoysCanon=true;return true;}catch(e){return false;}
+    try{if(typeof root.toast!=="function"||root.toast.__goodBoysCanon)return false;baseToast=root.toast;root.toast=function(msg){var t=String(msg||"").toUpperCase();if(isChain()&&(t.indexOf("NIGHT CRAWL")>=0||t.indexOf("NEW HAVEN STREETS")>=0||t.indexOf("NEW HAVEN AFTER DARK")>=0))return;return baseToast.apply(this,arguments);};root.toast.__goodBoysCanon=true;return true;}catch(e){return false;}
   }
   function installStartAuthority(){try{if(!root.v736||typeof root.v736.start!=="function"||root.v736.start.__goodBoysCanon)return false;var start=root.v736.start;root.v736.start=function(){latch();ensureAssets();return start.apply(this,arguments);};root.v736.start.__goodBoysCanon=true;return true;}catch(e){return false;}}
   function installDistrictAuthority(){

@@ -12,6 +12,7 @@ const tests = [
   "test_campaign_late_game_contracts.js",
   "test_good_boys_canon_runtime.js",
   "test_good_boys_compositor_ownership.js",
+  "test_good_boys_ui_ownership.js",
   "test_good_boys_mobile_launch_guard.js",
   "test_production_mode_router.js",
   "test_production_runtime_safety.js",

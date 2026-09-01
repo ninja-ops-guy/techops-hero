@@ -2482,23 +2482,43 @@ function renderTab(tab) {
   }
 }
 
-// ---------- music (SoundCloud widget) ----------
-let scWidget = null, musicOn = false;
-function initMusic() {
-  if (scWidget || typeof SC === "undefined") return;
-  try {
-    scWidget = SC.Widget($("sc-widget"));
-    scWidget.bind(SC.Widget.Events.READY, () => setMusic(true));
-  } catch (e) { }
+// ---------- music (SoundCloud widget; loaded only after explicit user input) ----------
+let scWidget = null, scReady = false, musicOn = false, musicRequested = false, musicLoading = false;
+function applyMusicRequest() {
+  if (!scWidget || !scReady) return;
+  try { musicRequested ? scWidget.play() : scWidget.pause(); } catch (e) { }
+}
+function initMusic(userInitiated = false) {
+  if (!userInitiated || scWidget || musicLoading) return;
+  const frame = $("sc-widget");
+  if (!frame) return;
+  musicLoading = true;
+  const api = $("sc-api");
+  if (api && api.dataset.src && !api.getAttribute("src")) api.setAttribute("src", api.dataset.src);
+  if (frame.dataset.src && frame.getAttribute("src") !== frame.dataset.src) frame.setAttribute("src", frame.dataset.src);
+  let attempts = 0;
+  const connect = () => {
+    if (scWidget) return;
+    if (typeof SC === "undefined" || !SC.Widget) {
+      if (++attempts < 100) setTimeout(connect, 50);
+      else musicLoading = false;
+      return;
+    }
+    try {
+      scWidget = SC.Widget(frame);
+      scWidget.bind(SC.Widget.Events.READY, () => { scReady = true; musicLoading = false; applyMusicRequest(); });
+    } catch (e) { musicLoading = false; }
+  };
+  connect();
 }
 function setMusic(on) {
-  musicOn = on;
-  sfxMuted = !on; // one toggle rules all audio
-  $("btn-music").textContent = on ? "🔊" : "🔇";
-  if (!scWidget) return;
-  try { on ? scWidget.play() : scWidget.pause(); } catch (e) { }
+  musicRequested = !!on;
+  musicOn = musicRequested;
+  sfxMuted = !musicRequested; // one toggle rules all audio
+  $("btn-music").textContent = musicRequested ? "🔊" : "🔇";
+  applyMusicRequest();
 }
-$("btn-music").addEventListener("click", () => { initMusic(); if (scWidget) setMusic(!musicOn); });
+$("btn-music").addEventListener("click", () => { const on = !musicRequested; if (on) initMusic(true); setMusic(on); });
 
 // ---------- boot ----------
 function showTouchUI() {

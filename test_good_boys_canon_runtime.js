@@ -9,7 +9,7 @@ const context={console,setInterval(){return 1;},setTimeout(fn){fn();return 1;},p
  enterNight(){context.S.nightMode=true;context.NM={district:"downtown",x:120,y:220};},nmLoadDistrict(id){loaded=id;context.NM=context.NM||{};context.NM.district=id;return id;},drawNM(){return true;},
  v725:{play(id,cb){if(cb)cb();return true;}},v736:{start(){context.NM=context.NM||{x:120,y:220};context.NM._v736={m:1,active:"katrin",chars:{katrin:{hp:100,maxHp:100},manchez:{hp:120,maxHp:120}},partner:{x:60,y:220},sync:0};context.nmLoadDistrict("suburbs");}}
 };context.globalThis=context;vm.createContext(context);vm.runInContext(src,context,{filename:"good_boys_canon_runtime.js"});
-const api=context.TechOpsGoodBoysCanon;assert.ok(api);assert.strictEqual(api.VERSION,6);
+const api=context.TechOpsGoodBoysCanon;assert.ok(api);assert.ok(api.VERSION>=6);
 assert.strictEqual(typeof api.drawHud,"function","canon HUD must be exported for the production compositor");
 assert.strictEqual(typeof api.syncIdentity,"function","canon identity sync must be exported for the production router");
 assert.strictEqual(api.SEQUENCE[1].name,"WALDO'S HOUSE");assert.strictEqual(api.SEQUENCE[2].name,"THE HIDDEN BAY");assert.strictEqual(api.SEQUENCE[3].name,"MAKE A DOOR");

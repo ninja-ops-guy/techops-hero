@@ -132,6 +132,7 @@ jobs:
           node --check test_campaign_native_act2.js
           node --check test_campaign_world_visuals.js
           node --check test_good_boys_canon_runtime.js
+          node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js
           node --check test_production_asset_registry.js
           node --check test_production_compositor.js
@@ -166,6 +167,8 @@ jobs:
         run: node test_campaign_world_visuals.js
       - name: Verify Good Boys canon runtime
         run: node test_good_boys_canon_runtime.js
+      - name: Verify Good Boys UI ownership
+        run: node test_good_boys_ui_ownership.js
       - name: Verify Good Boys mobile launch recovery
         run: node test_good_boys_mobile_launch_guard.js
       - name: Verify production asset inventory

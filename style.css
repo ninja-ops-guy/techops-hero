@@ -14,6 +14,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12;font-family:
 @keyframes blink{50%{opacity:.25}}
 canvas{image-rendering:pixelated;display:block}
 .hidden{display:none!important}
+@media(max-width:640px){#v55-nmbtns.on{position:fixed!important;right:max(8px,calc(env(safe-area-inset-right) + 8px))!important;bottom:max(190px,calc(env(safe-area-inset-bottom) + 190px))!important}}
 
 /* HUD */
 #hud{position:absolute;top:0;left:0;right:0;pointer-events:none;z-index:10}
