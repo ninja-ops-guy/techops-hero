@@ -18,6 +18,9 @@ assert.ok(!source.includes('btn.addEventListener("pointerdown",advance'), "repai
 assert.ok(source.includes('if(advancing||!active)return'), "slide progression must reject double taps/re-entrancy");
 assert.ok(source.includes('Object.defineProperty(s,"inDialog"'), "intro must own the authoritative dialogue lock while visible");
 assert.ok(source.includes('get:function(){return active?true:'), "legacy writers must not clear the intro dialogue lock");
+assert.ok(source.includes('function ensureGameState()'), "Good Boys title launch must create the canonical game state before cinematic locking");
+assert.ok(source.includes('root.S=make();'), "state initialization must write through the lexical S bridge");
+assert.ok(source.includes('active=true;advancing=false;ensureGameState();setDialog(true);'), "opening cinematic must initialize state before acquiring the gameplay block");
 
 // Final-card regression: remove the blocker, invoke canonical v736 start, then verify attachment.
 const launch = source.indexOf("function launchCampaign()");
@@ -29,5 +32,10 @@ assert.ok(source.includes('if(attempt<2){invokeStart();'), "final CTA needs one 
 assert.ok(source.includes('dataset.gbdBypass="1"'), "legacy director click interception must be bypassed intentionally");
 assert.ok(source.includes('root.__gbiSkipBuiltinM1=true'), "legacy duplicate mission-1 cinematic must be skipped during repaired handoff");
 assert.ok(source.includes('(root.setTimeout||setTimeout)(function(){'), "final CTA must defer heavy campaign bootstrap until after the tap event returns");
+assert.ok(source.includes('function primeRunShell()'), "final handoff must prime the canonical run shell from title state");
+assert.ok(source.includes('if(typeof startRun==="function")run=startRun;'), "run-shell priming must use the canonical startRun path");
+const prime = source.indexOf('if(!primeRunShell())', launch);
+const invoke = source.indexOf('if(!invokeStart())', launch);
+assert.ok(prime > cleanup && invoke > prime, "deferred handoff must prime the run shell before v736.start");
 
 console.log("Good Boys intro repair contract: PASS");

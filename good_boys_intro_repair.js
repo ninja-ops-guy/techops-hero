@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Boys intro repair v2
+/* TechOps Hero — Good Boys intro repair v3
  * Repairs the pre-campaign four-card opening on mobile without changing the
  * canonical campaign/progression authority. The legacy director is bypassed
  * via its documented data-gbd-bypass hook; the familiar cinematic DOM id is
@@ -8,7 +8,7 @@
   "use strict";
   if(!root||root.TechOpsGoodBoysIntroRepair)return;
 
-  var VERSION=2;
+  var VERSION=3;
   var active=false,index=0,launching=false,advancing=false,watchdog=null;
   var overlay=null,style=null,dialogLock=null;
   var SCENES=[
@@ -59,6 +59,19 @@
     try{var b=root.document&&root.document.getElementById("btn-v736");if(!b)return false;b.dataset.gbdBypass="1";b.dataset.gbiRepair="1";return true;}catch(e){return false;}
   }
   function gameState(){try{return root.S||null;}catch(_){return null;}}
+  function ensureGameState(){
+    try{
+      var s=gameState();if(s)return s;
+      var make=null;
+      try{if(typeof newState==="function")make=newState;}catch(_){}
+      if(!make&&typeof root.newState==="function")make=root.newState;
+      if(!make){root.__goodBoysIntroStateInitError="newState missing";return null;}
+      root.S=make();
+      s=gameState();
+      if(!s)root.__goodBoysIntroStateInitError="lexical S bridge did not publish state";
+      return s;
+    }catch(e){root.__goodBoysIntroStateInitError=String(e&&e.stack||e);return null;}
+  }
   function lockDialog(){
     try{
       var s=gameState();if(!s)return false;
@@ -120,6 +133,20 @@
     }catch(e){root.__goodBoysIntroRepairSkipError=String(e&&e.stack||e);return false;}
   }
   function campaignAttached(){try{return !!(root.NM&&root.NM._v736);}catch(e){return false;}}
+  function primeRunShell(){
+    try{
+      var s=ensureGameState();if(!s)return false;
+      var title=root.document&&root.document.getElementById("title-screen");
+      var needsStart=!!(title&&!title.classList.contains("hidden"));
+      if(needsStart){
+        var run=null;try{if(typeof startRun==="function")run=startRun;}catch(_){}
+        if(!run&&typeof root.startRun==="function")run=root.startRun;
+        if(!run){root.__goodBoysIntroRunPrimeError="startRun missing";return false;}
+        run();
+      }
+      return !!gameState();
+    }catch(e){root.__goodBoysIntroRunPrimeError=String(e&&e.stack||e);return false;}
+  }
   function invokeStart(){
     try{ensureBuiltinM1Skip();if(root.v736&&typeof root.v736.start==="function"){root.v736.start();return true;}}catch(e){root.__goodBoysIntroRepairStartError=String(e&&e.stack||e);}return false;
   }
@@ -137,6 +164,7 @@
        synchronous campaign bootstrap work runs, presenting as a dead CTA. */
     (root.setTimeout||setTimeout)(function(){
       ensureBuiltinM1Skip();
+      if(!primeRunShell()){launching=false;root.__goodBoysIntroRepairLaunch={ok:false,attempt:0,at:Date.now(),error:root.__goodBoysIntroRunPrimeError||root.__goodBoysIntroStateInitError||"run shell prime failed"};return;}
       if(!invokeStart()){launching=false;root.__goodBoysIntroRepairLaunch={ok:false,attempt:0,at:Date.now(),error:root.__goodBoysIntroRepairStartError||"v736 start missing"};return;}
       watchdog=root.setTimeout(function(){verifyLaunch(0);},250);
     },0);
@@ -153,7 +181,7 @@
     installStyle();
     try{var stale=root.document.getElementById("good-boys-story-cine");if(stale)stale.remove();}catch(_){}
     overlay=root.document.createElement("div");overlay.id="good-boys-story-cine";overlay.className="gbi-repaired";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label","Good Boys Protocol opening");overlay.innerHTML='<div class="gbi-visual" aria-hidden="true"></div><div class="gbi-card-zone"></div>';
-    root.document.body.appendChild(overlay);index=0;active=true;advancing=false;setDialog(true);
+    root.document.body.appendChild(overlay);index=0;active=true;advancing=false;ensureGameState();setDialog(true);
     try{root.document.body.classList.add("good-boys-cinematic");}catch(_){}
     render();return true;
   }
