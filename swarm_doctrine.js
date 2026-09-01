@@ -1,4 +1,4 @@
-/* TechOps Hero — distributed swarm doctrine authority v2
+/* TechOps Hero — distributed swarm doctrine authority v3
  * No single drone owns mission state. Commands are bounded, logged, inspectable,
  * and reversible where doctrine permits. Persistent state lives in main campaign.
  * Percentage-style late-game consequences are adapted without corrupting the
@@ -7,14 +7,22 @@
 (function(root){
   "use strict";
   if(!root || root.TechOpsSwarmDoctrine) return;
-  var VERSION=2, REVERSAL_MS=5*60*1000;
+  var VERSION=3, REVERSAL_MS=5*60*1000;
   var DOCTRINE={NO_SINGLE_OWNER:"No single drone holds authoritative mission state.",LOGGED_ACTIONS:"Every swarm action is logged with timestamp, actor, intent, and bounds.",INSPECTABLE:"Logs are readable by any authorized operator, including Mike.",REVERSIBLE:"Actions within constraint bounds can be reversed by authorized operators.",BOUNDED:"Every command has explicit spatial, temporal, and capability constraints.",QUESTIONABLE:"Felicia's control can be challenged. The swarm does not override human judgment."};
   var COMMANDS={
     RECON:{id:"recon",label:"Reconnaissance",bounds:{maxRange:500,maxDuration:300,lethal:false,reversible:true}},RELAY:{id:"relay",label:"Signal Relay",bounds:{maxRange:1000,maxDuration:600,lethal:false,reversible:true}},SHIELD:{id:"shield",label:"Protective Shield",bounds:{maxRange:200,maxDuration:180,lethal:false,reversible:true}},RECOVER:{id:"recover",label:"Drone Recovery",bounds:{maxRange:300,maxDuration:120,lethal:false,reversible:true}},DISRUPT:{id:"disrupt",label:"Signal Disruption",bounds:{maxRange:400,maxDuration:60,lethal:false,reversible:true}},INTERCEPT:{id:"intercept",label:"Threat Interception",bounds:{maxRange:600,maxDuration:90,lethal:true,reversible:false,requiresAuthorization:true}}
   };
   function campaign(){try{return root.TechOpsCampaign&&root.TechOpsCampaign.load?root.TechOpsCampaign.load(root.localStorage):null;}catch(e){return null;}}
   function save(s){try{if(root.TechOpsCampaign&&root.TechOpsCampaign.save)root.TechOpsCampaign.save(s,root.localStorage);return true;}catch(e){root.__swarmSaveError=String(e&&e.stack||e);return false;}}
-  function store(s){s.lateGame=s.lateGame||{};return s.lateGame.swarm||(s.lateGame.swarm={log:[],triggeredQuestioningMoments:[],integrityAuditUnlocked:false,consequences:[]});}
+  function store(s){
+    s.lateGame=s.lateGame||{};
+    var st=s.lateGame.swarm||(s.lateGame.swarm={});
+    st.log=Array.isArray(st.log)?st.log:[];
+    st.triggeredQuestioningMoments=Array.isArray(st.triggeredQuestioningMoments)?st.triggeredQuestioningMoments:[];
+    st.integrityAuditUnlocked=!!st.integrityAuditUnlocked;
+    st.consequences=Array.isArray(st.consequences)?st.consequences:[];
+    return st;
+  }
   function unlocked(s){try{return !!(root.TechOpsMORNINGSTARBuild&&root.TechOpsMORNINGSTARBuild.getCurrentPhase()>=3);}catch(e){return !!(s&&s.lateGame&&s.lateGame.morningstar&&s.lateGame.morningstar.phase>=3);}}
   function checkBounds(cmd,p){p=p||{};if(Number(p.range||0)>cmd.bounds.maxRange)return{valid:false,reason:"range_exceeds_maximum:"+cmd.bounds.maxRange};if(Number(p.duration||0)>cmd.bounds.maxDuration)return{valid:false,reason:"duration_exceeds_maximum:"+cmd.bounds.maxDuration};return{valid:true};}
   function append(s,e){var st=store(s);e.id=e.id||("swarm-"+Date.now()+"-"+Math.floor(Math.random()*1e6));st.log.push(e);if(st.log.length>100)st.log=st.log.slice(-100);save(s);return e;}
