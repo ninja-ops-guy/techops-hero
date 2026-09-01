@@ -1,25 +1,29 @@
-/* TechOps Hero — Good Boys direct cinematic intro v13
+/* TechOps Hero — Good Boys direct cinematic intro v14
  * Canon opening: clip 01 -> three-system ship inspection -> clip 02 -> one premise -> M2.
  * Opening phases are ephemeral; numeric campaign mission state changes only through
  * TechOpsGoodBoysCampaignState after the authored opening has completed.
  * Ship movement is time-based and pointer-captured so mobile/WebKit frame rate and
  * minor finger drift cannot change traversal speed or cancel a valid hold.
  * TAKE CONTROL completes the canonical CLOCK IN -> Standard -> CIO Dispatch path before M2.
+ * M2 ownership is valid only after a fresh NM._v736 runtime has mounted.
  */
 (function(root){
   "use strict";
   if(!root)return;
   var PRIOR=root.TechOpsGoodBoysIntroRepair;
-  if(PRIOR&&Number(PRIOR.VERSION||0)>=13)return;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=14)return;
   try{if(PRIOR&&PRIOR.timer&&root.clearInterval)root.clearInterval(PRIOR.timer);if(PRIOR&&PRIOR.observer)PRIOR.observer.disconnect();}catch(_){}
-  var VERSION=13,launching=false,premise=null,interlude=null,installedButton=null,launchEpoch=0,observer=null;
+  var VERSION=14,launching=false,premise=null,interlude=null,installedButton=null,launchEpoch=0,observer=null;
   function button(){return root.document&&root.document.getElementById("btn-v736");}
   function bypass(){var b=button();if(!b)return false;b.dataset.gbdBypass="1";b.dataset.gbiRepair="1";return true;}
-  function attached(){try{return !!(root.NM&&root.NM._v736);}catch(_){return false;}}
+  function attached(){try{var c=root.NM&&root.NM._v736;return !!(c&&!c.ending);}catch(_){return false;}}
+  function liveM2(){try{var c=root.NM&&root.NM._v736,state=root.TechOpsGoodBoysCampaignState,m=state&&state.mission?Number(state.mission()):Number(root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||0);return !!(c&&!c.ending&&Number(c.m||0)===2&&m===2);}catch(_){return false;}}
+  function boardTarget(t){try{var b=t&&t.closest?t.closest("button"):null;return b&&(b.id==="good-boys-board-ship"||/BOARD\s+(THE\s+)?SHIP/i.test(b.textContent||""))?b:null;}catch(_){return null;}}
+  function suppressStaleBoard(e){var b=boardTarget(e&&e.target);if(!b||liveM2())return false;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}try{b.remove();}catch(_){}root.__goodBoysStaleBoardSuppressed={at:Date.now(),phase:root.__goodBoysOpeningPhase||null};return true;}
   function dismissLegacy(){try{["good-boys-story-cine","good-boys-premise"].forEach(function(id){var n=root.document&&root.document.getElementById(id);if(n)n.remove();});}catch(_){}try{if(root.document&&root.document.body&&!root.document.getElementById("good-boys-campaign-intro")&&!root.document.getElementById("good-boys-ship-interlude")&&!root.document.querySelector("#good-dogs-cutscene-overlay.active"))root.document.body.classList.remove("good-boys-cinematic");}catch(_){} }
   function legacyFollowTarget(t){try{var b=t&&t.closest?t.closest("#gb-cine-next"):null;return b&&/FOLLOW\s+THE\s+TRAIL/i.test(b.textContent||"")?b:null;}catch(_){return null;}}
   function rescueLegacyFollow(e){var b=legacyFollowTarget(e&&e.target);if(!b)return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}dismissLegacy();root.__goodBoysLegacyFollowRescued={at:Date.now()};if(!launching&&!attached())launch();}
-  function guardOwnership(){try{bypass();var legacy=root.document&&root.document.getElementById("good-boys-story-cine");if(legacy)legacy.remove();if(launching||premise||interlude||!attached())dismissLegacy();return true;}catch(e){root.__goodBoysIntroOwnershipError=String(e&&e.stack||e);return false;}}
+  function guardOwnership(){try{bypass();var legacy=root.document&&root.document.getElementById("good-boys-story-cine");if(legacy)legacy.remove();var board=root.document&&root.document.getElementById("good-boys-board-ship");if(board&&!liveM2())board.remove();if(launching||premise||interlude||!attached())dismissLegacy();return true;}catch(e){root.__goodBoysIntroOwnershipError=String(e&&e.stack||e);return false;}}
   function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,at:Date.now()},extra||{});}
   function canonicalClockIn(){
     var usedStart=false,usedStandard=false,usedDispatch=false,state=null;
@@ -70,7 +74,17 @@
       return authority.startNext(current);
     }catch(e){root.__goodBoysDirectIntroStartError=String(e&&e.stack||e);return false;}
   }
-  function verify(attempt,epoch){if(epoch!==launchEpoch)return;var state=root.TechOpsGoodBoysCampaignState,expected=state&&state.mission?Number(state.mission())||2:2;if(attached()){var c=root.NM&&root.NM._v736,ok=Number(c&&c.m||0)===expected;if(ok){launching=false;guardOwnership();phase("gameplay",{mission:expected});root.__goodBoysDirectIntro={ok:true,at:Date.now(),attempt:attempt,epoch:epoch,mission:expected};return;}}if(attempt<3){startCampaign();root.setTimeout(function(){verify(attempt+1,epoch);},300);return;}launching=false;root.__goodBoysDirectIntro={ok:false,at:Date.now(),attempt:attempt,epoch:epoch,error:root.__goodBoysDirectIntroStartError||root.__goodBoysDirectIntroClockInError||root.__goodBoysProgressionError||"campaign did not attach"};}
+  function verify(attempt,epoch){
+    if(epoch!==launchEpoch)return;
+    var authority=root.TechOpsGoodBoysProgressionAuthority,state=root.TechOpsGoodBoysCampaignState,expected=state&&state.mission?Number(state.mission())||2:2;
+    try{if(authority&&typeof authority.finalizeHandoff==="function")authority.finalizeHandoff("intro-verify");}catch(_){}
+    if(attached()){
+      var c=root.NM&&root.NM._v736,ok=Number(c&&c.m||0)===expected;
+      if(ok){launching=false;guardOwnership();phase("gameplay",{mission:expected});root.__goodBoysDirectIntro={ok:true,at:Date.now(),attempt:attempt,epoch:epoch,mission:expected};return;}
+    }
+    if(attempt<240){root.__goodBoysDirectIntro={ok:null,status:"awaiting-runtime",at:Date.now(),attempt:attempt,epoch:epoch,mission:expected};root.setTimeout(function(){verify(attempt+1,epoch);},250);return;}
+    launching=false;root.__goodBoysDirectIntro={ok:false,at:Date.now(),attempt:attempt,epoch:epoch,error:root.__goodBoysDirectIntroStartError||root.__goodBoysDirectIntroClockInError||root.__goodBoysHandoffError||root.__goodBoysProgressionError||"campaign did not attach"};
+  }
   function showPremise(){return new Promise(function(resolve){
     if(!root.document){resolve();return;}dismissLegacy();phase("premise");var stale=root.document.getElementById("good-boys-campaign-intro");if(stale)stale.remove();
     premise=root.document.createElement("div");premise.id="good-boys-campaign-intro";premise.dataset.goodDogsOpening="premise";
@@ -112,9 +126,9 @@
     var gameplay=await showShipInterlude();root.__goodBoysOpeningGameplayResult=gameplay||null;
     phase("clip2");var second=await root.GoodDogsCutscenes.play("GD_CUT_02",{force:true,muted:true});root.__goodBoysOpeningClipResult=second||null;return second||gameplay||first||null;
   }
-  function launch(e){if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}if(launching||attached())return false;var epoch=++launchEpoch;launching=true;bypass();dismissLegacy();var b=button(),old=b&&b.textContent;if(b){b.disabled=true;b.textContent="OPENING TRANSMISSION…";}phase("opening");root.__goodBoysDirectIntro={ok:null,status:"opening",at:Date.now(),epoch:epoch};Promise.resolve().then(playOpening).catch(function(err){root.__goodBoysDirectIntroMediaError=String(err&&err.stack||err);}).then(function(){if(epoch!==launchEpoch)return;dismissLegacy();return showPremise();}).catch(function(err2){root.__goodBoysPremiseError=String(err2&&err2.stack||err2);}).then(function(){if(epoch!==launchEpoch)return;if(b){b.disabled=false;b.textContent=old||"🐕 GOOD BOYS — 118 / 1984 BREAKOUT";}root.__goodBoysDirectIntro={ok:null,status:"handoff",at:Date.now(),epoch:epoch};root.setTimeout(function(){if(epoch!==launchEpoch)return;dismissLegacy();startCampaign();root.setTimeout(function(){verify(1,epoch);},350);},0);});return true;}
-  function install(){var b=button();if(!b)return false;bypass();if(installedButton===b&&b.dataset.gbiRepairInstalled==="13")return true;if(installedButton)try{installedButton.removeEventListener("click",launch,true);}catch(_){}b.addEventListener("click",launch,true);b.dataset.gbiRepairInstalled="13";installedButton=b;return true;}
+  function launch(e){if(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}if(launching||attached())return false;var epoch=++launchEpoch;launching=true;bypass();dismissLegacy();var b=button(),old=b&&b.textContent;if(b){b.disabled=true;b.textContent="OPENING TRANSMISSION…";}phase("opening");root.__goodBoysDirectIntro={ok:null,status:"opening",at:Date.now(),epoch:epoch};Promise.resolve().then(playOpening).catch(function(err){root.__goodBoysDirectIntroMediaError=String(err&&err.stack||err);}).then(function(){if(epoch!==launchEpoch)return;dismissLegacy();return showPremise();}).catch(function(err2){root.__goodBoysPremiseError=String(err2&&err2.stack||err2);}).then(function(){if(epoch!==launchEpoch)return;if(b){b.disabled=false;b.textContent=old||"🐕 GOOD BOYS — 118 / 1984 BREAKOUT";}root.__goodBoysDirectIntro={ok:null,status:"handoff",at:Date.now(),epoch:epoch};root.setTimeout(function(){if(epoch!==launchEpoch)return;dismissLegacy();startCampaign();root.setTimeout(function(){verify(1,epoch);},250);},0);});return true;}
+  function install(){var b=button();if(!b)return false;bypass();if(installedButton===b&&b.dataset.gbiRepairInstalled==="14")return true;if(installedButton)try{installedButton.removeEventListener("click",launch,true);}catch(_){}b.addEventListener("click",launch,true);b.dataset.gbiRepairInstalled="14";installedButton=b;return true;}
   function installObserver(){try{if(observer||!root.MutationObserver||!root.document)return;observer=new root.MutationObserver(function(){install();guardOwnership();});observer.observe(root.document.documentElement,{subtree:true,childList:true});}catch(e){root.__goodBoysIntroObserverError=String(e&&e.stack||e);}}
-  if(root.document){root.document.addEventListener("pointerdown",rescueLegacyFollow,true);root.document.addEventListener("click",rescueLegacyFollow,true);}var timer=root.setInterval(function(){install();guardOwnership();},80);installObserver();install();guardOwnership();
-  root.TechOpsGoodBoysIntroRepair={VERSION:VERSION,launch:launch,install:install,playOpening:playOpening,showShipInterlude:showShipInterlude,startCampaign:startCampaign,guardOwnership:guardOwnership,timer:timer,observer:observer,get launching(){return launching;},get premise(){return premise;},get interlude(){return interlude;}};
+  if(root.document){root.document.addEventListener("pointerdown",suppressStaleBoard,true);root.document.addEventListener("click",suppressStaleBoard,true);root.document.addEventListener("pointerdown",rescueLegacyFollow,true);root.document.addEventListener("click",rescueLegacyFollow,true);}var timer=root.setInterval(function(){install();guardOwnership();},80);installObserver();install();guardOwnership();
+  root.TechOpsGoodBoysIntroRepair={VERSION:VERSION,launch:launch,install:install,playOpening:playOpening,showShipInterlude:showShipInterlude,startCampaign:startCampaign,guardOwnership:guardOwnership,liveM2:liveM2,suppressStaleBoard:suppressStaleBoard,timer:timer,observer:observer,get launching(){return launching;},get premise(){return premise;},get interlude(){return interlude;}};
 })(typeof globalThis!=="undefined"?globalThis:this);
