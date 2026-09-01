@@ -105,10 +105,17 @@ try{
     const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
     return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
   },null,{timeout:3000});
+  // The shared v6.6 dialogue typewriter exposes tap-to-complete. Exercise that
+  // canonical mobile path before asserting the authored command copy.
+  await page.evaluate(()=>{
+    const t=document.getElementById('dlg-text');
+    if(!t)throw new Error('swarm dialog text missing');
+    t.click();
+  });
   await page.waitForFunction(()=>{
     const t=(document.getElementById('dlg-text')&&document.getElementById('dlg-text').textContent)||'';
     return /bounded/i.test(t)&&/nonlethal/i.test(t);
-  },null,{timeout:8000});
+  },null,{timeout:2000});
   const dialog=await page.evaluate(()=>({
     name:(document.getElementById('dlg-name')&&document.getElementById('dlg-name').textContent)||'',
     text:(document.getElementById('dlg-text')&&document.getElementById('dlg-text').textContent)||'',
