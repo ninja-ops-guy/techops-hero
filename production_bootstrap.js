@@ -1,11 +1,12 @@
-/* TechOps Hero — production runtime bootstrap v19.
- * Stable production stack. v19 adds campaign state validation before Good Boys
- * production wrappers and preserves unified touch/render authority.
+/* TechOps Hero — production runtime bootstrap v20.
+ * Stable production stack. v20 keeps the Good Boys compositor/state authority
+ * intact while loading the Story Bible completion modules as main-campaign
+ * concern layers with their own persistent ownership.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=19,BUILD="20260901-production-v19-canonical-goodboys-state",started=false,done=false;
+  var VERSION=20,BUILD="20260901-production-v20-story-bible-completion",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -24,7 +25,12 @@
     "day_cinematic_mobile_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
-    "production_presentation_guard.js"
+    "production_presentation_guard.js",
+    "campaign_bible_gap_pass.js",
+    "felicia_first_office.js",
+    "morningstar_build.js",
+    "swarm_doctrine.js",
+    "chapters_vii_x.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
@@ -49,6 +55,9 @@
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
+    try{if(root.TechOpsMORNINGSTARBuild&&root.TechOpsMORNINGSTARBuild.install)root.TechOpsMORNINGSTARBuild.install();}catch(e){root.__productionMorningstarInstallError=String(e&&e.stack||e);}
+    try{if(root.TechOpsFeliciaFirstOfficeDialogue&&root.TechOpsFeliciaFirstOfficeDialogue.install)root.TechOpsFeliciaFirstOfficeDialogue.install();}catch(e){root.__productionFeliciaOfficeInstallError=String(e&&e.stack||e);}
+    try{if(root.TechOpsLateGameCampaign&&root.TechOpsLateGameCampaign.check)root.TechOpsLateGameCampaign.check();}catch(e){root.__productionLateGameInstallError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;
   }
   root.TechOpsProductionBootstrap={VERSION:VERSION,BUILD:BUILD,FILES:FILES,start:start,ready:function(){return done;}};
