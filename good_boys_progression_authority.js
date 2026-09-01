@@ -93,6 +93,7 @@
       var observed=Number(c.m||0);if(observed!==expected){c.m=expected;root.__goodBoysForcedRepair={expected:expected,observed:observed,at:Date.now(),source:reason||"handoff"};}
       reconcileMission(reason||"handoff-finalize");if(!invariant(expected,reason||"handoff-finalize"))return false;
       var validator=root.TechOpsStateValidator;if(validator&&typeof validator.validateCampaign==="function"){var vr=validator.validateCampaign(m,c);if(!vr.valid){root.__stateValidationFailure=vr;throw new Error("Good Boys state validator failed: "+vr.errors.join(" | "));}}
+      if(h.directGameplay&&root.__goodBoysDirectGameplay){root.__goodBoysDirectGameplay.runtimeMission=Number(c.m||0);root.__goodBoysDirectGameplay.mountedAt=Date.now();}
       root.__goodBoysHandoffComplete={mission:expected,startedAt:h.at,completedAt:Date.now(),reason:reason||"handoff-finalize",directGameplay:!!h.directGameplay};root.__goodBoysHandoffInProgress=null;root.__goodBoysRuntimePending=null;root.__goodBoysHandoffError=null;root.__goodBoysProgressionError=null;return true;
     }catch(e){root.__goodBoysHandoffError=String(e&&e.stack||e);root.__goodBoysProgressionError=root.__goodBoysHandoffError;return false;}
   }
