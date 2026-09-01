@@ -1,4 +1,4 @@
-name: Apply Good Boys direct M2 core patch
+name: Apply Good Boys runtime harness patch
 
 on:
   push:
@@ -18,23 +18,23 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Apply direct M2 ownership patch
-        run: python3 scripts/apply_good_boys_direct_m2_patch.py
+      - name: Apply runtime harness race patch
+        run: python3 .github/apply_good_boys_bot_harness_patch.py
 
-      - name: Validate patched contracts
+      - name: Validate patched harnesses
         run: |
-          node --check v736_hooks.js
-          node --check good_boys_progression_authority.js
-          node --check scripts/good_boys_progression_bot.mjs
           node --check scripts/good_boys_intro_mobile_bot.mjs
+          node --check scripts/runtime_bot.mjs
+          node --check scripts/good_boys_progression_bot.mjs
+          node --check scripts/good_boys_background_bible_bot.mjs
           node test_good_boys_intro_repair.js
           node test_static_entrypoint_integrity.js
 
-      - name: Commit production patch
+      - name: Commit harness patch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add v736_hooks.js good_boys_progression_authority.js test_good_boys_intro_repair.js test_static_entrypoint_integrity.js
+          git add scripts/good_boys_intro_mobile_bot.mjs scripts/runtime_bot.mjs scripts/good_boys_progression_bot.mjs scripts/good_boys_background_bible_bot.mjs
           git diff --cached --check
-          git commit -m "Mount Good Boys M2 directly in v736 core"
+          git commit -m "Harden Good Boys runtime bot phase transitions"
           git push origin HEAD:main
