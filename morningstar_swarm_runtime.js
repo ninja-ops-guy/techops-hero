@@ -1,11 +1,12 @@
-/* TechOps Hero — MORNINGSTAR + swarm gameplay bridge v1.
+/* TechOps Hero — MORNINGSTAR + swarm gameplay bridge v2.
  * Presentation/input bridge only. State authority remains in morningstar_build.js,
- * swarm_doctrine.js and the main campaign contracts.
+ * swarm_doctrine.js and the main campaign contracts. Maintenance is owned by
+ * campaign_completion_runtime.js; this module creates no private polling timer.
  */
 (function(root){
   "use strict";
   if(!root||!root.document||root.TechOpsMORNINGSTARRuntime)return;
-  var VERSION=1,nightWrapped=false,timer=null;
+  var VERSION=2,nightWrapped=false;
   function phase(){try{return root.TechOpsMORNINGSTARBuild?root.TechOpsMORNINGSTARBuild.getCurrentPhase():0;}catch(e){return 0;}}
   function isFelicia(){try{return typeof root.isFel==="function"?!!root.isFel():!!(root.S&&root.S.meta&&root.S.meta._char==="felicia");}catch(e){return false;}}
   function notify(t){try{if(typeof root.toast==="function")root.toast(t,3200);}catch(_){} }
@@ -35,7 +36,7 @@
     var host=root.document.getElementById("hud-right"),build=root.TechOpsMORNINGSTARBuild;if(!host||!build)return false;
     var b=root.document.getElementById("btn-morningstar");
     if(!b){b=root.document.createElement("button");b.id="btn-morningstar";b.className="hud-btn";b.textContent="✦";b.title="MORNINGSTAR build";b.setAttribute("aria-label","Open MORNINGSTAR build");b.addEventListener("click",function(e){e.preventDefault();build.openHub();});host.appendChild(b);}
-    b.style.display=phase()>0||build.snapshot&&build.snapshot()&&build.snapshot().requirements?"":"none";
+    var snap=build.snapshot&&build.snapshot();b.style.display=phase()>0||(snap&&snap.requirements)?"":"none";
     return true;
   }
   function ensureWatchdogButton(){
@@ -45,13 +46,14 @@
     return true;
   }
   function wrapNightStage(){
-    if(nightWrapped||typeof root.nmNextStage!=="function")return false;
+    if(typeof root.nmNextStage!=="function")return false;
+    if(root.nmNextStage.__morningstarSwarmWrapped){nightWrapped=true;return true;}
     var base=root.nmNextStage;
     var fn=function(){var r=base.apply(this,arguments);try{if(root.TechOpsSwarmDoctrine)root.TechOpsSwarmDoctrine.checkQuestioningMoment();}catch(e){root.__swarmPostMissionError=String(e&&e.stack||e);}return r;};
     fn.__morningstarSwarmWrapped=true;fn.__base=base;root.nmNextStage=fn;nightWrapped=true;return true;
   }
-  function acceptance(){return{version:VERSION,phase:phase(),hud:!!root.document.getElementById("btn-morningstar"),watchdogSwarm:!!root.document.getElementById("v64-swarm"),nightHook:nightWrapped,doctrine:!!root.TechOpsSwarmDoctrine,build:!!root.TechOpsMORNINGSTARBuild,at:Date.now()};}
+  function acceptance(){return{version:VERSION,phase:phase(),hud:!!root.document.getElementById("btn-morningstar"),watchdogSwarm:!!root.document.getElementById("v64-swarm"),nightHook:nightWrapped&&!!(root.nmNextStage&&root.nmNextStage.__morningstarSwarmWrapped),doctrine:!!root.TechOpsSwarmDoctrine,build:!!root.TechOpsMORNINGSTARBuild,sharedMaintenance:true,at:Date.now()};}
   function install(){ensureHudButton();ensureWatchdogButton();wrapNightStage();root.__morningstarSwarmRuntime=acceptance();return true;}
   root.TechOpsMORNINGSTARRuntime={VERSION:VERSION,install:install,openSwarm:openSwarm,issue:issue,acceptance:acceptance};
-  timer=(root.setInterval||setInterval)(install,750);install();root.TechOpsMORNINGSTARRuntime.timer=timer;
+  install();
 })(typeof globalThis!=="undefined"?globalThis:this);
