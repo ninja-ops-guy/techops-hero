@@ -16,8 +16,8 @@ const expected={
   8:{key:'goodboys_earthfall',district:'goodboys_earthfall',scene:"WALDO'S HOUSE — DAWN",landmarks:["WALDO'S PORCH",'GARAGE','SHUTTLE WRECK']}
 };
 const findings=[];const fail=(mission,issue,data={})=>findings.push({mission,issue,...data});
-async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.click({timeout:500});return true;}catch{}}}return false;}
-async function domClick(page,selector){return page.locator(selector).evaluate(el=>{el.click();return true;}).catch(()=>false);}
+async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.evaluate(el=>{el.click();return true;});return true;}catch{}}}return false;}
+async function domClick(page,selector){return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);}
 async function moveShipTo(page,id){
   const result=await page.evaluate(async target=>{
     const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
@@ -36,12 +36,14 @@ async function moveShipTo(page,id){
 async function completeShip(page){if(!await page.locator('#good-boys-ship-interlude').count())return false;for(const id of ['nav','flight','dock']){const done=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(!done)await moveShipTo(page,id);}return true;}
 async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(Date.now()<until){
   if(await page.locator('#good-boys-ship-interlude').count()){idle=0;await completeShip(page);await page.waitForTimeout(100);continue;}
+  const premise='#good-boys-campaign-intro button';if(await page.locator(premise).count()){idle=0;await domClick(page,premise);await page.waitForTimeout(120);continue;}
   const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){idle=0;await domClick(page,film);await page.waitForTimeout(100);continue;}
-  let handled=false;for(const sel of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button','#good-boys-campaign-intro button']){const b=page.locator(sel).first();if(!await b.count())continue;if(await b.isVisible().catch(()=>false)){await b.evaluate(el=>el.click()).catch(()=>{});handled=true;break;}}
+  let handled=false;for(const sel of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button']){const b=page.locator(sel).first();if(!await b.count())continue;if(await b.isVisible().catch(()=>false)){await b.evaluate(el=>el.click()).catch(()=>{});handled=true;break;}}
   if(handled){idle=0;await page.waitForTimeout(100);continue;}
   const txt=await page.locator('body').innerText().catch(()=>'');if(/SELECT SHIFT DIFFICULTY/i.test(txt)){idle=0;await clickText(page,/Standard/i);continue;}if(/BEGIN THE INCIDENT/i.test(txt)){idle=0;await clickText(page,/BEGIN THE INCIDENT/i);continue;}
   const generic=page.locator('#dialogue:not(.hidden) #dlg-options button').first();if(await generic.count()&&await generic.isVisible().catch(()=>false)){idle=0;await generic.evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(80);continue;}
-  idle++;if(idle>=3)return true;await page.waitForTimeout(100);
+  const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);if(introBusy){idle=0;await page.waitForTimeout(120);continue;}
+  idle++;if(idle>=8)return true;await page.waitForTimeout(100);
 }return false;}
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{

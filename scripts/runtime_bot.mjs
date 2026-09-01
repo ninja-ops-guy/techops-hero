@@ -45,8 +45,8 @@ async function snapshotRuntime(page) {
     return {url:location.href,title:document.title,buttons:Array.from(document.querySelectorAll('button')).filter(b=>getComputedStyle(b).display!=='none').map(b=>b.textContent.trim()).filter(Boolean),titleVisible:vis('title-screen'),hudVisible:vis('hud'),touchVisible:vis('touch-ui'),recoveryVisible:!!document.getElementById('good-boys-mobile-recovery'),toast:text('toast'),bodyText,runtime,canvas,cutsceneVisible:legacyCutscene||!!blockerId,authoredBlocker:!!blockerId,blockerId,shipInteraction:window.__goodBoysOpeningGameplay||null,openingPhase:window.__goodBoysOpeningPhase||null,mode:window.__productionActiveMode||window.__productionDesiredMode||null,routerError:window.__productionModeRouterError||null,safetyError:window.__techOpsLastRuntimeError||null,goodBoysError:window.__goodBoysCoreBroken||null,wrapperGuard:!!window.__techopsWrapperGuardInstalled,wrapperHealth,runtimeLock:!!window.__productionFeatureWrapperTimersStopped,runtimeLockError:window.__productionRuntimeLockError||null,lexicalBridge:window.__techopsLexicalBridgeVersion||0};
   });
 }
-async function clickByRegex(page,regex,timeout=2500){const buttons=page.locator('button'),n=await buttons.count();for(let i=0;i<n;i++){const b=buttons.nth(i);let txt='';try{txt=(await b.innerText()).trim();}catch{}if(regex.test(txt)){try{await b.click({timeout});return txt;}catch{}}}return null;}
-async function domClick(page,selector){return page.locator(selector).evaluate(el=>{el.click();return true;}).catch(()=>false);}
+async function clickByRegex(page,regex,timeout=2500){const buttons=page.locator('button'),n=await buttons.count();for(let i=0;i<n;i++){const b=buttons.nth(i);let txt='';try{txt=(await b.innerText()).trim();}catch{}if(regex.test(txt)){try{await b.evaluate(el=>{el.click();return true;});return txt;}catch{}}}return null;}
+async function domClick(page,selector){return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);}
 async function moveShipTo(page,id){
   const result=await page.evaluate(async target=>{
     const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
@@ -79,13 +79,16 @@ async function settle(page,ms=5000){
   while(Date.now()<until){
     await page.waitForTimeout(150);
     if(await page.locator('#good-boys-ship-interlude').count()){try{await completeShipInteraction(page);shipAutomationError=null;}catch(e){shipAutomationError=String(e&&e.stack||e);return false;}await page.waitForTimeout(150);continue;}
+    const premise='#good-boys-campaign-intro button';if(await page.locator(premise).count()){await domClick(page,premise);await page.waitForTimeout(140);continue;}
     const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){await domClick(page,film);await page.waitForTimeout(140);continue;}
-    const authored=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');
+    const authored=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-earthfall-cine button');
     if(await authored.count()){await authored.first().evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(120);continue;}
     const txt=await page.locator('body').innerText().catch(()=>'');
     if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickByRegex(page,/Standard/i,500).catch(()=>{});continue;}
     if(/BEGIN THE INCIDENT/i.test(txt)){await clickByRegex(page,/BEGIN THE INCIDENT/i,500).catch(()=>{});continue;}
     if(/E\s*\/\s*CLICK\s*[—-]\s*SKIP|CLICK\s*[—-]\s*SKIP/i.test(txt)){await page.keyboard.press('KeyE').catch(()=>{});await page.waitForTimeout(250);continue;}
+    const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);
+    if(introBusy){await page.waitForTimeout(120);continue;}
     const s=await snapshotRuntime(page);if(!s.cutsceneVisible&&!s.runtime.inDialog)break;
   }
   return true;
