@@ -63,6 +63,7 @@ assert.deepEqual(Campaign.TICKETS, [
 ]);
 const gapSource = fs.readFileSync("campaign_bible_gap_pass.js", "utf8");
 const visualBootstrap = fs.readFileSync("campaign_native_act1_visuals.js", "utf8");
+assert.doesNotThrow(() => new Function(gapSource), "Bible gap runtime must parse as browser JavaScript");
 for (const id of Campaign.TICKETS) assert(gapSource.includes(id), `Bible gap pass must guarantee ${id}`);
 assert(gapSource.includes("campaign_shipping") && gapSource.includes("campaign_plating") && gapSource.includes("campaign_access"), "Day 1 guarantee must use authored world contacts");
 assert(!/\.tickets\.push\s*\(/.test(gapSource), "Bible pass must not duplicate canonical contacts into the procedural ticket queue");
@@ -74,6 +75,7 @@ assert.match(gapSource, /setVolume\(5\)/);
 assert.match(gapSource, /setVolume\(restoreVolume\|\|18\)/);
 assert.match(gapSource, /ENGINEERING THE HUMAN CONNECTION/);
 assert.match(gapSource, /ordinary_listening/);
+assert.match(gapSource, /primed-user-gesture/);
 
 // Ghost Fork recognition uses the existing v7.25 scene registry and preserves K's personhood rule.
 assert.match(gapSource, /defs\(\)/);
