@@ -27,15 +27,35 @@ function context(seed={}){
 }
 function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filename:file});}
 
-// Browser bootstrap: load all four modules only after canonical campaign dependencies exist.
+// Browser bootstrap: load all late-game modules only after canonical campaign dependencies exist.
 {
   const bootstrap=fs.readFileSync("campaign_late_game_bootstrap.js","utf8");
   assert.doesNotThrow(()=>new Function(bootstrap),"late-game browser bootstrap must parse");
-  ["morningstar_build.js","swarm_doctrine.js","chapters_vii_x.js","felicia_first_office.js"].forEach(file=>assert.ok(bootstrap.includes(file),`late-game bootstrap must load ${file}`));
+  ["morningstar_build.js","swarm_doctrine.js","morningstar_swarm_runtime.js","chapters_vii_x.js","felicia_first_office.js","campaign_completion_runtime.js"].forEach(file=>assert.ok(bootstrap.includes(file),`late-game bootstrap must load ${file}`));
   assert.ok(bootstrap.includes("TechOpsCampaignNativeAct2"),"Felicia office wrapper must wait until native Act II owns interaction");
+  assert.ok(bootstrap.indexOf("swarm_doctrine.js")<bootstrap.indexOf("morningstar_swarm_runtime.js"),"swarm doctrine must load before its gameplay bridge");
+  assert.ok(bootstrap.indexOf("morningstar_swarm_runtime.js")<bootstrap.indexOf("campaign_completion_runtime.js"),"gameplay bridge must exist before shared maintenance owner parks its timer");
   assert.ok(!bootstrap.includes("TechOpsGoodBoysCampaignState.transition"),"late-game bootstrap must never mutate Good Boys mission authority");
   const entry=fs.readFileSync("campaign_native_act1_visuals.js","utf8");
   assert.ok(entry.includes("campaign_late_game_bootstrap.js"),"browser campaign entrypoint must wire the late-game bootstrap");
+}
+
+// Player-facing MORNINGSTAR/swarm bridge: hub + Felicia swarm actions remain authority-routed.
+{
+  const runtime=fs.readFileSync("morningstar_swarm_runtime.js","utf8");
+  assert.doesNotThrow(()=>new Function(runtime),"MORNINGSTAR/swarm gameplay bridge must parse");
+  assert.match(runtime,/btn-morningstar/);
+  assert.match(runtime,/TechOpsMORNINGSTARBuild\.openHub/);
+  assert.match(runtime,/v64-swarm/);
+  assert.match(runtime,/TechOpsSwarmDoctrine\.issueCommand/);
+  assert.match(runtime,/INTERCEPT/);
+  assert.match(runtime,/nmNextStage/);
+  assert.match(runtime,/checkQuestioningMoment/);
+  assert.ok(!runtime.includes("TechOpsGoodBoysCampaignState"),"player-facing MORNINGSTAR/swarm bridge must not own Good Boys progression");
+  assert.ok(!/\.lateGame\s*=|morningstarPhase\s*=/.test(runtime),"gameplay bridge must not directly mutate main-campaign progression state");
+  const maintenance=fs.readFileSync("campaign_completion_runtime.js","utf8");
+  assert.match(maintenance,/parkPrivateTimer\(root\.TechOpsMORNINGSTARRuntime\)/);
+  assert.match(maintenance,/TechOpsMORNINGSTARRuntime\.install/);
 }
 
 // MORNINGSTAR: every phase requires its authored day tickets plus night recovery.
