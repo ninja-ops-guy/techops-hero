@@ -1,11 +1,12 @@
-/* TechOps Hero — Felicia first-office "Marketing" beat v1
+/* TechOps Hero — Felicia first-office "Marketing" beat v2
  * Intercepts only Felicia's first daylight interaction after the company video.
- * It then yields permanently to campaign_native_act2.js.
+ * install() is idempotent but reclaims the outer interaction layer if a later
+ * parser/native wrapper replaces it, avoiding order-dependent loss of the beat.
  */
 (function(root){
   "use strict";
   if(!root || root.TechOpsFeliciaFirstOfficeDialogue) return;
-  var VERSION=1, wrapped=false;
+  var VERSION=2;
   var LINES=[
     ["MIKE","You're the one from the company video."],
     ["FELICIA","Depends which video. I've been in a few."],
@@ -45,12 +46,13 @@
     }catch(e){}return false;
   }
   function install(){
-    if(wrapped||typeof root.interact!=="function")return false;
+    if(typeof root.interact!=="function")return false;
+    if(root.interact.__feliciaOfficeWrapped)return true;
     var base=root.interact;
     var fn=function(){if(canTrigger()&&adjacentFelicia())return trigger();return base.apply(this,arguments);};
-    fn.__feliciaOfficeWrapped=true;fn.__base=base;root.interact=fn;wrapped=true;return true;
+    fn.__feliciaOfficeWrapped=true;fn.__base=base;root.interact=fn;root.__feliciaOfficeInteractionOwnerAt=Date.now();return true;
   }
-  var timer=(root.setInterval||setInterval)(function(){if(install()&&timer){(root.clearInterval||clearInterval)(timer);timer=null;}},250);
-  root.TechOpsFeliciaFirstOfficeDialogue={VERSION:VERSION,LINES:LINES,canTrigger:canTrigger,trigger:trigger,install:install};
+  var timer=(root.setInterval||setInterval)(install,250);
+  root.TechOpsFeliciaFirstOfficeDialogue={VERSION:VERSION,LINES:LINES,canTrigger:canTrigger,trigger:trigger,install:install,timer:timer};
   install();
 })(typeof globalThis!=="undefined"?globalThis:this);
