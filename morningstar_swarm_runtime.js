@@ -1,4 +1,4 @@
-/* TechOps Hero — MORNINGSTAR + swarm gameplay bridge v4.
+/* TechOps Hero — MORNINGSTAR + swarm gameplay bridge v5.
  * Presentation/input bridge only. State authority remains in morningstar_build.js,
  * swarm_doctrine.js and the main campaign contracts. Maintenance is owned by
  * campaign_completion_runtime.js; this module creates no private polling timer.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||!root.document||root.TechOpsMORNINGSTARRuntime)return;
-  var VERSION=4,nightWrapped=false;
+  var VERSION=5,nightWrapped=false;
   function phase(){try{return root.TechOpsMORNINGSTARBuild?root.TechOpsMORNINGSTARBuild.getCurrentPhase():0;}catch(e){return 0;}}
   function isFelicia(){try{return typeof root.isFel==="function"?!!root.isFel():!!(root.S&&root.S.meta&&root.S.meta._char==="felicia");}catch(e){return false;}}
   function notify(t){try{if(typeof root.toast==="function")root.toast(t,3200);}catch(_){} }
@@ -29,14 +29,17 @@
     ];
     if(fel)opts.push({t:"INTERCEPT · SELF-AUTHORIZE",f:function(){issue("INTERCEPT",{range:300,duration:45,drones:2,intent:"intercept immediate threat",authorizedBy:"Felicia"});}});
     opts.push({t:"Close",f:close});
-    root.dlg("MORNINGSTAR // SWARM COMMAND",fel?"Felicia has tactical swarm authority, but every command remains bounded, attributable and challengeable.<br><br><b>Self-authorizing INTERCEPT is logged and can trigger a doctrine dispute.</b>":"Issue a bounded nonlethal swarm command. Lethal interception requires explicit Mike or Felicia authorization.",opts);
+    root.dlg("MORNINGSTAR // SWARM COMMAND",fel?"Felicia has tactical swarm authority, but every command remains bounded, attributable and challengeable.<br><br><b>Self-authorizing INTERCEPT is logged and can trigger a doctrine dispute.</b>":"Mike can issue bounded, nonlethal swarm commands and inspect or reverse logged actions. Lethal interception still requires explicit human authorization.",opts);
     return true;
   }
-  function ensureHudButton(){
+  function ensureHudButtons(){
     var host=root.document.getElementById("hud-right"),build=root.TechOpsMORNINGSTARBuild;if(!host||!build)return false;
     var b=root.document.getElementById("btn-morningstar");
     if(!b){b=root.document.createElement("button");b.id="btn-morningstar";b.className="hud-btn";b.textContent="✦";b.title="MORNINGSTAR build";b.setAttribute("aria-label","Open MORNINGSTAR build");b.addEventListener("click",function(e){e.preventDefault();if(root.TechOpsMORNINGSTARBuild&&typeof root.TechOpsMORNINGSTARBuild.openHub==="function")root.TechOpsMORNINGSTARBuild.openHub();});host.appendChild(b);}
     var snap=build.snapshot&&build.snapshot();b.style.display=phase()>0||(snap&&snap.requirements)?"":"none";
+    var swarm=root.document.getElementById("btn-swarm-command");
+    if(!swarm){swarm=root.document.createElement("button");swarm.id="btn-swarm-command";swarm.className="hud-btn";swarm.textContent="⌁";swarm.title="Swarm commands";swarm.setAttribute("aria-label","Open swarm commands");swarm.addEventListener("click",function(e){e.preventDefault();openSwarm();});host.appendChild(swarm);}
+    swarm.style.display=phase()>=3?"":"none";
     return true;
   }
   function ensureWatchdogButton(){
@@ -65,8 +68,8 @@
     };
     fn.__morningstarSwarmWrapped=true;fn.__base=base;root.nmNextStage=fn;nightWrapped=true;return true;
   }
-  function acceptance(){var snap=null;try{snap=root.TechOpsSwarmDoctrine&&root.TechOpsSwarmDoctrine.snapshot?root.TechOpsSwarmDoctrine.snapshot():null;}catch(e){}return{version:VERSION,phase:phase(),hud:!!root.document.getElementById("btn-morningstar"),watchdogSwarm:!!root.document.getElementById("v64-swarm"),nightHook:nightWrapped&&!!(root.nmNextStage&&root.nmNextStage.__morningstarSwarmWrapped),doctrine:!!root.TechOpsSwarmDoctrine,build:!!root.TechOpsMORNINGSTARBuild,integrityIncident:!!(snap&&snap.questioningMomentsTriggered&&snap.questioningMomentsTriggered.indexOf("swarm_q2")>=0),sharedMaintenance:true,at:Date.now()};}
-  function install(){ensureHudButton();ensureWatchdogButton();wrapNightStage();root.__morningstarSwarmRuntime=acceptance();return true;}
+  function acceptance(){var snap=null;try{snap=root.TechOpsSwarmDoctrine&&root.TechOpsSwarmDoctrine.snapshot?root.TechOpsSwarmDoctrine.snapshot():null;}catch(e){}return{version:VERSION,phase:phase(),hud:!!root.document.getElementById("btn-morningstar"),swarmHud:!!root.document.getElementById("btn-swarm-command"),watchdogSwarm:!!root.document.getElementById("v64-swarm"),nightHook:nightWrapped&&!!(root.nmNextStage&&root.nmNextStage.__morningstarSwarmWrapped),doctrine:!!root.TechOpsSwarmDoctrine,build:!!root.TechOpsMORNINGSTARBuild,integrityIncident:!!(snap&&snap.questioningMomentsTriggered&&snap.questioningMomentsTriggered.indexOf("swarm_q2")>=0),sharedMaintenance:true,at:Date.now()};}
+  function install(){ensureHudButtons();ensureWatchdogButton();wrapNightStage();root.__morningstarSwarmRuntime=acceptance();return true;}
   root.TechOpsMORNINGSTARRuntime={VERSION:VERSION,install:install,openSwarm:openSwarm,issue:issue,seedIntegrityIncident:seedIntegrityIncident,acceptance:acceptance};
   install();
 })(typeof globalThis!=="undefined"?globalThis:this);
