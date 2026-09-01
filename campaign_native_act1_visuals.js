@@ -1,6 +1,6 @@
 /* TechOps Hero — Day 1 presentation/bootstrap compatibility entrypoint.
- * Browser: load the preserved visual implementation plus the Story Bible v1.2
- * gap pass. Node/tests: export the preserved implementation unchanged.
+ * Browser: load the preserved visual implementation plus Story Bible v1.2
+ * content gap passes. Node/tests: export the preserved implementation unchanged.
  */
 (function(root){
   "use strict";
@@ -12,4 +12,5 @@
   }
   if(!root.TechOpsCampaignNativeAct1Visuals)load("campaign_native_act1_visuals_impl.js","__techopsAct1VisualImplLoader");
   if(!root.TechOpsCampaignBibleGapPass)load("campaign_bible_gap_pass.js","__techopsBibleGapLoader");
+  if(!root.TechOpsLateGameBootstrap)load("campaign_late_game_bootstrap.js","__techopsLateGameBootstrapLoader");
 })(typeof globalThis!=="undefined"?globalThis:this);
