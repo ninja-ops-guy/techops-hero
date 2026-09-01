@@ -30,7 +30,7 @@ assert.ok(order("good_boys_progression_authority.js")<order("good_dogs_cutscene_
 assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs cutscene player must load before the bridge");
 
 const introSource=fs.readFileSync(path.join(__dirname,"good_boys_intro_repair.js"),"utf8");new Function(introSource);
-assert.ok(introSource.includes('VERSION=12'),"direct intro must expose the v12 canonical mobile handoff contract");
+assert.ok(introSource.includes('VERSION=13'),"direct intro must expose the v13 canonical mobile handoff contract");
 assert.ok(introSource.includes('dataset.gbdBypass="1"'),"direct intro must bypass obsolete director start interception");
 assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_01"'),"Good Boys must open with GD_CUT_01");
 assert.ok(introSource.includes('function showShipInterlude()'),"Good Boys opening must include the playable ship inspection beat");
@@ -49,12 +49,16 @@ assert.ok(introSource.includes('e.stopImmediatePropagation()'),"direct intro lau
 assert.ok(introSource.includes('start.click()'),"direct intro must use canonical CLOCK IN initialization");
 assert.ok(introSource.includes('/Standard/i.test'),"direct intro must choose the canonical Standard difficulty before M2");
 assert.ok(introSource.includes('standard.click()'),"direct intro must complete startRun through the canonical difficulty option");
+assert.ok(introSource.includes('/CIO\\s+Dispatch/i.test'),"direct intro must consume the canonical CIO Dispatch after Standard startRun");
+assert.ok(introSource.includes('clockIn.click()'),"direct intro must complete the canonical CIO Dispatch option before M2");
+assert.ok(introSource.includes('usedDispatch:usedDispatch'),"direct intro clock-in diagnostics must record CIO Dispatch completion");
+assert.ok(introSource.includes('state.diff===1&&!state.inDialog'),"direct intro must verify Standard startup has no remaining canonical dialog");
 assert.ok(introSource.includes('__goodBoysCanonicalClockIn'),"direct intro must expose canonical clock-in diagnostics");
 assert.ok(introSource.includes('state.transition(1,2,"clip2-ended"'),"opening must commit canonical M1->M2 only at the final handoff");
 assert.ok(introSource.includes('authority.startNext(current)'),"canonical progression authority must start the persisted mission");
 assert.ok(introSource.includes('function verify(attempt,epoch)'),"direct intro must verify campaign attachment against a single launch epoch");
 assert.ok(introSource.includes('attempt<3'),"direct intro attachment retry must remain bounded");
-assert.ok(introSource.includes('gbiRepairInstalled==="12"'),"direct intro listener installation must be idempotent");
+assert.ok(introSource.includes('gbiRepairInstalled==="13"'),"direct intro listener installation must be idempotent");
 
 const directorSource=fs.readFileSync(path.join(__dirname,"good_boys_campaign_director.js"),"utf8");new Function(directorSource);
 assert.ok(directorSource.includes('VERSION=6'),"Good Boys director must be presentation-only v6");
