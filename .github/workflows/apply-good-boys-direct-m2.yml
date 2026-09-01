@@ -1,4 +1,4 @@
-name: Apply Good Boys runtime harness patch
+name: Apply Good Boys canonical control ownership fix
 
 on:
   push:
@@ -18,23 +18,22 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Apply runtime harness race patch
-        run: python3 .github/apply_good_boys_bot_harness_patch.py
+      - name: Apply canonical control ownership fix
+        run: python3 .github/apply_good_boys_control_ownership_fix.py
 
-      - name: Validate patched harnesses
+      - name: Validate patched runtime and contracts
         run: |
-          node --check scripts/good_boys_intro_mobile_bot.mjs
-          node --check scripts/runtime_bot.mjs
+          node --check good_boys_progression_authority.js
+          node --check good_boys_campaign_director.js
           node --check scripts/good_boys_progression_bot.mjs
-          node --check scripts/good_boys_background_bible_bot.mjs
           node test_good_boys_intro_repair.js
           node test_static_entrypoint_integrity.js
 
-      - name: Commit harness patch
+      - name: Commit production ownership fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/good_boys_intro_mobile_bot.mjs scripts/runtime_bot.mjs scripts/good_boys_progression_bot.mjs scripts/good_boys_background_bible_bot.mjs
+          git add good_boys_progression_authority.js good_boys_campaign_director.js scripts/good_boys_progression_bot.mjs test_good_boys_intro_repair.js
           git diff --cached --check
-          git commit -m "Harden Good Boys runtime bot phase transitions"
+          git commit -m "Fix Good Boys canonical mobile control ownership"
           git push origin HEAD:main
