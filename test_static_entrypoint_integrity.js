@@ -67,25 +67,31 @@ assert.ok(order("good_dogs_cutscenes_v2_2.js") < order("good_dogs_cutscene_bridg
 
 const introSource = fs.readFileSync(path.join(__dirname, "good_boys_intro_repair.js"), "utf8");
 new Function(introSource);
+assert.ok(introSource.includes('VERSION=7'), "direct intro must expose the v7 handoff contract");
 assert.ok(introSource.includes('dataset.gbdBypass="1"'), "direct intro must bypass the legacy director start interceptor");
 assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_01")'), "Good Boys must open with the exact source-master GD_CUT_01 cinematic");
+assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_02")'), "natural Good Boys opening playback must include GD_CUT_02");
+assert.ok(introSource.includes('if(first&&first.skipped)return first'), "SKIP must terminate the complete opening instead of advancing into a second movie");
+assert.ok(introSource.includes('premise.id="good-boys-campaign-intro"'), "TAKE CONTROL premise must participate in the authored blocker contract");
 assert.ok(!introSource.includes('SCENES=['), "retired four-card preamble must not return");
 assert.ok(introSource.includes('e.stopImmediatePropagation()'), "direct intro launch must isolate the title click from legacy delegated listeners");
 assert.ok(introSource.includes('start.click()'), "direct intro must use canonical CLOCK IN state initialization after the movie");
 assert.ok(introSource.includes('root.v736.start()'), "direct intro must hand off into the canonical Good Boys campaign");
-assert.ok(introSource.includes('function verify(attempt)'), "direct intro must verify campaign attachment after the movie");
-assert.ok(introSource.includes('attempt<2'), "direct intro attachment retry must remain bounded");
+assert.ok(introSource.includes('function verify(attempt,epoch)'), "direct intro must verify campaign attachment against a single launch epoch");
+assert.ok(introSource.includes('attempt<3'), "direct intro attachment retry must remain bounded");
+assert.ok(introSource.includes('gbiRepairInstalled==="7"'), "direct intro listener installation must be idempotent");
 
 const bridgeSource = fs.readFileSync(path.join(__dirname, "good_dogs_cutscene_bridge.js"), "utf8");
 new Function(bridgeSource);
 [
-  '1:["GD_CUT_01"]',
-  '3:["GD_CUT_02","GD_CUT_03"]',
+  '3:["GD_CUT_03"]',
   '4:["GD_CUT_04","GD_CUT_05"]',
   '5:["GD_CUT_06"]',
   '6:["GD_CUT_07"]',
   '7:["GD_CUT_08"]'
 ].forEach((contract) => assert.ok(bridgeSource.includes(contract), `Good Dogs mission/cutscene contract missing: ${contract}`));
+assert.ok(!bridgeSource.includes('1:["GD_CUT_01"]'), "opening GD_CUT_01 must remain owned by the direct intro");
+assert.ok(!bridgeSource.includes('3:["GD_CUT_02","GD_CUT_03"]'), "opening GD_CUT_02 must not replay during mission 3");
 assert.ok(bridgeSource.includes('write("k_identity_status","K_pending")'), "K reveal must persist K_pending identity state");
 assert.ok(bridgeSource.includes('m===4)return false'), "Cell 118 legacy mission card must remain suppressed after the canonical terminal-to-K reveal pair");
 
