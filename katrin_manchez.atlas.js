@@ -71,15 +71,15 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
   root.GoodDogsShipCanonicalArt={VERSION:2,cockpit:"assets/v736/good_boys_ship/cockpit_pilot.jpg",dogs:"assets/v736/good_boys_ship/canonical_dogs.webp",frames:FRAMES,install:install};
 })(typeof globalThis!=="undefined"?globalThis:this);
 
-/* Good Boys M2 boarding action owner.
- * The legacy M2 implementation used only an invisible x threshold. This layer makes
- * the visible BOARD THE SHIP affordance authoritative while delegating the actual
- * state transition to TechOpsGoodBoysProgressionAuthority.advance().
+/* Good Boys M2 boarding action owner v2.
+ * BOARD THE SHIP is owned by the mounted M2 gameplay runtime, never by canonical
+ * metadata alone. During cinematic/runtime handoff an old ending runtime or no
+ * runtime at all must remove the affordance instead of leaking a premise surface.
  */
 (function(root){
   "use strict";
-  if(!root||!root.document||root.__goodBoysBoardShipActionV1)return;
-  root.__goodBoysBoardShipActionV1=true;
+  if(!root||!root.document||root.__goodBoysBoardShipActionV2)return;
+  root.__goodBoysBoardShipActionV2=true;
   var boarding=false,retryTimer=0;
   function state(){
     try{
@@ -88,18 +88,19 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
       return{p:p,n:n,c:c,m:m,living:living,revealed:!!(n&&n._gbShipRevealed),x:Number(n&&n.x||0)};
     }catch(e){return{m:0,living:99,revealed:false,x:0};}
   }
+  function isLiveM2(s){return !!(s&&s.c&&!s.c.ending&&Number(s.c.m||0)===2&&s.m===2);}
   function remove(){var b=document.getElementById("good-boys-board-ship");if(b)b.remove();}
   function commit(attempt){
     var s=state();attempt=attempt||0;
-    if(s.m!==2||!s.revealed||s.living>0||!s.p||typeof s.p.advance!=="function"){boarding=false;return false;}
+    if(!isLiveM2(s)||!s.revealed||s.living>0||s.x<1080||!s.p||typeof s.p.advance!=="function"){boarding=false;remove();return false;}
     var ok=false;try{ok=!!s.p.advance(3,"boarded-secret-ship-button");}catch(e){root.__goodBoysBoardShipError=String(e&&e.stack||e);}
-    root.__goodBoysBoardShipAttempt={ok:ok,attempt:attempt,mission:s.m,x:s.x,at:Date.now()};
+    root.__goodBoysBoardShipAttempt={ok:ok,attempt:attempt,mission:s.m,runtimeMission:Number(s.c&&s.c.m||0),x:s.x,at:Date.now()};
     if(ok){remove();return true;}
     if(attempt<6){clearTimeout(retryTimer);retryTimer=setTimeout(function(){commit(attempt+1);},140);return false;}
     boarding=false;return false;
   }
   function activate(e){
-    var s=state();if(s.m!==2||!s.revealed||s.living>0)return false;
+    var s=state();if(!isLiveM2(s)||!s.revealed||s.living>0||s.x<1080){remove();return false;}
     if(e){try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){} }
     if(boarding)return true;boarding=true;var b=document.getElementById("good-boys-board-ship");if(b){b.disabled=true;b.textContent="BOARDING…";}commit(0);return true;
   }
@@ -107,8 +108,8 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
   function rescue(e){if(legacyTarget(e&&e.target))activate(e);}
   function render(){
     var s=state(),b=document.getElementById("good-boys-board-ship");
-    var visible=s.m===2&&s.revealed&&s.living===0&&s.x>=1080;
-    if(!visible){if(b&&s.m!==2)remove();return;}
+    var visible=isLiveM2(s)&&s.revealed&&s.living===0&&s.x>=1080;
+    if(!visible){if(b)remove();return;}
     if(!b){
       b=document.createElement("button");b.id="good-boys-board-ship";b.type="button";b.textContent="BOARD THE SHIP";b.setAttribute("aria-label","Board the secret ship");
       b.style.cssText="position:fixed;left:50%;bottom:max(88px,calc(env(safe-area-inset-bottom) + 78px));transform:translateX(-50%);z-index:15050;min-width:210px;min-height:54px;padding:12px 20px;border:2px solid #67e8f9;border-radius:8px;background:#071624;color:#fff;box-shadow:0 0 0 3px #051019,0 8px 30px #000b;font:800 13px monospace;letter-spacing:.08em;touch-action:manipulation";
@@ -118,5 +119,5 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
   }
   document.addEventListener("pointerup",rescue,true);document.addEventListener("click",rescue,true);
   setInterval(render,80);render();
-  root.TechOpsGoodBoysBoardShipAction={VERSION:1,activate:activate,render:render,state:state};
+  root.TechOpsGoodBoysBoardShipAction={VERSION:2,activate:activate,render:render,state:state,isLiveM2:isLiveM2};
 })(typeof globalThis!=="undefined"?globalThis:this);
