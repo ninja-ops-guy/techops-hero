@@ -1,0 +1,60 @@
+name: Patch Good Boys intro v4
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/patch-good-boys-intro-v4.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Defer final CTA beyond user event
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('good_boys_intro_repair.js')
+          s=p.read_text()
+          s=s.replace('/* TechOps Hero — Good Boys intro repair v3', '/* TechOps Hero — Good Boys intro repair v4')
+          s=s.replace('var VERSION=3;', 'var VERSION=4;')
+          old='''  function advance(e){\n    if(e){try{e.preventDefault();e.stopPropagation();}catch(_){}}\n    if(advancing||!active)return;advancing=true;\n    if(index<SCENES.length-1){index++;render();return;}\n    launchCampaign();\n  }'''
+          new='''  function advance(e){\n    if(e){try{e.preventDefault();if(typeof e.stopImmediatePropagation==="function")e.stopImmediatePropagation();else e.stopPropagation();}catch(_){}}\n    if(advancing||!active)return;advancing=true;\n    if(index<SCENES.length-1){index++;render();return;}\n    /* Do not mutate the cinematic or prime the shared Night engine on the same\n       event turn as the final iOS tap. WebKit may run zero-delay timers before\n       automation/touch dispatch acknowledges the click, making a healthy launch\n       present as a dead CTA. Give the gesture a short completion window first. */\n    try{var b=root.document&&root.document.getElementById("gb-cine-next");if(b){b.disabled=true;b.textContent="CONNECTING…";}}catch(_){}\n    (root.setTimeout||setTimeout)(launchCampaign,120);\n  }'''
+          if old not in s: raise SystemExit('advance block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          t=Path('test_good_boys_intro_repair.js')
+          q=t.read_text()
+          anchor='''assert.ok(source.includes('if(advancing||!active)return'), "slide progression must reject double taps/re-entrancy");\n'''
+          extra='''assert.ok(source.includes('e.stopImmediatePropagation()'), "final CTA must isolate its click from competing delegated listeners");\nassert.ok(source.includes('b.textContent="CONNECTING…"'), "final CTA must acknowledge the tap before campaign bootstrap");\nassert.ok(source.includes('(root.setTimeout||setTimeout)(launchCampaign,120);'), "entire campaign handoff must occur after the iOS tap event has returned");\n'''
+          if extra not in q:
+              if anchor not in q: raise SystemExit('advance test anchor missing')
+              q=q.replace(anchor,anchor+extra)
+          t.write_text(q)
+
+          i=Path('index.html')
+          h=i.read_text()
+          if 'good_boys_intro_repair.js?v=20260831-goodboys-intro-v3' in h:
+              h=h.replace('good_boys_intro_repair.js?v=20260831-goodboys-intro-v3','good_boys_intro_repair.js?v=20260901-goodboys-intro-v4',1)
+          elif 'good_boys_intro_repair.js?v=20260901-goodboys-intro-v4' not in h:
+              raise SystemExit('index cache key anchor missing')
+          i.write_text(h)
+          PY
+          node --check good_boys_intro_repair.js
+          node test_good_boys_intro_repair.js
+          node test_static_entrypoint_integrity.js
+      - name: Commit production fix
+        run: |
+          rm .github/workflows/patch-good-boys-intro-v4.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add good_boys_intro_repair.js test_good_boys_intro_repair.js index.html .github/workflows/patch-good-boys-intro-v4.yml
+          git commit -m 'Defer Good Boys final CTA beyond iOS tap event'
+          git push origin HEAD:main
