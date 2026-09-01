@@ -95,3 +95,5 @@ const report={pass:failures.length===0,failures,events};
 fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.json'),JSON.stringify(report,null,2));
 fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.md'),['# Good Boys iPhone Intro Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Failures: ${failures.length}`,'',...events.map(e=>`- ${e.name}: \`${JSON.stringify(e)}\``)].join('\n'));
 if(!report.pass)process.exitCode=1;
+
+// validation touch: direct Good Dogs opening v5
