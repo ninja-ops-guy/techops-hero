@@ -27,6 +27,17 @@ function context(seed={}){
 }
 function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filename:file});}
 
+// Browser bootstrap: load all four modules only after canonical campaign dependencies exist.
+{
+  const bootstrap=fs.readFileSync("campaign_late_game_bootstrap.js","utf8");
+  assert.doesNotThrow(()=>new Function(bootstrap),"late-game browser bootstrap must parse");
+  ["morningstar_build.js","swarm_doctrine.js","chapters_vii_x.js","felicia_first_office.js"].forEach(file=>assert.ok(bootstrap.includes(file),`late-game bootstrap must load ${file}`));
+  assert.ok(bootstrap.includes("TechOpsCampaignNativeAct2"),"Felicia office wrapper must wait until native Act II owns interaction");
+  assert.ok(!bootstrap.includes("TechOpsGoodBoysCampaignState.transition"),"late-game bootstrap must never mutate Good Boys mission authority");
+  const entry=fs.readFileSync("campaign_native_act1_visuals.js","utf8");
+  assert.ok(entry.includes("campaign_late_game_bootstrap.js"),"browser campaign entrypoint must wire the late-game bootstrap");
+}
+
 // MORNINGSTAR: every phase requires its authored day tickets plus night recovery.
 {
   const c=context();run("morningstar_build.js",c);
@@ -66,14 +77,34 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.strictEqual(F.canTrigger(),true);assert.strictEqual(F.trigger(),true);
   for(let i=0;i<F.LINES.length;i++){assert.ok(c.root.__dialog&&c.root.__dialog.opts&&c.root.__dialog.opts[0]);c.root.__dialog.opts[0].f();}
   assert.strictEqual(c.state.p1.office.feliciaFirstOfficeMet,true);assert.strictEqual(F.canTrigger(),false);
+  assert.ok(F.LINES.some(line=>/Marketing's here/.test(line[1])),"canonical Marketing joke must remain in the first office beat");
 }
 
-// Late-game ending validator: semantic gates are real and main-campaign-owned.
+// Good Dogs completion imports into the main story exactly once; _v736 remains read-only.
+{
+  const c=context();c.root.S={inDialog:true,meta:{_v736:{m:8,done:true,k:true,waldo:true}}};run("chapters_vii_x.js",c);
+  const L=c.root.TechOpsLateGameCampaign;assert.ok(L);
+  L.syncGoodBoysFacts();L.syncGoodBoysFacts();
+  const imports=c.state.lateGame.chapters.history.filter(h=>h.type==="good_dogs_interlude_imported");
+  assert.strictEqual(imports.length,1,"Good Dogs completion must be imported idempotently");
+  assert.strictEqual(c.state.story.facts.k_freed,true);assert.strictEqual(c.state.story.facts.waldo_freed,true);
+}
+
+// Late-game ending validator: semantic gates are real and canonical Story chooses the ending first.
 {
   const c=context();c.state.lateGame={metrics:{evidence:80,trust:40},morningstar:{phase:5}};c.state.story.facts={mike_meets_k:true,k_personhood_affirmed:true,duet_protocol_complete:true,watchdog_defeated:true,orpheus_interface_reached:true};c.root.TechOpsMORNINGSTARBuild={getCurrentPhase:()=>5};run("chapters_vii_x.js",c);
   const V=c.root.TechOpsEndingValidator;assert.strictEqual(V.validate("shutdown").valid,true);assert.strictEqual(V.validate("control").valid,true);assert.strictEqual(V.validate("open_network").valid,false,"low trust blocks Open Network");
   c.state.lateGame.metrics.trust=80;assert.strictEqual(V.validate("control").valid,false,"high trust blocks Control");assert.strictEqual(V.validate("open_network").valid,true,"distributed ending unlocks only after prerequisites");
+  assert.strictEqual(c.root.TechOpsChapterX.selectEnding("open_network"),true);
+  assert.strictEqual(c.state.story.ending,"open_network");assert.strictEqual(c.state.story.achievement,"open_network","canonical Story.chooseEnding must own the achievement before epilogue routing");
   const src=fs.readFileSync("chapters_vii_x.js","utf8");assert.ok(src.includes("Red is me. You're the mirror."));assert.ok(src.includes("EVERY TICKET IS A DUNGEON."));assert.ok(!src.includes("TechOpsGoodBoysCampaignState.transition"),"late chapters must not repurpose Good Boys state authority");
+}
+
+// State validator keeps Good Boys invariants separate and rejects structurally invalid Open Network saves.
+{
+  const c=context();run("state_validator.js",c);const V=c.root.TechOpsStateValidator;assert.ok(V.validateStory);
+  const invalid={story:{facts:{watchdog_defeated:true,k_personhood_affirmed:true,duet_protocol_complete:true}},lateGame:{morningstar:{phase:4},chapters:{watchdogDefeated:true,ending:"open_network"}}};
+  const r=V.validateStory(invalid);assert.strictEqual(r.valid,false);assert.ok(r.errors.some(e=>/MORNINGSTAR phase 5/.test(e)));
 }
 
 console.log("Late-game / MORNINGSTAR / swarm contracts: PASS");
