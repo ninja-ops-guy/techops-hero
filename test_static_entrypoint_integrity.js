@@ -30,11 +30,17 @@ assert.ok(order("good_boys_progression_authority.js")<order("good_dogs_cutscene_
 assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs cutscene player must load before the bridge");
 
 const introSource=fs.readFileSync(path.join(__dirname,"good_boys_intro_repair.js"),"utf8");new Function(introSource);
-assert.ok(introSource.includes('VERSION=10'),"direct intro must expose the v10 canonical handoff contract");
+assert.ok(introSource.includes('VERSION=11'),"direct intro must expose the v11 canonical mobile handoff contract");
 assert.ok(introSource.includes('dataset.gbdBypass="1"'),"direct intro must bypass obsolete director start interception");
 assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_01"'),"Good Boys must open with GD_CUT_01");
 assert.ok(introSource.includes('function showShipInterlude()'),"Good Boys opening must include the playable ship inspection beat");
+assert.ok(introSource.includes('VERSION:2,active:true,totalSystems:3'),"Good Boys ship runtime must expose time-based v2 controls");
 assert.ok(introSource.includes('totalSystems:3'),"Good Boys opening must require exactly three ship systems");
+assert.ok(introSource.includes('(ts-lastFrame)/1000'),"Good Boys ship traversal must use elapsed time rather than animation-frame count");
+assert.ok(introSource.includes('held*330*dt'),"Good Boys ship traversal must remain frame-rate independent");
+assert.ok(introSource.includes('setPointerCapture'),"Good Boys mobile ship controls must capture valid finger holds");
+assert.ok(introSource.includes('lostpointercapture'),"Good Boys mobile ship controls must release captured holds safely");
+assert.ok(!introSource.includes('x+held*5.5'),"retired frame-dependent ship movement must not return");
 assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_02"'),"Good Boys opening must resolve with GD_CUT_02");
 assert.ok(!introSource.includes('if(first&&first.skipped)return first'),"skipping clip 1 must not skip required ship gameplay");
 assert.ok(introSource.includes('premise.id="good-boys-campaign-intro"'),"TAKE CONTROL premise must participate in the authored blocker contract");
@@ -45,7 +51,7 @@ assert.ok(introSource.includes('state.transition(1,2,"clip2-ended"'),"opening mu
 assert.ok(introSource.includes('authority.startNext(current)'),"canonical progression authority must start the persisted mission");
 assert.ok(introSource.includes('function verify(attempt,epoch)'),"direct intro must verify campaign attachment against a single launch epoch");
 assert.ok(introSource.includes('attempt<3'),"direct intro attachment retry must remain bounded");
-assert.ok(introSource.includes('gbiRepairInstalled==="10"'),"direct intro listener installation must be idempotent");
+assert.ok(introSource.includes('gbiRepairInstalled==="11"'),"direct intro listener installation must be idempotent");
 
 const directorSource=fs.readFileSync(path.join(__dirname,"good_boys_campaign_director.js"),"utf8");new Function(directorSource);
 assert.ok(directorSource.includes('VERSION=6'),"Good Boys director must be presentation-only v6");
