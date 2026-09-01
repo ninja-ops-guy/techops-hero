@@ -40,12 +40,13 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.ok(entry.includes("campaign_late_game_bootstrap.js"),"browser campaign entrypoint must wire the late-game bootstrap");
 }
 
-// Player-facing MORNINGSTAR/swarm bridge: hub + Felicia swarm actions remain authority-routed.
+// Player-facing MORNINGSTAR/swarm bridge: shared HUD + Felicia Watchdog actions remain authority-routed.
 {
   const runtime=fs.readFileSync("morningstar_swarm_runtime.js","utf8");
   assert.doesNotThrow(()=>new Function(runtime),"MORNINGSTAR/swarm gameplay bridge must parse");
-  assert.match(runtime,/VERSION=4/);
+  assert.match(runtime,/VERSION=5/);
   assert.match(runtime,/btn-morningstar/);
+  assert.match(runtime,/btn-swarm-command/);
   assert.match(runtime,/TechOpsMORNINGSTARBuild\.openHub/);
   assert.match(runtime,/v64-swarm/);
   assert.match(runtime,/TechOpsSwarmDoctrine\.issueCommand/);
