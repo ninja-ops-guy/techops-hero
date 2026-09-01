@@ -64,14 +64,14 @@ assert.ok(introSource.includes('function liveM2()'),"direct intro must require l
 assert.ok(introSource.includes('suppressStaleBoard'),"direct intro must suppress stale BOARD THE SHIP interception");
 
 const directorSource=fs.readFileSync(path.join(__dirname,"good_boys_campaign_director.js"),"utf8");new Function(directorSource);
-assert.ok(directorSource.includes('VERSION=6'),"Good Boys director must be presentation-only v6");
+assert.ok(directorSource.includes('VERSION=7'),"Good Boys director must be presentation-only v7 with compositor-owned observation");
 assert.ok(directorSource.includes('openingOwner:"TechOpsGoodBoysIntroRepair"'),"director must delegate opening ownership to the canonical intro module");
 assert.ok(!directorSource.includes('FOLLOW THE TRAIL'),"legacy FOLLOW THE TRAIL path must be removed at source");
 assert.ok(!directorSource.includes('installStartCinematic'),"legacy director start capture must be removed");
 
 const progressionSource=fs.readFileSync(path.join(__dirname,"good_boys_progression_authority.js"),"utf8");new Function(progressionSource);
 const v736Source=fs.readFileSync(path.join(__dirname,"v736_hooks.js"),"utf8");new Function(v736Source);
-assert.ok(progressionSource.includes('VERSION=12'),"Good Boys progression must expose v12 core-owned direct-M2 plus async-safe state authority");
+assert.ok(progressionSource.includes('VERSION=13'),"Good Boys progression must expose v13 core-owned direct-M2 plus canonical mobile-pad ownership");
 assert.ok(progressionSource.includes('root.TechOpsGoodBoysCampaignState=CampaignState'),"canonical campaign state API must be globally available");
 assert.ok(progressionSource.includes('CampaignState.transition(from,next'),"mission advancement must go through canonical transition()");
 assert.ok(progressionSource.includes('function startNext(next,options)'),"canonical runtime handoff must accept explicit options");

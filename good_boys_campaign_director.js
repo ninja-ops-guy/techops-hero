@@ -6,7 +6,7 @@
   "use strict";
   if(!root)return;
   try{var old=root.TechOpsGoodBoysCampaignDirector;if(old&&old.timer&&root.clearInterval)root.clearInterval(old.timer);if(old&&old.observer)old.observer.disconnect();}catch(_){}
-  var VERSION=6,style=null,observer=null,shipImg=null,combo={step:0,last:0};
+  var VERSION=7,style=null,observer=null,shipImg=null,combo={step:0,last:0};
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
   function mission(){try{var a=root.TechOpsGoodBoysCampaignState;if(a&&typeof a.mission==="function")return Number(a.mission())||1;var m=root.S&&root.S.meta&&root.S.meta._v736;return Math.max(1,Math.min(8,Number(m&&m.m||1)));}catch(e){return 1;}}
@@ -31,7 +31,7 @@
   function showOpening(done){try{var intro=root.TechOpsGoodBoysIntroRepair;if(intro&&typeof intro.launch==="function"&&!intro.launching)intro.launch();}catch(e){root.__goodBoysDirectorOpeningDelegateError=String(e&&e.stack||e);}if(done)done();return false;}
   function showCinematic(scenes,done){if(done)done();return false;}
   function progressionWatch(){try{var p=root.TechOpsGoodBoysProgressionAuthority;if(p&&p.tick)return p.tick();return false;}catch(e){return false;}}
-  function installObserver(){try{if(observer||!root.MutationObserver||!root.document)return;observer=new root.MutationObserver(function(){if(active())handoffControls();});observer.observe(root.document.documentElement,{subtree:true,childList:true});}catch(e){}}
+  function installObserver(){try{if(root.__productionSingleCompositor){if(observer){observer.disconnect();observer=null;}root.__goodBoysDirectorObserverSuppressed=true;return false;}if(observer||!root.MutationObserver||!root.document)return false;observer=new root.MutationObserver(function(){if(active())handoffControls();});observer.observe(root.document.documentElement,{subtree:true,childList:true});return true;}catch(e){return false;}}
   function tick(){try{installStyle();syncMissionDefinitions();installShipDraw();calmFrames();installObserver();var on=active();if(root.document&&root.document.body){root.document.body.classList.toggle("good-boys-directed",on);root.document.body.classList.toggle("good-boys-cinematic",on&&cinematicVisible());}removeDirectorPads();if(on)handoffControls();}catch(e){root.__goodBoysDirectorError=String(e&&e.stack||e);}}
   tick();var timer=root.setInterval?root.setInterval(tick,150):null;
   root.TechOpsGoodBoysCampaignDirector={VERSION:VERSION,tick:tick,showOpening:showOpening,showCinematic:showCinematic,duoAttack:duoAttack,reliableThrow:reliableThrow,handoffControls:handoffControls,syncMissionDefinitions:syncMissionDefinitions,drawShip:drawShip,progressionWatch:progressionWatch,observer:observer,timer:timer,openingOwner:"TechOpsGoodBoysIntroRepair"};
