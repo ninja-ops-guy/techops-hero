@@ -9,6 +9,7 @@ new Function(progression);
 new Function(board);
 new Function(core);
 
+// Certification trigger: core-owned direct M2 handoff after ff11c91.
 // Canonical opening: Clip 1 -> deterministic 3-system ship interaction -> Clip 2
 // -> one premise -> TAKE CONTROL -> canonical Standard CLOCK IN -> CIO Dispatch -> direct M2 gameplay.
 assert.ok(source.includes('VERSION=15'), "direct Good Boys opening must be v15");
