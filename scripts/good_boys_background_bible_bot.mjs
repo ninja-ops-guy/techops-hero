@@ -48,8 +48,8 @@ try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
   await dismiss(page,12000);await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:7000});await page.waitForTimeout(300);
-  const opening=await page.evaluate(()=>({repair:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,ship:window.TechOpsShipInteraction&&window.TechOpsShipInteraction.VERSION||0,state:window.__goodBoysOpeningGameplay||null}));
-  if(opening.repair<11||opening.ship<2||!opening.state||!opening.state.completed||opening.state.count!==3)fail(0,'canonical-opening-not-complete',opening);
+  const opening=await page.evaluate(()=>({repair:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,ship:window.TechOpsShipInteraction&&window.TechOpsShipInteraction.VERSION||0,state:window.__goodBoysOpeningGameplay||null,clockIn:window.__goodBoysCanonicalClockIn||null}));
+  if(opening.repair<12||opening.ship<2||!opening.state||!opening.state.completed||opening.state.count!==3||!opening.clockIn||!opening.clockIn.ok)fail(0,'canonical-opening-not-complete',opening);
   /* This bot samples the eight authored environments out of sequence. Pause the
      live progression timer so combat-clear state cannot legitimately advance a
      manually selected sample while its background contract is being observed. */
