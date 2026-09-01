@@ -105,6 +105,10 @@ try{
     const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
     return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
   },null,{timeout:3000});
+  await page.waitForFunction(()=>{
+    const t=(document.getElementById('dlg-text')&&document.getElementById('dlg-text').textContent)||'';
+    return /bounded/i.test(t)&&/nonlethal/i.test(t);
+  },null,{timeout:5000});
   const dialog=await page.evaluate(()=>({
     name:(document.getElementById('dlg-name')&&document.getElementById('dlg-name').textContent)||'',
     text:(document.getElementById('dlg-text')&&document.getElementById('dlg-text').textContent)||'',
