@@ -55,7 +55,7 @@ try{
   /* This bot samples the eight authored environments out of sequence. Pause the
      live progression timer so combat-clear state cannot legitimately advance a
      manually selected sample while its background contract is being observed. */
-  await page.evaluate(()=>{const p=window.TechOpsGoodBoysProgressionAuthority;if(p&&p.timer!=null){clearInterval(p.timer);p.timer=null;}window.__goodBoysBackgroundBibleSampling=true;});
+  await page.evaluate(()=>{const p=window.TechOpsGoodBoysProgressionAuthority;if(p&&p.timer!=null){clearInterval(p.timer);p.timer=null;}if(p&&typeof p.tick==='function'){p.__backgroundBibleLiveTick=p.tick;p.tick=function(){return false;};}window.__goodBoysBackgroundBibleSampling=true;});
   for(let m=1;m<=8;m++){
     await page.evaluate((mission)=>{var n=window.NM,s=window.S;if(n&&n._v736)n._v736.m=mission;if(s&&s.meta&&s.meta._v736)s.meta._v736.m=mission;var prog=window.TechOpsGoodBoysProgressionAuthority;if(prog&&prog.reconcileMission)prog.reconcileMission('background-bible-sample');var p=window.TechOpsGoodBoysPrisonCinematicPatch;if(p&&p.buildBackdrops)p.buildBackdrops();var a=window.TechOpsGoodBoysBackgroundAuthority;if(a){a.syncCanon();a.enforce();}var w=window.TechOpsGoodBoysBibleWorld;if(w)w.tick();if(a)a.enforce();},m);
     await page.waitForTimeout(180);

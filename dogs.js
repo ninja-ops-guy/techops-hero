@@ -14,11 +14,12 @@ window.TO_DOGS = (function(){ try { return window.__GK_DOGS || undefined; } catc
   bridge("ctx",function(){try{return typeof ctx!=="undefined"?ctx:null;}catch(e){return null;}});
   bridge("cv",function(){try{return typeof cv!=="undefined"?cv:null;}catch(e){return null;}});
   bridge("keys",function(){try{return typeof keys!=="undefined"?keys:null;}catch(e){return null;}});
+  bridge("save",function(){try{return typeof save==="function"?save:null;}catch(e){return null;}});
   bridge("NM_DISTRICTS",function(){try{return typeof NM_DISTRICTS!=="undefined"?NM_DISTRICTS:null;}catch(e){return null;}});
   bridge("NM_KINDS",function(){try{return typeof NM_KINDS!=="undefined"?NM_KINDS:null;}catch(e){return null;}});
   bridge("NM_FLOOR",function(){try{return typeof NM_FLOOR!=="undefined"?NM_FLOOR:null;}catch(e){return null;}});
   bridge("NM_W",function(){try{return typeof NM_W!=="undefined"?NM_W:null;}catch(e){return null;}});
   try{root.__techopsPreProductionDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){}
   try{root.__techopsPreProductionStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){}
-  root.__techopsLexicalBridgeVersion=3;
+  root.__techopsLexicalBridgeVersion=4;
 })(window);

@@ -65,6 +65,7 @@
   function startCampaign(){
     try{
       if(!canonicalClockIn())return false;
+      try{if(root.GoodDogsCutscenes&&typeof root.GoodDogsCutscenes.state==="function")root.GoodDogsCutscenes.state();}catch(e){root.__goodBoysCutsceneStateMigrationError=String(e&&e.stack||e);}
       root.__gbiSkipBuiltinM1=true;root.__gbdSkipBuiltinM1=true;
       var state=root.TechOpsGoodBoysCampaignState,authority=root.TechOpsGoodBoysProgressionAuthority;
       if(!state||typeof state.mission!=="function"||typeof state.transition!=="function"||!authority||typeof authority.startNext!=="function")throw new Error("canonical Good Boys authority unavailable");

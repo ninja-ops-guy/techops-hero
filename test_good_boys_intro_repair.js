@@ -49,6 +49,7 @@ assert.ok(source.includes('clockIn.click()'), "canonical CIO Dispatch must compl
 assert.ok(source.includes('usedDispatch:usedDispatch'), "clock-in diagnostics must record CIO Dispatch completion");
 assert.ok(source.includes('state.diff===1&&!state.inDialog'), "Good Boys may not start M2 until Standard startup dialogs are fully resolved");
 assert.ok(source.includes('__goodBoysCanonicalClockIn'), "clock-in completion must expose a diagnostic contract");
+assert.ok(source.includes('GoodDogsCutscenes.state()'), "canonical CLOCK IN must rehydrate Good Dogs cutscene seen-state before M2 persistence");
 assert.ok(source.includes('root.__gbiSkipBuiltinM1=true'), "duplicate legacy mission-1 cinematic must remain suppressed");
 assert.ok(source.includes('gbiRepairInstalled==="15"'), "launch listener must install idempotently at v15");
 assert.ok(source.includes('if(launching||attached())return false'), "launch must remain single-flight");

@@ -31,8 +31,8 @@ assert.ok(script('campaign_sector04_runtime.js') < script('campaign_native_act1.
 ['night_walker_reference_v1.js','night_reference_visuals.js','loadNightReference'].forEach(marker=>assert.ok(world.includes(marker),`Night reference bootstrap missing ${marker}`));
 
 assert.ok(script('dogs.js') !== -1,'dogs.js must be present in deployed entrypoint');
-assert.ok(dogs.includes('__techopsLexicalBridgeVersion=3'),'dogs.js must expose current lexical runtime bridge v3');
-['bridge("S"','bridge("NM"','bridge("ctx"','bridge("NM_DISTRICTS"','__techopsPreProductionDrawNM','__techopsPreProductionStepNM'].forEach(marker=>assert.ok(dogs.includes(marker),`dogs.js lexical bridge missing ${marker}`));
+assert.ok(dogs.includes('__techopsLexicalBridgeVersion=4'),'dogs.js must expose current lexical runtime bridge v4');
+['bridge("S"','bridge("NM"','bridge("ctx"','bridge("save"','bridge("NM_DISTRICTS"','__techopsPreProductionDrawNM','__techopsPreProductionStepNM'].forEach(marker=>assert.ok(dogs.includes(marker),`dogs.js lexical bridge missing ${marker}`));
 assert.ok(dogs.includes('production_bootstrap') && dogs.includes('sole authority'),'dogs.js must defer post-parser production loading to bootstrap');
 assert.ok(!dogs.includes('good_boys_mobile_launch_guard.js?v='),'dogs.js must not dynamically load production guards');
 
