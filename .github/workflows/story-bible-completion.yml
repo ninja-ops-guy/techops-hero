@@ -14,6 +14,7 @@ on:
       - "state_validator.js"
       - "production_bootstrap.js"
       - "test_campaign_late_game_contracts.js"
+      - "test_campaign_swarm_migration.js"
       - ".github/workflows/story-bible-completion.yml"
   push:
     branches: [main]
@@ -29,6 +30,7 @@ on:
       - "state_validator.js"
       - "production_bootstrap.js"
       - "test_campaign_late_game_contracts.js"
+      - "test_campaign_swarm_migration.js"
       - ".github/workflows/story-bible-completion.yml"
 
 permissions:
@@ -56,8 +58,11 @@ jobs:
           node --check state_validator.js
           node --check production_bootstrap.js
           node --check test_campaign_late_game_contracts.js
+          node --check test_campaign_swarm_migration.js
       - name: Verify completion contracts
         run: node test_campaign_late_game_contracts.js
+      - name: Verify legacy swarm save migration
+        run: node test_campaign_swarm_migration.js
       - name: Verify existing campaign story contract
         run: node test_campaign_story.js
       - name: Verify production aggregate gate
