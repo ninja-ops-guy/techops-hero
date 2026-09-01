@@ -8,6 +8,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const transcript = [];
 const findings = [];
 const started = Date.now();
+let shipAutomationError=null;
 
 function repl(label, value) {
   const line = `[${new Date().toISOString()}] > ${label}${value === undefined ? '' : `\n${JSON.stringify(value, null, 2)}`}`;
@@ -46,17 +47,30 @@ async function snapshotRuntime(page) {
 }
 async function clickByRegex(page,regex,timeout=2500){const buttons=page.locator('button'),n=await buttons.count();for(let i=0;i<n;i++){const b=buttons.nth(i);let txt='';try{txt=(await b.innerText()).trim();}catch{}if(regex.test(txt)){try{await b.click({timeout});return txt;}catch{}}}return null;}
 async function domClick(page,selector){return page.locator(selector).evaluate(el=>{el.click();return true;}).catch(()=>false);}
+async function moveShipTo(page,id){
+  const result=await page.evaluate(async target=>{
+    const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
+    const interact=document.querySelector('#good-boys-ship-interlude [data-interact]');
+    if(!right||!interact)return {ok:false,error:'mobile controls missing'};
+    const before=window.__goodBoysOpeningGameplay||{};const xStart=Number(before.x||0);const pointerId=61;
+    const fire=(el,type,buttons)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId,pointerType:'touch',isPrimary:true,buttons}));
+    fire(right,'pointerdown',1);let moved=false,last=xStart;
+    try{
+      const deadline=performance.now()+5000;
+      while(performance.now()<deadline){await new Promise(r=>setTimeout(r,40));const s=window.__goodBoysOpeningGameplay||{};last=Number(s.x||last);if(Math.abs(last-xStart)>=5)moved=true;if(s.near&&s.targetId===target)return {ok:true,moved,xStart,xEnd:last,target};}
+      return {ok:false,moved,xStart,xEnd:last,target,error:moved?'target proximity not reached':'pointer hold produced no movement'};
+    }finally{fire(right,'pointerup',0);}
+  },id);
+  repl('ship touch hold',result);if(!result.ok)throw new Error('ship touch hold failed: '+JSON.stringify(result));
+  await page.waitForFunction(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');return !!(b&&!b.disabled);},null,{timeout:1000});
+  await page.evaluate(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');if(!b||b.disabled)throw new Error('INTERACT unavailable');b.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:62,pointerType:'touch',isPrimary:true,buttons:0}));});
+  await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id,{timeout:2000});
+}
 async function completeShipInteraction(page){
   if(!await page.locator('#good-boys-ship-interlude').count())return false;
   for(const id of ['nav','flight','dock']){
     const already=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(already)continue;
-    const right=page.locator('#good-boys-ship-interlude [data-move="right"]'),interact=page.locator('#good-boys-ship-interlude [data-interact]');
-    if(!await right.count())throw new Error('mobile right control missing');
-    await right.dispatchEvent('pointerdown',{pointerType:'touch',isPrimary:true,buttons:1});
-    try{await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&s.near&&s.targetId===target);},id,{timeout:7000});}finally{await right.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});}
-    await page.waitForFunction(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');return !!(b&&!b.disabled);},null,{timeout:1000});
-    await interact.dispatchEvent('pointerup',{pointerType:'touch',isPrimary:true,buttons:0});
-    await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id,{timeout:2000});
+    await moveShipTo(page,id);
   }
   return true;
 }
@@ -64,7 +78,7 @@ async function settle(page,ms=5000){
   const until=Date.now()+ms;
   while(Date.now()<until){
     await page.waitForTimeout(150);
-    if(await page.locator('#good-boys-ship-interlude').count()){await completeShipInteraction(page).catch(()=>{});await page.waitForTimeout(150);continue;}
+    if(await page.locator('#good-boys-ship-interlude').count()){try{await completeShipInteraction(page);shipAutomationError=null;}catch(e){shipAutomationError=String(e&&e.stack||e);return false;}await page.waitForTimeout(150);continue;}
     const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){await domClick(page,film);await page.waitForTimeout(140);continue;}
     const authored=page.locator('#good-boys-story-cine button,#gb-prison-cine button,#good-boys-campaign-intro button,#good-boys-earthfall-cine button');
     if(await authored.count()){await authored.first().evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(120);continue;}
@@ -74,6 +88,7 @@ async function settle(page,ms=5000){
     if(/E\s*\/\s*CLICK\s*[—-]\s*SKIP|CLICK\s*[—-]\s*SKIP/i.test(txt)){await page.keyboard.press('KeyE').catch(()=>{});await page.waitForTimeout(250);continue;}
     const s=await snapshotRuntime(page);if(!s.cutsceneVisible&&!s.runtime.inDialog)break;
   }
+  return true;
 }
 async function exercise(page,mode,before,profileName){
   if(!before.runtime.hasNM)return null;
@@ -88,7 +103,7 @@ async function exercise(page,mode,before,profileName){
 }
 
 async function runMode(browserType,profileName,contextOptions,mode){
-  repl(`launch ${profileName} :: ${mode}`);
+  repl(`launch ${profileName} :: ${mode}`);shipAutomationError=null;
   const browser=await browserType.launch({headless:true}),context=await browser.newContext(contextOptions);await context.tracing.start({screenshots:true,snapshots:false,sources:false});const page=await context.newPage();
   const consoleErrors=[],pageErrors=[],requestFailures=[],badResponses=[];
   page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});page.on('pageerror',e=>pageErrors.push(String(e&&e.stack||e)));page.on('requestfailed',r=>requestFailures.push({url:r.url(),error:r.failure()?.errorText||''}));page.on('response',r=>{if(r.status()>=400)badResponses.push({url:r.url(),status:r.status()});});
@@ -99,6 +114,7 @@ async function runMode(browserType,profileName,contextOptions,mode){
     repl(`${profileName} clicked`,clicked);await settle(page,mode==='goodboys'?15000:7500);
     if(mode==='goodboys'&&await page.locator('#gb-mobile-retry').count()){warn(mode,'recovery surfaced; bot executing one retry',{profileName});await page.locator('#gb-mobile-retry').evaluate(el=>el.click()).catch(()=>{});await settle(page,7000);}
     const s1=await snapshotRuntime(page);await page.screenshot({path:path.join(OUT,`${profileName}-${mode}.png`),fullPage:true});repl(`${profileName} ${mode} state`,s1);
+    if(mode==='goodboys'&&s1.blockerId==='good-boys-ship-interlude'){fail(mode,'ship opening did not complete',{profileName,shipAutomationError,opening:s1.shipInteraction});return;}
     const firstPartyPageErrors=pageErrors.filter(e=>!thirdPartyNoise(e)),thirdPartyPageErrors=pageErrors.filter(thirdPartyNoise);
     if(firstPartyPageErrors.length)fail(mode,'uncaught first-party page errors',{profileName,pageErrors:firstPartyPageErrors});if(thirdPartyPageErrors.length)warn(mode,'third-party media widget errors',{profileName,pageErrors:thirdPartyPageErrors});if(consoleErrors.length)warn(mode,'console errors',{profileName,consoleErrors:consoleErrors.slice(0,20)});if(requestFailures.length)warn(mode,'request failures',{profileName,requests:requestFailures.slice(0,15)});if(badResponses.length)warn(mode,'HTTP asset failures',{profileName,responses:badResponses.slice(0,15)});
     if(s1.safetyError)fail(mode,'runtime safety captured exception',{profileName,error:s1.safetyError});if(s1.canvas.ok&&(s1.canvas.nonBlack<20||s1.canvas.range<8))fail(mode,'canvas appears blank/stalled',{profileName,canvas:s1.canvas});if(!s1.canvas.ok)warn(mode,'canvas probe unavailable',{profileName,canvas:s1.canvas});if(!s1.wrapperGuard)warn(mode,'stable wrapper guard not confirmed',{profileName});
