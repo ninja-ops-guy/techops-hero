@@ -80,6 +80,14 @@ assert.ok(progressionSource.includes('finalizeHandoff("tick-handoff")'),"runtime
 assert.ok(!progressionSource.includes('throw new Error("Good Boys mission invariant failed after v736.start")'),"runtime start may not enforce a synchronous attachment invariant");
 assert.ok(!progressionSource.includes('_gbWaldoTrailComplete'),"retired Waldo trail completion flag must not drive progression");
 
+const boardSource=fs.readFileSync(path.join(__dirname,"katrin_manchez.atlas.js"),"utf8");new Function(boardSource);
+assert.ok(boardSource.includes('Good Boys M2 boarding action owner v2'),"M2 boarding action must expose the v2 runtime-ownership contract");
+assert.ok(boardSource.includes('function isLiveM2(s)'),"M2 boarding action must define a live-runtime ownership gate");
+assert.ok(boardSource.includes('s.c&&!s.c.ending&&Number(s.c.m||0)===2&&s.m===2'),"BOARD THE SHIP must require a fresh mounted M2 runtime as well as canonical M2 metadata");
+assert.ok(boardSource.includes('var visible=isLiveM2(s)&&s.revealed&&s.living===0&&s.x>=1080'),"BOARD THE SHIP render eligibility must require runtime ownership, clear arena, reveal, and position");
+assert.ok(boardSource.includes('if(!isLiveM2(s)||!s.revealed||s.living>0||s.x<1080)'),"BOARD THE SHIP activation must reject stale/pre-handoff surfaces");
+assert.ok(boardSource.includes('if(!visible){if(b)remove();return;}'),"boarding UI must be removed immediately whenever ownership is lost");
+
 const accessSource=fs.readFileSync(path.join(__dirname,"good_boys_access_core_authority.js"),"utf8");new Function(accessSource);
 assert.ok(accessSource.includes('VERSION=5'),"Access Core must expose canonical-only v5");
 assert.ok(accessSource.includes('TechOpsGoodBoysCampaignState'),"Access Core mission reads must delegate to canonical campaign state");
