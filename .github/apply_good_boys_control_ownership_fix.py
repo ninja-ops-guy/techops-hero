@@ -59,8 +59,8 @@ replace_once(
     "if(s.directorPads!==1)fail('director-pad-count',{count:s.directorPads});if(s.legacyPads!==0)fail('legacy-control-pads-remain',{count:s.legacyPads});if(s.canonicalPads!==1)fail('canonical-good-dogs-pad-count',{count:s.canonicalPads});",
 )
 
-# Static contract: lock the ownership rule so a future cleanup cannot reintroduce
-# the WebKit MutationObserver ping-pong.
+# Static contracts: lock the ownership rule so a future cleanup cannot
+# reintroduce the WebKit MutationObserver ping-pong.
 replace_once(
     "test_good_boys_intro_repair.js",
     "assert.ok(progression.includes('VERSION=12'), \"progression authority must expose v12 core-owned direct-M2 + async-safe handoff semantics\");",
@@ -69,5 +69,15 @@ replace_once(
 needle = "assert.ok(!progression.includes('cine.skip()'), \"progression authority must not emulate direct gameplay by skipping the cinematic engine\");\n"
 insert = needle + "assert.ok(!progression.includes('[\"good-dogs-touch\",\"good-boys-loop-controls\"]'), \"progression cleanup must never delete the canonical good-dogs-touch pad\");\nassert.ok(progression.includes('querySelectorAll(\"#good-boys-loop-controls\")'), \"progression cleanup must target only the retired loop control pad\");\nassert.ok(progression.includes('__goodBoysProgressionObserverSuppressed'), \"production compositor must suppress the redundant progression MutationObserver\");\n"
 replace_once("test_good_boys_intro_repair.js", needle, insert)
+replace_once(
+    "test_static_entrypoint_integrity.js",
+    "assert.ok(directorSource.includes('VERSION=6'),\"Good Boys director must be presentation-only v6\");",
+    "assert.ok(directorSource.includes('VERSION=7'),\"Good Boys director must be presentation-only v7 with compositor-owned observation\");",
+)
+replace_once(
+    "test_static_entrypoint_integrity.js",
+    "assert.ok(progressionSource.includes('VERSION=12'),\"Good Boys progression must expose v12 core-owned direct-M2 plus async-safe state authority\");",
+    "assert.ok(progressionSource.includes('VERSION=13'),\"Good Boys progression must expose v13 core-owned direct-M2 plus canonical mobile-pad ownership\");",
+)
 
 print("Good Boys canonical control ownership patch applied")
