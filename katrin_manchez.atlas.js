@@ -47,3 +47,53 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
   }
   var obs=new MutationObserver(install);obs.observe(document.documentElement,{childList:true,subtree:true});install();
 })(typeof globalThis!=="undefined"?globalThis:this);
+
+/* Good Boys M2 boarding action owner.
+ * The legacy M2 implementation used only an invisible x threshold. This layer makes
+ * the visible BOARD THE SHIP affordance authoritative while delegating the actual
+ * state transition to TechOpsGoodBoysProgressionAuthority.advance().
+ */
+(function(root){
+  "use strict";
+  if(!root||!root.document||root.__goodBoysBoardShipActionV1)return;
+  root.__goodBoysBoardShipActionV1=true;
+  var boarding=false,retryTimer=0;
+  function state(){
+    try{
+      var p=root.TechOpsGoodBoysProgressionAuthority,n=root.NM,c=n&&n._v736,m=p&&p.mission?Number(p.mission()):Number(root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||0);
+      var living=n&&n.enemies?n.enemies.filter(function(e){return e&&e.alive!==false&&Number(e.hp)>0;}).length:0;
+      return{p:p,n:n,c:c,m:m,living:living,revealed:!!(n&&n._gbShipRevealed),x:Number(n&&n.x||0)};
+    }catch(e){return{m:0,living:99,revealed:false,x:0};}
+  }
+  function remove(){var b=document.getElementById("good-boys-board-ship");if(b)b.remove();}
+  function commit(attempt){
+    var s=state();attempt=attempt||0;
+    if(s.m!==2||!s.revealed||s.living>0||!s.p||typeof s.p.advance!=="function"){boarding=false;return false;}
+    var ok=false;try{ok=!!s.p.advance(3,"boarded-secret-ship-button");}catch(e){root.__goodBoysBoardShipError=String(e&&e.stack||e);}
+    root.__goodBoysBoardShipAttempt={ok:ok,attempt:attempt,mission:s.m,x:s.x,at:Date.now()};
+    if(ok){remove();return true;}
+    if(attempt<6){clearTimeout(retryTimer);retryTimer=setTimeout(function(){commit(attempt+1);},140);return false;}
+    boarding=false;return false;
+  }
+  function activate(e){
+    var s=state();if(s.m!==2||!s.revealed||s.living>0)return false;
+    if(e){try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){} }
+    if(boarding)return true;boarding=true;var b=document.getElementById("good-boys-board-ship");if(b){b.disabled=true;b.textContent="BOARDING…";}commit(0);return true;
+  }
+  function legacyTarget(t){try{var b=t&&t.closest?t.closest("button"):null;return b&&/BOARD\s+(THE\s+)?SHIP/i.test(b.textContent||"")?b:null;}catch(_){return null;}}
+  function rescue(e){if(legacyTarget(e&&e.target))activate(e);}
+  function render(){
+    var s=state(),b=document.getElementById("good-boys-board-ship");
+    var visible=s.m===2&&s.revealed&&s.living===0&&s.x>=1080;
+    if(!visible){if(b&&s.m!==2)remove();return;}
+    if(!b){
+      b=document.createElement("button");b.id="good-boys-board-ship";b.type="button";b.textContent="BOARD THE SHIP";b.setAttribute("aria-label","Board the secret ship");
+      b.style.cssText="position:fixed;left:50%;bottom:max(88px,calc(env(safe-area-inset-bottom) + 78px));transform:translateX(-50%);z-index:15050;min-width:210px;min-height:54px;padding:12px 20px;border:2px solid #67e8f9;border-radius:8px;background:#071624;color:#fff;box-shadow:0 0 0 3px #051019,0 8px 30px #000b;font:800 13px monospace;letter-spacing:.08em;touch-action:manipulation";
+      b.addEventListener("pointerup",activate);b.addEventListener("click",activate);document.body.appendChild(b);
+    }
+    if(!boarding){b.disabled=false;b.textContent="BOARD THE SHIP";}
+  }
+  document.addEventListener("pointerup",rescue,true);document.addEventListener("click",rescue,true);
+  setInterval(render,80);render();
+  root.TechOpsGoodBoysBoardShipAction={VERSION:1,activate:activate,render:render,state:state};
+})(typeof globalThis!=="undefined"?globalThis:this);
