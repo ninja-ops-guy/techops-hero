@@ -4,10 +4,12 @@ on:
   pull_request:
     paths:
       - "campaign_bible_gap_pass.js"
+      - "campaign_late_game_bootstrap.js"
       - "campaign_completion_runtime.js"
       - "chapters_vii_x.js"
       - "felicia_first_office.js"
       - "morningstar_build.js"
+      - "morningstar_swarm_runtime.js"
       - "swarm_doctrine.js"
       - "state_validator.js"
       - "production_bootstrap.js"
@@ -17,10 +19,12 @@ on:
     branches: [main]
     paths:
       - "campaign_bible_gap_pass.js"
+      - "campaign_late_game_bootstrap.js"
       - "campaign_completion_runtime.js"
       - "chapters_vii_x.js"
       - "felicia_first_office.js"
       - "morningstar_build.js"
+      - "morningstar_swarm_runtime.js"
       - "swarm_doctrine.js"
       - "state_validator.js"
       - "production_bootstrap.js"
@@ -42,10 +46,12 @@ jobs:
       - name: Parse completion modules
         run: |
           node --check campaign_bible_gap_pass.js
+          node --check campaign_late_game_bootstrap.js
           node --check campaign_completion_runtime.js
           node --check chapters_vii_x.js
           node --check felicia_first_office.js
           node --check morningstar_build.js
+          node --check morningstar_swarm_runtime.js
           node --check swarm_doctrine.js
           node --check state_validator.js
           node --check production_bootstrap.js
