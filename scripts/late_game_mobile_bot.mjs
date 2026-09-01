@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// Runtime certification: exercise the canonical tap-to-complete path.
 import path from 'node:path';
 import { webkit, devices } from 'playwright';
 
