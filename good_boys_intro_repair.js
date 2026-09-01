@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Boys intro repair v3
+/* TechOps Hero — Good Boys intro repair v4
  * Repairs the pre-campaign four-card opening on mobile without changing the
  * canonical campaign/progression authority. The legacy director is bypassed
  * via its documented data-gbd-bypass hook; the familiar cinematic DOM id is
@@ -8,7 +8,7 @@
   "use strict";
   if(!root||root.TechOpsGoodBoysIntroRepair)return;
 
-  var VERSION=3;
+  var VERSION=4;
   var active=false,index=0,launching=false,advancing=false,watchdog=null;
   var overlay=null,style=null,dialogLock=null;
   var SCENES=[
@@ -171,10 +171,15 @@
     return true;
   }
   function advance(e){
-    if(e){try{e.preventDefault();e.stopPropagation();}catch(_){}}
+    if(e){try{e.preventDefault();if(typeof e.stopImmediatePropagation==="function")e.stopImmediatePropagation();else e.stopPropagation();}catch(_){}}
     if(advancing||!active)return;advancing=true;
     if(index<SCENES.length-1){index++;render();return;}
-    launchCampaign();
+    /* Do not mutate the cinematic or prime the shared Night engine on the same
+       event turn as the final iOS tap. WebKit may run zero-delay timers before
+       automation/touch dispatch acknowledges the click, making a healthy launch
+       present as a dead CTA. Give the gesture a short completion window first. */
+    try{var b=root.document&&root.document.getElementById("gb-cine-next");if(b){b.disabled=true;b.textContent="CONNECTING…";}}catch(_){}
+    (root.setTimeout||setTimeout)(launchCampaign,120);
   }
   function showOpening(){
     if(active||launching)return false;

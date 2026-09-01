@@ -16,6 +16,9 @@ assert.ok(source.includes('flex:1 1 auto;min-height:0'), "card zone must consume
 assert.ok(source.includes('btn.addEventListener("click",advance'), "slide progression must use click semantics for iOS Safari");
 assert.ok(!source.includes('btn.addEventListener("pointerdown",advance'), "repaired intro must not regress to pointerdown-only progression");
 assert.ok(source.includes('if(advancing||!active)return'), "slide progression must reject double taps/re-entrancy");
+assert.ok(source.includes('e.stopImmediatePropagation()'), "final CTA must isolate its click from competing delegated listeners");
+assert.ok(source.includes('b.textContent="CONNECTING…"'), "final CTA must acknowledge the tap before campaign bootstrap");
+assert.ok(source.includes('(root.setTimeout||setTimeout)(launchCampaign,120);'), "entire campaign handoff must occur after the iOS tap event has returned");
 assert.ok(source.includes('Object.defineProperty(s,"inDialog"'), "intro must own the authoritative dialogue lock while visible");
 assert.ok(source.includes('get:function(){return active?true:'), "legacy writers must not clear the intro dialogue lock");
 assert.ok(source.includes('function ensureGameState()'), "Good Boys title launch must create the canonical game state before cinematic locking");
