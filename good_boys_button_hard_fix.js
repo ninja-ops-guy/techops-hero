@@ -1,69 +1,32 @@
-/* TechOps Hero — 118/1984 hard title-button owner v3.
- * One physical-device button owner. Fresh/M2 launches MUST traverse the authored
- * opening: cutscene 01 -> playable ship -> cutscene 02 -> M2 gameplay.
- * Never silently fall through to gameplay when opening dependencies are late.
+/* TechOps Hero — 118/1984 hard title-button owner v4.
+ * One physical-device button owner. M2 opening is now:
+ * GD_CUT_01 -> one deck INTERACT -> playable space flight -> GD_CUT_03
+ * orbital/prison approach -> shuttle crash -> M2 prison gameplay.
  */
 (function(root){
   "use strict";
   if(!root||!root.document)return;
   var PRIOR=root.TechOpsGoodBoysButtonHardFix;
-  if(PRIOR&&Number(PRIOR.VERSION||0)>=3)return;
-  var VERSION=3,lastLaunch=0,launching=false,depTimer=0;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=4)return;
+  var VERSION=4,lastLaunch=0,launching=false,depTimer=0;
   function target(t){try{return t&&t.closest&&t.closest("#btn-v736");}catch(_){return null;}}
-  function saved(){
-    try{var raw=root.localStorage&&root.localStorage.getItem("techops_save"),s=raw?JSON.parse(raw):null,m=s&&s.meta&&s.meta._v736||null;return {mission:m&&Number(m.m)>1?Math.max(2,Math.min(8,Number(m.m))):2,k:!!(m&&m.k),waldo:!!(m&&m.waldo),evidence:m&&Array.isArray(m.evidence)?m.evidence.slice():[]};}
-    catch(_){return {mission:2,k:false,waldo:false,evidence:[]};}
-  }
-  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v3",at:Date.now()},extra||{});}
-  function clearForeignUi(){
-    try{["act1-reference","good-boys-story-cine","good-boys-premise"].forEach(function(id){var n=root.document.getElementById(id);if(n)n.remove();});}catch(_){}
-    try{var d=root.document.getElementById("dialogue");if(d)d.classList.add("hidden");if(root.S)root.S.inDialog=false;}catch(_){}
-    try{var p=root.document.getElementById("panel");if(p)p.classList.add("hidden");}catch(_){}
-    try{var e=root.document.getElementById("eod");if(e)e.classList.add("hidden");}catch(_){}
-  }
+  function saved(){try{var raw=root.localStorage&&root.localStorage.getItem("techops_save"),s=raw?JSON.parse(raw):null,m=s&&s.meta&&s.meta._v736||null;return {mission:m&&Number(m.m)>1?Math.max(2,Math.min(8,Number(m.m))):2,k:!!(m&&m.k),waldo:!!(m&&m.waldo),evidence:m&&Array.isArray(m.evidence)?m.evidence.slice():[]};}catch(_){return {mission:2,k:false,waldo:false,evidence:[]};}}
+  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v4",at:Date.now()},extra||{});}
+  function clearForeignUi(){try{["act1-reference","good-boys-story-cine","good-boys-premise","good-boys-ship-interlude"].forEach(function(id){var n=root.document.getElementById(id);if(n)n.remove();});}catch(_){}try{var d=root.document.getElementById("dialogue");if(d)d.classList.add("hidden");if(root.S)root.S.inDialog=false;}catch(_){}try{var p=root.document.getElementById("panel");if(p)p.classList.add("hidden");}catch(_){}try{var e=root.document.getElementById("eod");if(e)e.classList.add("hidden");}catch(_){} }
   function setButton(text,disabled){try{var b=root.document.getElementById("btn-v736");if(b){b.disabled=!!disabled;b.textContent=text;}}catch(_){} }
-  function depsReady(){var c=root.GoodDogsCutscenes,r=root.TechOpsGoodBoysIntroRepair;return !!(c&&typeof c.play==="function"&&r&&typeof r.showShipInterlude==="function");}
-  function waitForDeps(timeout){return new Promise(function(resolve,reject){var start=Date.now();function poll(){if(depsReady()){resolve(true);return;}if(Date.now()-start>=timeout){reject(new Error("Good Boys authored opening dependencies did not become ready"));return;}depTimer=root.setTimeout(poll,50);}poll();});}
-  function showOpeningError(err){
-    var old=root.document.getElementById("good-boys-opening-error");if(old)old.remove();
-    var box=root.document.createElement("div");box.id="good-boys-opening-error";
-    box.style.cssText="position:fixed;inset:0;z-index:160000;display:flex;align-items:center;justify-content:center;padding:22px;background:#02050af2;color:#eaf6ff;font-family:monospace";
-    box.innerHTML='<div style="width:min(620px,100%);border:1px solid #ff6b81;background:#071019;padding:22px;box-shadow:0 18px 60px #000"><div style="color:#ff8fa3;font-weight:700;letter-spacing:.12em">GOOD DOGS OPENING ERROR</div><p style="line-height:1.55">The 118/1984 opening did not initialize. Gameplay was not started so the story sequence cannot be skipped accidentally.</p><button type="button" style="width:100%;min-height:52px;border:1px solid #67e8f9;background:#0a1a28;color:#fff;font:700 13px monospace">RETRY OPENING</button></div>';
-    root.document.body.appendChild(box);var b=box.querySelector("button");b.onclick=function(){box.remove();launch("retry");};
-    root.__goodBoysOpeningError=String(err&&err.stack||err);root.__goodBoysHardButtonLaunch={ok:false,status:"opening-error",error:root.__goodBoysOpeningError,at:Date.now(),version:VERSION};
-  }
-  function mount(cfg,source){
-    if(!root.v736||typeof root.v736.start!=="function")throw new Error("v736.start unavailable");
-    clearForeignUi();phase("campaign-handoff",{mission:cfg.mission});
-    var ok=root.v736.start({mission:cfg.mission,k:cfg.k,waldo:cfg.waldo,evidence:cfg.evidence,directGameplay:true});
-    var c=root.NM&&root.NM._v736;if(!c||c.ending)throw new Error("Katrin/Manchez runtime did not mount synchronously");
-    phase("gameplay",{mission:Number(c.m||cfg.mission)});root.__goodBoysPhysicalLaunchActive=false;
-    root.__goodBoysHardButtonLaunch={ok:true,status:"gameplay",source:source||"unknown",mission:Number(c.m||cfg.mission),active:c.active||null,pair:!!(c.chars&&c.chars.katrin&&c.chars.manchez),at:Date.now(),version:VERSION};
-    launching=false;return ok!==false;
-  }
-  async function opening(cfg,source){
-    phase("opening-dependencies");setButton("LOADING GOOD DOGS OPENING…",true);await waitForDeps(6000);
-    var cine=root.GoodDogsCutscenes,repair=root.TechOpsGoodBoysIntroRepair;
-    phase("clip1");setButton("PLAYING TRANSMISSION 01…",true);
-    var first=await cine.play("GD_CUT_01",{force:true,muted:true,allowIOSVideo:true});root.__goodBoysHardClip1=first||null;
-    phase("ship-interaction");
-    var ship=await repair.showShipInterlude();root.__goodBoysHardShipResult=ship||null;
-    if(!ship||ship.completed!==true)throw new Error("Playable ship opening did not complete");
-    phase("clip2");var second=await cine.play("GD_CUT_02",{force:true,muted:true,allowIOSVideo:true});root.__goodBoysHardClip2=second||null;
+  function depsReady(){var c=root.GoodDogsCutscenes,o=root.TechOpsGoodBoysOpeningV4;return !!(c&&typeof c.play==="function"&&o&&typeof o.showDeckInteraction==="function"&&typeof o.showSpaceFlight==="function"&&typeof o.showCrashScene==="function");}
+  function waitForDeps(timeout){return new Promise(function(resolve,reject){var start=Date.now();function poll(){if(depsReady()){resolve(true);return;}if(Date.now()-start>=timeout){reject(new Error("Good Dogs opening v4 dependencies did not become ready"));return;}depTimer=root.setTimeout(poll,50);}poll();});}
+  function showOpeningError(err){var old=root.document.getElementById("good-boys-opening-error");if(old)old.remove();var box=root.document.createElement("div");box.id="good-boys-opening-error";box.style.cssText="position:fixed;inset:0;z-index:160000;display:flex;align-items:center;justify-content:center;padding:22px;background:#02050af2;color:#eaf6ff;font-family:monospace";box.innerHTML='<div style="width:min(620px,100%);border:1px solid #ff6b81;background:#071019;padding:22px;box-shadow:0 18px 60px #000"><div style="color:#ff8fa3;font-weight:700;letter-spacing:.12em">GOOD DOGS OPENING ERROR</div><p style="line-height:1.55">The opening sequence stopped before prison gameplay. It will not silently skip the missing scene.</p><button type="button" style="width:100%;min-height:52px;border:1px solid #67e8f9;background:#0a1a28;color:#fff;font:700 13px monospace">RETRY OPENING</button></div>';root.document.body.appendChild(box);box.querySelector("button").onclick=function(){box.remove();launch("retry");};root.__goodBoysOpeningError=String(err&&err.stack||err);root.__goodBoysHardButtonLaunch={ok:false,status:"opening-error",error:root.__goodBoysOpeningError,at:Date.now(),version:VERSION};}
+  function mount(cfg,source){if(!root.v736||typeof root.v736.start!=="function")throw new Error("v736.start unavailable");clearForeignUi();phase("prison-handoff",{mission:cfg.mission});var ok=root.v736.start({mission:cfg.mission,k:cfg.k,waldo:cfg.waldo,evidence:cfg.evidence,directGameplay:true});var c=root.NM&&root.NM._v736;if(!c||c.ending)throw new Error("Katrin/Manchez prison runtime did not mount synchronously");phase("prison-gameplay",{mission:Number(c.m||cfg.mission)});root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:true,status:"prison-gameplay",source:source||"unknown",mission:Number(c.m||cfg.mission),active:c.active||null,pair:!!(c.chars&&c.chars.katrin&&c.chars.manchez),at:Date.now(),version:VERSION};launching=false;return ok!==false;}
+  async function opening(cfg,source){phase("opening-dependencies");setButton("LOADING GOOD DOGS OPENING…",true);await waitForDeps(7000);var cine=root.GoodDogsCutscenes,o=root.TechOpsGoodBoysOpeningV4;
+    phase("clip1");setButton("PLAYING SIGNAL BEYOND EARTH…",true);var first=await cine.play("GD_CUT_01",{force:true,muted:true,allowIOSVideo:true});root.__goodBoysHardClip1=first||null;
+    phase("ship-deck-interact");var deck=await o.showDeckInteraction();if(!deck||deck.completed!==true)throw new Error("Ship deck interaction did not complete");root.__goodBoysHardDeckResult=deck;
+    phase("space-flight");var flight=await o.showSpaceFlight();if(!flight||flight.completed!==true)throw new Error("Space flight did not complete");root.__goodBoysHardFlightResult=flight;
+    phase("prison-approach-cutscene");setButton("APPROACHING BLACKSITE MERIDIAN…",true);var approach=await cine.play("GD_CUT_03",{force:true,muted:true,allowIOSVideo:true});root.__goodBoysHardApproachClip=approach||null;
+    phase("crash-scene");var crash=await o.showCrashScene();if(!crash||crash.completed!==true)throw new Error("Crash scene did not complete");root.__goodBoysHardCrashResult=crash;
     return mount(cfg,source);
   }
-  function launch(source){
-    var now=Date.now();if(launching||now-lastLaunch<700)return true;lastLaunch=now;launching=true;
-    var cfg=saved();root.__goodBoysPhysicalLaunchActive=true;clearForeignUi();
-    root.__goodBoysHardButtonLaunch={ok:null,status:cfg.mission===2?"opening":"starting",source:source||"unknown",mission:cfg.mission,at:now,version:VERSION};
-    if(cfg.mission===2){
-      setButton("OPENING GOOD DOGS PROTOCOL…",true);
-      opening(cfg,source).catch(function(err){launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY 118/1984 — KATRIN + MANCHEZ",false);showOpeningError(err);});
-      return true;
-    }
-    try{setButton("RESUMING KATRIN + MANCHEZ · M"+cfg.mission+"…",true);return mount(cfg,source);}catch(err){launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY 118/1984 — KATRIN + MANCHEZ",false);root.__goodBoysHardButtonLaunch={ok:false,status:"failed",source:source||"unknown",mission:cfg.mission,error:String(err&&err.stack||err),at:Date.now(),version:VERSION};return false;}
-  }
+  function launch(source){var now=Date.now();if(launching||now-lastLaunch<700)return true;lastLaunch=now;launching=true;var cfg=saved();root.__goodBoysPhysicalLaunchActive=true;clearForeignUi();root.__goodBoysHardButtonLaunch={ok:null,status:cfg.mission===2?"opening":"starting",source:source||"unknown",mission:cfg.mission,at:now,version:VERSION};if(cfg.mission===2){setButton("OPENING GOOD DOGS PROTOCOL…",true);opening(cfg,source).catch(function(err){launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY 118/1984 — KATRIN + MANCHEZ",false);showOpeningError(err);});return true;}try{setButton("RESUMING KATRIN + MANCHEZ · M"+cfg.mission+"…",true);return mount(cfg,source);}catch(err){launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY 118/1984 — KATRIN + MANCHEZ",false);root.__goodBoysHardButtonLaunch={ok:false,status:"failed",source:source||"unknown",mission:cfg.mission,error:String(err&&err.stack||err),at:Date.now(),version:VERSION};return false;}}
   function own(e){if(!target(e&&e.target))return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}launch(e&&e.type||"event");}
-  root.document.addEventListener("pointerup",own,true);root.document.addEventListener("click",own,true);
-  root.TechOpsGoodBoysButtonHardFix={VERSION:VERSION,launch:launch,saved:saved,opening:opening,clearForeignUi:clearForeignUi,depsReady:depsReady,get launching(){return launching;}};
+  root.document.addEventListener("pointerup",own,true);root.document.addEventListener("click",own,true);root.TechOpsGoodBoysButtonHardFix={VERSION:VERSION,launch:launch,saved:saved,opening:opening,clearForeignUi:clearForeignUi,depsReady:depsReady,get launching(){return launching;}};
 })(typeof globalThis!=="undefined"?globalThis:this);
