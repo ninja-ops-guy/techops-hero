@@ -14,6 +14,7 @@ const tests = [
   "test_good_boys_compositor_ownership.js",
   "test_good_boys_ui_ownership.js",
   "test_good_boys_mobile_launch_guard.js",
+  "test_good_boys_ship_deck_mapping.js",
   "test_production_mode_router.js",
   "test_production_runtime_safety.js",
   "test_production_compositor.js",

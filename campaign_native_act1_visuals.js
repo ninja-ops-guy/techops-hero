@@ -11,8 +11,8 @@
   if(!root.GoodDogsCutscenes||parseFloat(root.GoodDogsCutscenes.VERSION||0)<3.0)load("good_dogs_cutscenes_v2_2.js?v=20260902-ios-single-gesture-v30","__techopsGoodDogsCutsceneV30Loader");
   if(!root.TechOpsGoodDogsSingleAtlasAuthority||Number(root.TechOpsGoodDogsSingleAtlasAuthority.VERSION||0)<2)load("good_dogs_single_atlas_authority.js?v=20260902-single-atlas-v2","__techopsGoodDogsSingleAtlasLoaderV2");
   if(!root.TechOpsGoodBoysOpeningV4)load("good_boys_opening_sequence_v4.js?v=20260902-opening-v4c","__techopsGoodBoysOpeningV4Loader");
-  if(!root.GOOD_BOYS_SHIP_DECK_USER_ASSET)load("good_boys_ship_deck_user_asset.js?v=20260902-js-cockpit-v1","__techopsGoodBoysDeckUserAssetLoaderV1");
-  if(!root.TechOpsGoodBoysShipDeckScene||Number(root.TechOpsGoodBoysShipDeckScene.VERSION||0)<4)load("good_boys_ship_deck_scene.js?v=20260902-good-ship-deck-v4","__techopsGoodBoysShipDeckSceneLoaderV4");
+  if(!root.GOOD_BOYS_SHIP_DECK_USER_ASSET||Number(root.GOOD_BOYS_SHIP_DECK_USER_ASSET.VERSION||0)<2)load("good_boys_ship_deck_user_asset.js?v=20260902-deck-map-r2","__techopsGoodBoysUserDeckAssetLoaderV2");
+  if(!root.TechOpsGoodBoysShipDeckScene||Number(root.TechOpsGoodBoysShipDeckScene.VERSION||0)<5)load("good_boys_ship_deck_scene.js?v=20260902-deck-map-r2","__techopsGoodBoysShipDeckSceneLoaderV5");
   if(!root.TechOpsGoodBoysCrashScene||Number(root.TechOpsGoodBoysCrashScene.VERSION||0)<2)load("good_boys_crash_scene.js?v=20260902-canonical-crash-v2","__techopsGoodBoysCrashSceneLoaderV2");
   if(!root.TechOpsGoodBoysButtonHardFix||Number(root.TechOpsGoodBoysButtonHardFix.VERSION||0)<8)load("good_boys_button_hard_fix.js?v=20260902-hard-button-v8","__techopsGoodBoysButtonHardFixLoaderV8");
   if(!root.TechOpsGoodDogsMobileVisualPolish)load("good_dogs_mobile_visual_polish.js?v=20260901-mobile-polish-v1","__techopsGoodDogsMobileVisualPolishLoader");

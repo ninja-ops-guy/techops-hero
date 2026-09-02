@@ -7,11 +7,17 @@
   "use strict";
   if(!root||!root.document)return;
   var PRIOR=root.TechOpsGoodBoysShipDeckScene;if(PRIOR&&Number(PRIOR.VERSION||0)>=5)return;
-  var VERSION=5,DECK_SRC="assets/good_boys/good_ship_arcade.atlas.png",DECK_FRAME=[0,405,292,114],PILOT_SRC="assets/v736/good_boys_ship/cockpit_pilot.jpg",PRIME_KEY="__goodBoysCockpitPrimeV5";
+  var VERSION=5,DECK_SRC="assets/good_boys/good_ship_arcade.atlas.png",DECK_FRAME=[0,405,292,114],PILOT_SRC="assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260902-deck-map-r2",PRIME_KEY="__goodBoysCockpitPrimeV5";
   function remove(id){try{var n=root.document.getElementById(id);if(n)n.remove();}catch(_){}}
   function drawActor(ctx,A,img,key,cx,base,h,flip){try{var fr=A&&A.frames&&A.frames[key];if(!fr||!img||!img.complete||!img.naturalWidth)return false;var w=h*(fr[2]/fr[3]);ctx.save();ctx.imageSmoothingEnabled=false;if(flip){ctx.translate(cx,0);ctx.scale(-1,1);ctx.drawImage(img,fr[0],fr[1],fr[2],fr[3],-w/2,base-h,w,h);}else ctx.drawImage(img,fr[0],fr[1],fr[2],fr[3],cx-w/2,base-h,w,h);ctx.restore();return true;}catch(_){return false;}}
   function drawGuaranteedDeck(ctx,now){var g=ctx.createLinearGradient(0,0,0,540);g.addColorStop(0,"#10213a");g.addColorStop(.5,"#07111f");g.addColorStop(1,"#02050a");ctx.fillStyle=g;ctx.fillRect(0,0,960,540);ctx.fillStyle="#121e2c";ctx.fillRect(0,340,960,200);ctx.fillStyle="#24364a";for(var x=0;x<960;x+=96)ctx.fillRect(x,344,2,196);ctx.strokeStyle="#4d7898";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(70,300);ctx.quadraticCurveTo(480,20,890,300);ctx.stroke();ctx.strokeStyle="#203b53";ctx.lineWidth=22;ctx.beginPath();ctx.moveTo(92,298);ctx.quadraticCurveTo(480,48,868,298);ctx.stroke();var starShift=Math.floor((now||0)/80)%41;ctx.fillStyle="#cfefff";for(var i=0;i<42;i++){var sx=(i*137+starShift*3)%760+100,sy=(i*67)%220+62;ctx.fillRect(sx,sy,i%5===0?3:2,i%5===0?3:2);}ctx.fillStyle="#19314a";ctx.fillRect(110,285,190,95);ctx.fillRect(660,285,190,95);ctx.strokeStyle="#ff9e3d";ctx.lineWidth=3;ctx.strokeRect(125,300,160,62);ctx.strokeRect(675,300,160,62);ctx.fillStyle="#0a1826";ctx.beginPath();ctx.moveTo(410,430);ctx.lineTo(455,290);ctx.lineTo(505,290);ctx.lineTo(550,430);ctx.closePath();ctx.fill();ctx.strokeStyle="#5d819e";ctx.stroke();ctx.fillStyle="#72dcff";ctx.font="700 13px monospace";ctx.textAlign="center";ctx.fillText("GOOD SHIP // CREW DECK",480,90);}
   function primeAtlas(){if(root[PRIME_KEY])return root[PRIME_KEY];var img=new root.Image();root[PRIME_KEY]=img;img.decoding="async";try{img.src=DECK_SRC;}catch(_){}return img;}
+  function drawContain(ctx,img,x,y,w,h){
+    if(!img||!img.complete||!img.naturalWidth||!img.naturalHeight)return false;
+    var scale=Math.min(w/img.naturalWidth,h/img.naturalHeight);
+    var dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
+    ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);return true;
+  }
   function install(){
     var opening=root.TechOpsGoodBoysOpeningV4;if(!opening)return false;if(opening.showDeckInteraction&&opening.showDeckInteraction.__goodShipDeckV5)return true;
     function showDeckInteraction(){return new Promise(function(resolve){
@@ -30,7 +36,8 @@
       function keyUp(e){var k=String(e.key||"").toLowerCase();if(k==="arrowleft"||k==="a"||k==="arrowright"||k==="d")setMove(0,e);}
       function render(now){
         if(done)return;var dt=Math.min(34,Math.max(0,now-last));last=now;playerX=Math.max(105,Math.min(820,playerX+move*.31*dt));partnerX+=(playerX-78-partnerX)*Math.min(1,dt*.009);nearPilot=Math.abs(playerX-pilotX)<=112;drawGuaranteedDeck(ctx,now);
-        if(inlineReady){ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=.96;ctx.drawImage(inlineImg,0,0,inlineImg.naturalWidth,inlineImg.naturalHeight,0,70,960,330);ctx.restore();}
+        if(done)return;var dt=Math.min(34,Math.max(0,now-last));last=now;playerX=Math.max(105,Math.min(820,playerX+move*.31*dt));partnerX+=(playerX-78-partnerX)*Math.min(1,dt*.009);nearPilot=Math.abs(playerX-pilotX)<=112;drawGuaranteedDeck(ctx,now);
+        if(inlineReady){ctx.save();ctx.imageSmoothingEnabled=true;ctx.globalAlpha=.96;drawContain(ctx,inlineImg,0,70,960,330);ctx.restore();}
         if(atlasReady){try{var r=DECK_FRAME;ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=inlineReady?.3:.7;ctx.drawImage(atlas,r[0],r[1],r[2],r[3],0,0,960,540);ctx.restore();}catch(_){atlasReady=false;}}
         var shade=ctx.createLinearGradient(0,300,0,540);shade.addColorStop(0,"rgba(2,5,10,0)");shade.addColorStop(1,"rgba(2,5,10,.7)");ctx.fillStyle=shade;ctx.fillRect(0,300,960,240);
         if(!drawPilot()){ctx.fillStyle="rgba(70,9,14,.9)";ctx.fillRect(700,225,140,130);ctx.strokeStyle="#ff475d";ctx.strokeRect(700.5,225.5,140,130);ctx.fillStyle="#ffd8dc";ctx.font="700 11px monospace";ctx.textAlign="center";ctx.fillText("PILOT ASSET",770,278);ctx.fillText(pilotFailed?"MISSING":"LOADING",770,298);}

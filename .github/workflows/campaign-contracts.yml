@@ -134,6 +134,7 @@ jobs:
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js
+          node --check test_good_boys_ship_deck_mapping.js
           node --check test_production_asset_registry.js
           node --check test_production_compositor.js
           node --check test_production_runtime_lock.js
