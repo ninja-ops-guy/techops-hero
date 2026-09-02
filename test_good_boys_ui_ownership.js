@@ -58,4 +58,30 @@ assert.ok(game.includes("initMusic(true)"),"soundtrack must load from explicit u
 assert.ok(game.includes("if (!userInitiated"),"run initialization cannot eagerly mount the SoundCloud widget");
 assert.ok(fs.readFileSync("style.css","utf8").includes("bottom:max(190px"),"Night BLOCK/DASH controls must clear the primary touch buttons");
 
-console.log("Good Boys UI ownership and lazy media regression: PASS");
+// The 118/1984 opening has one click owner. The handoff patch is presentation-only.
+const handoff=fs.readFileSync("good_boys_handoff_ui_patch.js","utf8");
+const hard=fs.readFileSync("good_boys_button_hard_fix.js","utf8");
+const deck=fs.readFileSync("good_boys_ship_deck_scene.js","utf8");
+const flight=fs.readFileSync("good_boys_ship_flight.js","utf8");
+const cutscenes=fs.readFileSync("good_dogs_cutscenes_v2_2.js","utf8");
+for(const [name,src] of [["handoff",handoff],["hard",hard],["deck",deck],["flight",flight],["cutscenes",cutscenes]]) assert.doesNotThrow(()=>new Function(src),`${name} source must parse`);
+assert.ok(handoff.includes("VERSION=3"),"handoff isolation must be passive v3");
+assert.ok(handoff.includes('launchOwner:"TechOpsGoodBoysButtonHardFix"'),"handoff must name the sole launch owner");
+assert.ok(!handoff.includes('addEventListener("click",isolatedLaunch,true)'),"handoff may not consume the title click");
+assert.ok(!handoff.includes("v736.start({mission:Number(m)"),"handoff may not boot/resume a Good Boys mission");
+assert.ok(hard.includes("VERSION=9"),"hard title button must be the v9 opening authority");
+assert.ok(hard.includes("TechOpsGoodBoysShipFlight"),"opening must call the canonical ship-flight authority directly");
+assert.ok(!hard.includes("o.showSpaceFlight()"),"opening may not route through the legacy flight alias");
+assert.ok(deck.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"cockpit must integrate the existing pilot asset");
+assert.ok(deck.includes("MOVE TO PILOT")&&deck.includes("INTERACT"),"pilot must be a gameplay interaction target");
+assert.ok(flight.includes("assets/good_boys/good_ship_arcade.atlas.png"),"flight must use the supplied Good Ship atlas");
+assert.ok(flight.includes("asteroid_1")&&flight.includes("ship_player")&&flight.includes("prison_station"),"flight must use supplied ship/hazard/prison frames");
+assert.ok(cutscenes.includes('VERSION:"3.1"'),"cutscene player must expose automatic iPhone playback contract");
+assert.ok(cutscenes.includes("attemptAutoplay"),"cutscene player must attempt muted inline autoplay");
+assert.ok(!cutscenes.includes('if(ios)waitForUser("ios-ready"'),"iPhone must not be forced through a manual VIDEO READY gate");
+assert.ok(hard.includes('cine.play("GD_CUT_02",{force:true,muted:true,autoplay:true})'),"takeover clip must request autoplay");
+assert.ok(hard.includes('cine.play("GD_CUT_03",{force:true,muted:true,autoplay:true})'),"prison approach clip must request autoplay");
+const takeover=hard.indexOf('cine.play("GD_CUT_02"'),shipRun=hard.indexOf("runCanonicalFlight(ship)"),approach=hard.indexOf('cine.play("GD_CUT_03"'),crash=hard.indexOf("o.showCrashScene()");
+assert.ok(takeover>=0&&takeover<shipRun&&shipRun<approach&&approach<crash,"opening order must be pilot -> GD_CUT_02 -> flight -> GD_CUT_03 -> crash");
+
+console.log("Good Boys UI ownership, single opening authority, and lazy media regression: PASS");
