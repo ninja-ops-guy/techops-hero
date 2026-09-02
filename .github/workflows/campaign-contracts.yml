@@ -7,7 +7,7 @@ on:
       - "assets/v736/**"
       - "campaign_*.js"
       - "good_boys_*.js"
-      - "good_dogs_production_runtime.js"
+      - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
       - "orbital_tiles.source.js"
@@ -25,6 +25,7 @@ on:
       - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_good_dogs_*.js"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
@@ -40,7 +41,7 @@ on:
       - "assets/v736/**"
       - "campaign_*.js"
       - "good_boys_*.js"
-      - "good_dogs_production_runtime.js"
+      - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
       - "orbital_tiles.source.js"
@@ -58,6 +59,7 @@ on:
       - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_good_dogs_*.js"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
@@ -105,6 +107,9 @@ jobs:
           node --check good_boys_reference_mechanics.js
           node --check good_boys_gameplay_loop.js
           node --check good_boys_mobile_launch_guard.js
+          node --check good_boys_ship_approach.js
+          node --check good_boys_ship_flight.js
+          node --check good_dogs_campaign_state.js
           node --check good_dogs_production_runtime.js
           node --check production_asset_registry.js
           node --check production_wrapper_guard.js
@@ -134,6 +139,9 @@ jobs:
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js
+          node --check test_good_boys_ship_approach.js
+          node --check test_good_boys_ship_flight.js
+          node --check test_good_dogs_bible_contract.js
           node --check test_production_asset_registry.js
           node --check test_production_compositor.js
           node --check test_production_runtime_lock.js
@@ -171,6 +179,12 @@ jobs:
         run: node test_good_boys_ui_ownership.js
       - name: Verify Good Boys mobile launch recovery
         run: node test_good_boys_mobile_launch_guard.js
+      - name: Verify canonical Good Boys ship flight
+        run: |
+          node test_good_boys_ship_approach.js
+          node test_good_boys_ship_flight.js
+      - name: Verify Good Dogs Story Bible semantics
+        run: node test_good_dogs_bible_contract.js
       - name: Verify production asset inventory
         run: node test_production_asset_registry.js
       - name: Verify single Night compositor

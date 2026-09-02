@@ -5,7 +5,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
   /* Move with production_bootstrap so Safari cannot retain older authority files. */
-  var BUILD="20260830-production-v18-unified-goodboys-ui";
+  var BUILD="20260902-production-v25-canonical-good-dogs-state";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
@@ -19,9 +19,10 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
     }catch(e){return false;}
   }
   function loadHudLite(){if(!appendScript('data-good-boys-hud-lite','good_boys_hud_lite.js',null,function(){root.__goodBoysHudLiteWireError='good_boys_hud_lite.js';}))root.__goodBoysHudLiteWireError='append_failed';}
-  function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',loadHudLite,function(){root.__goodBoysDepthLiteWireError='good_boys_depth-lite.js';loadHudLite();}))loadHudLite();}
+  function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',loadHudLite,function(){root.__goodBoysDepthLiteWireError='good_boys-depth-lite.js';loadHudLite();}))loadHudLite();}
   function loadProgression(){if(!appendScript('data-good-boys-progression-authority','good_boys_progression_authority.js',loadDepthLite,function(){root.__goodBoysProgressionWireError='good_boys_progression_authority.js';loadDepthLite();}))loadDepthLite();}
-  function loadEarthfall(){if(!appendScript('data-good-boys-earthfall-ending','good_boys_earthfall_ending.js',loadProgression,function(){root.__goodBoysEarthfallWireError='good_boys_earthfall_ending.js';loadProgression();}))loadProgression();}
+  function loadCampaignState(){if(!appendScript('data-good-dogs-campaign-state','good_dogs_campaign_state.js',loadProgression,function(){root.__goodDogsCampaignStateWireError='good_dogs_campaign_state.js';loadProgression();}))loadProgression();}
+  function loadEarthfall(){if(!appendScript('data-good-boys-earthfall-ending','good_boys_earthfall_ending.js',loadCampaignState,function(){root.__goodBoysEarthfallWireError='good_boys_earthfall_ending.js';loadCampaignState();}))loadCampaignState();}
   function loadAccessCore(){if(!appendScript('data-good-boys-access-core-authority','good_boys_access_core_authority.js',loadEarthfall,function(){root.__goodBoysAccessCoreWireError='good_boys_access_core_authority.js';loadEarthfall();}))loadEarthfall();}
   function loadBibleWorld(){if(!appendScript('data-good-boys-bible-world','good_boys_bible_world.js',loadAccessCore,function(){root.__goodBoysBibleWorldWireError='good_boys_bible_world.js';loadAccessCore();}))loadAccessCore();}
   function loadBackgroundAuthority(){if(!appendScript('data-good-boys-background-authority','good_boys_background_authority.js',loadBibleWorld,function(){root.__goodBoysBackgroundWireError='good_boys_background_authority.js';loadBibleWorld();}))loadBibleWorld();}

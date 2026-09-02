@@ -1,0 +1,22 @@
+"use strict";
+const assert=require("assert");
+const fs=require("fs");
+const flight=fs.readFileSync("good_boys_ship_flight.js","utf8");
+const shim=fs.readFileSync("good_boys_ship_approach.js","utf8");
+const boot=fs.readFileSync("production_bootstrap.js","utf8");
+new Function(flight);new Function(shim);
+assert.ok(flight.includes("GOOD_BOYS_SHIP_ARCADE"),"canonical flight must own the supplied atlas contract");
+assert.ok(flight.includes("assets/good_boys/good_ship_arcade.atlas.png"),"canonical flight must load the supplied Good Ship atlas");
+for(const key of ["ship_player","asteroid_1","asteroid_2","asteroid_3","asteroid_4","asteroid_5","prison_station","prison_dock","lead_1","lead_2","lead_3","lead_4"]){assert.ok(flight.includes(key),`canonical flight missing supplied frame ${key}`);}
+assert.ok(flight.includes("AVOID ASTEROIDS")&&flight.includes("PRISON VECTOR"),"production flight must expose the authored avoidance objective and prison vector");
+assert.ok(flight.includes("runApproachCutscene"),"production flight must hand off through supplied approach frames");
+assert.ok(flight.includes("boarded-secret-ship")&&flight.includes("ship-flight-arrived-prison"),"production flight must own the real M2 -> M3 handoff");
+assert.ok(flight.includes("softlockPrevented")&&flight.includes("asset-error"),"asset failure must be visible in diagnostics while preserving progression");
+assert.ok(!flight.includes("pixelShip("),"canonical player ship must never fall back to procedural rectangles");
+assert.ok(!flight.includes("assets/v742/cutscenes/orbital_approach.png"),"canonical flight must not render the old prison plate as gameplay authority");
+assert.ok(!flight.includes("assets/v742/cutscenes/secret_ship_interior.png"),"canonical flight must not render the old ship interior as the player craft");
+assert.ok(boot.includes('"good_boys_ship_flight.js"'),"production bootstrap must load the authoritative ship flight");
+assert.ok(boot.includes("TechOpsGoodBoysShipFlight")&&boot.includes(".install()"),"production bootstrap must install the authoritative ship flight");
+assert.ok(shim.includes("compatibility shim")&&shim.includes("TechOpsGoodBoysShipFlight"),"legacy approach module must delegate to the production flight");
+assert.ok(!shim.includes('id==="GD_CUT_02"')&&!shim.includes("GoodDogsCutscenes.play"),"legacy approach module must not retain a second cinematic/flight interception point");
+console.log("Good Boys canonical supplied-asset ship flight: PASS");
