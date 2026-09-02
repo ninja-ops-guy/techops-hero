@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Dogs Protocol semantic state bridge v2.
+/* TechOps Hero — Good Dogs Protocol semantic state bridge v3.
  * Canonical story semantics for the compressed 8-mission browser runtime. The
  * Night-derived _v736 mission number remains a transport/runtime detail; these
  * named facts are the Story Bible contract consumed by Ghost Fork / Watchdog.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodDogsCampaignState)return;
-  var VERSION=2,bridgeTimer=null,bridgeInstalled=false;
+  var VERSION=3,bridgeTimer=null,bridgeInstalled=false,returnTimer=null;
   var ALL_FLAGS=[
     "good_dogs_signal_heard","good_dogs_campaign_started","good_dogs_tutorial_complete","cell_118_known","cell_1984_known",
     "shuttle_launched","orbital_detention_seen","prison_infiltrated","good_dogs_advanced_traversal_unlocked","cell_118_reached","k_seen",
@@ -26,6 +26,11 @@
     g.updatedAt=Date.now();return true;
   }
   function writeMany(obj){for(var k in obj)if(Object.prototype.hasOwnProperty.call(obj,k))write(k,obj[k]);return snapshot();}
+  function watchReturn(){
+    if(returnTimer||!root.setInterval)return false;
+    function check(){try{var m=root.S&&root.S.meta&&root.S.meta._v736;if(m&&m.done){completeReturn();if(returnTimer){root.clearInterval(returnTimer);returnTimer=null;}return true;}}catch(e){root.__goodDogsReturnBridgeError=String(e&&e.stack||e);}return false;}
+    if(check())return true;returnTimer=root.setInterval(check,120);return true;
+  }
   function markTransition(from,to){
     from=Number(from)||0;to=Number(to)||0;ensure();
     if(from===1&&to===2)writeMany({good_dogs_signal_heard:true,good_dogs_campaign_started:true,good_dogs_tutorial_complete:true,cell_118_known:true,cell_1984_known:true});
@@ -34,20 +39,21 @@
     if(from===4&&to===5)writeMany({k_seen:true,k_freed:true,k_identity_status:"K_pending"});
     if(from===5&&to===6)writeMany({mike_index_defeated:true,k_identity_status:"K",cell_1984_route_open:true});
     if(from===6&&to===7)writeMany({waldo_seen:true,waldo_freed:true,waldo_relationship_k:"accepted",release_expected_seen:true,orpheus_prediction_seeded:true,warden_null_active:true});
-    if(from===7&&to===8)writeMany({shuttle_bay_reached:true,warden_null_defeated:true,orbital_custody_broken:true});
+    if(from===7&&to===8){writeMany({shuttle_bay_reached:true,warden_null_defeated:true,orbital_custody_broken:true});watchReturn();}
     root.__goodDogsSemanticTransition={from:from,to:to,at:Date.now(),state:snapshot()};return true;
   }
   function completeReturn(){
+    var g=ensure();if(!g)return null;if(g.good_dogs_protocol_complete&&g.watchdog_k_available&&g.watchdog_waldo_available&&g.watchdog_good_dogs_available)return snapshot();
     writeMany({
       k_freed:true,k_identity_status:"K",waldo_freed:true,waldo_returned:true,good_dogs_returned:true,good_dogs_protocol_complete:true,
       warden_null_defeated:true,orbital_custody_broken:true,crew_returned_to_earth:true,
       watchdog_k_available:true,watchdog_waldo_available:true,watchdog_good_dogs_available:true
     });
-    var g=ensure(),story=root.S&&root.S.story;if(story){
+    var story=root.S&&root.S.story;if(story){
       ["k_freed","waldo_freed","warden_null_defeated","crew_returned_to_earth","good_dogs_protocol_complete","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available"].forEach(function(f){story.facts[f]=true;});
       if(story.completedActs.indexOf("interlude")<0)story.completedActs.push("interlude");
     }
-    g.completedAt=Date.now();root.__goodDogsMainCampaignBridge={complete:true,at:g.completedAt,facts:story&&story.facts||{}};return snapshot();
+    g.completedAt=Date.now();root.__goodDogsMainCampaignBridge={complete:true,at:g.completedAt,facts:story&&story.facts||{}};try{if(typeof root.save==="function")root.save();else if(typeof root.saveGame==="function")root.saveGame();}catch(e){root.__goodDogsMainCampaignBridgeSaveError=String(e&&e.stack||e);}return snapshot();
   }
   function snapshot(){var g=ensure()||{},out={schemaVersion:VERSION};ALL_FLAGS.forEach(function(k){out[k]=g[k]!==undefined?g[k]:root.S&&root.S.meta&&root.S.meta[k];});out.k_identity_status=g.k_identity_status;out.waldo_relationship_k=g.waldo_relationship_k;return out;}
   function validate(){
@@ -63,7 +69,8 @@
     if(bridgeInstalled)return true;var c=root.TechOpsGoodBoysCampaignState;if(!c||typeof c.transition!=="function")return false;if(c.transition.__goodDogsSemanticBridge){bridgeInstalled=true;return true;}
     var base=c.transition;var wrapped=function(from,to,reason,patch){var ok=base.apply(this,arguments);if(ok!==false)markTransition(from,to);return ok;};wrapped.__goodDogsSemanticBridge=true;wrapped.__baseTransition=base;c.transition=wrapped;bridgeInstalled=true;root.__goodDogsSemanticBridgeInstalled=true;return true;
   }
-  var API=root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate,installTransitionBridge:installTransitionBridge};
+  var API=root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate,installTransitionBridge:installTransitionBridge,watchReturn:watchReturn};
   ensure();
+  try{var initial=root.S&&root.S.meta&&root.S.meta._v736;if(initial&&initial.done)completeReturn();else if(initial&&Number(initial.m)===8)watchReturn();}catch(_){}
   if(!installTransitionBridge()&&root.setInterval){bridgeTimer=root.setInterval(function(){if(installTransitionBridge()){root.clearInterval(bridgeTimer);bridgeTimer=null;}},50);root.setTimeout(function(){if(bridgeTimer){root.clearInterval(bridgeTimer);bridgeTimer=null;root.__goodDogsSemanticBridgeError="progression authority not found within bridge window";}},5000);}
 })(typeof globalThis!=="undefined"?globalThis:this);
