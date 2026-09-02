@@ -1,0 +1,36 @@
+name: Apply Good Boys supplied-asset ship approach
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-good-boys-ship-approach.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Wire supplied ship assets into production
+        run: python3 .github/apply_good_boys_ship_approach.py
+      - name: Validate ship approach and startup contracts
+        run: |
+          node --check good_boys_ship_approach.js
+          node test_good_boys_ship_approach.js
+          node test_static_entrypoint_integrity.js
+          node test_production_performance_budget.js
+      - name: Commit production wiring
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html test_static_entrypoint_integrity.js test_production_performance_budget.js
+          git diff --cached --check
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Wire supplied Good Ship assets into prison approach gameplay"
+          git push origin HEAD:main
