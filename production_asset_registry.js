@@ -1,4 +1,4 @@
-/* TechOps Hero — complete production asset registry v8.
+/* TechOps Hero — complete production asset registry v9.
  * Makes every shipped visual asset discoverable by runtime, preloads physical
  * PNG assets, loads source payloads before atlas/reference manifests, and
  * fails closed when any required script/image/JSON asset cannot be loaded.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionAssets)return;
-  var VERSION=8;
+  var VERSION=9;
   var SCRIPT_ASSETS=[
     "campaign_bg.js","campaign_asset_pipeline.js","campaign_native_act1_visuals.js",
     "charger_reference_v1.js","duo_kw.atlas.js","env_objects.atlas.js","env_overlays.atlas.js","env_struct.atlas.js","env_terrain.atlas.js",
@@ -33,6 +33,7 @@
     "assets/campaign/shipping.clerk.idle.png","assets/campaign/shipping.dock_background.png","assets/campaign/shipping.label_printer.png","assets/campaign/shipping.printed_label_success.png",
     "assets/campaign/ui.standup.board.png","assets/campaign/ui.standup.owner_badge.png","assets/campaign/ui.standup.ticket_card.png",
     "assets/campaign/workstation.corporate_aircraft_panel.png","assets/campaign/workstation.felicia.video_frame.png","assets/campaign/workstation.orpheus.glitch_frame.png",
+    "assets/good_boys/good_ship_arcade.atlas.png",
     "assets/v736/katrin_manchez_atlas.png","assets/v736/k_action_atlas.png","assets/v736/k_studio_atlas.png",
     "assets/v742/cutscenes/access_core.png","assets/v742/cutscenes/cell_118.png","assets/v742/cutscenes/cell_1984.png","assets/v742/cutscenes/crash_site.png",
     "assets/v742/cutscenes/earthfall.png","assets/v742/cutscenes/hidden_bay.png","assets/v742/cutscenes/orbital_approach.png","assets/v742/cutscenes/secret_ship_interior.png",
