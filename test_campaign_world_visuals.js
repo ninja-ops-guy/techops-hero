@@ -98,10 +98,17 @@ assert.ok(/installStep/.test(loop) && /root\.stepNM=/.test(loop), "legacy standa
 assert.ok(/emergency_red/.test(canon) && /hack_green/.test(canon) && /impact_orange/.test(canon), "mission lighting language must match campaign route");
 
 const accessCore = fs.readFileSync("good_boys_access_core_authority.js", "utf8");
-assert.ok(/Mission 5 is K's route-control breach/.test(accessCore));
-assert.ok(/function legacyMike/.test(accessCore) && /function purge/.test(accessCore) && /legacyMikeCount/.test(accessCore), "Access Core must continuously quarantine the legacy Mike Index boss");
-assert.ok(/_goodBoysNoMikeIndex/.test(accessCore) && /seedSecurity/.test(accessCore), "Access Core must replace the legacy boss with authored security pressure");
+assert.ok(/canonical Mike Index encounter/.test(accessCore));
+assert.ok(/function isMikeIndex/.test(accessCore) && /function seedMikeIndex/.test(accessCore) && /function settleMikeIndex/.test(accessCore), "Access Core must own the canonical Mike Index encounter");
+assert.ok(/recorded-behavior-only/.test(accessCore) && /_predictionHistoryOnly=true/.test(accessCore), "Mike Index must predict from recorded behavior only");
+assert.ok(/parkPrematureSecurity/.test(accessCore) && /seedSecurity/.test(accessCore), "route security must occur after the Mike Index beat rather than replacing it");
+assert.ok(/mike_index_defeated/.test(accessCore) && /k_identity_status/.test(accessCore), "Mike Index completion must affirm K and write semantic state");
 assert.ok(/function syncState/.test(accessCore) && /c!==lastState/.test(accessCore) && /_gbAccessCoreSecuritySeeded=false/.test(accessCore), "Access Core retries must reset encounter seeding for each new _v736 state");
+
+const semantic = fs.readFileSync("good_dogs_campaign_state.js", "utf8");
+["good_dogs_signal_heard","k_freed","mike_index_defeated","waldo_freed","warden_null_defeated","good_dogs_protocol_complete","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available"].forEach(flag=>assert.ok(semantic.includes(flag),flag+" semantic state missing"));
+assert.ok(/markTransition/.test(semantic) && /completeReturn/.test(semantic) && /installTransitionBridge/.test(semantic), "Good Dogs state must bridge compressed missions into named Story Bible facts");
+assert.ok(/story\.completedActs\.indexOf\("interlude"\)/.test(semantic), "Good Dogs return must write back into the main campaign interlude");
 
 const earthfall = fs.readFileSync("good_boys_earthfall_ending.js", "utf8");
 assert.ok(/ESCAPE BURN/.test(earthfall) && /EARTHFALL/.test(earthfall) && /WALDO'S PLACE/.test(earthfall) && /GOOD BOYS PROTOCOL — COMPLETE/.test(earthfall), "Earthfall must own the full return-home cinematic");
@@ -113,9 +120,10 @@ assert.ok(/next===8/.test(progression) && /TechOpsGoodBoysEarthfallEnding/.test(
 assert.ok(/good-boys-earthfall-cine/.test(progression), "Earthfall must participate in gameplay input blocking");
 
 const boot = fs.readFileSync("bg_noc.js", "utf8");
-assert.ok(boot.includes("good_boys_access_core_authority.js") && boot.includes("good_boys_earthfall_ending.js"), "production bootstrap must wire Access Core and Earthfall authorities");
+assert.ok(boot.includes("good_boys_access_core_authority.js") && boot.includes("good_boys_earthfall_ending.js") && boot.includes("good_dogs_campaign_state.js"), "production bootstrap must wire Access Core, Earthfall and semantic state authorities");
 assert.ok(/function loadAccessCore\(\)\{if\(!appendScript\([^\n]*good_boys_access_core_authority\.js[^\n]*loadEarthfall/.test(boot), "Access Core loader must hand off to Earthfall");
-assert.ok(/function loadEarthfall\(\)\{if\(!appendScript\([^\n]*good_boys_earthfall_ending\.js[^\n]*loadProgression/.test(boot), "Earthfall loader must hand off to progression");
+assert.ok(/function loadEarthfall\(\)\{if\(!appendScript\([^\n]*good_boys_earthfall_ending\.js[^\n]*loadCampaignState/.test(boot), "Earthfall loader must hand off to semantic state");
+assert.ok(/function loadCampaignState\(\)\{if\(!appendScript\([^\n]*good_dogs_campaign_state\.js[^\n]*loadProgression/.test(boot), "semantic state loader must hand off to progression");
 assert.ok(/function loadBibleWorld\(\)\{if\(!appendScript\([^\n]*good_boys_bible_world\.js[^\n]*loadAccessCore/.test(boot), "Bible World loader must hand off to Access Core");
 
 const worldSource = fs.readFileSync("campaign_world_visuals.js", "utf8");
@@ -130,4 +138,4 @@ assert.strictEqual(f.key, "right1"); assert.strictEqual(f.semantic, "walk_right"
 assert.strictEqual(visuals.animations(), global.TechOpsMikeAnimations);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f000"), false);
 assert.strictEqual(global.TechOpsMikeAnimations.actionFrameApproved("f181"), false);
-console.log("Campaign playable world visuals + Good Boys Waldo-house-to-Earthfall route v7: PASS");
+console.log("Campaign playable world visuals + Good Boys Story Bible route v8: PASS");
