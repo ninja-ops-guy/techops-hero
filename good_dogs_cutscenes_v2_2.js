@@ -1,7 +1,8 @@
-/* TechOps Hero — Good Dogs pre-rendered cutscene player v3.0.
- * iPhone contract:
+/* TechOps Hero — Good Dogs pre-rendered cutscene player v3.1.
+ * Production playback contract:
+ *   - attempt muted + playsInline autoplay on every device, including iPhone
+ *   - only expose the PLAY button when the browser actually rejects/stalls
  *   - never expose a black video surface while media is preparing
- *   - one deliberate user gesture starts playback
  *   - reveal video only after a decoded frame is available
  *   - autoplay/decode/stall failures never satisfy progression
  *   - only COMPLETED or USER_SKIPPED may advance campaign state
@@ -30,7 +31,7 @@
   function makeOverlay(){
     let root=document.getElementById("good-dogs-cutscene-overlay");if(root)return root;
     root=document.createElement("div");root.id="good-dogs-cutscene-overlay";root.setAttribute("role","dialog");root.setAttribute("aria-modal","true");
-    root.innerHTML='<div class="gd-film-frame"><div class="gd-film-poster" aria-hidden="true"></div><div class="gd-film-title">GOOD DOGS PROTOCOL</div><video class="gd-film-video" playsinline webkit-playsinline preload="metadata" muted></video><div class="gd-film-status" aria-live="polite">PREPARING TRANSMISSION…</div><button class="gd-film-play" type="button">PLAY CUTSCENE</button><div class="gd-crt" aria-hidden="true"></div><div class="gd-vignette" aria-hidden="true"></div><button class="gd-film-skip" type="button">SKIP</button></div>';
+    root.innerHTML='<div class="gd-film-frame"><div class="gd-film-poster" aria-hidden="true"></div><div class="gd-film-title">GOOD DOGS PROTOCOL</div><video class="gd-film-video" playsinline webkit-playsinline preload="auto" muted></video><div class="gd-film-status" aria-live="polite">PREPARING TRANSMISSION…</div><button class="gd-film-play" type="button">PLAY CUTSCENE</button><div class="gd-crt" aria-hidden="true"></div><div class="gd-vignette" aria-hidden="true"></div><button class="gd-film-skip" type="button">SKIP</button></div>';
     document.body.appendChild(root);return root;
   }
   const css=document.createElement("style");css.textContent=`
@@ -46,10 +47,10 @@
   `;document.head.appendChild(css);
   async function play(id,options={}){
     const def=CLIPS[id];if(!def)throw new Error("Unknown Good Dogs cutscene: "+id);
-    const state=ensureState(),root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),poster=root.querySelector(".gd-film-poster"),video=root.querySelector(".gd-film-video"),status=root.querySelector(".gd-film-status"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip"),priorOverflow=document.body.style.overflow,ios=isIOSDevice();
+    const state=ensureState(),root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),poster=root.querySelector(".gd-film-poster"),video=root.querySelector(".gd-film-video"),status=root.querySelector(".gd-film-status"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip"),priorOverflow=document.body.style.overflow,ios=isIOSDevice(),autoRequested=options.autoplay!==false;
     root.classList.add("active");root.dataset.activeCutscene=id;document.body.style.overflow="hidden";frame.classList.remove("gd-playing","gd-frame-ready");poster.style.backgroundImage='url("'+(options.poster||def.poster)+'")';playBtn.classList.remove("active");status.textContent="PREPARING TRANSMISSION…";status.style.display="block";
-    video.controls=false;video.muted=true;video.defaultMuted=true;video.volume=0;video.setAttribute("muted","");video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.preload=ios?"metadata":"auto";skip.disabled=false;skip.textContent="SKIP";
-    let done=false,startTimer=0,stallTimer=0,hardTimer=0,lastTime=-1,progressed=false,retryReason="",playInFlight=false,frameRevealed=false;
+    video.controls=false;video.muted=true;video.defaultMuted=true;video.volume=0;video.setAttribute("muted","");video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.preload="auto";skip.disabled=false;skip.textContent="SKIP";
+    let done=false,startTimer=0,stallTimer=0,hardTimer=0,lastTime=-1,progressed=false,retryReason="",playInFlight=false,frameRevealed=false,autoAttempted=false;
     return new Promise(resolve=>{
       const clearTimers=()=>{clearTimeout(startTimer);clearTimeout(stallTimer);clearTimeout(hardTimer);startTimer=stallTimer=hardTimer=0;};
       const cleanup=()=>{clearTimers();video.onended=null;video.onerror=null;video.onloadedmetadata=null;video.onloadeddata=null;video.oncanplay=null;video.onplaying=null;video.ontimeupdate=null;video.onwaiting=null;video.onstalled=null;skip.removeEventListener("click",skipEvent);playBtn.removeEventListener("click",playEvent);document.removeEventListener("keydown",key);};
@@ -59,15 +60,16 @@
       const requestDecodedFrame=()=>{if(done||frameRevealed)return;if(typeof video.requestVideoFrameCallback==="function"){try{video.requestVideoFrameCallback(()=>revealFrame());return;}catch(_){}}if(Number(video.readyState||0)>=2&&Number(video.currentTime||0)>.02)revealFrame();};
       const armStall=()=>{clearTimeout(stallTimer);stallTimer=setTimeout(()=>waitForUser("media-stall","TRANSMISSION STALLED · PLAY TO RESUME"),4200);};
       const markPlaying=()=>{if(done)return;progressed=true;playInFlight=false;playBtn.classList.remove("active");status.style.display="";frame.classList.add("gd-playing");requestDecodedFrame();armStall();clearTimeout(hardTimer);hardTimer=setTimeout(()=>waitForUser("hard-timeout","TRANSMISSION PAUSED · PLAY TO RESUME"),60000);};
-      const attemptPlay=()=>{if(done||playInFlight)return;playInFlight=true;playBtn.classList.remove("active");status.style.display="block";status.textContent="STARTING TRANSMISSION…";let p;try{p=video.play();}catch(err){window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err)};waitForUser("play-throw","PLAY CUTSCENE");return;}if(p&&typeof p.then==="function")p.then(()=>{playInFlight=false;requestDecodedFrame();}).catch(err=>{window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err)};waitForUser("play-rejected","PLAY CUTSCENE");});clearTimeout(startTimer);startTimer=setTimeout(()=>{if(!done&&!progressed)waitForUser("no-first-frame","VIDEO READY · PLAY CUTSCENE")},4200);};
+      const attemptPlay=()=>{if(done||playInFlight)return;playInFlight=true;playBtn.classList.remove("active");status.style.display="block";status.textContent="STARTING TRANSMISSION…";let p;try{p=video.play();}catch(err){window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err),ios};waitForUser("play-throw","PLAY CUTSCENE");return;}if(p&&typeof p.then==="function")p.then(()=>{playInFlight=false;requestDecodedFrame();}).catch(err=>{window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err),ios};waitForUser("play-rejected","PLAY CUTSCENE");});clearTimeout(startTimer);startTimer=setTimeout(()=>{if(!done&&!progressed)waitForUser("no-first-frame","VIDEO READY · PLAY CUTSCENE")},4200);};
+      const attemptAutoplay=()=>{if(done||!autoRequested||autoAttempted)return;autoAttempted=true;window.__goodDogsCutsceneAutoplay={id,requested:true,ios,muted:true,playsInline:true,at:Date.now()};attemptPlay();};
       const skipEvent=e=>{if(done)return;try{e.preventDefault();e.stopPropagation();}catch(_){}skip.disabled=true;skip.textContent="SKIPPING…";finish(STATUS.USER_SKIPPED,"click-skip");};
       const playEvent=e=>{if(done)return;try{e.preventDefault();e.stopPropagation();}catch(_){}progressed=false;if(retryReason==="media-error"){try{video.pause();video.src=options.src||def.src;video.load();}catch(_){}}attemptPlay();};
       const key=e=>{if(e.key==="Escape")finish(STATUS.USER_SKIPPED,"keyboard-skip");};
       skip.addEventListener("click",skipEvent);playBtn.addEventListener("click",playEvent);document.addEventListener("keydown",key);
-      video.onended=()=>finish(STATUS.COMPLETED,"ended");video.onerror=()=>waitForUser("media-error","VIDEO UNAVAILABLE · RETRY OR SKIP");video.onloadedmetadata=()=>{if(ios)waitForUser("ios-ready","VIDEO READY · PLAY CUTSCENE");};video.onloadeddata=()=>{if(!ios&&!progressed)attemptPlay();};video.oncanplay=()=>{if(ios&&!progressed)waitForUser("ios-ready","VIDEO READY · PLAY CUTSCENE");};video.onplaying=()=>{clearTimeout(startTimer);markPlaying();};video.ontimeupdate=()=>{const t=Number(video.currentTime||0);if(t>lastTime+.01){lastTime=t;if(t>.02){progressed=true;requestDecodedFrame();markPlaying();}}};video.onwaiting=video.onstalled=()=>{if(progressed)armStall();};
+      video.onended=()=>finish(STATUS.COMPLETED,"ended");video.onerror=()=>waitForUser("media-error","VIDEO UNAVAILABLE · RETRY OR SKIP");video.onloadedmetadata=attemptAutoplay;video.onloadeddata=attemptAutoplay;video.oncanplay=attemptAutoplay;video.onplaying=()=>{clearTimeout(startTimer);markPlaying();};video.ontimeupdate=()=>{const t=Number(video.currentTime||0);if(t>lastTime+.01){lastTime=t;if(t>.02){progressed=true;requestDecodedFrame();markPlaying();}}};video.onwaiting=video.onstalled=()=>{if(progressed)armStall();};
       video.src=options.src||def.src;try{video.load();}catch(_){}
-      if(ios){clearTimeout(startTimer);startTimer=setTimeout(()=>waitForUser("ios-ready-timeout","PLAY CUTSCENE"),1800);}else{attemptPlay();}
+      if(autoRequested){startTimer=setTimeout(()=>{if(!done&&!progressed&&!playInFlight&&!autoAttempted)waitForUser("autoplay-timeout","VIDEO READY · PLAY CUTSCENE")},3000);}else waitForUser("autoplay-disabled","VIDEO READY · PLAY CUTSCENE");
     });
   }
-  window.GoodDogsCutscenes={VERSION:"3.0",STATUS,play,clips:CLIPS,state:ensureState,isIOSDevice};
+  window.GoodDogsCutscenes={VERSION:"3.1",STATUS,play,clips:CLIPS,state:ensureState,isIOSDevice};
 })();
