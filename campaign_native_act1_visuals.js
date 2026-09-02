@@ -13,7 +13,7 @@
   if(!root.GOOD_BOYS_SHIP_DECK_USER_ASSET)load("good_boys_ship_deck_user_asset.js?v=20260902-user-deck-v1","__techopsGoodBoysUserDeckAssetLoaderV1");
   if(!root.TechOpsGoodBoysOpeningV4)load("good_boys_opening_sequence_v4.js?v=20260902-opening-v4","__techopsGoodBoysOpeningV4Loader");
   if(!root.TechOpsGoodBoysShipDeckScene)load("good_boys_ship_deck_scene.js?v=20260902-user-deck-scene-v1","__techopsGoodBoysShipDeckSceneLoaderV1");
-  if(!root.TechOpsGoodBoysCrashScene)load("good_boys_crash_scene.js?v=20260902-canonical-crash-v1","__techopsGoodBoysCrashSceneLoaderV1");
+  if(!root.TechOpsGoodBoysCrashScene||Number(root.TechOpsGoodBoysCrashScene.VERSION||0)<2)load("good_boys_crash_scene.js?v=20260902-canonical-crash-v2","__techopsGoodBoysCrashSceneLoaderV2");
   if(!root.TechOpsGoodBoysButtonHardFix||Number(root.TechOpsGoodBoysButtonHardFix.VERSION||0)<7)load("good_boys_button_hard_fix.js?v=20260902-hard-button-v7","__techopsGoodBoysButtonHardFixLoaderV7");
   if(!root.TechOpsGoodDogsMobileVisualPolish)load("good_dogs_mobile_visual_polish.js?v=20260901-mobile-polish-v1","__techopsGoodDogsMobileVisualPolishLoader");
   if(!root.TechOpsWorkstationClarityPatch)load("workstation_cinematic_clarity_patch.js?v=20260901-workstation-clarity-v1","__techopsWorkstationClarityPatchLoader");
