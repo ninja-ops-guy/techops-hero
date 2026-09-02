@@ -81,7 +81,8 @@ assert.ok(cutscenes.includes("attemptAutoplay"),"cutscene player must attempt mu
 assert.ok(!cutscenes.includes('if(ios)waitForUser("ios-ready"'),"iPhone must not be forced through a manual VIDEO READY gate");
 assert.ok(hard.includes('cine.play("GD_CUT_02",{force:true,muted:true,autoplay:true})'),"takeover clip must request autoplay");
 assert.ok(hard.includes('cine.play("GD_CUT_03",{force:true,muted:true,autoplay:true})'),"prison approach clip must request autoplay");
-const takeover=hard.indexOf('cine.play("GD_CUT_02"'),shipRun=hard.indexOf("runCanonicalFlight(ship)"),approach=hard.indexOf('cine.play("GD_CUT_03"'),crash=hard.indexOf("o.showCrashScene()");
-assert.ok(takeover>=0&&takeover<shipRun&&shipRun<approach&&approach<crash,"opening order must be pilot -> GD_CUT_02 -> flight -> GD_CUT_03 -> crash");
+const openingStart=hard.indexOf("async function opening(source)");
+const takeover=hard.indexOf('cine.play("GD_CUT_02"',openingStart),shipRun=hard.indexOf("runCanonicalFlight(ship)",takeover),approach=hard.indexOf('cine.play("GD_CUT_03"',shipRun),crash=hard.indexOf("o.showCrashScene()",approach);
+assert.ok(openingStart>=0&&takeover>openingStart&&takeover<shipRun&&shipRun<approach&&approach<crash,"opening order must be pilot -> GD_CUT_02 -> flight -> GD_CUT_03 -> crash");
 
 console.log("Good Boys UI ownership, single opening authority, and lazy media regression: PASS");
