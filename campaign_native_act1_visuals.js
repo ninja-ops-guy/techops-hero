@@ -11,7 +11,9 @@
     var script=root.document.createElement("script");script.src=src;script.async=false;(root.document.head||root.document.documentElement).appendChild(script);return true;
   }
   if(!root.TechOpsCampaignNativeAct1Visuals)load("campaign_native_act1_visuals_impl.js","__techopsAct1VisualImplLoader");
-  if(!root.TechOpsGoodBoysHandoffUIPatch)load("good_boys_handoff_ui_patch.js?v=20260901-handoff-ui-v2","__techopsGoodBoysHandoffUIPatchLoader");
+  /* The physical-device title button gets one hard owner. Do not load the older
+     handoff UI interceptor here; it competed with good_boys_intro_repair on iOS. */
+  if(!root.TechOpsGoodBoysButtonHardFix)load("good_boys_button_hard_fix.js?v=20260901-hard-button-v1","__techopsGoodBoysButtonHardFixLoader");
   if(!root.TechOpsWorkstationClarityPatch)load("workstation_cinematic_clarity_patch.js?v=20260901-workstation-clarity-v1","__techopsWorkstationClarityPatchLoader");
   if(!root.TechOpsCampaignBibleGapPass)load("campaign_bible_gap_pass.js","__techopsBibleGapLoader");
   if(!root.TechOpsLateGameBootstrap)load("campaign_late_game_bootstrap.js","__techopsLateGameBootstrapLoader");
