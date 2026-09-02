@@ -8,12 +8,13 @@ const html=fs.readFileSync("index.html","utf8");
 // not a hand-maintained duplicate list in this test.
 const context={console,Promise,Image:function(){},fetch:null,document:{scripts:[],head:{appendChild(){}},documentElement:{appendChild(){}},createElement(){return{dataset:{},getAttribute(){return"";}};}}};
 context.globalThis=context;vm.createContext(context);vm.runInContext(registry,context,{filename:"production_asset_registry.js"});
-const api=context.TechOpsProductionAssets;assert.ok(api,"production asset registry must export TechOpsProductionAssets");assert.ok(api.VERSION>=3,"production asset registry must include source-order repair contract");
+const api=context.TechOpsProductionAssets;assert.ok(api,"production asset registry must export TechOpsProductionAssets");assert.ok(api.VERSION>=10,"production asset registry must include cockpit-pilot image inventory");
 
-for(const src of [...api.SCRIPT_ASSETS,...api.SOURCE_PARTS,...api.PNG_ASSETS,...api.JSON_ASSETS]){
+for(const src of [...api.SCRIPT_ASSETS,...api.SOURCE_PARTS,...api.PNG_ASSETS,...api.JPG_ASSETS,...api.JSON_ASSETS]){
   assert.ok(fs.existsSync(src),`production asset registry references missing file: ${src}`);
 }
 assert.ok(api.PNG_ASSETS.length>=70,"expected the full campaign + Katrin/Manchez physical PNG inventory");
+assert.ok(api.JPG_ASSETS.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"existing cockpit pilot JPG must be production-inventory bound");
 assert.ok(api.SOURCE_PARTS.length>=50,"expected all campaign background/UI payload chunks");
 assert.ok(api.SCRIPT_ASSETS.includes("night_walker.atlas.js"));
 assert.ok(api.SCRIPT_ASSETS.includes("orbital_tiles.source.js"));
@@ -31,7 +32,8 @@ assert.ok(api.PNG_ASSETS.includes("assets/campaign/sector04.locked_violin_door.p
 assert.ok(api.PNG_ASSETS.includes("assets/campaign/workstation.felicia.video_frame.png"));
 for(let i=1;i<=33;i++) assert.ok(api.SOURCE_PARTS.includes(`parts/campaign_ui_camp_ui_p${String(i).padStart(3,"0")}.js`),`missing campaign UI payload part ${i}`);
 
-// Every physical runtime asset under assets/ must be explicitly inventory-bound.
+// Every production PNG/JPG/JSON runtime asset under assets/ must be explicitly inventory-bound.
+// WEBP reference sheets are intentionally excluded unless promoted to runtime authority.
 function walk(dir){
   let out=[];
   for(const name of fs.readdirSync(dir)){
@@ -40,8 +42,8 @@ function walk(dir){
   }
   return out;
 }
-const physical=walk("assets").filter(f=>/\.(png|json)$/i.test(f));
-const registered=new Set([...api.PNG_ASSETS,...api.JSON_ASSETS]);
+const physical=walk("assets").filter(f=>/\.(png|jpe?g|json)$/i.test(f));
+const registered=new Set([...api.PNG_ASSETS,...api.JPG_ASSETS,...api.JSON_ASSETS]);
 for(const f of physical) assert.ok(registered.has(f),`unintegrated physical asset: ${f}`);
 for(const f of registered) assert.ok(physical.includes(f),`registered physical asset not found in assets tree: ${f}`);
 
@@ -67,4 +69,4 @@ assert.ok(registry.includes("failedImages"),"registry must track image failures"
 assert.ok(registry.includes("failedJSON"),"registry must track JSON failures");
 assert.ok(registry.includes("failureCount"),"registry status must expose aggregate failure count");
 
-console.log(`Production asset integration: PASS (${api.PNG_ASSETS.length} PNGs, ${api.JSON_ASSETS.length} JSON manifests, ${api.SOURCE_PARTS.length} payload parts, ${api.SCRIPT_ASSETS.length} asset authorities; ${physical.length} physical assets covered)`);
+console.log(`Production asset integration: PASS (${api.PNG_ASSETS.length} PNGs, ${api.JPG_ASSETS.length} JPGs, ${api.JSON_ASSETS.length} JSON manifests, ${api.SOURCE_PARTS.length} payload parts, ${api.SCRIPT_ASSETS.length} asset authorities; ${physical.length} physical assets covered)`);
