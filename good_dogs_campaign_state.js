@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Dogs Protocol semantic state bridge v1.
+/* TechOps Hero — Good Dogs Protocol semantic state bridge v2.
  * Canonical story semantics for the compressed 8-mission browser runtime. The
  * Night-derived _v736 mission number remains a transport/runtime detail; these
  * named facts are the Story Bible contract consumed by Ghost Fork / Watchdog.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodDogsCampaignState)return;
-  var VERSION=1;
+  var VERSION=2,bridgeTimer=null,bridgeInstalled=false;
   var ALL_FLAGS=[
     "good_dogs_signal_heard","good_dogs_campaign_started","good_dogs_tutorial_complete","cell_118_known","cell_1984_known",
     "shuttle_launched","orbital_detention_seen","prison_infiltrated","good_dogs_advanced_traversal_unlocked","cell_118_reached","k_seen",
@@ -15,7 +15,7 @@
     "good_dogs_protocol_complete","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available","crew_returned_to_earth"
   ];
   function ensure(){
-    if(!root.S)return null;root.S.meta=root.S.meta||{};var g=root.S.meta.goodDogs||(root.S.meta.goodDogs={schemaVersion:VERSION});
+    if(!root.S)return null;root.S.meta=root.S.meta||{};var g=root.S.meta.goodDogs||(root.S.meta.goodDogs={schemaVersion:VERSION});g.schemaVersion=VERSION;
     if(!root.S.story)root.S.story={schemaVersion:1,completedActs:[],facts:{},ending:null};
     root.S.story.facts=root.S.story.facts||{};root.S.story.completedActs=root.S.story.completedActs||[];
     return g;
@@ -59,6 +59,11 @@
     if(s.good_dogs_protocol_complete&&!(s.watchdog_k_available&&s.watchdog_waldo_available&&s.watchdog_good_dogs_available))errors.push("Good Dogs completion must unlock Watchdog participation");
     return{valid:errors.length===0,errors:errors,state:s,version:VERSION,at:Date.now()};
   }
-  root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate};
+  function installTransitionBridge(){
+    if(bridgeInstalled)return true;var c=root.TechOpsGoodBoysCampaignState;if(!c||typeof c.transition!=="function")return false;if(c.transition.__goodDogsSemanticBridge){bridgeInstalled=true;return true;}
+    var base=c.transition;var wrapped=function(from,to,reason,patch){var ok=base.apply(this,arguments);if(ok!==false)markTransition(from,to);return ok;};wrapped.__goodDogsSemanticBridge=true;wrapped.__baseTransition=base;c.transition=wrapped;bridgeInstalled=true;root.__goodDogsSemanticBridgeInstalled=true;return true;
+  }
+  var API=root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate,installTransitionBridge:installTransitionBridge};
   ensure();
+  if(!installTransitionBridge()&&root.setInterval){bridgeTimer=root.setInterval(function(){if(installTransitionBridge()){root.clearInterval(bridgeTimer);bridgeTimer=null;}},50);root.setTimeout(function(){if(bridgeTimer){root.clearInterval(bridgeTimer);bridgeTimer=null;root.__goodDogsSemanticBridgeError="progression authority not found within bridge window";}},5000);}
 })(typeof globalThis!=="undefined"?globalThis:this);
