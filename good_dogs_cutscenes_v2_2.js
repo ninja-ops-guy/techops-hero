@@ -1,7 +1,9 @@
 /* TechOps Hero — Good Dogs pre-rendered cutscene player
-   v2.6: iPhone/WebKit fail-open playback, visible loading state, deterministic
-   skip handling, and media-stall recovery so a failed movie can never leave a
-   permanent black fullscreen blocker in front of gameplay.
+   v2.7: iPhone/iPad playback is deliberately non-blocking. The current pixel
+   MP4 masters can advance their media clock in Mobile Safari while presenting
+   a black decoded surface, which defeats readyState/timeupdate stall watchdogs.
+   iOS therefore records the authored beat as seen and immediately hands control
+   back to gameplay. Desktop playback retains the normal movie path and watchdogs.
 */
 (function(){
   "use strict";
@@ -17,6 +19,20 @@
       return dst;
     }
     return window.__goodDogsCutsceneState;
+  }
+  function isIOSDevice(){
+    try{
+      const nav=window.navigator||{},ua=String(nav.userAgent||""),platform=String(nav.platform||"");
+      return /iPad|iPhone|iPod/i.test(ua)||(platform==="MacIntel"&&Number(nav.maxTouchPoints||0)>1);
+    }catch(_){return false;}
+  }
+  function recordIOSBypass(id,options,state){
+    const at=Date.now(),result={id,skipped:true,source:"ios-nonblocking-bypass"};
+    window.__goodDogsCutsceneIOSBypass={id,at,reason:"mobile-safari-black-decoder-surface"};
+    window.__goodDogsCutsceneExit={id,skipped:true,source:result.source,at,currentTime:0,readyState:0};
+    state[id]={seen:true,skipped:true,at};window.__goodDogsCutsceneState[id]=state[id];
+    if(typeof options.onStateWrite==="function")options.onStateWrite({id,skipped:true});
+    return result;
   }
   function makeOverlay(){
     let root=document.getElementById("good-dogs-cutscene-overlay");if(root)return root;
@@ -38,7 +54,9 @@
   `;document.head.appendChild(css);
   async function play(id,options={}){
     const def=CLIPS[id];if(!def)throw new Error("Unknown Good Dogs cutscene: "+id);
-    const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),video=root.querySelector(".gd-film-video"),status=root.querySelector(".gd-film-status"),skip=root.querySelector(".gd-film-skip"),state=ensureState(),priorOverflow=document.body.style.overflow;
+    const state=ensureState();
+    if(isIOSDevice()&&options.allowIOSVideo!==true)return recordIOSBypass(id,options,state);
+    const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),video=root.querySelector(".gd-film-video"),status=root.querySelector(".gd-film-status"),skip=root.querySelector(".gd-film-skip"),priorOverflow=document.body.style.overflow;
     root.classList.add("active");root.dataset.activeCutscene=id;document.body.style.overflow="hidden";
     frame.classList.remove("gd-playing");if(status)status.textContent="LOADING TRANSMISSION…";
     video.controls=false;video.muted=true;video.defaultMuted=true;video.volume=0;video.setAttribute("muted","");video.removeAttribute("autoplay");skip.disabled=false;skip.textContent="SKIP";
@@ -84,5 +102,5 @@
       if(playPromise&&typeof playPromise.catch==="function")playPromise.catch(err=>{window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err)};setTimeout(()=>finish(true,"play-rejected"),120);});
     });
   }
-  window.GoodDogsCutscenes={VERSION:"2.6",play,clips:CLIPS,state:ensureState};
+  window.GoodDogsCutscenes={VERSION:"2.7",play,clips:CLIPS,state:ensureState,isIOSDevice};
 })();
