@@ -23,7 +23,7 @@ sandbox.S.meta._v736.done=true;api.completeReturn();snap=api.snapshot();
 for(const flag of ["good_dogs_protocol_complete","good_dogs_returned","crew_returned_to_earth","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available"])assert.strictEqual(snap[flag],true,`${flag} not committed on return`);
 assert.ok(sandbox.S.story.completedActs.includes("interlude"),"main campaign must record Good Dogs interlude completion");
 for(const fact of ["k_freed","waldo_freed","warden_null_defeated","crew_returned_to_earth"])assert.strictEqual(sandbox.S.story.facts[fact],true,`${fact} missing from main story facts`);
-assert.deepStrictEqual(api.validate().errors,[]);
+const validation=api.validate();assert.strictEqual(validation.valid,true,`semantic validation failed: ${Array.from(validation.errors||[]).join(" | ")}`);assert.strictEqual((validation.errors||[]).length,0);
 
 const access=fs.readFileSync("good_boys_access_core_authority.js","utf8");
 assert.ok(/THE MIKE INDEX/.test(access)&&/recorded-behavior-only/.test(access),"Mike Index must exist and use history-only prediction semantics");
