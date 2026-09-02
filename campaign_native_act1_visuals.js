@@ -6,14 +6,10 @@
   "use strict";
   if(typeof module==="object"&&module.exports){module.exports=require("./campaign_native_act1_visuals_impl.js");return;}
   if(!root||!root.document)return;
-  function load(src,flag){
-    if(root[flag])return false;root[flag]=true;
-    var script=root.document.createElement("script");script.src=src;script.async=false;(root.document.head||root.document.documentElement).appendChild(script);return true;
-  }
+  function load(src,flag){if(root[flag])return false;root[flag]=true;var script=root.document.createElement("script");script.src=src;script.async=false;(root.document.head||root.document.documentElement).appendChild(script);return true;}
   if(!root.TechOpsCampaignNativeAct1Visuals)load("campaign_native_act1_visuals_impl.js","__techopsAct1VisualImplLoader");
-  /* The physical-device title button gets one hard owner. Do not load the older
-     handoff UI interceptor here; it competed with good_boys_intro_repair on iOS. */
-  if(!root.TechOpsGoodBoysButtonHardFix)load("good_boys_button_hard_fix.js?v=20260901-hard-button-v3","__techopsGoodBoysButtonHardFixLoader");
+  if(!root.TechOpsGoodBoysOpeningV4)load("good_boys_opening_sequence_v4.js?v=20260902-opening-v4","__techopsGoodBoysOpeningV4Loader");
+  if(!root.TechOpsGoodBoysButtonHardFix||Number(root.TechOpsGoodBoysButtonHardFix.VERSION||0)<4)load("good_boys_button_hard_fix.js?v=20260902-hard-button-v4","__techopsGoodBoysButtonHardFixLoaderV4");
   if(!root.TechOpsGoodDogsMobileVisualPolish)load("good_dogs_mobile_visual_polish.js?v=20260901-mobile-polish-v1","__techopsGoodDogsMobileVisualPolishLoader");
   if(!root.TechOpsWorkstationClarityPatch)load("workstation_cinematic_clarity_patch.js?v=20260901-workstation-clarity-v1","__techopsWorkstationClarityPatchLoader");
   if(!root.TechOpsCampaignBibleGapPass)load("campaign_bible_gap_pass.js","__techopsBibleGapLoader");
