@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v23.
+/* TechOps Hero — production runtime bootstrap v24.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
@@ -6,13 +6,14 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=23,BUILD="20260901-production-v23-ship-flight",started=false,done=false;
+  var VERSION=24,BUILD="20260902-production-v24-good-dogs-actor-contract",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
     "good_boys_campaign_assets.js",
     "state_validator.js",
     "good_boys_legacy_hud_filter.js",
+    "good_dogs_actor_contract.js",
     "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",
     "good_boys_visual_polish.js",
@@ -41,10 +42,11 @@
     var deferred=[],deferOn=false,nextFake=-7000;
     function beginTimerDeferral(){if(deferOn||!nativeSetInterval)return;deferOn=true;root.setInterval=function(fn,ms){var rec={fake:nextFake--,fn:fn,ms:Math.max(1,Number(ms)||1),args:Array.prototype.slice.call(arguments,2),cancelled:false,real:null};deferred.push(rec);return rec.fake;};if(nativeClearInterval)root.clearInterval=function(id){for(var i=0;i<deferred.length;i++)if(deferred[i].fake===id&&!deferred[i].real){deferred[i].cancelled=true;return;}return nativeClearInterval(id);};root.__productionTimersDeferred=true;}
     function parkTimers(){if(!deferOn)return;deferOn=false;if(nativeSetInterval)root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;for(var i=0;i<deferred.length;i++)deferred[i].cancelled=true;root.__productionParkedMaintenanceTimers=deferred.length;root.__productionTimersDeferred=false;}
-    try{for(var i=0;i<FILES.length;i++){var src=FILES[i];if(src===DEFER_FROM)beginTimerDeferral();if(src===FREEZE_AT&&deferOn){root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;}await load(src);if(src===FREEZE_AT){try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}parkTimers();}}}finally{if(deferOn)parkTimers();}
+    try{for(var i=0;i<FILES.length;i++){var src=FILES[i];if(src===DEFER_FROM)beginTimerDeferral();if(src===FREEZE_AT&&deferOn){root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;}await load(src);if(src==="good_dogs_actor_contract.js"){try{if(root.TechOpsGoodDogsActorContract)root.TechOpsGoodDogsActorContract.enforce();}catch(e){root.__productionGoodDogsActorContractError=String(e&&e.stack||e);}}if(src===FREEZE_AT){try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}parkTimers();}}}finally{if(deferOn)parkTimers();}
     try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightProductionAssets)await root.TechOpsNightProductionAssets.install();}catch(e){}
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
+    try{if(root.TechOpsGoodDogsActorContract)root.TechOpsGoodDogsActorContract.enforce();}catch(e){root.__productionGoodDogsActorContractError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysVisualPolish)root.TechOpsGoodBoysVisualPolish.install();}catch(e){root.__productionVisualPolishInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileCinematicPolish)root.TechOpsGoodBoysMobileCinematicPolish.apply();}catch(e){root.__productionMobileCinePolishError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileControlsLayout)root.TechOpsGoodBoysMobileControlsLayout.apply();}catch(e){root.__productionGoodBoysControlLayoutError=String(e&&e.stack||e);}
@@ -53,6 +55,7 @@
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
+    try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
   root.TechOpsProductionBootstrap={VERSION:VERSION,BUILD:BUILD,FILES:FILES,start:start,ready:function(){return done;}};
   start();
