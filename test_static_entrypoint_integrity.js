@@ -16,7 +16,7 @@ assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate l
 const bgNocRef=localScriptRefs.find(ref=>localPath(ref)==="bg_noc.js");assert.ok(/^bg_noc\.js\?v=/.test(bgNocRef||""),"production bootstrap entrypoint must be cache-versioned");
 for(const tag of [...html.matchAll(/<link\b[^>]*>/g)].map(m=>m[0])){const a=attrs(tag);if(a.rel!=="stylesheet"||!a.href||isExternal(a.href))continue;assertLocalFile(a.href,"index.html stylesheet");}
 [
-  "campaign_act1.js","campaign_assets.js","campaign_story.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","good_boys_intro_repair.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js"
+  "campaign_act1.js","campaign_assets.js","campaign_story.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","good_boys_intro_repair.js","good_dogs_cutscenes_v2_2.js","good_boys_ship_approach.js","good_dogs_cutscene_bridge.js"
 ].forEach(src=>assert.strictEqual(localScripts.filter(candidate=>candidate===src).length,1,`${src} must be loaded exactly once`));
 const order=src=>localScripts.indexOf(src);
 assert.ok(order("campaign_act1.js")<order("campaign_runtime.js"),"campaign runtime must load after campaign_act1.js");
@@ -27,6 +27,8 @@ assert.ok(order("good_boys_campaign_director.js")<order("good_boys_intro_repair.
 assert.ok(order("good_boys_intro_repair.js")<order("good_dogs_cutscenes_v2_2.js"),"Good Boys intro owner must arm before source-master mission cutscenes begin");
 assert.ok(order("good_boys_prison_cinematic_patch.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs bridge must load after the prison cinematic patch");
 assert.ok(order("good_boys_progression_authority.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs bridge must load after canonical Good Boys progression");
+assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_boys_ship_approach.js"),"Good Boys supplied-asset ship approach must load after the cutscene player");
+assert.ok(order("good_boys_ship_approach.js")<order("good_dogs_cutscene_bridge.js"),"Good Boys supplied-asset ship approach must load before the mission bridge");
 assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs cutscene player must load before the bridge");
 
 const introSource=fs.readFileSync(path.join(__dirname,"good_boys_intro_repair.js"),"utf8");new Function(introSource);
