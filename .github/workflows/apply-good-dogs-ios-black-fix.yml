@@ -1,0 +1,39 @@
+name: Apply Good Dogs iPhone black-screen cache bust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-good-dogs-ios-black-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Cache-bust Good Dogs player
+        run: python3 .github/apply_good_dogs_ios_black_fix.py
+
+      - name: Validate entrypoint and iPhone harness
+        run: |
+          node --check good_dogs_cutscenes_v2_2.js
+          node --check scripts/good_boys_intro_mobile_bot.mjs
+          node test_static_entrypoint_integrity.js
+
+      - name: Commit production cache bust
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/apply_good_dogs_ios_black_fix.py .github/workflows/apply-good-dogs-ios-black-fix.yml
+          git diff --cached --check
+          git commit -m "Cache-bust Good Dogs iPhone black-screen fix"
+          git push origin HEAD:main
