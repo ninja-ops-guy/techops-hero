@@ -23,66 +23,28 @@ const assert=require("assert"),fs=require("fs"),vm=require("vm");
   assert.ok(calls.some(c=>c[0]==="text"&&c[1]==="CLEAR THE HANGAR"),"center objective message must remain intact");
 }
 
-// Night Crawler keeps the tutorial toast and objective, so its redundant v6.3
-// title card is suppressed before it can overlap the mobile tutorial.
 {
   let baseCards=0;
   const context={console,S:{meta:{_char:"nightcrawler"}},v63Card(){baseCards++;},document:{getElementById(){return null;}},setInterval(){return 1;}};
   context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("production_presentation_guard.js","utf8"),context,{filename:"production_presentation_guard.js"});
-  context.v63Card("DAY 1","MONDAY · SHIFT 09:00");
-  context.v63Card("🌃 NIGHT CRAWL","NEW HAVEN STREETS");
-  assert.strictEqual(baseCards,0,"Night tutorial cannot overlap generic day or title cards");
+  context.v63Card("DAY 1","MONDAY · SHIFT 09:00");context.v63Card("🌃 NIGHT CRAWL","NEW HAVEN STREETS");assert.strictEqual(baseCards,0,"Night tutorial cannot overlap generic day or title cards");
 }
 
-// Good Boys owns all campaign cards, while the generic Night tutorial toast
-// is actively removed if it was already mounted before mode convergence.
 {
-  const card={style:{},innerHTML:"DAY 1",textContent:"DAY 1"},toast={textContent:"NEW HAVEN AFTER DARK",classList:{added:false,add(){this.added=true;}}};
-  let baseCards=0;
+  const card={style:{},innerHTML:"DAY 1",textContent:"DAY 1"},toast={textContent:"NEW HAVEN AFTER DARK",classList:{added:false,add(){this.added=true;}}};let baseCards=0;
   const context={console,NM:{_v736:{}},v63Card(){baseCards++;},document:{getElementById(id){return id==="v63-card"?card:id==="toast"?toast:null;}},setInterval(){return 1;}};
-  context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("production_presentation_guard.js","utf8"),context,{filename:"production_presentation_guard.js"});
-  context.v63Card("DAY 1","MONDAY SHIFT 09:00");
-  assert.strictEqual(baseCards,0,"generic day card cannot render during Good Boys");
-  assert.strictEqual(card.innerHTML,"","an already-mounted generic card must be cleared");
-  assert.strictEqual(toast.textContent,"","Night Crawler tutorial toast must be cleared");
-  assert.strictEqual(toast.classList.added,true);
+  context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("production_presentation_guard.js","utf8"),context,{filename:"production_presentation_guard.js"});context.v63Card("DAY 1","MONDAY SHIFT 09:00");
+  assert.strictEqual(baseCards,0,"generic day card cannot render during Good Boys");assert.strictEqual(card.innerHTML,"","an already-mounted generic card must be cleared");assert.strictEqual(toast.textContent,"","Night Crawler tutorial toast must be cleared");assert.strictEqual(toast.classList.added,true);
 }
 
 const layout=fs.readFileSync("good_boys_mobile_controls_layout.js","utf8"),html=fs.readFileSync("index.html","utf8"),game=fs.readFileSync("game.js","utf8");
-assert.ok(/var VERSION=7/.test(layout));
-assert.ok(layout.includes('classList.toggle("good-boys-controls",active())'),"controls must own their active body class");
-assert.ok(layout.includes("border-radius:11px"),"action controls must use compact rounded rectangles");
-assert.ok(layout.includes("#v55-nmbtns{display:none!important"),"legacy Night action buttons cannot overlap Good Boys controls");
-assert.ok(html.includes('id="sc-widget" title="Optional soundtrack" src="about:blank" data-src='),"SoundCloud iframe must be lazy");
-assert.ok(game.includes("initMusic(true)"),"soundtrack must load from explicit user input");
-assert.ok(game.includes("if (!userInitiated"),"run initialization cannot eagerly mount the SoundCloud widget");
-assert.ok(fs.readFileSync("style.css","utf8").includes("bottom:max(190px"),"Night BLOCK/DASH controls must clear the primary touch buttons");
+assert.ok(/var VERSION=7/.test(layout));assert.ok(layout.includes('classList.toggle("good-boys-controls",active())'),"controls must own their active body class");assert.ok(layout.includes("border-radius:11px"),"action controls must use compact rounded rectangles");assert.ok(layout.includes("#v55-nmbtns{display:none!important"),"legacy Night action buttons cannot overlap Good Boys controls");assert.ok(html.includes('id="sc-widget" title="Optional soundtrack" src="about:blank" data-src='),"SoundCloud iframe must be lazy");assert.ok(game.includes("initMusic(true)"),"soundtrack must load from explicit user input");assert.ok(game.includes("if (!userInitiated"),"run initialization cannot eagerly mount the SoundCloud widget");assert.ok(fs.readFileSync("style.css","utf8").includes("bottom:max(190px"),"Night BLOCK/DASH controls must clear the primary touch buttons");
 
-// The 118/1984 opening has one click owner. The handoff patch is presentation-only.
-const handoff=fs.readFileSync("good_boys_handoff_ui_patch.js","utf8");
-const hard=fs.readFileSync("good_boys_button_hard_fix.js","utf8");
-const deck=fs.readFileSync("good_boys_ship_deck_scene.js","utf8");
-const flight=fs.readFileSync("good_boys_ship_flight.js","utf8");
-const cutscenes=fs.readFileSync("good_dogs_cutscenes_v2_2.js","utf8");
+const handoff=fs.readFileSync("good_boys_handoff_ui_patch.js","utf8"),hard=fs.readFileSync("good_boys_button_hard_fix.js","utf8"),deck=fs.readFileSync("good_boys_ship_deck_scene.js","utf8"),flight=fs.readFileSync("good_boys_ship_flight.js","utf8"),cutscenes=fs.readFileSync("good_dogs_cutscenes_v2_2.js","utf8");
 for(const [name,src] of [["handoff",handoff],["hard",hard],["deck",deck],["flight",flight],["cutscenes",cutscenes]]) assert.doesNotThrow(()=>new Function(src),`${name} source must parse`);
-assert.ok(handoff.includes("VERSION=3"),"handoff isolation must be passive v3");
-assert.ok(handoff.includes('launchOwner:"TechOpsGoodBoysButtonHardFix"'),"handoff must name the sole launch owner");
-assert.ok(!handoff.includes('addEventListener("click",isolatedLaunch,true)'),"handoff may not consume the title click");
-assert.ok(!handoff.includes("v736.start({mission:Number(m)"),"handoff may not boot/resume a Good Boys mission");
-assert.ok(hard.includes("VERSION=9"),"hard title button must be the v9 opening authority");
-assert.ok(hard.includes("TechOpsGoodBoysShipFlight"),"opening must call the canonical ship-flight authority directly");
-assert.ok(!hard.includes("o.showSpaceFlight()"),"opening may not route through the legacy flight alias");
-assert.ok(deck.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"cockpit must integrate the existing pilot asset");
-assert.ok(deck.includes("MOVE TO PILOT")&&deck.includes("INTERACT"),"pilot must be a gameplay interaction target");
-assert.ok(flight.includes("assets/good_boys/good_ship_arcade.atlas.png"),"flight must use the supplied Good Ship atlas");
-assert.ok(flight.includes("asteroid_1")&&flight.includes("ship_player")&&flight.includes("prison_station"),"flight must use supplied ship/hazard/prison frames");
-assert.ok(cutscenes.includes('VERSION:"3.1"'),"cutscene player must expose automatic iPhone playback contract");
-assert.ok(cutscenes.includes("attemptAutoplay"),"cutscene player must attempt muted inline autoplay");
-assert.ok(!cutscenes.includes('if(ios)waitForUser("ios-ready"'),"iPhone must not be forced through a manual VIDEO READY gate");
-assert.ok(hard.includes('cine.play("GD_CUT_02",{force:true,muted:true,autoplay:true})'),"takeover clip must request autoplay");
-assert.ok(hard.includes('cine.play("GD_CUT_03",{force:true,muted:true,autoplay:true})'),"prison approach clip must request autoplay");
-const openingStart=hard.indexOf("async function opening(source)");
-const takeover=hard.indexOf('cine.play("GD_CUT_02"',openingStart),shipRun=hard.indexOf("runCanonicalFlight(ship)",takeover),approach=hard.indexOf('cine.play("GD_CUT_03"',shipRun),crash=hard.indexOf("o.showCrashScene()",approach);
-assert.ok(openingStart>=0&&takeover>openingStart&&takeover<shipRun&&shipRun<approach&&approach<crash,"opening order must be pilot -> GD_CUT_02 -> flight -> GD_CUT_03 -> crash");
+assert.ok(handoff.includes("VERSION=3"),"handoff isolation must be passive v3");assert.ok(handoff.includes('launchOwner:"TechOpsGoodBoysButtonHardFix"'),"handoff must name the sole launch owner");assert.ok(!handoff.includes('addEventListener("click",isolatedLaunch,true)'),"handoff may not consume the title click");assert.ok(!handoff.includes("v736.start({mission:Number(m)"),"handoff may not boot/resume a Good Boys mission");
+assert.ok(hard.includes("VERSION=10"),"hard title button must be the v10 opening authority");assert.ok(hard.includes("TechOpsGoodBoysShipFlight"),"opening must call the canonical ship-flight authority directly");assert.ok(!hard.includes("o.showSpaceFlight()"),"opening may not route through the legacy flight alias");assert.ok(hard.includes("result.completed!==true"),"opening must reject incomplete canonical flight callbacks");assert.ok(hard.includes("result&&result.assetError"),"canonical flight asset failures must fail closed before the prison cutscene");
+assert.ok(deck.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"cockpit must integrate the existing pilot asset");assert.ok(deck.includes("MOVE TO PILOT")&&deck.includes("INTERACT"),"pilot must be a gameplay interaction target");assert.ok(flight.includes("assets/good_boys/good_ship_arcade.atlas.png"),"flight must use the supplied Good Ship atlas");assert.ok(flight.includes("asteroid_1")&&flight.includes("ship_player")&&flight.includes("prison_station"),"flight must use supplied ship/hazard/prison frames");assert.ok(cutscenes.includes('VERSION:"3.1"'),"cutscene player must expose automatic iPhone playback contract");assert.ok(cutscenes.includes("attemptAutoplay"),"cutscene player must attempt muted inline autoplay");assert.ok(!cutscenes.includes('if(ios)waitForUser("ios-ready"'),"iPhone must not be forced through a manual VIDEO READY gate");assert.ok(hard.includes('cine.play("GD_CUT_02",{force:true,muted:true,autoplay:true})'),"takeover clip must request autoplay");assert.ok(hard.includes('cine.play("GD_CUT_03",{force:true,muted:true,autoplay:true})'),"prison approach clip must request autoplay");
+const openingStart=hard.indexOf("async function opening(source)"),takeover=hard.indexOf('cine.play("GD_CUT_02"',openingStart),shipRun=hard.indexOf("runCanonicalFlight(ship)",takeover),approach=hard.indexOf('cine.play("GD_CUT_03"',shipRun),crash=hard.indexOf("o.showCrashScene()",approach);assert.ok(openingStart>=0&&takeover>openingStart&&takeover<shipRun&&shipRun<approach&&approach<crash,"opening order must be pilot -> GD_CUT_02 -> flight -> GD_CUT_03 -> crash");
 
-console.log("Good Boys UI ownership, single opening authority, and lazy media regression: PASS");
+console.log("Good Boys UI ownership, single opening authority, fail-closed flight, and lazy media regression: PASS");
