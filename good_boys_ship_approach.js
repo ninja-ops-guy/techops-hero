@@ -1,14 +1,14 @@
-/* TechOps Hero — Good Boys asteroid approach gameplay v2
+/* TechOps Hero — Good Boys asteroid approach gameplay v3
  * Inserts a short playable ship approach after the three-system deck interaction
  * and before GD_CUT_02. Uses only the supplied Good Ship asset sheet extractions.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysShipApproach)return;
-  var VERSION=2,active=false,overlay=null,raf=0,atlasImage=null,wrapped=false,originalPlay=null;
+  var VERSION=3,active=false,overlay=null,raf=0,atlasImage=null,wrapped=false,originalPlay=null;
   var API=null;
   var DURATION_MS=4200;
-  var ATLAS={VERSION:2,src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-atlas-r1",width:768,height:520,frames:{space_bg:[0,0,552,60],ship_player:[600,0,76,98],prison_station:[0,80,380,250],prison_dock:[390,80,161,147],asteroid_1:[570,110,94,90],asteroid_2:[670,110,62,66],asteroid_3:[570,205,55,48],asteroid_4:[640,205,54,49],asteroid_5:[700,205,55,52],lead_1:[0,350,82,38],lead_2:[98,350,77,35],lead_3:[191,350,97,55],lead_4:[304,350,118,77],ship_large:[0,405,292,114]},source:"user-provided Good Ship asset sheet"};
+  var ATLAS={VERSION:3,src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-gameplay-assets-r2",width:768,height:620,frames:{space_bg:[0,0,552,220],ship_player:[600,0,76,98],prison_station:[0,230,390,250],prison_dock:[400,230,166,138],asteroid_1:[570,110,94,90],asteroid_2:[670,110,62,66],asteroid_3:[570,205,55,48],asteroid_4:[640,205,54,49],asteroid_5:[700,205,55,52],lead_1:[310,500,82,38],lead_2:[405,500,77,35],lead_3:[495,500,97,55],lead_4:[620,500,118,77],ship_large:[0,500,292,114]},source:"user-provided Good Ship gameplay integration sheet"};
   if(!root.GOOD_BOYS_SHIP_ARCADE)root.GOOD_BOYS_SHIP_ARCADE=ATLAS;
 
   function atlas(){return root.GOOD_BOYS_SHIP_ARCADE||ATLAS;}
@@ -52,7 +52,7 @@
         function snapshot(progress){root.__goodBoysShipApproach={active:!done,phase:"flight",progress:progress,hull:hull,hits:hits,shipX:Math.round(ship.x),asteroids:objects.filter(function(o){return !o.dead;}).length,distanceKm:Number((6.8*(1-progress)).toFixed(1)),completed:done,at:Date.now()};}
         function hit(o){if(o.dead)return;o.dead=true;hits++;hull=Math.max(0,hull-1);hullEl.textContent=[0,1,2].map(function(i){return i<hull?"●":"○";}).join(" ");root.__goodBoysShipApproachHit={hits:hits,hull:hull,at:Date.now()};if(hull===0){hull=3;root.setTimeout(function(){hullEl.textContent="● ● ●";},350);}}
         function collide(a,b){return a.x-a.w/2<b.x+b.w/2&&a.x+a.w/2>b.x-b.w/2&&a.y-a.h/2<b.y+b.h/2&&a.y+a.h/2>b.y-b.h/2;}
-        function drawBg(dt){starOffset=(starOffset+dt*75)%60;var fr=frame("space_bg");if(fr){for(var y=-60+starOffset;y<H;y+=60){for(var x=0;x<W;x+=552){ctx.drawImage(atlasImage,fr[0],fr[1],fr[2],fr[3],x,y,552,60);}}}ctx.fillStyle="rgba(1,4,10,.28)";ctx.fillRect(0,0,W,H);}
+        function drawBg(dt){var fr=frame("space_bg");if(fr){var scale=Math.max(W/fr[2],H/fr[3]),dw=fr[2]*scale,dh=fr[3]*scale;starOffset=(starOffset+dt*dh*.32)%dh;for(var y=-dh+starOffset;y<H;y+=dh)ctx.drawImage(atlasImage,fr[0],fr[1],fr[2],fr[3],(W-dw)/2,y,dw,dh);}else ctx.fillStyle="#020713",ctx.fillRect(0,0,W,H);ctx.fillStyle="rgba(1,4,10,.28)";ctx.fillRect(0,0,W,H);}
         function draw(ts){if(done)return;var dt=Math.min(.05,(ts-last)/1000||0);last=ts;var elapsed=ts-start,progress=Math.min(1,elapsed/DURATION_MS);
           while(spawnAt<spawnPlan.length&&elapsed>=spawnPlan[spawnAt]){spawn();spawnAt++;}
           ship.x=Math.max(60,Math.min(W-60,ship.x+held*330*dt));
@@ -83,7 +83,7 @@
       var el=root.document.createElement("div");el.id="good-boys-prison-approach-cine";el.style.cssText="position:fixed;inset:0;z-index:150195;background:#01040a;display:flex;align-items:center;justify-content:center;pointer-events:none";
       var c=root.document.createElement("canvas");c.width=960;c.height=540;c.style.cssText="width:100%;height:100%;object-fit:contain";el.appendChild(c);root.document.body.appendChild(el);var ctx=c.getContext("2d"),start=performance.now(),last=0;
       root.__goodBoysPrisonApproachCine={active:true,at:Date.now()};
-      function tick(ts){var t=Math.min(1,(ts-start)/2600);ctx.clearRect(0,0,960,540);var fr=frame("space_bg");if(fr){for(var y=0;y<540;y+=60)for(var x=0;x<960;x+=552)ctx.drawImage(atlasImage,fr[0],fr[1],fr[2],fr[3],x,y,552,60);}ctx.fillStyle="rgba(0,0,0,.15)";ctx.fillRect(0,0,960,540);
+      function tick(ts){var t=Math.min(1,(ts-start)/2600);ctx.clearRect(0,0,960,540);var fr=frame("space_bg");if(fr){var scale=Math.max(960/fr[2],540/fr[3]),dw=fr[2]*scale,dh=fr[3]*scale,drift=(t*dh*.55)%dh;for(var y=-dh+drift;y<540;y+=dh)ctx.drawImage(atlasImage,fr[0],fr[1],fr[2],fr[3],(960-dw)/2,y,dw,dh);}ctx.fillStyle="rgba(0,0,0,.15)";ctx.fillRect(0,0,960,540);
         var ps=.38+.62*t,pw=380*ps,ph=250*ps;drawFrame(ctx,"prison_station",480-pw/2,34+(1-t)*45,pw,ph,1);
         var key="lead_"+(1+Math.min(3,Math.floor(t*4))),sw=120+150*t,sy=410-80*t;drawFrame(ctx,key,80+430*t,sy,sw,null,1);
         ctx.fillStyle="#9be8cf";ctx.font="700 16px monospace";ctx.fillText("BLACKSITE MERIDIAN // APPROACH",24,34);ctx.fillStyle="#ffd166";ctx.font="700 12px monospace";ctx.fillText(t<.7?"PRISON VECTOR LOCKED":"DOCK WINDOW ACQUIRED",24,55);

@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Boys canonical ship flight v4.
+/* TechOps Hero — Good Boys canonical ship flight v5.
  * Production authority for the Good Ship prison approach. The supplied Good
  * Ship sheet is the only gameplay visual source for the ship, asteroid hazards,
  * prison station, dock and flight backdrop. No procedural ship fallback.
@@ -6,15 +6,15 @@
 (function(root){
   "use strict";
   if(!root||!root.document)return;
-  var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=4)return;
+  var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=5)return;
   try{if(PRIOR&&PRIOR.timer)root.clearInterval(PRIOR.timer);}catch(_){}
-  var VERSION=4,DURATION_MS=8200,active=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
+  var VERSION=5,DURATION_MS=8200,active=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
   var ATLAS={
-    src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-atlas-r1",width:768,height:520,
+    src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-gameplay-assets-r2",width:768,height:620,
     frames:{
-      space_bg:[0,0,552,60],ship_player:[600,0,76,98],prison_station:[0,80,380,250],prison_dock:[390,80,161,147],
+      space_bg:[0,0,552,220],ship_player:[600,0,76,98],prison_station:[0,230,390,250],prison_dock:[400,230,166,138],
       asteroid_1:[570,110,94,90],asteroid_2:[670,110,62,66],asteroid_3:[570,205,55,48],asteroid_4:[640,205,54,49],asteroid_5:[700,205,55,52],
-      lead_1:[0,350,82,38],lead_2:[98,350,77,35],lead_3:[191,350,97,55],lead_4:[304,350,118,77],ship_large:[0,405,292,114]
+      lead_1:[310,500,82,38],lead_2:[405,500,77,35],lead_3:[495,500,97,55],lead_4:[620,500,118,77],ship_large:[0,500,292,114]
     },source:"user-provided Good Ship asset sheet"
   };
   root.GOOD_BOYS_SHIP_ARCADE=ATLAS;
@@ -48,7 +48,7 @@
       var ship={x:W*.5,y:H*(portrait?.82:.78),w:portrait?58:54,h:portrait?74:70,hull:3,hits:0,invuln:0},objects=[];
       function spawn(){var idx=(spawnIndex%5)+1,lane=(.12+(((spawnIndex*7)%11)/10)*.76)*W,scale=portrait?1:0.9;objects.push({key:"asteroid_"+idx,x:lane,y:-85,w:(42+idx*6)*scale,h:(40+idx*5)*scale,speed:(145+idx*17)*(portrait?1.15:1),dead:false});spawnIndex++;}
       function hit(o,t){if(o.dead||t<ship.invuln)return;o.dead=true;ship.hits++;ship.hull=Math.max(1,ship.hull-1);ship.invuln=t+700;trace("asteroid.hit",{hits:ship.hits,hull:ship.hull});hullText.textContent="HULL "+[0,1,2].map(function(i){return i<ship.hull?"●":"○";}).join(" ");}
-      function background(progress){ctx.fillStyle="#01040a";ctx.fillRect(0,0,W,H);var r=fr("space_bg"),tileW=portrait?W:Math.min(552,W),tileH=portrait?72:60;if(r){for(var y=-tileH+(progress*H*2)%tileH;y<H;y+=tileH)for(var x=0;x<W;x+=tileW)ctx.drawImage(atlasImage,r[0],r[1],r[2],r[3],x,y,tileW,tileH);}ctx.fillStyle="rgba(1,4,10,.24)";ctx.fillRect(0,0,W,H);}
+      function background(progress){ctx.fillStyle="#01040a";ctx.fillRect(0,0,W,H);var r=fr("space_bg");if(r){var scale=Math.max(W/r[2],H/r[3]),dw=r[2]*scale,dh=r[3]*scale,drift=(progress*dh)%dh,x=(W-dw)/2;for(var y=-dh+drift;y<H;y+=dh)ctx.drawImage(atlasImage,r[0],r[1],r[2],r[3],x,y,dw,dh);}ctx.fillStyle="rgba(1,4,10,.24)";ctx.fillRect(0,0,W,H);}
       function finish(){if(!active)return;active=false;cleanup(host);state({phase:"flight-complete",completed:true,assetReady:true,progress:1,distanceKm:0,hull:ship.hull,hits:ship.hits});trace("flight.arrived",{hull:ship.hull,hits:ship.hits});if(typeof done==="function")done({completed:true,hull:ship.hull,hits:ship.hits,asset:ATLAS.src});}
       function loop(t){
         if(!active)return;var dt=Math.min(.05,Math.max(.001,(t-last)/1000));last=t;var elapsed=t-start,progress=Math.min(1,elapsed/DURATION_MS);while(spawnIndex<spawnPlan.length&&elapsed>=spawnPlan[spawnIndex])spawn();

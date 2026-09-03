@@ -1,4 +1,4 @@
-/* TechOps Hero — 118/1984 hard title-button owner v11.
+/* TechOps Hero — 118/1984 hard title-button owner v12.
  * Single production opening authority:
  * cockpit pilot interact -> GD_CUT_02 autoplay -> canonical Good Ship flight ->
  * GD_CUT_03 autoplay -> canonical prison impact -> fresh M3 prison gameplay.
@@ -7,14 +7,14 @@
 (function(root){
   "use strict";
   if(!root||!root.document)return;
-  var PRIOR=root.TechOpsGoodBoysButtonHardFix;if(PRIOR&&Number(PRIOR.VERSION||0)>=11)return;
-  var VERSION=11,lastLaunch=0,launching=false,depTimer=0;
+  var PRIOR=root.TechOpsGoodBoysButtonHardFix;if(PRIOR&&Number(PRIOR.VERSION||0)>=12)return;
+  var VERSION=12,lastLaunch=0,launching=false,depTimer=0;
   function target(t){try{return t&&t.closest&&t.closest("#btn-v736");}catch(_){return null;}}
   function freshConfig(){return {mission:3,k:false,waldo:false,evidence:[]};}
-  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v11",at:Date.now()},extra||{});}
+  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v12",at:Date.now()},extra||{});}
   function clearForeignUi(){try{["act1-reference","good-boys-story-cine","good-boys-premise","good-boys-ship-interlude","good-boys-opening-error","good-boys-deck-v4","good-boys-deck-supplied","good-boys-flight-v4","good-boys-crash-v4","good-boys-crash-canonical","good-boys-prison-approach-cine","good-boys-ship-flight"].forEach(function(id){var n=root.document.getElementById(id);if(n)n.remove();});}catch(_){}try{var d=root.document.getElementById("dialogue");if(d)d.classList.add("hidden");if(root.S)root.S.inDialog=false;}catch(_){}try{var p=root.document.getElementById("panel");if(p)p.classList.add("hidden");}catch(_){}try{var e=root.document.getElementById("eod");if(e)e.classList.add("hidden");}catch(_){} }
   function setButton(text,disabled){try{var b=root.document.getElementById("btn-v736");if(b){b.disabled=!!disabled;b.textContent=text;}}catch(_){} }
-  function depsReady(){var c=root.GoodDogsCutscenes,o=root.TechOpsGoodBoysOpeningV4,a=root.TechOpsGoodDogsSingleAtlasAuthority,d=root.TechOpsGoodBoysShipDeckScene,x=root.TechOpsGoodBoysCrashScene,f=root.TechOpsGoodBoysShipFlight;return !!(c&&parseFloat(c.VERSION||0)>=3.2&&typeof c.play==="function"&&o&&typeof o.showDeckInteraction==="function"&&o.showDeckInteraction.__goodShipDeckV5&&typeof o.showCrashScene==="function"&&o.showCrashScene.__canonicalCrashArtV2&&a&&Number(a.VERSION||0)>=2&&a.installed!==false&&d&&Number(d.VERSION||0)>=6&&x&&Number(x.VERSION||0)>=2&&f&&Number(f.VERSION||0)>=4&&typeof f.launch==="function");}
+  function depsReady(){var c=root.GoodDogsCutscenes,o=root.TechOpsGoodBoysOpeningV4,a=root.TechOpsGoodDogsSingleAtlasAuthority,d=root.TechOpsGoodBoysShipDeckScene,x=root.TechOpsGoodBoysCrashScene,f=root.TechOpsGoodBoysShipFlight;return !!(c&&parseFloat(c.VERSION||0)>=3.3&&typeof c.play==="function"&&o&&typeof o.showDeckInteraction==="function"&&o.showDeckInteraction.__goodShipDeckV7&&typeof o.showCrashScene==="function"&&o.showCrashScene.__canonicalCrashArtV2&&a&&Number(a.VERSION||0)>=2&&a.installed!==false&&d&&Number(d.VERSION||0)>=7&&x&&Number(x.VERSION||0)>=2&&f&&Number(f.VERSION||0)>=5&&typeof f.launch==="function");}
   function dependencySnapshot(){return {cutscenes:root.GoodDogsCutscenes&&root.GoodDogsCutscenes.VERSION||null,opening:root.TechOpsGoodBoysOpeningV4&&root.TechOpsGoodBoysOpeningV4.VERSION||null,deck:root.TechOpsGoodBoysShipDeckScene&&root.TechOpsGoodBoysShipDeckScene.VERSION||null,flight:root.TechOpsGoodBoysShipFlight&&root.TechOpsGoodBoysShipFlight.VERSION||null,crash:root.TechOpsGoodBoysCrashScene&&root.TechOpsGoodBoysCrashScene.VERSION||null,atlas:root.TechOpsGoodDogsSingleAtlasAuthority&&root.TechOpsGoodDogsSingleAtlasAuthority.VERSION||null};}
   function waitForDeps(timeout){return new Promise(function(resolve,reject){var start=Date.now();function poll(){if(depsReady()){resolve(true);return;}if(Date.now()-start>=timeout){var e=new Error("Opening dependencies not ready: "+JSON.stringify(dependencySnapshot()));e.code="GOOD_BOYS_DEPS_TIMEOUT";reject(e);return;}depTimer=root.setTimeout(poll,50);}poll();});}
   function esc(v){return String(v==null?"":v).replace(/[&<>\"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;"}[c];});}

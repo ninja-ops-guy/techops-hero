@@ -38,7 +38,7 @@ assert.strictEqual(bytes[bytes.length - 2], 0xff, "deck image must have a valid 
 assert.strictEqual(bytes[bytes.length - 1], 0xd9, "deck image must have a valid JPEG EOI");
 
 const scene = fs.readFileSync("good_boys_ship_deck_scene.js", "utf8");
-assert.ok(scene.includes("VERSION=6"), "deck fix must preserve the interactive v6 pilot approach scene");
+assert.ok(scene.includes("VERSION=7"), "deck fix must preserve the interactive v7 pilot approach scene");
 assert.ok(scene.includes("drawContain(ctx,inlineImg,0,70,960,330)"), "deck must map natural image bounds without stretching");
 assert.ok(scene.includes("pilotX=480"), "pilot interaction target must stay centered on the visible pilot");
 assert.ok(scene.includes("<=88"), "pilot interaction should be local to the pilot, not the right console");
@@ -53,7 +53,7 @@ for (const source of [atlas, opening]) {
   assert.ok(source.includes("20260903-deck-center-r1"), "every live deck renderer must bypass the off-center cached cockpit");
   assert.ok(!source.includes("20260902-deck-map-r2"), "live deck renderers must not request the stale cockpit cache key");
 }
-assert.ok(entry.includes("campaign_story.js?v=20260903-good-ship-handoff-r2"), "entrypoint must bypass the stale campaign story bootstrap");
-assert.ok(entry.includes("20260903-good-ship-handoff-r1"), "entrypoint must pull the centered deck/flight cache chain");
+assert.ok(entry.includes("campaign_story.js?v=20260903-good-ship-gameplay-assets-r2"), "entrypoint must bypass the stale campaign story bootstrap");
+assert.ok(entry.includes("20260903-good-ship-gameplay-assets-r2"), "entrypoint must pull the corrected gameplay atlas cache chain");
 
 console.log("Good Boys ship-deck mapping contract: PASS");
