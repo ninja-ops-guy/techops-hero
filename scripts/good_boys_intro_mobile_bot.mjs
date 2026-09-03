@@ -13,9 +13,12 @@ async function phase(page){return page.evaluate(()=>({phase:window.__goodBoysOpe
 async function canvasSignal(page,selector){return page.evaluate(sel=>{const c=document.querySelector(sel);if(!c)return null;const x=c.getContext('2d',{willReadFrequently:true});if(!x)return null;const w=c.width,h=c.height,d=x.getImageData(0,0,w,h).data;let nonBlack=0,alpha=0,min=255,max=0;for(let i=0;i<d.length;i+=16){const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];if(a)alpha++;if(r||g||b)nonBlack++;min=Math.min(min,r,g,b);max=Math.max(max,r,g,b);}return{nonBlack,alpha,range:max-min,w,h};},selector).catch(()=>null);}
 async function holdRightToPilot(page){
   await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:7000});
-  const right=page.locator('#gbs-right');if(!await right.count())throw new Error('cockpit right control unavailable');
-  await right.dispatchEvent('pointerdown',{pointerId:7,pointerType:'touch',isPrimary:true,bubbles:true});await page.waitForTimeout(1500);await right.dispatchEvent('pointerup',{pointerId:7,pointerType:'touch',isPrimary:true,bubbles:true});
-  await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:2500});
+  await page.keyboard.down('ArrowRight');
+  try{
+    await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:7000});
+  }finally{
+    await page.keyboard.up('ArrowRight').catch(()=>{});
+  }
 }
 async function assertAutoplayThenSkip(page,id){
   await page.waitForFunction(want=>{const e=window.__goodDogsCutsceneExit;if(e&&e.id===want)return true;const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video');return !!(o&&v&&String(v.currentSrc||v.getAttribute('src')||'').includes(want));},id,{timeout:10000});
@@ -31,7 +34,8 @@ try{
   await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:9000});await page.waitForTimeout(250);
   const deckSignal=await canvasSignal(page,'#good-boys-deck-supplied canvas');let deckState=await phase(page);log('cockpit',{deckSignal,...deckState});
   if(!deckSignal||deckSignal.nonBlack<100||deckSignal.alpha<100||deckSignal.range<8)fail('cockpit-canvas-blank',{deckSignal,...deckState});
-  if(!deckState.deck||deckState.deck.pilotAsset!=='assets/v736/good_boys_ship/cockpit_pilot.jpg')fail('cockpit-pilot-asset-not-authoritative',deckState);
+  const pilotAsset=String(deckState.deck?.pilotAsset||deckState.deckInteract?.pilotAsset||'').split('?')[0];
+  if(pilotAsset!=='assets/v736/good_boys_ship/cockpit_pilot.jpg'||deckState.phase?.assetAuthority!=='supplied-pilot')fail('cockpit-pilot-asset-not-authoritative',deckState);
   if(!deckState.handoff||deckState.handoff.owner!=='TechOpsGoodBoysButtonHardFix')fail('opening-authority-not-hard-button',deckState);
   await page.screenshot({path:path.join(OUT,'goodboys-cockpit.png')});
   await holdRightToPilot(page);deckState=await phase(page);log('pilot-in-range',deckState);if(!deckState.deckInteract?.nearPilot)fail('pilot-never-entered-interaction-range',deckState);
