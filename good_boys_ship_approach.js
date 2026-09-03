@@ -1,14 +1,14 @@
-/* TechOps Hero — Good Boys asteroid approach gameplay v1
+/* TechOps Hero — Good Boys asteroid approach gameplay v2
  * Inserts a short playable ship approach after the three-system deck interaction
  * and before GD_CUT_02. Uses only the supplied Good Ship asset sheet extractions.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysShipApproach)return;
-  var VERSION=1,active=false,overlay=null,raf=0,atlasImage=null,wrapped=false,originalPlay=null;
+  var VERSION=2,active=false,overlay=null,raf=0,atlasImage=null,wrapped=false,originalPlay=null;
   var API=null;
   var DURATION_MS=4200;
-  var ATLAS={VERSION:1,src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260902-ship-approach-r1",width:768,height:520,frames:{space_bg:[0,0,552,60],ship_player:[600,0,76,98],prison_station:[0,80,380,250],prison_dock:[390,80,161,147],asteroid_1:[570,110,94,90],asteroid_2:[670,110,62,66],asteroid_3:[570,205,55,48],asteroid_4:[640,205,54,49],asteroid_5:[700,205,55,52],lead_1:[0,350,82,38],lead_2:[98,350,77,35],lead_3:[191,350,97,55],lead_4:[304,350,118,77],ship_large:[0,405,292,114]},source:"user-provided Good Ship asset sheet"};
+  var ATLAS={VERSION:2,src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-atlas-r1",width:768,height:520,frames:{space_bg:[0,0,552,60],ship_player:[600,0,76,98],prison_station:[0,80,380,250],prison_dock:[390,80,161,147],asteroid_1:[570,110,94,90],asteroid_2:[670,110,62,66],asteroid_3:[570,205,55,48],asteroid_4:[640,205,54,49],asteroid_5:[700,205,55,52],lead_1:[0,350,82,38],lead_2:[98,350,77,35],lead_3:[191,350,97,55],lead_4:[304,350,118,77],ship_large:[0,405,292,114]},source:"user-provided Good Ship asset sheet"};
   if(!root.GOOD_BOYS_SHIP_ARCADE)root.GOOD_BOYS_SHIP_ARCADE=ATLAS;
 
   function atlas(){return root.GOOD_BOYS_SHIP_ARCADE||ATLAS;}

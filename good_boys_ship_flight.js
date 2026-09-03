@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Boys canonical ship flight v3.
+/* TechOps Hero — Good Boys canonical ship flight v4.
  * Production authority for the Good Ship prison approach. The supplied Good
  * Ship sheet is the only gameplay visual source for the ship, asteroid hazards,
  * prison station, dock and flight backdrop. No procedural ship fallback.
@@ -6,11 +6,11 @@
 (function(root){
   "use strict";
   if(!root||!root.document)return;
-  var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=3)return;
+  var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=4)return;
   try{if(PRIOR&&PRIOR.timer)root.clearInterval(PRIOR.timer);}catch(_){}
-  var VERSION=3,DURATION_MS=8200,active=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
+  var VERSION=4,DURATION_MS=8200,active=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
   var ATLAS={
-    src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260902-flight-v3",width:768,height:520,
+    src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-atlas-r1",width:768,height:520,
     frames:{
       space_bg:[0,0,552,60],ship_player:[600,0,76,98],prison_station:[0,80,380,250],prison_dock:[390,80,161,147],
       asteroid_1:[570,110,94,90],asteroid_2:[670,110,62,66],asteroid_3:[570,205,55,48],asteroid_4:[640,205,54,49],asteroid_5:[700,205,55,52],

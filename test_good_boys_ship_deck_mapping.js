@@ -38,17 +38,20 @@ assert.strictEqual(bytes[bytes.length - 2], 0xff, "deck image must have a valid 
 assert.strictEqual(bytes[bytes.length - 1], 0xd9, "deck image must have a valid JPEG EOI");
 
 const scene = fs.readFileSync("good_boys_ship_deck_scene.js", "utf8");
-assert.ok(scene.includes("VERSION=5"), "deck fix must preserve the interactive v5 pilot approach scene");
+assert.ok(scene.includes("VERSION=6"), "deck fix must preserve the interactive v6 pilot approach scene");
 assert.ok(scene.includes("drawContain(ctx,inlineImg,0,70,960,330)"), "deck must map natural image bounds without stretching");
-assert.ok(scene.includes("cockpit_pilot.jpg?v=20260902-deck-map-r2"), "pilot/deck image must bypass the broken cached crop");
+assert.ok(scene.includes("pilotX=480"), "pilot interaction target must stay centered on the visible pilot");
+assert.ok(scene.includes("<=88"), "pilot interaction should be local to the pilot, not the right console");
+assert.ok(scene.includes("cockpit_pilot.jpg?v=20260903-deck-center-r1"), "pilot/deck image must bypass the off-center cached crop");
 assert.ok(!scene.includes("ctx.drawImage(env,0,0,asset.width"), "legacy guessed source rectangle must stay removed");
 assert.ok(!scene.includes("ctx.drawImage(inlineImg,0,0,inlineImg.naturalWidth,inlineImg.naturalHeight,0,70,960,330)"), "interactive scene must not stretch the bridge crop");
 
 const atlas = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
 const opening = fs.readFileSync("good_boys_opening_sequence_v4.js", "utf8");
 const entry = fs.readFileSync("index.html", "utf8");
-for (const source of [atlas, opening, entry]) {
+for (const source of [atlas, opening]) {
   assert.ok(source.includes("20260902-deck-map-r2"), "every live deck renderer must bypass the broken cached crop");
 }
+assert.ok(entry.includes("20260903-good-ship-handoff-r1"), "entrypoint must pull the centered deck/flight cache chain");
 
 console.log("Good Boys ship-deck mapping contract: PASS");

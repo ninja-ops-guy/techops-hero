@@ -11,6 +11,6 @@
     width:620,
     height:170,
     fit:"contain",
-    src:"assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260902-deck-map-r2"
+    src:"assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260903-deck-center-r1"
   };
 })(typeof globalThis!=="undefined"?globalThis:this);
