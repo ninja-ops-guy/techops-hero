@@ -14,7 +14,7 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
   root.__goodDogsShipCanonicalV2=true;
 
   var cockpit=new root.Image(),dogImage=null;
-  cockpit.src="assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260902-deck-map-r2";
+  cockpit.src="assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260903-deck-center-r1";
   var raf=root.requestAnimationFrame?root.requestAnimationFrame.bind(root):function(fn){return root.setTimeout(function(){fn(Date.now());},16);};
   var caf=root.cancelAnimationFrame?root.cancelAnimationFrame.bind(root):root.clearTimeout.bind(root);
 
@@ -134,7 +134,7 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
 
   var obs=new MutationObserver(function(){install();});obs.observe(document.documentElement,{childList:true,subtree:true});
   installLayoutPatch();install();
-  root.GoodDogsShipCanonicalArt={VERSION:5,cockpit:"assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260902-deck-map-r2",dogs:"KATRIN_MANCHEZ",install:install};
+  root.GoodDogsShipCanonicalArt={VERSION:6,cockpit:"assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260903-deck-center-r1",dogs:"KATRIN_MANCHEZ",install:install};
 })(typeof globalThis!=="undefined"?globalThis:this);
 
 /* Good Boys M2 boarding action owner v2.

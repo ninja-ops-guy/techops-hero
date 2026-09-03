@@ -50,8 +50,10 @@ const atlas = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
 const opening = fs.readFileSync("good_boys_opening_sequence_v4.js", "utf8");
 const entry = fs.readFileSync("index.html", "utf8");
 for (const source of [atlas, opening]) {
-  assert.ok(source.includes("20260902-deck-map-r2"), "every live deck renderer must bypass the broken cached crop");
+  assert.ok(source.includes("20260903-deck-center-r1"), "every live deck renderer must bypass the off-center cached cockpit");
+  assert.ok(!source.includes("20260902-deck-map-r2"), "live deck renderers must not request the stale cockpit cache key");
 }
+assert.ok(entry.includes("campaign_story.js?v=20260903-good-ship-handoff-r2"), "entrypoint must bypass the stale campaign story bootstrap");
 assert.ok(entry.includes("20260903-good-ship-handoff-r1"), "entrypoint must pull the centered deck/flight cache chain");
 
 console.log("Good Boys ship-deck mapping contract: PASS");

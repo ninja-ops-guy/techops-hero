@@ -62,8 +62,12 @@ assert.deepEqual(Campaign.TICKETS, [
   "impossible_access_event"
 ]);
 const gapSource = fs.readFileSync("campaign_bible_gap_pass.js", "utf8");
+const storySource = fs.readFileSync("campaign_story.js", "utf8");
 const visualBootstrap = fs.readFileSync("campaign_native_act1_visuals.js", "utf8");
 assert.doesNotThrow(() => new Function(gapSource), "Bible gap runtime must parse as browser JavaScript");
+assert.match(storySource, /campaign_native_act1_visuals\.js\?v=20260903-good-ship-handoff-r2/, "campaign story must bypass stale mobile visual bootstrap cache");
+assert.match(visualBootstrap, /good_boys_ship_deck_scene\.js\?v=20260903-deck-center-r1/, "visual bootstrap must request the centered cockpit interaction scene");
+assert.match(visualBootstrap, /good_boys_button_hard_fix\.js\?v=20260903-good-ship-handoff-r1/, "visual bootstrap must request the repaired Good Boys handoff owner");
 for (const id of Campaign.TICKETS) assert(gapSource.includes(id), `Bible gap pass must guarantee ${id}`);
 assert(gapSource.includes("campaign_shipping") && gapSource.includes("campaign_plating") && gapSource.includes("campaign_access"), "Day 1 guarantee must use authored world contacts");
 assert(!/\.tickets\.push\s*\(/.test(gapSource), "Bible pass must not duplicate canonical contacts into the procedural ticket queue");
