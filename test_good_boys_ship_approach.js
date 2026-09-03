@@ -32,7 +32,7 @@ assert.ok(flight.includes("20260903-good-ship-gameplay-assets-r2"),"canonical sh
 assert.ok(flight.includes("space_bg:[0,0,552,220]"),"canonical flight must use the tall gameplay backdrop frame, not a repeated UI strip");
 assert.deepStrictEqual(pngInfo("assets/good_boys/good_ship_arcade.atlas.png"),{width:768,height:620});
 for(const key of ["ship_player","asteroid_1","asteroid_2","asteroid_3","asteroid_4","asteroid_5","prison_station","lead_1","lead_2","lead_3","lead_4"]){assert.ok(source.includes(key),`missing supplied asset frame ${key}`);}
-assert.ok(source.includes('id==="GD_CUT_02"'),"ship gameplay must run immediately before the existing prison-drive transition clip");
+assert.ok(source.includes('id==="GD_CUT_02"'),"ship gameplay hook must preserve the picked cockpit takeover clip contract");
 assert.ok(source.includes('p.phase==="clip2"'),"ship gameplay must only intercept the authored opening transition");
 assert.ok(source.includes('AVOID ASTEROIDS'),"ship gameplay must present the asteroid-avoidance objective");
 assert.ok(source.includes('PRISON VECTOR'),"ship gameplay must visually advance toward the prison");

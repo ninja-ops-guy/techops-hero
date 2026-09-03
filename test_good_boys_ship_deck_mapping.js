@@ -53,7 +53,8 @@ for (const source of [atlas, opening]) {
   assert.ok(source.includes("20260903-deck-center-r1"), "every live deck renderer must bypass the off-center cached cockpit");
   assert.ok(!source.includes("20260902-deck-map-r2"), "live deck renderers must not request the stale cockpit cache key");
 }
-assert.ok(entry.includes("campaign_story.js?v=20260903-good-ship-gameplay-assets-r2"), "entrypoint must bypass the stale campaign story bootstrap");
 assert.ok(entry.includes("20260903-good-ship-gameplay-assets-r2"), "entrypoint must pull the corrected gameplay atlas cache chain");
+assert.ok(entry.includes("campaign_story.js?v=20260903-picked-pilot-crash-r1"), "entrypoint must bypass the stale campaign story bootstrap");
+assert.ok(entry.includes("20260903-picked-pilot-crash-r1"), "entrypoint must pull the picked pilot/crash cache chain");
 
 console.log("Good Boys ship-deck mapping contract: PASS");

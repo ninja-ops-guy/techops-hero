@@ -12,7 +12,7 @@
   const BASE="assets/cutscenes/good_dogs/";
   const CLIPS={
     GD_CUT_01:{src:BASE+"01_signal_beyond_earth_pixel.mp4"},
-    GD_CUT_02:{src:BASE+"02_signal_pull_transition_pixel.mp4"},
+    GD_CUT_02:{src:BASE+"02_signal_pull_transition_pixel.mp4?v=20260903-picked-pilot-attack-r1"},
     GD_CUT_03:{src:BASE+"03_orbital_approach_pixel.mp4",retired:true},
     GD_CUT_04:{src:BASE+"04_cell118_triple_jump_to_terminal_pixel.mp4"},
     GD_CUT_05:{src:BASE+"05_cell118_approach_k_reveal_pixel.mp4"},

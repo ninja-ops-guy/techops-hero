@@ -105,7 +105,8 @@ assert.ok(accessSource.includes('TechOpsGoodBoysCampaignState'),"Access Core mis
 assert.ok(accessSource.includes('timer:null'),"Access Core must not own an independent competing timer");
 
 const bridgeSource=fs.readFileSync(path.join(__dirname,"good_dogs_cutscene_bridge.js"),"utf8");new Function(bridgeSource);
-['3:["GD_CUT_03"]','4:["GD_CUT_04","GD_CUT_05"]','5:["GD_CUT_06"]','6:["GD_CUT_07"]','7:["GD_CUT_08"]'].forEach(contract=>assert.ok(bridgeSource.includes(contract),`Good Dogs mission/cutscene contract missing: ${contract}`));
+['4:["GD_CUT_04","GD_CUT_05"]','5:["GD_CUT_06"]','6:["GD_CUT_07"]','7:["GD_CUT_08"]'].forEach(contract=>assert.ok(bridgeSource.includes(contract),`Good Dogs mission/cutscene contract missing: ${contract}`));
+assert.ok(!bridgeSource.includes('3:["GD_CUT_03"]'),"mission 3 must not replay the retired flying-ship cutscene");
 assert.ok(!bridgeSource.includes('1:["GD_CUT_01"]'),"opening GD_CUT_01 must remain owned by direct intro");
 assert.ok(!bridgeSource.includes('3:["GD_CUT_02","GD_CUT_03"]'),"opening GD_CUT_02 must not replay during mission 3");
 assert.ok(bridgeSource.includes('write("k_identity_status","K_pending")'),"K reveal must persist K_pending identity state");
