@@ -13,7 +13,16 @@ const localScriptRefs=[],localScripts=[];
 for(const tag of scriptTags){const src=attrs(tag).src;if(!src||isExternal(src))continue;localScriptRefs.push(src);localScripts.push(localPath(src));assertLocalFile(src,"index.html script");}
 const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src)!==index);
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
-const bgNocRef=localScriptRefs.find(ref=>localPath(ref)==="bg_noc.js");assert.ok(/^bg_noc\.js\?v=/.test(bgNocRef||""),"production bootstrap entrypoint must be cache-versioned");
+const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260904-m3-prison-breach-r1","production bootstrap entrypoint must bypass stale mobile caches");
+[
+  "v736_hooks.js",
+  "good_boys_prison_cinematic_patch.js",
+  "good_boys_progression_authority.js",
+  "good_dogs_cutscene_bridge.js"
+].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260904-m3-prison-breach-r1",src+" must bypass stale mobile caches for the M3-complete handoff"));
+assert.ok(!html.includes("good_dogs_cutscene_bridge.js?v=20260831-gooddogs-master-v1"),"entrypoint must not serve the stale M3 cutscene bridge");
+assert.ok(!html.includes("good_boys_progression_authority.js?v=20260901-goodboys-certified-r1"),"entrypoint must not serve the stale M3 progression authority");
 for(const tag of [...html.matchAll(/<link\b[^>]*>/g)].map(m=>m[0])){const a=attrs(tag);if(a.rel!=="stylesheet"||!a.href||isExternal(a.href))continue;assertLocalFile(a.href,"index.html stylesheet");}
 [
   "campaign_act1.js","campaign_assets.js","campaign_story.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","good_boys_intro_repair.js","good_dogs_cutscenes_v2_2.js","good_boys_ship_approach.js","good_dogs_cutscene_bridge.js"

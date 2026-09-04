@@ -5,7 +5,7 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
   /* Move with production_bootstrap so Safari cannot retain older authority files. */
-  var BUILD="20260904-production-v28-prison-breach";
+  var BUILD="20260904-production-v29-m3-prison-breach";
   function snapshotParserChain(){
     try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
     try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
