@@ -1,7 +1,8 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>BEAT RUNNER 3D — TESTER</title>
 <style>html,body{margin:0;width:100%;height:100%;background:#0a0a0f;overflow:hidden}#boot{position:fixed;inset:0;display:grid;place-items:center;color:#00ff88;font:700 16px monospace}iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#0a0a0f}</style></head>
-<body><div id="boot">Loading reference-model tester…</div><iframe id="game" allow="autoplay; fullscreen; gamepad"></iframe>
+<body><div id="boot">Loading juiced tester…</div><iframe id="game" allow="autoplay; fullscreen; gamepad"></iframe>
+<script src="./juice.js"></script>
 <script>
 (async function(){
 const BASE='https://raw.githubusercontent.com/ninja-ops-guy/techops-hero/cb68fc9c4864c9af1bf9bb5f3046b42debbe0e63/beat-runner-tester/index.html';
@@ -12,7 +13,8 @@ try{
  h=h.replace(/function createPlayer\(\)\{[\s\S]*?\}\nfunction createWorld/,CREATE+'\nfunction createWorld');
  h=h.replace(/function updatePlayer\(delta\)\{[\s\S]*?\}\nfunction updateEnemies/,UPDATE+'\nfunction updateEnemies');
  h=h.replace('TESTER BUILD • GitHub Pages','TESTER BUILD • REFERENCE MODEL + CONTROL FIX');
- if(h.indexOf(CREATE)<0||h.indexOf(UPDATE)<0)throw new Error('patch did not apply');
+ h=window.applyJuice(h);
+ if(h.indexOf(CREATE)<0||h.indexOf(UPDATE)<0||h.indexOf('FEVER')<0)throw new Error('patch did not apply');
  document.getElementById('game').srcdoc=h;
  document.getElementById('game').addEventListener('load',function(){document.getElementById('boot').style.display='none'},{once:true});
 }catch(e){document.getElementById('boot').textContent='Tester load failed: '+e.message;console.error(e)}
