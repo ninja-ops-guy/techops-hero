@@ -8,6 +8,7 @@ const tests = [
   "test_campaign_act2_reload_gates.js",
   "test_campaign_native_act2.js",
   "test_campaign_native_act1_visuals.js",
+  "test_workstation_concept_retirement.js",
   "test_campaign_world_visuals.js",
   "test_campaign_late_game_contracts.js",
   "test_good_boys_canon_runtime.js",
