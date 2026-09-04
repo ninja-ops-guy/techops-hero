@@ -7,7 +7,7 @@ on:
       - "assets/v736/**"
       - "campaign_*.js"
       - "good_boys_*.js"
-      - "good_dogs_production_runtime.js"
+      - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
       - "orbital_tiles.source.js"
@@ -40,7 +40,7 @@ on:
       - "assets/v736/**"
       - "campaign_*.js"
       - "good_boys_*.js"
-      - "good_dogs_production_runtime.js"
+      - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
       - "orbital_tiles.source.js"
@@ -97,6 +97,7 @@ jobs:
           node --check good_boys_campaign_assets.js
           node --check good_boys_campaign_director.js
           node --check good_boys_prison_cinematic_patch.js
+          node --check good_boys_prison_gameplay_v2.js
           node --check good_boys_background_authority.js
           node --check good_boys_bible_world.js
           node --check good_boys_access_core_authority.js
@@ -106,6 +107,8 @@ jobs:
           node --check good_boys_gameplay_loop.js
           node --check good_boys_mobile_launch_guard.js
           node --check good_dogs_production_runtime.js
+          node --check good_dogs_cutscenes_v2_2.js
+          node --check good_dogs_cutscene_bridge.js
           node --check production_asset_registry.js
           node --check production_wrapper_guard.js
           node --check production_runtime_lock.js
