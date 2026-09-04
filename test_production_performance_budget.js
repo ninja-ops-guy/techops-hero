@@ -20,14 +20,17 @@ const indexBytes = fs.statSync("index.html").size;
 const styleBytes = fs.statSync("style.css").size;
 assert.ok(indexBytes < 250 * 1024, `index.html exceeds 250 KiB structural budget: ${indexBytes}`);
 assert.ok(styleBytes < 160 * 1024, `style.css exceeds 160 KiB structural budget: ${styleBytes}`);
-// Baseline was already 261 startup scripts. Good Dogs v2.2 adds exactly two small
-// authored-cutscene modules (player + campaign bridge). Keep one slot of headroom
-// but fail any unreviewed growth beyond this integration.
-assert.ok(local.length <= 265, `startup script count ${local.length} exceeds reviewed Good Dogs + ship approach ceiling 265`);
+// Baseline was already 261 startup scripts. Good Dogs v2.2 + the ship approach
+// consumed the earlier reviewed headroom. Mike's workstation arcade adds one small,
+// isolated concern module so the reviewed ceiling is now 266. Any further startup
+// growth still fails until it is explicitly reviewed or moved behind a lazy boundary.
+assert.ok(local.length <= 266, `startup script count ${local.length} exceeds reviewed Good Dogs + Mike workstation arcade ceiling 266`);
 for(const required of ["good_dogs_cutscenes_v2_2.js","good_boys_ship_approach.js","good_dogs_cutscene_bridge.js"]){
   assert.strictEqual(localFiles.filter(f=>f===required).length,1,`${required} must be present exactly once in startup budget`);
   assert.ok(fs.statSync(required).size < 32 * 1024,`${required} exceeds 32 KiB cutscene concern-module budget`);
 }
+assert.strictEqual(localFiles.filter(f=>f==="runtime_arcade.js").length,1,"runtime_arcade.js must be present exactly once in startup budget");
+assert.ok(fs.statSync("runtime_arcade.js").size < 32 * 1024,"runtime_arcade.js exceeds 32 KiB workstation-arcade concern-module budget");
 
 let startupBytes = 0;
 let largest = { file: "", bytes: 0 };
@@ -45,7 +48,8 @@ assert.ok(startupBytes < 40 * 1024 * 1024, `local startup JS exceeds 40 MiB stru
 for (const file of [
   "campaign_act1.js","campaign_act2.js","campaign_native_act1.js","campaign_native_act2.js",
   "campaign_world_visuals.js","good_dogs_production_runtime.js","good_boys_reference_mechanics.js",
-  "good_boys_canon_runtime.js","good_boys_gameplay_loop.js","good_dogs_cutscenes_v2_2.js","good_boys_ship_approach.js","good_dogs_cutscene_bridge.js"
+  "good_boys_canon_runtime.js","good_boys_gameplay_loop.js","good_dogs_cutscenes_v2_2.js","good_boys_ship_approach.js","good_dogs_cutscene_bridge.js",
+  "runtime_arcade.js"
 ]) {
   assert.ok(fs.existsSync(file), `${file} missing`);
   assert.ok(fs.statSync(file).size < 180 * 1024, `${file} exceeds 180 KiB concern-module budget`);
