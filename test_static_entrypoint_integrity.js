@@ -105,11 +105,18 @@ assert.ok(accessSource.includes('TechOpsGoodBoysCampaignState'),"Access Core mis
 assert.ok(accessSource.includes('timer:null'),"Access Core must not own an independent competing timer");
 
 const bridgeSource=fs.readFileSync(path.join(__dirname,"good_dogs_cutscene_bridge.js"),"utf8");new Function(bridgeSource);
-['4:["GD_CUT_04","GD_CUT_05"]','5:["GD_CUT_06"]','6:["GD_CUT_07"]','7:["GD_CUT_08"]'].forEach(contract=>assert.ok(bridgeSource.includes(contract),`Good Dogs mission/cutscene contract missing: ${contract}`));
+['4:["GD_CUT_04"]','5:["GD_CUT_06"]','6:["GD_CUT_07"]','7:["GD_CUT_08"]'].forEach(contract=>assert.ok(bridgeSource.includes(contract),`Good Dogs mission/cutscene contract missing: ${contract}`));
+assert.ok(bridgeSource.includes('CONDITIONAL_SEQUENCE={4:{id:"GD_CUT_05",when:"cellOpened"}}'),"K reveal must be gated to the actual Cell 118 open event");
+assert.ok(!bridgeSource.includes('4:["GD_CUT_04","GD_CUT_05"]'),"Cell 118 videos must not play back-to-back at mission entry");
 assert.ok(!bridgeSource.includes('3:["GD_CUT_03"]'),"mission 3 must not replay the retired flying-ship cutscene");
 assert.ok(!bridgeSource.includes('1:["GD_CUT_01"]'),"opening GD_CUT_01 must remain owned by direct intro");
 assert.ok(!bridgeSource.includes('3:["GD_CUT_02","GD_CUT_03"]'),"opening GD_CUT_02 must not replay during mission 3");
 assert.ok(bridgeSource.includes('write("k_identity_status","K_pending")'),"K reveal must persist K_pending identity state");
-assert.ok(bridgeSource.includes('m===4)return false'),"Cell 118 legacy mission card must remain suppressed after canonical reveal pair");
+assert.ok(bridgeSource.includes('m===4)return false'),"Cell 118 legacy mission card must remain suppressed around the canonical reveal flow");
+
+const prisonGameplay=fs.readFileSync(path.join(__dirname,"good_boys_prison_gameplay_v2.js"),"utf8");new Function(prisonGameplay);
+assert.ok(prisonGameplay.includes('BLACKSITE MERIDIAN — BREACH PROTOCOL'),"M3 must use the multi-stage prison breach objective");
+assert.ok(prisonGameplay.includes('SECURITY RELAY')&&prisonGameplay.includes('counterattack'),"M3 must include relay interaction and counterattack beats");
+assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK BREAKER'),"orbital prison combat must expose the five-hit paired combat cadence");
 
 console.log("Static entrypoint integrity: PASS");
