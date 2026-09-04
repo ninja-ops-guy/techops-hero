@@ -23,6 +23,7 @@ const tests = [
   "test_production_performance_budget.js",
   "test_production_asset_registry.js",
   "test_mike_animation_manifest.js",
+  "test_runtime_arcade.js",
   "test_campaign_visual_assets.js",
   "test_campaign_assets.js",
   "test_campaign_asset_pipeline.js",
