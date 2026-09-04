@@ -67,4 +67,20 @@ assert.ok(fs.existsSync("night_walker_payload_p5.js"));
 assert.ok(fs.existsSync("night_walker_payload_p7.js"));
 assert.ok(!fs.existsSync("night_walker_payload_p1.js") && !fs.existsSync("night_walker_payload_p2.js"));
 
-console.log("Night reference visual authority: PASS");
+const ncPlayerStart = v737Hooks.indexOf("function drawNCPlayer");
+const ncPlayerEnd = v737Hooks.indexOf("// ---------- satellite beam special", ncPlayerStart);
+assert.ok(ncPlayerStart > -1 && ncPlayerEnd > ncPlayerStart, "Night Crawler production draw block must exist");
+const ncPlayer = v737Hooks.slice(ncPlayerStart, ncPlayerEnd);
+assert.ok(/TechOpsNightReferenceVisuals/.test(ncPlayer) && /drawReferenceNightWalker/.test(ncPlayer),
+  "Night Crawler form must delegate to the production reference visual authority");
+assert.ok(!/nwFrame\(/.test(ncPlayer),
+  "retired NIGHT_WALKER payload must not be the normal Night Crawler production sprite path");
+
+assert.ok(/function clearStaleNightSelectionForNormalStart/.test(v737Hooks),
+  "normal CLOCK IN must clear a stale Night Crawler selector");
+assert.ok(/__productionDesiredMode === "nightcrawler"/.test(v737Hooks) && /__v737NightStartIntent/.test(v737Hooks),
+  "normal-run cleanup must preserve intentional Night Crawler launches");
+assert.ok(/localStorage\.removeItem\("techops_char"\)/.test(v737Hooks),
+  "normal-run cleanup must remove persisted Night Crawler selection before newState()");
+
+console.log("Night reference visual authority + normal-run isolation: PASS");
