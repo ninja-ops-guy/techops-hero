@@ -15,10 +15,15 @@ assert.ok(gameSource.includes('$("tb-interact").addEventListener("touchstart", e
 
 // Canonical campaign modules must load after the base runtime so their wrappers own final authority.
 function scriptIndex(src) {
+  const escaped = src.replace(/[.*+?^${}()|[\]\\]/g, "\\function scriptIndex(src) {
   const marker = `<script src="${src}"></script>`;
   const index = html.indexOf(marker);
   assert.notStrictEqual(index, -1, `${src} must be loaded by index.html`);
   return index;
+}");
+  const match = new RegExp(`<script src="${escaped}(?:[?#][^"]*)?"></script>`).exec(html);
+  assert.ok(match, `${src} must be loaded by index.html`);
+  return match.index;
 }
 assert.ok(scriptIndex("game.js") < scriptIndex("campaign_act1.js"), "campaign authority must load after base game runtime");
 assert.ok(scriptIndex("campaign_act1.js") < scriptIndex("campaign_native_act1.js"), "native presentation must load after canonical campaign state");
