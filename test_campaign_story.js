@@ -66,7 +66,7 @@ const storySource = fs.readFileSync("campaign_story.js", "utf8");
 const visualBootstrap = fs.readFileSync("campaign_native_act1_visuals.js", "utf8");
 assert.doesNotThrow(() => new Function(gapSource), "Bible gap runtime must parse as browser JavaScript");
 assert.match(visualBootstrap, /good_boys_ship_deck_scene\.js\?v=20260903-good-ship-gameplay-assets-r2/, "visual bootstrap must request the centered cockpit interaction scene");
-assert.match(storySource, /campaign_native_act1_visuals\.js\?v=20260903-picked-pilot-crash-r1/, "campaign story must bypass stale mobile visual bootstrap cache");
+assert.match(storySource, /campaign_native_act1_visuals\.js\?v=20260905-crash-watchdog-r1/, "campaign story must bypass stale mobile visual bootstrap cache");
 assert.match(visualBootstrap, /good_boys_button_hard_fix\.js\?v=20260903-picked-pilot-crash-r1/, "visual bootstrap must request the repaired Good Boys handoff owner");
 for (const id of Campaign.TICKETS) assert(gapSource.includes(id), `Bible gap pass must guarantee ${id}`);
 assert(gapSource.includes("campaign_shipping") && gapSource.includes("campaign_plating") && gapSource.includes("campaign_access"), "Day 1 guarantee must use authored world contacts");
