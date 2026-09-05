@@ -6,6 +6,6 @@
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs"
   },
   "devDependencies": {
-    "playwright": "1.55.0"
+    "playwright": "1.55.1"
   }
 }
