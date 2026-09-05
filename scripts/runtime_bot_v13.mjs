@@ -172,6 +172,7 @@ async function snapshot(page){
 async function drivePilot(page,mode,profileName){
   await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:12000});
   await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:8000});
+  await waitForRenderReady(page,'#good-boys-deck-supplied canvas',{timeout:6000,minNonBlack:100,minRange:8});
   const deckCanvas=await canvasSignal(page,'#good-boys-deck-supplied canvas');
   const deck=await snapshot(page);repl(`${profileName} ${mode} cockpit`,{deckCanvas,deckInteract:deck.deckInteract,phase:deck.openingPhase,hard:deck.hard});
   if(!deckCanvas?.ok||deckCanvas.nonBlack<100||deckCanvas.range<8)fail(mode,'authored cockpit canvas appears blank',{profileName,deckCanvas});
@@ -208,6 +209,7 @@ async function driveGoodBoysOpening(page,mode,profileName){
 
   await page.waitForSelector('#good-boys-ship-flight',{state:'visible',timeout:8000});
   await page.waitForFunction(()=>window.__goodBoysShipFlightState&&window.__goodBoysShipFlightState.assetReady===true,null,{timeout:7000});
+  await waitForRenderReady(page,'#good-boys-ship-flight canvas',{timeout:6000,minNonBlack:100,minRange:8});
   const flightCanvas=await canvasSignal(page,'#good-boys-ship-flight canvas');
   const flight=await snapshot(page);repl(`${profileName} ${mode} flight`,{flightCanvas,flight:flight.flight});
   if(!flightCanvas?.ok||flightCanvas.nonBlack<100||flightCanvas.range<8)fail(mode,'Good Ship flight canvas appears blank',{profileName,flightCanvas,flight:flight.flight});
@@ -290,8 +292,18 @@ async function runMode(browserType,profileName,contextOptions,mode){
     if(!clicked){const s=await snapshot(page);fail(mode,'launch button not found',{profileName,bodyText:s.bodyText});return;}
     repl(`${profileName} clicked`,clicked);
 
-    if(mode==='goodboys')await driveGoodBoysOpening(page,mode,profileName);
-    else await settleNight(page);
+    if(mode==='goodboys'){
+      await driveGoodBoysOpening(page,mode,profileName);
+      // M3 intentionally opens an authored prison briefing. It owns S.inDialog
+      // and hides gameplay controls until TAKE CONTROL. Dismiss it before
+      // evaluating input readiness so a valid cinematic is not misreported as
+      // a stale-dialog gameplay lock.
+      await waitForInputReady(page,{timeout:12000});
+    }else{
+      const settled=await settleNight(page);
+      if(!settled)throw new Error('Night runtime did not reach input-ready state');
+      await waitForInputReady(page,{timeout:5000});
+    }
 
     await page.waitForTimeout(300);
     const s1=await snapshot(page);
