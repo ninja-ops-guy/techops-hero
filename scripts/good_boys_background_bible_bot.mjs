@@ -18,6 +18,16 @@ const expected={
 const findings=[];const fail=(mission,issue,data={})=>findings.push({mission,issue,...data});
 async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.evaluate(el=>{el.click();return true;});return true;}catch{}}}return false;}
 async function domClick(page,selector){return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);}
+async function driveCurrentDeck(page){
+  if(!await page.locator('#good-boys-deck-supplied').count())return false;
+  await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:8000});
+  await page.keyboard.down('ArrowRight');
+  try{await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:8000});}
+  finally{await page.keyboard.up('ArrowRight').catch(()=>{});}
+  if(!await domClick(page,'#gbs-use'))throw new Error('current cockpit pilot INTERACT unavailable');
+  await page.waitForFunction(()=>!document.getElementById('good-boys-deck-supplied')||(window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.completed===true),null,{timeout:5000});
+  return true;
+}
 async function moveShipTo(page,id){
   const result=await page.evaluate(async target=>{
     const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
@@ -35,7 +45,10 @@ async function moveShipTo(page,id){
 }
 async function completeShip(page){if(!await page.locator('#good-boys-ship-interlude').count())return false;for(const id of ['nav','flight','dock']){const done=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(!done)await moveShipTo(page,id);}return true;}
 async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(Date.now()<until){
+  if(await page.locator('#good-boys-deck-supplied').count()){idle=0;await driveCurrentDeck(page);await page.waitForTimeout(100);continue;}
   if(await page.locator('#good-boys-ship-interlude').count()){idle=0;await completeShip(page);await page.waitForTimeout(100);continue;}
+  if(await page.locator('#good-boys-ship-flight').count()){idle=0;await page.waitForTimeout(180);continue;}
+  if(await page.locator('#good-boys-crash-canonical').count()){idle=0;await page.waitForTimeout(180);continue;}
   const premise='#good-boys-campaign-intro button';if(await page.locator(premise).count()){idle=0;await domClick(page,premise);await page.waitForTimeout(120);continue;}
   const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){idle=0;await domClick(page,film);await page.waitForTimeout(100);continue;}
   let handled=false;for(const sel of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button']){const b=page.locator(sel).first();if(!await b.count())continue;if(await b.isVisible().catch(()=>false)){await b.evaluate(el=>el.click()).catch(()=>{});handled=true;break;}}
@@ -49,15 +62,17 @@ const browser=await chromium.launch({headless:true});const context=await browser
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
-  await dismiss(page,16000);
-  await page.waitForFunction(()=>{
-    const opening=window.__goodBoysOpeningGameplay,clock=window.__goodBoysCanonicalClockIn,repair=window.TechOpsGoodBoysIntroRepair,n=window.NM;
-    return !!((n&&n._v736)||(opening&&opening.completed&&clock&&clock.ok&&!(repair&&repair.launching)));
-  },null,{timeout:15000});
-  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:15000});
+  await dismiss(page,36000);
+  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736&&Number(window.NM._v736.m)===3),null,{timeout:18000});
   await page.waitForTimeout(300);
-  const opening=await page.evaluate(()=>({repair:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,ship:window.TechOpsShipInteraction&&window.TechOpsShipInteraction.VERSION||0,state:window.__goodBoysOpeningGameplay||null,clockIn:window.__goodBoysCanonicalClockIn||null}));
-  if(opening.repair<12||opening.ship<2||!opening.state||!opening.state.completed||opening.state.count!==3||!opening.clockIn||!opening.clockIn.ok)fail(0,'canonical-opening-not-complete',opening);
+  const opening=await page.evaluate(()=>({
+    deck:window.__goodBoysDeckInteract||null,
+    crash:window.__goodBoysCrashScene||null,
+    hard:window.__goodBoysHardButtonLaunch||null,
+    mission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||0),
+    pair:!!(window.NM&&window.NM._v736&&window.NM._v736.chars&&window.NM._v736.chars.katrin&&window.NM._v736.chars.manchez)
+  }));
+  if(!opening.deck||!opening.deck.completed||!opening.crash||!opening.crash.completed||opening.hard?.status!=='prison-gameplay'||opening.mission!==3||!opening.pair)fail(0,'canonical-opening-not-complete',opening);
   /* This bot samples the eight authored environments out of sequence. Pause the
      live progression timer so combat-clear state cannot legitimately advance a
      manually selected sample while its background contract is being observed. */
@@ -85,9 +100,9 @@ try{
 }catch(e){
   const state=await page.evaluate(()=>({
     openingPhase:window.__goodBoysOpeningPhase||null,
-    opening:window.__goodBoysOpeningGameplay||null,
-    clockIn:window.__goodBoysCanonicalClockIn||null,
-    repair:window.TechOpsGoodBoysIntroRepair?{version:window.TechOpsGoodBoysIntroRepair.VERSION||0,launching:!!window.TechOpsGoodBoysIntroRepair.launching}:null,
+    deck:window.__goodBoysDeckInteract||null,
+    crash:window.__goodBoysCrashScene||null,
+    hard:window.__goodBoysHardButtonLaunch||null,
     hasNM:!!window.NM,
     runtimeMission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||0)
   })).catch(()=>null);
