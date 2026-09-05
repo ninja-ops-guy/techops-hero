@@ -49,7 +49,13 @@ const browser=await chromium.launch({headless:true});const context=await browser
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
-  await dismiss(page,12000);await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:7000});await page.waitForTimeout(300);
+  await dismiss(page,16000);
+  await page.waitForFunction(()=>{
+    const opening=window.__goodBoysOpeningGameplay,clock=window.__goodBoysCanonicalClockIn,repair=window.TechOpsGoodBoysIntroRepair,n=window.NM;
+    return !!((n&&n._v736)||(opening&&opening.completed&&clock&&clock.ok&&!(repair&&repair.launching)));
+  },null,{timeout:15000});
+  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:15000});
+  await page.waitForTimeout(300);
   const opening=await page.evaluate(()=>({repair:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,ship:window.TechOpsShipInteraction&&window.TechOpsShipInteraction.VERSION||0,state:window.__goodBoysOpeningGameplay||null,clockIn:window.__goodBoysCanonicalClockIn||null}));
   if(opening.repair<12||opening.ship<2||!opening.state||!opening.state.completed||opening.state.count!==3||!opening.clockIn||!opening.clockIn.ok)fail(0,'canonical-opening-not-complete',opening);
   /* This bot samples the eight authored environments out of sequence. Pause the
@@ -76,5 +82,16 @@ try{
     if(st.phase&&st.phase.bg!==e.key)fail(m,'gameplay-phase-background-drift',{expected:e.key,actual:st.phase.bg});
     await page.screenshot({path:path.join(OUT,`goodboys-bible-m${m}.png`),fullPage:false});
   }
-}catch(e){fail(0,'bot-exception',{error:String(e&&e.stack||e)});}finally{await browser.close();}
+}catch(e){
+  const state=await page.evaluate(()=>({
+    openingPhase:window.__goodBoysOpeningPhase||null,
+    opening:window.__goodBoysOpeningGameplay||null,
+    clockIn:window.__goodBoysCanonicalClockIn||null,
+    repair:window.TechOpsGoodBoysIntroRepair?{version:window.TechOpsGoodBoysIntroRepair.VERSION||0,launching:!!window.TechOpsGoodBoysIntroRepair.launching}:null,
+    hasNM:!!window.NM,
+    runtimeMission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||0)
+  })).catch(()=>null);
+  fail(0,'bot-exception',{error:String(e&&e.stack||e),state});
+  await page.screenshot({path:path.join(OUT,'goodboys-background-bible-exception.png'),fullPage:true}).catch(()=>{});
+}finally{await browser.close();}
 const report={pass:findings.length===0,expected,findings};fs.writeFileSync(path.join(OUT,'goodboys-background-bible.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-background-bible.md'),['# Good Boys Background Bible Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Findings: ${findings.length}`,'','## Canon route','',...Object.entries(expected).map(([m,e])=>`- M${m}: ${e.scene} — \`${e.key}\` / \`${e.district}\``),'',...(findings.length?['## Findings','',...findings.map(f=>`- ${JSON.stringify(f)}`)]:[])].join('\n'));if(!report.pass)process.exitCode=1;
