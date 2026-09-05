@@ -84,12 +84,23 @@ async function waitForInputReady(page,{timeout=10000}={}){
     for(const sel of ['#gb-prison-cine button','#good-boys-story-cine button','#good-boys-earthfall-cine button','#dialogue:not(.hidden) #dlg-options button']){
       const b=page.locator(sel).first();
       if(await b.count()&&await b.isVisible().catch(()=>false)){
-        await b.evaluate(el=>el.click()).catch(()=>{});
+        const label=((await b.innerText().catch(()=>''))||'').trim();
+        // Authored Good Boys cards bind pointerdown rather than click so the
+        // same control works immediately on touch devices. A synthetic click()
+        // never reaches that handler and previously made the bot mistake the
+        // legitimate IMPACT VECTOR / CONTINUE card for a stale-dialog lock.
+        await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
+        await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
+        // Ordinary dialogue buttons use click handlers; firing click as a
+        // compatibility follow-up is harmless because pointerdown removes the
+        // authored card before this can double-advance it.
+        await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
+        repl('input-ready dismissed blocker',{selector:sel,label});
         acted=true;
         break;
       }
     }
-    if(acted){await page.waitForTimeout(120);continue;}
+    if(acted){await page.waitForTimeout(180);continue;}
     const ready=await page.evaluate(()=>{
       const s=window.S;
       if(s&&s.inDialog)return false;
@@ -111,7 +122,14 @@ async function waitForInputReady(page,{timeout=10000}={}){
     if(ready)return true;
     await page.waitForTimeout(150);
   }
-  throw new Error('input readiness timeout: dialogue/cinematic/control ownership did not clear');
+  const blocked=await page.evaluate(()=>({
+    inDialog:!!(window.S&&window.S.inDialog),
+    prison:document.getElementById('gb-prison-cine')?.innerText?.slice(0,700)||null,
+    story:document.getElementById('good-boys-story-cine')?.innerText?.slice(0,700)||null,
+    earthfall:document.getElementById('good-boys-earthfall-cine')?.innerText?.slice(0,700)||null,
+    dialogue:document.getElementById('dialogue')&&!document.getElementById('dialogue').classList.contains('hidden')?document.getElementById('dialogue').innerText.slice(0,700):null
+  })).catch(()=>null);
+  throw new Error('input readiness timeout: dialogue/cinematic/control ownership did not clear :: '+JSON.stringify(blocked));
 }
 
 async function snapshot(page){
