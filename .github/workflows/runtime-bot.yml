@@ -93,7 +93,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 180s npm run runtime-bot
+          timeout --signal=TERM --kill-after=15s 300s npm run runtime-bot
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
