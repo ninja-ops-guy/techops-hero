@@ -77,59 +77,130 @@ async function waitForRenderReady(page,canvasSelector,{timeout=5000,minNonBlack=
   },{sel:canvasSelector,minNonBlack,minRange},{timeout,polling:100});
 }
 
-async function waitForInputReady(page,{timeout=10000}={}){
+async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
   const until=Date.now()+timeout;
+  const blockers={
+    inDialog:{count:0,lastSeen:null},
+    cutsceneOverlay:{count:0,lastSeen:null,details:null},
+    prisonCine:{count:0,lastSeen:null},
+    storyCine:{count:0,lastSeen:null},
+    earthfallCine:{count:0,lastSeen:null},
+    dialogue:{count:0,lastSeen:null},
+    touchControls:{count:0,lastSeen:null,zeroRects:[]},
+    objectiveCard:{attempts:0,lastAttempt:null,label:null,selector:null}
+  };
+  let lastDismissalAttempt=0,stableSince=0;
+  const DISMISSAL_RETRY_MS=800;
+
   while(Date.now()<until){
+    const now=Date.now();
     let acted=false;
-    for(const sel of ['#gb-prison-cine button','#good-boys-story-cine button','#good-boys-earthfall-cine button','#dialogue:not(.hidden) #dlg-options button']){
-      const b=page.locator(sel).first();
-      if(await b.count()&&await b.isVisible().catch(()=>false)){
-        const label=((await b.innerText().catch(()=>''))||'').trim();
-        // Authored Good Boys cards bind pointerdown rather than click so the
-        // same control works immediately on touch devices. A synthetic click()
-        // never reaches that handler and previously made the bot mistake the
-        // legitimate IMPACT VECTOR / CONTINUE card for a stale-dialog lock.
-        await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
-        await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
-        // Ordinary dialogue buttons use click handlers; firing click as a
-        // compatibility follow-up is harmless because pointerdown removes the
-        // authored card before this can double-advance it.
-        await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
-        repl('input-ready dismissed blocker',{selector:sel,label});
-        acted=true;
-        break;
+
+    if(now-lastDismissalAttempt>=DISMISSAL_RETRY_MS){
+      for(const sel of ['#gb-prison-cine button','#good-boys-story-cine button','#good-boys-earthfall-cine button','#dialogue:not(.hidden) #dlg-options button']){
+        const b=page.locator(sel).first();
+        if(await b.count()&&await b.isVisible().catch(()=>false)){
+          const label=((await b.innerText().catch(()=>''))||'').trim();
+          lastDismissalAttempt=now;
+          blockers.objectiveCard.attempts++;
+          blockers.objectiveCard.lastAttempt=new Date(now).toISOString();
+          blockers.objectiveCard.label=label;
+          blockers.objectiveCard.selector=sel;
+          await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
+          await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
+          await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
+          repl('input-ready dismissal attempt',{selector:sel,label,attempt:blockers.objectiveCard.attempts});
+          acted=true;
+          break;
+        }
       }
     }
-    if(acted){await page.waitForTimeout(180);continue;}
-    const ready=await page.evaluate(()=>{
-      const s=window.S;
-      if(s&&s.inDialog)return false;
-      if(document.querySelector('#good-dogs-cutscene-overlay.active'))return false;
-      for(const id of ['gb-prison-cine','good-boys-story-cine','good-boys-earthfall-cine']){
-        const e=document.getElementById(id);if(!e)continue;const cs=getComputedStyle(e);
-        if(!e.classList.contains('hidden')&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity||1)!==0)return false;
-      }
-      const d=document.getElementById('dialogue');
-      if(d){const cs=getComputedStyle(d);if(!d.classList.contains('hidden')&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity||1)!==0)return false;}
+    if(acted){stableSince=0;await page.waitForTimeout(180);continue;}
+
+    const state=await page.evaluate(()=>{
+      const visible=el=>{
+        if(!el||el.classList.contains('hidden'))return false;
+        const cs=getComputedStyle(el);
+        if(cs.display==='none'||cs.visibility==='hidden'||Number(cs.opacity||1)===0)return false;
+        const r=el.getBoundingClientRect();
+        return r.width>0&&r.height>0;
+      };
+      const ids=['gb-prison-cine','good-boys-story-cine','good-boys-earthfall-cine'];
+      const byId=Object.fromEntries(ids.map(id=>[id,visible(document.getElementById(id))]));
+      const overlay=document.querySelector('#good-dogs-cutscene-overlay.active');
+      const overlayVisible=visible(overlay);
+      const dialogue=document.getElementById('dialogue');
+      const dialogueVisible=visible(dialogue);
       const box=document.getElementById('good-dogs-touch');
-      if(box){
-        const cs=getComputedStyle(box);
-        const visible=cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity||1)!==0;
-        if(visible){for(const b of box.querySelectorAll('button')){const r=b.getBoundingClientRect();if(r.width===0||r.height===0)return false;}}
+      const boxVisible=visible(box);
+      const zeroRects=[];
+      if(boxVisible){
+        for(const b of box.querySelectorAll('button')){
+          const r=b.getBoundingClientRect();
+          if(r.width===0||r.height===0)zeroRects.push({id:b.id,w:r.width,h:r.height});
+        }
       }
-      return true;
-    }).catch(()=>false);
-    if(ready)return true;
+      const overlayDetails=overlay?(()=>{
+        const cs=getComputedStyle(overlay),r=overlay.getBoundingClientRect();
+        return{className:overlay.className,display:cs.display,visibility:cs.visibility,opacity:cs.opacity,w:r.width,h:r.height,text:(overlay.innerText||'').slice(0,500)};
+      })():null;
+      return{
+        inDialog:!!(window.S&&window.S.inDialog),
+        overlayVisible,overlayDetails,
+        prisonCine:byId['gb-prison-cine'],
+        storyCine:byId['good-boys-story-cine'],
+        earthfallCine:byId['good-boys-earthfall-cine'],
+        dialogueVisible,
+        touchControlsVisible:boxVisible,
+        zeroRects
+      };
+    }).catch(()=>null);
+
+    if(!state){stableSince=0;await page.waitForTimeout(150);continue;}
+    const stamp=new Date().toISOString();
+    const note=(key,blocked,details)=>{
+      if(!blocked)return;
+      blockers[key].count++;
+      blockers[key].lastSeen=stamp;
+      if(details!==undefined)blockers[key].details=details;
+    };
+    note('inDialog',state.inDialog);
+    note('cutsceneOverlay',state.overlayVisible,state.overlayDetails);
+    note('prisonCine',state.prisonCine);
+    note('storyCine',state.storyCine);
+    note('earthfallCine',state.earthfallCine);
+    note('dialogue',state.dialogueVisible);
+    if(state.touchControlsVisible&&state.zeroRects.length){
+      blockers.touchControls.count++;
+      blockers.touchControls.lastSeen=stamp;
+      blockers.touchControls.zeroRects=state.zeroRects;
+    }
+
+    const blocked=state.inDialog||state.overlayVisible||state.prisonCine||state.storyCine||state.earthfallCine||state.dialogueVisible||(state.touchControlsVisible&&state.zeroRects.length>0);
+    if(!blocked){
+      if(!stableSince)stableSince=now;
+      if(now-stableSince>=stableMs){
+        repl('input-ready stable',{stableMs,objectiveDismissals:blockers.objectiveCard.attempts});
+        return true;
+      }
+    }else stableSince=0;
+
     await page.waitForTimeout(150);
   }
-  const blocked=await page.evaluate(()=>({
+
+  const finalState=await page.evaluate(()=>({
     inDialog:!!(window.S&&window.S.inDialog),
+    phase:window.__goodBoysOpeningPhase||null,
     prison:document.getElementById('gb-prison-cine')?.innerText?.slice(0,700)||null,
     story:document.getElementById('good-boys-story-cine')?.innerText?.slice(0,700)||null,
     earthfall:document.getElementById('good-boys-earthfall-cine')?.innerText?.slice(0,700)||null,
-    dialogue:document.getElementById('dialogue')&&!document.getElementById('dialogue').classList.contains('hidden')?document.getElementById('dialogue').innerText.slice(0,700):null
+    dialogue:document.getElementById('dialogue')&&!document.getElementById('dialogue').classList.contains('hidden')?document.getElementById('dialogue').innerText.slice(0,700):null,
+    overlay:(()=>{
+      const e=document.querySelector('#good-dogs-cutscene-overlay.active');if(!e)return null;
+      const s=getComputedStyle(e),r=e.getBoundingClientRect();return{className:e.className,display:s.display,visibility:s.visibility,opacity:s.opacity,w:r.width,h:r.height,text:(e.innerText||'').slice(0,700)};
+    })()
   })).catch(()=>null);
-  throw new Error('input readiness timeout: dialogue/cinematic/control ownership did not clear :: '+JSON.stringify(blocked));
+  throw new Error('input readiness timeout :: '+JSON.stringify({blockers,finalState}));
 }
 
 async function snapshot(page){
