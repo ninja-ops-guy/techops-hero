@@ -77,8 +77,8 @@ async function waitForRenderReady(page,canvasSelector,{timeout=5000,minNonBlack=
   },{sel:canvasSelector,minNonBlack,minRange},{timeout,polling:100});
 }
 
-async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
-  const until=Date.now()+timeout;
+async function waitForInputReady(page,{timeout=10000,stableMs=400}={}){
+  let deadline=Date.now()+timeout;
   const blockers={
     inDialog:{count:0,lastSeen:null},
     cutsceneOverlay:{count:0,lastSeen:null,details:null},
@@ -90,34 +90,10 @@ async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
     objectiveCard:{attempts:0,lastAttempt:null,label:null,selector:null}
   };
   let lastDismissalAttempt=0,stableSince=0;
-  const DISMISSAL_RETRY_MS=800;
+  const DISMISSAL_RETRY_MS=800,EXTENSION_MS=3000;
 
-  while(Date.now()<until){
-    const now=Date.now();
-    let acted=false;
-
-    if(now-lastDismissalAttempt>=DISMISSAL_RETRY_MS){
-      for(const sel of ['#gb-prison-cine button','#good-boys-story-cine button','#good-boys-earthfall-cine button','#dialogue:not(.hidden) #dlg-options button']){
-        const b=page.locator(sel).first();
-        if(await b.count()&&await b.isVisible().catch(()=>false)){
-          const label=((await b.innerText().catch(()=>''))||'').trim();
-          lastDismissalAttempt=now;
-          blockers.objectiveCard.attempts++;
-          blockers.objectiveCard.lastAttempt=new Date(now).toISOString();
-          blockers.objectiveCard.label=label;
-          blockers.objectiveCard.selector=sel;
-          await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
-          await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
-          await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
-          repl('input-ready dismissal attempt',{selector:sel,label,attempt:blockers.objectiveCard.attempts});
-          acted=true;
-          break;
-        }
-      }
-    }
-    if(acted){stableSince=0;await page.waitForTimeout(180);continue;}
-
-    const state=await page.evaluate(()=>{
+  async function readReadiness(){
+    return page.evaluate(()=>{
       const visible=el=>{
         if(!el||el.classList.contains('hidden'))return false;
         const cs=getComputedStyle(el);
@@ -144,7 +120,7 @@ async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
         const cs=getComputedStyle(overlay),r=overlay.getBoundingClientRect();
         return{className:overlay.className,display:cs.display,visibility:cs.visibility,opacity:cs.opacity,w:r.width,h:r.height,text:(overlay.innerText||'').slice(0,500)};
       })():null;
-      return{
+      const state={
         inDialog:!!(window.S&&window.S.inDialog),
         overlayVisible,overlayDetails,
         prisonCine:byId['gb-prison-cine'],
@@ -154,8 +130,38 @@ async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
         touchControlsVisible:boxVisible,
         zeroRects
       };
+      state.allClear=!(state.inDialog||state.overlayVisible||state.prisonCine||state.storyCine||state.earthfallCine||state.dialogueVisible||(state.touchControlsVisible&&state.zeroRects.length>0));
+      return state;
     }).catch(()=>null);
+  }
 
+  while(Date.now()<deadline){
+    const now=Date.now();
+    let acted=false;
+
+    if(now-lastDismissalAttempt>=DISMISSAL_RETRY_MS){
+      for(const sel of ['#gb-prison-cine button','#good-boys-story-cine button','#good-boys-earthfall-cine button','#dialogue:not(.hidden) #dlg-options button']){
+        const b=page.locator(sel).first();
+        if(await b.count()&&await b.isVisible().catch(()=>false)){
+          const label=((await b.innerText().catch(()=>''))||'').trim();
+          lastDismissalAttempt=now;
+          blockers.objectiveCard.attempts++;
+          blockers.objectiveCard.lastAttempt=new Date(now).toISOString();
+          blockers.objectiveCard.label=label;
+          blockers.objectiveCard.selector=sel;
+          await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
+          await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
+          await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
+          deadline=Math.max(deadline,Date.now()+EXTENSION_MS);
+          repl('input-ready dismissal attempt',{selector:sel,label,attempt:blockers.objectiveCard.attempts,deadlineExtendedMs:EXTENSION_MS});
+          acted=true;
+          break;
+        }
+      }
+    }
+    if(acted){stableSince=0;await page.waitForTimeout(180);continue;}
+
+    const state=await readReadiness();
     if(!state){stableSince=0;await page.waitForTimeout(150);continue;}
     const stamp=new Date().toISOString();
     const note=(key,blocked,details)=>{
@@ -176,8 +182,7 @@ async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
       blockers.touchControls.zeroRects=state.zeroRects;
     }
 
-    const blocked=state.inDialog||state.overlayVisible||state.prisonCine||state.storyCine||state.earthfallCine||state.dialogueVisible||(state.touchControlsVisible&&state.zeroRects.length>0);
-    if(!blocked){
+    if(state.allClear){
       if(!stableSince)stableSince=now;
       if(now-stableSince>=stableMs){
         repl('input-ready stable',{stableMs,objectiveDismissals:blockers.objectiveCard.attempts});
@@ -186,6 +191,14 @@ async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
     }else stableSince=0;
 
     await page.waitForTimeout(150);
+  }
+
+  // A clean final snapshot is authoritative: if every blocking predicate is
+  // clear at the deadline, do not fail solely because the stable timer ran out.
+  const finalReadiness=await readReadiness();
+  if(finalReadiness&&finalReadiness.allClear){
+    repl('input-ready accepted clean final snapshot',{stableMs,objectiveDismissals:blockers.objectiveCard.attempts,finalReadiness});
+    return true;
   }
 
   const finalState=await page.evaluate(()=>({
@@ -200,7 +213,7 @@ async function waitForInputReady(page,{timeout=10000,stableMs=700}={}){
       const s=getComputedStyle(e),r=e.getBoundingClientRect();return{className:e.className,display:s.display,visibility:s.visibility,opacity:s.opacity,w:r.width,h:r.height,text:(e.innerText||'').slice(0,700)};
     })()
   })).catch(()=>null);
-  throw new Error('input readiness timeout :: '+JSON.stringify({blockers,finalState}));
+  throw new Error('input readiness timeout :: '+JSON.stringify({blockers,finalReadiness,finalState}));
 }
 
 async function snapshot(page){
