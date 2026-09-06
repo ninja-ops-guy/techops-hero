@@ -380,10 +380,13 @@ async function runMode(browserType,profileName,contextOptions,mode){
   const context=await browser.newContext(contextOptions);
   await context.tracing.start({screenshots:true,snapshots:false,sources:false});
   const page=await context.newPage();
+  const modeStarted=Date.now();
+  const pageState={closed:false,crashed:false,closedAt:null,crashedAt:null};
   const consoleErrors=[],pageErrors=[],requestFailures=[],badResponses=[],crashes=[];
   page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
   page.on('pageerror',e=>pageErrors.push(String(e&&e.stack||e)));
-  page.on('crash',()=>crashes.push({at:Date.now()}));
+  page.on('close',()=>{pageState.closed=true;pageState.closedAt=Date.now();});
+  page.on('crash',()=>{pageState.crashed=true;pageState.crashedAt=Date.now();crashes.push({at:Date.now()});});
   page.on('requestfailed',r=>requestFailures.push({url:r.url(),error:r.failure()?.errorText||''}));
   page.on('response',r=>{if(r.status()>=400)badResponses.push({url:r.url(),status:r.status()});});
 
@@ -457,11 +460,19 @@ async function runMode(browserType,profileName,contextOptions,mode){
     if(s2.safetyError)fail(mode,'runtime errored during liveness window',{profileName,error:s2.safetyError});
     if(!s2.canvas?.ok||s2.canvas.nonBlack<20||s2.canvas.range<8)fail(mode,'canvas failed liveness window',{profileName,canvas:s2.canvas});
   }catch(e){
-    fail(mode,'bot exception',{profileName,error:String(e&&e.stack||e),state:await snapshot(page).catch(()=>null)});
-    await page.screenshot({path:path.join(OUT,`${profileName}-${mode}-exception.png`),fullPage:true}).catch(()=>{});
+    const message=String(e&&e.stack||e);
+    const closed=/Target page, context or browser has been closed|Target closed|Session closed/i.test(message)||pageState.closed;
+    fail(mode,closed?'page/context closed unexpectedly':'bot exception',{
+      profileName,
+      error:message,
+      modeElapsedMs:Date.now()-modeStarted,
+      pageState,
+      state:pageState.closed?null:await snapshot(page).catch(()=>null)
+    });
+    if(!pageState.closed)await page.screenshot({path:path.join(OUT,`${profileName}-${mode}-exception.png`),fullPage:true}).catch(()=>{});
   }finally{
-    await context.tracing.stop({path:path.join(OUT,`${profileName}-${mode}-trace.zip`)}).catch(()=>{});
-    await browser.close();
+    try{await context.tracing.stop({path:path.join(OUT,`${profileName}-${mode}-trace.zip`)}).catch(()=>{});}catch(_){}
+    try{await browser.close();}catch(_){}
   }
 }
 
