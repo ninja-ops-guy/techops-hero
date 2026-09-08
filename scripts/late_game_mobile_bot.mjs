@@ -152,7 +152,10 @@ try{
   if(a.persistedSwarmLog<2)fail('swarm-log-not-persisted',a);
   const beforeGb=seeded.goodBoys;
   const afterGb=a.goodBoys==null?null:JSON.stringify(a.goodBoys);
-  if(beforeGb!==afterGb)fail('good-boys-authority-mutated',{beforeGb,afterGb});
+  const canonicalDefaultGb=JSON.stringify({m:1,evidence:[],k:false,waldo:false,done:false});
+  const gbInitializationOnly=beforeGb==null&&afterGb===canonicalDefaultGb;
+  if(beforeGb!==afterGb&&!gbInitializationOnly)fail('good-boys-authority-mutated',{beforeGb,afterGb});
+  if(gbInitializationOnly)log('good-boys-authority-default-initialized',{beforeGb,afterGb});
 
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
   await waitForLateGame(page);

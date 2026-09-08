@@ -10,6 +10,7 @@ on:
       - "*.css"
       - "package.json"
       - "scripts/**"
+      - "assets/**/*.mp4"
       - ".github/workflows/runtime-bot.yml"
   pull_request:
     branches: [main]
