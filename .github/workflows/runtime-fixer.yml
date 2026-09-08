@@ -26,7 +26,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.name == 'Runtime bot' &&
-       github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.event != 'pull_request' &&
+       github.event.workflow_run.conclusion != 'cancelled' &&
        !startsWith(github.event.workflow_run.head_branch, 'runtime-fix/'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -35,6 +36,8 @@ jobs:
       RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
       FAILED_SHA: ${{ github.event.workflow_run.head_sha || '' }}
       RUNTIME_ARTIFACT_DIR: runtime-fixer-input
+      RUNTIME_AUTOFIX_SUMMARY: /tmp/runtime-autofix-summary.md
+      RUNTIME_AUTOFIX_RESULT: /tmp/runtime-autofix-result.json
 
     steps:
       - name: Checkout current main
@@ -42,6 +45,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          lfs: true
 
       - name: Resolve failed run metadata
         id: meta
@@ -57,12 +61,15 @@ jobs:
             echo "Refusing non-Runtime-bot run: $name" >&2
             exit 1
           fi
-          if [ "$conclusion" != "failure" ]; then
-            echo "Run is not failed ($conclusion); nothing to repair."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
+          case "$conclusion" in
+            success|failure)
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Run conclusion is $conclusion; nothing actionable to repair."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
@@ -78,16 +85,28 @@ jobs:
           fi
           find "$RUNTIME_ARTIFACT_DIR" -maxdepth 2 -type f -print || true
 
+      - name: Ensure media repair tooling
+        if: steps.meta.outputs.skip != 'true'
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+
       - name: Apply known-safe runtime repairs
         if: steps.meta.outputs.skip != 'true'
+        env:
+          RUNTIME_FAILED_SHA: ${{ steps.meta.outputs.sha }}
+          RUNTIME_RUN_ID: ${{ env.RUN_ID }}
         run: node scripts/runtime_autofix.mjs
 
       - name: Add fixer summary
         if: always() && steps.meta.outputs.skip != 'true'
         shell: bash
         run: |
-          if [ -f runtime-autofix-summary.md ]; then
-            cat runtime-autofix-summary.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$RUNTIME_AUTOFIX_SUMMARY" ]; then
+            cat "$RUNTIME_AUTOFIX_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
           else
             echo '# Runtime Autofix' >> "$GITHUB_STEP_SUMMARY"
             echo 'Fixer did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
@@ -106,25 +125,36 @@ jobs:
             git diff --check
           fi
 
-      - name: Static syntax gate
+      - name: Static and targeted repair gates
         if: steps.diff.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          for f in $(git diff --name-only -- '*.js' '*.mjs'); do
-            node --check "$f"
-          done
+          node --check scripts/runtime_autofix.mjs
+          while IFS= read -r f; do
+            [ -n "$f" ] && node --check "$f"
+          done < <(git diff --name-only -- '*.js' '*.mjs')
+          if git diff --name-only | grep -qx 'scripts/late_game_mobile_bot.mjs'; then
+            node test_campaign_late_game_contracts.js
+          fi
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            codec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=nw=1:nk=1 "$f")"
+            pix="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=nw=1:nk=1 "$f")"
+            test "$codec" = "h264"
+            test "$pix" = "yuv420p"
+          done < <(git diff --name-only -- '*.mp4')
 
       - name: Create repair branch and PR
         if: steps.diff.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          branch="runtime-fix/run-${RUN_ID}"
+          branch="runtime-fix/run-${RUN_ID}-${GITHUB_RUN_ID}"
           git config user.name "runtime-fixer[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add -A
+          git add -u
           git commit -m "Autofix Runtime bot failure #${RUN_ID}"
           git push origin "$branch"
 
@@ -136,7 +166,7 @@ jobs:
 
           The fixer only applies repository-defined, known-safe transformations. This PR is intentionally not auto-merged; CI must validate the repair first.
 
-          $(cat runtime-autofix-summary.md)
+          $(cat "$RUNTIME_AUTOFIX_SUMMARY")
           EOF
           )"
 
@@ -151,4 +181,7 @@ jobs:
         shell: bash
         run: |
           echo "No repository-defined safe mutation was available for Runtime bot run ${RUN_ID}." >> "$GITHUB_STEP_SUMMARY"
-          echo "The Runtime bot issue/report remains the escalation path for this failure." >> "$GITHUB_STEP_SUMMARY"
+          echo "The Runtime bot issue/report remains the escalation path for this finding." >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$RUNTIME_AUTOFIX_SUMMARY" ]; then
+            cat "$RUNTIME_AUTOFIX_SUMMARY" >> "$GITHUB_STEP_SUMMARY"
+          fi
