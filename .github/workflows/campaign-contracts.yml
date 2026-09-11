@@ -10,6 +10,7 @@ on:
       - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
+      - "night_hooks.js"
       - "orbital_tiles.source.js"
       - "orbital_tiles.atlas.js"
       - "shuttle.atlas.js"
@@ -25,6 +26,7 @@ on:
       - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_runtime_autofix.mjs"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
@@ -43,6 +45,7 @@ on:
       - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
+      - "night_hooks.js"
       - "orbital_tiles.source.js"
       - "orbital_tiles.atlas.js"
       - "shuttle.atlas.js"
@@ -58,6 +61,7 @@ on:
       - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_runtime_autofix.mjs"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
@@ -237,3 +241,4 @@ jobs:
         run: node test_ui_coop_contract.js
       - name: Verify aggregate production release gate
         run: node scripts/production_release_gate.js
+

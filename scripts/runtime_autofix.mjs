@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { mediaFailureSources, repositoryMediaPath } from './runtime_autofix_evidence.mjs';
 
 const root = process.cwd();
 const artifactDir = process.env.RUNTIME_ARTIFACT_DIR || 'runtime-fixer-input';
@@ -115,43 +116,6 @@ function applyDrawNmRecursionFix() {
   return changed;
 }
 
-function findRepoFileByBasename(name) {
-  const ignored = new Set(['.git', 'node_modules', artifactDir]);
-  const stack = [root];
-  while (stack.length) {
-    const dir = stack.pop();
-    let ents = [];
-    try { ents = fs.readdirSync(dir, { withFileTypes: true }); } catch { continue; }
-    for (const ent of ents) {
-      if (ignored.has(ent.name)) continue;
-      const p = path.join(dir, ent.name);
-      if (ent.isDirectory()) stack.push(p);
-      else if (ent.name === name) return path.relative(root, p);
-    }
-  }
-  return null;
-}
-
-function nearestMp4ToDemuxSignature() {
-  const signatures = [...evidence.matchAll(/DEMUXER_ERROR_NO_SUPPORTED_STREAMS|FFmpegDemuxer:\s*no supported streams|mediaError[^]{0,120}?code["']?\s*[:=]\s*4/gi)];
-  const candidates = [];
-  for (const sig of signatures) {
-    const start = Math.max(0, sig.index - 900), end = Math.min(evidence.length, sig.index + 900);
-    const chunk = evidence.slice(start, end);
-    for (const m of chunk.matchAll(/(?:https?:\/\/[^\s"'<>]+\/)?((?:assets\/)?[A-Za-z0-9_.\/-]+\.mp4)/gi)) {
-      let raw = m[1];
-      if (raw.includes('assets/')) raw = raw.slice(raw.indexOf('assets/'));
-      const base = path.basename(raw);
-      const rel = fs.existsSync(path.join(root, raw)) ? raw : findRepoFileByBasename(base);
-      if (!rel) continue;
-      const absIndex = start + m.index;
-      candidates.push({ rel, distance: Math.abs(absIndex - sig.index) });
-    }
-  }
-  candidates.sort((a,b) => a.distance - b.distance);
-  return candidates[0]?.rel || null;
-}
-
 function probeVideo(rel) {
   const r = run('ffprobe', ['-v','error','-select_streams','v:0','-show_entries','stream=codec_name,pix_fmt,width,height','-of','json', rel]);
   let parsed = null;
@@ -161,19 +125,40 @@ function probeVideo(rel) {
 
 function applyChromiumMediaFix() {
   if (!/DEMUXER_ERROR_NO_SUPPORTED_STREAMS|FFmpegDemuxer:\s*no supported streams/i.test(evidence)) return false;
-  const rel = nearestMp4ToDemuxSignature();
+  const sources = mediaFailureSources(evidenceFiles.map(p => fs.readFileSync(p, 'utf8')));
+  const paths = [...new Set(sources.map(repositoryMediaPath).filter(Boolean))];
   result.matched.push('chromium-mp4-demux');
-  if (!rel) {
-    result.notes.push('Chromium demux failure matched, but no referenced MP4 could be resolved in the checkout.');
+  if (!paths.length) {
+    result.notes.push('Chromium demux failure matched without an exact media source in the failing record; refusing proximity-based repair.');
     return false;
   }
+  let changed = false;
+  for (const rel of paths) changed = repairMedia(rel) || changed;
+  return changed;
+}
+
+function repairMedia(rel) {
   const abs = path.join(root, rel);
+  if (!fs.existsSync(abs) || !fs.realpathSync(abs).startsWith(fs.realpathSync(root) + path.sep)) {
+    result.notes.push('Reported media is unavailable in this checkout: ' + rel);
+    return false;
+  }
   const head = fs.readFileSync(abs, { encoding: null }).subarray(0, 160).toString('utf8');
   if (/git-lfs\.github\.com\/spec\/v1/i.test(head)) {
     result.notes.push('Referenced MP4 is still a Git LFS pointer; checkout must enable LFS before repair.');
     return false;
   }
   const before = probeVideo(rel);
+  const original = before.parsed?.streams?.[0];
+  if (before.status !== 0 || !original) {
+    result.notes.push('Unable to verify source video streams for ' + rel + '; no automatic transcode.');
+    return false;
+  }
+  if (original.codec_name === 'h264' && original.pix_fmt === 'yuv420p') {
+    result.diagnostics.push({ rule:'media-already-compatible', file:rel, before:before.parsed });
+    result.notes.push(rel + ' already uses H.264/yuv420p. Investigate browser decoding/loading; repeated lossy encoding is not a verified repair.');
+    return false;
+  }
   const tmp = abs + '.runtime-fixer.mp4';
   const ff = run('ffmpeg', [
     '-hide_banner','-loglevel','error','-y','-i',abs,
@@ -188,7 +173,7 @@ function applyChromiumMediaFix() {
   }
   const afterProbe = probeVideo(path.relative(root, tmp));
   const stream = afterProbe.parsed?.streams?.[0];
-  if (afterProbe.status !== 0 || !stream || stream.codec_name !== 'h264' || stream.pix_fmt !== 'yuv420p') {
+  if (afterProbe.status !== 0 || !stream || stream.codec_name !== 'h264' || stream.pix_fmt !== 'yuv420p' || stream.width !== original.width || stream.height !== original.height) {
     fs.rmSync(tmp, { force: true });
     result.notes.push('Transcoded MP4 failed Chromium-safe validation for ' + rel + '.');
     return false;

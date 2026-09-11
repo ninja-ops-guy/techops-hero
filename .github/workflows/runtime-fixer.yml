@@ -15,10 +15,9 @@ permissions:
   contents: write
   pull-requests: write
   actions: read
-  issues: write
 
 concurrency:
-  group: runtime-fixer-${{ github.event.workflow_run.id || inputs.run_id }}
+  group: runtime-fixer-main
   cancel-in-progress: false
 
 jobs:
@@ -27,8 +26,8 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.name == 'Runtime bot' &&
        github.event.workflow_run.event != 'pull_request' &&
-       github.event.workflow_run.conclusion != 'cancelled' &&
-       !startsWith(github.event.workflow_run.head_branch, 'runtime-fix/'))
+       github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -61,9 +60,25 @@ jobs:
             echo "Refusing non-Runtime-bot run: $name" >&2
             exit 1
           fi
+          branch="$(jq -r '.head_branch' <<<"$data")"
+          event="$(jq -r '.event' <<<"$data")"
+          repository="$(jq -r '.head_repository.full_name' <<<"$data")"
+          if [ "$branch" != main ] || [ "$repository" != "$GITHUB_REPOSITORY" ]; then
+            echo "Refusing evidence outside this repository's main branch." >&2
+            exit 1
+          fi
+          case "$event" in
+            push|schedule|workflow_dispatch) ;;
+            *) echo "Refusing unsupported source event: $event" >&2; exit 1 ;;
+          esac
           case "$conclusion" in
-            success|failure)
-              echo "skip=false" >> "$GITHUB_OUTPUT"
+            failure)
+              if [ "$sha" = "$(git rev-parse HEAD)" ]; then
+                echo "skip=false" >> "$GITHUB_OUTPUT"
+              else
+                echo "Stale evidence for $sha; current main requires a fresh Runtime bot run."
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+              fi
               ;;
             *)
               echo "Run conclusion is $conclusion; nothing actionable to repair."
@@ -131,6 +146,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check scripts/runtime_autofix.mjs
+          node test_runtime_autofix.mjs
           while IFS= read -r f; do
             [ -n "$f" ] && node --check "$f"
           done < <(git diff --name-only -- '*.js' '*.mjs')
@@ -145,12 +161,35 @@ jobs:
             test "$pix" = "yuv420p"
           done < <(git diff --name-only -- '*.mp4')
 
+      - name: Preserve reviewable repair evidence
+        if: always() && steps.meta.outputs.skip == 'false'
+        shell: bash
+        run: |
+          mkdir -p /tmp/runtime-fixer-review
+          git diff --binary > /tmp/runtime-fixer-review/repair.patch
+          for file in "$RUNTIME_AUTOFIX_RESULT" "$RUNTIME_AUTOFIX_SUMMARY"; do
+            if [ -f "$file" ]; then cp "$file" /tmp/runtime-fixer-review/; fi
+          done
+          git rev-parse HEAD > /tmp/runtime-fixer-review/base-sha.txt
+
+      - name: Upload repair evidence
+        if: always() && steps.meta.outputs.skip == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-fixer-review-${{ github.run_id }}
+          path: /tmp/runtime-fixer-review/
+          retention-days: 14
+
       - name: Create repair branch and PR
         if: steps.diff.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          branch="runtime-fix/run-${RUN_ID}-${GITHUB_RUN_ID}"
+          branch="runtime-fix/sha-${{ steps.meta.outputs.sha }}"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "A repair branch already exists for this SHA: $branch. Review it before generating another repair." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           git config user.name "runtime-fixer[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
@@ -158,7 +197,7 @@ jobs:
           git commit -m "Autofix Runtime bot failure #${RUN_ID}"
           git push origin "$branch"
 
-          body="$(cat <<EOF
+          cat > /tmp/runtime-fixer-pr.md <<EOF
           Automated repair for failed Runtime bot run ${RUN_ID}.
 
           Failed run: ${{ steps.meta.outputs.url }}
@@ -168,13 +207,17 @@ jobs:
 
           $(cat "$RUNTIME_AUTOFIX_SUMMARY")
           EOF
-          )"
 
-          gh pr create \
+          if ! gh pr create \
             --base main \
             --head "$branch" \
             --title "Runtime Fixer: repair run ${RUN_ID}" \
-            --body "$body"
+            --body-file /tmp/runtime-fixer-pr.md 2>/tmp/runtime-fixer-pr-error.txt; then
+            cat /tmp/runtime-fixer-pr-error.txt >&2
+            echo "PR creation failed; repair remains on $branch and in the workflow artifact. No merge was performed." >> "$GITHUB_STEP_SUMMARY"
+            echo "If GitHub reports that Actions may not create PRs, the repository owner must enable that setting or review the branch manually." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
       - name: Record no-safe-fix outcome
         if: steps.meta.outputs.skip != 'true' && steps.diff.outputs.changed != 'true'

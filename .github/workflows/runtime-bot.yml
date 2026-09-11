@@ -9,6 +9,7 @@ on:
       - "*.html"
       - "*.css"
       - "package.json"
+      - "package-lock.json"
       - "scripts/**"
       - "assets/**/*.mp4"
       - ".github/workflows/runtime-bot.yml"
@@ -19,6 +20,7 @@ on:
       - "*.html"
       - "*.css"
       - "package.json"
+      - "package-lock.json"
       - "scripts/**"
       - ".github/workflows/runtime-bot.yml"
       - ".github/workflows/runtime-fixer.yml"
@@ -37,6 +39,8 @@ jobs:
   browser-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 18
+    env:
+      BOT_CHROMIUM_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v4
 
@@ -46,8 +50,8 @@ jobs:
 
       - name: Install browser bot
         run: |
-          npm install --no-audit --no-fund
-          npx playwright install --with-deps chromium webkit
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit chrome
 
       - name: Start exact-commit local server
         run: |

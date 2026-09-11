@@ -149,9 +149,14 @@ async function waitForInputReady(page,{timeout=10000,stableMs=400}={}){
           blockers.objectiveCard.lastAttempt=new Date(now).toISOString();
           blockers.objectiveCard.label=label;
           blockers.objectiveCard.selector=sel;
-          await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
-          await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
-          await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
+          // Keep the original element: pointerdown can remove the card. A new
+          // locator lookup would wait 30 seconds or act on the following card.
+          await b.evaluate(el=>{
+            el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}));
+            if(!el.isConnected)return;
+            el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}));
+            if(el.isConnected)el.click();
+          }).catch(()=>{});
           deadline=Math.max(deadline,Date.now()+EXTENSION_MS);
           repl('input-ready dismissal attempt',{selector:sel,label,attempt:blockers.objectiveCard.attempts,deadlineExtendedMs:EXTENSION_MS});
           acted=true;
@@ -300,8 +305,14 @@ async function advanceTakeover(page,mode,profileName){
   if(autoplay.gesture&&autoplay.gesture.id==='GD_CUT_02')fail(mode,'GD_CUT_02 required manual play',{profileName,autoplay});
   if(autoplay.overlay){
     await page.waitForFunction(()=>{const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video'),e=window.__goodDogsCutsceneExit;return !!((e&&e.id==='GD_CUT_02')||(v&&Number(v.currentTime||0)>.08));},null,{timeout:8000}).catch(()=>{});
-    if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');
   }
+  const playback=await page.evaluate(()=>{
+      const v=document.querySelector('#good-dogs-cutscene-overlay.active video'),exit=window.__goodDogsCutsceneExit;
+      return {decoded:!!((v&&v.readyState>=2&&v.currentTime>.08)||(exit&&exit.id==='GD_CUT_02'&&exit.status==='COMPLETED'&&exit.currentTime>.08)),src:v&&(v.currentSrc||v.src),currentTime:v&&v.currentTime,readyState:v&&v.readyState,mediaError:v&&v.error?{code:v.error.code,message:v.error.message}:null,h264:document.createElement('video').canPlayType('video/mp4; codecs="avc1.64001f"')};
+    });
+    repl(`${profileName} takeover decoded-frame evidence`,playback);
+    if(!playback.decoded)fail(mode,'GD_CUT_02 produced no decoded playback before skip',{profileName,playback,channel:process.env.BOT_CHROMIUM_CHANNEL||'bundled'});
+  if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');
   await page.waitForFunction(()=>window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0),null,{timeout:8000});
 }
 
@@ -376,7 +387,7 @@ async function exerciseGameplay(page,mode,profileName,before){
 
 async function runMode(browserType,profileName,contextOptions,mode){
   repl(`launch ${profileName} :: ${mode}`);
-  const browser=await browserType.launch({headless:true});
+  const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
   const context=await browser.newContext(contextOptions);
   await context.tracing.start({screenshots:true,snapshots:false,sources:false});
   const page=await context.newPage();
@@ -483,7 +494,15 @@ const profiles=[
   {id:'chromium',name:chromiumMobile?'iphone-chromium':'desktop-chromium',browser:chromium,options:chromiumMobile?{...devices['iPhone 15 Pro'],viewport:{width:393,height:852}}:{viewport:{width:1440,height:900}}}
 ].filter(p=>enabledBrowsers.has(p.id));
 const modes=String(process.env.BOT_MODES||'nightcrawler,goodboys').split(',').map(s=>s.trim()).filter(s=>s==='nightcrawler'||s==='goodboys');
-for(const p of profiles)for(const mode of modes)await runMode(p.browser,p.name,p.options,mode);
+if(!profiles.length||!modes.length)fail('configuration','No browser/mode checks selected',{browsers:[...enabledBrowsers],modes});
+for(const p of profiles)for(const mode of modes){
+  try{await runMode(p.browser,p.name,p.options,mode);}
+  catch(error){
+    // Browser/dependency startup failures occur before runMode's page-level
+    // handler. Still emit the report and REPL used by CI and the fixer.
+    fail(mode,'Browser session could not start or finish',{profileName:p.name,error:String(error&&error.stack||error)});
+  }
+}
 
 const report={timestamp:new Date().toISOString(),baseUrl:BASE,durationMs:Date.now()-started,contractVersion:13,pass:!findings.some(f=>f.severity==='FAIL'),failures:findings.filter(f=>f.severity==='FAIL').length,warnings:findings.filter(f=>f.severity==='WARN').length,findings};
 fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
