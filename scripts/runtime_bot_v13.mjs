@@ -483,7 +483,15 @@ const profiles=[
   {id:'chromium',name:chromiumMobile?'iphone-chromium':'desktop-chromium',browser:chromium,options:chromiumMobile?{...devices['iPhone 15 Pro'],viewport:{width:393,height:852}}:{viewport:{width:1440,height:900}}}
 ].filter(p=>enabledBrowsers.has(p.id));
 const modes=String(process.env.BOT_MODES||'nightcrawler,goodboys').split(',').map(s=>s.trim()).filter(s=>s==='nightcrawler'||s==='goodboys');
-for(const p of profiles)for(const mode of modes)await runMode(p.browser,p.name,p.options,mode);
+if(!profiles.length||!modes.length)fail('configuration','No browser/mode checks selected',{browsers:[...enabledBrowsers],modes});
+for(const p of profiles)for(const mode of modes){
+  try{await runMode(p.browser,p.name,p.options,mode);}
+  catch(error){
+    // Browser/dependency startup failures occur before runMode's page-level
+    // handler. Still emit the report and REPL used by CI and the fixer.
+    fail(mode,'Browser session could not start or finish',{profileName:p.name,error:String(error&&error.stack||error)});
+  }
+}
 
 const report={timestamp:new Date().toISOString(),baseUrl:BASE,durationMs:Date.now()-started,contractVersion:13,pass:!findings.some(f=>f.severity==='FAIL'),failures:findings.filter(f=>f.severity==='FAIL').length,warnings:findings.filter(f=>f.severity==='WARN').length,findings};
 fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,2));

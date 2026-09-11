@@ -9,6 +9,7 @@ on:
       - "*.html"
       - "*.css"
       - "package.json"
+      - "package-lock.json"
       - "scripts/**"
       - "assets/**/*.mp4"
       - ".github/workflows/runtime-bot.yml"
@@ -19,6 +20,7 @@ on:
       - "*.html"
       - "*.css"
       - "package.json"
+      - "package-lock.json"
       - "scripts/**"
       - ".github/workflows/runtime-bot.yml"
       - ".github/workflows/runtime-fixer.yml"
@@ -46,7 +48,7 @@ jobs:
 
       - name: Install browser bot
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium webkit
 
       - name: Start exact-commit local server
