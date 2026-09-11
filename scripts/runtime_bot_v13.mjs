@@ -149,9 +149,14 @@ async function waitForInputReady(page,{timeout=10000,stableMs=400}={}){
           blockers.objectiveCard.lastAttempt=new Date(now).toISOString();
           blockers.objectiveCard.label=label;
           blockers.objectiveCard.selector=sel;
-          await b.dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}).catch(()=>{});
-          await b.dispatchEvent('pointerup',{pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}).catch(()=>{});
-          await b.evaluate(el=>{if(el&&el.isConnected)el.click();}).catch(()=>{});
+          // Keep the original element: pointerdown can remove the card. A new
+          // locator lookup would wait 30 seconds or act on the following card.
+          await b.evaluate(el=>{
+            el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}));
+            if(!el.isConnected)return;
+            el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}));
+            if(el.isConnected)el.click();
+          }).catch(()=>{});
           deadline=Math.max(deadline,Date.now()+EXTENSION_MS);
           repl('input-ready dismissal attempt',{selector:sel,label,attempt:blockers.objectiveCard.attempts,deadlineExtendedMs:EXTENSION_MS});
           acted=true;
@@ -300,6 +305,12 @@ async function advanceTakeover(page,mode,profileName){
   if(autoplay.gesture&&autoplay.gesture.id==='GD_CUT_02')fail(mode,'GD_CUT_02 required manual play',{profileName,autoplay});
   if(autoplay.overlay){
     await page.waitForFunction(()=>{const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video'),e=window.__goodDogsCutsceneExit;return !!((e&&e.id==='GD_CUT_02')||(v&&Number(v.currentTime||0)>.08));},null,{timeout:8000}).catch(()=>{});
+    const playback=await page.evaluate(()=>{
+      const v=document.querySelector('#good-dogs-cutscene-overlay.active video'),exit=window.__goodDogsCutsceneExit;
+      return {decoded:!!((v&&v.readyState>=2&&v.currentTime>.08)||(exit&&exit.id==='GD_CUT_02'&&exit.status==='COMPLETED'&&exit.currentTime>.08)),src:v&&(v.currentSrc||v.src),currentTime:v&&v.currentTime,readyState:v&&v.readyState,mediaError:v&&v.error?{code:v.error.code,message:v.error.message}:null,h264:document.createElement('video').canPlayType('video/mp4; codecs="avc1.64001f"')};
+    });
+    repl(`${profileName} takeover decoded-frame evidence`,playback);
+    if(!playback.decoded)fail(mode,'GD_CUT_02 produced no decoded playback before skip',{profileName,playback,channel:process.env.BOT_CHROMIUM_CHANNEL||'bundled'});
     if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');
   }
   await page.waitForFunction(()=>window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0),null,{timeout:8000});
@@ -376,7 +387,7 @@ async function exerciseGameplay(page,mode,profileName,before){
 
 async function runMode(browserType,profileName,contextOptions,mode){
   repl(`launch ${profileName} :: ${mode}`);
-  const browser=await browserType.launch({headless:true});
+  const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
   const context=await browser.newContext(contextOptions);
   await context.tracing.start({screenshots:true,snapshots:false,sources:false});
   const page=await context.newPage();

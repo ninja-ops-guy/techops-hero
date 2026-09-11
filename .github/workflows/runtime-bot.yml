@@ -39,6 +39,8 @@ jobs:
   browser-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 18
+    env:
+      BOT_CHROMIUM_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v4
 
@@ -49,7 +51,7 @@ jobs:
       - name: Install browser bot
         run: |
           npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps chromium webkit chrome
 
       - name: Start exact-commit local server
         run: |

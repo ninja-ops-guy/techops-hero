@@ -58,7 +58,7 @@ async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(
   const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);if(introBusy){idle=0;await page.waitForTimeout(120);continue;}
   idle++;if(idle>=8)return true;await page.waitForTimeout(100);
 }return false;}
-const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
+const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
   if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');

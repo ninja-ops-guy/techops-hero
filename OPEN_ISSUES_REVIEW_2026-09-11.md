@@ -39,12 +39,12 @@ The quarantined MIKE_ACTIONS payload and temporary Charger artwork fallback in `
 
 - Baseline: 40-suite deterministic production gate passed.
 - Repair candidate: 43-suite aggregate gate passed, including the new combat, world-isolation and repair-integrity tests.
-- Chromium: Night Crawler and authored Good Boys opening/gameplay passed (0 failures; 4 external-media/network warnings in the local environment).
+- Initial Chromium Night Crawler and Good Boys checks passed, but a repeat exposed an invalid green result: the bot could skip GD_CUT_02 without proving it decoded. The corrected test requires playback evidence. A direct eight-attempt probe showed the bundled browser returned empty H.264 canPlayType and eight demux failures. CI now uses Google Chrome for the desktop media path, as recommended in the [Playwright media-codec guidance](https://playwright.dev/docs/browsers#media-codecs).
 - Chromium: progression through M3, Cell 118, GD_CUT_04 and GD_CUT_05 passed.
 - Chromium: all eight Good Boys background contracts passed.
 - Workflow YAML parsing, embedded shell syntax and git diff whitespace checks passed.
-- Final car-isolation visual recheck and GitHub PR CI results are recorded in the PR. Browser artifacts are retained by the existing Runtime bot workflow.
-- These checks do not prove full M4–M8 gameplay, all endings, physical-device behavior, or production certification. The present progression bot stops after Cell 118; restore full Warden/Earthfall runtime coverage before claiming that chain is closed.
+- Final car-isolation screenshot review confirms the car, DRIVE prompt and street markings are absent in the prison. Initial PR #14 Campaign Contracts and Runtime bot checks passed; subsequent test-strengthening changes require their own CI run. Browser artifacts are retained by the Runtime bot workflow.
+- These checks do not prove unassisted M4–M8 gameplay, all main-campaign endings, physical-device behavior, or production certification. The original progression bot stopped after Cell 118. This branch restores the later mission cutscenes, real Warden finisher, Earthfall and unlock assertions; investigation of end-of-campaign dialog state is in progress.
 
 ## Automation permission still required
 
