@@ -242,5 +242,3 @@ jobs:
       - name: Verify aggregate production release gate
         run: node scripts/production_release_gate.js
 
-      - name: Verify aggregate production gate
-        run: node scripts/production_release_gate.js
