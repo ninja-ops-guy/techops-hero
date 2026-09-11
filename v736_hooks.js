@@ -647,6 +647,12 @@
       } catch (e) { window.__err736s = String(e && e.stack || e); return false; }
     }
     function missionWin736() {
+      // The canonical progression module owns completion and the Earthfall
+      // handoff. Do not leave this provider's old M7 dialog behind its ending.
+      const authority = window.TechOpsGoodBoysProgressionAuthority;
+      if (authority && typeof authority.advance === "function") {
+        return authority.advance(Number(NM && NM._v736 && NM._v736.m || 0) + 1, "encounter-clear");
+      }
       const cs = NM._v736, m = cs.m, mt = meta736();
       cs.ending = true; NM.enemies = []; NM.clear = false; cs.pendingSpawn = null;
       if (mt) {

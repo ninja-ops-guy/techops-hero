@@ -305,14 +305,14 @@ async function advanceTakeover(page,mode,profileName){
   if(autoplay.gesture&&autoplay.gesture.id==='GD_CUT_02')fail(mode,'GD_CUT_02 required manual play',{profileName,autoplay});
   if(autoplay.overlay){
     await page.waitForFunction(()=>{const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video'),e=window.__goodDogsCutsceneExit;return !!((e&&e.id==='GD_CUT_02')||(v&&Number(v.currentTime||0)>.08));},null,{timeout:8000}).catch(()=>{});
-    const playback=await page.evaluate(()=>{
+  }
+  const playback=await page.evaluate(()=>{
       const v=document.querySelector('#good-dogs-cutscene-overlay.active video'),exit=window.__goodDogsCutsceneExit;
       return {decoded:!!((v&&v.readyState>=2&&v.currentTime>.08)||(exit&&exit.id==='GD_CUT_02'&&exit.status==='COMPLETED'&&exit.currentTime>.08)),src:v&&(v.currentSrc||v.src),currentTime:v&&v.currentTime,readyState:v&&v.readyState,mediaError:v&&v.error?{code:v.error.code,message:v.error.message}:null,h264:document.createElement('video').canPlayType('video/mp4; codecs="avc1.64001f"')};
     });
     repl(`${profileName} takeover decoded-frame evidence`,playback);
     if(!playback.decoded)fail(mode,'GD_CUT_02 produced no decoded playback before skip',{profileName,playback,channel:process.env.BOT_CHROMIUM_CHANNEL||'bundled'});
-    if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');
-  }
+  if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');
   await page.waitForFunction(()=>window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0),null,{timeout:8000});
 }
 

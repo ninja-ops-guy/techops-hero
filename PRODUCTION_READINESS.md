@@ -10,9 +10,9 @@ This document is the current readiness snapshot. Historical “shippable” verd
 
 **Shipped-asset integration: PASS by repository contract.** The current asset gate covers 91 PNGs, 1 JPG, 3 JSON manifests, 52 payload parts, and 43 asset authorities (95 physical assets). The registry fails closed for script, image-decode and JSON-fetch failures; asset inventory is separate from visual acceptance.
 
-**Deterministic production contracts: GREEN in the September 11 issue-review checkout.** The aggregate gate now includes paired-combat hit/whiff and interaction isolation, Good Boys world isolation, and repeat-run media-repair integrity. See `OPEN_ISSUES_REVIEW_2026-09-11.md` for the reviewed baseline, evidence scope, and outstanding work.
+**Deterministic production contracts: GREEN in the September 11 issue-review checkout.** The aggregate gate now includes paired-combat hit/whiff and interaction isolation, Good Boys world/completion isolation, and repeat-run media-repair integrity. See `OPEN_ISSUES_REVIEW_2026-09-11.md` for the reviewed baseline, evidence scope, and outstanding work.
 
-**Production release: NOT YET CERTIFIED.** The reviewed main commit `a7fc7c5` has recent successful Runtime bot runs, but also an intermittent GD_CUT_02 Chromium media failure. Its Runtime Fixer repeatedly selected an unrelated compatible clip and could not create PRs due to repository Actions permissions. This repair branch addresses that incorrect repair behavior; exact-commit CI and physical-device evidence remain release requirements.
+**Production release: NOT YET CERTIFIED.** The reviewed main commit `a7fc7c5` has recent successful Runtime bot runs, but also an intermittent GD_CUT_02 Chromium media failure. Its Runtime Fixer repeatedly selected an unrelated compatible clip and could not create PRs due to repository Actions permissions. This repair branch addresses that incorrect repair behavior and uses Chrome for desktop H.264 tests with decoded-frame assertions. The restored Warden/Earthfall fixture exposed and fixed a lingering legacy completion modal. Exact-commit CI and physical-device evidence remain release requirements.
 
 Asset integration completeness and art completeness are separate claims. Do not mark missing/uncertified source art “integrated” by inventing mappings or procedural substitutes.
 

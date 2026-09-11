@@ -14,6 +14,7 @@ const tests = [
   "test_good_boys_canon_runtime.js",
   "test_good_boys_combat_contract.js",
   "test_good_boys_world_isolation.js",
+  "test_good_boys_completion_authority.js",
   "test_runtime_autofix.mjs",
   "test_good_boys_compositor_ownership.js",
   "test_good_boys_ui_ownership.js",
