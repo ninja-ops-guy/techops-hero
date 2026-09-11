@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Boys canonical ship flight v5.
+/* TechOps Hero — Good Dogs canonical ship flight + M2 exit sequence v6.
  * Production authority for the Good Ship prison approach. The supplied Good
  * Ship sheet is the only gameplay visual source for the ship, asteroid hazards,
  * prison station, dock and flight backdrop. No procedural ship fallback.
@@ -6,9 +6,9 @@
 (function(root){
   "use strict";
   if(!root||!root.document)return;
-  var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=5)return;
+  var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=6)return;
   try{if(PRIOR&&PRIOR.timer)root.clearInterval(PRIOR.timer);}catch(_){}
-  var VERSION=5,DURATION_MS=8200,active=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
+  var VERSION=6,DURATION_MS=8200,active=false,boardingActive=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
   var ATLAS={
     src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-gameplay-assets-r2",width:768,height:620,
     frames:{
@@ -62,7 +62,24 @@
       raf=root.requestAnimationFrame(loop);
     });return true;
   }
-  function install(){var p=authority();if(installed||!p||typeof p.advance!=="function")return false;origAdvance=p.advance.bind(p);p.advance=function(next,reason){if(Number(next)===3&&/^boarded-secret-ship/.test(String(reason||""))&&!active){trace("boarding.intercept",{reason:reason});launch(function(result){if(result&&result.completed){trace("progression.handoff");origAdvance(3,"ship-flight-arrived-prison");}});return true;}return origAdvance(next,reason);};installed=true;root.__goodBoysShipFlightInstalled=true;trace("installed");return true;}
+  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"m2-boarding-sequence-v6",at:Date.now()},extra||{});}
+  function movieResult(result,id){if(!result)throw new Error(id+" returned no result");var status=result.status||result.result;if(status&&status!=="COMPLETED"&&status!=="USER_SKIPPED")throw new Error(id+" did not complete: "+String(status));return result;}
+  function flightPromise(){return new Promise(function(resolve,reject){var settled=false,to=root.setTimeout(function(){if(settled)return;settled=true;reject(new Error("Canonical Good Ship flight timed out"));},30000);var ok=launch(function(result){if(settled)return;settled=true;root.clearTimeout(to);if(!result||result.completed!==true){reject(new Error(result&&result.assetError?"Canonical Good Ship asset failed to load":"Canonical Good Ship flight did not complete"));return;}resolve(result);});if(ok===false){settled=true;root.clearTimeout(to);reject(new Error("Canonical Good Ship flight refused launch"));}});}
+  function resetBoard(){try{var b=root.TechOpsGoodBoysBoardShipAction;if(b&&typeof b.reset==="function")b.reset();else if(b&&typeof b.render==="function")b.render();}catch(_){} }
+  function runBoardingSequence(done){
+    if(boardingActive||active)return false;boardingActive=true;var director=root.TechOpsPresentationDirector,token=null;
+    try{if(director&&director.begin){token=director.begin({id:"gooddogs-m2-board",owner:"TechOpsGoodBoysShipFlight",mode:"gooddogs",kind:"sequence",blocking:true});if(!token)throw new Error("another presentation owns the boarding handoff");}}
+    catch(e){boardingActive=false;if(typeof done==="function")done({completed:false,error:String(e&&e.message||e)});return false;}
+    state({phase:"boarding-sequence",completed:false});phase("m2-cockpit-pilot");
+    Promise.resolve().then(function(){var o=root.TechOpsGoodBoysOpeningV4;if(!o||typeof o.showDeckInteraction!=="function")throw new Error("cockpit pilot interaction unavailable");return o.showDeckInteraction();})
+      .then(function(deck){if(!deck||deck.completed!==true)throw new Error("cockpit pilot interaction did not complete");root.__goodBoysM2DeckResult=deck;phase("m2-takeover-cutscene");var c=root.GoodDogsCutscenes;if(!c||typeof c.play!=="function")throw new Error("Good Dogs cutscene player unavailable");return c.play("GD_CUT_02",{force:true,muted:true,autoplay:true,noPoster:true});})
+      .then(function(movie){root.__goodBoysM2TakeoverResult=movieResult(movie,"GD_CUT_02");phase("m2-space-flight");return flightPromise();})
+      .then(function(result){root.__goodBoysM2FlightResult=result;phase("m2-authored-crash");var o=root.TechOpsGoodBoysOpeningV4;if(!o||typeof o.showCrashScene!=="function")throw new Error("authored crash scene unavailable");return o.showCrashScene();})
+      .then(function(crash){if(!crash||crash.completed!==true)throw new Error("authored crash scene did not complete");root.__goodBoysM2CrashResult=crash;var n=root.NM,c=n&&n._v736;if(!n||!c||Number(c.m)!==2)throw new Error("M2 runtime ownership was lost during boarding");n._gbBoardSequenceComplete=true;c._gbBoardSequenceComplete=true;c._gbBoardSequenceCompletedAt=Date.now();boardingActive=false;state({phase:"boarding-complete",completed:true});phase("m2-board-complete");if(token&&director&&director.end)director.end(token,"completed");trace("boarding.sequence.complete");if(typeof done==="function")done({completed:true,deck:root.__goodBoysM2DeckResult,movie:root.__goodBoysM2TakeoverResult,flight:root.__goodBoysM2FlightResult,crash:crash});})
+      .catch(function(err){boardingActive=false;state({phase:"boarding-error",completed:false,error:String(err&&err.message||err)});root.__goodBoysM2BoardingError=String(err&&err.stack||err);phase("m2-boarding-error",{error:String(err&&err.message||err)});if(token&&director&&director.end)director.end(token,"error");resetBoard();if(typeof done==="function")done({completed:false,error:String(err&&err.message||err)});});
+    return true;
+  }
+  function install(){var p=authority();if(installed||!p||typeof p.advance!=="function")return false;origAdvance=p.advance.bind(p);p.advance=function(next,reason){if(Number(next)===3&&/^boarded-secret-ship/.test(String(reason||""))&&!boardingActive&&!active){var n=root.NM,c=n&&n._v736;if(!n||!c||Number(c.m)!==2)return false;n._gbBoardRequested=true;c._gbBoardRequested=true;trace("boarding.intercept",{reason:reason});runBoardingSequence(function(result){if(result&&result.completed){trace("progression.handoff");if(!origAdvance(3,"m2-board-flight-crash-complete")){root.__goodBoysM2BoardingError="completion gate rejected finished boarding sequence";resetBoard();}}});return true;}return origAdvance(next,reason);};installed=true;root.__goodBoysShipFlightInstalled=true;trace("installed");return true;}
   root.addEventListener("keydown",function(e){keys[e.key]=true;keys[String(e.key).toLowerCase()]=true;if(active&&["ArrowLeft","ArrowRight"," "].indexOf(e.key)>=0)e.preventDefault();},{passive:false});root.addEventListener("keyup",function(e){keys[e.key]=false;keys[String(e.key).toLowerCase()]=false;});timer=root.setInterval(function(){if(install())root.clearInterval(timer);},80);install();
-  root.TechOpsGoodBoysShipFlight={VERSION:VERSION,ATLAS:ATLAS,install:install,launch:launch,active:function(){return active;},telemetry:function(){return root.__goodBoysShipFlightState||null;},timer:timer};
+  root.TechOpsGoodBoysShipFlight={VERSION:VERSION,ATLAS:ATLAS,install:install,launch:launch,runBoardingSequence:runBoardingSequence,active:function(){return active||boardingActive;},telemetry:function(){return root.__goodBoysShipFlightState||null;},timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);

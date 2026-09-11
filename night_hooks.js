@@ -224,6 +224,10 @@ const NM_DISTRICTS = {
   home:       { name: "HOME STREET",         streets: 1, danger: 0,    accent: "#7dd87d", sky: "#080d1c", far: "#0e1428", mid: "#141a30", signs: ["APT 4B"], roster: [] },
 };
 const NM_ORDER = ["downtown", "longwharf", "industrial", "wooster", "airport", "suburbs"];
+// Passive metadata bridge. Night progression and district state remain owned
+// by this module; the shared registry only inventories them.
+globalThis.TechOpsNightDistricts = NM_DISTRICTS;
+globalThis.TechOpsNightOrder = NM_ORDER;
 // enemy archetypes from the night-drive sheets (night-glitch silhouettes, canon palette)
 const NM_KINDS = {
   thug:    { name: "Street Thug",    hp: 34, spd: 1.05, dmg: 8,  tint: "#7ee787", cash: [15, 25], w: 24, h: 30 },
@@ -262,6 +266,7 @@ function nmSpawnEnemies(st, dist) {
 
 function nmLoadDistrict(id) {
   const D = NM_DISTRICTS[id];
+  try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset(NM && NM._v736 ? "gooddogs" : "nightcrawler"); } catch (e) { }
   NM.district = id; NM.street = 1;
   NM.x = NM_CAR_X + 84; NM.y = NM_FLOOR - NM.h; NM.vx = 0; NM.vy = 0; NM.face = 1;
   NM.platforms = nmStagePlatforms(1, id); NM.enemies = nmSpawnEnemies(1, id);
@@ -284,6 +289,7 @@ function enterNight() {
     msg: `DOWNTOWN — STREET 1/2 · clear every enemy · ← the Charger waits`, msgT: performance.now() + 3600,
   };
   s.nightMode = NM;
+  try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("nightcrawler"); } catch (e) { }
   sfx("portal");
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
@@ -501,7 +507,16 @@ function stepNM(dt) {
     }
   }
   // camera + exits: right edge advances, the car waits at the left
-  NM.cam = clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
+  const cameraDirector = window.TechOpsCameraDirector;
+  const cameraChannel = NM._v736 ? "gooddogs" : "nightcrawler";
+  const cameraResult = cameraDirector && cameraDirector.update(cameraChannel, {
+    profile: NM._v736 ? "gooddogs.sideview" : "night.street",
+    nowMs: now, targetX: NM.x, targetY: NM.y, facingX: NM.face,
+    viewportW: cv.width, viewportH: cv.height, worldW: NM_W, worldH: cv.height,
+    enabled: !window.V67SET || V67SET.anims !== false,
+    reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  });
+  NM.cam = cameraResult ? cameraResult.x : clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
   if (NM.clear && NM.x > NM_W - 110) nmNextStage();
   if (NM.district === "home" && NM.x > NM_W - 240) exitNight(true);
 }
@@ -604,11 +619,14 @@ function drawNM() {
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
   if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
-    const bs = Math.max(W / __bg734.naturalWidth, (horizon + 60) / __bg734.naturalHeight);
+    const m3Authority = NM._v736 && Number(NM._v736.m) === 3 && window.TechOpsM3CinematicAsset;
+    const m3Image = m3Authority && m3Authority.image ? m3Authority.image() : null;
+    const m3Asset = m3Image && m3Image === __bg734 ? m3Authority : null;
+    const bs = m3Asset ? Math.max(W / __bg734.naturalWidth, NM_FLOOR / (__bg734.naturalHeight * m3Asset.gameplayHorizonRatio)) : Math.max(W / __bg734.naturalWidth, (horizon + 60) / __bg734.naturalHeight);
     const bw = __bg734.naturalWidth * bs, bh = __bg734.naturalHeight * bs;
     const bx = -((NM.cam * .18) % Math.max(1, bw - W + 1));
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(__bg734, bx, horizon + 40 - bh, bw, bh);
+    ctx.imageSmoothingEnabled = !m3Asset;
+    ctx.drawImage(__bg734, bx, m3Asset ? 0 : horizon + 40 - bh, bw, bh);
   } else {
   // moon + stars
   ctx.fillStyle = "#e8ecff"; ctx.beginPath(); ctx.arc(W - 90, 60, 22, 0, 7); ctx.fill();

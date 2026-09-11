@@ -1,17 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
 
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
-const CONTRACT_VERSION=13;
+const CONTRACT_VERSION=GOOD_DOGS_CONTRACT_VERSION;
 fs.mkdirSync(OUT,{recursive:true});
 
 const events=[],failures=[];
 const log=(name,data={})=>{events.push({at:new Date().toISOString(),name,...data});console.log(name,JSON.stringify(data));};
 const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data);};
 
-async function clickMatching(page,re){for(const b of await page.locator('button').all()){const t=(await b.innerText().catch(()=>'' )).trim();if(re.test(t)){await b.evaluate(el=>el.click());return t;}}return null;}
 async function click(page,sel){return page.evaluate(s=>{const el=document.querySelector(s);if(!el)return false;el.click();return true;},sel).catch(()=>false);}
 async function snap(page){return page.evaluate(()=>{const s=window.S||null,n=window.NM||null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysProgressionAuthority,cs=window.TechOpsGoodBoysCampaignState,b=window.TechOpsGoodDogsCutsceneBridge,p=window.TechOpsGoodBoysPrisonGameplayV2;return{
   phase:window.__goodBoysOpeningPhase||null,openingError:window.__goodBoysOpeningErrorDetail||null,hard:window.__goodBoysHardButtonLaunch||null,
@@ -35,7 +35,8 @@ async function resolveCutscene(page,id,timeout=12000){
 
 const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
 try{
-  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1500);if(!await clickMatching(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
+  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1500);if(!await clickGoodDogsLaunch(page))throw new Error('Good Dogs launch button missing');
+  await driveFreshRouteToCockpit(page,{onEvent:log,requireDecoded:true});
   await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:9000});let d=await snap(page);assertContractCompatible(d);log('cockpit',d);if(!d.deckInteract||d.deckInteract.interaction!=='pilot')fail('pilot-interaction-contract-missing',d);if(d.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(d.hard?.version||0)<CONTRACT_VERSION)fail('hard-opening-authority-mismatch',d);await moveToPilot(page);
   await advanceTakeover(page);await page.waitForSelector('#good-boys-ship-flight',{state:'visible',timeout:7000});await page.waitForFunction(()=>window.__goodBoysShipFlightState&&window.__goodBoysShipFlightState.completed===true,null,{timeout:13000});
   await page.waitForFunction(()=>{const c=window.__goodBoysCrashScene;return !!(document.querySelector('#good-boys-crash-canonical')||(c&&(c.active||c.completed)));},null,{timeout:7000});d=await snap(page);log('crash-start',d);if(d.cutsceneExit?.id==='GD_CUT_03')fail('retired-gd-cut-03-played',d);if(d.crash?.procedural===true)fail('procedural-crash-authority-returned',d);await page.waitForFunction(()=>window.__goodBoysCrashScene&&window.__goodBoysCrashScene.completed===true,null,{timeout:18000});
@@ -99,6 +100,6 @@ try{
   log('earthfall-complete',ending);
   if(ending.campaign.m!==8||!ending.campaign.k||!ending.campaign.waldo||!ending.breakout||!ending.pair||ending.inDialog||ending.overlay)fail('earthfall-completion-contract',ending);
 }catch(e){fail('bot-exception',{error:String(e&&e.stack||e),state:await snap(page).catch(()=>null)});await page.screenshot({path:path.join(OUT,'goodboys-progression-exception.png')}).catch(()=>{});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-progression-trace.zip')}).catch(()=>{});await browser.close();}
-const report={pass:failures.length===0,contractVersion:CONTRACT_VERSION,contract:'opening -> M3 breach -> Cell 118/K -> M5/M6 rescue fixtures -> real Warden finisher -> Earthfall and unlocks',failures,events};fs.writeFileSync(path.join(OUT,'goodboys-progression.json'),JSON.stringify(report,null,2));
-fs.writeFileSync(path.join(OUT,'goodboys-progression.md'),['# Good Boys Progression Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Contract: ${report.contract}`,`- Failures: ${failures.length}`,'','Uses explicit encounter fixtures; does not certify physical-device gameplay.','',...failures.map(f=>'- '+f.name+': '+JSON.stringify(f)),''].join('\n'));
+const report={pass:failures.length===0,contractVersion:CONTRACT_VERSION,contract:'GD_CUT_01 -> real-input M1 trail -> real-input M2 hangar -> cockpit/flight/crash -> M3 breach -> Cell 118/K -> M5/M6 rescue fixtures -> real Warden finisher -> Earthfall and unlocks',failures,events};fs.writeFileSync(path.join(OUT,'goodboys-progression.json'),JSON.stringify(report,null,2));
+fs.writeFileSync(path.join(OUT,'goodboys-progression.md'),['# Good Dogs Progression Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Contract: ${report.contract}`,`- Failures: ${failures.length}`,'','M1 and M2 use real keyboard input. Later encounter fixtures do not certify physical-device gameplay.','',...failures.map(f=>'- '+f.name+': '+JSON.stringify(f)),''].join('\n'));
 console.log(JSON.stringify(report,null,2));if(!report.pass)process.exitCode=1;

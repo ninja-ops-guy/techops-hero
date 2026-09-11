@@ -1,4 +1,4 @@
-/* Good Boys gameplay-loop authority v5.
+/* Good Dogs gameplay-loop adapter v6.
  * Approved concept sheets are production authority:
  * sheet 3 = moment-to-moment HUD/gameplay, sheet 2 = mechanics/level design,
  * sheet 1 = campaign progression/environment language.
@@ -10,21 +10,21 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysGameplayLoop)return;
-  var VERSION=5,baseDraw=null,baseStep=null,style=null,controls=null;
-  var PHASES={
+  var VERSION=6,baseDraw=null,baseStep=null,style=null,controls=null;
+  var LEGACY_PHASES={
     1:{id:"arrival",label:"ARRIVAL / THE INCIDENT",objective:"Cross the breach. Reach the shuttle.",accent:"#38bdf8",hazard:"pressure",bg:"orbital_gate"},
     2:{id:"traversal",label:"HULL BREACH",objective:"Use boost jumps and two air dashes to cross the transit spine.",accent:"#38bdf8",hazard:"debris",bg:"orbital_gate"},
     3:{id:"infiltration",label:"DETENTION FACILITY",objective:"Infiltrate the station. Keep both dogs together.",accent:"#38bdf8",hazard:"security",bg:"orbital_gate"},
     4:{id:"cell118",label:"CELL 118 — FREE K",objective:"Locate Cell 118. Break the controls. Free K.",accent:"#22c55e",hazard:"hack",bg:"orbital_gate"},
     5:{id:"escort",label:"K SUPPORT ONLINE",objective:"Defend K while he opens the route to Cell 1984.",accent:"#22c55e",hazard:"waves",bg:"orbital_eye"},
     6:{id:"cell1984",label:"CELL 1984 — FREE WALDO",objective:"Break the Warden. Free Waldo.",accent:"#ef4444",hazard:"warden",bg:"orbital_eye"},
-    7:{id:"escape",label:"GOOD BOYS PROTOCOL",objective:"Run for the shuttle. Build Sync. Finish together.",accent:"#f59e0b",hazard:"collapse",bg:"orbital_eye"},
+    7:{id:"escape",label:"GOOD DOGS PROTOCOL",objective:"Run for the shuttle. Build Sync. Finish together.",accent:"#f59e0b",hazard:"collapse",bg:"orbital_eye"},
     8:{id:"earthfall",label:"EARTHFALL",objective:"Survive reentry and get everyone home.",accent:"#60a5fa",hazard:"reentry",bg:"orbital_gate"}
   };
   /* Authored side-view geometry. Floor breaches are hazard zones because the
      shared Night engine owns a continuous base floor; raised routes make the
      intended boost/air-dash path visibly readable without forking physics. */
-  var STAGES={
+  var LEGACY_STAGES={
     1:{platforms:[[250,360,185],[520,315,145],[760,270,165],[1015,330,180],[1280,285,220]],hazards:[[450,65],[690,70],[1210,65]],landmarks:[{x:1470,label:"MAINTENANCE SHUTTLE",kind:"shuttle"}]},
     2:{platforms:[[190,345,150],[405,292,150],[630,238,145],[855,305,160],[1090,250,165],[1340,200,190]],hazards:[[350,55],[575,55],[1015,70],[1280,55]],landmarks:[{x:790,label:"TRANSIT SPINE",kind:"console"}]},
     3:{platforms:[[250,350,235],[560,315,190],[825,350,230],[1140,305,210],[1430,350,180]],hazards:[[500,45],[1070,50]],landmarks:[{x:680,label:"DETENTION ACCESS",kind:"door"},{x:1370,label:"CELL BLOCK",kind:"door"}]},
@@ -34,6 +34,9 @@
     7:{platforms:[[210,340,180],[465,285,160],[700,235,155],[930,300,180],[1190,245,180],[1450,325,170]],hazards:[[400,55],[640,55],[1115,65],[1380,55]],landmarks:[{x:1580,label:"SHUTTLE · GO!",kind:"shuttle"}]},
     8:{platforms:[[300,340,240],[650,300,220],[1010,335,250],[1370,300,220]],hazards:[],landmarks:[{x:1450,label:"EARTHFALL",kind:"earth"}]}
   };
+  var REGISTRY=root.TechOpsLevelRegistry;
+  var PHASES=REGISTRY&&REGISTRY.goodBoysPhases?REGISTRY.goodBoysPhases():LEGACY_PHASES;
+  var STAGES=REGISTRY&&REGISTRY.goodBoysStages?REGISTRY.goodBoysStages():LEGACY_STAGES;
   var COLORS={katrin:"#22b8ff",manchez:"#ff9f1c",green:"#3cff78",red:"#ff4055",panel:"rgba(2,7,13,.96)",text:"#eef8ff"};
   function productionCompositorActive(){try{return !!(root.TechOpsProductionWrapperGuard||root.__productionSingleCompositor||root.__productionCompositorPlanned);}catch(e){return false;}}
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
@@ -45,7 +48,7 @@
   function activeWho(){var c=cs();return c&&c.active==="manchez"?"manchez":"katrin";}
   function char(who){var c=cs();return c&&c.chars&&c.chars[who]?c.chars[who]:null;}
   function repairState(){try{var c=cs(),n=root.NM;if(!c||!n)return false;c.chars=c.chars||{};c.chars.katrin=c.chars.katrin||{hp:100,maxHp:100,downed:false,out:false};c.chars.manchez=c.chars.manchez||{hp:120,maxHp:120,downed:false,out:false};c.active=c.active==="manchez"?"manchez":"katrin";c.partner=c.partner||{x:(Number(n.x)||180)-62,y:Number(n.y)||260,vx:0,vy:0,w:22,h:34,face:1,onGround:true,jumps:0};if(!isFinite(c.partner.x))c.partner.x=(Number(n.x)||180)-62;if(!isFinite(c.partner.y))c.partner.y=Number(n.y)||260;if(!isFinite(n.x))n.x=180;if(!isFinite(n.y))n.y=260;if(!isFinite(n.vx))n.vx=0;if(!isFinite(n.vy))n.vy=0;if(!n.w)n.w=22;if(!n.h)n.h=34;n._goodBoysLoop=true;n._goodBoysPhase=phase().id;n._goodBoysReferenceScale=1.55;c._referenceHud=true;c._referenceLinkedPair=true;return true;}catch(e){root.__goodBoysLoopError=String(e&&e.stack||e);return false;}}
-  function configureStage(){try{var n=root.NM,s=stage(),m=mission();if(!active()||!n)return false;if(n._goodBoysStageMission===m)return true;n.platforms=s.platforms.map(function(p){return{x:p[0],y:p[1],w:p[2],h:12};});n._goodBoysHazards=s.hazards.map(function(h){return{x:h[0],w:h[1]};});n._goodBoysLandmarks=s.landmarks.slice();n._goodBoysStageMission=m;n._goodBoysStageAuthority="concept_geometry_v1";n.clear=false;return true;}catch(e){return false;}}
+  function configureStage(){try{var n=root.NM,s=stage(),m=mission();if(!active()||!n)return false;if(n._goodBoysStageMission===m)return true;n.platforms=s.platforms.map(function(p){return{x:p[0],y:p[1],w:p[2],h:12};});n._goodBoysHazards=s.hazards.map(function(h){return{x:h[0],w:h[1]};});n._goodBoysLandmarks=s.landmarks.map(function(l){return Object.assign({},l);});n._goodBoysStageMission=m;n._goodBoysStageAuthority="level_registry_v1";n.clear=false;return true;}catch(e){return false;}}
   function applyHazards(){try{var n=root.NM,c=cs();if(!active()||!n||!c||!n._goodBoysHazards||n.ifr>0||!n.onGround)return false;var hit=n._goodBoysHazards.some(function(h){return n.x+n.w*.5>h.x&&n.x+n.w*.5<h.x+h.w;});if(!hit)return false;var who=activeWho(),ch=char(who);n.hp=Math.max(1,(Number(n.hp)||Number(ch&&ch.hp)||100)-8);if(ch)ch.hp=n.hp;n.vy=-8.5;n.vx=(n.face||1)*-4.5;n.onGround=false;n.ifr=55;n.msg="⚠ HULL BREACH — BOOST / AIR DASH";n.msgT=(root.performance&&root.performance.now?root.performance.now():Date.now())+1600;return true;}catch(e){return false;}}
   function ensureStyle(){try{if(!root.document)return false;if(style)return true;style=root.document.getElementById("good-boys-loop-style");if(style)return true;style=root.document.createElement("style");style.id="good-boys-loop-style";style.textContent="body.good-boys-loop #hud,body.good-boys-loop #quest-tracker,body.good-boys-loop #chaos-banner{display:none!important}body.good-boys-loop #dpad{transform:scale(.78);transform-origin:left bottom;opacity:.9}body.good-boys-loop #touch-buttons,body.good-boys-loop #good-dogs-touch{display:none!important}#good-boys-loop-controls{position:fixed;right:max(10px,calc(env(safe-area-inset-right) + 10px));bottom:max(24px,calc(env(safe-area-inset-bottom) + 24px));z-index:10020;display:none;grid-template-columns:repeat(2,66px);gap:7px;pointer-events:auto}#good-boys-loop-controls button{min-width:66px;min-height:48px;border-radius:12px;background:#05101ddd;color:#eef8ff;font:700 9px monospace;box-shadow:0 0 14px #0008}body.good-boys-loop #good-boys-loop-controls{display:grid}@media(max-width:520px){#good-boys-loop-controls{right:max(8px,calc(env(safe-area-inset-right) + 8px));bottom:max(18px,calc(env(safe-area-inset-bottom) + 18px));grid-template-columns:repeat(2,58px);gap:6px}#good-boys-loop-controls button{min-width:58px;min-height:44px;font-size:7px}body.good-boys-loop #dpad{transform:scale(.72)}}";(root.document.head||root.document.documentElement).appendChild(style);return true;}catch(e){return false;}}
   function button(label,color,fn,id){var b=root.document.createElement("button");b.id=id;b.textContent=label;b.style.border="2px solid "+color;b.addEventListener("pointerdown",function(e){e.preventDefault();e.stopPropagation();try{fn();}catch(_){}},{passive:false});return b;}

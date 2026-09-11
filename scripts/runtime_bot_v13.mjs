@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, webkit, devices } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
 
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
-const CONTRACT_VERSION=13;
+const CONTRACT_VERSION=GOOD_DOGS_CONTRACT_VERSION;
 fs.mkdirSync(OUT,{recursive:true});
 
 const transcript=[];
@@ -283,7 +284,7 @@ async function drivePilot(page,mode,profileName){
   const deckCanvas=await canvasSignal(page,'#good-boys-deck-supplied canvas');
   const deck=await snapshot(page);repl(`${profileName} ${mode} cockpit`,{deckCanvas,deckInteract:deck.deckInteract,phase:deck.openingPhase,hard:deck.hard});
   if(!deckCanvas?.ok||deckCanvas.nonBlack<100||deckCanvas.range<8)fail(mode,'authored cockpit canvas appears blank',{profileName,deckCanvas});
-  if(deck.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(deck.hard?.version||0)<13)fail(mode,'v13 hard opening authority not active',{profileName,hard:deck.hard});
+  if(deck.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(deck.hard?.version||0)<CONTRACT_VERSION)fail(mode,'v14 hard opening authority not active',{profileName,hard:deck.hard});
   await page.keyboard.down('ArrowRight');
   try{await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:8000});}
   finally{await page.keyboard.up('ArrowRight').catch(()=>{});}
@@ -317,6 +318,7 @@ async function advanceTakeover(page,mode,profileName){
 }
 
 async function driveGoodBoysOpening(page,mode,profileName){
+  await driveFreshRouteToCockpit(page,{onEvent:(name,data)=>repl(`${profileName} ${mode} ${name}`,data),requireDecoded:true});
   await drivePilot(page,mode,profileName);
   await advanceTakeover(page,mode,profileName);
 
@@ -404,7 +406,7 @@ async function runMode(browserType,profileName,contextOptions,mode){
   try{
     await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});
     await page.waitForTimeout(1800);
-    const clicked=mode==='nightcrawler'?await clickByRegex(page,/NIGHT\s*CRAWLER/i):await clickByRegex(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i);
+    const clicked=mode==='nightcrawler'?await clickByRegex(page,/NIGHT\s*CRAWLER/i):await clickGoodDogsLaunch(page);
     if(!clicked){const s=await snapshot(page);fail(mode,'launch button not found',{profileName,bodyText:s.bodyText});return;}
     repl(`${profileName} clicked`,clicked);
 
@@ -453,7 +455,7 @@ async function runMode(browserType,profileName,contextOptions,mode){
       if(Number(s1.runtime.mission)!==3)fail(mode,'Good Boys opening did not enter M3',{profileName,runtime:s1.runtime});
       if(Number(s1.runtime.mission)!==Number(s1.runtime.metaMission)||Number(s1.runtime.mission)!==Number(s1.runtime.stateMission))fail(mode,'Good Boys mission authority diverged',{profileName,runtime:s1.runtime});
       if(s1.runtime.missionInvariant&&s1.runtime.missionInvariant.ok===false)fail(mode,'Good Boys post-handoff invariant failed',{profileName,invariant:s1.runtime.missionInvariant});
-      if(s1.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(s1.hard?.version||0)<13)fail(mode,'wrong Good Boys opening runtime authority',{profileName,hard:s1.hard});
+      if(s1.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(s1.hard?.version||0)<CONTRACT_VERSION)fail(mode,'wrong Good Dogs opening runtime authority',{profileName,hard:s1.hard});
       if(/NEW HAVEN STREETS|NIGHT CRAWL|NEW HAVEN AFTER DARK/i.test(s1.bodyText))fail(mode,'generic Night presentation leaks into Good Boys',{profileName});
       if(!s1.controls.bodyClass||!s1.controls.visible||s1.controls.count!==7||s1.controls.overlaps)fail(mode,'Good Boys mobile controls are unstyled or overlapping',{profileName,controls:s1.controls});
     }
@@ -504,10 +506,10 @@ for(const p of profiles)for(const mode of modes){
   }
 }
 
-const report={timestamp:new Date().toISOString(),baseUrl:BASE,durationMs:Date.now()-started,contractVersion:13,pass:!findings.some(f=>f.severity==='FAIL'),failures:findings.filter(f=>f.severity==='FAIL').length,warnings:findings.filter(f=>f.severity==='WARN').length,findings};
+const report={timestamp:new Date().toISOString(),baseUrl:BASE,durationMs:Date.now()-started,contractVersion:CONTRACT_VERSION,pass:!findings.some(f=>f.severity==='FAIL'),failures:findings.filter(f=>f.severity==='FAIL').length,warnings:findings.filter(f=>f.severity==='WARN').length,findings};
 fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 fs.writeFileSync(path.join(OUT,'repl.txt'),transcript.join('\n\n')+'\n');
-const md=['# TechOps Hero Runtime Bot','',`- Contract: **v13 authored Good Boys opening**`,`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Target: \`${BASE}\``,`- Failures: ${report.failures}`,`- Warnings: ${report.warnings}`,`- Duration: ${(report.durationMs/1000).toFixed(1)}s`,'','## Findings','',findings.length?findings.map((f,i)=>`${i+1}. **${f.severity} / ${f.mode}** — ${f.issue}\n\n   \`${JSON.stringify(f)}\``).join('\n'):'No findings.','','## REPL transcript','','See `repl.txt`, authored-opening screenshots, gameplay screenshots, and Playwright trace ZIPs in the workflow artifact.'].join('\n');
+const md=['# TechOps Hero Runtime Bot','',`- Contract: **v14 canonical Good Dogs M1 → M3 opening**`,`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Target: \`${BASE}\``,`- Failures: ${report.failures}`,`- Warnings: ${report.warnings}`,`- Duration: ${(report.durationMs/1000).toFixed(1)}s`,'','## Findings','',findings.length?findings.map((f,i)=>`${i+1}. **${f.severity} / ${f.mode}** — ${f.issue}\n\n   \`${JSON.stringify(f)}\``).join('\n'):'No findings.','','## REPL transcript','','See `repl.txt`, authored-opening screenshots, gameplay screenshots, and Playwright trace ZIPs in the workflow artifact.'].join('\n');
 fs.writeFileSync(path.join(OUT,'report.md'),md);
 console.log('\n'+md);
 if(!report.pass)process.exitCode=1;

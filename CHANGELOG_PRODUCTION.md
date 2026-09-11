@@ -1,5 +1,17 @@
 # TechOps Hero — Production Changelog
 
+## Cinematic Cohesion v1 — 2026-09-11
+
+- Restored the canonical fresh Good Dogs route: GD_CUT_01 → playable M1 → playable M2 → cockpit → GD_CUT_02 → playable flight → authored crash → M3.
+- Added explicit completion contracts for M1–M7; enemy clear alone no longer advances story objectives that require investigation, interaction, rescue, control, tandem defeat, or shuttle arrival.
+- Added an immutable 42-space level registry spanning 8 Good Dogs missions, 12 Night Crawler streets, 17 ticket worlds, and 5 Day/story spaces.
+- Added passive presentation, deterministic camera, and semantic animation services without adding a draw/step/progression owner.
+- Added a palette-quantized authored M3 Orbital Prison Breach backplate and production-asset registration.
+- Quarantined mislabeled dog idle crops and retained honest source-art gaps for dedicated locomotion.
+- Retired the production-loaded direct-to-M2 intro and duplicate ship-approach wrapper; startup count contracts from 266 to 265 scripts.
+- Expanded the deterministic release gate from 44 to 46 suites with cinematic-system and Good Dogs route contracts.
+- Added `CINEMATIC_COHESION_V1.md` as the campaign walkthrough, exact level inventory, mixed-media specification, and bounded swarm backlog.
+
 ## Production v1.2 — release-candidate line
 
 ### Canon / campaign

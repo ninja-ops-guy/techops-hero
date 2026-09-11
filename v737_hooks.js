@@ -84,9 +84,9 @@
       }
       if (NM.block && has(p + "shield")) return p + "shield";
       if (!NM.onGround && has(p + "leap")) return p + "leap";
-      // There is no authored walk row in this source sheet. Cycle the seven
-      // clean idle/motion frames instead of pretending attack poses are walk.
-      const idle = p + "idle" + (Math.floor(now / (Math.abs(NM.vx) > .5 ? 105 : 155)) % 7);
+      // There is no authored walk row in this source sheet. Hold the two
+      // verified idle frames instead of relabeling attack/down poses as walk.
+      const idle = p + "idle" + (Math.floor(now / (Math.abs(NM.vx) > .5 ? 145 : 720)) % 2);
       return has(idle) ? idle : p + "idle0";
     }
     function drawGoodDogActive737(x, NM, now, oldW, oldH) {

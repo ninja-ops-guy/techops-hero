@@ -14,7 +14,7 @@ for(const accepted of [true,false]){
 // Standalone legacy entrypoints without the production authority retain their
 // existing completion UI and state behavior.
 const meta={m:7};let dialogs=0;
-const legacy={window:{},NM:{_v736:{m:7,sync:0},enemies:[{}],clear:true},meta736:()=>meta,save(){},sfx(){},dlg(){dialogs++;},MISSIONS:{7:{name:'WARDEN'},8:{name:'EARTHFALL'}},Math};
+const legacy={window:{},NM:{_v736:{m:7,sync:0},enemies:[{}],clear:true},meta736:()=>meta,save(){},sfx(){},dlg(){dialogs++;},missionSpec:m=>({name:m===7?'WARDEN':'EARTHFALL'}),Math};
 vm.createContext(legacy);vm.runInContext(fn,legacy);legacy.missionWin736();
 assert.equal(meta.m,8);assert.equal(dialogs,1);assert.equal(legacy.NM._v736.ending,true);
 console.log('Canonical Good Boys completion ownership / legacy fallback: PASS');

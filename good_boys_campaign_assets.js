@@ -19,7 +19,7 @@
     kFull:"k_full.atlas.js",kAction:"k_action.atlas.js",waldo:"waldo_full.atlas.js",warden:"warden.atlas.js",wardenNull:"warden_null.atlas.js",enemies:"enemy_roster.atlas.js",coopUi:"ui_coop.js"
   };
   function aliasBackgrounds(){try{root.NM_BG734=root.NM_BG734||{};var n=0;Object.keys(BG_SOURCE).forEach(function(id){var src=BG_SOURCE[id],im=root.NM_BG734[src];if(im){root.NM_BG734[id]=im;n++;}});return n;}catch(e){return 0;}}
-  function installDistricts(){try{aliasBackgrounds();if(typeof root.NM_DISTRICTS==="undefined")return false;var defs={
+  function installDistricts(){try{aliasBackgrounds();var districts=root.TechOpsNightDistricts||root.NM_DISTRICTS;if(!districts)return false;var registry=root.TechOpsLevelRegistry;var defs=registry&&registry.goodBoysDistricts?registry.goodBoysDistricts():{
     goodboys_home:{name:"WALDO'S HOUSE — EARTH",streets:1,danger:.1,accent:"#e4bc66",sky:"#11131b",far:"#20232b",mid:"#28251f",signs:["WALDO'S HOUSE","HIDDEN BAY"],roster:[]},
     goodboys_hangar:{name:"WALDO'S SECRET HANGAR",streets:1,danger:.4,accent:"#54d6ff",sky:"#070b12",far:"#0c1620",mid:"#111820",signs:["SECRET SHIP","LAUNCH"],roster:["guard"]},
     goodboys_approach:{name:"ORBITAL DETENTION — APPROACH",streets:1,danger:1.4,accent:"#8e79ff",sky:"#02050b",far:"#08101c",mid:"#09111a",signs:["DOCKING DENIED","IMPACT VECTOR ACCEPTED"],roster:["skimmer","guard"]},
@@ -29,6 +29,6 @@
     goodboys_cell1984:{name:"SURVEILLANCE BLOCK — CELL 1984",streets:1,danger:2,accent:"#ff475d",sky:"#070509",far:"#10080d",mid:"#140b10",signs:["CELL 1984","WALDO"],roster:["hunter","guard"]},
     goodboys_escape:{name:"WARDEN CORE / SHUTTLE BAY",streets:1,danger:2.2,accent:"#7d6cff",sky:"#04050a",far:"#090b12",mid:"#10131a",signs:["WARDEN NULL","MAINTENANCE SHUTTLE"],roster:["guard","hunter"]},
     goodboys_earthfall:{name:"WALDO'S HOUSE — DAWN",streets:1,danger:0,accent:"#ffd18b",sky:"#25314b",far:"#704d50",mid:"#42574a",signs:["HOME","EARTHFALL"],roster:[]}
-  };Object.keys(defs).forEach(function(k){root.NM_DISTRICTS[k]=defs[k];});return true;}catch(e){return false;}}
+  };Object.keys(defs).forEach(function(k){districts[k]=defs[k];});return true;}catch(e){return false;}}
   root.GOOD_BOYS_CAMPAIGN_ASSETS=PRODUCTION;root.GOOD_BOYS_CAMPAIGN_BACKGROUND_SOURCE=BG_SOURCE;root.TechOpsGoodBoysCampaignAssets={VERSION:VERSION,PRODUCTION:PRODUCTION,BG_SOURCE:BG_SOURCE,aliasBackgrounds:aliasBackgrounds,installDistricts:installDistricts};aliasBackgrounds();installDistricts();
 })(typeof globalThis!=="undefined"?globalThis:this);

@@ -12,6 +12,7 @@ on:
       - "package-lock.json"
       - "scripts/**"
       - "assets/**/*.mp4"
+      - "assets/**/*.png"
       - ".github/workflows/runtime-bot.yml"
   pull_request:
     branches: [main]
@@ -22,6 +23,7 @@ on:
       - "package.json"
       - "package-lock.json"
       - "scripts/**"
+      - "assets/**/*.png"
       - ".github/workflows/runtime-bot.yml"
       - ".github/workflows/runtime-fixer.yml"
   schedule:
@@ -64,7 +66,7 @@ jobs:
           cat /tmp/techops-runtime-server.log
           exit 1
 
-      - name: Run Good Boys iPhone intro regression
+      - name: Run Good Dogs iPhone M1 to M3 regression
         id: intro
         continue-on-error: true
         env:
@@ -72,7 +74,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 90s node scripts/good_boys_intro_mobile_bot.mjs
+          timeout 150s node scripts/good_boys_intro_mobile_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -90,7 +92,7 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Run Night Crawler + Good Boys REPL bot
+      - name: Run Night Crawler + Good Dogs runtime bot
         id: bot
         continue-on-error: true
         env:
@@ -103,7 +105,7 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Run Good Boys progression bot
+      - name: Run Good Dogs progression bot
         id: progression
         continue-on-error: true
         env:
@@ -111,12 +113,12 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 180s node scripts/good_boys_progression_bot.mjs
+          timeout 240s node scripts/good_boys_progression_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Run Good Boys background bible bot
+      - name: Run Good Dogs background bible bot
         id: backgrounds
         continue-on-error: true
         env:
@@ -124,7 +126,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 120s node scripts/good_boys_background_bible_bot.mjs
+          timeout 180s node scripts/good_boys_background_bible_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -135,7 +137,7 @@ jobs:
           if [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ]; then
             cat runtime-bot-artifacts/goodboys-intro-mobile.md >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '# Good Boys iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '# Good Dogs iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
           printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [ -f runtime-bot-artifacts/late-game-mobile.md ]; then
@@ -153,13 +155,13 @@ jobs:
           if [ -f runtime-bot-artifacts/goodboys-progression.md ]; then
             cat runtime-bot-artifacts/goodboys-progression.md >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '# Good Boys Progression Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '# Good Dogs Progression Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
           printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [ -f runtime-bot-artifacts/goodboys-background-bible.md ]; then
             cat runtime-bot-artifacts/goodboys-background-bible.md >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '# Good Boys Background Bible Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '# Good Dogs Background Bible Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload REPL, screenshots and traces

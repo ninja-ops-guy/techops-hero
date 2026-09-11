@@ -289,7 +289,7 @@
     }
     function drawPairFig736(x, who, dx, dy, h, pose, flip, tm) {
       // KATRIN_MANCHEZ contract first (guarded); procedural figures otherwise
-      const frame = Math.floor((tm || 0) / 140) % 7;
+      const frame = Math.floor((tm || 0) / 720) % 2;
       const key = who === "katrin"
         ? (pose === "cast" ? "kat_hack" : pose === "down" ? "kat_down" : pose === "shield" ? "kat_shield" : pose === "strike" ? "kat_pounce" : "kat_idle" + frame)
         : (pose === "strike" ? "man_pounce" : pose === "down" ? "man_down" : pose === "shield" ? "man_shield" : pose === "bark" ? "man_bark" : pose === "cast" ? "man_hack" : "man_idle" + frame);
@@ -402,14 +402,14 @@
     // ==========================================================================
     const CINE_IDS = ["b736m1", "b736m2", "b736m3", "b736m4", "b736m5", "b736m6", "b736m7", "b736m8"];
     const CINE_TITLES = {
-      b736m1: "THE 118/1984 BREAKOUT — M1 · DEAD SATELLITE",
-      b736m2: "THE 118/1984 BREAKOUT — M2 · NIGHT LAUNCH",
-      b736m3: "THE 118/1984 BREAKOUT — M3 · BLACKSITE MERIDIAN",
-      b736m4: "THE 118/1984 BREAKOUT — M4 · CELL 118",
-      b736m5: "THE 118/1984 BREAKOUT — M5 · THE WRONG MIKE",
-      b736m6: "THE 118/1984 BREAKOUT — M6 · CELL 1984",
-      b736m7: "THE 118/1984 BREAKOUT — M7 · ESCAPE VELOCITY",
-      b736m8: "THE 118/1984 BREAKOUT — M8 · RETURN TO EARTH",
+      b736m1: "GOOD DOGS PROTOCOL — M1 · WALDO'S HOUSE",
+      b736m2: "GOOD DOGS PROTOCOL — M2 · THE HIDDEN BAY",
+      b736m3: "GOOD DOGS PROTOCOL — M3 · ORBITAL PRISON — BREACH",
+      b736m4: "GOOD DOGS PROTOCOL — M4 · CELL 118",
+      b736m5: "GOOD DOGS PROTOCOL — M5 · ACCESS CORE",
+      b736m6: "GOOD DOGS PROTOCOL — M6 · CELL 1984",
+      b736m7: "GOOD DOGS PROTOCOL — M7 · ESCAPE VELOCITY",
+      b736m8: "GOOD DOGS PROTOCOL — M8 · EARTHFALL",
     };
     function briefPortraits(x, y) { // CAMP_UI chrome when present (K stays hidden until m4)
       if (!campReady()) return false;
@@ -517,7 +517,7 @@
     // ==========================================================================
     const FLOOR736 = () => (typeof NM_FLOOR !== "undefined") ? NM_FLOOR : 430;
     const NMW736 = () => (typeof NM_W !== "undefined") ? NM_W : 1800;
-    const MISSIONS = {
+    const LEGACY_MISSIONS = {
       1: { dist: "suburbs", name: "DEAD SATELLITE", waves: [["thug", "thug"], ["thug", "skimmer", "thug"]], brief: "Pair movement · C swaps · clear the crash site · both fighters at the door (E) to leave." },
       2: { dist: "industrial", name: "NIGHT LAUNCH", towers: [520, 1030, 1540], waves: [["guard", "thug"], ["skimmer", "guard", "thug"]], brief: "Disable 3 uplink towers (E) and clear the platform crew." },
       3: { dist: "orbital", name: "BLACKSITE MERIDIAN", grav: true, waves: [["skimmer", "skimmer"], ["guard", "hunter", "skimmer"]], brief: "Gravity flux — the floor forgets you. Survive the glitched block." },
@@ -527,13 +527,34 @@
       7: { dist: "orbital", boss: "warden1984", brief: "WARDEN OF 1984 — it splits the arena. Reunite. End it with G." },
       8: { cine: true, name: "RETURN TO EARTH" },
     };
+    function missionSpec(m) {
+      const legacy = LEGACY_MISSIONS[m];
+      if (!legacy) return null;
+      try {
+        const registry = window.TechOpsLevelRegistry;
+        const row = registry && registry.goodDogsMission && registry.goodDogsMission(m);
+        const encounter = registry && registry.goodDogsEncounter && registry.goodDogsEncounter(m);
+        if (!row) return legacy;
+        return {
+          ...legacy,
+          ...(encounter || {}),
+          dist: row.environment && row.environment.district || legacy.dist,
+          name: row.name || legacy.name,
+          brief: row.objective || legacy.brief,
+          target: Number(row.target) || legacy.target,
+          towers: encounter && encounter.towers || null,
+          grav: !!(encounter && encounter.gravityFlux),
+          cine: !!(encounter && encounter.cinematic),
+        };
+      } catch (e) { return legacy; }
+    }
     function mkChar(who) {
       return who === "katrin"
         ? { hp: 100, maxHp: 100, stress: 0, downed: false, out: false, downT: 0, bodyX: 0, tags: 0 }
         : { hp: 120, maxHp: 120, stress: 0, downed: false, out: false, downT: 0, bodyX: 0, tags: 0 };
     }
     function mkCState(m) {
-      const M = MISSIONS[m] || MISSIONS[1];
+      const M = missionSpec(m) || missionSpec(1);
       return {
         m, active: "katrin", ending: false, resolving: false,
         chars: { katrin: mkChar("katrin"), manchez: mkChar("manchez") },
@@ -580,7 +601,7 @@
     }
     function queueWave736(cs) { // Threat Forecast: spawns flash-marked 3s early post-m6
       const mt = meta736();
-      const kinds = (MISSIONS[cs.m].waves || [])[cs.wave]; if (!kinds) return;
+      const kinds = (missionSpec(cs.m).waves || [])[cs.wave]; if (!kinds) return;
       cs.wave++;
       if (mt && mt.waldo) {
         cs.pendingSpawn = { at: now736() + 3000, kinds };
@@ -590,12 +611,20 @@
         cs.pendingSpawn = null;
       }
     }
+    function clearMissionTransients736() {
+      if (!NM) return;
+      [
+        "_gbWaldoTrailStep", "_gbWaldoTrailComplete", "_gbHiddenBayEntered",
+        "_gbShipRevealed", "_gbBoardRequested", "_gbBoardSequenceComplete"
+      ].forEach(key => { try { delete NM[key]; } catch (e) { NM[key] = undefined; } });
+    }
     function startCombat736(m) {
       try {
-        const M = MISSIONS[m]; if (!M) return;
+        const M = missionSpec(m); if (!M) return;
         if (!S.nightMode && typeof enterNight === "function") enterNight();
         if (typeof NM === "undefined" || !NM) return;
         if (typeof nmLoadDistrict === "function") nmLoadDistrict(M.dist);
+        clearMissionTransients736();
         NM._v736 = mkCState(m);
         NM.enemies = [];
         if (M.boss) {
@@ -663,8 +692,8 @@
       }
       const names = { 1: "CELL 118 record recovered", 2: "orbital transport boarded", 3: "Blacksite Meridian crossed", 4: "K FREED — tactical support online (Q)", 5: "MIKE INDEX deleted", 6: "WALDO FREED — Threat Forecast online", 7: "WARDEN OF 1984 destroyed" };
       try { sfx("promote"); } catch (e) { }
-      dlg("✅ M" + m + " COMPLETE — " + (MISSIONS[m].name || ""), (names[m] || "Objective complete.") + ".<br><small>Sync banked: " + Math.round(cs.sync) + " · " + (mt && mt.k ? "K support ready (Q)" : "K not yet freed") + "</small>", [
-        { t: "▶ M" + (m + 1) + " — " + (MISSIONS[m + 1] ? MISSIONS[m + 1].name : "RETURN TO EARTH"), f: () => { closeDlg(); endNightQuiet736(); runMission736(m + 1); } },
+      dlg("✅ M" + m + " COMPLETE — " + (missionSpec(m).name || ""), (names[m] || "Objective complete.") + ".<br><small>Sync banked: " + Math.round(cs.sync) + " · " + (mt && mt.k ? "K support ready (Q)" : "K not yet freed") + "</small>", [
+        { t: "▶ M" + (m + 1) + " — " + (missionSpec(m + 1) ? missionSpec(m + 1).name : "RETURN TO EARTH"), f: () => { closeDlg(); endNightQuiet736(); runMission736(m + 1); } },
         { t: "💾 Save & return to the title", f: () => { closeDlg(); endNightQuiet736(); try { save(); } catch (e) { } location.reload(); } },
       ]);
     }
@@ -677,7 +706,7 @@
     }
     function missionFail736(why) {
       const cs = NM._v736; if (!cs || cs.resolving) return; cs.resolving = true;
-      dlg("💀 MISSION FAILED — " + (MISSIONS[cs.m].name || ""), why + "<br><small>Both fighters down. The cell numbers keep their prisoners.</small>", [
+      dlg("💀 MISSION FAILED — " + (missionSpec(cs.m).name || ""), why + "<br><small>Both fighters down. The cell numbers keep their prisoners.</small>", [
         { t: "↻ Retry M" + cs.m, f: () => { closeDlg(); const m = cs.m; endNightQuiet736(); startCombat736(m); } },
         { t: "Abort to the title", f: () => { closeDlg(); endNightQuiet736(); try { save(); } catch (e) { } location.reload(); } },
       ]);
@@ -695,9 +724,9 @@
         } catch (e) { }
         try { if (window.v733) S.meta._v733rep = (S.meta._v733rep || 0) + 25; } catch (e) { }
         try { save(); } catch (e) { }
-        toast("🛰 THE 118/1984 BREAKOUT complete — Katrin & Manchez unlocked as a night pair!", 5200);
+        toast("🛰 GOOD DOGS PROTOCOL complete — Katrin & Manchez unlocked as a night pair!", 5200);
         console.log("[v7.36] campaign complete — pair unlocked");
-        dlg("🛰 THE 118/1984 BREAKOUT — COMPLETE", "The shuttle cools in Waldo's yard. K's warning hangs in the dawn air.<br><br><i>\"It didn't copy your memories to become you. It copied them to predict who you'll save.\"</i><br><br><b>Unlocked:</b> Katrin & Manchez night pair · Cell 118 / Cell 1984 gallery entries · K support · Waldo Threat Forecast.", [
+        dlg("🛰 GOOD DOGS PROTOCOL — COMPLETE", "The shuttle cools in Waldo's yard. K's warning hangs in the dawn air.<br><br><i>\"It didn't copy your memories to become you. It copied them to predict who you'll save.\"</i><br><br><b>Unlocked:</b> Katrin & Manchez night pair · Cell 118 / Cell 1984 gallery entries · K support · Waldo Threat Forecast.", [
           { t: "Return to the title", f: () => { closeDlg(); location.reload(); } },
         ]);
       } catch (e) { }
@@ -754,7 +783,7 @@
       for (const e of NM.enemies) {
         if (!e.alive) continue;
         hits++;
-        if (e.kind === "warden1984" && cs.finisherReady) { e.hp = 1; dealDamage736(e, 9999, cs.active); }
+        if (e.kind === "warden1984" && cs.finisherReady) { e.hp = 1; dealDamage736(e, 9999, cs.active); if (e.alive === false || e.hp <= 0) cs._gbWardenTandemDefeated = true; }
         else dealDamage736(e, e.boss ? 120 : 80, cs.active);
         e.kb = Math.sign(e.x - NM.x) * 12; e.launch = 16; e.down = 40;
       }
@@ -890,7 +919,7 @@
       }
     }
     function stepObjectives736(dt, f) {
-      const cs = NM._v736, now = now736(), M = MISSIONS[cs.m];
+      const cs = NM._v736, now = now736(), M = missionSpec(cs.m);
       if (cs.ending || cs.resolving) return;
       // Threat Forecast: resolve marked spawns
       if (cs.pendingSpawn && now >= cs.pendingSpawn.at) {
@@ -910,14 +939,15 @@
       // m1 — linked door: both fighters near the exit once clear
       if (cs.m === 1 && clear) {
         NM.clear = false;
-        NM.msg = "✅ SITE CLEAR — both fighters to the door ➡ (E)"; NM.msgT = now + 500;
-        if (NM.x > NMW736() - 220 && Math.abs(cs.partner.x - NM.x) < 160) missionWin736();
+        const atBay = NM.x >= Number(M.target || 1460) - 35 && Math.abs(cs.partner.x - NM.x) < 160 && NM._gbWaldoTrailComplete;
+        NM.msg = atBay ? "✅ HIDDEN BAY FOUND — both fighters at the false wall · USE / E" : "FOLLOW WALDO'S TRAIL — keep the pair together"; NM.msgT = now + 500;
         return;
       }
       // m2 — towers then clear
       if (cs.m === 2) {
-        const tDone = cs.towers.every(t => t.done);
-        if (clear && tDone) return missionWin736();
+        // Hidden Bay completion is owned by the explicit BOARD action. Clearing
+        // the hangar reveals the ship; it must never auto-complete into M3.
+        NM.clear = false;
         // moving launch platform
         const pl = NM.platforms && NM.platforms[1];
         if (pl && !pl._v736base) pl._v736base = pl.x;
@@ -941,12 +971,12 @@
             const mt = meta736(); if (mt) { mt.k = true; }
             try { sfx("promote"); } catch (e) { }
             dlg("⌘ CELL 118 — THE PRISONER", "The restraints answer K's cipher before you touch them. He stands, and for one frame his shadow is someone else.<br><br><i>\"I found out they were printing him. So they printed a cell for me. Freeing me is how you reach Cell 1984 — I'm the only route key left.\"</i><br><br><b>K JOINS AS TACTICAL SUPPORT — press Q in combat.</b>", [
-              { t: "We trust him. Move.", f: () => { closeDlg(); cs.wave = 0; queueWave736(cs); NM.msg = "⚠ AMBUSH — ORPHEUS noticed the open door"; NM.msgT = now736() + 2600; } },
+              { t: "We trust him. Move.", f: () => { closeDlg(); cs._gbCell118AmbushCommitted = true; cs.wave = 0; queueWave736(cs); NM.msg = "⚠ AMBUSH — ORPHEUS noticed the open door"; NM.msgT = now736() + 2600; } },
             ]);
           }
           return;
         }
-        if (cs.cellOpened && clear) return missionWin736();
+        if (cs.cellOpened && cs._gbCell118AmbushCommitted && clear) { cs._gbCell118AmbushCleared = true; return missionWin736(); }
         return;
       }
       // m5 — Mike Index phases
@@ -976,7 +1006,7 @@
         }
         if (cs.uplink && cs.uplink.hp <= 0) return missionFail736("The uplink was destroyed — K lost the decrypt stream.");
         if (cs.decrypt <= 0 && clear) {
-          const mt = meta736(); if (mt) mt.waldo = true;
+          const mt = meta736(); if (mt) mt.waldo = true; cs._gbDecryptComplete = true; cs._gbFinalWaveComplete = true; cs._gbWaldoFreed = true;
           missionWin736();
           return;
         }
@@ -996,7 +1026,10 @@
             NM.msg = "👁 THE EYE IS EXPOSED — G: SYNCHRONIZED LAUNCHER"; NM.msgT = now + 3600; try { sfx("sev"); } catch (e) { }
           }
           if (cs.finisherReady && b.hp < 1) b.hp = 1; // only the tandem finisher ends it
-        } else if (clear) return missionWin736();
+        } else if (clear) {
+          NM.msg = "WARDEN NULL DOWN · REACH THE MAINTENANCE SHUTTLE"; NM.msgT = now + 700;
+          if (cs._gbWardenTandemDefeated && NM.x >= 1500) { cs._gbShuttleReached = true; return missionWin736(); }
+        }
         return;
       }
     }
@@ -1081,6 +1114,11 @@
           // revive the downed partner
           const down = cs.chars.katrin.downed ? cs.chars.katrin : cs.chars.manchez.downed ? cs.chars.manchez : null;
           if (down && Math.abs(NM.x - down.bodyX) < 90) { revive736(); return; }
+          // The domestic opening ends with a deliberate shared interaction,
+          // rather than crossing an invisible X-coordinate trigger.
+          if (cs.m === 1 && NM._gbWaldoTrailComplete && NM.x >= Number(missionSpec(1).target || 1460) - 35 && Math.abs(cs.partner.x - NM.x) < 180) {
+            NM._gbHiddenBayEntered = true; NM.msg = "FALSE WALL OPEN · DESCENDING TO THE HIDDEN BAY"; NM.msgT = now + 1600; missionWin736(); return;
+          }
           // m2 uplink towers
           if (cs.towers) {
             const t = cs.towers.find(t => !t.done && Math.abs(NM.x - t.x) < 80);
@@ -1107,7 +1145,7 @@
           }
           // abort at the car instead of the district map
           if (typeof NM_CAR_X !== "undefined" && NM.x < NM_CAR_X + 150) {
-            dlg("🛰 THE 118/1984 BREAKOUT", "Abort the mission? Progress up to the last completed mission is saved.", [
+            dlg("🛰 GOOD DOGS PROTOCOL", "Abort the mission? Progress up to the last completed mission is saved.", [
               { t: "Keep fighting.", f: closeDlg },
               { t: "Abort to the title", f: () => { closeDlg(); endNightQuiet736(); try { save(); } catch (e) { } location.reload(); } },
             ]);
@@ -1311,7 +1349,7 @@
           // campaign banner
           ctx.fillStyle = "#0009"; ctx.fillRect(W - 262, 78, 252, 22);
           ctx.fillStyle = "#a06bff"; ctx.font = "bold 10px monospace"; ctx.textAlign = "right";
-          ctx.fillText("118/1984 · M" + cs.m + " " + (MISSIONS[cs.m].name || "") + " · C swap", W - 16, 92);
+          ctx.fillText("118/1984 · M" + cs.m + " " + (missionSpec(cs.m).name || "") + " · C swap", W - 16, 92);
           ctx.restore();
         } catch (e) { window.__err736d = String(e && e.stack || e); }
       };
@@ -1326,7 +1364,7 @@
           if (s && s.meta && s.meta._v733ghost && !(s.meta._v736 && s.meta._v736.done) && typeof NM !== "undefined" && NM && !NM._v736) {
             const mt = meta736();
             return dlg("🚗 THE CHARGER — where to?", "The engine idles. Katrin's intercepted burst repeats on the police band: <b>CELL 118 · CELL 1984</b>.<br><small>Side story: progress is saved between missions.</small>", [
-              { t: `🛰 THE 118/1984 BREAKOUT <small>· co-op side story${mt && mt.m > 1 ? " · resume M" + mt.m : ""}</small>`, f: () => { closeDlg(); try { s.nightMode = null; NM = null; } catch (e) { } start736(); } },
+              { t: `🛰 GOOD DOGS PROTOCOL <small>· co-op side story${mt && mt.m > 1 ? " · resume M" + mt.m : ""}</small>`, f: () => { closeDlg(); try { s.nightMode = null; NM = null; } catch (e) { } start736(); } },
               { t: "Regular district map…", f: () => { closeDlg(); _nmCarMenu736(); } },
             ]);
           }
@@ -1343,7 +1381,7 @@
         const pr = saved && saved.meta && saved.meta._v736;
         const b = document.createElement("button");
         b.id = "btn-v736";
-        b.textContent = "🛰 THE 118/1984 BREAKOUT — CO-OP SIDE STORY" + (pr && pr.done ? " · ✅ REPLAY FINALE" : pr && pr.m > 1 ? " · RESUME M" + pr.m : "");
+        b.textContent = "🛰 GOOD DOGS PROTOCOL — CO-OP SIDE STORY" + (pr && pr.done ? " · ✅ REPLAY FINALE" : pr && pr.m > 1 ? " · RESUME M" + pr.m : "");
         b.onclick = () => start736();
         ts.appendChild(b);
         if (pr && pr.done) {

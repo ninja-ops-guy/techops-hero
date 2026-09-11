@@ -78,6 +78,9 @@ const TICKET_TYPES = [
   { id: "shadow", label: "UNKNOWN ROOT PROCESS", icon: "🕳️", enemy: "THE SHADOW ADMINISTRATOR", eicon: "🌑", world: "The Root Directory", wbg: "#0a0a12", stat: "security",
     diag: { best: "Confront palan0 at the root terminal", okay: "Trace the process tree to its origin", wrong: ["Kill the process and move on", "Report it to the vendor SOC", "Shut down the affected subnet"] } },
 ];
+// Read-only catalog bridge for the cinematic level registry. Runtime ticket
+// state remains lexical and is not moved into the registry.
+globalThis.TechOpsTicketTypes = TICKET_TYPES;
 // moves unlocked by career rank (RANKS index) — your loadout evolves as you level
 const MOVE_LEVELS = [
   { rank: 1, ability: { id: "rdp", name: "Remote Desktop", icon: "🖥️", dmg: [8, 14], stress: 5, heal: 6, desc: "Fix it without leaving your desk" } },

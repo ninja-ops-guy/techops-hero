@@ -90,7 +90,7 @@ assert.ok(/#touch-buttons,body\.good-boys-loop #good-dogs-touch\{display:none!im
 assert.ok(/_goodBoysReferenceScale=1\.55/.test(loop), "Good Boys should retain hero-scale presentation metadata");
 assert.ok(/concept_v4/.test(loop) && /controls:8/.test(loop), "acceptance telemetry must expose current concept HUD authority and control count");
 assert.ok(/var STAGES=/.test(loop) && /configureStage/.test(loop), "Good Boys must own authored side-view stage geometry");
-assert.ok(/_goodBoysStageAuthority="concept_geometry_v1"/.test(loop), "stage authority must be observable for QA");
+assert.ok(/_goodBoysStageAuthority="level_registry_v1"/.test(loop), "registry-owned stage authority must be observable for QA");
 assert.ok(/HULL BREACH — BOOST \/ AIR DASH/.test(loop) && /applyHazards/.test(loop), "breach hazards must exercise reference traversal mechanics");
 assert.ok(/CELL 118/.test(loop) && /CELL 1984/.test(loop) && /MAINTENANCE SHUTTLE/.test(loop), "orbital landmarks must be visually authored into gameplay");
 assert.ok(/drawStageAccents/.test(loop) && /foreground rails\/pipes/.test(loop), "stage must include foreground depth treatment");
@@ -104,7 +104,7 @@ assert.ok(/_goodBoysNoMikeIndex/.test(accessCore) && /seedSecurity/.test(accessC
 assert.ok(/function syncState/.test(accessCore) && /c!==lastState/.test(accessCore) && /_gbAccessCoreSecuritySeeded=false/.test(accessCore), "Access Core retries must reset encounter seeding for each new _v736 state");
 
 const earthfall = fs.readFileSync("good_boys_earthfall_ending.js", "utf8");
-assert.ok(/ESCAPE BURN/.test(earthfall) && /EARTHFALL/.test(earthfall) && /WALDO'S PLACE/.test(earthfall) && /GOOD BOYS PROTOCOL — COMPLETE/.test(earthfall), "Earthfall must own the full return-home cinematic");
+assert.ok(/ESCAPE BURN/.test(earthfall) && /EARTHFALL/.test(earthfall) && /WALDO'S PLACE/.test(earthfall) && /GOOD DOGS PROTOCOL — COMPLETE/.test(earthfall), "Earthfall must own the full return-home cinematic under the canonical player-facing name");
 assert.ok(/sh_takeoff/.test(earthfall) && /sh_reentry/.test(earthfall) && /sh_crash/.test(earthfall) && /sh_wreck/.test(earthfall), "Earthfall must animate the real shuttle atlas states");
 assert.ok(/m\.done=true/.test(earthfall) && /_v736breakout=true/.test(earthfall) && /_v736pair=true/.test(earthfall), "Earthfall must commit campaign completion and pair unlocks");
 

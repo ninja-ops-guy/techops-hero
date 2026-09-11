@@ -9,8 +9,7 @@ const reference = fs.readFileSync("night_reference_visuals.js", "utf8");
 const referenceAtlas = fs.readFileSync("night_walker_reference_v1.js", "utf8");
 
 function scriptIndex(src) {
-  const marker = `<script src="${src}"></script>`;
-  const index = html.indexOf(marker);
+  const index = [...html.matchAll(/<script\s+src="([^"]+)"[^>]*><\/script>/g)].findIndex(match => match[1].split(/[?#]/, 1)[0] === src);
   assert.notStrictEqual(index, -1, `${src} must be loaded by index.html`);
   return index;
 }
