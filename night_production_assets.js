@@ -1,13 +1,18 @@
-/* TechOps Hero — Night production art authority v1.
+/* TechOps Hero — Night production art authority v2.
  * Loads the painted JPEG payloads already shipped in /parts and installs them
  * into NM_BG734. This makes production art the normal Night path instead of
  * silently falling back to the procedural skyline when legacy TO_BG_* payloads
  * are absent.
+ *
+ * v2 is evidence-driven from the live visual crawl: Long Wharf, Wooster and
+ * Airport must not be rebound to unrelated NOC/music/orbital plates. Until a
+ * district-specific authored plate exists, those districts retain the existing
+ * NM_BG734 / procedural street authority instead of displaying wrong-world art.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsNightProductionAssets)return;
-  var VERSION=1,loading=null,installed=false;
+  var VERSION=2,loading=null,installed=false;
   var PACKS={
     suburb_rift:{prefix:"__GK_BG_SUBURB_RIFT",files:["parts/campaign_bg_bg_suburb_rift_p001.js","parts/campaign_bg_bg_suburb_rift_p002.js"]},
     orbital_gate:{prefix:"__GK_BG_ORBITAL_GATE",files:["parts/campaign_bg_bg_orbital_gate_p001.js","parts/campaign_bg_bg_orbital_gate_p002.js","parts/campaign_bg_bg_orbital_gate_p003.js"]},
@@ -17,14 +22,12 @@
     waldo_loft:{prefix:"__GK_BG_WALDO_LOFT",files:["parts/campaign_bg2_bg_waldo_loft_p001.js","parts/campaign_bg2_bg_waldo_loft_p002.js"]},
     music_venue:{prefix:"__GK_BG_MUSIC_VENUE",files:["parts/campaign_bg2_bg_music_venue_p001.js","parts/campaign_bg2_bg_music_venue_p002.js","parts/campaign_bg2_bg_music_venue_p003.js"]}
   };
-  /* Until dedicated paint exists for every street, use canon production plates
-     rather than generated geometry. The collision/gameplay layer stays shared. */
+  /* Only bind plates whose subject matter is compatible with the live district.
+     Omitted districts intentionally keep the v7.34 authored/procedural fallback.
+     This is preferable to a high-fidelity but semantically wrong environment. */
   var DISTRICT_SOURCE={
     downtown:"suburb_rift",
-    longwharf:"noc_twin",
     industrial:"waldo_garage",
-    wooster:"music_venue",
-    airport:"orbital_gate",
     suburbs:"suburb_rift",
     orbital:"orbital_eye",
     waldo_loft:"waldo_loft",
@@ -35,6 +38,7 @@
     noc_twin:"noc_twin",
     suburb_rift:"suburb_rift"
   };
+  var DEFERRED_DISTRICTS={longwharf:"district-specific plate required",wooster:"district-specific plate required",airport:"district-specific plate required"};
   function pad(n){return String(n).padStart(3,"0");}
   function scriptLoaded(src){try{return !!(root.document&&root.document.querySelector('script[data-night-production="'+src+'"]'));}catch(e){return false;}}
   function loadScript(src){return new Promise(function(resolve){
@@ -58,11 +62,12 @@
       var sources=buildSources(),count=0;
       Object.keys(DISTRICT_SOURCE).forEach(function(id){var src=sources[DISTRICT_SOURCE[id]];if(src&&putImage(id,src))count++;});
       installed=count>=6;root.__nightProductionBackgroundCount=count;root.__nightProductionBackgroundsReady=installed;
+      root.__nightDeferredDistrictArt=Object.assign({},DEFERRED_DISTRICTS);
       aliasGoodBoys();
       return installed;
     })();
     return loading;
   }
-  root.TechOpsNightProductionAssets={VERSION:VERSION,PACKS:PACKS,DISTRICT_SOURCE:DISTRICT_SOURCE,install:install,buildSources:buildSources};
+  root.TechOpsNightProductionAssets={VERSION:VERSION,PACKS:PACKS,DISTRICT_SOURCE:DISTRICT_SOURCE,DEFERRED_DISTRICTS:DEFERRED_DISTRICTS,install:install,buildSources:buildSources};
   install();
 })(typeof globalThis!=="undefined"?globalThis:this);
