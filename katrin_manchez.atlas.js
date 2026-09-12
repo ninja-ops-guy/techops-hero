@@ -151,7 +151,7 @@ window.KATRIN_MANCHEZ = {"src":"assets/v736/katrin_manchez_atlas.png","cell":0,"
     try{
       var p=root.TechOpsGoodBoysProgressionAuthority,n=root.NM,c=n&&n._v736,m=p&&p.mission?Number(p.mission()):Number(root.S&&root.S.meta&&root.S.meta._v736&&root.S.meta._v736.m||0);
       var living=n&&n.enemies?n.enemies.filter(function(e){return e&&e.alive!==false&&Number(e.hp)>0;}).length:0;
-      return{p:p,n:n,c:c,m:m,living:living,revealed:!!(n&&n._gbShipRevealed),x:Number(n&&n.x||0)};
+      return{p:p,n:n,c:c,m:m,living:living,revealed:!!(n&&n._gbShipRevealed)&&(!root.TechOpsGoodDogsCoop||root.TechOpsGoodDogsCoop.complete(2)),x:Number(n&&n.x||0)};
     }catch(e){return{m:0,living:99,revealed:false,x:0};}
   }
   function isLiveM2(s){return !!(s&&s.c&&!s.c.ending&&Number(s.c.m||0)===2&&s.m===2);}

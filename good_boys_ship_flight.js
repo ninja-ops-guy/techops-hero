@@ -68,6 +68,7 @@
   function resetBoard(){try{var b=root.TechOpsGoodBoysBoardShipAction;if(b&&typeof b.reset==="function")b.reset();else if(b&&typeof b.render==="function")b.render();}catch(_){} }
   async function establishShip(){
     var n=root.NM,c=n&&n._v736,m=root.S&&root.S.meta&&root.S.meta._v736;
+    if(root.TechOpsGoodDogsCoop&&!root.TechOpsGoodDogsCoop.complete(2))throw new Error("hangar power puzzle incomplete");
     if(!c||Number(c.m)!==2||!c._gbBoardRequested)throw new Error("ship establishing film requires the M2 BOARD action");
     // A legacy title-screen 'seen' bit is not proof of correctly ordered playback.
     if(m&&m.ship_establishing_seen)return {status:"COMPLETED",resumed:true};

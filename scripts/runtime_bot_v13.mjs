@@ -258,6 +258,7 @@ async function snapshot(page){
       hard:window.__goodBoysHardButtonLaunch||null,openingError:window.__goodBoysOpeningErrorDetail||null,
       runtime,wrapperHealth,
       safetyError:window.__techOpsLastRuntimeError||null,routerError:window.__productionModeRouterError||null,
+      openingDependencies:window.TechOpsGoodBoysButtonHardFix?.dependencySnapshot()||null,boardAttempt:window.__goodBoysBoardShipAttempt||null,boardError:window.__goodBoysBoardShipError||window.__goodBoysM2BoardingError||null,
       wrapperGuard:!!window.__techopsWrapperGuardInstalled,lexicalBridge:window.__techopsLexicalBridgeVersion||0,
       controls:{bodyClass:document.body.classList.contains('good-boys-controls'),visible:!!(box&&vis('good-dogs-touch')),count:buttons.length,overlaps,rects},
       bodyText:document.body.innerText.slice(0,3500)

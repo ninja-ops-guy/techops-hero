@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=30,BUILD="20260912-production-v30-pr12-canon",started=false,done=false;
+  var VERSION=30,BUILD="20260912-production-v30-local-coop-r3",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",

@@ -17,7 +17,7 @@ for (const [file, source] of [["hard", hard], ["flight", flight], ["progression"
   assert.doesNotThrow(() => new Function(source), `${file} must parse`);
 }
 
-assert.ok(hard.includes("VERSION=15"));
+assert.ok(hard.includes("VERSION=16"));
 assert.ok(hard.includes("function freshConfig(){return{mission:1"), "a fresh campaign must begin at M1");
 assert.ok(!hard.includes('GoodDogsCutscenes.play("GD_CUT_01"'), "title may not play the ship movie before discovery");
 assert.ok(flight.includes('player.play("GD_CUT_01"'), "M2 boarding owns the ship establishing movie");
@@ -31,7 +31,7 @@ assert.ok(!runtime.includes("cs.towers.every"), "M2 may not retain obsolete upli
 assert.ok(runtime.includes("Hidden Bay completion is owned by the explicit BOARD action"));
 assert.ok(runtime.includes("clearMissionTransients736()"), "mission-local discovery/boarding flags must not leak into the next level");
 assert.ok(board.includes('BOARD_X=1210')&&board.includes('s.p.advance(3,"boarded-secret-ship-button")'), "the mounted M2 BOARD action must require reaching the ship and request the exit sequence");
-assert.ok(browserDriver.includes("GOOD_DOGS_CONTRACT_VERSION=15"), "browser acceptance must track the M1-first v15 contract");
+assert.ok(browserDriver.includes("GOOD_DOGS_CONTRACT_VERSION=16"), "browser acceptance must track the M1-first v16 contract");
 assert.ok(browserDriver.includes("page.keyboard.down('ArrowRight')")&&browserDriver.includes("page.keyboard.press('KeyE')"), "browser acceptance must traverse M1/M2 through player input");
 assert.ok(!browserDriver.includes("testPrimeClear")&&!browserDriver.includes("testPrimeComplete"), "M1/M2 browser acceptance may not use encounter fixtures");
 
@@ -131,6 +131,7 @@ console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity:
 
 // Execute the orchestration: image order must follow player discovery, including
 // resume, skip and failure boundaries. These checks do not rely on source order.
+const chronologyWatchdog=setTimeout(()=>{console.error("Chronology test stalled before its final assertions");process.exit(1);},2000);
 (async()=>{
   const order=[],saved=[],root={console,Date,Math,Object,Array,Number,String,Promise,
     document:{getElementById(){return null;},addEventListener(){}},
@@ -164,18 +165,37 @@ console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity:
   finishMovie({status:'COMPLETED'});await new Promise(resolve=>setImmediate(resolve));
   assert.deepStrictEqual(order,['GD_CUT_01','GD_CUT_01','pilot']);
   // The base title launcher can recreate S; preserve the M2 scene checkpoint.
+  const homeEvents=[];
+  root.TechOpsGoodDogsHomeScene={choose:async()=>{homeEvents.push("choose");return "local";},play:async()=>{homeEvents.push("house");return true;}};
+  root.TechOpsGoodDogsCoop={configure:mode=>{homeEvents.push("mode:"+mode);}};
   root.TechOpsGoodDogsSingleAtlasAuthority={VERSION:2,installed:true};
   root.TechOpsGoodBoysProgressionAuthority={VERSION:14};
   root.v736={start(options){var restored=options.state?JSON.parse(JSON.stringify(options.state)):{meta:{}};root.S=Object.assign({meta:{}},restored);root.S.meta=root.S.meta||{};root.S.meta._v736=Object.assign(root.S.meta._v736||{},options.campaign||{},{m:options.mission});root.NM={_v736:{m:options.mission,chars:{katrin:{},manchez:{}}}};return true;}};
   vm.runInContext(hard,root);
   const title=root.TechOpsGoodBoysButtonHardFix;
   const moviesBefore=order.length;
-  await title.opening('fresh-test',title.freshConfig());
+  // Title dependencies arrive independently from the serial production stack.
+  // Reproduce an early click with the wrapper/boarding adapter still loading.
+  const dependencyPolls=[];root.setTimeout=fn=>{dependencyPolls.push(fn);return dependencyPolls.length;};
+  assert.strictEqual(title.depsReady(),false,'partial title dependencies cannot unlock gameplay');
+  const freshOpening=title.opening('fresh-test',title.freshConfig());
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepStrictEqual(homeEvents,[],'an early click must wait before selecting a mode or playing the prologue');
+  root.__productionBootstrapReady=true;root.__techopsWrapperGuardInstalled=true;
+  assert.strictEqual(title.depsReady(),false,'boarding adapter must be installed before title handoff');
+  root.__goodBoysShipFlightInstalled=true;
+  assert.strictEqual(title.depsReady(),true);
+  dependencyPolls.shift()();
+  await freshOpening;
   assert.strictEqual(root.NM._v736.m,1);
   assert.strictEqual(order.length,moviesBefore,'fresh title launch must not play any movie');
-  root.S.meta._v736={m:2,ship_establishing_seen:true};
+  assert.deepStrictEqual(homeEvents,["choose","mode:local","house","mode:local"]);
+  root.S.meta._v736={m:2,ship_establishing_seen:true,pairPuzzles:{garage_latches:true,hangar_power:true},playMode:"local"};
   await title.opening('resume-test',title.launchConfig());
   assert.strictEqual(root.S.meta._v736.ship_establishing_seen,true,'title state recreation must retain the chronology checkpoint');
   assert.strictEqual(order.length,moviesBefore,'M2 resume may not replay opening footage at title');
+  assert.strictEqual(homeEvents.filter(e=>e==='house').length,1,'resume must not replay the house prologue');
+  assert.strictEqual(root.S.meta._v736.pairPuzzles.hangar_power,true,'resume preserves solved mechanisms across state recreation');
+  assert.strictEqual(root.S.meta._v736.playMode,'local');
   console.log('Good Dogs executable chronology, legacy-save, skip and failure boundaries: PASS');
-})().catch(e=>{console.error(e);process.exitCode=1;});
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>clearTimeout(chronologyWatchdog));

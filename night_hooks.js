@@ -418,7 +418,9 @@ function stepNM(dt) {
   }
   // hit-stop: the world freezes for a beat on impact
   if (NM.hitStop > 0) { NM.hitStop -= f; return; }
-  const L = keys.a || keys.arrowleft, R = keys.d || keys.arrowright, J = keys.w || keys.arrowup;
+  const pairDown = NM._v736 && (NM._v736.chars[NM._v736.active].downed || NM._v736.chars[NM._v736.active].out);
+  const localPair=window.TechOpsGoodDogsCoop&&window.TechOpsGoodDogsCoop.active();
+  const L = !pairDown && ((!localPair&&keys.a) || keys.arrowleft), R = !pairDown && ((!localPair&&keys.d) || keys.arrowright), J = !pairDown && ((!localPair&&keys.w) || keys.arrowup);
   NM.block = false; // re-evaluated after ground collision resolves
   // run
   if (!NM.block) {
@@ -436,7 +438,7 @@ function stepNM(dt) {
   }
   NM.jHeld = !!J;
   // dash
-  if (keys.shift && NM.dashCD <= 0 && !NM.block) { NM.dashT = 10; NM.dashCD = 42; NM.ifr = Math.max(NM.ifr, 12); NM.vx = NM.face * 9.5; sfx("dash"); }
+  if (!pairDown && keys.shift && NM.dashCD <= 0 && !NM.block) { NM.dashT = 10; NM.dashCD = 42; NM.ifr = Math.max(NM.ifr, 12); NM.vx = NM.face * 9.5; sfx("dash"); }
   if (NM.dashCD > 0) NM.dashCD -= f;
   if (NM.dashT > 0) NM.dashT -= f;
   // gravity (tighter than the old float)
@@ -515,7 +517,7 @@ function stepNM(dt) {
   const cameraChannel = NM._v736 ? "gooddogs" : "nightcrawler";
   const cameraResult = cameraDirector && cameraDirector.update(cameraChannel, {
     profile: NM._v736 ? "gooddogs.sideview" : "night.street",
-    nowMs: now, targetX: NM.x, targetY: NM.y, facingX: NM.face,
+    nowMs: now, targetX: window.TechOpsGoodDogsCoop ? window.TechOpsGoodDogsCoop.cameraTarget(NM,cv.width) : NM.x, targetY: NM.y, facingX: window.TechOpsGoodDogsCoop&&window.TechOpsGoodDogsCoop.active()?0:NM.face,
     viewportW: cv.width, viewportH: cv.height, worldW: NM_W, worldH: cv.height,
     enabled: !window.V67SET || V67SET.anims !== false,
     reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
@@ -622,7 +624,8 @@ function drawNM() {
   // v7.34: painted district backdrop (payload-loaded) replaces the procedural
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
-  if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
+  const domestic = NM._v736 && Number(NM._v736.m)===1 && window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR);
+  if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
     const m3Authority = NM._v736 && Number(NM._v736.m) === 3 && window.TechOpsM3CinematicAsset;
     const m3Image = m3Authority && m3Authority.image ? m3Authority.image() : null;
     const m3Asset = m3Image && m3Image === __bg734 ? m3Authority : null;
@@ -662,18 +665,20 @@ function drawNM() {
     }
   }
   } // v7.34: end procedural-sky else (painted backdrop drew instead)
+  if(!domestic){
   // near railing (fast parallax)
   ctx.strokeStyle = "#232c44"; ctx.lineWidth = 3;
   ctx.beginPath();
   for (let i = 0; i < 16; i++) { const bx = ((i * 140 - NM.cam * .85) % (NM_W + 160)) - 80; ctx.moveTo(bx, horizon + 6); ctx.lineTo(bx, horizon - 22); }
   ctx.stroke();
   ctx.strokeStyle = "#2c3652"; ctx.beginPath(); ctx.moveTo(0, horizon - 20); ctx.lineTo(W, horizon - 20); ctx.stroke();
+  }
   // street: asphalt, lane marks, wet sheen under lamps
-  ctx.fillStyle = "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
-  ctx.fillStyle = "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
+  ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
+  ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
   if (!NM._v736 && !NM._sector04) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
-  for (let i = 0; i < 7; i++) {
+  if(!domestic) for (let i = 0; i < 7; i++) {
     const lx = ((i * 300 - NM.cam) % (NM_W + 300)) - 150;
     ctx.fillStyle = "#2a3350"; ctx.fillRect(lx, NM_FLOOR - 96, 4, 96); // lamp post
     const g = ctx.createRadialGradient(lx + 2, NM_FLOOR - 96, 6, lx + 2, NM_FLOOR - 20, 90);

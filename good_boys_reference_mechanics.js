@@ -38,6 +38,7 @@
     }catch(e){root.__goodBoysCombatStrikeError=String(e&&e.stack||e);return false;}
   }
   function partnerAssist(step){
+    if(root.TechOpsGoodDogsCoop&&(root.TechOpsGoodDogsCoop.active()||root.TechOpsGoodDogsCoop.aiHolding()))return false;
     try{var c=cs(),n=root.NM,p=c&&c.partner;if(!c||!n||!p)return false;var e=nearestEnemy(175);p.face=n.face||1;p.anim=18;p.vx=(n.face||1)*(step>=3?6.8:4.6);if(e){hitEnemy(e,step>=3?13:7,step>=3?7:4,step>=3?14:0);p.x=enemyCenter(e)-(p.w||22)/2-(n.face||1)*20;c.sync=Math.min(100,(c.sync||0)+(step>=3?10:5));return true;}return false;}catch(_){return false;}
   }
   function pairedAttack(){
@@ -48,10 +49,12 @@
     }catch(e){return false;}
   }
   function partnerThrow(){
+    if(root.TechOpsGoodDogsCoop&&root.TechOpsGoodDogsCoop.active())return false;
     try{var c=cs(),n=root.NM,p=c&&c.partner,w=partner(),ch=c&&c.chars&&c.chars[w];if(!c||!n||!p||!ch||ch.downed||ch.out)return false;if(!nearPartner(165)){p.x=n.x-(n.face||1)*32;p.y=n.y;}
       p.vx=(n.face||1)*10.5;p.vy=-8.8;p.onGround=false;p.jumps=1;p.face=n.face||1;p.anim=24;var e=nearestEnemy(235);if(e){hitEnemy(e,16,8,18);p.x=enemyCenter(e)-(p.w||22)/2-(n.face||1)*10;p.y=Math.min(Number(p.y)||Number(n.y)||0,Number(e.y)||Number(n.y)||0);state.comboStep=2;c.sync=Math.min(100,(c.sync||0)+12);msg("🤝 THROW → PARTNER IMPACT · ATTACK TO FOLLOW");}else{state.comboStep=0;c.sync=Math.min(100,(c.sync||0)+7);msg("🤝 PARTNER THROW · "+w.toUpperCase());}state.lastThrowAt=now();return true;}catch(e){return false;}
   }
   function midAirCatch(){
+    if(root.TechOpsGoodDogsCoop&&root.TechOpsGoodDogsCoop.active())return false;
     try{var c=cs(),n=root.NM,p=c&&c.partner,w=partner(),ch=c&&c.chars&&c.chars[w];if(!c||!n||!p||!ch||ch.downed||ch.out||!nearPartner(145))return false;n.vy=Math.min(n.vy||0,-4.8);p.x=n.x-(n.face||1)*34;p.y=n.y+10;p.vx=(n.vx||0)*.7;p.vy=-3.8;p.onGround=false;c.sync=Math.min(100,(c.sync||0)+10);state.comboStep=Math.max(1,state.comboStep);msg("🫴 CATCH → LINK RECOVERED · ATTACK TO CHAIN");return true;}catch(e){return false;}
   }
   function throwOrCatch(){try{var c=cs();if(!c||!root.NM)return false;return (!root.NM.onGround&&nearPartner(145))?midAirCatch():partnerThrow();}catch(e){return false;}}

@@ -95,7 +95,9 @@ function progressionContext(saveResult) {
         m: 7, k: true, waldo: true, done: false,
         evidence: [{ id: "cell-118", found: true }],
         ship_establishing_seen: true,
-        checkpoint: "shuttle-bay"
+        checkpoint: "shuttle-bay",
+        playMode: "local",
+        pairPuzzles: { garage_latches: true, hangar_power: true }
       },
       goodDogs: { k_freed: true, waldo_freed: true }
     }
@@ -104,7 +106,7 @@ function progressionContext(saveResult) {
     console, Date, Math, Object, Array, Number, String, JSON, Promise,
     S: null, NM: null,
     localStorage: { getItem(key) { return key === "techops_save" ? JSON.stringify(durable) : null; } },
-    document: { addEventListener() {}, getElementById() { return null; }, body: { appendChild() {} } },
+    document: { addEventListener() {}, getElementById() { return null; }, body: { dataset: {}, appendChild() {} } },
     setTimeout() { return 1; }, clearTimeout() {},
     v736: {
       start(options) {
@@ -119,6 +121,7 @@ function progressionContext(saveResult) {
   };
   context.globalThis = context;
   vm.createContext(context);
+  vm.runInContext(read("good_dogs_coop.js"), context, { filename: "good_dogs_coop.js" });
   vm.runInContext(titleSource, context, { filename: "good_boys_button_hard_fix.js" });
   const title = context.TechOpsGoodBoysButtonHardFix;
   const config = title.launchConfig();
@@ -132,6 +135,15 @@ function progressionContext(saveResult) {
   assert.strictEqual(context.S.meta._v736.checkpoint, "shuttle-bay", "resume must retain non-enumerated campaign checkpoint fields");
   assert.strictEqual(context.S.meta._v736.ship_establishing_seen, true);
   assert.strictEqual(context.S.meta.goodDogs.k_freed, true, "semantic rescue state must survive title-state recreation");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(context.S.meta._v736.pairPuzzles)), durable.meta._v736.pairPuzzles, "cold resume must retain both completed co-op puzzles");
+  assert.strictEqual(context.TechOpsGoodDogsCoop.mode(), "local", "cold resume retains its mode without an explicit selector override");
+  assert.strictEqual(context.document.body.dataset.goodDogsMode, "local");
+  config.playMode = "solo";
+  assert.strictEqual(title.mount(config, "cold-resume-mode-change"), true);
+  assert.strictEqual(context.TechOpsGoodDogsCoop.mode(), "solo", "an explicit mode selection must override the durable mode");
+  assert.strictEqual(context.S.meta._v736.pairPuzzles.hangar_power, true, "changing mode must retain solved puzzles");
+  assert.strictEqual(context.S.day, 9);
+  assert.strictEqual(context.S.meta._v736.checkpoint, "shuttle-bay");
 }
 
 console.log("Good Dogs cold resume + transactional persistence integrity: PASS");

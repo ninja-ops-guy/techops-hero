@@ -14,11 +14,10 @@ for(const tag of scriptTags){const src=attrs(tag).src;if(!src||isExternal(src))c
 const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src)!==index);
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
 const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
-for(const src of ["cinematic_systems.js","good_boys_bible_world.js","good_boys_access_core_authority.js","good_boys_progression_authority.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-pr12-canon");}
-const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-pr12-canon","production bootstrap entrypoint must bypass stale mobile caches");
+for(const src of ["good_boys_bible_world.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-pr12-canon");}
+for(const src of ["game.js","good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","night_hooks.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-local-coop-r3","production bootstrap entrypoint must bypass stale mobile caches");
 [
-  "night_hooks.js",
-  "v736_hooks.js",
   "good_boys_prison_cinematic_patch.js",
 ].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260911-cinematic-cohesion-r1",src+" must bypass stale caches for the cinematic-cohesion handoff"));
 assert.strictEqual(refFor("good_dogs_cutscene_bridge.js"),"good_dogs_cutscene_bridge.js?v=20260904-m3-prison-breach-r1");
@@ -41,7 +40,7 @@ assert.ok(order("good_boys_progression_authority.js")<order("good_dogs_cutscene_
 assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs cutscene player must load before the bridge");
 
 const introSource=fs.readFileSync(path.join(__dirname,"good_boys_button_hard_fix.js"),"utf8");new Function(introSource);
-assert.ok(introSource.includes('VERSION=15'),"title authority must expose the M1-first v15 contract");
+assert.ok(introSource.includes('VERSION=16'),"title authority must expose the M1-first v16 contract");
 assert.ok(introSource.includes('function freshConfig(){return{mission:1'),"fresh campaigns must begin at Waldo's House");
 assert.ok(!introSource.includes('GoodDogsCutscenes.play("GD_CUT_01"'),"Good Dogs must open on the property, not aboard ship");
 assert.ok(!introSource.includes('GoodDogsCutscenes.play("GD_CUT_02"'),"title launch may not bypass M1/M2 into the ship handoff");

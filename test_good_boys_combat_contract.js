@@ -38,4 +38,13 @@ assert.strictEqual(prison.acceptance().comboStep,0,"prison combo cannot advance 
 sandbox.NM._v736.active="manchez";t+=120;
 assert.strictEqual(api.pairedAttack(),false);
 assert.strictEqual(sandbox.NM._v736.sync,composedSyncBefore,"actor switching on whiffs cannot grant SYNC");
+// Human P2 ownership must also survive a successful attack through the same wrapper.
+sandbox.TechOpsGoodDogsCoop={active:()=>true};
+sandbox.nmJab=()=>{enemy.hp-=10;};
+const localHp=enemy.hp,localPartnerX=sandbox.NM._v736.partner.x;
+t+=120;
+assert.strictEqual(api.pairedAttack(),true);
+assert.strictEqual(enemy.hp,localHp-10,"local combat applies the base hit without automatic partner bonus damage");
+assert.strictEqual(prison.acceptance().comboStep,0,"local hits must not advance the legacy AI pack chain");
+assert.strictEqual(sandbox.NM._v736.partner.x,localPartnerX,"local hits must not teleport human P2");
 console.log("Good Dogs combat separation + whiff contract: PASS");
