@@ -76,9 +76,10 @@ async function run(name,engine,touch,viewport){
   await page.evaluate(()=>{NM.x=1489;NM.y=396;NM.vx=NM.vy=0;});await page.locator('#night-home-interact').waitFor({state:'visible'});await shot('home');
   await click(page.locator('#night-home-interact'));await click(option('Stay out tonight'));assert.equal(await page.evaluate(()=>!!S.nightMode),true);
   await click(page.locator('#night-home-interact'));const clock=await page.evaluate(()=>S.clock);await click(option('Sleep — return to day mode'));await page.locator('#night-home-skip').waitFor({state:'visible'});
-  const position=await page.evaluate(()=>({x:NM.x,hp:NM.hp,steps:TechOpsProductionWrapperGuard.health().baseStepCount}));
+  const transitionState=()=>page.evaluate(()=>({runtime:window.NM?{x:NM.x,hp:NM.hp}:null,steps:TechOpsProductionWrapperGuard.health().baseStepCount}));
+  const position=await transitionState();
   await page.keyboard.down('ArrowRight');await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');
-  assert.equal(await page.evaluate(()=>S.clock),clock);assert.deepEqual(await page.evaluate(()=>({x:NM.x,hp:NM.hp,steps:TechOpsProductionWrapperGuard.health().baseStepCount})),position);await shot('transition');
+  assert.equal(await page.evaluate(()=>S.clock),clock);assert.deepEqual(await transitionState(),position);await shot('transition');
   if(name!=='chromium')await click(page.locator('#night-home-skip'));await page.waitForFunction(()=>!window.v725?.active());
   if(await option('Straight to bed').isVisible())await click(option('Straight to bed'));
   await page.waitForFunction(()=>!S.nightMode);await page.locator('#eod-rewards button').first().waitFor({state:'visible'});await click(page.locator('#eod-rewards button').first());
