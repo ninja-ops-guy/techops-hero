@@ -4,7 +4,10 @@ on:
   pull_request:
     paths:
       - "east_side.js"
+      - "east_side_visual_assets.js"
       - "test_east_side.js"
+      - "test_east_side_visual_assets.js"
+      - "assets/eastside/**"
       - "bg_noc.js"
       - "EAST_SIDE_IMPLEMENTATION.md"
       - "scripts/production_release_gate.js"
@@ -13,7 +16,10 @@ on:
     branches: [main]
     paths:
       - "east_side.js"
+      - "east_side_visual_assets.js"
       - "test_east_side.js"
+      - "test_east_side_visual_assets.js"
+      - "assets/eastside/**"
       - "bg_noc.js"
       - "scripts/production_release_gate.js"
       - ".github/workflows/east-side-validation.yml"
@@ -33,11 +39,15 @@ jobs:
       - name: Syntax
         run: |
           node --check east_side.js
+          node --check east_side_visual_assets.js
           node --check test_east_side.js
+          node --check test_east_side_visual_assets.js
           node --check bg_noc.js
           node --check scripts/production_release_gate.js
       - name: EAST SIDE contracts
-        run: node test_east_side.js
+        run: |
+          node test_east_side.js
+          node test_east_side_visual_assets.js
       - name: Loader and integration contracts
         run: |
           node test_campaign_world_visuals.js
