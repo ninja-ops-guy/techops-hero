@@ -10,6 +10,7 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
  const browser=await type.launch({headless:true,...(name==='chromium'&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
  try{for(const scene of ['gooddogs.m3','sector04','night.industrial']){
   const context=await browser.newContext(options),page=await context.newPage(),errors=[];
+  page.setDefaultTimeout(10000);page.setDefaultNavigationTimeout(15000);
   page.on('pageerror',e=>errors.push(String(e)));
   try{
    await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -37,6 +38,7 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
     for(let i=0;i<3;i++)await page.locator('#gb-prison-next').click();
    }
    await page.waitForFunction(()=>!window.S.inDialog,null,{timeout:5000});
+   if(scene==='sector04'){await page.keyboard.press('KeyE');if(await page.evaluate(()=>window.S.inDialog))throw Error('Sector 04 opened the Earth travel hub');}
    await page.waitForFunction(id=>window.__techOpsLayerEvidence?.level===id,scene,{timeout:10000});
    await page.keyboard.down('ArrowRight');
    try{
@@ -50,8 +52,8 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
    if(errors.length)throw Error(errors.join('\n'));
    if(scene==='gooddogs.m3'&&!evidence.m3.ready)throw Error('Authored M3 asset did not decode');
    reports.push({browser:name,scene,pass:true,fixture:true,evidence});
-  }catch(e){reports.push({browser:name,scene,pass:false,error:String(e.stack||e),errors});await page.screenshot({path:path.join(out,'slice-'+name+'-'+scene+'-error.png')}).catch(()=>{});}
-  finally{await context.close();}
+  }catch(e){reports.push({browser:name,scene,pass:false,error:String(e.stack||e),errors});await page.screenshot({path:path.join(out,'slice-'+name+'-'+scene+'-error.png'),timeout:5000}).catch(()=>{});}
+  finally{fs.writeFileSync(path.join(out,'presentation-slices.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(reports.at(-1)));await context.close();}
  }}finally{await browser.close();}
 }
 fs.writeFileSync(path.join(out,'presentation-slices.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(reports,null,2));if(!reports.length||reports.some(r=>!r.pass))process.exitCode=1;

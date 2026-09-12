@@ -92,3 +92,8 @@ const input={S:{nightMode:true,inDialog:false,inBattle:false,px:0,py:0},interact
 vm.createContext(input);vm.runInContext(wrapper,input);
 input.interact();assert.strictEqual(delegated,1);assert.strictEqual(dialogs,0,'Night combat/travel interaction must not open Day scenery');
 input.S.nightMode=false;input.interact();assert.strictEqual(delegated,2);assert.strictEqual(dialogs,1,'Day inspection remains available');
+
+// A campaign encounter must not escape into the Earth car hub.
+const carSource=nightHooks.slice(nightHooks.indexOf("function nmCarMenu()"),nightHooks.indexOf("function nmNextStage()"));
+let carDialogs=0;const car={NM:{_sector04:{active:true}},S:{},NM_ORDER:[],dlg(){carDialogs++;},closeDlg(){}};vm.createContext(car);vm.runInContext(carSource,car);
+assert.strictEqual(car.nmCarMenu(),false);assert.strictEqual(carDialogs,0);car.NM={};car.nmCarMenu();assert.strictEqual(carDialogs,1,"Earth Charger still opens");

@@ -187,7 +187,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -303,8 +303,8 @@ function enterNight() {
 
 // the Charger: drive the district map
 function nmCarMenu() {
-  // Good Boys borrows Night physics, not the Earth district travel hub.
-  if (!NM || NM._v736) return false;
+  // Campaign encounters borrow Night physics, not the Earth travel hub.
+  if (!NM || NM._v736 || NM._sector04) return false;
   const s = S;
   const opts = NM_ORDER.filter(id => !NM.done[id]).map(id => {
     const D = NM_DISTRICTS[id];
@@ -672,7 +672,7 @@ function drawNM() {
   ctx.fillStyle = "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
-  if (!NM._v736) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
+  if (!NM._v736 && !NM._sector04) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
   for (let i = 0; i < 7; i++) {
     const lx = ((i * 300 - NM.cam) % (NM_W + 300)) - 150;
     ctx.fillStyle = "#2a3350"; ctx.fillRect(lx, NM_FLOOR - 96, 4, 96); // lamp post
@@ -685,7 +685,7 @@ function drawNM() {
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
-  if (!NM._v736) {
+  if (!NM._v736 && !NM._sector04) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
     if (NM.x < NM_CAR_X + 150) {
     ctx.save(); ctx.globalAlpha = .7 + Math.sin(now / 260) * .3;

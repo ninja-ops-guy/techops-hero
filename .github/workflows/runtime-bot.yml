@@ -38,6 +38,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  media-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install WebKit diagnostic
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps webkit
+      - name: Decode original films without game scripts
+        run: |
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > /tmp/media-probe-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          timeout 45s node scripts/media_decode_probe.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: media-isolation-${{ github.sha }}
+          path: runtime-bot-artifacts/media-isolation.json
+          retention-days: 14
+
   browser-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 18
@@ -54,14 +78,6 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium webkit chrome
-
-      - name: Start headless audio clock for WebKit media
-        run: |
-          sudo apt-get install --no-install-recommends -y pulseaudio
-          pulseaudio --start --exit-idle-time=-1
-          pactl load-module module-null-sink sink_name=ci_audio
-          pactl set-default-sink ci_audio
-          pactl info
 
       - name: Start exact-commit local server
         run: |
