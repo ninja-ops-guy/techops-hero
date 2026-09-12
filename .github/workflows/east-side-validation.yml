@@ -1,0 +1,46 @@
+name: EAST SIDE validation
+
+on:
+  pull_request:
+    paths:
+      - "east_side.js"
+      - "test_east_side.js"
+      - "bg_noc.js"
+      - "EAST_SIDE_IMPLEMENTATION.md"
+      - "scripts/production_release_gate.js"
+      - ".github/workflows/east-side-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "east_side.js"
+      - "test_east_side.js"
+      - "bg_noc.js"
+      - "scripts/production_release_gate.js"
+      - ".github/workflows/east-side-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax
+        run: |
+          node --check east_side.js
+          node --check test_east_side.js
+          node --check bg_noc.js
+          node --check scripts/production_release_gate.js
+      - name: EAST SIDE contracts
+        run: node test_east_side.js
+      - name: Loader and integration contracts
+        run: |
+          node test_campaign_world_visuals.js
+          node test_quality_integration.js
+      - name: Aggregate release gate
+        run: node scripts/production_release_gate.js
