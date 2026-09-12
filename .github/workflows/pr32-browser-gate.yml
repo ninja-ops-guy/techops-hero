@@ -17,6 +17,19 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium webkit
+      - name: Start local game server
+        run: |
+          set -euo pipefail
+          nohup npx http-server . -p 4173 -c-1 > /tmp/techops-http.log 2>&1 &
+          echo $! > /tmp/techops-http.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/techops-http.log || true
+          exit 1
       - name: Cross-browser directional Night combat
         run: |
           set -euo pipefail
@@ -33,6 +46,10 @@ jobs:
             artifacts/night-combat/
             artifacts/good-boys-progression/
           retention-days: 7
+      - name: Stop local game server
+        if: always()
+        run: |
+          if [ -f /tmp/techops-http.pid ]; then kill "$(cat /tmp/techops-http.pid)" || true; fi
       - name: Remove temporary browser gate after green run
         run: |
           set -euo pipefail
