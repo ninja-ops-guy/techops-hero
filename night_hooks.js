@@ -223,6 +223,9 @@ const NM_DISTRICTS = {
   suburbs:    { name: "SUBURBS",             streets: 2, danger: 1.8,  accent: "#fbbf24", sky: "#0a0c16", far: "#12142a", mid: "#1a1c34", signs: ["MAPLE ST", "GARAGE"], roster: ["hunter", "guard", "skimmer"] },
   home:       { name: "HOME STREET",         streets: 1, danger: 0,    accent: "#7dd87d", sky: "#080d1c", far: "#0e1428", mid: "#141a30", signs: ["APT 4B"], roster: [] },
 };
+// Sector 04 uses the Night renderer but remains outside the Charger route.
+const sector04Visual = globalThis.TechOpsLevelRegistry && globalThis.TechOpsLevelRegistry.get("day.sector04");
+if (sector04Visual && sector04Visual.districtConfig) NM_DISTRICTS.sector04 = {...sector04Visual.districtConfig};
 const NM_ORDER = ["downtown", "longwharf", "industrial", "wooster", "airport", "suburbs"];
 // Passive metadata bridge. Night progression and district state remain owned
 // by this module; the shared registry only inventories them.

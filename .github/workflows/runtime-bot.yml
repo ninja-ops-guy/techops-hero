@@ -55,6 +55,14 @@ jobs:
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium webkit chrome
 
+      - name: Start headless audio clock for WebKit media
+        run: |
+          sudo apt-get install --no-install-recommends -y pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_audio
+          pactl set-default-sink ci_audio
+          pactl info
+
       - name: Start exact-commit local server
         run: |
           python3 scripts/test_media_http_server.py
@@ -73,6 +81,16 @@ jobs:
         run: |
           set +e
           timeout 90s node scripts/art_handoff_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Compare M3, Sector 04 and Night presentation
+        id: presentation
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 120s node scripts/presentation_slice_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -218,6 +236,7 @@ jobs:
         if: always()
         run: |
           test "${{ steps.art.outputs.exit_code }}" = "0"
+          test "${{ steps.presentation.outputs.exit_code }}" = "0"
           test "${{ steps.intro.outputs.exit_code }}" = "0"
           test "${{ steps.late_game.outputs.exit_code }}" = "0"
           test "${{ steps.bot.outputs.exit_code }}" = "0"

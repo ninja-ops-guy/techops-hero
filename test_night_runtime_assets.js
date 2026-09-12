@@ -84,11 +84,11 @@ assert.ok(/localStorage\.removeItem\("techops_char"\)/.test(v737Hooks),
 
 console.log("Night reference visual authority + normal-run isolation: PASS");
 
-// Shared keys still reach Night combat, but cannot invoke Day prop inspection.
-const vm=require('node:vm'),gameSource=fs.readFileSync('game.js','utf8');
-const dayKeys=gameSource.slice(gameSource.indexOf('const keys = {};'),gameSource.indexOf('addEventListener("keyup"'));
-let handler,interactions=0;
-const input={S:{nightMode:true},addEventListener(kind,fn){handler=fn;},interact(){interactions++;},openPanel(){},toggleTwin(){}};
-vm.createContext(input);vm.runInContext(dayKeys,input);
-handler({key:'e'});assert.strictEqual(interactions,0);assert.strictEqual(vm.runInContext('keys.e',input),true);
-input.S.nightMode=false;handler({key:'e'});assert.strictEqual(interactions,1);
+// The legacy scenery wrapper must delegate to Night interaction without then opening a Day prop.
+const vm=require('node:vm'),propsSource=fs.readFileSync('v720_hooks.js','utf8');
+const wrapper=propsSource.slice(propsSource.indexOf('const __origInteract720 ='),propsSource.indexOf('  window.v720 ='));
+let delegated=0,dialogs=0;
+const input={S:{nightMode:true,inDialog:false,inBattle:false,px:0,py:0},interact(){delegated++;},window:{v63:{v63PropSpots(){return [[0,1,0]];}}},PROP_INFO:[['Coffee','Day scenery']],dlg(){dialogs++;},closeDlg(){}};
+vm.createContext(input);vm.runInContext(wrapper,input);
+input.interact();assert.strictEqual(delegated,1);assert.strictEqual(dialogs,0,'Night combat/travel interaction must not open Day scenery');
+input.S.nightMode=false;input.interact();assert.strictEqual(delegated,2);assert.strictEqual(dialogs,1,'Day inspection remains available');

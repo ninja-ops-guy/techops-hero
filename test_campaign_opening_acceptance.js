@@ -10,8 +10,8 @@ assert.ok(html.includes('id="touch-ui"'), "mobile touch UI must remain in the pr
 assert.ok(html.includes('id="tb-interact"'), "mobile interact control must remain in the production entrypoint");
 assert.ok(html.includes('id="dialogue"'), "dialogue layer must remain in the production entrypoint");
 assert.ok(html.includes('id="hud-clock"'), "HUD clock must remain in the production entrypoint");
-assert.ok(gameSource.includes('if (!(S && S.nightMode) && ["e", "enter", " "].includes(e.key.toLowerCase())) interact();'), "desktop keyboard interaction must call interact()");
-assert.ok(gameSource.includes('$("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); if (!(S && S.nightMode)) interact(); });'), "mobile touch interaction must call the same interact() path");
+assert.ok(gameSource.includes('if (["e", "enter", " "].includes(e.key.toLowerCase())) interact();'), "desktop keyboard interaction must call interact()");
+assert.ok(gameSource.includes('$("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); interact(); });'), "mobile touch interaction must call the same interact() path");
 
 // Canonical campaign modules must load after the base runtime so their wrappers own final authority.
 function scriptIndex(src) {

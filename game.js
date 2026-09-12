@@ -1114,7 +1114,7 @@ function draw() {
 const keys = {};
 addEventListener("keydown", e => {
   keys[e.key.toLowerCase()] = true;
-  if (!(S && S.nightMode) && ["e", "enter", " "].includes(e.key.toLowerCase())) interact();
+  if (["e", "enter", " "].includes(e.key.toLowerCase())) interact();
   if (e.key.toLowerCase() === "m") openPanel();
   if (e.key.toLowerCase() === "v") toggleTwin();
 });
@@ -1138,7 +1138,7 @@ document.querySelectorAll(".dbtn").forEach(b => {
   b.addEventListener("mouseup", release);
   b.addEventListener("mouseleave", release);
 });
-$("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); if (!(S && S.nightMode)) interact(); });
+$("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); interact(); });
 $("tb-menu").addEventListener("touchstart", e => { e.preventDefault(); openPanel(); });
 $("btn-menu").addEventListener("click", openPanel);
 // digital twin: network vision overlay (button or V key)

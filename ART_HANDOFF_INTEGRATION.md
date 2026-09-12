@@ -26,4 +26,6 @@ Remaining acceptance is explicit: physical iPhone Safari, complete alternating w
 
 Runtime graphics review found the pre-existing Night combat PNG had a broken compressed stream despite passing dimension/header checks. The supplied JPEG now reproduces its ten semantic slots in a valid transparent atlas. The embedded payload is byte-identical to the reviewed derivative, and the test decompresses every full indexed PNG before accepting it.
 
-The Night input review also exposed Day prop inspection reacting to the same E key as combat. Day keyboard/touch interaction now checks the active mode; the legacy prop inspector also declines Night mode. Night movement/combat key state is still written normally.
+The Night input review also exposed Day prop inspection reacting to the same E key as combat. The legacy prop inspector now declines Night mode after delegating to its existing interaction authority. Keyboard/touch, Good Dogs objectives, Sector 04 investigation and Night combat/Charger input keep their original routing.
+
+Presentation fixtures now compare M3, Sector 04 and Industrial in Chrome and WebKit, recording 120 animation-frame intervals, decoded assets and screenshots. These fixtures do not replace campaign progression acceptance. The Sector 04 fixture exposed a missing district palette; its registry-owned configuration now supplies the renderer without adding Sector 04 to the six-district travel route. Local Chromium previews passed all three scenes; physical device certification remains outstanding.

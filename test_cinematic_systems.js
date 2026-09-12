@@ -120,3 +120,5 @@ assert.strictEqual(png.readUInt32BE(20), 512);
 assert.ok(png.length > 100000, "M3 mixed-media backplate must be a substantive authored asset");
 
 console.log("Cinematic systems, exact level inventory, animation semantics, camera determinism, and M3 mixed-media asset: PASS");
+
+assert.ok(registry.get("day.sector04").districtConfig.sky&&registry.get("day.sector04").districtConfig.accent,"Sector 04 must supply a complete Night renderer palette");

@@ -135,7 +135,7 @@
       {id:"day.office",mode:"day",kind:"space",ordinal:2,name:"OFFICE",cameraProfile:"day.grid",presentationProfile:"workday",animationProfile:"mike.day",environment:{light:"office",palette:"day_office"}},
       {id:"day.engineering",mode:"day",kind:"space",ordinal:3,name:"ENGINEERING",cameraProfile:"day.grid",presentationProfile:"workday",animationProfile:"mike.day",environment:{light:"engineering",palette:"day_engineering"}},
       {id:"day.it",mode:"day",kind:"space",ordinal:4,name:"IT ROOM",cameraProfile:"day.grid",presentationProfile:"workday",animationProfile:"mike.day",environment:{light:"it",palette:"day_it"}},
-      {id:"day.sector04",mode:"sector04",kind:"set_piece",ordinal:5,name:"SECTOR 04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",animationProfile:"mike.day",environment:{light:"sector04",palette:"sector04",assetClass:"props_without_backplate"}}
+      {id:"day.sector04",mode:"sector04",kind:"set_piece",ordinal:5,name:"SECTOR 04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",animationProfile:"mike.day",environment:{light:"sector04",palette:"sector04",assetClass:"props_without_backplate"},districtConfig:{name:"SECTOR 04",streets:1,danger:1.5,accent:"#a855f7",sky:"#090611",far:"#171022",mid:"#22162f",signs:["SECTOR 04","IDENTITY CONTROL"],roster:[]}}
     ]);
     var BY_ID={};GOOD_DOGS.concat(DAY_SPACES).forEach(function(row){BY_ID[row.id]=row;});
     function dynamic(){return nightRecords().concat(ticketRecords());}
