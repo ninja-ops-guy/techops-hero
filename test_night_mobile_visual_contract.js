@@ -1,0 +1,10 @@
+"use strict";
+const assert=require("assert"),fs=require("fs");
+const src=fs.readFileSync("night_combat_input.js","utf8");
+assert.ok(src.includes("night-directional-controls"),"Night input must own an explicit mobile presentation class");
+assert.ok(src.includes("grid-template-columns:repeat(3,52px)"),"Night actions must collapse to a compact three-column layout");
+assert.ok(src.includes("#touch-buttons #tb-interact"),"Night context/punch control must receive a scoped compact size");
+assert.ok(src.includes("#dpad{grid-template-columns:repeat(3,46px)"),"Night d-pad must be compact on coarse pointers");
+assert.ok(src.includes("body.night-directional-controls #toast"),"Night tutorial toast must use a scoped compact presentation");
+assert.ok(src.includes("classList.toggle('night-directional-controls',active)"),"Night presentation class must follow combat ownership");
+console.log("Night mobile visual contract: PASS");
