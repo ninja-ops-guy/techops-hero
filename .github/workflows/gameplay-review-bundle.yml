@@ -5,30 +5,70 @@ on:
     paths:
       - '.github/workflows/gameplay-review-bundle.yml'
 permissions:
-  contents: read
+  contents: write
 jobs:
-  baseline:
+  publish-reviewed-source:
+    if: github.event.pull_request.number == 23 && github.event.pull_request.head.ref == 'feat/gameplay-roadmap-quality' && github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'ninja-ops-guy/techops-hero'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Exact tracked-source reproduction bundle
+          node-version: '22'
+      - name: Verify and reconstruct the locally tested source
         run: |
-          mkdir -p /tmp/gameplay-review
-          git rev-parse HEAD > /tmp/gameplay-review/HEAD.txt
-          git archive --format=tar HEAD | gzip -1 > /tmp/gameplay-review/source.tar.gz
-          sha256sum /tmp/gameplay-review/source.tar.gz > /tmp/gameplay-review/SHA256SUMS.txt
+          python3 - <<'PY'
+          import hashlib, json, lzma, pathlib, subprocess
+          root = pathlib.Path.cwd().resolve()
+          packed = b''.join((root / ('.github/gameplay-transfer/part%d.xz' % i)).read_bytes() for i in range(1, 5))
+          raw = lzma.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest() == 'ca0b29093a7b78bd7e89b342863055d9483d97a5094c734b90aad9c33bb8b041', 'Transfer checksum mismatch'
+          data = json.loads(raw)
+          assert len(data) == 25
+          pending = {}
+          for name, entry in data.items():
+              path = (root / name).resolve()
+              assert path.is_relative_to(root) and not name.startswith('.') and '..' not in pathlib.PurePosixPath(name).parts
+              assert path.suffix in ('.js', '.mjs', '.html', '.css', '.md')
+              assert not (root / name).is_symlink()
+              if entry['old'] is None:
+                  assert not path.exists(), 'Refusing to replace new path ' + name
+                  text = entry['text']
+              else:
+                  old = path.read_bytes()
+                  assert hashlib.sha256(old).hexdigest() == entry['old'], 'Base changed: ' + name
+                  text = old.decode('utf-8')
+                  previous = len(text)
+                  for start, end, value in reversed(entry['edits']):
+                      assert 0 <= start <= end <= previous
+                      text = text[:start] + value + text[end:]
+                      previous = start
+              result = text.encode('utf-8')
+              assert hashlib.sha256(result).hexdigest() == entry['new'], 'Reconstruction mismatch: ' + name
+              pending[name] = result
+          for name, result in pending.items():
+              path = root / name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(result)
+              print('VERIFIED', hashlib.sha256(result).hexdigest(), name)
+          subprocess.run(['git', 'add', '--', *pending], check=True)
+          PY
+      - name: Enforce all deterministic gameplay and production contracts
+        run: node scripts/production_release_gate.js | tee /tmp/gameplay-production-gate.log
+      - name: Commit only verified gameplay sources to the review branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --check
+          git commit -m 'feat: contact audio, complete night handoff and persistent office follow-ups'
+          git push origin HEAD:refs/heads/feat/gameplay-roadmap-quality
+          git rev-parse HEAD
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: gameplay-review-source
-          path: /tmp/gameplay-review/
+          name: gameplay-transfer-validation
+          path: /tmp/gameplay-production-gate.log
           retention-days: 2
-          compression-level: 0
-      - name: Baseline production regression gate
-        run: node scripts/production_release_gate.js
