@@ -1,0 +1,43 @@
+name: PR32 browser acceptance
+on:
+  push:
+    branches: [integrate/pr29-on-main-20260912]
+permissions:
+  contents: write
+jobs:
+  browser:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Cross-browser directional Night combat
+        run: |
+          set -euo pipefail
+          NIGHT_COMBAT_BROWSERS=chromium,chromium-touch,webkit node scripts/night_combat_bot.mjs
+      - name: Good Dogs progression regression
+        run: |
+          set -euo pipefail
+          node scripts/good_boys_progression_bot.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr32-browser-acceptance-${{ github.sha }}
+          path: |
+            artifacts/night-combat/
+            artifacts/good-boys-progression/
+          retention-days: 7
+      - name: Remove temporary browser gate after green run
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/pr32-browser-gate.yml
+          git commit -m "Remove temporary PR32 browser acceptance workflow"
+          git push origin HEAD:integrate/pr29-on-main-20260912
