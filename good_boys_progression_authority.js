@@ -14,7 +14,9 @@
   function runtime(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function clampMission(v){v=Number(v);return Math.max(1,Math.min(8,isFinite(v)&&v>0?v:1));}
   function rawMeta(){try{if(!root.S)return null;root.S.meta=root.S.meta||{};return root.S.meta._v736||(root.S.meta._v736={m:1,evidence:[],k:false,waldo:false,done:false});}catch(e){return null;}}
-  function save(){try{if(typeof root.save==="function")root.save();else if(typeof root.saveGame==="function")root.saveGame();return true;}catch(e){root.__goodBoysProgressionSaveError=String(e&&e.stack||e);return false;}}
+  function save(){try{var result=false;if(typeof root.save==="function")result=root.save();else if(typeof root.saveGame==="function")result=root.saveGame();if(result!==true){root.__goodBoysProgressionSaveError="canonical save did not return true";return false;}root.__goodBoysProgressionSaveError=null;return true;}catch(e){root.__goodBoysProgressionSaveError=String(e&&e.stack||e);return false;}}
+  function cloneMeta(value){return JSON.parse(JSON.stringify(value));}
+  function replaceMeta(target,value){var k;for(k in target)if(Object.prototype.hasOwnProperty.call(target,k))delete target[k];for(k in value)if(Object.prototype.hasOwnProperty.call(value,k))target[k]=value[k];return target;}
 
   var CampaignState=root.TechOpsGoodBoysCampaignState||{
     VERSION:1,
@@ -28,11 +30,13 @@
       var m=this._getMeta();if(!m)throw new Error("CampaignState: no meta");from=clampMission(from);to=clampMission(to);var current=clampMission(m.m);
       if(current!==from)throw new Error("CampaignState: transition from "+from+" rejected, current="+current);
       if(to!==from+1&&!(from===8&&to===8))throw new Error("CampaignState: non-sequential transition "+from+" -> "+to);
-      patch=patch||{};if(Object.prototype.hasOwnProperty.call(patch,"k"))m.k=!!patch.k;if(Object.prototype.hasOwnProperty.call(patch,"waldo"))m.waldo=!!patch.waldo;if(Array.isArray(patch.evidence))m.evidence=patch.evidence.slice();
-      m.m=to;
-      var validator=root.TechOpsStateValidator;if(validator&&typeof validator.validateCampaign==="function"){var vr=validator.validateCampaign(m,null);if(!vr.valid){root.__stateValidationFailure=vr;throw new Error("CampaignState: invalid persisted transition: "+vr.errors.join(" | "));}}
-      if(!save())throw new Error("CampaignState: save failed");
+      var before=cloneMeta(m),candidate=cloneMeta(m);patch=patch||{};if(Object.prototype.hasOwnProperty.call(patch,"k"))candidate.k=!!patch.k;if(Object.prototype.hasOwnProperty.call(patch,"waldo"))candidate.waldo=!!patch.waldo;if(Array.isArray(patch.evidence))candidate.evidence=cloneMeta(patch.evidence);
+      candidate.m=to;
+      var validator=root.TechOpsStateValidator;if(validator&&typeof validator.validateCampaign==="function"){var vr=validator.validateCampaign(candidate,null);if(!vr.valid){root.__stateValidationFailure=vr;root.__goodBoysTransitionFailure={from:from,to:to,stage:"validation",errors:vr.errors.slice(),at:Date.now()};throw new Error("CampaignState: invalid persisted transition: "+vr.errors.join(" | "));}}
+      replaceMeta(m,candidate);
+      if(!save()){replaceMeta(m,before);root.__goodBoysTransitionFailure={from:from,to:to,stage:"save",error:root.__goodBoysProgressionSaveError||"save failed",at:Date.now()};throw new Error("CampaignState: save failed");}
       var c=this._getRuntime();if(c)c.m=to;
+      root.__goodBoysTransitionFailure=null;
       root.__goodBoysTransition={from:from,to:to,reason:reason||"transition",at:Date.now()};
       if(c&&Number(c.m)!==to)throw new Error("CampaignState: runtime mirror failed, expected "+to+", got "+c.m);
       return true;

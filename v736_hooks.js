@@ -654,15 +654,26 @@
     function start736(options) {
       options = options || {};
       try {
+        let resumeState = null;
+        if (options.state && typeof options.state === "object") {
+          try { resumeState = JSON.parse(JSON.stringify(options.state)); } catch (e) { window.__goodBoysResumeCloneError = String(e && e.stack || e); return false; }
+        }
         const ts = document.getElementById("title-screen");
         if ((typeof S === "undefined" || !S) || (ts && !ts.classList.contains("hidden"))) {
-          S = newState(); S.diff = 1;
+          S = newState();
+          if (resumeState) Object.assign(S, resumeState);
+          if (!Number.isFinite(Number(S.diff))) S.diff = 1;
           if (ts) ts.classList.add("hidden");
           const hud = document.getElementById("hud"); if (hud) hud.classList.remove("hidden");
           try { showTouchUI(); } catch (e) { }
           try { updateHUD(); } catch (e) { }
         }
         const mt = meta736(); if (!mt) return false;
+        if (options.campaign && typeof options.campaign === "object") {
+          const campaign = JSON.parse(JSON.stringify(options.campaign));
+          Object.assign(mt, campaign);
+          if (Array.isArray(campaign.evidence)) mt.evidence = campaign.evidence.slice();
+        }
         if (options.mission != null) mt.m = Number(options.mission) || mt.m || 1;
         if (mt.done) { playCine736("b736m8", null); return true; }
         if (options.directGameplay) {

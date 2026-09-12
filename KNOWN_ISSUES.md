@@ -8,14 +8,14 @@ This list is intentionally stricter than deterministic CI. A green test suite do
 
 - Main campaign: current production SHA must complete New Run -> Tuesday on iPhone Safari.
 - Main campaign: same SHA must complete New Run -> Tuesday on desktop Chromium.
-- Good Dogs: current SHA must complete GD_CUT_01 -> playable M1/M2 -> decoded GD_CUT_02 -> playable flight -> crash -> M3 breach -> Cell 118 on iPhone Safari.
+- Good Dogs: current SHA must complete playable M1 property discovery -> M2 Hidden Bay / BOARD -> decoded GD_CUT_01 -> cockpit interaction -> decoded GD_CUT_02 -> playable flight -> crash -> M3 breach -> Cell 118 on iPhone Safari.
 - Screenshots/tester output must be retained for the accepted SHA.
 
-### Good Dogs and Night Crawler animation source gaps
+### Remaining animation source gaps
 
-The shipped `KATRIN_MANCHEZ` atlas has two verified idle frames plus action/shield/hit/down/leap/roll frames, but it does not contain a verified dedicated walk/run row matching the newest approved concept sheets. Five unrelated crops previously labeled as extra idle frames are quarantined from runtime metadata. Night Crawler also lacks verified transition, jump/land, and dash rows. Production intentionally uses conservative holds rather than mislabeling attack or knockdown art as locomotion.
+The supplied-art integration now provides and wires verified Katrin/Manchez run and airborne-dash sequences, the reviewed Mike combat/traversal atlas, masked Waldo, orbital props, and the production four-door Charger. Those assets are generated, approved, wired, and automatically decoded in Chrome/WebKit, but still require physical-device acceptance on the release SHA.
 
-Required closeout: extract/author transparent walk/run/true air-dash frames from approved reference material, classify them semantically, then wire and regression-test them.
+Still missing are complete alternating walk/contact cycles for both dogs, distinct start/stop and landing poses, and a distinct Mike dash that does not reuse a strike. Required closeout: author transparent source frames from approved reference material, classify them semantically, then wire and regression-test them. Do not regenerate the run, airborne dash, Charger, masked Waldo, or already integrated combat/traversal atlases.
 
 ### Mike action atlas source gap
 
@@ -29,7 +29,6 @@ Required closeout: profile dependency order, move still-required behavior into s
 
 ## Accepted temporary fallbacks — not final art
 
-- The Charger runtime silhouette is a compatibility fallback until a verified production four-door Charger sprite is integrated.
 - Good Dogs M3 uses an authored mixed-media backplate over the shared Night engine's continuous floor and stage geometry. M4–M7 still use orbital-tile generated environment fallbacks pending the layer-manifest pipeline described in `CINEMATIC_COHESION_V1.md`.
 - Static performance budgets are enforced, but real-device first-playable time, long-frame, memory, thermal and image-decode measurements are still required before final release.
 
