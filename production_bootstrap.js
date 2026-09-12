@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v30.
+/* TechOps Hero — production runtime bootstrap v31.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
@@ -6,32 +6,9 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=30,BUILD="20260912-production-v30-night-combat-r1",started=false,done=false;
+  var VERSION=31,BUILD="20260912-production-v31-experience-r1",started=false,done=false;
   var FILES=[
-    "production_asset_registry.js",
-    "night_production_assets.js",
-    "good_boys_campaign_assets.js",
-    "state_validator.js",
-    "night_combat.js",
-    "good_boys_legacy_hud_filter.js",
-    "good_dogs_actor_contract.js",
-    "production_wrapper_guard.js",
-    "good_dogs_production_runtime.js",
-    "good_boys_visual_polish.js",
-    "good_boys_mobile_cinematic_polish.js",
-    "good_boys_reference_mechanics.js",
-    "good_boys_canon_runtime.js",
-    "good_boys_gameplay_loop.js",
-    "good_boys_prison_gameplay_v2.js",
-    "good_boys_mobile_controls_layout.js",
-    "good_boys_mobile_launch_guard.js",
-    "good_boys_ship_flight.js",
-    "good_dogs_cutscenes_v2_2.js",
-    "good_dogs_cutscene_bridge.js",
-    "day_cinematic_mobile_guard.js",
-    "production_runtime_safety.js",
-    "production_mode_router.js",
-    "production_presentation_guard.js"
+    "production_asset_registry.js","night_production_assets.js","good_boys_campaign_assets.js","state_validator.js","night_combat.js","good_boys_legacy_hud_filter.js","good_dogs_actor_contract.js","production_wrapper_guard.js","good_dogs_production_runtime.js","good_boys_visual_polish.js","good_boys_mobile_cinematic_polish.js","good_boys_reference_mechanics.js","good_boys_canon_runtime.js","good_boys_gameplay_loop.js","good_boys_prison_gameplay_v2.js","good_boys_mobile_controls_layout.js","good_boys_mobile_launch_guard.js","good_boys_ship_flight.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js","day_cinematic_mobile_guard.js","production_runtime_safety.js","production_mode_router.js","production_presentation_guard.js","production_gameplay_experience.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
@@ -60,6 +37,7 @@
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
+    try{if(root.TechOpsGameplayExperience)root.TechOpsGameplayExperience.install();}catch(e){root.__productionGameplayExperienceError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
