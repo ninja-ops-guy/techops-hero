@@ -14,13 +14,14 @@
 
   function target(t){try{return t&&t.closest&&t.closest("#btn-v736");}catch(_){return null;}}
   function meta(){try{return root.S&&root.S.meta&&root.S.meta._v736||null;}catch(_){return null;}}
-  function freshConfig(){return{mission:1,k:false,waldo:false,evidence:[],fresh:true,done:false};}
+  function durableState(){try{var live=root.S;if(live&&live.meta&&live.meta._v736)return live;var raw=root.localStorage&&root.localStorage.getItem("techops_save"),saved=raw&&JSON.parse(raw);if(!saved||!saved.meta||!saved.meta._v736)return null;var validator=root.TechOpsStateValidator;if(validator&&typeof validator.validate==="function"){var vr=validator.validate(saved,null);if(!vr.valid){root.__goodBoysResumeValidationFailure=vr;return null;}}return saved;}catch(e){root.__goodBoysResumeLoadError=String(e&&e.stack||e);return null;}}
+  function freshConfig(){return{mission:1,k:false,waldo:false,evidence:[],fresh:true,done:false,state:null,campaign:null};}
   function launchConfig(){
-    var m=meta();if(!m)return freshConfig();
-    if(m.done)return{mission:8,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice(),fresh:false,done:true};
+    var state=durableState(),m=state&&state.meta&&state.meta._v736;if(!m)return freshConfig();
+    if(m.done)return{mission:8,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice(),fresh:false,done:true,state:state,campaign:m};
     var mission=Math.max(1,Math.min(7,Number(m.m)||1));
     if(mission===1)return freshConfig();
-    return{mission:mission,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice(),fresh:false,done:false};
+    return{mission:mission,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice(),fresh:false,done:false,state:state,campaign:m};
   }
   function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v16",at:Date.now()},extra||{});}
   function clearForeignUi(){
@@ -45,15 +46,13 @@
   function validMovieResult(result,id){if(!result)throw new Error(id+" returned no result");var status=result.status||result.result;if(status&&status!=="COMPLETED"&&status!=="USER_SKIPPED")throw new Error(id+" did not complete: "+String(status));return result;}
   function mount(cfg,source){
     if(!root.v736||typeof root.v736.start!=="function")throw new Error("v736.start unavailable");clearForeignUi();endPresentation("completed");
-    if(cfg.done){phase("earthfall-replay",{mission:8});root.v736.start({mission:8,k:true,waldo:true,evidence:cfg.evidence||[]});launching=false;root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:true,status:"earthfall-replay",source:source||"unknown",mission:8,resume:true,openingAuthority:"TechOpsGoodBoysButtonHardFix",at:Date.now(),version:VERSION};return true;}
+    if(cfg.done){phase("earthfall-replay",{mission:8});root.v736.start({mission:8,k:true,waldo:true,evidence:cfg.evidence||[],state:cfg.state,campaign:cfg.campaign});launching=false;root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:true,status:"earthfall-replay",source:source||"unknown",mission:8,resume:true,openingAuthority:"TechOpsGoodBoysButtonHardFix",at:Date.now(),version:VERSION};return true;}
     phase(cfg.fresh?"waldo-property-handoff":"campaign-resume",{mission:cfg.mission});
-    var puzzleSave=!cfg.fresh&&meta()&&meta().pairPuzzles?Object.assign({},meta().pairPuzzles):{};
-    var established=!!(!cfg.fresh&&meta()&&meta().ship_establishing_seen);
-    var ok=root.v736.start({mission:cfg.mission,k:cfg.k,waldo:cfg.waldo,evidence:cfg.evidence||[],directGameplay:true}),c=root.NM&&root.NM._v736;
+    var ok=root.v736.start({mission:cfg.mission,k:cfg.k,waldo:cfg.waldo,evidence:cfg.evidence||[],state:cfg.state,campaign:cfg.campaign,directGameplay:true}),c=root.NM&&root.NM._v736,m=meta();
     if(!c||c.ending)throw new Error("Katrin/Manchez runtime did not mount synchronously");if(Number(c.m||0)!==cfg.mission)throw new Error("Good Dogs mounted wrong mission: "+String(c.m));
-    if(established&&meta()){meta().ship_establishing_seen=true;meta().good_dogs_signal_heard=true;meta().signal_beyond_earth_seen=true;}
-    if(meta()){meta().playMode=cfg.playMode||"solo";meta().pairPuzzles=puzzleSave;}
-    root.TechOpsGoodDogsCoop.configure(cfg.playMode||"solo");
+    if(!cfg.fresh&&(!m||Number(m.m)!==cfg.mission||!!m.k!==cfg.k||!!m.waldo!==cfg.waldo||JSON.stringify(m.evidence||[])!==JSON.stringify(cfg.evidence||[])))throw new Error("Good Dogs resume snapshot was not restored completely");
+    if(m&&cfg.fresh)m.pairPuzzles={};
+    root.TechOpsGoodDogsCoop.configure(cfg.playMode||m&&m.playMode||"solo");
     phase("campaign-gameplay",{mission:cfg.mission});root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:ok!==false,status:"campaign-gameplay",source:source||"unknown",mission:cfg.mission,resume:!cfg.fresh,pair:!!(c.chars&&c.chars.katrin&&c.chars.manchez),atlasAuthority:root.__goodDogsAtlasAuthority||null,actorAuthority:root.__goodDogsActorRenderAuthority||null,openingAuthority:"TechOpsGoodBoysButtonHardFix",openingContract:"playable M1 -> playable M2 -> board -> GD_CUT_01 -> cockpit -> GD_CUT_02 -> playable flight -> authored crash -> M3",at:Date.now(),version:VERSION};launching=false;return ok!==false;
   }
   async function opening(source,cfg){
@@ -73,5 +72,5 @@
   }
   function own(e){if(!target(e&&e.target))return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}launch(e&&e.type||"event");}
   root.document.addEventListener("pointerup",own,true);root.document.addEventListener("click",own,true);
-  root.TechOpsGoodBoysButtonHardFix={VERSION:VERSION,launch:launch,freshConfig:freshConfig,launchConfig:launchConfig,opening:opening,mount:mount,clearForeignUi:clearForeignUi,depsReady:depsReady,dependencySnapshot:dependencySnapshot,get launching(){return launching;}};
+  root.TechOpsGoodBoysButtonHardFix={VERSION:VERSION,launch:launch,freshConfig:freshConfig,durableState:durableState,launchConfig:launchConfig,opening:opening,mount:mount,clearForeignUi:clearForeignUi,depsReady:depsReady,dependencySnapshot:dependencySnapshot,get launching(){return launching;}};
 })(typeof globalThis!=="undefined"?globalThis:this);

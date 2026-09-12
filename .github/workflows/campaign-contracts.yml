@@ -153,6 +153,7 @@ jobs:
           node --check test_campaign_world_visuals.js
           node --check test_cinematic_systems.js
           node --check test_good_dogs_route_contract.js
+          node --check test_good_dogs_state_integrity.js
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js

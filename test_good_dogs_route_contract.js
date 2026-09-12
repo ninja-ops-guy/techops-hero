@@ -66,7 +66,7 @@ const context = {
     enemies: [],
     _v736: { m: 1, ending: false, chars: { katrin: {}, manchez: {} }, partner: { x: 110 }, evidence: [] }
   },
-  save() {},
+  save() { return true; },
   setInterval() { return 1; },
   clearInterval() {},
   setTimeout() { return 1; },
@@ -170,7 +170,7 @@ const chronologyWatchdog=setTimeout(()=>{console.error("Chronology test stalled 
   root.TechOpsGoodDogsCoop={configure:mode=>{homeEvents.push("mode:"+mode);}};
   root.TechOpsGoodDogsSingleAtlasAuthority={VERSION:2,installed:true};
   root.TechOpsGoodBoysProgressionAuthority={VERSION:14};
-  root.v736={start(options){root.S={meta:{_v736:{m:options.mission}}};root.NM={_v736:{m:options.mission,chars:{katrin:{},manchez:{}}}};return true;}};
+  root.v736={start(options){var restored=options.state?JSON.parse(JSON.stringify(options.state)):{meta:{}};root.S=Object.assign({meta:{}},restored);root.S.meta=root.S.meta||{};root.S.meta._v736=Object.assign(root.S.meta._v736||{},options.campaign||{},{m:options.mission});root.NM={_v736:{m:options.mission,chars:{katrin:{},manchez:{}}}};return true;}};
   vm.runInContext(hard,root);
   const title=root.TechOpsGoodBoysButtonHardFix;
   const moviesBefore=order.length;

@@ -3,7 +3,9 @@ const assert=require("assert");
 const fs=require("fs");
 const vm=require("vm");
 const source=fs.readFileSync("good_boys_reference_mechanics.js","utf8");
+const prisonSource=fs.readFileSync("good_boys_prison_gameplay_v2.js","utf8");
 new Function(source);
+new Function(prisonSource);
 assert.ok(/Combat never delegates to interact/.test(source),"combat/interact separation must be explicit");
 assert.ok(!/root\.interact\(/.test(source),"paired combat must never call interact()");
 assert.ok(/WHIFF · NO COMBO/.test(source),"whiffs must be observable and reset combo state");
@@ -23,4 +25,26 @@ assert.strictEqual(interactions,0);assert.strictEqual(sandbox.NM._v736.sync,sync
 vm.runInNewContext(fs.readFileSync('good_boys_campaign_director.js','utf8'),sandbox);
 assert.strictEqual(sandbox.TechOpsGoodBoysCampaignDirector.duoAttack(),false);
 assert.strictEqual(interactions,0);assert.strictEqual(sandbox.NM._v736.sync,syncBefore);
+
+// Test the shipped composition, not only the reference authority in isolation.
+sandbox.document={getElementById:()=>null,addEventListener:()=>{},body:{appendChild:()=>{}},createElement:()=>({style:{},dataset:{}})};
+sandbox.NM._v736.m=3;sandbox.NM._v736.active="katrin";sandbox.NM.enemies=[enemy];enemy.hp=100;enemy.alive=true;mode="whiff";t+=120;
+vm.runInNewContext(prisonSource,sandbox);
+const prison=sandbox.TechOpsGoodBoysPrisonGameplayV2;
+const hpBefore=enemy.hp,composedSyncBefore=sandbox.NM._v736.sync;
+assert.strictEqual(api.pairedAttack(),false,"composed prison attack must preserve the base whiff result");
+assert.strictEqual(enemy.hp,hpBefore,"prison bonuses cannot damage on a whiff");
+assert.strictEqual(prison.acceptance().comboStep,0,"prison combo cannot advance on a whiff");
+sandbox.NM._v736.active="manchez";t+=120;
+assert.strictEqual(api.pairedAttack(),false);
+assert.strictEqual(sandbox.NM._v736.sync,composedSyncBefore,"actor switching on whiffs cannot grant SYNC");
+// Human P2 ownership must also survive a successful attack through the same wrapper.
+sandbox.TechOpsGoodDogsCoop={active:()=>true};
+sandbox.nmJab=()=>{enemy.hp-=10;};
+const localHp=enemy.hp,localPartnerX=sandbox.NM._v736.partner.x;
+t+=120;
+assert.strictEqual(api.pairedAttack(),true);
+assert.strictEqual(enemy.hp,localHp-10,"local combat applies the base hit without automatic partner bonus damage");
+assert.strictEqual(prison.acceptance().comboStep,0,"local hits must not advance the legacy AI pack chain");
+assert.strictEqual(sandbox.NM._v736.partner.x,localPartnerX,"local hits must not teleport human P2");
 console.log("Good Dogs combat separation + whiff contract: PASS");

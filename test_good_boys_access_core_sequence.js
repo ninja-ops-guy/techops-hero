@@ -6,12 +6,13 @@ const facts = {};
 const handlers = {};
 const context = {
   console, Date, performance: { now: () => 1000 },
-  S: { meta: { _v736: { m: 5, k: true } } },
+  S: { inDialog: false, inBattle: false, gameOver: false, meta: { _v736: { m: 5, k: true } } },
   NM: { x: 1070, enemies: [{ kind: "guard", hp: 50, alive: true }], _v736: { m: 5 } },
   NM_KINDS: { mikeindex: { hp: 300 }, guard: { hp: 50 }, hunter: { hp: 70 } },
   TechOpsGoodDogsCampaignState: { write: (key, value) => { facts[key] = value; } },
   document: { addEventListener: (name, fn) => { handlers[name] = fn; } }
 };
+context.S.nightMode = context.NM;
 context.globalThis = context;
 vm.runInNewContext(fs.readFileSync("good_boys_access_core_authority.js", "utf8"), context);
 const api = context.TechOpsGoodBoysAccessCoreAuthority;
@@ -34,6 +35,12 @@ for (const enemy of context.NM.enemies) { enemy.hp = 0; enemy.alive = false; }
 context.NM.x = 100;
 assert.strictEqual(api.seizeAccessNode(), false, "node requires proximity");
 context.NM.x = 1070;
+context.S.inDialog = true;
+let modalConsumed = false;
+handlers.keydown({ key: "Enter", preventDefault() { modalConsumed = true; }, stopImmediatePropagation() { modalConsumed = true; } });
+assert.strictEqual(modalConsumed, false, "dialogue must retain Enter ownership");
+assert.strictEqual(context.NM._v736._gbAccessNodeSeized, undefined, "modal input cannot seize the Access Node");
+context.S.inDialog = false;
 let consumed = false;
 handlers.keydown({ key: "e", preventDefault() {}, stopImmediatePropagation() { consumed = true; } });
 assert.strictEqual(consumed, true);
