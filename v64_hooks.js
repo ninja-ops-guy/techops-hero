@@ -456,6 +456,7 @@
   const __origInteract64 = interact;
   interact = function () {
     const s = S;
+    if (s && s.nightMode) return __origInteract64.apply(this, arguments);
     if (s && !s.inBattle && !s.inDialog) {
       const f = fel();
       const p = { x: s.px, y: s.py };

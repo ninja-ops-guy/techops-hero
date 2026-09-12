@@ -59,6 +59,7 @@ const tests = [
   "test_v736_runtime_assets.js",
   "test_night_runtime_assets.js",
   "test_night_combat.js",
+  "test_night_lifecycle.js",
   "test_ui_coop_contract.js"
 ];
 

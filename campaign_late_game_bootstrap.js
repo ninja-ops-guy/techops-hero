@@ -1,4 +1,4 @@
-/* TechOps Hero — Story Bible gaps 4–7 browser bootstrap v3.
+/* TechOps Hero — Story Bible gaps 4–7 browser bootstrap v4.
  * Sole browser owner for the late-game completion layer. Loads only after the
  * canonical campaign/native Act II authorities exist, then starts one shared
  * maintenance runtime. Good Boys _v736 remains read-only interlude state.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||!root.document||root.TechOpsLateGameBootstrap)return;
-  var VERSION=3,started=false,ready=false,tries=0;
+  var VERSION=4,started=false,ready=false,tries=0;
   var FILES=[
     {src:"morningstar_build.js",global:"TechOpsMORNINGSTARBuild"},
     {src:"swarm_doctrine.js",global:"TechOpsSwarmDoctrine"},
@@ -27,7 +27,7 @@
           var n=0,t=(root.setInterval||setInterval)(function(){if(root[def.global]||n++>100){(root.clearInterval||clearInterval)(t);resolve(!!root[def.global]);}},25);return;
         }
         var s=root.document.createElement("script");
-        s.src=def.src+"?v=20260901-bible-gaps-4567-v3";
+        s.src=def.src+"?v=20260912-night-isolation-v4";
         s.async=false;s.dataset.techopsLateGame=def.src;
         s.onload=function(){resolve(!!root[def.global]);};
         s.onerror=function(){root.__lateGameBootstrapError="load-failed:"+def.src;resolve(false);};

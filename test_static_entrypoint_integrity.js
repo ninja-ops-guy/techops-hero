@@ -15,9 +15,9 @@ const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
 const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
 for(const src of ["good_boys_bible_world.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-pr12-canon");}
-for(const src of ["game.js","good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
-for(const src of ["night_hooks.js","v733_hooks.js","campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
-const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-night-combat-r1","production bootstrap entrypoint must bypass stale mobile caches");
+for(const src of ["good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
+for(const src of ["campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-night-reviewed-r1","production bootstrap entrypoint must bypass stale mobile caches");
 [
   "good_boys_prison_cinematic_patch.js",
 ].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260911-cinematic-cohesion-r1",src+" must bypass stale caches for the cinematic-cohesion handoff"));
@@ -106,3 +106,6 @@ assert.ok(prisonGameplay.includes('SECURITY RELAY')&&prisonGameplay.includes('co
 assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK BREAKER'),"orbital prison combat must expose the five-hit paired combat cadence");
 
 console.log("Static entrypoint integrity: PASS");
+
+// Every changed parser-time lifecycle dependency bypasses the old mobile cache.
+for(const src of ["game.js", "night_hooks.js", "v55_hooks.js", "v57_hooks.js", "v64_hooks.js", "v69_hooks.js", "v70_hooks.js", "v710_hooks.js", "v716_hooks.js", "v733_hooks.js", "v735_hooks.js", "bg_noc.js", "campaign_sector04_runtime.js", "campaign_native_act1.js", "campaign_native_act2.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");

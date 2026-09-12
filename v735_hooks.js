@@ -25,7 +25,7 @@
     if (!biomeId && typeof BIOME_OF_DEPT !== "undefined") biomeId = BIOME_OF_DEPT[npc.dept] || null;
     return { npc, dev, biomeId };
   }
-  function canBattle(s) { return typeof startBattle === "function" && !s.inBattle && !s.inDialog && !s.gameOver; }
+  function canBattle(s) { return typeof startBattle === "function" && !s.nightMode && !s.inBattle && !s.inDialog && !s.gameOver; }
 
   // ============================================================
   // A) SIDE-VIEW ROOMS (day) — marker + E-to-enter

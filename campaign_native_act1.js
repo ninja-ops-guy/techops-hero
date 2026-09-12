@@ -523,7 +523,7 @@
           if (isAdjacent(p, native.plating)) return resolveTicket("plating_workstation_down");
           if (isAdjacent(p, native.access)) return recordAccessEvidence();
         }
-        if (dayWorkLocked() && blockedBaseWorkAtPlayer()) return pauseBaseWorkDialog();
+        if (state && !state.nightMode && dayWorkLocked() && blockedBaseWorkAtPlayer()) return pauseBaseWorkDialog();
         return originalInteract.apply(this, arguments);
       };
     }

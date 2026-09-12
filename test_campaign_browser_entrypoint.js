@@ -4,8 +4,9 @@ const fs = require("fs");
 const html = fs.readFileSync("index.html", "utf8");
 
 function scriptIndex(src) {
-  const marker = `<script src="${src}"></script>`;
-  const index = html.indexOf(marker);
+  const urls = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)];
+  const match = urls.find(m => m[1].split("?")[0] === src);
+  const index = match ? match.index : -1;
   assert.notStrictEqual(index, -1, `${src} must be loaded by index.html`);
   return index;
 }

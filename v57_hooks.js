@@ -70,7 +70,7 @@ const __origStepV57 = step;
 step = function (dt) {
   __origStepV57(dt);
   const s = S;
-  if (s && s.meta.maint && !s.meta.maint.done && !s.meta.maint.reminded && s.clock >= 16 * 60) {
+  if (s && !s.nightMode && s.meta.maint && !s.meta.maint.done && !s.meta.maint.reminded && s.clock >= 16 * 60) {
     s.meta.maint.reminded = true;
     toast(`🛠️ Reminder: change window tonight — ${s.meta.maint.name}. It'll be waiting when you get home.`, 4600);
   }
