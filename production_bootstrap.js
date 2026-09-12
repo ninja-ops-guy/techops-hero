@@ -6,9 +6,34 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=31,BUILD="20260912-production-v31-experience-r1",started=false,done=false;
+  var VERSION=31,BUILD="20260912-production-v31-good-dogs-ui-night-flow-r2",started=false,done=false;
   var FILES=[
-    "production_asset_registry.js","night_production_assets.js","good_boys_campaign_assets.js","state_validator.js","night_combat.js","good_boys_legacy_hud_filter.js","good_dogs_actor_contract.js","production_wrapper_guard.js","good_dogs_production_runtime.js","good_boys_visual_polish.js","good_boys_mobile_cinematic_polish.js","good_boys_reference_mechanics.js","good_boys_canon_runtime.js","good_boys_gameplay_loop.js","good_boys_prison_gameplay_v2.js","good_boys_mobile_controls_layout.js","good_boys_mobile_launch_guard.js","good_boys_ship_flight.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js","day_cinematic_mobile_guard.js","production_runtime_safety.js","production_mode_router.js","production_presentation_guard.js","production_gameplay_experience.js"
+    "production_asset_registry.js",
+    "night_production_assets.js",
+    "good_boys_campaign_assets.js",
+    "state_validator.js",
+    "night_combat.js",
+    "good_boys_legacy_hud_filter.js",
+    "good_dogs_actor_contract.js",
+    "production_wrapper_guard.js",
+    "good_dogs_production_runtime.js",
+    "good_boys_visual_polish.js",
+    "good_boys_mobile_cinematic_polish.js",
+    "good_boys_reference_mechanics.js",
+    "good_boys_canon_runtime.js",
+    "good_boys_gameplay_loop.js",
+    "good_boys_prison_gameplay_v2.js",
+    "good_boys_mobile_controls_layout.js",
+    "good_boys_reference_ui_v1.js",
+    "good_boys_mobile_launch_guard.js",
+    "good_boys_ship_flight.js",
+    "good_dogs_cutscenes_v2_2.js",
+    "good_dogs_cutscene_bridge.js",
+    "day_cinematic_mobile_guard.js",
+    "production_runtime_safety.js",
+    "production_mode_router.js",
+    "runtime_night.js",
+    "production_presentation_guard.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
@@ -32,12 +57,13 @@
     try{if(root.TechOpsGoodBoysMobileCinematicPolish)root.TechOpsGoodBoysMobileCinematicPolish.apply();}catch(e){root.__productionMobileCinePolishError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysPrisonGameplayV2)root.TechOpsGoodBoysPrisonGameplayV2.tick();}catch(e){root.__productionGoodBoysPrisonGameplayError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileControlsLayout)root.TechOpsGoodBoysMobileControlsLayout.apply();}catch(e){root.__productionGoodBoysControlLayoutError=String(e&&e.stack||e);}
+    try{if(root.TechOpsGoodBoysReferenceUI)root.TechOpsGoodBoysReferenceUI.apply();}catch(e){root.__productionGoodBoysReferenceUIError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysShipFlight)root.TechOpsGoodBoysShipFlight.install();}catch(e){root.__productionGoodBoysShipFlightError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodDogsCutsceneBridge)root.TechOpsGoodDogsCutsceneBridge.tick();}catch(e){root.__productionGoodDogsCutsceneBridgeError=String(e&&e.stack||e);}
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
+    try{if(root.TechOpsNightFlow)root.TechOpsNightFlow.install();}catch(e){root.__productionNightFlowError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
-    try{if(root.TechOpsGameplayExperience)root.TechOpsGameplayExperience.install();}catch(e){root.__productionGameplayExperienceError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
