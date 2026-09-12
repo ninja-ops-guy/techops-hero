@@ -1,0 +1,59 @@
+name: Integrate PR29
+on:
+  push:
+    branches: [integrate/pr29-on-main-20260912]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Merge reviewed PR29 combat changes onto current main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin fix/night-directional-combat-integration
+          git merge --no-ff -X ours origin/fix/night-directional-combat-integration -m "Integrate PR #29 directional combat onto current main"
+      - name: Preserve current-main lifecycle and quality authority
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          # The merged main already contains the corrected Night lifecycle browser harness and expanded release gate.
+          # Ensure PR29's focused suites are included without removing current-main suites.
+          p=Path('scripts/production_release_gate.js')
+          s=p.read_text()
+          anchor='  "test_night_combat.js",\n'
+          for f in ['test_night_directional_combat.js','test_night_directional_physics.js','test_night_directional_integration.js']:
+              if f not in s:
+                  s=s.replace(anchor,anchor+f'  "{f}",\n',1)
+          p.write_text(s)
+          PY
+      - name: Validate integrated combat and production contracts
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          node scripts/production_release_gate.js
+          node test_night_directional_combat.js
+          node test_night_directional_physics.js
+          node test_night_directional_integration.js
+          node test_runtime_combat_audio.js
+          node test_night_lifecycle.js
+      - name: Publish reconciled branch
+        run: |
+          set -euo pipefail
+          git add -A
+          git commit -m "Reconcile PR29 with current production contracts" || true
+          git rm .github/workflows/integrate-pr29.yml
+          git commit -m "Remove temporary PR29 integration workflow"
+          git push origin HEAD:integrate/pr29-on-main-20260912
