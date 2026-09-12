@@ -1,0 +1,11 @@
+const fs=require('fs'),assert=require('assert');
+const ui=fs.readFileSync('good_boys_reference_ui_v1.js','utf8');
+assert.ok(/VERSION=2/.test(ui),'reference UI v2 required');
+['gb-ref-objective','gb-ref-location','gb-ref-map','gb-ref-interact','gb-ref-status'].forEach(id=>assert.ok(ui.includes(id),id+' missing'));
+['KATRIN','MANCHEZ','USE \/ INTERACT','GOOD DOGS','HANGAR B','CELL 118','CELL 1984','EARTHFALL'].forEach(t=>assert.ok(ui.includes(t),t+' missing'));
+['gb-swap','gb-sync','gb-attack','gb-boost','gb-airdash','gb-partner','gb-use'].forEach(id=>assert.ok(ui.includes(id),id+' control missing'));
+assert.ok(/pointer-events:none/.test(ui),'HUD overlay must not steal gameplay input');
+assert.ok(/ProgressionAuthority/.test(ui),'mission presentation should follow progression authority when available');
+assert.ok(/root\.NM&&root\.NM\._v736/.test(ui),'UI must remain Good Dogs scoped');
+assert.ok(!/drawNM\s*=/.test(ui)&&!/stepNM\s*=/.test(ui),'presentation layer must not become gameplay owner');
+console.log('Good Dogs reference UI v2 contract: PASS');
