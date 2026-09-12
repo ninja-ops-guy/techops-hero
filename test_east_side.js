@@ -1,0 +1,34 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const vm=require("node:vm");
+const src=fs.readFileSync("east_side.js","utf8");
+let passed=0;
+function test(name,fn){fn();passed++;console.log("PASS "+name);}
+function boot(seed={}){
+  const S={meta:{},story:{facts:{},completedActs:[]}};
+  Object.assign(S.meta,seed.meta||{});Object.assign(S.story.facts,seed.facts||{});
+  let saves=0;const root={S,save(){saves++;return true;},toast(){},setTimeout(fn){root._timeout=fn;return 1;},clearTimeout(){},setInterval(){return 1;},clearInterval(){},performance:{now:()=>0}};
+  root.globalThis=root;const ctx=vm.createContext(root);vm.runInContext(src,ctx,{filename:"east_side.js"});
+  return{root:ctx,E:ctx.TechOpsEastSide,S,saves:()=>saves};
+}
+test("locked before Good Dogs",()=>{const b=boot();assert.equal(b.E.canStart(),false);assert.equal(b.E.blockGhostFork("gk1"),true);});
+test("Good Dogs unlocks East Side but not Ghost Fork",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});assert.equal(b.E.canStart(),true);assert.equal(b.E.ensure().unlocked,true);assert.equal(b.E.ghostForkUnlocked(),false);assert.equal(b.E.blockGhostFork("gk3"),true);});
+test("legacy Ghost Fork saves are grandfathered",()=>{const b=boot({meta:{_v734gk2:true}});assert.equal(b.E.ensure().legacyGhostFork,true);assert.equal(b.E.blockGhostFork("gk4"),false);});
+test("seven static pickups are unique and unlock Full Static",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});b.E.STATIC.forEach(o=>assert.equal(b.E.addStatic(o.id),true));assert.equal(b.E.addStatic(b.E.STATIC[0].id),false);const s=b.E.snapshot();assert.equal(s.staticCollected.length,7);assert.equal(s.lyrics.length,7);assert.equal(s.fullStaticUnlocked,true);assert.equal(b.S.story.facts.eastside_full_static_unlocked,true);});
+test("static buildup changes phase without exposing a meter API",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});for(let i=0;i<6;i++)b.E.addStatic(b.E.STATIC[i].id);assert.equal(b.E.snapshot().phase,"orbital");assert.equal(Object.prototype.hasOwnProperty.call(b.E,"orbitalMeter"),false);});
+test("trauma anchors force ORBITAL",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});b.E.triggerAnchor("grate");assert.equal(b.E.snapshot().phase,"orbital");assert.ok(b.E.snapshot().anchorsSeen.includes("grate"));});
+test("grounding returns K to GROUNDED",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});b.E.triggerAnchor("camera");b.E.ground("bench");assert.equal(b.E.snapshot().phase,"grounded");});
+test("three dogs add invisible Ghost inventory and ground K",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});b.E.triggerAnchor("camera");b.E.DOGS.forEach(d=>b.E.petDog(d.id));let s=b.E.snapshot();assert.equal(s.inventory.ghost,3);assert.equal(s.phase,"grounded");b.E.petDog(b.E.DOGS[0].id);assert.equal(b.E.snapshot().inventory.ghost,3);});
+test("gas station choice is one-shot and entry spikes ORBITAL",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});assert.equal(b.E.chooseGas(true),true);assert.equal(b.E.chooseGas(false),false);assert.equal(b.E.snapshot().phase,"orbital");});
+test("walking past gas station grounds K",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});b.E.triggerAnchor("camera");b.E.chooseGas(false);assert.equal(b.E.snapshot().phase,"grounded");});
+test("empty bottle inventory is idempotent",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});assert.equal(b.E.collectBottle(),true);assert.equal(b.E.collectBottle(),false);assert.equal(b.E.snapshot().inventory.empty_bottle,true);});
+test("completion writes canonical landing and Ghost Fork facts",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});assert.equal(b.E.complete(),true);const f=b.S.story.facts;assert.equal(f.k_landed,true);assert.equal(f.ghost_fork_unlocked,true);assert.equal(f.eastside_completed,true);assert.equal(f.k_headphones,true);assert.equal(b.E.blockGhostFork("gk1"),false);});
+test("save/reload reconstructs phase and collectibles from canonical S.meta",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});b.E.addStatic("radio_1");b.E.triggerAnchor("grate");const saved=JSON.parse(JSON.stringify(b.S.meta.eastSide));const c=boot({meta:{eastSide:saved},facts:{good_dogs_protocol_complete:true}});assert.equal(c.E.snapshot().phase,"orbital");assert.deepEqual(Array.from(c.E.snapshot().staticCollected),["radio_1"]);});
+test("recognition timeline is deterministic and completes at 45 seconds",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});assert.match(b.E.recognitionBeat(0).label,/Door opens/);assert.equal(b.E.recognitionBeat(6000).waldo,true);assert.match(b.E.recognitionBeat(15000).label,/headphones/);assert.match(b.E.recognitionBeat(22000).label,/don't feel like I landed/);assert.match(b.E.recognitionBeat(31000).label,/Ground's just loud/);assert.equal(b.E.recognitionBeat(45000).label,"complete");});
+test("refrain sync resolves hits inside ±50ms",()=>{const b=boot();b.E.setRefrainTimes([1000,2500,5000]);assert.equal(b.E.refrainDue(900,960,50),1000);assert.equal(b.E.refrainDue(1001,2400,50),null);assert.equal(b.E.refrainDue(2400,2460,50),2500);});
+test("Ghost Fork gate wraps only gk cinematics",()=>{const b=boot({facts:{good_dogs_protocol_complete:true}});let played=[];b.root.v725={play(id){played.push(id);return"ok";}};assert.equal(b.E.installGhostForkGate(),true);assert.equal(b.root.v725.play("gk1"),false);assert.equal(played.length,0);assert.equal(b.root.v725.play("ordinary"),"ok");assert.deepEqual(played,["ordinary"]);});
+test("combat functions are absent from the East Side API",()=>{const b=boot();["attack","punch","kick","combat"].forEach(k=>assert.equal(typeof b.E[k],"undefined"));});
+test("audio contract references authored East Side assets",()=>{const b=boot();assert.match(b.E.AUDIO.grounded,/eastside_grounded\.ogg$/);assert.match(b.E.AUDIO.orbital,/eastside_orbital\.ogg$/);assert.match(b.E.AUDIO.static,/static_burst\.wav$/);assert.match(b.E.AUDIO.breathing,/breathing_mechanical\.wav$/);});
+test("map is six screens by two screens",()=>{const b=boot();assert.equal(b.E.COLS,6);assert.equal(b.E.ROWS,2);assert.equal(b.E.WORLD_W,b.E.W*6);assert.equal(b.E.WORLD_H,b.E.H*2);});
+console.log(`EAST SIDE: ${passed} tests passed`);
