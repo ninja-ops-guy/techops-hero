@@ -85,9 +85,27 @@ jobs:
 
           p=Path("test_quality_integration.js"); s=p.read_text()
           s=s.replace('assert.match(src,/TechOpsNightFlow\\.install\\(\\)/);','assert.equal(r.TechOpsProductionBootstrap.FILES.filter(x=>x==="runtime_night.js").length,1);')
+          s=s.replace("'test_runtime_night.js'","'test_night_lifecycle.js'")
           p.write_text(s)
 
           p=Path("test_live_crawl_visual_cohesion.js"); s=p.read_text().replace("bootstrap.includes('VERSION=32')","bootstrap.includes('VERSION=34')"); p.write_text(s)
+
+          p=Path("scripts/production_release_gate.js"); s=p.read_text()
+          anchor='  "test_night_lifecycle.js",'
+          if anchor not in s: raise SystemExit("Night lifecycle release-gate anchor missing")
+          additions=[
+              '  "test_campaign_investigation_integrity.js",',
+              '  "test_campaign_workday_followups.js",',
+              '  "test_campaign_workday_followups_ui.js",',
+              '  "test_runtime_combat_audio.js",',
+              '  "test_quality_integration.js",',
+              '  "test_production_gameplay_experience.js",',
+              '  "test_orbital_scene_staging.js",',
+          ]
+          for line in additions:
+              if line not in s:
+                  s=s.replace(anchor,line+'\n'+anchor,1)
+          p.write_text(s)
           PY
       - name: Static and aggregate validation
         run: |
@@ -110,7 +128,7 @@ jobs:
       - name: Remove temporary workflow and publish reconciled branch
         run: |
           set -euo pipefail
-          git add index.html good_boys_reference_ui_v1.js production_bootstrap.js bg_noc.js test_campaign_browser_entrypoint.js test_good_boys_ship_deck_mapping.js test_static_entrypoint_integrity.js test_quality_integration.js test_live_crawl_visual_cohesion.js
+          git add index.html good_boys_reference_ui_v1.js production_bootstrap.js bg_noc.js scripts/production_release_gate.js test_campaign_browser_entrypoint.js test_good_boys_ship_deck_mapping.js test_static_entrypoint_integrity.js test_quality_integration.js test_live_crawl_visual_cohesion.js
           git commit -m "Reconcile reviewed PR overlap contracts"
           git rm .github/workflows/integrate-open-prs.yml
           git commit -m "Remove temporary integration workflow"
