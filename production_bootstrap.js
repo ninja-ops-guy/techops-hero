@@ -1,12 +1,14 @@
-/* TechOps Hero — production runtime bootstrap v31.
+/* TechOps Hero — production runtime bootstrap v32.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
+ * v32 adds the evidence-grounded live-crawl visual cohesion authority last so
+ * mode ownership and presentation contracts can police the historical hook stack.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=31,BUILD="20260912-production-v31-good-dogs-ui-night-flow-r2",started=false,done=false;
+  var VERSION=32,BUILD="20260912-production-v32-live-crawl-cohesion-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -33,7 +35,8 @@
     "production_runtime_safety.js",
     "production_mode_router.js",
     "runtime_night.js",
-    "production_presentation_guard.js"
+    "production_presentation_guard.js",
+    "visual_cohesion_live_crawl.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
@@ -64,6 +67,7 @@
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsNightFlow)root.TechOpsNightFlow.install();}catch(e){root.__productionNightFlowError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
+    try{if(root.TechOpsLiveCrawlVisualCohesion)root.TechOpsLiveCrawlVisualCohesion.tick();}catch(e){root.__productionLiveCrawlVisualError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
