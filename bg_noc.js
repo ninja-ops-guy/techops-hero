@@ -18,12 +18,13 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
       var s=document.createElement('script');s.src=src+'?v='+BUILD;s.async=false;s.setAttribute(attr,'1');s.onload=onload||null;s.onerror=onerror||null;(document.head||document.documentElement).appendChild(s);return true;
     }catch(e){return false;}
   }
+  /* Approved EAST SIDE art is a read-only visual handoff. Preload it without changing the canonical Good Dogs progression chain. */
+  try{appendScript('data-techops-east-side-visuals','east_side_visual_assets.js',function(){try{if(root.TechOpsEastSideVisualAssets)root.TechOpsEastSideVisualAssets.preload();}catch(e){}},function(){root.__eastSideVisualWireError='east_side_visual_assets.js';});}catch(e){root.__eastSideVisualWireError=String(e&&e.stack||e);}
   function loadHudLite(){if(!appendScript('data-good-boys-hud-lite','good_boys_hud_lite.js',null,function(){root.__goodBoysHudLiteWireError='good_boys_hud_lite.js';}))root.__goodBoysHudLiteWireError='append_failed';}
   function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',loadHudLite,function(){root.__goodBoysDepthLiteWireError='good_boys_depth-lite.js';loadHudLite();}))loadHudLite();}
   function loadProgressionCore(){if(!appendScript('data-good-boys-progression-authority','good_boys_progression_authority.js',loadDepthLite,function(){root.__goodBoysProgressionWireError='good_boys_progression_authority.js';loadDepthLite();}))loadDepthLite();}
-  function loadEastSideVisuals(){if(!appendScript('data-techops-east-side-visuals','east_side_visual_assets.js',loadProgressionCore,function(){root.__eastSideVisualWireError='east_side_visual_assets.js';loadProgressionCore();}))loadProgressionCore();}
-  /* EAST SIDE is part of the progression handoff: semantic Good Dogs state -> bridge chapter -> approved visual handoff -> Good Boys progression. */
-  function loadProgression(){if(!appendScript('data-techops-east-side','east_side.js',loadEastSideVisuals,function(){root.__eastSideWireError='east_side.js';loadEastSideVisuals();}))loadEastSideVisuals();}
+  /* EAST SIDE is part of the progression handoff: semantic Good Dogs state -> bridge chapter -> Good Boys progression. */
+  function loadProgression(){if(!appendScript('data-techops-east-side','east_side.js',loadProgressionCore,function(){root.__eastSideWireError='east_side.js';loadProgressionCore();}))loadProgressionCore();}
   function loadCampaignState(){if(!appendScript('data-good-dogs-campaign-state','good_dogs_campaign_state.js',loadProgression,function(){root.__goodDogsCampaignStateWireError='good_dogs_campaign_state.js';loadProgression();}))loadProgression();}
   function loadEarthfall(){if(!appendScript('data-good-boys-earthfall-ending','good_boys_earthfall_ending.js',loadCampaignState,function(){root.__goodBoysEarthfallWireError='good_boys_earthfall_ending.js';loadCampaignState();}))loadCampaignState();}
   function loadAccessCore(){if(!appendScript('data-good-boys-access-core-authority','good_boys_access_core_authority.js',loadEarthfall,function(){root.__goodBoysAccessCoreWireError='good_boys_access_core_authority.js';loadEarthfall();}))loadEarthfall();}
