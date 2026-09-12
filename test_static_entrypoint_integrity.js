@@ -42,12 +42,12 @@ assert.ok(order("good_boys_progression_authority.js")<order("good_dogs_cutscene_
 assert.ok(order("good_dogs_cutscenes_v2_2.js")<order("good_dogs_cutscene_bridge.js"),"Good Dogs cutscene player must load before the bridge");
 
 const introSource=fs.readFileSync(path.join(__dirname,"good_boys_button_hard_fix.js"),"utf8");new Function(introSource);
-assert.ok(introSource.includes('VERSION=14'),"title authority must expose the M1-first v14 contract");
+assert.ok(introSource.includes('VERSION=15'),"title authority must expose the M1-first v15 contract");
 assert.ok(introSource.includes('function freshConfig(){return{mission:1'),"fresh campaigns must begin at Waldo's House");
-assert.ok(introSource.includes('GoodDogsCutscenes.play("GD_CUT_01"'),"Good Dogs must open with GD_CUT_01");
+assert.ok(!introSource.includes('GoodDogsCutscenes.play("GD_CUT_01"'),"Good Dogs must open on the property, not aboard ship");
 assert.ok(!introSource.includes('GoodDogsCutscenes.play("GD_CUT_02"'),"title launch may not bypass M1/M2 into the ship handoff");
 assert.ok(introSource.includes('root.v736.start({mission:cfg.mission')&&introSource.includes('directGameplay:true'),"fresh and resumed missions must mount canonical gameplay directly");
-assert.ok(introSource.includes('openingContract:"GD_CUT_01 -> playable M1 -> playable M2'),"launch diagnostics must expose the full M1→M3 route");
+assert.ok(introSource.includes('openingContract:"playable M1 -> playable M2'),"launch diagnostics must expose the full M1→M3 route");
 assert.ok(introSource.includes('e.stopImmediatePropagation()'),"title launch must isolate the physical click");
 assert.ok(introSource.includes('TechOpsPresentationDirector'),"the opening must participate in shared presentation ownership");
 
@@ -96,7 +96,7 @@ const bridgeSource=fs.readFileSync(path.join(__dirname,"good_dogs_cutscene_bridg
 assert.ok(bridgeSource.includes('CONDITIONAL_SEQUENCE={4:{id:"GD_CUT_05",when:"cellOpened"}}'),"K reveal must be gated to the actual Cell 118 open event");
 assert.ok(!bridgeSource.includes('4:["GD_CUT_04","GD_CUT_05"]'),"Cell 118 videos must not play back-to-back at mission entry");
 assert.ok(!bridgeSource.includes('3:["GD_CUT_03"]'),"mission 3 must not replay the retired flying-ship cutscene");
-assert.ok(!bridgeSource.includes('1:["GD_CUT_01"]'),"opening GD_CUT_01 must remain owned by direct intro");
+assert.ok(!bridgeSource.includes('1:["GD_CUT_01"]'),"ship establishing GD_CUT_01 must remain owned by M2 boarding");
 assert.ok(!bridgeSource.includes('3:["GD_CUT_02","GD_CUT_03"]'),"opening GD_CUT_02 must not replay during mission 3");
 assert.ok(bridgeSource.includes('write("k_identity_status","K_pending")'),"K reveal must persist K_pending identity state");
 assert.ok(bridgeSource.includes('m===4)return false'),"Cell 118 legacy mission card must remain suppressed around the canonical reveal flow");

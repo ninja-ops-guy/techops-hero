@@ -17,10 +17,10 @@ for (const [file, source] of [["hard", hard], ["flight", flight], ["progression"
   assert.doesNotThrow(() => new Function(source), `${file} must parse`);
 }
 
-assert.ok(hard.includes("VERSION=14"));
+assert.ok(hard.includes("VERSION=15"));
 assert.ok(hard.includes("function freshConfig(){return{mission:1"), "a fresh campaign must begin at M1");
-const openingSignal = hard.indexOf('GoodDogsCutscenes.play("GD_CUT_01"');
-assert.ok(openingSignal >= 0 && hard.indexOf("return mount(cfg,source)", openingSignal) > openingSignal, "GD_CUT_01 must hand off to playable M1");
+assert.ok(!hard.includes('GoodDogsCutscenes.play("GD_CUT_01"'), "title may not play the ship movie before discovery");
+assert.ok(flight.includes('player.play("GD_CUT_01"'), "M2 boarding owns the ship establishing movie");
 assert.ok(hard.includes("freshStoryStart:cfg.fresh") && hard.includes("resume:!cfg.fresh"), "fresh and resume routes must remain explicit");
 assert.ok(!html.includes('src="good_boys_intro_repair.js'), "obsolete direct-to-M2 intro may not be parser loaded");
 assert.ok(html.indexOf("cinematic_systems.js") < html.indexOf("night_hooks.js"), "shared cinematic contracts must exist before runtime consumers");
@@ -31,7 +31,7 @@ assert.ok(!runtime.includes("cs.towers.every"), "M2 may not retain obsolete upli
 assert.ok(runtime.includes("Hidden Bay completion is owned by the explicit BOARD action"));
 assert.ok(runtime.includes("clearMissionTransients736()"), "mission-local discovery/boarding flags must not leak into the next level");
 assert.ok(board.includes('BOARD_X=1210')&&board.includes('s.p.advance(3,"boarded-secret-ship-button")'), "the mounted M2 BOARD action must require reaching the ship and request the exit sequence");
-assert.ok(browserDriver.includes("GOOD_DOGS_CONTRACT_VERSION=14"), "browser acceptance must track the M1-first v14 contract");
+assert.ok(browserDriver.includes("GOOD_DOGS_CONTRACT_VERSION=15"), "browser acceptance must track the M1-first v15 contract");
 assert.ok(browserDriver.includes("page.keyboard.down('ArrowRight')")&&browserDriver.includes("page.keyboard.press('KeyE')"), "browser acceptance must traverse M1/M2 through player input");
 assert.ok(!browserDriver.includes("testPrimeClear")&&!browserDriver.includes("testPrimeComplete"), "M1/M2 browser acceptance may not use encounter fixtures");
 
@@ -126,3 +126,54 @@ assert.strictEqual(starts[1].mission,5);
 assert.strictEqual(starts[1].directGameplay,false,"ordinary mission entry keeps its authored cinematic handoff");
 
 console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity: PASS");
+
+// Execute the orchestration: image order must follow player discovery, including
+// resume, skip and failure boundaries. These checks do not rely on source order.
+(async()=>{
+  const order=[],saved=[],root={console,Date,Math,Object,Array,Number,String,Promise,
+    document:{getElementById(){return null;},addEventListener(){}},
+    setInterval(){return 1;},clearInterval(){},setTimeout(){return 1;},clearTimeout(){},addEventListener(){},
+    S:{meta:{_v736:{m:2},goodDogsCutscenes:{GD_CUT_01:{seen:true}}}},
+    NM:{_v736:{m:2,_gbBoardRequested:true}},
+    GoodDogsCutscenes:{VERSION:'3.5',play:async id=>{order.push(id);return {status:'USER_SKIPPED'};}},
+    TechOpsGoodBoysOpeningV4:{showDeckInteraction(){order.push('pilot');return new Promise(()=>{});}},
+    save(){saved.push(JSON.parse(JSON.stringify(root.S.meta._v736)));}
+  };root.globalThis=root;vm.createContext(root);vm.runInContext(flight,root);
+  const ship=root.TechOpsGoodBoysShipFlight;
+  root.NM._v736.m=1;
+  assert.strictEqual(ship.runBoardingSequence(),false,'ship scenes may not run in M1');
+  await assert.rejects(ship.establishShip(),/M2 BOARD/);
+  root.NM._v736.m=2;root.NM._v736._gbBoardRequested=false;
+  assert.strictEqual(ship.runBoardingSequence(),false,'reaching M2 alone is not boarding');
+  root.NM._v736._gbBoardRequested=true;
+  await ship.establishShip();
+  assert.deepStrictEqual(order,['GD_CUT_01'],'legacy early seen bit must not bypass correct placement');
+  assert.strictEqual(saved[0].ship_establishing_seen,true,'skip commits the correctly placed scene boundary');
+  await ship.establishShip();
+  assert.strictEqual(order.length,1,'persisted establishing scene must not replay on resume');
+  delete root.S.meta._v736.ship_establishing_seen;
+  root.GoodDogsCutscenes.play=async()=>({status:'MEDIA_ERROR'});
+  await assert.rejects(ship.establishShip(),/did not complete/);
+  assert.strictEqual(root.S.meta._v736.ship_establishing_seen,undefined,'failed media cannot advance story state');
+  let finishMovie;root.GoodDogsCutscenes.play=id=>{order.push(id);return new Promise(resolve=>{finishMovie=resolve;});};
+  assert.strictEqual(ship.runBoardingSequence(),true);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.strictEqual(order.includes('pilot'),false,'pilot interaction cannot precede establishing film completion');
+  finishMovie({status:'COMPLETED'});await new Promise(resolve=>setImmediate(resolve));
+  assert.deepStrictEqual(order,['GD_CUT_01','GD_CUT_01','pilot']);
+  // The base title launcher can recreate S; preserve the M2 scene checkpoint.
+  root.TechOpsGoodDogsSingleAtlasAuthority={VERSION:2,installed:true};
+  root.TechOpsGoodBoysProgressionAuthority={VERSION:14};
+  root.v736={start(options){root.S={meta:{_v736:{m:options.mission}}};root.NM={_v736:{m:options.mission,chars:{katrin:{},manchez:{}}}};return true;}};
+  vm.runInContext(hard,root);
+  const title=root.TechOpsGoodBoysButtonHardFix;
+  const moviesBefore=order.length;
+  await title.opening('fresh-test',title.freshConfig());
+  assert.strictEqual(root.NM._v736.m,1);
+  assert.strictEqual(order.length,moviesBefore,'fresh title launch must not play any movie');
+  root.S.meta._v736={m:2,ship_establishing_seen:true};
+  await title.opening('resume-test',title.launchConfig());
+  assert.strictEqual(root.S.meta._v736.ship_establishing_seen,true,'title state recreation must retain the chronology checkpoint');
+  assert.strictEqual(order.length,moviesBefore,'M2 resume may not replay opening footage at title');
+  console.log('Good Dogs executable chronology, legacy-save, skip and failure boundaries: PASS');
+})().catch(e=>{console.error(e);process.exitCode=1;});

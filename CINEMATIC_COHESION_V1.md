@@ -9,7 +9,7 @@
 
 This pass makes the story route and the verified route agree:
 
-`GD_CUT_01 → M1 Waldo's House → M2 Hidden Bay → cockpit pilot interaction → GD_CUT_02 → playable Good Ship flight → authored crash → M3 Hull Breach → M4 Cell 118 → M5 Access Core → M6 Cell 1984 → M7 Warden / shuttle → M8 Earthfall`
+`M1 Waldo's House → M2 Hidden Bay → BOARD → GD_CUT_01 → cockpit pilot interaction → GD_CUT_02 → playable Good Ship flight → authored crash → M3 Hull Breach → M4 Cell 118 → M5 Access Core → M6 Cell 1984 → M7 Warden / shuttle → M8 Earthfall`
 
 A fresh save starts at M1. A resume starts at the persisted mission. M2 stays persisted until the deck interaction, takeover film, playable flight, and crash all complete. Any failure leaves the player in M2 with a recoverable BOARD action.
 

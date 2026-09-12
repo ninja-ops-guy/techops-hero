@@ -75,6 +75,12 @@ Do not expand endgame until these are mechanically proven:
 
 Good Dogs Protocol, Ghost Fork, Watchdog, ORPHEUS WAKES, and all three endings remain valid canon, but their implementation must not weaken P0/P1 continuity or reveal timing.
 
+### Good Dogs opening chronology
+
+`M1 Waldo property / garage discovery -> M2 Hidden Bay / hangar clearance -> BOARD -> GD_CUT_01 ship establishment -> pilot interaction -> GD_CUT_02 takeover -> playable flight -> authored crash -> M3 hull breach`
+
+The supplied first movie already shows the dogs aboard the ship; its legacy “Signal Beyond Earth” title does not make it a pre-discovery prologue. No aboard-ship footage precedes the property investigation. GD_CUT_03 remains retired, and M3 cannot replay the pre-crash approach. A completed or skipped establishing movie commits `ship_establishing_seen` at M2; media errors do not. Earlier saves that marked the movie seen at the title do not prove this chronological boundary.
+
 ## Runtime consolidation rules
 
 The repo currently contains a long version-hook history. New production work should reduce authority fragmentation rather than add another parallel implementation.

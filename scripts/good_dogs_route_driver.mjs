@@ -5,7 +5,7 @@
  * never mutates campaign, enemy, objective, save, or media state.
  */
 
-export const GOOD_DOGS_CONTRACT_VERSION=14;
+export const GOOD_DOGS_CONTRACT_VERSION=15;
 export const GOOD_DOGS_LAUNCH_RE=/(118\/1984|BREAKOUT|GOOD\s*(?:BOYS|DOGS))/i;
 
 export async function clickGoodDogsLaunch(page){
@@ -50,13 +50,25 @@ async function tapDirection(page,direction,ms){
   try{await page.waitForTimeout(ms);}finally{await page.keyboard.up(key).catch(()=>{});}
 }
 
+export async function mountFreshProperty(page,{onEvent=()=>{}}={}){
+  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===1,null,{timeout:9000});
+  const state=await routeState(page);onEvent('m1-mounted',state);
+  if(state.cutscene.id||state.cutscene.exit?.id==='GD_CUT_01')throw new Error('Ship movie played before the property investigation');
+  if(state.metaMission!==1||!state.pair)throw new Error('Fresh Good Dogs launch did not mount the canonical M1 pair: '+JSON.stringify(state));
+  if(state.openingError)throw new Error('Good Dogs opening error: '+JSON.stringify(state.openingError));
+  if(state.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(state.hard?.version||0)<GOOD_DOGS_CONTRACT_VERSION)throw new Error('Good Dogs v15 title authority is not active: '+JSON.stringify(state.hard));
+  return state;
+}
+
 export async function resolveOpeningSignal(page,{onEvent=()=>{},requireDecoded=true}={}){
   await page.waitForFunction(()=>{
     const c=window.NM&&window.NM._v736,o=document.querySelector('#good-dogs-cutscene-overlay.active'),e=window.__goodDogsCutsceneExit;
-    return !!(c&&Number(c.m)===1||o&&o.dataset.activeCutscene==='GD_CUT_01'||e&&e.id==='GD_CUT_01');
+    return !!(o&&o.dataset.activeCutscene==='GD_CUT_01'||e&&e.id==='GD_CUT_01');
   },null,{timeout:12000});
 
-  let state=await routeState(page);onEvent('gd-cut-01-start',state);
+  let state=await routeState(page);
+  if(state.mission!==2||state.metaMission!==2||!state.shipRevealed)throw new Error('Ship movie preceded hangar clearance');
+  onEvent('gd-cut-01-start',state);
   if(state.cutscene.id==='GD_CUT_01'){
     await page.waitForFunction(()=>{
       const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video'),e=window.__goodDogsCutsceneExit;
@@ -68,11 +80,6 @@ export async function resolveOpeningSignal(page,{onEvent=()=>{},requireDecoded=t
     if(requireDecoded&&!decoded)throw new Error('GD_CUT_01 produced no decoded playback evidence: '+JSON.stringify(state.cutscene));
     if(state.cutscene.id==='GD_CUT_01'&&!await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip'))throw new Error('GD_CUT_01 SKIP control unavailable');
   }
-  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===1,null,{timeout:9000});
-  state=await routeState(page);onEvent('m1-mounted',state);
-  if(state.metaMission!==1||!state.pair)throw new Error('Fresh Good Dogs launch did not mount the canonical M1 pair: '+JSON.stringify(state));
-  if(state.openingError)throw new Error('Good Dogs opening error: '+JSON.stringify(state.openingError));
-  if(state.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(state.hard?.version||0)<GOOD_DOGS_CONTRACT_VERSION)throw new Error('Good Dogs v14 title authority is not active: '+JSON.stringify(state.hard));
   return state;
 }
 
@@ -97,7 +104,7 @@ export async function driveMissionOne(page,{onEvent=()=>{}}={}){
   return state;
 }
 
-export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45000}={}){
+export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45000,requireDecoded=true}={}){
   await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===2,null,{timeout:9000});
   await tapDirection(page,1,260);
   const deadline=Date.now()+timeoutMs;
@@ -132,13 +139,14 @@ export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45
   await page.waitForSelector('#good-boys-board-ship',{state:'visible',timeout:5000});
   state=await routeState(page);onEvent('m2-board-ready',state);
   if(!await domClick(page,'#good-boys-board-ship'))throw new Error('BOARD THE SHIP action unavailable');
+  await resolveOpeningSignal(page,{onEvent,requireDecoded});
   await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:12000});
   state=await routeState(page);onEvent('m2-cockpit-mounted',state);
   return state;
 }
 
 export async function driveFreshRouteToCockpit(page,options={}){
-  await resolveOpeningSignal(page,options);
+  await mountFreshProperty(page,options);
   await driveMissionOne(page,options);
   return clearMissionTwoWithInput(page,options);
 }

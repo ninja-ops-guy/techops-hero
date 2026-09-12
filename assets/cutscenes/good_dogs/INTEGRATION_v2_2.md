@@ -12,6 +12,7 @@ Load the JS after the main game/campaign state scripts.
 
 ## Trigger calls
 ```js
+await GoodDogsCutscenes.play("GD_CUT_01"); // after M1 discovery + M2 BOARD, before pilot interaction
 await GoodDogsCutscenes.play("GD_CUT_02"); // after center-pilot interaction, before Good Ship Prison Run
 await GoodDogsCutscenes.play("GD_CUT_04"); // after traversal setup; lands on Cell 118 terminal
 await GoodDogsCutscenes.play("GD_CUT_05"); // K reveal
@@ -28,6 +29,9 @@ GD_CUT_04 already finishes on the MIKE OLIVEFIELD terminal; cut/glitch directly 
 Each video is reduced to roughly one quarter resolution in each dimension and returned to its
 native dimensions with nearest-neighbor scaling. This makes real motion read like chunky
 game pixels without changing scene content or audio.
+
+## Opening chronology
+The supplied GD_CUT_01 already depicts the dogs aboard the ship. It is not a title-screen prologue. Playable Waldo property/garage discovery and Hidden Bay hangar clearance must precede BOARD → GD_CUT_01 → pilot interaction → GD_CUT_02 → flight → authored crash → M3. The M2 boarding authority owns this order and a durable `ship_establishing_seen` boundary; a legacy early `GD_CUT_01.seen` bit is insufficient.
 
 ## Runtime safety
 - skip button and Escape/Enter support

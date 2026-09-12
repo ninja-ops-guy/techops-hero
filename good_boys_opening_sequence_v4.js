@@ -1,7 +1,7 @@
 /* TechOps Hero — Good Dogs opening sequence v4.
  * Canon physical flow:
- * GD_CUT_01 -> one contextual deck INTERACT -> playable space flight ->
- * GD_CUT_03 orbital/prison approach -> in-engine shuttle crash -> M2 prison.
+ * M1 property -> M2 hangar -> BOARD -> GD_CUT_01 -> deck INTERACT ->
+ * GD_CUT_02 -> playable flight -> authored crash -> M3. GD_CUT_03 is retired.
  * The old three-terminal ship checklist is intentionally retired.
  */
 (function(root){
