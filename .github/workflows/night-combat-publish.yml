@@ -60,11 +60,16 @@ jobs:
               data = (root / name).read_bytes()
               assert hashlib.sha256(data).hexdigest() == hashes['new'], 'Installed source mismatch: ' + name
               print('VERIFIED', hashes['new'], name)
-          temporary = [str(p.relative_to(root)) for p in parts] + ['.github/workflows/night-combat-publish.yml']
+          # The Actions token has contents permission, not workflows permission.
+          # Publish only game sources. The authorized connector performs the two
+          # workflow edits in a subsequent atomic commit; do not escalate token scope.
+          workflow = '.github/workflows/night-combat-validation.yml'
+          subprocess.run(['git','restore','--source=HEAD','--staged','--worktree','--',workflow], check=True)
+          temporary = [str(p.relative_to(root)) for p in parts]
           subprocess.run(['git','rm','--',*temporary], check=True)
           staged = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
-          assert staged == expected | set(temporary), 'Unexpected staged change'
-          receipt = {'base':payload['base'],'publisher_head':os.environ['PUBLISH_HEAD'],'files':payload['files'],'temporary_paths_removed':temporary}
+          assert staged == (expected - {workflow}) | set(temporary), 'Unexpected staged change'
+          receipt = {'base':payload['base'],'publisher_head':os.environ['PUBLISH_HEAD'],'files':payload['files'],'temporary_paths_removed':temporary,'workflow_pending_connector':workflow}
           pathlib.Path(os.environ['RUNNER_TEMP'],'combat-source-receipt.json').write_text(json.dumps(receipt, indent=2))
           PY
       - name: Enforce all current production and directional combat tests
@@ -72,7 +77,7 @@ jobs:
           set -euo pipefail
           node scripts/production_release_gate.js | tee "$RUNNER_TEMP/combat-production-gate.log"
           git diff --cached --check
-      - name: Commit only the verified source tree without force pushing
+      - name: Commit only the verified game source tree without force pushing
         run: |
           set -euo pipefail
           current=$(git ls-remote origin "refs/heads/$PUBLISH_BRANCH" | cut -f1)
