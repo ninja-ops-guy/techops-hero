@@ -7,7 +7,7 @@ const nightAssets = fs.readFileSync('night_production_assets.js','utf8');
 const goodDogsUi = fs.readFileSync('good_boys_reference_ui_v1.js','utf8');
 
 assert.ok(bootstrap.includes('visual_cohesion_live_crawl.js'), 'production bootstrap must load live-crawl cohesion authority');
-assert.ok(bootstrap.includes('VERSION=32'), 'bootstrap version must advance with the new production owner');
+assert.ok(bootstrap.includes('VERSION=34'), 'bootstrap version must advance with the new production owner');
 
 assert.ok(cohesion.includes('live-crawl-night #hud'), 'Night mode must explicitly suppress legacy Day HUD');
 assert.ok(cohesion.includes('f.pos=null;f.spots=null'), 'Night interaction must mask Felicia day-world targets while delegating');
