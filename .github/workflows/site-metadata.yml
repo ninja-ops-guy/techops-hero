@@ -1,0 +1,41 @@
+name: Site metadata contracts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "favicon.*"
+      - "scripts/media_http_server.py"
+      - "scripts/test_media_http_server.py"
+      - "scripts/test_site_metadata.py"
+      - ".github/workflows/site-metadata.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "favicon.*"
+      - "scripts/media_http_server.py"
+      - "scripts/test_media_http_server.py"
+      - "scripts/test_site_metadata.py"
+      - ".github/workflows/site-metadata.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  site-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify entrypoint icons and real HTTP delivery
+        run: |
+          python3 scripts/test_site_metadata.py
+          python3 scripts/test_media_http_server.py

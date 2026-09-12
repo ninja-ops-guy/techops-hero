@@ -18,7 +18,9 @@ for(const src of ["good_boys_bible_world.js"]){assert.strictEqual(refFor(src),sr
 for(const src of ["good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
 for(const src of ["campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
 for(const src of ["campaign_story.js","campaign_act1.js","campaign_native_act1.js"])assert.strictEqual(refFor(src),src+"?v=20260912-integrated-r1");
-const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-night-reviewed-r1","production bootstrap entrypoint must bypass stale mobile caches");
+const bootstrapBuild=fs.readFileSync("production_bootstrap.js","utf8").match(/BUILD="([A-Za-z0-9._-]+)"/);
+assert.ok(bootstrapBuild,"production bootstrap must declare its cache build");
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v="+bootstrapBuild[1],"production bootstrap entrypoint must bypass stale mobile caches");
 [
   "good_boys_prison_cinematic_patch.js",
 ].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260911-cinematic-cohesion-r1",src+" must bypass stale caches for the cinematic-cohesion handoff"));
@@ -109,5 +111,5 @@ assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK B
 console.log("Static entrypoint integrity: PASS");
 
 // Every changed parser-time lifecycle dependency bypasses the old mobile cache.
-for(const src of ["game.js", "v57_hooks.js", "v64_hooks.js", "v69_hooks.js", "v70_hooks.js", "v710_hooks.js", "v716_hooks.js", "v733_hooks.js", "v735_hooks.js", "bg_noc.js", "campaign_sector04_runtime.js", "campaign_native_act2.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
+for(const src of ["game.js", "v57_hooks.js", "v64_hooks.js", "v69_hooks.js", "v70_hooks.js", "v710_hooks.js", "v716_hooks.js", "v733_hooks.js", "v735_hooks.js", "campaign_sector04_runtime.js", "campaign_native_act2.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
 for(const src of ["night_hooks.js","v55_hooks.js","v730_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-directional-integrated-r2");
