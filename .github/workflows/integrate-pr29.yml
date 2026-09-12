@@ -22,19 +22,66 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin fix/night-directional-combat-integration
+          git fetch origin main fix/night-directional-combat-integration
           git merge --no-ff -X ours origin/fix/night-directional-combat-integration -m "Integrate PR #29 directional combat onto current main"
-      - name: Preserve current-main lifecycle and quality authority
+      - name: Reconcile directional combat with current production contracts
         run: |
           set -euo pipefail
+          # For the combat implementation itself, PR29 is the authoritative reviewed move model.
+          # The automatic conflict merge mixed two function signatures, so restore this file whole
+          # before adapting it to the newer semantic-audio contract already on main.
+          git checkout origin/fix/night-directional-combat-integration -- night_combat.js night_combat_input.js v55_hooks.js v730_hooks.js
+          # Keep the current main entrypoint as authority, then cache-bump only files whose bytes changed.
+          git checkout origin/main -- index.html test_static_entrypoint_integrity.js
           python3 - <<'PY'
           from pathlib import Path
-          # The merged main already contains the corrected Night lifecycle browser harness and expanded release gate.
-          # Ensure PR29's focused suites are included without removing current-main suites.
-          p=Path('scripts/production_release_gate.js')
-          s=p.read_text()
+          import re
+
+          CACHE='20260912-directional-integrated-r2'
+
+          # Semantic audio: retain PR29's richer event names for gameplay/visuals while mapping
+          # them onto the existing bounded audio vocabulary. Guarded contacts remain single-sound.
+          p=Path('night_combat.js'); s=p.read_text()
+          s=s.replace("function sound(id){try{if(typeof root.sfx==='function')root.sfx(id);}",
+                      "function sound(id){try{if(!root.TechOpsCombatAudio&&typeof root.sfx==='function')root.sfx(id);}",1)
+          old="function event(n,type,e,extra){const c=state(n),r=Object.assign({id:++c.serial,type,time:c.time,x:e?e.x+e.w/2:n.x+n.w/2,y:e?e.y+e.h/2:n.y},extra||{});c.events.push(r);if(c.events.length>32)c.events.shift();c.fx.push(r);if(c.fx.length>24)c.fx.shift();root.__nightCombatEvent=r;return r;}"
+          new="function event(n,type,e,extra){const c=state(n),r=Object.assign({id:++c.serial,type,time:c.time,x:e?e.x+e.w/2:n.x+n.w/2,y:e?e.y+e.h/2:n.y},extra||{});c.events.push(r);if(c.events.length>32)c.events.shift();c.fx.push(r);if(c.fx.length>24)c.fx.shift();root.__nightCombatEvent=r;try{if(root.TechOpsCombatAudio){const map={uppercut:'launcher',low:'jab',kick:'launcher','rising-kick':'launcher',sweep:'cross','air-kick':'air','air-slam':'slam','grab-miss':'whiff'};root.TechOpsCombatAudio.emit(n,map[type]?Object.assign({},r,{type:map[type]}):r);}}catch(_){}return r;}"
+          if old not in s: raise SystemExit('PR29 event contract not found')
+          s=s.replace(old,new,1)
+          s=s.replace("function damage(n,e,value,kind){", "function damage(n,e,value,kind,flags){",1)
+          s=s.replace("event(n,kind,e,{damage:Math.round(value)});", "event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));",1)
+          s=s.replace("a.connected=damage(n,e,value,a.kind)&&!shield;", "a.connected=damage(n,e,value,a.kind,{guarded:!!shield})&&!shield;",1)
+          p.write_text(s)
+
+          # Current-main bootstrap owns the full quality stack; add the new input adapter exactly once.
+          p=Path('production_bootstrap.js'); s=p.read_text()
+          if '"night_combat_input.js"' not in s:
+              anchor='"night_combat.js",'
+              if anchor not in s: raise SystemExit('night combat bootstrap anchor missing')
+              s=s.replace(anchor,anchor+'\n    "night_combat_input.js",',1)
+          if s.count('"night_combat_input.js"') != 1: raise SystemExit('night combat input duplicated')
+          p.write_text(s)
+
+          # Preserve all current-main parser/cache contracts and bump only modified legacy hooks.
+          p=Path('index.html'); s=p.read_text()
+          for src in ('night_hooks.js','v55_hooks.js','v730_hooks.js'):
+              pattern=r'src="'+re.escape(src)+r'(?:\?v=[^"]*)?"'
+              s,n=re.subn(pattern,'src="'+src+'?v='+CACHE+'"',s,count=1)
+              if n != 1: raise SystemExit(f'entrypoint missing: {src}')
+          p.write_text(s)
+
+          # Align static cache assertions with the reconciled entrypoint without changing unrelated keys.
+          p=Path('test_static_entrypoint_integrity.js'); s=p.read_text()
+          for src in ('night_hooks.js','v55_hooks.js','v730_hooks.js'):
+              s=re.sub(r'(refFor\("'+re.escape(src)+r'"\)[^\n]*?'+re.escape(src)+r'\?v=)[^"\']+',r'\g<1>'+CACHE,s)
+          # If the test groups files in an array under one cache key, update only the directional group/key.
+          s=s.replace('20260912-directional-integrated-r1',CACHE)
+          p.write_text(s)
+
+          # Ensure PR29's focused suites are in the aggregate release gate without removing #30 suites.
+          p=Path('scripts/production_release_gate.js'); s=p.read_text()
           anchor='  "test_night_combat.js",\n'
-          for f in ['test_night_directional_combat.js','test_night_directional_physics.js','test_night_directional_integration.js']:
+          for f in ('test_night_directional_combat.js','test_night_directional_physics.js','test_night_directional_integration.js'):
               if f not in s:
                   s=s.replace(anchor,anchor+f'  "{f}",\n',1)
           p.write_text(s)
@@ -43,6 +90,8 @@ jobs:
         run: |
           set -euo pipefail
           npm ci --no-audit --no-fund
+          node --check night_combat.js
+          node --check night_combat_input.js
           node scripts/production_release_gate.js
           node test_night_directional_combat.js
           node test_night_directional_physics.js
