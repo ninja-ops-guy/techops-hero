@@ -182,6 +182,9 @@ draw = function () {
 const __origStepNMV55 = (typeof stepNM === "function") ? stepNM : null;
 if (__origStepNMV55) {
   stepNM = function (dt) {
+    // Ordinary Night owns aim/jump separately; campaigns retain the old bridge.
+    if (window.TechOpsNightInput && window.TechOpsNightInput.owns())
+      return window.TechOpsNightInput.runStep(__origStepNMV55, dt, keys, typeof joy !== "undefined" ? joy : {});
     const hadA = keys.a, hadD = keys.d, hadW = keys.w;
     if (typeof joy !== "undefined") {
       if (joy.x < -.3) keys.a = true;
@@ -202,6 +205,7 @@ draw = function () {
   const night = !!s.nightMode;
   if (box) box.classList.toggle("on", night);
   if (tb && tb.dataset.v55 !== String(night)) { tb.dataset.v55 = String(night); tb.textContent = night ? "👊" : "A"; }
+  if (window.TechOpsNightInput) window.TechOpsNightInput.sync();
 };
 
 console.log("%c[TechOps Hero] v5.5 Rhythm of the Week loaded — week cycles, weather, mobile night controls.", "color:#60a5fa");

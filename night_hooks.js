@@ -301,7 +301,7 @@ function enterNight() {
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
   if (qt) { NM._qtHidden = qt.classList.contains("hidden"); qt.classList.add("hidden"); }
-  toast("Walk in + attack: grab. ←/→ throw · ↑ launch. Tap on gold for combos.", 3400);
+  toast("G / GRAB · E punch · J kick · ↑ high / ↓ low · SPACE / JUMP follows launch.", 3400);
   updateHUD();
 }
 
@@ -362,7 +362,10 @@ function exitNight(homeSafe) {
 
 // ---------- combat ----------
 function nmJab() {
-  if (window.TechOpsNightCombat && window.TechOpsNightCombat.active(NM)) return window.TechOpsNightCombat.attack(NM, keys);
+  if (window.TechOpsNightCombat && window.TechOpsNightCombat.active(NM)) {
+    if (window.TechOpsNightInput) return window.TechOpsNightCombat.attack(NM, keys, "punch");
+    return window.TechOpsNightCombat.attack(NM, keys);
+  }
   if (!NM || NM.block || NM.drive) return;
   const now = performance.now(), gap = now - NM.lastJab;
   NM.lastJab = now; NM.jabAnim = 9;

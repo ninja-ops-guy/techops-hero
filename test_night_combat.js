@@ -65,3 +65,9 @@ assert.ok(hooks.indexOf('streetCombat.stepEnemy(NM,e,dt)')<hooks.indexOf('// lau
 assert.ok(hooks.includes('streetCombat.hurt(NM)'));assert.ok(hooks.includes('TechOpsNightCombat.attack(NM, keys)'));
 assert.ok(boot.includes('"night_combat.js"'));assert.ok(!/setInterval|requestAnimationFrame|addEventListener/.test(source),'combat service must not add a competing loop or input handler');
 console.log('Night contextual combat: contact timing, rhythm, grabs, throws, stun, finite juggles, collision rewards and campaign isolation PASS');
+
+require('./test_night_directional_combat.js');
+
+require('./test_night_directional_physics.js');
+
+require('./test_night_input_lifecycle.js');

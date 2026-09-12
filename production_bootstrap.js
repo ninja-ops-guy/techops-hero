@@ -6,13 +6,14 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=32,BUILD="20260912-production-v32-night-reviewed-r1",started=false,done=false;
+  var VERSION=32,BUILD="20260912-production-v33-directional-integrated-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
     "good_boys_campaign_assets.js",
     "state_validator.js",
     "night_combat.js",
+    "night_combat_input.js",
     "good_boys_legacy_hud_filter.js",
     "good_dogs_actor_contract.js",
     "production_wrapper_guard.js",
