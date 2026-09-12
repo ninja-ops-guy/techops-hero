@@ -190,14 +190,42 @@
   }
 
   function browserNight() { return root && root.S && root.S.nightMode ? root.S.nightMode : null; }
-  function enterBrowser() { var campaign = loadCampaign(); if (root.closeDlg) root.closeDlg(); if (root.enterNight) root.enterNight(); var night = browserNight(); if (!night) throw new Error("Night mode did not start"); createEncounter(campaign, night); if (root.toast) root.toast("SECTOR 04 — investigate the controller · E to inspect · damage suppresses; understanding defeats.", 4200); saveCampaign(campaign); return night._sector04; }
+  var pendingEntry = null;
+  function attachBrowserEncounter(night) {
+    if (!night || night._v736) return false;
+    if (night._sector04 && night._sector04.active) return night._sector04;
+    var campaign = loadCampaign();
+    createEncounter(campaign, night); saveCampaign(campaign);
+    if (root.toast) root.toast("SECTOR 04 — E to inspect. Damage suppresses; understanding defeats.", 4200);
+    return night._sector04;
+  }
+  function enterBrowser() {
+    var campaign = loadCampaign(), night = browserNight();
+    if (!campaign.flags.day_work_unlocked) throw new Error("Complete the Day 1 opening before Sector 04");
+    if (campaign.flags.tuesday_morning_reached) return false;
+    if (night && night._v736) return false;
+    if (root.closeDlg) root.closeDlg();
+    if (night) return attachBrowserEncounter(night); // preserve the current Night session
+    pendingEntry = root.S;
+    if (root.enterNight) root.enterNight();
+    night = browserNight();
+    if (night) { pendingEntry = null; return attachBrowserEncounter(night); }
+    return { pending: true }; // Night Drive is still playing; the entered event completes the handoff.
+  }
+  function onNightEntered(event) {
+    if (!pendingEntry) return;
+    var expected = pendingEntry; pendingEntry = null;
+    if (root.S !== expected || root.__productionDesiredMode === "goodboys") return;
+    attachBrowserEncounter(event && event.detail && event.detail.night || browserNight());
+  }
   function browserInteract() {
     var night = browserNight(); if (!night || !night._sector04 || !night._sector04.active) return false; var campaign = loadCampaign(), result = inspectNearest(campaign, night, night.x + night.w / 2, night.y + night.h / 2); if (!result) return false; saveCampaign(campaign);
-    if (result.message && root.dlg && (result.id === "symptoms_terminal" || result.blocked)) { var options = [{ t: "Continue", f: root.closeDlg }]; if (result.blocked && result.recovery && result.recovery.required) options.unshift({ t: "Return to daytime investigation", f: function () { var freshCampaign = loadCampaign(), freshNight = browserNight(); retreatToDayInvestigation(freshCampaign, freshNight); saveCampaign(freshCampaign); if (root.S) root.S.nightMode = null; if (root.closeDlg) root.closeDlg(); } }); root.dlg("SECTOR 04", result.message, options); }
+    if (result.message && root.dlg && (result.id === "symptoms_terminal" || result.canTransition || result.blocked)) { var options = [{ t: "Continue", f: root.closeDlg }]; if (night._sector04.completed && root.TechOpsNightRuntime) options.unshift({ t: "Continue to Tuesday morning", f: root.TechOpsNightRuntime.resumeDay }); if (result.blocked && result.recovery && result.recovery.required) options.unshift({ t: "Return to daytime investigation", f: function () { var freshCampaign = loadCampaign(), freshNight = browserNight(); retreatToDayInvestigation(freshCampaign, freshNight); saveCampaign(freshCampaign); if (root.TechOpsNightRuntime) root.TechOpsNightRuntime.resumeDay(); else { if (root.S) root.S.nightMode = null; if (root.closeDlg) root.closeDlg(); } } }); root.dlg("SECTOR 04", result.message, options); }
     return true;
   }
   function install() {
     if (!root || root.__techopsSector04RuntimeInstalled) return false; root.__techopsSector04RuntimeInstalled = true;
+    if (root.addEventListener) root.addEventListener("techops:night-entered", onNightEntered);
     if (typeof root.nmJab === "function") { var originalJab = root.nmJab; root.nmJab = function () { var result = originalJab.apply(this, arguments), night = browserNight(); if (night && night._sector04) { var campaign = loadCampaign(); syncCombat(campaign, night, nowMs()); saveCampaign(campaign); } return result; }; }
     if (typeof root.stepNM === "function") { var originalStep = root.stepNM; root.stepNM = function () { var result = originalStep.apply(this, arguments), night = browserNight(); if (night && night._sector04) { var campaign = loadCampaign(); tick(campaign, night, nowMs()); saveCampaign(campaign); } return result; }; }
     if (typeof root.drawNM === "function") { var originalDraw = root.drawNM; root.drawNM = function () { var result = originalDraw.apply(this, arguments), night = browserNight(); if (night && night._sector04 && root.ctx) drawOverlay(root.ctx, night, root.cv && root.cv.width); return result; }; }

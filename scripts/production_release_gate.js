@@ -48,6 +48,7 @@ const tests = [
   "test_campaign_runtime.js",
   "test_campaign_native_act1.js",
   "test_campaign_casebook.js",
+  "test_campaign_task_focus.js",
   "test_campaign_act1_investigations.js",
   "test_campaign_investigation_integrity.js",
   "test_campaign_workday_followups.js",
@@ -65,8 +66,10 @@ const tests = [
   "test_runtime_combat_audio.js",
   "test_runtime_night.js",
   "test_quality_integration.js",
+  "test_good_boys_reference_ui_v2.js",
   "test_production_gameplay_experience.js",
   "test_orbital_scene_staging.js",
+  "test_night_lifecycle.js",
   "test_ui_coop_contract.js"
 ];
 

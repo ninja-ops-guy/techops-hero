@@ -33,7 +33,7 @@ setupDay = function () {
   s.meta.fridayEmergency = false;
   // weather start-of-day effects
   if (w.id === "storm") { addStress(5); s.meta.treeBoost = true; }
-  setTimeout(() => toast(`${w.icon} <b>${weekday()}</b> — ${w.name}. ${w.note}.`, 3600), 5200);
+  setTimeout(dayNotice(() => toast(`${w.icon} <b>${weekday()}</b> — ${w.name}. ${w.note}.`, 3600)), 5200);
   // Monday flood: two extra walk-ins
   if (weekday() === "Monday") {
     for (let i = 0; i < 2; i++) {
@@ -44,9 +44,9 @@ setupDay = function () {
         done: false, interviewed: false, diagnosed: false, correctDiag: false, critical: false, pv: R(0, PAL_NPCS.length - 1) };
       s.npcs.push(npc); s.tickets.push(npc); s.ticketsTotal++;
     }
-    setTimeout(() => toast("📅 <b>Monday flood</b> — two extra walk-ins. Weekend updates strike again.", 4200), 6400);
+    setTimeout(dayNotice(() => toast("📅 <b>Monday flood</b> — two extra walk-ins. Weekend updates strike again.", 4200)), 6400);
   }
-  if (weekday() === "Friday") setTimeout(() => toast("📅 Friday. Nobody deploys today. <b>Nobody.</b> (Watch the clock at 16:45…)", 4200), 6400);
+  if (weekday() === "Friday") setTimeout(dayNotice(() => toast("📅 Friday. Nobody deploys today. <b>Nobody.</b> (Watch the clock at 16:45…)", 4200)), 6400);
 };
 
 // HUD day label: DAY 3 · WED 🌧️
@@ -83,7 +83,7 @@ resolveTicket = function (n) {
   const s = S; if (!s || !n || !n.type || !n.done) return;
   if (s.weather === "rain" && n.type.stat === "networking") {
     s.budget += 10;
-    setTimeout(() => toast("🌧️ Moisture-splice surcharge. (+$10)"), 4300);
+    setTimeout(dayNotice(() => toast("🌧️ Moisture-splice surcharge. (+$10)")), 4300);
   }
 };
 // heatwave: terminal drills pay +$2 (wrap the quiz payout by bumping budget at setup)

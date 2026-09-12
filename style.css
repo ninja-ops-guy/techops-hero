@@ -264,3 +264,20 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
 @keyframes techops-scene-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 #dialogue:not(.hidden),#battle:not(.hidden),#v722-cine,#good-boys-campaign-intro{animation:techops-scene-in 180ms ease-out both}
 @media(prefers-reduced-motion:reduce){#dialogue:not(.hidden),#battle:not(.hidden),#v722-cine,#good-boys-campaign-intro{animation:none}}
+
+/* Long investigations and case histories remain readable on short viewports.
+ * Native dialog/input ownership is unchanged; overflow scrolls inside the panel.
+ * vh is the fallback for browsers without dynamic viewport units. */
+#dialogue {
+  max-height: calc(100vh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 12px;
+  bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+}
+#dlg-options button:focus-visible { outline: 2px solid #bfe3ff; outline-offset: 2px; }

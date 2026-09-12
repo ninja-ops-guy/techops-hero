@@ -10,6 +10,7 @@
   "use strict";
 
   var DEFAULT_ASSET_BASE = "assets/campaign/";
+  var taskCache = null, taskCacheAt = -Infinity, taskCacheWorld = null;
   var WORKSTATION_TABS = ["QUEUE", "TEAMS", "ALERTS", "COMPANY", "MUSIC"];
 
   var NATIVE_ASSET_BINDINGS = {
@@ -58,8 +59,8 @@
   function assetsApi() { return root && root.TechOpsCampaignAssets ? root.TechOpsCampaignAssets : null; }
   function storage() { return root && root.localStorage ? root.localStorage : null; }
   function loadState() { return act1().load(storage()); }
-  function saveState(state) { act1().save(state, storage()); return state; }
-  function gameState() { return root && root.S ? root.S : null; }
+  function saveState(state) { act1().save(state, storage()); taskCache = null; taskCacheAt = -Infinity; return state; }
+  function gameState() { try { return typeof S !== 'undefined' ? S : root && root.S || null; } catch (_) { return root && root.S || null; } }
   function hasGameFunction(name) { return root && typeof root[name] === "function"; }
   function callDialog(name, body, options) { if (hasGameFunction("dlg")) { root.dlg(name, body, options || []); return true; } return false; }
   function closeDialog() { if (hasGameFunction("closeDlg")) root.closeDlg(); }
@@ -280,11 +281,11 @@
     if (item.conflict) body += "<br><b>Conflicting outcome records — follow-up required.</b>";
     if (item.sources.length) body += "<br>Recorded perspective: " + esc(item.sources[0].perspective) + " (" + esc(item.sources[0].discoveredBy) + ")";
     body += "<br><br><b>NEXT:</b> " + esc(item.next);
-    return callDialog("CASEBOOK // " + item.title, body, (shiftRecord(state,ticketId) ? [{t:"Next-shift follow-up",f:function(){openWorkdayFollowup(ticketId);}}] : []).concat([
+    return callDialog("CASEBOOK // " + item.title, body, trackingOptions(state,ticketId).concat((shiftRecord(state,ticketId) ? [{t:"Next-shift follow-up",f:function(){openWorkdayFollowup(ticketId);}}] : []).concat([
       { t: "Recorded events", f: function () { openTicketEvents(ticketId, filter); } },
       { t: "Back to history", f: function () { openTicketHistory(filter); } },
       { t: "Close record", f: closeDialog }
-    ]));
+    ])));
   }
   function openTicketEvents(ticketId, filter) {
     var state = readCasebook(); if (!state) return false;
@@ -369,6 +370,7 @@
       options.push({t:"Requester performs and confirms the task",f:function(){commitWorkdayAction(ticketId,"verify_requester");}});
     }
     if (record.phase !== "gather" && record.phase !== "carryover" && record.phase !== "complete" && !review) options.push({t:"Review observations",f:function(){openWorkdayFollowup(ticketId,true);}});
+    options = trackingOptions(state,ticketId).concat(options);
     options.push({t:"Original Day 1 record",f:function(){openTicketRecord(ticketId);}});
     options.push({t:"Back to shift handoff",f:openWorkdayHandoff});
     options.push({t:"Return to work",f:closeDialog});
@@ -381,6 +383,81 @@
       item.status="VERIFIED / RESTORED"; item.humanOutcome="restored"; item.verification="strong"; item.technical="CONFIRMED"; item.needsAttention=false; item.conflict=false;
     }
     return item;
+  }
+
+  // An explicit case pin reuses the existing Day waypoint renderer. It stores
+  // only a presentation preference, never an investigation step or completion.
+  function focusPhase(state, ticketId) {
+    if (!state || !state.flags || !state.flags.day_work_unlocked ||
+        !state.assignments || !state.assignments[ticketId] ||
+        !Object.prototype.hasOwnProperty.call(TICKET_COPY, ticketId)) return null;
+    var day = state.campaign && state.campaign.day;
+    if (day !== 1 && day !== 2) return null;
+    if (ticketId === "impossible_access_event") return day === 1 && !badgeSources(state).length ? "investigate" : null;
+    if (day === 2) {
+      var follow = shiftRecord(state, ticketId);
+      if (!follow || follow.phase === "complete") return null;
+      if (follow.kind !== "carryover") return follow.phase;
+    }
+    if ((state.tickets || {})[ticketId]) return null;
+    var record = (state.investigations || {})[ticketId];
+    return record && record.phase || "gather";
+  }
+  function trackedTicket(state) {
+    var id = state && state.presentation && state.presentation.trackedTicketId;
+    return typeof id === "string" && Object.prototype.hasOwnProperty.call(TICKET_COPY, id) ? id : null;
+  }
+  function taskFocus(state, game) {
+    if (!state || !game || game.nightMode || game.inDialog || game.inBattle || game.paused || game.gameOver ||
+        game.room || game.clock >= 960 || !state.campaign || state.campaign.day !== game.day) return null;
+    var id = trackedTicket(state), phase = id && focusPhase(state, id);
+    if (!phase) return null;
+    var contact = id === "shipping_cannot_print" ? CONTACTS.shipping : id === "plating_workstation_down" ? CONTACTS.plating : CONTACTS.access;
+    var npc = (Array.isArray(game.npcs) ? game.npcs : []).find(function (n) { return n && n.id === contact.id; });
+    // NPC coordinates, not a second map or guessed fallback, own the destination.
+    if (!npc || !Number.isInteger(npc.x) || !Number.isInteger(npc.y) || npc.x < 0 || npc.y < 0 ||
+        !Array.isArray(game.map) || !Array.isArray(game.map[npc.y]) || npc.x >= game.map[npc.y].length) return null;
+    var labels = {gather:"GATHER EVIDENCE",investigate:"REVIEW ACCESS",remediate:"APPLY SUPPORTED FIX",
+      technical_check:"TEST THE FIX",human_verify:"REQUESTER CHECK",workaround_verify:"TEST WORKAROUND",carryover:"RESUME INVESTIGATION"};
+    var text = Object.prototype.hasOwnProperty.call(labels, phase) ? labels[phase] : "RESUME INVESTIGATION";
+    return {x:npc.x,y:npc.y,ticketId:id,phase:phase,kind:"campaign:"+id+":"+phase,
+      color:"#7effcd",label:text+" · "+(id === "shipping_cannot_print" ? "SHIPPING" : id === "plating_workstation_down" ? "PLATING" : "SECURITY")};
+  }
+  function worldObjective() {
+    var game = gameState();
+    if (!game || game.nightMode || game.inDialog || game.inBattle || game.room || game.paused || game.gameOver ||
+        game.clock >= 960 || root.document && root.document.hidden) return null;
+    var director = root.TechOpsPresentationDirector;
+    if (director && typeof director.isBlocking === "function" && director.isBlocking()) return null;
+    var at = Date.now();
+    try {
+      // The legacy waypoint is consulted twice per draw. Bound canonical reads
+      // to four per second; our writes invalidate immediately, other writers
+      // become visible within 250 ms. No timers or frame wrappers are added.
+      if (taskCacheWorld !== game || taskCacheAt > at || at - taskCacheAt >= 250) {
+        taskCacheWorld = game; taskCacheAt = at; taskCache = null; taskCache = loadState();
+      }
+      return taskCache ? taskFocus(taskCache, game) : null;
+    } catch (_) { taskCache = null; return null; }
+  }
+  function trackTicket(ticketId) {
+    var state = readCasebook(); if (!state) return false;
+    try {
+      if (ticketId !== null && !focusPhase(state, ticketId)) throw new Error("No active task to track");
+      var before = state.presentation;
+      state.presentation = Object.assign({}, before && typeof before === "object" && !Array.isArray(before) ? before : {}, {trackedTicketId:ticketId});
+      if (trackedTicket({presentation:before}) !== ticketId) saveState(state);
+      closeDialog();
+      notify(ticketId ? "CASE TRACKED — return to the Day map for your next step" : "CASE UNTRACKED", 2600);
+      return true;
+    } catch (_) {
+      callDialog("CASE TRACKING UNAVAILABLE", "The case is no longer active, or the preference could not be saved. Investigation progress was not changed.", [{t:"Close",f:closeDialog}]);
+      return false;
+    }
+  }
+  function trackingOptions(state, ticketId) {
+    if (trackedTicket(state) === ticketId) return [{t:"Stop tracking this case",f:function(){trackTicket(null);}}];
+    return focusPhase(state, ticketId) ? [{t:"Track this case on the Day map",f:function(){trackTicket(ticketId);}}] : [];
   }
 
   function workstationOptions() {
@@ -632,7 +709,7 @@
           if (isAdjacent(p, native.plating)) return openFieldTicket("plating_workstation_down");
           if (isAdjacent(p, native.access)) return recordAccessEvidence();
         }
-        if (dayWorkLocked() && blockedBaseWorkAtPlayer()) return pauseBaseWorkDialog();
+        if (state && !state.nightMode && dayWorkLocked() && blockedBaseWorkAtPlayer()) return pauseBaseWorkDialog();
         return originalInteract.apply(this, arguments);
       };
     }
@@ -658,6 +735,9 @@
     openStandup: openStandup,
     openWorkstation: openWorkstation,
     openWorkstationTab: openWorkstationTab,
+    taskFocus: taskFocus,
+    worldObjective: worldObjective,
+    trackTicket: trackTicket,
     ticketRecord: ticketRecord,
     currentServiceRecord: currentServiceRecord,
     openWorkdayHandoff: openWorkdayHandoff,

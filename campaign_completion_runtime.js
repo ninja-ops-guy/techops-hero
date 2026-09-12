@@ -23,6 +23,7 @@
   }
   function tick(){
     ticks++;installOwners();
+    if(root.S && root.S.nightMode && !root.S.nightMode._v736) { if(ticks%8===0)validate(); return; }
     try{if(root.TechOpsCampaignBibleGapPass&&root.TechOpsCampaignBibleGapPass.tick)root.TechOpsCampaignBibleGapPass.tick();}catch(e){lastError=String(e&&e.stack||e);}
     try{if(root.TechOpsSwarmDoctrine&&root.TechOpsSwarmDoctrine.checkQuestioningMoment)root.TechOpsSwarmDoctrine.checkQuestioningMoment();}catch(e){lastError=String(e&&e.stack||e);}
     try{if(root.TechOpsLateGameCampaign&&root.TechOpsLateGameCampaign.check)root.TechOpsLateGameCampaign.check();}catch(e){lastError=String(e&&e.stack||e);}

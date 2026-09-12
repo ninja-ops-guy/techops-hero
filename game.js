@@ -1198,12 +1198,27 @@ function step(dt) {
 function npcAt(x, y) { return S.npcs.find(n => n.x === x && n.y === y); }
 function adjacent(a, b) { return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= 1; }
 
+// Bind delayed day announcements to the state/day/mode that scheduled them.
+// Night dialogue is not filtered by its text, and callbacks cannot spill into
+// a new run or fire on returning from a different mode.
+function dayNotice(callback) {
+  const state = S, day = state && state.day, epoch = state && state._modeEpoch || 0;
+  return function () {
+    if (!state || S !== state || S.day !== day || (S._modeEpoch || 0) !== epoch || S.nightMode || window.__productionDesiredMode) return;
+    return callback.apply(this, arguments);
+  };
+}
+
 // ---------- game loop ----------
 let last = 0;
 function loop(t) {
   const dt = Math.min(.1, (t - last) / 1000); last = t;
-  step(dt);
-  draw();
+  // Dispatch Night before the historical day wrappers can produce weather,
+  // office events or time-of-day modals. Good Dogs retains its existing loop.
+  const skin = window.TechOpsGoodBoysReferenceUI;
+  if (skin && typeof skin.sync === "function") skin.sync(t);
+  const nightRuntime = window.TechOpsNightRuntime;
+  if (!nightRuntime || !nightRuntime.frame(dt)) { step(dt); draw(); }
   requestAnimationFrame(loop);
 }
 
@@ -1237,6 +1252,7 @@ function interact() {
 }
 
 function dlg(name, text, options) {
+  $("dialogue").scrollTop = 0; // Each new dialog begins at its heading.
   S.inDialog = true;
   $("dialogue").classList.remove("hidden");
   $("dlg-name").textContent = name;

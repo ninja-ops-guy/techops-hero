@@ -65,6 +65,13 @@
     const s = S;
     if (!s || !s.npcs || s.nightMode || s.inBattle || s.room) return null;
     if (s.clock >= 960) return null; // 16:00 — v68's WAY HOME owns the guide
+    // Explicit campaign focus takes precedence while active. The same path
+    // renderer remains in charge; missing/completed pins yield to normal work.
+    try {
+      const campaign = window.TechOpsCampaignNativeAct1;
+      const focused = campaign && typeof campaign.worldObjective === "function" && campaign.worldObjective();
+      if (focused) return focused;
+    } catch (_) { /* A presentation failure must not disable ordinary wayfinding. */ }
     let best = null, bestW = 0, bestD = 1e9;
     for (const n of s.npcs) {
       if (!n || n.ambient || n.done || !n.type) continue;

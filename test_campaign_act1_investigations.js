@@ -56,6 +56,6 @@ test("reload between every investigation phase resumes from canonical state",()=
 
 test("investigation copy contains no ORPHEUS/reveal leakage",()=>{const src=investigationSource.toLowerCase();assert.ok(!src.includes("orpheus"));assert.ok(!src.includes("violinist"));assert.ok(!src.includes("ghost fork"));});
 
-test("bootstrap loader references the stable investigation module",()=>{const loader=fs.readFileSync(path.join(__dirname,"campaign_native_act1_visuals.js"),"utf8");assert.match(loader,/campaign_act1_investigations\.js\?v=20260912-gameplay-feedback-r1/);assert.doesNotMatch(loader,/v738_hooks|v739_hooks/);});
+test("bootstrap loader references the stable investigation module",()=>{const loader=fs.readFileSync(path.join(__dirname,"campaign_native_act1_visuals.js"),"utf8");assert.match(loader,/campaign_act1_investigations\.js\?v=20260912-gameplay-continuation-r4/);assert.doesNotMatch(loader,/v738_hooks|v739_hooks/);});
 
 console.log(`Campaign Day 1 investigations: ${passed} tests passed`);

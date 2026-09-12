@@ -162,6 +162,7 @@
   const __origInteract710 = interact;
   interact = function () {
     const s = S;
+    if (s && s.nightMode) return __origInteract710.apply(this, arguments);
     if (s && s.room) {
       if (s.inDialog) return;
       if (nearClueOrFel710(s)) { window.v69ExitRoom(); return __origInteract710.apply(this, arguments); }

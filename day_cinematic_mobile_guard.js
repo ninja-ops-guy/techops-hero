@@ -45,7 +45,7 @@
   }
   function button(label,fn,cls){var b=root.document.createElement("button");b.type="button";b.textContent=label;if(cls)b.className=cls;b.addEventListener("pointerdown",function(e){e.preventDefault();e.stopPropagation();fn();},{passive:false});b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();});return b;}
   function attach(overlay){
-    if(!overlay||isGoodBoys())return false;
+    if(!overlay||isGoodBoys()||(root.TechOpsNightRuntime&&root.TechOpsNightRuntime.health().transitioning))return false;
     installStyle();
     if(overlay.querySelector(".day-cine-touch"))return true;
     var ui=root.document.createElement("div");ui.className="day-cine-touch";ui.setAttribute("aria-label","Cinematic controls");

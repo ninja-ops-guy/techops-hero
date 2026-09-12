@@ -1,0 +1,57 @@
+name: Gameplay quality acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '*.js'
+      - '*.css'
+      - '*.html'
+      - 'scripts/**'
+      - 'test_helpers/**'
+      - 'package*.json'
+      - '.github/workflows/gameplay-continuation-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: gameplay-quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  gameplay-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Exact-head release gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts/gameplay-quality
+          git rev-parse HEAD > runtime-bot-artifacts/gameplay-quality/tested-head.txt
+          node scripts/production_release_gate.js | tee runtime-bot-artifacts/gameplay-quality/production-gate.log
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Renderer and WebAudio fixtures
+        run: node scripts/gameplay_quality_browser.mjs
+        env:
+          BOT_OUT_DIR: runtime-bot-artifacts/gameplay-quality/renderer-audio
+      - name: Actual dialog callbacks and short-screen casebook
+        run: node scripts/campaign_task_focus_browser.mjs
+        env:
+          BOT_OUT_DIR: runtime-bot-artifacts/gameplay-quality/task-focus
+      - name: Mobile skin, controls and single-HUD ownership
+        run: node scripts/gameplay_skin_browser.mjs
+        env:
+          BOT_OUT_DIR: runtime-bot-artifacts/gameplay-quality/skin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-quality-${{ github.event.pull_request.head.sha }}
+          path: runtime-bot-artifacts/gameplay-quality/
+          retention-days: 7

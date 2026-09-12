@@ -1,0 +1,12 @@
+const fs=require('fs'),assert=require('assert');
+const ui=fs.readFileSync('good_boys_reference_ui_v1.js','utf8');
+assert.ok(/VERSION=3/.test(ui),'reference UI v3 required');
+['gb-ref-objective','gb-ref-location','gb-ref-map','gb-ref-interact','gb-ref-status'].forEach(id=>assert.ok(ui.includes(id),id+' missing'));
+['KATRIN','MANCHEZ','USE \/ INTERACT','GOOD DOGS'].forEach(t=>assert.ok(ui.includes(t),t+' missing'));
+['gb-swap','gb-sync','gb-attack','gb-boost','gb-airdash','gb-partner','gb-use'].forEach(id=>assert.ok(ui.includes(id),id+' control missing'));
+assert.ok(/pointer-events:none/.test(ui),'HUD overlay must not steal gameplay input');
+assert.ok(/TechOpsLevelRegistry/.test(ui)&&/TechOpsGameplayExperience/.test(ui),'fallback HUD must use canonical mission and live guidance');
+assert.ok(/s\.nightMode===n/.test(ui)&&/n\._v736/.test(ui),'UI requires the current active Good Dogs world');
+assert.ok(!/drawNM\s*=/.test(ui)&&!/stepNM\s*=/.test(ui),'presentation layer must not become gameplay owner');
+assert.ok(/nativeHud\(\)\|\|blocked\(\)/.test(ui),'production native HUD must retain exclusive ownership');
+console.log('Good Dogs reference UI v3 contract: PASS');

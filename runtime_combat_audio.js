@@ -156,7 +156,7 @@
     if (!record || record.state !== n._nightCombat) {
       record = { state:n._nightCombat, serial:-1, last:Object.create(null) }; seen.set(n, record);
     }
-    if (!Number.isFinite(event.id) || event.id <= record.serial) return false;
+    if (!Number.isSafeInteger(event.id) || event.id <= record.serial) return false;
     record.serial = event.id;
     if(!allowed(n)){silence();return false;}
     if(event.guarded)return false; // The preceding guard contact already sounded.

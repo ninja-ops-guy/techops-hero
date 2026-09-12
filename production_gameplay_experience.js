@@ -74,7 +74,13 @@
     }else {g.phase='home';g.text='HOME TOGETHER';g.detail='The homecoming owns campaign completion';}
     return g;
   }
-  function streetStatus(n){if(blocked(n)||n._v736||n._sector04||n.district==='waldo')return '';var count=living(n);return count?count+' HOSTILES':pending(n)?'REINFORCEMENTS INBOUND':n.clear===true?'STREET SECURED · CONTINUE OR RETURN TO CHARGER':'CHECK THE STREET';}
+  function streetStatus(n){
+    if(blocked(n)||n._v736||n._sector04||n.district==='waldo')return '';
+    var count=living(n);if(count)return count+' HOSTILES';if(pending(n))return 'REINFORCEMENTS INBOUND';
+    if(n.district==='home')return "MIKE'S HOUSE · APPROACH THE LIT ENTRANCE";
+    if(n.done&&n.done[n.district])return 'DISTRICT SECURED · RETURN TO THE CHARGER';
+    return n.clear===true?'STREET SECURED · CONTINUE OR RETURN TO CHARGER':'CHECK THE STREET';
+  }
   function install(){
     // Retire v1's competing DOM ribbon and impact/audio poller on a live reload.
     var d=root.document;if(d&&d.getElementById)['px-objective','px-action','px-impact','production-gameplay-experience-style'].forEach(function(id){var e=d.getElementById(id);if(e&&e.remove)e.remove();});return true;

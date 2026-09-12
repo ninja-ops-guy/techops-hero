@@ -3,13 +3,14 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),asse
 const SHIPPING='shipping_cannot_print',PLATING='plating_workstation_down',ACCESS='impossible_access_event';
 const plain=value=>JSON.parse(JSON.stringify(value));
 function storage(){const data=new Map();return {writes:0,data,getItem(k){return data.get(k)||null;},setItem(k,v){this.writes++;data.set(k,String(v));}};}
-function boot(store=storage()){
+function boot(store=storage(),options={}){
  const r=vm.createContext({console,localStorage:store,setTimeout:null,
   S:{day:1,px:4,py:4,clock:540,meta:{},npcs:[],map:Array.from({length:43},()=>Array(45).fill(0)),inDialog:false,inBattle:false,nightMode:false},
   setupDay(){},interact(){r.baseInteractions=(r.baseInteractions||0)+1;},
   dlg(name,body,options){r.dialog={name,body,options};r.S.inDialog=true;},
   closeDlg(){r.dialog=null;r.S.inDialog=false;},toast(){},adjacent(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)<=1;}
  });
+ if(options.classicState)vm.runInContext('let S=globalThis.S;',r);
  for(const file of ['campaign_act1.js','campaign_native_act1.js','campaign_act1_investigations.js','campaign_native_act1_visuals_impl.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),r,{filename:file});
  return {r,C:r.TechOpsCampaign,N:r.TechOpsCampaignNativeAct1,I:r.TechOpsCampaignInvestigations,V:r.TechOpsCampaignNativeAct1Visuals,store};
 }
