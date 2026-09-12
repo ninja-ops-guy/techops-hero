@@ -1,0 +1,25 @@
+name: Verified gameplay integration
+on:
+  push:
+    branches: [feat/gameplay-feedback-workday-pass]
+    paths: [.quality-delivery/manifest.json]
+permissions:
+  contents: write
+concurrency:
+  group: verified-gameplay-integration
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.event.head_commit.message == 'ci: apply verified gameplay quality integration'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact-base payload, verify checksums, test and push
+        run: python3 .quality-delivery/apply.py
