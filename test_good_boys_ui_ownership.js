@@ -51,3 +51,6 @@ const crashScene=fs.readFileSync("good_boys_crash_scene.js","utf8");assert.ok(cr
 const deckStart=flight.indexOf("showDeckInteraction()"),takeover=flight.indexOf('c.play("GD_CUT_02"',deckStart),shipRun=flight.indexOf("return flightPromise()",takeover),crash=flight.indexOf("o.showCrashScene()",shipRun),commit=flight.indexOf("_gbBoardSequenceComplete=true",crash);assert.ok(deckStart>=0&&takeover>deckStart&&shipRun>takeover&&crash>shipRun&&commit>crash,"M2 exit order must be pilot -> GD_CUT_02 -> flight -> authored crash -> completion gate");
 
 console.log("Good Boys UI ownership, single opening authority, hardened cutscene lifecycle, fail-closed flight, and lazy media regression: PASS");
+
+const videoCss=cutscenes.match(/\.gd-film-video\{([^}]+)\}/)[1];
+assert.ok(videoCss.includes("visibility:visible")&&videoCss.includes("opacity:1"),"fresh video must be paintable before requesting its first decoded frame in WebKit");

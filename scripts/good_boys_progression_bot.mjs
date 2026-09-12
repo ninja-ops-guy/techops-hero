@@ -44,6 +44,14 @@ try{
   await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===3,null,{timeout:7000});await clearBlockingCines(page,2500);let s=await snap(page);assertContractCompatible(s);log('m3-start',s);
   if(s.openingError)fail('opening-error',s);if(s.mission!==3||s.metaMission!==3||s.stateMission!==3)fail('opening-did-not-canonically-enter-m3',s);if(!s.pair)fail('good-dogs-pair-not-attached',s);if(!s.authority||!s.campaignState||!s.accessCore||!s.earthfall)fail('campaign-authorities-not-attached',s);if(!s.prison||Number(s.prison.version||0)<2)fail('prison-breach-authority-missing',s);
 
+  // Mission metadata changes before the fresh runtime mounts. Prime only after
+  // the completed handoff, its transition cooldown, and the entry briefing.
+  await page.waitForFunction(()=>{
+    const a=window.TechOpsGoodBoysProgressionAuthority?.acceptance();
+    return a?.active&&a.mission===3&&a.handoffComplete?.mission===3&&!a.handoff&&!a.transition&&a.lastAdvanceAge>=700;
+  },null,{timeout:9000});
+  await clearBlockingCines(page,2500);
+  await page.waitForFunction(()=>!window.S.inDialog,null,{timeout:5000});
   const objectivePrimed=await page.evaluate(()=>window.TechOpsGoodBoysPrisonGameplayV2&&window.TechOpsGoodBoysPrisonGameplayV2.testPrimeComplete?window.TechOpsGoodBoysPrisonGameplayV2.testPrimeComplete():false);log('m3-objective-prime',{objectivePrimed});if(!objectivePrimed)fail('m3-objective-prime-unavailable',s);
   const combatPrimed=await page.evaluate(()=>window.TechOpsGoodBoysProgressionAuthority&&window.TechOpsGoodBoysProgressionAuthority.testPrimeClear?window.TechOpsGoodBoysProgressionAuthority.testPrimeClear():false);log('m3-combat-prime-clear',{combatPrimed});if(!combatPrimed)fail('m3-prime-clear-unavailable',s);
   await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===4,null,{timeout:9000});

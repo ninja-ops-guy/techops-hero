@@ -106,4 +106,23 @@ assert.strictEqual(authority.completionStatus(7).ok, false, "defeating the Warde
 c._gbShuttleReached = true;
 assert.strictEqual(authority.completionStatus(7).ok, true);
 
+// A completed boarding sequence must not replay the legacy pre-crash M3 intro.
+const scheduled=[],starts=[];
+context.setTimeout=fn=>{scheduled.push(fn);return scheduled.length;};
+context.v736={start(options){starts.push(options);setMission(options.mission);}};
+c=setMission(2);c._gbBoardSequenceComplete=true;context.NM._gbBoardSequenceComplete=true;
+assert.strictEqual(authority.advance(3,"m2-board-flight-crash-complete"),true);
+scheduled.shift()();
+assert.strictEqual(starts.length,1);
+assert.strictEqual(starts[0].mission,3);
+assert.strictEqual(starts[0].directGameplay,true,"finished crash must mount M3 without a second approach intro");
+assert.strictEqual(authority.acceptance().handoffComplete.mission,3);
+scheduled.shift()(); // End the M2 transition cooldown.
+context.performance.now=()=>3000;
+c=setMission(4);c.evidence=[{found:true},{found:true},{found:true}];c.cellOpened=true;c._gbCell118AmbushCommitted=true;c._gbCell118AmbushCleared=true;
+assert.strictEqual(authority.advance(5,"freed-k"),true);
+scheduled.shift()();
+assert.strictEqual(starts[1].mission,5);
+assert.strictEqual(starts[1].directGameplay,false,"ordinary mission entry keeps its authored cinematic handoff");
+
 console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity: PASS");

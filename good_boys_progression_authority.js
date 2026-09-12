@@ -122,7 +122,8 @@
     try{if(transition||now()-lastAdvance<700)return false;var c=cs(),m=meta();if(!c||!m)return false;reconcileMission("pre-transition");var from=mission();if(from>=8)return false;var gate=completionStatus(from);root.__goodBoysCompletionGate=Object.assign({at:Date.now(),requestedReason:reason||"clear"},gate);if(!gate.ok){setMsg("OBJECTIVE INCOMPLETE · "+String(gate.reason||"").replace(/-/g," ").toUpperCase(),1300);return false;}next=Math.min(8,from+1);transition=true;lastAdvance=now();var patch={};if(from===4)patch.k=true;if(from===6)patch.waldo=true;
       CampaignState.transition(from,next,reason||"clear",patch);if(!invariant(next,"pre-handoff")){reconcileMission("pre-handoff-repair");if(!invariant(next,"pre-handoff-repaired"))throw new Error("Good Boys mission invariant failed before handoff");}
       resetWorldForHandoff();root.__goodBoysLastProgression={from:from,to:next,reason:reason||"clear",at:Date.now()};setMsg("MISSION "+from+" COMPLETE · M"+next+" UNLOCKED",2200);
-      var restart=function(){try{startNext(next);finalizeHandoff("handoff-complete");}finally{root.setTimeout(function(){transition=false;},500);}};root.setTimeout(restart,120);return true;
+      /* M2 has already played approach/flight/crash. Mount M3 directly; its prison briefing remains owned by missionEntry. */
+      var restart=function(){try{if(from===2)startNext(next,{directGameplay:true});else startNext(next);finalizeHandoff("handoff-complete");}finally{root.setTimeout(function(){transition=false;},500);}};root.setTimeout(restart,120);return true;
     }catch(e){root.__goodBoysProgressionError=String(e&&e.stack||e);transition=false;return false;}
   }
   function revealShip(){try{var n=root.NM;if(!n)return false;if(!n._gbShipRevealed){n._gbShipRevealed=true;n.clear=false;setMsg("HANGAR CLEAR · SECRET SHIP REVEALED",2400);root.__goodBoysShipRevealAt=Date.now();}return true;}catch(e){return false;}}

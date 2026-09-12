@@ -1,8 +1,8 @@
 # TechOps Hero — Cinematic Cohesion v1
 
-**Status:** foundation published in PR #15; supplied-art and backlog follow-up in validation  
-**Canonical player-facing campaign name:** **GOOD DOGS PROTOCOL**  
-**Runtime authority:** `cinematic_systems.js` + existing mode-specific engines  
+**Status:** foundation published in PR #15; supplied-art and backlog follow-up in validation
+**Canonical player-facing campaign name:** **GOOD DOGS PROTOCOL**
+**Runtime authority:** `cinematic_systems.js` + existing mode-specific engines
 **Release rule:** presentation may observe gameplay events; it may not own damage, collision, progression, saves, or media retries.
 
 ## Outcome

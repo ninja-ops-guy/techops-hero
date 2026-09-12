@@ -69,7 +69,7 @@ assert.ok(v736Source.includes('function start736(options)'),"v736 core start mus
 assert.ok(v736Source.includes('if (options.directGameplay)'),"v736 core must own the direct gameplay branch");
 assert.ok(v736Source.includes('startCombat736(mission)'),"direct mission resume must synchronously mount combat inside v736 core");
 assert.ok(v736Source.includes('source: "v736-core"'),"v736 direct-play diagnostics must identify the core owner");
-assert.ok(progressionSource.includes('var restart=function(){try{startNext(next);'),"ordinary mission progression must retain authored cinematic handoffs");
+assert.ok(progressionSource.includes('if(from===2)startNext(next,{directGameplay:true});else startNext(next);'),"ordinary mission progression must retain authored cinematic handoffs");
 assert.ok(progressionSource.includes('function finalizeHandoff(reason)'),"progression authority must wait for a fresh runtime on normal cinematic handoffs");
 assert.ok(progressionSource.includes('if(!c||c.ending)'),"stale ending runtime must not satisfy handoff ownership");
 assert.ok(progressionSource.includes('finalizeHandoff("tick-handoff")'),"runtime attachment must be finalized by the authority tick");
