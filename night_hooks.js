@@ -268,6 +268,7 @@ function nmSpawnEnemies(st, dist) {
 }
 
 function nmLoadDistrict(id) {
+  if(typeof window!=="undefined"&&window.TechOpsCombatAudio)window.TechOpsCombatAudio.silence();
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const D = NM_DISTRICTS[id];
   try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset(NM && NM._v736 ? "gooddogs" : "nightcrawler"); } catch (e) { }
@@ -315,11 +316,13 @@ function nmCarMenu() {
     };
   });
   opts.push({ t: `🏠 HOME STREET <small>· call it a night</small>`, f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: "home" }; sfx("portal"); } });
+  if(typeof window!=="undefined"&&window.TechOpsCombatAudio)opts.push({t:"Combat sound & captions",f:()=>window.TechOpsCombatAudio.openSettings(nmCarMenu)});
   opts.push({ t: "Back to the street.", f: closeDlg });
   dlg("🚗 THE CHARGER — where to?", `The engine idles. New Haven glows wet and neon.<br><small>Cleared districts stay cleared tonight. Pay scales with danger.</small>`, opts);
 }
 
 function nmNextStage() {
+  if(typeof window!=="undefined"&&window.TechOpsCombatAudio)window.TechOpsCombatAudio.silence();
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
   advanceClock(20); // each street takes 20 minutes
@@ -343,6 +346,7 @@ function nmNextStage() {
 }
 
 function exitNight(homeSafe) {
+  if(typeof window!=="undefined"&&window.TechOpsCombatAudio)window.TechOpsCombatAudio.silence();
   const s = S, cash = NM.cash, kills = NM.kills, districts = Object.keys(NM.done).length;
   const qt = document.getElementById("quest-tracker");
   if (qt && !NM._qtHidden) qt.classList.remove("hidden"); // day HUD returns in the morning
@@ -498,7 +502,8 @@ function stepNM(dt) {
         NM.hp -= chip ? Math.ceil(e.dmg * .25) : e.dmg;
         NM.ifr = 22;
         if (!chip) { NM.vx = Math.sign(dx) * -5; NM.vy = -3; if(streetCombat)streetCombat.hurt(NM); }
-        sfx(chip ? "block" : "bad");
+        if(chip&&streetCombat&&streetCombat.blocked)streetCombat.blocked(NM,e);
+        if(!window.TechOpsCombatAudio||!streetCombat||!streetCombat.active(NM))sfx(chip ? "block" : "bad");
         NM.msg = chip ? "🛡️ blocked!" : `💥 ${e.name} hits you!`; NM.msgT = now + 900;
         if (NM.hp <= 0) return exitNight(false);
       }
@@ -513,7 +518,8 @@ function stepNM(dt) {
           NM.hp -= chip ? Math.ceil(e.dmg * .3) : Math.ceil(e.dmg * .8);
           if(!chip&&streetCombat)streetCombat.hurt(NM);
           NM.ifr = 22;
-          sfx(chip ? "block" : "bad");
+          if(chip&&streetCombat&&streetCombat.blocked)streetCombat.blocked(NM,e);
+        if(!window.TechOpsCombatAudio||!streetCombat||!streetCombat.active(NM))sfx(chip ? "block" : "bad");
           NM.msg = chip ? "🛡️ zap caught on the stance!" : `⚡ drone zap — ${e.dmg} arc damage!`; NM.msgT = now + 900;
           if (NM.hp <= 0) return exitNight(false);
         }
@@ -633,7 +639,8 @@ function drawNM() {
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
   const domestic = NM._v736 && Number(NM._v736.m)===1 && window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR);
-  if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
+  const stagedBackdrop = window.TechOpsOrbitalStaging && window.TechOpsOrbitalStaging.drawBackdrop(ctx,NM);
+  if(stagedBackdrop) { /* World-aligned prison staging; original fallback remains until source decode. */ } else if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
     const m3Authority = NM._v736 && Number(NM._v736.m) === 3 && window.TechOpsM3CinematicAsset;
     const m3Image = m3Authority && m3Authority.image ? m3Authority.image() : null;
     const m3Asset = m3Image && m3Image === __bg734 ? m3Authority : null;
@@ -809,14 +816,17 @@ function drawNM() {
   ctx.fillStyle = dp > .7 ? "#ff6b81" : dp > .4 ? "#ffb347" : "#7ee787";
   ctx.fillRect(dangerX, leftY + 30, dangerW * dp, 8);
   ctx.fillStyle = "#9fb7d9";
-  ctx.textAlign = "right"; ctx.fillText(`💀 ${NM.kills}`, rightX + rightW - 8, leftY + 56);
+  const guidance = window.TechOpsGameplayExperience;
+  const encounter = guidance && guidance.streetStatus(NM);
+  const status = encounter ? encounter.replace('REINFORCEMENTS INBOUND', 'INBOUND').replace('STREET SECURED · CONTINUE OR RETURN TO CHARGER', 'STREET SECURED').replace('CHECK THE STREET', 'CHECK STREET') : `💀 ${NM.kills}`;
+  ctx.textAlign = "right"; ctx.fillText(status, rightX + rightW - 8, leftY + 56);
   // center message
   if (NM.msgT > now) {
     const msgW = Math.min(520, W - 16), msgFont = compactHud ? 10 : 13, words = String(NM.msg || "").split(/\s+/), lines = [];
     ctx.font = msgFont + "px monospace";
     for (const word of words) { const last = lines.length - 1, trial = last < 0 ? word : lines[last] + " " + word; if (last < 0 || ctx.measureText(trial).width > msgW - 18) lines.push(word); else lines[last] = trial; }
     if (lines.length > 3) { lines.length = 3; lines[2] = lines[2].replace(/[.…]*$/, "…"); }
-    const msgH = 12 + lines.length * (msgFont + 4),msgY=window.TechOpsNightCombat&&window.TechOpsNightCombat.active(NM)?142:96;
+    const msgH = 12 + lines.length * (msgFont + 4),msgY=window.TechOpsNightCombat&&window.TechOpsNightCombat.active(NM)?(window.TechOpsCombatAudio&&window.TechOpsCombatAudio.settings().captions?170:142):96;
     ctx.fillStyle = "#000a"; ctx.fillRect((W - msgW) / 2, msgY, msgW, msgH);
     ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
     lines.forEach((line, i) => ctx.fillText(line, W / 2, msgY+10 + (i + 1) * (msgFont + 3)));

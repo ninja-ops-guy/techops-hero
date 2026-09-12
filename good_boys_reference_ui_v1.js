@@ -1,4 +1,4 @@
-/* TechOps Hero — Good Dogs reference UI v1
+/* TechOps Hero — Good Dogs reference UI v2
  * Presentation-only pass derived from the approved mobile gameplay reference.
  * Keeps gameplay/input ownership in the existing Good Dogs runtimes while making
  * the touch experience read like a composed game HUD rather than floating debug controls.
@@ -6,8 +6,8 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysReferenceUI)return;
-  var VERSION=1,style=null,timer=null;
-  function active(){try{return !!(root.NM&&root.NM._v736);}catch(e){return false;}}
+  var VERSION=2,style=null,timer=null;
+  function active(){try{var n=root.NM,s=root.S;return !!(n&&n._v736&&s&&!s.gameOver&&(s.nightMode===n||s.nightMode===true));}catch(e){return false;}}
   function installStyle(){
     try{
       if(!root.document)return false;
@@ -47,8 +47,9 @@
         "gb-partner":"🐾\nPARTNER"
       };
       Object.keys(map).forEach(function(id){var b=root.document.getElementById(id);if(b&&b.dataset.referenceLabel!=="1"){b.textContent=map[id];b.dataset.referenceLabel="1";}});
-      var use=root.document.getElementById("gb-use");
-      if(use){var contextual=use.dataset.context==="1";var txt=contextual?"E   USE · CELL 118":"E   USE / INTERACT";if(use.textContent!==txt)use.textContent=txt;}
+      // gb-use belongs to the current mission interaction authority.
+      // A visual skin must not replace relay, boarding or access-node verbs.
+      // In particular, context=1 does not imply Cell 118.
       return true;
     }catch(e){return false;}
   }

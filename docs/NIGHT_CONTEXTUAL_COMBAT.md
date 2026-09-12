@@ -38,3 +38,22 @@ These are in-engine sequences built from existing key poses, not newly authored 
 - The existing release gate and cross-browser campaign/runtime checks remain required. Physical controller, touch ergonomics and hardware frame pacing still require playtesting.
 
 Initial tuning is intentionally centralized in `RULES`; playtest adjustments should preserve confirmed-hit rewards, finite control loss, and the no-infinite-juggle boundary.
+
+## Follow-on fighting-audio pass
+
+The locally implemented `runtime_combat_audio.js` consumes the existing contact
+and reaction events, plus explicit incoming block contacts. Swings, misses,
+punches, launchers, grabs, throws, impacts, guard, hurt and KO have distinct
+synthesized cues. It reuses the shared audio context, respects the existing master
+mute, and does not change music playback. A finite priority-limited voice pool and
+per-type crowd throttling prevent collision bursts from stacking unbounded sound.
+
+Open the Charger menu or Mike's workstation and choose **Combat sound & captions**.
+Combat volume is independent of the soundtrack; optional captions also work when
+effects are muted. Captions and existing message panels have separate vertical
+space. Effects are silenced on district/stage changes, night exit and hidden-page
+transitions; suspended audio does not queue old actions to replay later.
+
+The implementation and 28 instrumented audio tests are included in the gameplay
+pass report. This pass has not been auditioned or browser/device-certified; the
+existing browser and physical acceptance requirements above still apply.

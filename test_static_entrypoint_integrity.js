@@ -15,9 +15,10 @@ const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
 const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
 for(const src of ["good_boys_bible_world.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-pr12-canon");}
-for(const src of ["game.js","good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
-for(const src of ["night_hooks.js","v733_hooks.js","campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
-const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-night-combat-r1","production bootstrap entrypoint must bypass stale mobile caches");
+for(const src of ["game.js","good_boys_access_core_authority.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
+for(const src of ["v733_hooks.js","campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
+for(const src of ["cinematic_systems.js","night_hooks.js"])assert.strictEqual(refFor(src),src+"?v=20260912-quality-r2");
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-quality-r2","production bootstrap entrypoint must bypass stale mobile caches");
 [
   "good_boys_prison_cinematic_patch.js",
 ].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260911-cinematic-cohesion-r1",src+" must bypass stale caches for the cinematic-cohesion handoff"));
@@ -26,7 +27,7 @@ assert.ok(!html.includes("good_dogs_cutscene_bridge.js?v=20260831-gooddogs-maste
 assert.ok(!html.includes("good_boys_progression_authority.js?v=20260901-goodboys-certified-r1"),"entrypoint must not serve the stale M3 progression authority");
 for(const tag of [...html.matchAll(/<link\b[^>]*>/g)].map(m=>m[0])){const a=attrs(tag);if(a.rel!=="stylesheet"||!a.href||isExternal(a.href))continue;assertLocalFile(a.href,"index.html stylesheet");}
 [
-  "campaign_act1.js","campaign_assets.js","campaign_story.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","cinematic_systems.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js"
+  "campaign_act1.js","campaign_assets.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","cinematic_systems.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js"
 ].forEach(src=>assert.strictEqual(localScripts.filter(candidate=>candidate===src).length,1,`${src} must be loaded exactly once`));
 assert.strictEqual(localScripts.filter(candidate=>candidate==="good_boys_intro_repair.js").length,0,"obsolete direct-to-M2 intro must not be parser loaded");
 assert.strictEqual(localScripts.filter(candidate=>candidate==="good_boys_ship_approach.js").length,0,"obsolete duplicate ship-approach wrapper must not be parser loaded");
@@ -106,3 +107,10 @@ assert.ok(prisonGameplay.includes('SECURITY RELAY')&&prisonGameplay.includes('co
 assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK BREAKER'),"orbital prison combat must expose the five-hit paired combat cadence");
 
 console.log("Static entrypoint integrity: PASS");
+
+const bgSource=fs.readFileSync("bg_noc.js","utf8"),bootSource=fs.readFileSync("production_bootstrap.js","utf8");
+assert.equal(bgSource.match(/var BUILD="([^"]+)"/)[1],bootSource.match(/BUILD="([^"]+)"/)[1],"loader and bootstrap must share exact cache build");
+for(const file of ["runtime_combat_audio.js","production_gameplay_experience.js","orbital_scene_staging.js"])assert.ok(bootSource.includes(JSON.stringify(file)),file+" must be loaded");
+assert.ok(bootSource.indexOf('"runtime_combat_audio.js"')<bootSource.indexOf('"night_combat.js"'),"audio must precede semantic event emitter");
+
+for(const src of ["campaign_act1.js","campaign_story.js","campaign_native_act1.js"])assert.equal(refFor(src),src+"?v=20260912-gameplay-feedback-r1");

@@ -84,15 +84,16 @@
   }
 
   // Use the native read model: a closure object alone is not verified restoration.
-  function casebookRecord(state, ticketId) {
+  function casebookRecord(state, ticketId, historical) {
     var native = root && root.TechOpsCampaignNativeAct1;
-    return native && typeof native.ticketRecord === "function" ? native.ticketRecord(state, ticketId) : null;
+    return !historical && native && typeof native.currentServiceRecord === "function" ? native.currentServiceRecord(state, ticketId) : native && typeof native.ticketRecord === "function" ? native.ticketRecord(state, ticketId) : null;
   }
 
   function presentationFor(sceneId, state, dialogName) {
     state = state || null;
     var flags = state && state.flags || {};
     var tickets = state && state.tickets || {};
+    var historical = /^CASEBOOK\b/i.test(String(dialogName || ""));
     var p = { sceneId: sceneId, variant: "default", props: (SCENES[sceneId] && SCENES[sceneId].props || []).slice(), motion: [], statusText: null };
 
     if (sceneId === "standup") {
@@ -107,7 +108,7 @@
       if (video) p.motion.push("orpheus_glitch");
       p.statusText = flags.day_work_unlocked ? "DAY SHIFT ACTIVE" : "TICKET CLOCK PAUSED";
     } else if (sceneId === "shipping") {
-      var shipping = casebookRecord(state, "shipping_cannot_print");
+      var shipping = casebookRecord(state, "shipping_cannot_print", historical);
       var shippingDone = !!(shipping && shipping.status === "VERIFIED / RESTORED");
       var shippingFollowUp = !!tickets.shipping_cannot_print && !shippingDone;
       p.variant = shippingDone ? "verified" : shippingFollowUp ? "follow_up" : "fault";
@@ -115,7 +116,7 @@
       p.motion = shippingDone ? ["verification_glow", "printer_eject", "camera_push"] : shippingFollowUp ? ["camera_push"] : ["forklift_pass", "printer_feed", "camera_track"];
       p.statusText = shippingDone ? "CUSTOMS LABEL VERIFIED BY REQUESTER" : shippingFollowUp ? "SHIPPING OUTCOME NEEDS FOLLOW-UP" : "PRINT JOBS DISAPPEAR FROM QUEUE";
     } else if (sceneId === "plating") {
-      var plating = casebookRecord(state, "plating_workstation_down");
+      var plating = casebookRecord(state, "plating_workstation_down", historical);
       var platingDone = !!(plating && plating.status === "VERIFIED / RESTORED");
       var platingFollowUp = !!tickets.plating_workstation_down && !platingDone;
       p.variant = platingDone ? "restored" : platingFollowUp ? "follow_up" : "stopped";
@@ -123,7 +124,7 @@
       p.motion = platingDone ? ["machine_run", "status_clear", "camera_push"] : platingFollowUp ? ["camera_push"] : ["warning_beacon", "machine_idle", "camera_track"];
       p.statusText = platingDone ? "OPERATOR VERIFIED — LINE RESUMED" : platingFollowUp ? "PLATING OUTCOME NEEDS FOLLOW-UP" : "LINE STOPPED — DIGITAL DEPENDENCY";
     } else if (sceneId === "access") {
-      var access = casebookRecord(state, "impossible_access_event");
+      var access = casebookRecord(state, "impossible_access_event", historical);
       var established = !!(access && access.sources.length);
       p.variant = established ? "documented" : "unresolved";
       p.motion = established ? ["audit_lock", "evidence_stack", "camera_push"] : ["audit_sweep", "evidence_pulse", "camera_push"];

@@ -7,8 +7,8 @@
   if(typeof module==="object"&&module.exports){module.exports=require("./campaign_native_act1_visuals_impl.js");return;}
   if(!root||!root.document)return;
   function load(src,flag){if(root[flag])return false;root[flag]=true;var script=root.document.createElement("script");script.src=src;script.async=false;(root.document.head||root.document.documentElement).appendChild(script);return true;}
-  if(!root.TechOpsCampaignNativeAct1Visuals)load("campaign_native_act1_visuals_impl.js","__techopsAct1VisualImplLoader");
-  if(!root.TechOpsCampaignInvestigations)load("campaign_act1_investigations.js?v=20260912-day1-investigation-v1","__techopsCampaignInvestigationLoaderV1");
+  if(!root.TechOpsCampaignNativeAct1Visuals)load("campaign_native_act1_visuals_impl.js?v=20260912-gameplay-feedback-r1","__techopsAct1VisualImplLoader");
+  if(!root.TechOpsCampaignInvestigations)load("campaign_act1_investigations.js?v=20260912-gameplay-feedback-r1","__techopsCampaignInvestigationLoaderV1");
   if(!root.GoodDogsCutscenes||parseFloat(root.GoodDogsCutscenes.VERSION||0)<3.4)load("good_dogs_cutscenes_v2_2.js?v=20260903-picked-pilot-crash-r1","__techopsGoodDogsCutsceneV34Loader");
   if(!root.TechOpsGoodDogsSingleAtlasAuthority||Number(root.TechOpsGoodDogsSingleAtlasAuthority.VERSION||0)<2)load("good_dogs_single_atlas_authority.js?v=20260902-single-atlas-v2","__techopsGoodDogsSingleAtlasLoaderV2");
   if(!root.TechOpsGoodBoysOpeningV4)load("good_boys_opening_sequence_v4.js?v=20260903-deck-center-r1","__techopsGoodBoysOpeningV4Loader");

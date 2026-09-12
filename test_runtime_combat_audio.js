@@ -1,0 +1,72 @@
+'use strict';
+const assert=require('node:assert/strict'), fs=require('node:fs'), vm=require('node:vm');
+const audio=fs.readFileSync('runtime_combat_audio.js','utf8'), combat=fs.readFileSync('night_combat.js','utf8');
+let count=0;
+function test(name, fn){fn();count++;console.log('PASS '+name);}
+function fixture(options={}){
+ const log=[], created=[], handlers={}, data=new Map();
+ const param=()=>({value:0,setValueAtTime(v,t){this.value=v;log.push(['set',v,t]);},linearRampToValueAtTime(v,t){log.push(['linear',v,t]);},exponentialRampToValueAtTime(v,t){assert.ok(v>0);log.push(['exponential',v,t]);}});
+ function node(kind){return {kind,frequency:param(),pan:param(),gain:param(),threshold:param(),knee:param(),ratio:param(),attack:param(),release:param(),connect(other){log.push(['connect',kind,other.kind]);return other;},disconnect(){this.disconnected=true;log.push(['disconnect',kind]);},start(t){this.started=true;log.push(['start',kind,t]);},stop(t){log.push(['stop',kind,t]);}};}
+ class AudioContext {
+  constructor(){this.state=options.suspended?'suspended':'running';this.currentTime=1;this.sampleRate=8000;this.destination=node('destination');this.nodes=[];created.push(this);}
+  make(kind){const n=node(kind);this.nodes.push(n);return n;}
+  createStereoPanner(){return this.make('pan');}
+  createGain(){return this.make('gain');} createOscillator(){return this.make('tone');}
+  createDynamicsCompressor(){if(options.failGraph)throw Error('graph unavailable');return this.make('limiter');}
+  createBiquadFilter(){return this.make('filter');} createBufferSource(){if(options.failSource)throw Error('source unavailable');return this.make('noise');}
+  createBuffer(channels,frames,rate){this.buffers=(this.buffers||0)+1;return {getChannelData:()=>new Float32Array(frames)};}
+  resume(){this.resumes=(this.resumes||0)+1;if(options.rejectResume)return Promise.reject(Error('gesture required'));this.state='running';return Promise.resolve();}
+ }
+ if(options.mono)delete AudioContext.prototype.createStereoPanner;
+ const math=Object.create(Math);math.random=()=>{throw Error('audio touched gameplay RNG');};
+ const r=vm.createContext({console,Math:math,Float32Array,Promise,AudioContext:options.unsupported?undefined:AudioContext,
+  document:{hidden:false,addEventListener(type,handler){(handlers[type]||(handlers[type]=[])).push(handler);}},
+  localStorage:{getItem(k){return options.corrupt?'broken{':data.get(k)||null;},setItem(k,v){if(options.failSave)throw Error('quota');data.set(k,v);}},
+  S:{nightMode:true,inDialog:false}, performance:{now:()=>1000}, sfx(){r.legacy=(r.legacy||0)+1;},
+  dlg(name,body,items){r.dialog={name,body,items};},closeDlg(){r.dialog=null;}
+ });
+ vm.runInContext('let AC=null;let sfxMuted=false;',r);
+ vm.runInContext(audio,r);const api=r.TechOpsCombatAudio;
+ const n={district:'downtown',enemies:[],x:0,y:0,w:22,h:34,_nightCombat:{time:0,events:[]}};r.NM=n;
+ return {r,api,n,created,log,handlers,data,event:(type,id=1,time=0,extra={})=>Object.assign({type,id,time},extra)};
+}
+test('load is silent, lazy and listener installation is idempotent',()=>{const f=fixture();assert.equal(f.created.length,0);vm.runInContext(audio,f.r);assert.equal(f.handlers.pointerdown.length,1);assert.equal(f.handlers.visibilitychange.length,1);});
+test('one shared context and one reusable noise buffer serve repeated effects',()=>{const f=fixture();f.api.unlock();for(let i=1;i<=5;i++)f.api.emit(f.n,f.event('jab',i,i*100));assert.equal(f.created.length,1);assert.equal(f.created[0].buffers,1);assert.equal(vm.runInContext('AC',f.r),f.created[0]);assert.equal(f.api.diagnostics().played,5);});
+test('every supported semantic cue schedules a finite local voice',()=>{const f=fixture();f.api.unlock();let id=0;for(const type of Object.keys(f.api.CUES)){assert.equal(f.api.emit(f.n,f.event(type,++id,id*100)),true);f.created[0].currentTime+=.3;}assert.equal(f.api.diagnostics().played,Object.keys(f.api.CUES).length);assert.ok(f.log.filter(x=>x[0]==='stop'&&Number.isFinite(x[2])).every(x=>x[2]<10));});
+test('cue timbres distinguish a miss, hit, finisher, block and knockout',()=>{const c=fixture().api.CUES;assert.notEqual(c.whiff.body,c.jab.body);assert.notEqual(c.jab.length,c.launcher.length);assert.notEqual(c.block.filter,c.jab.filter);assert.notEqual(c.ko.end,c.slam.end);});
+test('duplicate serials and crowd bursts do not double-play',()=>{const f=fixture();f.api.unlock();assert.equal(f.api.emit(f.n,f.event('jab')),true);assert.equal(f.api.emit(f.n,f.event('jab')),false);assert.equal(f.api.emit(f.n,f.event('jab',2,10)),false);assert.equal(f.api.emit(f.n,f.event('jab',3,35)),true);assert.equal(f.api.diagnostics().played,2);});
+test('serials reset with the combat state, not across every swing',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('jab',50));f.n._nightCombat={time:0,events:[]};assert.equal(f.api.emit(f.n,f.event('jab',1)),true);});
+test('guarded damage is not a second impact sound',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('guard'));assert.equal(f.api.emit(f.n,f.event('jab',2,0,{guarded:true})),false);assert.equal(f.api.diagnostics().played,1);});
+test('unknown/prototype names are safely ignored',()=>{const f=fixture();f.api.unlock();for(const type of ['fake','toString','__proto__'])assert.equal(f.api.emit(f.n,f.event(type)),false);assert.equal(f.api.diagnostics().played,0);});
+test('voice count is bounded even during a crowd collision storm',()=>{const f=fixture();f.api.unlock();for(let i=1;i<70;i++)f.api.emit(f.n,f.event(i%3?'collision':'wall',i,i*26));assert.ok(f.api.diagnostics().voices<=8);});
+test('quiet effects cannot steal all active high-priority feedback',()=>{const f=fixture();f.api.unlock();for(let i=1;i<=8;i++)f.api.emit(f.n,f.event('ko',i,i*30));assert.equal(f.api.emit(f.n,f.event('whiff',9,300)),false);assert.equal(f.api.diagnostics().voices,8);});
+test('ended sounds disconnect every voice node',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('jab'));const ac=f.created[0],tone=ac.nodes.find(n=>n.kind==='tone');tone.onended();assert.equal(f.api.diagnostics().voices,0);assert.ok(ac.nodes.slice(2).every(n=>n.disconnected));});
+test('partial WebAudio construction failures clean up and cannot affect combat',()=>{const f=fixture({failSource:true});f.api.unlock();assert.equal(f.api.emit(f.n,f.event('jab')),false);assert.equal(f.api.diagnostics().voices,0);assert.ok(f.created[0].nodes.slice(2).every(n=>n.disconnected));});
+test('failed bus graphs are not retained as a working audio bus',()=>{const f=fixture({failGraph:true});assert.equal(f.api.unlock(),false);assert.ok(f.created[0].nodes.every(n=>n.disconnected));assert.equal(f.api.emit(f.n,f.event('jab')),false);});
+test('the game lexical mute binding still controls combat effects',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('jab'));vm.runInContext('sfxMuted=true',f.r);assert.equal(f.api.emit(f.n,f.event('hurt',2)),false);assert.equal(f.api.diagnostics().voices,0);});
+test('combat volume zero does not create an audio context',()=>{const f=fixture();f.api.configure({volume:0});assert.equal(f.api.unlock(),false);assert.equal(f.created.length,0);});
+test('combat preference validation is finite, bounded, and independent of story saves',()=>{const f=fixture();f.api.configure({volume:10,captions:true});assert.equal(f.api.settings().volume,1);f.api.configure({volume:NaN,captions:'off'});assert.equal(f.api.settings().volume,1);assert.equal(f.api.settings().captions,true);assert.deepEqual([...f.data.keys()],[f.api.KEY]);});
+test('corrupt or unavailable preference storage does not break play',()=>{for(const options of [{corrupt:true},{failSave:true}]){const f=fixture(options);f.api.configure({volume:.5});f.api.unlock();assert.equal(f.api.emit(f.n,f.event('jab')),true);}});
+test('hidden document silences existing voices and rejects new sounds',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('jab'));f.r.document.hidden=true;f.handlers.visibilitychange[0]();assert.equal(f.api.diagnostics().voices,0);assert.equal(f.api.emit(f.n,f.event('ko',2)),false);});
+test('suspended contexts drop, rather than enqueue, late combat events',()=>{const f=fixture();f.api.unlock();f.created[0].state='suspended';assert.equal(f.api.emit(f.n,f.event('jab')),false);f.api.unlock();assert.equal(f.api.diagnostics().played,0);assert.equal(f.api.emit(f.n,f.event('cross',2,300)),true);});
+test('unsupported audio leaves actual hit timing and damage intact',()=>{const f=fixture({unsupported:true});vm.runInContext(combat,f.r);const n=f.n;Object.assign(n,{x:100,y:396,hp:100,face:1,onGround:true});const e={x:150,y:396,w:24,h:34,hp:200,alive:true,cash:[0,0]};n.enemies=[e];delete n._nightCombat;f.r.TechOpsNightCombat.attack(n,{});for(let i=0;i<8;i++)f.r.TechOpsNightCombat.tick(n,.01,{});assert.equal(e.hp,186);assert.equal(f.created.length,0);});
+test('Good Dogs, Sector 04 and Waldo do not enter the street audio bus',()=>{const f=fixture();f.api.unlock();for(const n of [{...f.n,_v736:{}},{...f.n,_sector04:{}},{...f.n,district:'waldo'}])assert.equal(f.api.emit(n,f.event('jab')),false);});
+test('captions remain available with sounds off and expire on the simulation clock',()=>{const f=fixture();f.api.configure({volume:0,captions:true});f.n._nightCombat.events.push(f.event('slam'));assert.equal(f.api.caption(f.n),'[SLAM]');f.n._nightCombat.time=601;assert.equal(f.api.caption(f.n),'');});
+test('caption preference is reachable without touching music controls',()=>{const f=fixture();f.api.openSettings(()=>{});assert.match(f.r.dialog.body,/Music is unchanged/);f.r.dialog.items.find(x=>x.t==='Turn captions on').f();assert.equal(f.api.settings().captions,true);assert.equal(f.r.dialog.items.filter(x=>x.t==='Back').length,1);});
+test('real combat events drive hit, block, and hurt sounds exactly once',()=>{const f=fixture();vm.runInContext(combat,f.r);Object.assign(f.n,{x:100,y:396,hp:100,face:1,onGround:true});const e={x:150,y:396,w:24,h:34,hp:200,alive:true,cash:[0,0]};f.n.enemies=[e];delete f.n._nightCombat;const c=f.r.TechOpsNightCombat;c.attack(f.n,{});for(let i=0;i<8;i++)c.tick(f.n,.01,{});c.blocked(f.n,e);c.hurt(f.n);assert.equal(f.api.diagnostics().played,4);assert.equal(f.r.legacy,undefined);});
+test('new audio cannot control or stop music playback',()=>{assert.doesNotMatch(audio,/\.play\(|\.pause\(|new\s+Audio\(|setInterval|requestAnimationFrame|Math\.random\(/);});
+test('guard captions do not get overwritten by the guarded damage modifier',()=>{const f=fixture();f.api.configure({captions:true});f.n._nightCombat.events=[f.event('guard'),f.event('jab',2,0,{guarded:true})];assert.equal(f.api.caption(f.n),'[GUARDED]');});
+test('knockout noise synthesis does not consume reward RNG',()=>{const f=fixture();let calls=0;f.r.Math.random=()=>{calls++;return .5;};vm.runInContext(combat,f.r);Object.assign(f.n,{x:100,y:396,hp:100,face:1,onGround:true});f.n.enemies=[{x:150,y:396,w:24,h:34,hp:1,alive:true,cash:[10,10]}];delete f.n._nightCombat;f.r.TechOpsNightCombat.attack(f.n,{});for(let i=0;i<8;i++)f.r.TechOpsNightCombat.tick(f.n,.01,{});assert.equal(f.n.cash,10);assert.equal(f.n.kills,1);assert.equal(calls,1);});
+(async()=>{const f=fixture({suspended:true,rejectResume:true});assert.equal(f.api.unlock(),false);await new Promise(r=>setImmediate(r));assert.equal(f.api.diagnostics().played,0);count++;console.log('PASS rejected resume promise is contained without replay');
+test('master SFX zero suppresses construction and sound',()=>{const f=fixture();f.r.V67SET={volSfx:0};assert.equal(f.api.unlock(),false);assert.equal(f.created.length,0);});
+test('master and combat gains multiply without touching music',()=>{const f=fixture();f.r.V67SET={volSfx:.25,volMusic:.9};f.api.configure({volume:.4});f.api.unlock();f.api.emit(f.n,f.event('jab'));assert.equal(f.created[0].nodes[0].gain.value,.1);assert.equal(f.r.V67SET.volMusic,.9);});
+test('stereo location is clamped and voice-owned pan nodes disconnect',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('jab',1,0,{x:10000}));const pan=f.created[0].nodes.find(n=>n.kind==='pan');assert.equal(pan.pan.value,.75);f.created[0].nodes.find(n=>n.kind==='tone').onended();assert.equal(pan.disconnected,true);});
+test('stereo left/right follows confirmed event location, not random sound position',()=>{const f=fixture();f.api.unlock();f.api.emit(f.n,f.event('wall',1,0,{x:-500}));f.api.emit(f.n,f.event('collision',2,100,{x:500}));assert.deepEqual(f.created[0].nodes.filter(n=>n.kind==='pan').map(n=>n.pan.value),[-.75,.75]);});
+test('older browsers without stereo panners keep functional mono effects',()=>{const f=fixture({mono:true});f.api.unlock();assert.equal(f.api.emit(f.n,f.event('jab')),true);assert.equal(f.created[0].nodes.filter(n=>n.kind==='pan').length,0);});
+
+test('old Night world emits no sound after switching into another mode or dialog',()=>{const f=fixture();f.api.unlock();for(const s of [{nightMode:false},{nightMode:{}},{nightMode:true,inDialog:true}]){f.r.S=s;assert.equal(f.api.emit(f.n,f.event('jab',99)),false);}assert.equal(f.api.diagnostics().played,0);});
+test('pause, drive, game over and presentation blockers suppress sound and captions',()=>{for(const mode of ['pause','drive','over','modal']){const f=fixture();f.api.unlock();f.api.configure({captions:true});f.n._nightCombat.events=[f.event('jab')];if(mode==='pause')f.r.S.paused=true;if(mode==='drive')f.n.drive={};if(mode==='over')f.r.S.gameOver=true;if(mode==='modal')f.r.TechOpsPresentationDirector={isBlocking:()=>true};assert.equal(f.api.emit(f.n,f.event('jab')),false,mode);assert.equal(f.api.caption(f.n),'',mode);}});
+test('suppressed effects cannot be replayed after unpausing',()=>{const f=fixture();f.api.unlock();f.r.S.paused=true;const e=f.event('slam',1);assert.equal(f.api.emit(f.n,e),false);f.r.S.paused=false;assert.equal(f.api.emit(f.n,e),false);assert.equal(f.api.emit(f.n,f.event('jab',2,100)),true);});
+test('classic-script state overrides stale window aliases for sound',()=>{const f=fixture();f.api.unlock();vm.runInContext('let S={nightMode:NM,paused:true};',f.r);assert.equal(f.api.emit(f.n,f.event('jab')),false);assert.equal(f.api.diagnostics().played,0);});
+test('missing active world does not unlock on a stale-world gesture',()=>{const f=fixture();f.r.S=null;f.handlers.pointerdown[0]();assert.equal(f.created.length,0);assert.equal(f.api.emit(f.n,f.event('jab')),false);});
+console.log('Combat audio: '+count+' tests passed');})().catch(error=>{console.error(error);process.exitCode=1;});

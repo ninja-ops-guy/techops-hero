@@ -86,7 +86,17 @@
     }
     if (!pos || !openTile(map, pos)) pos = { x: contact.fallback.x, y: contact.fallback.y };
     var key = pos.x + "," + pos.y;
-    while (used[key]) { pos = { x: Math.min(pos.x + 1, 40), y: pos.y }; key = pos.x + "," + pos.y; }
+    if (used[key]) {
+      var found = null;
+      for (var radius=1;radius<Math.max(map.length,map[0].length)&&!found;radius++) {
+        for (var dy=-radius;dy<=radius&&!found;dy++) for(var dx=-radius;dx<=radius;dx++) {
+          var candidate={x:pos.x+dx,y:pos.y+dy};
+          if(openTile(map,candidate)&&!used[candidate.x+","+candidate.y]){found=candidate;break;}
+        }
+      }
+      if(!found) throw new Error("No free tile for campaign contact");
+      pos=found;key=pos.x+","+pos.y;
+    }
     used[key] = true;
     if (map && map[pos.y]) map[pos.y][pos.x] = 0;
     return pos;
@@ -98,11 +108,19 @@
   }
   function ensureWorld() {
     var state = gameState();
-    if (!state || !state.map || state.day !== 1) return false;
+    if (!state || !state.map || (state.day !== 1 && state.day !== 2)) return false;
     var campaign = loadState();
-    if (campaign.flags.tuesday_morning_reached) return false;
-    var used = {}, native = {};
-    Object.keys(CONTACTS).forEach(function (key) { var contact = CONTACTS[key]; var pos = findSpot(state.map, contact, used); native[key] = pos; addContact(state, contact, pos); });
+    var nextShift = state.day === 2 && campaign.flags.tuesday_morning_reached;
+    if ((state.day === 1 && campaign.flags.tuesday_morning_reached) || (state.day === 2 && !nextShift)) return false;
+    if(nextShift)state.npcs=(state.npcs||[]).filter(function(npc){return npc.id!==CONTACTS.access.id;});
+    var used = {}, native = {}, keys = nextShift ? ["standup","shipping","plating"] : Object.keys(CONTACTS);
+    (state.npcs || []).forEach(function(npc){if(!Object.keys(CONTACTS).some(function(key){return CONTACTS[key].id === npc.id;}))used[npc.x+","+npc.y]=true;});
+    keys.forEach(function (key) {
+      var contact = CONTACTS[key], existing = (state.npcs || []).find(function(npc){return npc.id === contact.id;});
+      var pos = existing ? {x:existing.x,y:existing.y} : findSpot(state.map,contact,used);
+      used[pos.x+","+pos.y]=true; native[key]=pos; addContact(state,contact,pos);
+      if(key === "standup"){var board=state.npcs.find(function(npc){return npc.id === contact.id;});if(board)board.name=nextShift?"SHIFT HANDOFF":contact.name;}
+    });
     native.sector04Door = state._nightObjs && state._nightObjs.door ? { x: state._nightObjs.door.x, y: state._nightObjs.door.y } : { x: 20, y: 28 };
     state.meta = state.meta || {};
     state.meta.campaignAct1Native = native;
@@ -193,6 +211,8 @@
   }
   function ticketFollowUp(state, ticketId) {
     var item = ticketRecord(state, ticketId), prefix = item.requester + ": ";
+    var next = shiftRecord(state, ticketId);
+    if (next && next.kind !== "carryover") return prefix + (next.phase === "complete" ? (next.kind === "stable" ? "The verified outcome carried forward. Thank you for checking the actual work." : "The next shift has now verified the real task. The new check is recorded separately from Day 1.") : next.kind === "recheck" ? "A next-shift check is due. Incomplete verification does not prove another failure." : next.kind === "reconcile" ? "The prior outcome records disagree. Please establish a new verified outcome without rewriting the old record." : "The previous closure left work degraded or unmet. The next shift needs a follow-up.");
     if (ticketId === "impossible_access_event") return prefix + (item.sources.length ?
       "The badge report is on file. We still have a contradiction, not a solved case." : "The access anomaly still needs documented investigation.");
     if (item.status === "OPEN") return prefix + (ticketId === "shipping_cannot_print" ?
@@ -211,6 +231,9 @@
     function add(at, text) { events.push({ at: casebookText(at), text: text, order: events.length }); }
     (Array.isArray(state.history) ? state.history : []).forEach(function (event) {
       if (event && event.type === "ticket_assigned" && event.ticketId === ticketId) add(event.at, "Assigned to " + casebookOwner(event.ownerId));
+      if(event && event.ticketId === ticketId && event.type === "investigation_workaround_tested")add(event.at,"Temporary workaround tested; permanent repair still pending");
+      if(event && event.ticketId === ticketId && event.type === "investigation_limited_service_verified")add(event.at,"Requester confirmed limited service; next-shift repair due");
+      if(event && event.ticketId === ticketId && event.type === "investigation_reported_restoration")add(event.at,"Restoration reported; firsthand task verification deferred to a next-shift check");
     });
     if (ticketId === "impossible_access_event") {
       badgeSources(state).forEach(function (source) { add(source.at, "Badge report: " + (casebookText(source.perspective) || "unrecorded perspective") + "; source " + casebookOwner(source.discoveredBy)); });
@@ -257,11 +280,11 @@
     if (item.conflict) body += "<br><b>Conflicting outcome records — follow-up required.</b>";
     if (item.sources.length) body += "<br>Recorded perspective: " + esc(item.sources[0].perspective) + " (" + esc(item.sources[0].discoveredBy) + ")";
     body += "<br><br><b>NEXT:</b> " + esc(item.next);
-    return callDialog("CASEBOOK // " + item.title, body, [
+    return callDialog("CASEBOOK // " + item.title, body, (shiftRecord(state,ticketId) ? [{t:"Next-shift follow-up",f:function(){openWorkdayFollowup(ticketId);}}] : []).concat([
       { t: "Recorded events", f: function () { openTicketEvents(ticketId, filter); } },
       { t: "Back to history", f: function () { openTicketHistory(filter); } },
       { t: "Close record", f: closeDialog }
-    ]);
+    ]));
   }
   function openTicketEvents(ticketId, filter) {
     var state = readCasebook(); if (!state) return false;
@@ -274,6 +297,7 @@
   }
   function openTicketFollowUp(ticketId) {
     var state = readCasebook(); if (!state) return false;
+    if (shiftRecord(state, ticketId)) return openWorkdayFollowup(ticketId);
     var item = ticketRecord(state, ticketId);
     return callDialog(item.title, casebookEscape(ticketFollowUp(state, ticketId)) + "<br><br>Recorded completion owner: " + casebookEscape(item.completionOwner) + "<br><b>" + casebookEscape(item.status) + "</b>", [
       { t: "Review ticket record", f: function () { openTicketRecord(ticketId); } },
@@ -281,8 +305,86 @@
     ]);
   }
 
+  function shiftRecord(state, ticketId) {
+    if (!state.campaign || !state.flags || !state.flags.tuesday_morning_reached) return null;
+    return act1().workdayHandoff(state).find(function (item) { return item.ticketId === ticketId; }) || null;
+  }
+  function shiftStatus(record) {
+    return record.phase === "complete" ? (record.kind === "stable" ? "VERIFIED WORK CARRIED FORWARD" : "NEXT SHIFT VERIFIED") :
+      record.kind === "carryover" ? "OPEN WORK CARRIED FORWARD" : record.kind === "restore" ? "SERVICE FOLLOW-UP" :
+      record.kind === "reconcile" ? "RECONCILE OUTCOMES" : "VERIFICATION DUE";
+  }
+  function openWorkdayHandoff() {
+    var state = readCasebook(); if (!state) return false;
+    setAssetContext("workstation");
+    var records = act1().workdayHandoff(state);
+    if (!records.length) return callDialog("WORKSTATION // SHIFT HANDOFF", "The next-shift handoff becomes available after the verified Tuesday transition.", [{t:"Back to desktop",f:openWorkstation}]);
+    var options = records.map(function (record) { return {t:TICKET_COPY[record.ticketId].title+" — "+shiftStatus(record),f:function(){openWorkdayFollowup(record.ticketId);}}; });
+    options.push({t:"Review Day 1 casebook",f:function(){openTicketHistory();}});
+    options.push({t:"Back to desktop",f:openWorkstation});
+    var pending = records.filter(function(record){return record.phase !== "complete";}).length;
+    return callDialog("WORKSTATION // SHIFT HANDOFF", "<b>TUESDAY · "+pending+" FOLLOW-UP"+(pending === 1 ? "" : "S")+"</b><br><br>Verified work stays verified. Open work is not forgotten. A verification gap is not a proven recurrence.<br><br>New checks keep their own record; the original casebook stays intact.", options);
+  }
+  function commitWorkdayAction(ticketId, action, value) {
+    var state = readCasebook(); if (!state) return false;
+    try {
+      var record = act1().performWorkdayFollowup(state,ticketId,action,value);
+      saveState(state);
+      if (action === "observe") {
+        var evidence = act1().followupDefinition(record).evidence.find(function(item){return item.id === value;});
+        return callDialog("OBSERVATION // "+TICKET_COPY[ticketId].title,casebookEscape(evidence.text),[{t:"Continue follow-up",f:function(){openWorkdayFollowup(ticketId);}}]);
+      }
+      if (action === "hypothesis" && record.ruledOut.indexOf(value) >= 0) return callDialog("FOLLOW-UP // NOT SUPPORTED","The observations do not support that conclusion. A status indicator is not the requester's outcome, and incomplete verification does not prove a new failure.",[{t:"Review the evidence",f:function(){openWorkdayFollowup(ticketId);}}]);
+      return openWorkdayFollowup(ticketId);
+    } catch (_) {
+      return callDialog("FOLLOW-UP // ACTION UNAVAILABLE","This step is no longer available, or the record could not be saved. Review the current record before continuing. No replacement save was created.",[{t:"Review current follow-up",f:function(){openWorkdayFollowup(ticketId);}},{t:"Close",f:closeDialog}]);
+    }
+  }
+  function openWorkdayFollowup(ticketId, review) {
+    var state = readCasebook(); if (!state) return false;
+    var record = shiftRecord(state,ticketId); if (!record) return openTicketRecord(ticketId);
+    setAssetContext(TICKET_COPY[ticketId].assetContext);
+    var def = act1().followupDefinition(record), esc = casebookEscape, options = [];
+    var body = "<b>"+shiftStatus(record)+"</b><br><br>"+esc(def.reason);
+    if (record.phase === "complete") {
+      if (record.result) body += record.result.fromCarryover ? "<br><br>The carried investigation is now complete. Recorded completion owner: "+esc(casebookOwner(record.result.ownerId))+". See the original record for its verification history." : "<br><br>Next-shift task: verified firsthand by "+esc(casebookOwner(record.result.ownerId))+". Human outcome: restored.";
+      body += "<br><br>No repeat reward or duplicate closure is generated by revisiting this record.";
+    } else if (record.kind === "carryover") {
+      options.push({t:"Resume original investigation",f:function(){if(root.TechOpsCampaignInvestigations)root.TechOpsCampaignInvestigations.openInvestigation(ticketId);else callDialog("INVESTIGATION UNAVAILABLE","The investigation module has not loaded. The ticket has not been closed.",[{t:"Back",f:closeDialog}]);}});
+    } else if (record.phase === "gather" || review) {
+      body += "<br><br><b>RECORDED OBSERVATIONS</b><br>"+(record.evidence.map(function(id){var item=def.evidence.find(function(e){return e.id === id;});return item?esc(item.text):"";}).filter(Boolean).join("<br><br>") || "No new observations yet.");
+      def.evidence.filter(function(item){return record.evidence.indexOf(item.id) < 0;}).forEach(function(item){options.push({t:item.label,f:function(){commitWorkdayAction(ticketId,"observe",item.id);}});});
+      if (record.phase === "gather" && record.evidence.indexOf("requester") >= 0 && record.evidence.indexOf("technical") >= 0) {
+        def.hypotheses.filter(function(item){return record.ruledOut.indexOf(item.id) < 0;}).forEach(function(item){options.push({t:item.label,f:function(){commitWorkdayAction(ticketId,"hypothesis",item.id);}});});
+      }
+      if (record.phase !== "gather") options.push({t:"Resume current step",f:function(){openWorkdayFollowup(ticketId);}});
+    } else if (record.phase === "remediate") {
+      body += "<br><br>"+esc(def.remediation);
+      options.push({t:"Apply the supported remediation",f:function(){commitWorkdayAction(ticketId,"remediate");}});
+    } else if (record.phase === "technical_check") {
+      body += "<br><br>Test the changed path again. Applying a fix is not a technical pass.";
+      options.push({t:"Run the technical recheck",f:function(){commitWorkdayAction(ticketId,"technical_check");}});
+    } else if (record.phase === "human_verify") {
+      body += "<br><br><b>TECHNICAL CHECK PASSED</b><br>"+esc(def.technicalCheck)+"<br><br>"+esc(def.humanVerification);
+      options.push({t:"Requester performs and confirms the task",f:function(){commitWorkdayAction(ticketId,"verify_requester");}});
+    }
+    if (record.phase !== "gather" && record.phase !== "carryover" && record.phase !== "complete" && !review) options.push({t:"Review observations",f:function(){openWorkdayFollowup(ticketId,true);}});
+    options.push({t:"Original Day 1 record",f:function(){openTicketRecord(ticketId);}});
+    options.push({t:"Back to shift handoff",f:openWorkdayHandoff});
+    options.push({t:"Return to work",f:closeDialog});
+    return callDialog(def.title,body,options);
+  }
+  // Presentation may show the newly verified service without rewriting history.
+  function currentServiceRecord(state, ticketId) {
+    var item = ticketRecord(state,ticketId), record = shiftRecord(state,ticketId);
+    if (record && record.phase === "complete" && record.result && record.result.verification === "strong" && record.result.humanOutcome === "restored") {
+      item.status="VERIFIED / RESTORED"; item.humanOutcome="restored"; item.verification="strong"; item.technical="CONFIRMED"; item.needsAttention=false; item.conflict=false;
+    }
+    return item;
+  }
+
   function workstationOptions() {
-    return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat([{ t: "Exit workstation", f: closeDialog }]);
+    return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat(root.TechOpsCombatAudio ? [{t:"Combat sound & captions",f:function(){root.TechOpsCombatAudio.openSettings(openWorkstation);}}] : []).concat([{ t: "Exit workstation", f: closeDialog }]);
   }
 
   function openWorkstation() {
@@ -296,12 +398,13 @@
   function openWorkstationTab(tab) {
     setAssetContext("workstation");
     var state = ensureWorkstationChecked(loadState());
+    if (tab === "QUEUE" && state.flags.tuesday_morning_reached) return openWorkdayHandoff();
     if (tab === "QUEUE") {
       return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL OPENING COMPLETE") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "TEAMS") {
       var messages = Object.keys(TICKET_COPY).map(function (id) { return casebookEscape(ticketFollowUp(state, id)); }).join("<br><br>");
-      return callDialog("WORKSTATION // TEAMS", messages, [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // TEAMS", messages, (state.flags.tuesday_morning_reached ? [{t:"Review shift handoff",f:openWorkdayHandoff}] : []).concat([{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]));
     }
     if (tab === "ALERTS") {
       return callDialog("WORKSTATION // ALERTS", "02:13  SECTOR04-EAST  ACCESS GRANTED<br>05:42  PLATING-WS07  SERVICE RECOVERY FAILED<br>07:18  SHIP-LBL02  QUEUE RETRY LIMIT<br><br>Nothing here says conspiracy. It says the morning has work in it.", [{ t: "Back to desktop", f: openWorkstation }]);
@@ -376,6 +479,12 @@
     return callDialog("09:00 // DAY SHIFT", "The desktop recedes back into the room.<br><br>Shipping is waiting. Plating is waiting. Security has a contradiction.<br><br><b>Now the clock begins.</b>", [{ t: "Stand up", f: closeDialog }]);
   }
 
+  function openFieldTicket(ticketId) {
+    var state=readCasebook();if(!state)return false;
+    if(!state.flags.day_work_unlocked || state.tickets[ticketId])return resolveTicket(ticketId);
+    if(root.TechOpsCampaignInvestigations && typeof root.TechOpsCampaignInvestigations.openInvestigation === "function")return root.TechOpsCampaignInvestigations.openInvestigation(ticketId);
+    return callDialog("INVESTIGATION UNAVAILABLE","The field investigation module has not loaded. No ticket was closed. Return to the contact after the module is available.",[{t:"Back",f:closeDialog}]);
+  }
   function resolveTicket(ticketId) {
     setAssetContext(TICKET_COPY[ticketId] && TICKET_COPY[ticketId].assetContext);
     var campaign = withAssignedState();
@@ -518,9 +627,9 @@
         var state = gameState(), native = state && state.meta && state.meta.campaignAct1Native;
         if (state && !state.inDialog && !state.inBattle && !state.nightMode && native) {
           var p = { x: state.px, y: state.py };
-          if (isAdjacent(p, native.standup)) return openStandup();
-          if (isAdjacent(p, native.shipping)) return resolveTicket("shipping_cannot_print");
-          if (isAdjacent(p, native.plating)) return resolveTicket("plating_workstation_down");
+          if (isAdjacent(p, native.standup)) return state.day >= 2 ? openWorkstation() : openStandup();
+          if (isAdjacent(p, native.shipping)) return openFieldTicket("shipping_cannot_print");
+          if (isAdjacent(p, native.plating)) return openFieldTicket("plating_workstation_down");
           if (isAdjacent(p, native.access)) return recordAccessEvidence();
         }
         if (dayWorkLocked() && blockedBaseWorkAtPlayer()) return pauseBaseWorkDialog();
@@ -531,6 +640,7 @@
       var originalNightDoorDialog = root.nightDoorDialog;
       root.nightDoorDialog = function () { var campaign = loadState(); if (campaign.flags.day_work_unlocked && campaign.campaign.day === 1 && !campaign.flags.tuesday_morning_reached) return sector04Door(); return originalNightDoorDialog.apply(this, arguments); };
     }
+    try{ensureWorld();}catch(error){root.__techopsCampaignNativeAct1WorldError=String(error&&error.message||error);}
     syncDayWorkMeta();
     return true;
   }
@@ -549,6 +659,9 @@
     openWorkstation: openWorkstation,
     openWorkstationTab: openWorkstationTab,
     ticketRecord: ticketRecord,
+    currentServiceRecord: currentServiceRecord,
+    openWorkdayHandoff: openWorkdayHandoff,
+    openWorkdayFollowup: openWorkdayFollowup,
     ticketHistory: ticketHistory,
     ticketFollowUp: ticketFollowUp,
     ticketEvents: ticketEvents,
@@ -562,6 +675,7 @@
     completeFeliciaVideo: completeFeliciaVideo,
     unlockDayShift: unlockDayShift,
     resolveTicket: resolveTicket,
+    openFieldTicket: openFieldTicket,
     recordAccessEvidence: recordAccessEvidence,
     sector04Door: sector04Door,
     insightSector04: insightSector04,
