@@ -11,12 +11,27 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
  const browser=await type.launch({headless:true,...(name==='chromium'&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
  try{for(const mode of ['local','solo']){
   const context=await browser.newContext(mode==='solo'?{...devices['iPhone 13']}:{viewport:{width:1280,height:800}}),page=await context.newPage(),errors=[];
+  let releaseBootstrap=()=>{};
+  if(mode==='local'){const gate=new Promise(resolve=>{releaseBootstrap=resolve;});await page.route('**/production_wrapper_guard.js?*',async route=>{await gate;await route.continue();});}
   const snap=async label=>page.screenshot({path:path.join(out,`coop-${name}-${mode}-${label}.png`)});
   page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(10000);
   try{
    await page.goto(base,{waitUntil:'domcontentloaded'});
-   await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.VERSION>=16&&window.TechOpsProductionBootstrap?.ready(),null,{timeout:20000}).catch(async()=>{await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.depsReady(),null,{timeout:10000});});
-   await clickGoodDogsLaunch(page);await page.locator('#gd-mode-solo').waitFor();await snap('selector');
+   if(mode==='local'){
+    // Hold one production dependency while clicking the real title button.
+    // An early launch must remain pending until the boarding adapter is installed.
+    await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.VERSION>=16&&document.querySelector('script[data-production-bootstrap="production_wrapper_guard.js"]'),null,{timeout:20000});
+    await clickGoodDogsLaunch(page);
+    await page.waitForFunction(()=>window.__goodBoysOpeningPhase?.phase==='opening-dependencies');
+    if(await page.evaluate(()=>!!document.querySelector('#gd-mode-solo')||!!window.NM?._v736))throw Error('Early title input entered campaign before production readiness');
+    releaseBootstrap();
+   }else{
+    await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.depsReady(),null,{timeout:20000});
+    await clickGoodDogsLaunch(page);
+   }
+   await page.locator('#gd-mode-solo').waitFor();
+   if(!await page.evaluate(()=>window.__productionBootstrapReady&&window.__techopsWrapperGuardInstalled&&window.__goodBoysShipFlightInstalled))throw Error('Selector appeared before required runtime dependencies');
+   await snap('selector');
    // Cancellation must leave title and launch authority usable.
    await page.locator('#gd-mode-cancel').click();await page.waitForTimeout(750);await clickGoodDogsLaunch(page);
    if(mode==='solo'){
@@ -63,7 +78,7 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
    if(errors.length)throw Error(errors.join('\n'));
    results.push({browser:name,mode,pass:true,controls:'real keyboard',m2CombatFixture:mode==='local',evidence:await page.evaluate(()=>({mode:TechOpsGoodDogsCoop.mode(),mission:NM._v736.m,puzzles:S.meta._v736.pairPuzzles,home:__goodDogsHomeSceneExit}))});
   }catch(e){results.push({browser:name,mode,pass:false,error:String(e.stack||e),errors,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,error:window.__goodBoysOpeningErrorDetail,step:window.__err736p,x:window.NM?.x,p:window.NM?._v736?.partner,puzzle:window.NM?._v736?.pairPuzzle,meta:window.S?.meta?._v736,dialog:window.S?.inDialog})).catch(()=>null)});await snap('error').catch(()=>{});}
-  finally{console.log(JSON.stringify(results.at(-1)));fs.writeFileSync(path.join(out,'coop.json'),JSON.stringify(results,null,2));await context.close();}
+  finally{releaseBootstrap();console.log(JSON.stringify(results.at(-1)));fs.writeFileSync(path.join(out,'coop.json'),JSON.stringify(results,null,2));await context.close();}
  }}finally{await browser.close();}
 }
 if(!results.length||results.some(r=>!r.pass))process.exitCode=1;

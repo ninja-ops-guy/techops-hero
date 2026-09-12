@@ -39,6 +39,7 @@ export async function routeState(page){
       hp:Number(n&&n.hp||0),partnerDown:!!(c&&c.chars&&Object.values(c.chars).some(ch=>ch&&ch.downed)),resolving:!!(c&&c.resolving),
       hard:window.__goodBoysHardButtonLaunch||null,openingPhase:window.__goodBoysOpeningPhase||null,openingError:window.__goodBoysOpeningErrorDetail||null,
       cutscene:{id:overlay&&overlay.dataset.activeCutscene||null,src:video&&(video.currentSrc||video.getAttribute('src'))||null,currentTime:Number(video&&video.currentTime||0),readyState:Number(video&&video.readyState||0),playButton:!!(play&&play.classList.contains('active')),exit:window.__goodDogsCutsceneExit||null},
+      dependencies:window.TechOpsGoodBoysButtonHardFix?.dependencySnapshot()||null,boardAttempt:window.__goodBoysBoardShipAttempt||null,boardError:window.__goodBoysBoardShipError||window.__goodBoysM2BoardingError||null,
       boardVisible:!!document.getElementById('good-boys-board-ship'),deckVisible:!!document.getElementById('good-boys-deck-supplied')
     };
   });

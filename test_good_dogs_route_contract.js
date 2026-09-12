@@ -174,7 +174,19 @@ const chronologyWatchdog=setTimeout(()=>{console.error("Chronology test stalled 
   vm.runInContext(hard,root);
   const title=root.TechOpsGoodBoysButtonHardFix;
   const moviesBefore=order.length;
-  await title.opening('fresh-test',title.freshConfig());
+  // Title dependencies arrive independently from the serial production stack.
+  // Reproduce an early click with the wrapper/boarding adapter still loading.
+  const dependencyPolls=[];root.setTimeout=fn=>{dependencyPolls.push(fn);return dependencyPolls.length;};
+  assert.strictEqual(title.depsReady(),false,'partial title dependencies cannot unlock gameplay');
+  const freshOpening=title.opening('fresh-test',title.freshConfig());
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepStrictEqual(homeEvents,[],'an early click must wait before selecting a mode or playing the prologue');
+  root.__productionBootstrapReady=true;root.__techopsWrapperGuardInstalled=true;
+  assert.strictEqual(title.depsReady(),false,'boarding adapter must be installed before title handoff');
+  root.__goodBoysShipFlightInstalled=true;
+  assert.strictEqual(title.depsReady(),true);
+  dependencyPolls.shift()();
+  await freshOpening;
   assert.strictEqual(root.NM._v736.m,1);
   assert.strictEqual(order.length,moviesBefore,'fresh title launch must not play any movie');
   assert.deepStrictEqual(homeEvents,["choose","mode:local","house","mode:local"]);
