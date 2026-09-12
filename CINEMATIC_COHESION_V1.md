@@ -196,6 +196,6 @@ Physical iPhone Safari remains a release-evidence requirement. Playwright WebKit
 
 ## September 11 supplied-art follow-up
 
-See `ART_HANDOFF_INTEGRATION.md` for exact sources, accepted/excluded poses, extraction, source hashes and remaining acceptance. Six lazy atlases total 553,194 bytes before any later extraction refinement. No new image generation was used in this follow-up. The existing M3 raster from the earlier foundation is retained. This is raster compositing, not a delivered Blender/DCC project.
+See `ART_HANDOFF_INTEGRATION.md` for exact sources, accepted/excluded poses, extraction, source hashes and remaining acceptance. Seven atlases total 585,070 bytes before any later extraction refinement. No new image generation was used in this follow-up. The existing M3 raster from the earlier foundation is retained. This is raster compositing, not a delivered Blender/DCC project.
 
 PR #15 initial CI exposed an outgoing-runtime race in the M1→M2 browser driver and a stale GD_CUT_02 checksum inherited from before source restore commit 776df25. The driver now waits for a fresh runtime with cleared mission transients. The checksum remains mandatory and matches the restored committed master; the MP4 is unchanged. H.264 checks continue using Chrome and WebKit.

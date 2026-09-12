@@ -63,6 +63,10 @@ assert.strictEqual(registry.resolveRuntimeContext({ nightMode: true }, { _v736: 
 assert.strictEqual(registry.resolveRuntimeContext({ nightMode: true }, { _sector04: true, district: "downtown" }).levelId, "day.sector04", "Sector 04 must outrank ordinary Night context");
 assert.strictEqual(registry.resolveRuntimeContext({ nightMode: true }, { district: "wooster", street: 2 }).levelId, "nightcrawler.wooster.2");
 
+for(let m=1;m<=8;m++){
+  const row=registry.goodDogsMission(m);
+  assert.strictEqual(registry.goodBoysDistricts()[row.environment.district].accent,row.environment.accent,"district projection must carry its palette before the first draw");
+}
 const presentations = context.TechOpsPresentationDirector;
 const token = presentations.begin({ id: "opening", owner: "test", mode: "gooddogs", blocking: true });
 assert.ok(token && presentations.isBlocking("gooddogs"));
@@ -74,6 +78,8 @@ assert.strictEqual(presentations.end(token, "completed-again"), false, "presenta
 assert.strictEqual(presentations.end(dayToken, "completed"), true);
 elements["good-dogs-cutscene-overlay"].classList.add("active");
 assert.ok(presentations.isBlocking("gooddogs"), "registered visible surfaces must participate in input blocking");
+elements["good-dogs-cutscene-overlay"].style.opacity="0";
+assert.ok(presentations.isBlocking("gooddogs"),"entry fades retain their input lock at zero opacity");
 elements["good-dogs-cutscene-overlay"].classList.remove("active");
 assert.ok(!presentations.isBlocking("gooddogs"));
 

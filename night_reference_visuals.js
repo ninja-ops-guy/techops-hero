@@ -45,11 +45,12 @@
     // Reference target is the large readable Sector 04 silhouette. The old
     // runtime rendered Mike near debug-sprite scale; production is intentionally larger.
     var h = Math.round(Math.max(92, (NM.h || 34) * 2.9));
-    var w = h;
+    var scale = h / (atlas.standingHeight || C);
+    var w = C * scale, spriteH = C * scale;
     var moving = Math.abs(NM.vx || 0) > .45;
     var bob = moving && NM.onGround ? Math.round(Math.sin((now || 0) / 92) * 1.5) : 0;
     var dx = Math.round(px + (NM.w || 22) / 2 - w / 2);
-    var dy = Math.round(py + (NM.h || 34) - h + 7 + bob);
+    var dy = Math.round(py + (NM.h || 34) + 7 - (atlas.pivot ? atlas.pivot[1] : C) * scale + bob);
     x.save();
     x.imageSmoothingEnabled = false;
     // grounded contact shadow helps the heavier reference silhouette read on wet streets
@@ -60,9 +61,9 @@
     if (NM.ifr > 0 && Math.floor((now || 0) / 80) % 2) x.globalAlpha = .55;
     if ((NM.face || 1) < 0) {
       x.translate(dx + w, 0); x.scale(-1, 1);
-      x.drawImage(img, fr[0], fr[1], C, C, 0, dy, w, h);
+      x.drawImage(img, fr[0], fr[1], C, C, 0, dy, w, spriteH);
     } else {
-      x.drawImage(img, fr[0], fr[1], C, C, dx, dy, w, h);
+      x.drawImage(img, fr[0], fr[1], C, C, dx, dy, w, spriteH);
     }
     x.restore();
     return true;

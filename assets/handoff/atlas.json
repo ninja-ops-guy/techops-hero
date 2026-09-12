@@ -1536,6 +1536,267 @@
         }
       ]
     },
+    "mikeCombat": {
+      "src": "assets/handoff/mikeCombat.png",
+      "sourceFile": "supplied/mike-night-combat.jpeg",
+      "sourceSha256": "299ad5a94cd462b8bd22a2198d5603b0ee2edfcd18d1f868e2d2985df21a5541",
+      "sha256": "564ce434b7a82510acb2bceed6e765b1b5594e41c5660d4e1dce28775899b4b3",
+      "width": 640,
+      "height": 256,
+      "standingHeight": 100,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "sourceRect": [
+            30,
+            31,
+            57,
+            118
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            40,
+            24,
+            48,
+            100
+          ],
+          "removedBackgroundPixels": 6325
+        },
+        {
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "sourceRect": [
+            122,
+            31,
+            57,
+            117
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            40,
+            25,
+            48,
+            99
+          ],
+          "removedBackgroundPixels": 7145
+        },
+        {
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "sourceRect": [
+            24,
+            173,
+            70,
+            106
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            34,
+            34,
+            60,
+            90
+          ],
+          "removedBackgroundPixels": 7031
+        },
+        {
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "sourceRect": [
+            114,
+            172,
+            75,
+            107
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            32,
+            33,
+            64,
+            91
+          ],
+          "removedBackgroundPixels": 8433
+        },
+        {
+          "rect": [
+            512,
+            0,
+            128,
+            128
+          ],
+          "sourceRect": [
+            212,
+            173,
+            103,
+            105
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            20,
+            35,
+            88,
+            89
+          ],
+          "removedBackgroundPixels": 9049
+        },
+        {
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "sourceRect": [
+            356,
+            303,
+            96,
+            112
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            23,
+            29,
+            82,
+            95
+          ],
+          "removedBackgroundPixels": 9101
+        },
+        {
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "sourceRect": [
+            743,
+            303,
+            88,
+            112
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            27,
+            29,
+            75,
+            95
+          ],
+          "removedBackgroundPixels": 9238
+        },
+        {
+          "rect": [
+            256,
+            128,
+            128,
+            128
+          ],
+          "sourceRect": [
+            223,
+            861,
+            62,
+            116
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            38,
+            25,
+            53,
+            99
+          ],
+          "removedBackgroundPixels": 7946
+        },
+        {
+          "rect": [
+            384,
+            128,
+            128,
+            128
+          ],
+          "sourceRect": [
+            153,
+            1123,
+            92,
+            96
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            25,
+            42,
+            78,
+            82
+          ],
+          "removedBackgroundPixels": 9057
+        },
+        {
+          "rect": [
+            512,
+            128,
+            128,
+            128
+          ],
+          "sourceRect": [
+            164,
+            1278,
+            89,
+            35
+          ],
+          "pivot": [
+            64,
+            124
+          ],
+          "opaqueBounds": [
+            26,
+            94,
+            76,
+            30
+          ],
+          "removedBackgroundPixels": 6301
+        }
+      ]
+    },
     "waldo": {
       "src": "assets/handoff/waldo.png",
       "sourceFile": "generated/waldo-prison-masked.png",

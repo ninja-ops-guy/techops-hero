@@ -57,7 +57,8 @@ jobs:
 
       - name: Start exact-commit local server
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/techops-runtime-server.log 2>&1 &
+          python3 scripts/test_media_http_server.py
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > /tmp/techops-runtime-server.log 2>&1 &
           echo $! > /tmp/techops-runtime-server.pid
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0

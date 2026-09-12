@@ -27,7 +27,7 @@
   ];
   for(var i=1;i<=33;i++)SOURCE_PARTS.push("parts/campaign_ui_camp_ui_p"+String(i).padStart(3,"0")+".js");
   var PNG_ASSETS=[
-    "assets/handoff/kat.png","assets/handoff/man.png","assets/handoff/mike.png","assets/handoff/waldo.png","assets/handoff/charger.png","assets/handoff/prison.png",
+    "assets/handoff/kat.png","assets/handoff/man.png","assets/handoff/mike.png","assets/handoff/mikeCombat.png","assets/handoff/waldo.png","assets/handoff/charger.png","assets/handoff/prison.png",
     "assets/campaign/plating.line_background.png","assets/campaign/plating.line_stopped_display.png","assets/campaign/plating.operator.idle.png","assets/campaign/plating.workstation_cracked.png",
     "assets/campaign/sector04.access_guard.attack.png","assets/campaign/sector04.access_guard.idle.png","assets/campaign/sector04.access_guard.respawn.png","assets/campaign/sector04.access_guard.suppressed.png",
     "assets/campaign/sector04.identity_controller.active.png","assets/campaign/sector04.identity_controller.severed.png","assets/campaign/sector04.identity_controller.spark_fx.png","assets/campaign/sector04.locked_violin_door.png","assets/campaign/sector04.purple_damage.enemy.png","assets/campaign/sector04.purple_damage.fx.png","assets/campaign/sector04.terminal.symptoms.png","assets/campaign/sector04.violin_note.fx.png",

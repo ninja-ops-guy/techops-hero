@@ -16,6 +16,7 @@ const plans={
   kat:{file:'generated/katrin-locomotion.png',rects:regions(dogsX,[[62,331],[353,620],[637,882]]),cell:[160,128],scale:.38,standing:90},
   man:{file:'generated/manchez-locomotion.png',rects:regions(dogsX,[[67,341],[354,620],[635,882]]),cell:[160,128],scale:.38,standing:90},
   mike:{file:'generated/mike-night-traversal.png',rects:regions(humansX,[[35,285],[310,530],[540,790],[797,1017]]),cell:[160,144],scale:.46,standing:100},
+  mikeCombat:{file:'supplied/mike-night-combat.jpeg',rects:[[15,22,81,132],[109,22,87,132],[14,162,89,124],[110,160,98,127],[209,159,106,126],[349,302,111,120],[734,302,111,122],[208,856,94,129],[136,1118,109,116],[153,1252,105,82]],cell:[128,128],columns:5,scale:.85,standing:100},
   waldo:{file:'generated/waldo-prison-masked.png',rects:regions(humansX,[[15,272],[277,511],[518,756],[765,1019]]),cell:[160,144],scale:.46,standing:100},
   charger:{file:'generated/charger-four-door.png',rects:[[10,165,748,281],[775,163,740,283]],cell:[384,160],scale:.49,standing:128},
   prison:{file:'generated/orbital-prison-props.png',rects:[[7,5,347,330],[402,5,344,330],[752,5,375,344],[1140,25,389,310],[2,450,394,177],[412,381,345,291],[775,382,430,265],[1220,388,306,295],[48,682,259,321],[431,691,193,309],[711,730,414,236],[1220,675,257,337]],cell:[224,192],scale:.50,standing:170}
@@ -35,7 +36,7 @@ async function main(){
  for(const [id,plan] of Object.entries(plans)){
   const bytes=fs.readFileSync(path.join(source,plan.file)),expected=sourceManifest.assets.find(a=>a.file===plan.file);
   if(hash(bytes)!==expected.sha256)throw Error('Source digest mismatch: '+plan.file);
-  const [cw,ch]=plan.cell,frames=[],composite=[];
+  const [cw,ch]=plan.cell,cols=plan.columns||6,frames=[],composite=[];
   for(let i=0;i<plan.rects.length;i++){
    const [left,top,width,height]=plan.rects[i],raw=await sharp(bytes).extract({left,top,width,height}).ensureAlpha().raw().toBuffer();
    const removed=alphaExterior(raw,width,height);let l=width,t=height,r=-1,b=-1;
@@ -44,13 +45,17 @@ async function main(){
    const w=Math.max(1,Math.round((r-l+1)*plan.scale)),h=Math.max(1,Math.round((b-t+1)*plan.scale));
    if(w>cw-4||h>ch-4)throw Error('Clipped frame '+id+':'+i);
    const png=await sharp(raw,{raw:{width,height,channels:4}}).extract({left:l,top:t,width:r-l+1,height:b-t+1}).resize(w,h,{kernel:'nearest'}).png().toBuffer();
-   const x=i%6*cw,y=Math.floor(i/6)*ch,px=Math.round((cw-w)/2),py=ch-h-4;
+   const x=i%cols*cw,y=Math.floor(i/cols)*ch,px=Math.round((cw-w)/2),py=ch-h-4;
    composite.push({input:png,left:x+px,top:y+py});
    frames.push({rect:[x,y,cw,ch],sourceRect:[left+l,top+t,r-l+1,b-t+1],pivot:[cw/2,ch-4],opaqueBounds:[px,py,w,h],removedBackgroundPixels:removed});
   }
-  const atlas=await sharp({create:{width:6*cw,height:Math.ceil(frames.length/6)*ch,channels:4,background:{r:0,g:0,b:0,alpha:0}}}).composite(composite).png({palette:true,colours:128,dither:0}).toBuffer();
+  const atlas=await sharp({create:{width:cols*cw,height:Math.ceil(frames.length/cols)*ch,channels:4,background:{r:0,g:0,b:0,alpha:0}}}).composite(composite).png({palette:true,colours:128,dither:0}).toBuffer();
   fs.writeFileSync(path.join(out,id+'.png'),atlas);
-  manifest.atlases[id]={src:'assets/handoff/'+id+'.png',sourceFile:plan.file,sourceSha256:hash(bytes),sha256:hash(atlas),width:6*cw,height:Math.ceil(frames.length/6)*ch,standingHeight:plan.standing,frames};
+  if(id==='mikeCombat'){
+   const target=path.resolve('night_walker_reference_v1.js'),prior=fs.readFileSync(target,'utf8');
+   fs.writeFileSync(target,prior.replace(/src:"[^"]*"/, 'src:"data:image/png;base64,'+atlas.toString('base64')+'"').replace(/cell:128,cellH:128,pivot:\[[^\]]+\]/,'cell:128,cellH:128,pivot:[64,124],standingHeight:100').replace(/provenance:"[^"]*"/,'provenance:"supplied_mike_night_combat_extracted_20260912"'));
+  }
+  manifest.atlases[id]={src:'assets/handoff/'+id+'.png',sourceFile:plan.file,sourceSha256:hash(bytes),sha256:hash(atlas),width:cols*cw,height:Math.ceil(frames.length/cols)*ch,standingHeight:plan.standing,frames};
  }
  fs.writeFileSync(path.join(out,'atlas.json'),JSON.stringify(manifest,null,2)+'\n');
  fs.writeFileSync(path.resolve('ART_HANDOFF_SOURCE.json'),JSON.stringify(sourceManifest,null,2)+'\n');

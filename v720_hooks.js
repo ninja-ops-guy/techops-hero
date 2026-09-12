@@ -117,7 +117,7 @@
     const s = S;
     const r = __origInteract720.apply(this, arguments);
     // only inspect when nothing else claimed the interaction
-    if (!s || s.inDialog || s.inBattle) return r;
+    if (!s || s.nightMode || s.inDialog || s.inBattle) return r;
     if (!(window.v63 && window.v63.v63PropSpots)) return r;
     const spots = window.v63.v63PropSpots(s);
     const hit = spots.find(([, x, y]) => Math.abs(x - s.px) + Math.abs(y - s.py) === 1);

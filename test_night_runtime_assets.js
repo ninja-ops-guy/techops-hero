@@ -83,3 +83,12 @@ assert.ok(/localStorage\.removeItem\("techops_char"\)/.test(v737Hooks),
   "normal-run cleanup must remove persisted Night Crawler selection before newState()");
 
 console.log("Night reference visual authority + normal-run isolation: PASS");
+
+// Shared keys still reach Night combat, but cannot invoke Day prop inspection.
+const vm=require('node:vm'),gameSource=fs.readFileSync('game.js','utf8');
+const dayKeys=gameSource.slice(gameSource.indexOf('const keys = {};'),gameSource.indexOf('addEventListener("keyup"'));
+let handler,interactions=0;
+const input={S:{nightMode:true},addEventListener(kind,fn){handler=fn;},interact(){interactions++;},openPanel(){},toggleTwin(){}};
+vm.createContext(input);vm.runInContext(dayKeys,input);
+handler({key:'e'});assert.strictEqual(interactions,0);assert.strictEqual(vm.runInContext('keys.e',input),true);
+input.S.nightMode=false;handler({key:'e'});assert.strictEqual(interactions,1);

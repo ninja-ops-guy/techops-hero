@@ -48,7 +48,7 @@ try{
   // the completed handoff, its transition cooldown, and the entry briefing.
   await page.waitForFunction(()=>{
     const a=window.TechOpsGoodBoysProgressionAuthority?.acceptance();
-    return a?.active&&a.mission===3&&a.handoffComplete?.mission===3&&!a.handoff&&!a.transition&&a.lastAdvanceAge>=700;
+    return a?.active&&a.mission===3&&a.handoffComplete?.mission===3&&!a.handoff&&!a.transition&&(a.lastAdvanceAge===null||a.lastAdvanceAge>=700);
   },null,{timeout:9000});
   await clearBlockingCines(page,2500);
   await page.waitForFunction(()=>!window.S.inDialog,null,{timeout:5000});
