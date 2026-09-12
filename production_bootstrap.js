@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=31,BUILD="20260912-production-v31-good-dogs-reference-ui",started=false,done=false;
+  var VERSION=31,BUILD="20260912-production-v31-good-dogs-ui-night-flow-r2",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -32,6 +32,7 @@
     "day_cinematic_mobile_guard.js",
     "production_runtime_safety.js",
     "production_mode_router.js",
+    "runtime_night.js",
     "production_presentation_guard.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
@@ -61,6 +62,7 @@
     try{if(root.TechOpsGoodDogsCutsceneBridge)root.TechOpsGoodDogsCutsceneBridge.tick();}catch(e){root.__productionGoodDogsCutsceneBridgeError=String(e&&e.stack||e);}
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
+    try{if(root.TechOpsNightFlow)root.TechOpsNightFlow.install();}catch(e){root.__productionNightFlowError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
