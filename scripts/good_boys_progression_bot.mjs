@@ -31,6 +31,7 @@ async function resolveCutscene(page,id,timeout=12000){
   const overlay=page.locator('#good-dogs-cutscene-overlay.active');if(await overlay.count()){const play=page.locator('#good-dogs-cutscene-overlay.active .gd-film-play.active');if(await play.count())await play.evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(100);if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await click(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');}
   await page.waitForFunction(want=>{const e=window.__goodDogsCutsceneExit;return !!(e&&e.id===want&&(e.status==='COMPLETED'||e.status==='USER_SKIPPED'));},id,{timeout});
   await page.waitForFunction(()=>!document.querySelector('#good-dogs-cutscene-overlay.active'),null,{timeout:3000});
+  await page.waitForFunction(()=>{const bridge=window.TechOpsGoodDogsCutsceneBridge;return !!bridge&&!bridge.running&&!window.__goodDogsPreRenderedCutsceneActive;},null,{timeout:3000});
   d=await snap(page);log('cutscene-'+id+'-complete',d);return d;
 }
 
