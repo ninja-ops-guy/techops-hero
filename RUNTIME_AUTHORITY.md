@@ -70,7 +70,3 @@ Do not add `v738_hooks.js`, `v739_hooks.js`, or another numbered production hook
 ## Contextual Night Crawler combat
 
 `night_combat.js` owns street attack phases, grabs, throws, stun and finite air juggles. The existing `night_hooks.js` step calls it directly and retains locomotion, district travel and enemy AI outside reaction states. Contact resolves augments and KO rewards once; `night_reference_visuals.js` consumes presentation poses. Good Dogs, Sector 04 and Waldo's property are excluded.
-
-## Night Walker lifecycle
-
-`runtime_night.js` owns main-loop dispatch to the existing immutable Night compositor, the paused/bounded Night clock, the spatial Mike's-house interaction, and reversible day/night UI cleanup. Its campaign hub reads the canonical campaign state and delegates Sector 04 to `campaign_sector04_runtime.js`; it never grants evidence or completion flags. Three return scenes are registered with the existing `v725` cinematic engine, not a second scene player. Good Dogs retains its existing runtime. See `docs/NIGHT_WALKER_LIFECYCLE.md` for boundaries and regression commands.

@@ -1,29 +1,29 @@
-# Night Walker lifecycle and campaign return
+# Night Walker lifecycle — reviewed integration
+
+This branch consolidates PR #24 with `main` at `8004cef72a33b466285076f25af64a5f0570e6b5`, including the merged PR #25 feature scope and the new Good Dogs reference UI. The production path has one `TechOpsNightRuntime` owner. The interval-based `TechOpsNightFlow` and PR #23's `TechOpsNightSession` are not loaded alongside it.
 
 ## Player path
 
-Use the Charger to travel to **Home Street**, then approach the lit door marked **Mike's House**. Press **E**, use the interaction control, or tap **Enter Mike's house**. Choose **Sleep — return to day mode** or **Stay out tonight**. Crossing the right edge is no longer an invisible sleep trigger.
+Use the Charger to travel to Home Street. Approach the lit ground-level door at Mike's house, then use E, the interaction control, or Enter Mike's house. Sleep opens the existing v725 three-shot home/interior/morning scene. Stay out leaves the night active; walking to the map edge does not silently sleep. Existing after-hours maintenance/study and end-of-day reward review remain in the exit chain. Sleeping does not complete story objectives.
 
-Sleep uses a three-shot, letterboxed home/interior/morning sequence registered in the existing cinematic engine. It supports the engine's keyboard/touch skip plus an explicit accessible skip button. Normal completion and skipping share a once-only continuation. After-hours maintenance/study and the normal end-of-day reward choice remain intact; choosing a day-review reward starts the next daytime shift. Sleeping does **not** complete campaign objectives.
+The visible CAMPAIGN [C] control and Charger entry delegate to the existing After Hours/Sector 04 campaign. Missing daytime prerequisites remain missing. A return to investigation preserves the recorded evidence and restores the original day clock. Sector 04 waits for the Night Drive attachment event, and continuing an active encounter does not reset it.
 
-**CAMPAIGN [C]** is visible during Night gameplay and the Charger has a campaign entry. This connects to the existing **Chapter I — After Hours / Sector 04** encounter. The menu distinguishes the authored campaign from free roam. It exposes missing daytime prerequisites rather than fabricating evidence. Returning to daytime investigation restores the same campaign day and pre-night work clock. After the canonical terminal has completed Sector 04, its Tuesday action performs the actual runtime handoff to the next day.
+## Ownership
 
-## Ownership and timing
+One in-game minute passes per five active gameplay seconds. Travel counts; dialogue, cinematics, menus, pause, game-over and hidden tabs do not. Deltas are bounded and invalid numbers are ignored. Midnight wraps the display without aging work tickets or incrementing the office day. Good Dogs and Waldo retain their existing loop ownership. Automatic street-time jumps are retired under the continuous owner.
 
-`runtime_night.js` is loaded once by `production_bootstrap.js`, after the existing authorities. The parser-time script count remains within the existing ceiling. It adds no interval or timer-driven maintenance owner.
+Home scenes acquire the existing presentation director's blocking claim. Tests run the actual production guard against that claim: stale-dialog repair cannot clear the cinematic pause. Normal completion, skip, missing-renderer fallback and stale callbacks share a once-only settlement boundary. Night selection is cleared before the original exit chain to prevent immediate re-entry.
 
-The main frame dispatches Night Walker directly into the immutable `stepNM`/`drawNM` compositor. The legacy daytime `step`/`draw` chains therefore cannot emit office events or draw daytime weather over Night Walker. Good Dogs retains its existing frame path. Day-only interaction handlers also reject Night state, including office NPCs and inherited day-ticket portals. Canonical Sector 04 interaction remains available.
+The main frame dispatches Night before legacy day step/draw wrappers. Day interactions and delayed announcements are explicitly mode-scoped rather than suppressed by matching their text. The Good Dogs opening wrapper keeps a local predecessor to avoid recursive guard composition.
 
-One in-game minute passes per **five active gameplay seconds**. Travel and combat count; dialogue, cinematics, menus, hidden documents and pause states do not. Frame deltas are bounded, so reopening a suspended tab does not fast-forward the night. The clock is monotonic across midnight and displayed modulo 24 hours. Automatic 20-minute per-street jumps are retired when this owner is present. Night advancement never ages work tickets or raises daytime incidents. A night clock checkpoint is retained in the existing game metadata, without introducing a second campaign save.
+The short landscape title is scrollable; acceptance uses a normal click or touch tap, not a forced click. Movement acceptance observes acknowledged input, an advancing production-step counter and actual position change, and reports all three when it fails.
 
-Delayed weather/week/day-theme notices capture their original state, day and mode generation. Switching modes or replacing a run invalidates them. Legitimate Night dialogue is not suppressed by matching words in its text.
+## Validation and limits
 
-## Transition invariants
+`node scripts/production_release_gate.js` runs the existing aggregate gate plus 16 lifecycle regression groups. `test_runtime_night.js` remains a compatibility test entry and delegates to the replacement lifecycle suite rather than testing the retired heartbeat implementation.
 
-The existing Night Crawler character selector is cleared before invoking the original exit chain, preventing its legacy automatic re-entry. Day HUD/controls are restored when the Night world detaches. Scene tokens are released on completion; duplicate and stale callbacks cannot settle another night or mutate a replacement run. Daytime investigation recovery keeps campaign evidence and choices; the Sector 04 renderer attaches after the Night Drive's entered event instead of assuming a synchronous launch.
+`npm ci` and `npx playwright install --with-deps chromium firefox webkit`, then `node scripts/night_lifecycle_browser.mjs`, exercise the production page in Chromium, Firefox, WebKit and touch-enabled landscape WebKit. Story prerequisites and selected travel positions are explicit fixtures. The tests are not unassisted campaign completion or physical iPhone validation.
 
-## Validation
+The workflow is read-only, disables persisted checkout credentials, preserves failures through `tee` using explicit pipefail, and captures tested commit/source hashes plus browser reports and screenshots. Local Chromium was blocked from accessing the local server by the execution environment; cross-browser outcomes must be read from this branch's CI, not inferred from Node tests.
 
-Run `node scripts/production_release_gate.js` for the production contract gate, including `test_night_lifecycle.js`. The new suite covers the night clock, pause/midnight semantics, mode isolation, house bounds, optional stay-out path, once-only sleep/skip/fallback, stale callbacks, campaign gating, recovery and asynchronous Sector 04 attachment.
-
-Run `npm ci`, install the pinned Playwright browsers, then run `node scripts/night_lifecycle_browser.mjs`. This exercises Chromium, Firefox, WebKit and touch-enabled mobile WebKit against the actual served game. Browser artifacts are written to `artifacts/night-lifecycle/`; inspect the JSON status and screenshots rather than assuming a launched job passed. Desktop WebKit emulation is not a substitute for testing on a physical iPhone.
+PR #23's office follow-ups/shared-context audio and PR #26's presentation additions are separate review work. The directional combat package remains a separate integration until its production touch tests pass. Do not merge competing clocks or sound generators merely to resolve a textual conflict.

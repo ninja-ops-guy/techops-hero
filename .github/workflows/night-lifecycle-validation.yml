@@ -1,19 +1,22 @@
 name: Night lifecycle validation
 on:
-  push:
-    branches: [fix/night-walker-lifecycle]
   pull_request:
+    branches: [main]
     paths:
       - '**.js'
-      - 'scripts/night_lifecycle_browser.mjs'
-      - 'scripts/night_browser_limits.mjs'
-      - 'index.html'
+      - 'scripts/**'
+      - '*.html'
+      - '*.css'
+      - 'package*.json'
       - '.github/workflows/night-lifecycle-validation.yml'
 permissions:
   contents: read
 concurrency:
   group: night-lifecycle-${{ github.ref }}
   cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -28,21 +31,25 @@ jobs:
           cache: npm
       - name: Production and lifecycle regression gate
         run: |
+          set -euo pipefail
           mkdir -p artifacts/night-lifecycle
+          git rev-parse HEAD > artifacts/night-lifecycle/tested-commit.txt
           node scripts/production_release_gate.js | tee artifacts/night-lifecycle/production-gate.log
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: Browser acceptance
-        run: timeout 480s node --import ./scripts/night_browser_limits.mjs scripts/night_lifecycle_browser.mjs
+        run: |
+          set -euo pipefail
+          timeout 480s node scripts/night_lifecycle_browser.mjs | tee artifacts/night-lifecycle/browser.log
       - name: Tested source identity
         if: always()
         run: |
+          set -euo pipefail
           mkdir -p artifacts/night-lifecycle
-          git rev-parse HEAD > artifacts/night-lifecycle/tested-commit.txt
-          sha256sum runtime_night.js scripts/night_lifecycle_browser.mjs > artifacts/night-lifecycle/source-sha256.txt
+          sha256sum runtime_night.js scripts/night_lifecycle_browser.mjs production_bootstrap.js > artifacts/night-lifecycle/source-sha256.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: night-lifecycle-browser-evidence
-          path: artifacts/night-lifecycle
+          name: night-lifecycle-${{ github.sha }}
+          path: artifacts/night-lifecycle/
           retention-days: 7

@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v31.
+/* TechOps Hero — production runtime bootstrap v32.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=31,BUILD="20260912-production-v31-night-lifecycle-r1",started=false,done=false;
+  var VERSION=32,BUILD="20260912-production-v32-night-reviewed-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -24,6 +24,7 @@
     "good_boys_gameplay_loop.js",
     "good_boys_prison_gameplay_v2.js",
     "good_boys_mobile_controls_layout.js",
+    "good_boys_reference_ui_v1.js",
     "good_boys_mobile_launch_guard.js",
     "good_boys_ship_flight.js",
     "good_dogs_cutscenes_v2_2.js",
@@ -56,6 +57,7 @@
     try{if(root.TechOpsGoodBoysMobileCinematicPolish)root.TechOpsGoodBoysMobileCinematicPolish.apply();}catch(e){root.__productionMobileCinePolishError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysPrisonGameplayV2)root.TechOpsGoodBoysPrisonGameplayV2.tick();}catch(e){root.__productionGoodBoysPrisonGameplayError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysMobileControlsLayout)root.TechOpsGoodBoysMobileControlsLayout.apply();}catch(e){root.__productionGoodBoysControlLayoutError=String(e&&e.stack||e);}
+    try{if(root.TechOpsGoodBoysReferenceUI)root.TechOpsGoodBoysReferenceUI.apply();}catch(e){root.__productionGoodBoysReferenceUIError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodBoysShipFlight)root.TechOpsGoodBoysShipFlight.install();}catch(e){root.__productionGoodBoysShipFlightError=String(e&&e.stack||e);}
     try{if(root.TechOpsGoodDogsCutsceneBridge)root.TechOpsGoodDogsCutsceneBridge.tick();}catch(e){root.__productionGoodDogsCutsceneBridgeError=String(e&&e.stack||e);}
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
