@@ -12,7 +12,7 @@ Load the JS after the main game/campaign state scripts.
 
 ## Trigger calls
 ```js
-await GoodDogsCutscenes.play("GD_CUT_03"); // after shuttle launch, before Dock Infiltration
+await GoodDogsCutscenes.play("GD_CUT_02"); // after center-pilot interaction, before Good Ship Prison Run
 await GoodDogsCutscenes.play("GD_CUT_04"); // after traversal setup; lands on Cell 118 terminal
 await GoodDogsCutscenes.play("GD_CUT_05"); // K reveal
 await GoodDogsCutscenes.play("GD_CUT_06"); // after K/Mike Index resolution
@@ -35,6 +35,7 @@ game pixels without changing scene content or audio.
 - saves `S.meta.goodDogsCutscenes[id]` when `window.S` exists
 - mobile `playsinline`
 - no silent character-art fallback because these are fixed pre-rendered clips
+- the opening no longer plays `GD_CUT_03`; crash is owned by `09_prison_crash_selected_pixel.mp4`
 
 ## Live repo note
 This package is prepared for direct integration, but the GitHub connector was unavailable during

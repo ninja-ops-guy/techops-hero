@@ -13,8 +13,19 @@
   // ---------- P0-3: camera smoothing ----------
   let smx = null, smy = null, lastT = 0;
   function cameraPre(s) {
-    if (!s || s.room || s.nightMode || !animsOn()) { smx = null; return; }
+    if (!s || s.room || s.nightMode || !animsOn()) { smx = null; try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("day"); } catch (e) { } return; }
     const now = performance.now(), dt = Math.min(80, now - (lastT || now)); lastT = now;
+    try {
+      const director = window.TechOpsCameraDirector;
+      if (director) {
+        const facing = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[s.fx] || [0, 0];
+        const d = director.offset("day", { profile: "day.grid", nowMs: now, targetX: s.px, targetY: s.py,
+          facingX: facing[0], facingY: facing[1], viewportW: 1, viewportH: 1, worldW: 100000, worldH: 100000,
+          enabled: true, reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) });
+        if (d && Math.abs(d.x) + Math.abs(d.y) >= .001) { s.px += d.x; s.py += d.y; return [d.x, d.y]; }
+        return null;
+      }
+    } catch (e) { window.__cameraDirectorDayError = String(e && e.stack || e); }
     if (smx === null) { smx = s.px; smy = s.py; }
     // look-ahead half a tile toward facing
     const la = { left: [-.5, 0], right: [.5, 0], up: [0, -.5], down: [0, .5] }[s.fx] || [0, 0];

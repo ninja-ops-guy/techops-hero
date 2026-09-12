@@ -1,6 +1,6 @@
 # TechOps Hero — Production Readiness
 
-**Authority date:** 2026-08-27  
+**Authority date:** 2026-09-11
 **Baseline:** Story Bible v1.2 / Production v1.2  
 **Primary release tracker:** GitHub issue #4
 
@@ -8,11 +8,11 @@ This document is the current readiness snapshot. Historical “shippable” verd
 
 ## Current readiness verdict
 
-**Shipped-asset integration: COMPLETE by repository contract.** The production inventory currently covers every physical `.png` and `.json` under `assets/`: **76 PNGs + 2 JSON manifests = 78/78 physical assets**, plus 52 campaign payload parts and 39 runtime atlas/reference authorities. The registry now fails closed for script, image-decode and JSON-fetch failures; a file existing in the repository is no longer enough to count as integrated.
+**Shipped-asset integration: PASS by repository contract.** The current asset gate covers 91 PNGs, 1 JPG, 3 JSON manifests, 52 payload parts, and 43 asset authorities (95 physical assets). The registry fails closed for script, image-decode and JSON-fetch failures; asset inventory is separate from visual acceptance.
 
-**Deterministic production contracts: GREEN on the current compositor workstream.** Campaign Contracts exercises syntax, campaign semantics, Good Boys, Sector 04, asset coverage, Night art authority, mobile contracts, the single-compositor contract, co-op UI and the aggregate release gate.
+**Deterministic production contracts: GREEN in the September 11 issue-review checkout.** The aggregate gate now includes paired-combat hit/whiff and interaction isolation, Good Boys world/completion isolation, and repeat-run media-repair integrity. See `OPEN_ISSUES_REVIEW_2026-09-11.md` for the reviewed baseline, evidence scope, and outstanding work.
 
-**Production release: NOT YET CERTIFIED.** Browser Runtime bot and real-device acceptance remain required. The last pre-snapshot browser run (`f8b49d4`, Runtime bot #71) still reproduced recursive Night rendering and a frozen Night Crawler; the compositor has since been changed to consume an immutable final parser-chain snapshot and must pass Runtime bot on the exact final SHA before release-candidate status.
+**Production release: NOT YET CERTIFIED.** The reviewed main commit `a7fc7c5` has recent successful Runtime bot runs, but also an intermittent GD_CUT_02 Chromium media failure. Its Runtime Fixer repeatedly selected an unrelated compatible clip and could not create PRs due to repository Actions permissions. This repair branch addresses that incorrect repair behavior and uses Chrome for desktop H.264 tests with decoded-frame assertions. The restored Warden/Earthfall fixture exposed and fixed a lingering legacy completion modal. Exact-commit CI and physical-device evidence remain release requirements.
 
 Asset integration completeness and art completeness are separate claims. Do not mark missing/uncertified source art “integrated” by inventing mappings or procedural substitutes.
 

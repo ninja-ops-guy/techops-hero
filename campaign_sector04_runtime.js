@@ -190,7 +190,7 @@
   }
 
   function browserNight() { return root && root.S && root.S.nightMode ? root.S.nightMode : null; }
-  function enterBrowser() { var campaign = loadCampaign(); if (root.closeDlg) root.closeDlg(); if (root.enterNight) root.enterNight(); var night = browserNight(); if (!night) throw new Error("Night mode did not start"); createEncounter(campaign, night); saveCampaign(campaign); return night._sector04; }
+  function enterBrowser() { var campaign = loadCampaign(); if (root.closeDlg) root.closeDlg(); if (root.enterNight) root.enterNight(); var night = browserNight(); if (!night) throw new Error("Night mode did not start"); createEncounter(campaign, night); if (root.toast) root.toast("SECTOR 04 — investigate the controller · E to inspect · damage suppresses; understanding defeats.", 4200); saveCampaign(campaign); return night._sector04; }
   function browserInteract() {
     var night = browserNight(); if (!night || !night._sector04 || !night._sector04.active) return false; var campaign = loadCampaign(), result = inspectNearest(campaign, night, night.x + night.w / 2, night.y + night.h / 2); if (!result) return false; saveCampaign(campaign);
     if (result.message && root.dlg && (result.id === "symptoms_terminal" || result.blocked)) { var options = [{ t: "Continue", f: root.closeDlg }]; if (result.blocked && result.recovery && result.recovery.required) options.unshift({ t: "Return to daytime investigation", f: function () { var freshCampaign = loadCampaign(), freshNight = browserNight(); retreatToDayInvestigation(freshCampaign, freshNight); saveCampaign(freshCampaign); if (root.S) root.S.nightMode = null; if (root.closeDlg) root.closeDlg(); } }); root.dlg("SECTOR 04", result.message, options); }

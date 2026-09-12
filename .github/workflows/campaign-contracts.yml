@@ -5,11 +5,13 @@ on:
     paths:
       - "assets/campaign/**"
       - "assets/v736/**"
+      - "assets/cinematic/**"
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
+      - "night_hooks.js"
       - "orbital_tiles.source.js"
       - "orbital_tiles.atlas.js"
       - "shuttle.atlas.js"
@@ -26,6 +28,8 @@ on:
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
       - "test_good_dogs_*.js"
+      - "test_cinematic_*.js"
+      - "test_runtime_autofix.mjs"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
@@ -39,11 +43,13 @@ on:
     paths:
       - "assets/campaign/**"
       - "assets/v736/**"
+      - "assets/cinematic/**"
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_*.js"
       - "production_*.js"
       - "bg_noc.js"
+      - "night_hooks.js"
       - "orbital_tiles.source.js"
       - "orbital_tiles.atlas.js"
       - "shuttle.atlas.js"
@@ -60,6 +66,8 @@ on:
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
       - "test_good_dogs_*.js"
+      - "test_cinematic_*.js"
+      - "test_runtime_autofix.mjs"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
       - "test_mike_animation_manifest.js"
@@ -92,6 +100,7 @@ jobs:
           node --check campaign_runtime.js
           node --check campaign_native_act1.js
           node --check campaign_native_act1_visuals.js
+          node --check cinematic_systems.js
           node --check campaign_native_act2.js
           node --check campaign_visual_direction.js
           node --check campaign_world_visuals.js
@@ -99,6 +108,7 @@ jobs:
           node --check good_boys_campaign_assets.js
           node --check good_boys_campaign_director.js
           node --check good_boys_prison_cinematic_patch.js
+          node --check good_boys_prison_gameplay_v2.js
           node --check good_boys_background_authority.js
           node --check good_boys_bible_world.js
           node --check good_boys_access_core_authority.js
@@ -111,6 +121,8 @@ jobs:
           node --check good_boys_ship_flight.js
           node --check good_dogs_campaign_state.js
           node --check good_dogs_production_runtime.js
+          node --check good_dogs_cutscenes_v2_2.js
+          node --check good_dogs_cutscene_bridge.js
           node --check production_asset_registry.js
           node --check production_wrapper_guard.js
           node --check production_runtime_lock.js
@@ -128,6 +140,9 @@ jobs:
           node --check v737_hooks.js
           node --check scripts/production_release_gate.js
           node --check scripts/runtime_bot.mjs
+          node --check scripts/runtime_bot_v13.mjs
+          node --check scripts/good_dogs_route_driver.mjs
+          node --check scripts/good_boys_intro_mobile_bot.mjs
           node --check scripts/good_boys_progression_bot.mjs
           node --check scripts/good_boys_background_bible_bot.mjs
           node --check test_campaign_act2.js
@@ -136,12 +151,15 @@ jobs:
           node --check test_campaign_native_act1_visuals.js
           node --check test_campaign_native_act2.js
           node --check test_campaign_world_visuals.js
+          node --check test_cinematic_systems.js
+          node --check test_good_dogs_route_contract.js
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js
           node --check test_good_boys_ship_approach.js
           node --check test_good_boys_ship_flight.js
           node --check test_good_dogs_bible_contract.js
+          node --check test_good_boys_ship_deck_mapping.js
           node --check test_production_asset_registry.js
           node --check test_production_compositor.js
           node --check test_production_runtime_lock.js

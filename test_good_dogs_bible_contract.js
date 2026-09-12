@@ -31,3 +31,17 @@ assert.ok(!/future-input/.test(access)||/never a future-input reader/.test(acces
 const earth=fs.readFileSync("good_boys_earthfall_ending.js","utf8");
 assert.ok(/K walks out under his own name/.test(earth)&&/Waldo walks back through his own door/.test(earth),"Earthfall must preserve K personhood and Waldo return tone");
 console.log("Good Dogs Story Bible semantic contract: PASS");
+
+// Loading a completed pre-bridge save must preserve valid rescue/writeback state.
+const legacy={console,Date,S:{meta:{_v736:{m:8,k:true,waldo:true,done:true}}},save:()=>true};
+legacy.globalThis=legacy;
+vm.runInNewContext(source,legacy);
+vm.runInNewContext(fs.readFileSync("state_validator.js","utf8"),legacy);
+assert.strictEqual(legacy.TechOpsStateValidator.validate(legacy.S).valid,true,"legacy completed saves must remain valid");
+assert.strictEqual(legacy.TechOpsGoodDogsCampaignState.snapshot().mike_index_defeated,undefined,"legacy migration must not invent an Index victory");
+legacy.S.meta.goodDogs.waldo_freed=true;legacy.S.meta.goodDogs.k_freed=false;legacy.S.meta.k_freed=false;
+assert.strictEqual(legacy.TechOpsStateValidator.validate(legacy.S).valid,false,"invalid rescue ordering must be rejected");
+// A failed save is observable; the bridge cannot report persistence it did not achieve.
+sandbox.save=()=>false;
+api.markTransition(1,2);
+assert.strictEqual(sandbox.__goodDogsSemanticTransition.persisted,false);

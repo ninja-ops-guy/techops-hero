@@ -1,85 +1,120 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
 
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
+const CONTRACT_VERSION=GOOD_DOGS_CONTRACT_VERSION;
 fs.mkdirSync(OUT,{recursive:true});
+
 const events=[],failures=[];
 const log=(name,data={})=>{events.push({at:new Date().toISOString(),name,...data});console.log(name,JSON.stringify(data));};
 const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data);};
-async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.click({timeout:1500});return true;}catch{}}}return false;}
-async function domClick(page,selector){return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);}
-async function runtimeProbe(page){return page.evaluate(()=>{try{const n=window.NM,c=n&&n._v736,s=window.S,m=s&&s.meta&&s.meta._v736;return {mission:Number(c&&c.m||m&&m.m||0),metaMission:Number(m&&m.m||0),living:n&&n.enemies?n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).length:0,wave:Number(c&&c.wave||0),waveDelay:Number(c&&c.waveDelay||0),pendingSpawn:!!(c&&c.pendingSpawn),inDialog:!!(s&&s.inDialog),shipFlight:window.TechOpsGoodBoysShipFlight&&window.TechOpsGoodBoysShipFlight.state?window.TechOpsGoodBoysShipFlight.state():null,prisonCines:document.querySelectorAll('#gb-prison-cine').length,prisonButton:(document.querySelector('#gb-prison-cine button')?.textContent||'').trim()};}catch(e){return {error:String(e&&e.stack||e)};}}).catch(e=>({error:String(e&&e.stack||e)}));}
-async function activateAuthoredButton(page,selector){
-  const b=page.locator(selector).last();if(!await b.count())return false;
-  try{
-    if(!await b.isVisible())return false;
-    const before=await runtimeProbe(page);const text=(await b.innerText().catch(()=>'' )).trim();const started=Date.now();
-    await b.click({timeout:1800});
-    await page.waitForTimeout(90);
-    const after=await runtimeProbe(page);
-    log('authored-cinematic-action',{selector,event:'playwright-click',button:text,elapsedMs:Date.now()-started,before,after});
-    if(selector.includes('#gb-prison-cine')&&before.prisonCines&&after.prisonCines&&before.prisonButton===after.prisonButton){
-      fail('prison-cinematic-action-did-not-advance',{selector,button:text,before,after});
-    }
-    return true;
-  }catch(e){log('authored-cinematic-action-error',{selector,error:String(e&&e.stack||e),probe:await runtimeProbe(page)});return false;}
-}
-async function moveShipTo(page,id){
-  const result=await page.evaluate(async target=>{
-    const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
-    const interact=document.querySelector('#good-boys-ship-interlude [data-interact]');
-    if(!right||!interact)return {ok:false,error:'mobile controls missing'};
-    const before=window.__goodBoysOpeningGameplay||{};const xStart=Number(before.x||0);const pointerId=51;
-    const fire=(el,type,buttons)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId,pointerType:'touch',isPrimary:true,buttons}));
-    fire(right,'pointerdown',1);let moved=false,last=xStart;
-    try{
-      const deadline=performance.now()+5000;
-      while(performance.now()<deadline){await new Promise(r=>setTimeout(r,40));const s=window.__goodBoysOpeningGameplay||{};last=Number(s.x||last);if(Math.abs(last-xStart)>=5)moved=true;if(s.near&&s.targetId===target)return {ok:true,moved,xStart,xEnd:last,target};}
-      return {ok:false,moved,xStart,xEnd:last,target,error:moved?'target proximity not reached':'pointer hold produced no movement'};
-    }finally{fire(right,'pointerup',0);}
-  },id);
-  log('ship-touch-hold',result);if(!result.ok)throw new Error('ship touch hold failed: '+JSON.stringify(result));
-  await page.waitForFunction(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');return !!(b&&!b.disabled);},null,{timeout:1000});
-  await page.evaluate(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');if(!b||b.disabled)throw new Error('INTERACT unavailable');b.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:52,pointerType:'touch',isPrimary:true,buttons:0}));});
-  await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id,{timeout:2000});
-}
-async function completeShip(page){if(!await page.locator('#good-boys-ship-interlude').count())return false;for(const id of ['nav','flight','dock']){const done=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(done)continue;await moveShipTo(page,id);}return true;}
-async function dismiss(page,ms=5000){const until=Date.now()+ms;let idle=0;while(Date.now()<until){
-  if(await page.locator('#good-boys-ship-interlude').count()){idle=0;try{await completeShip(page);}catch(e){fail('ship-interaction-automation-failed',{error:String(e&&e.stack||e),opening:await page.evaluate(()=>window.__goodBoysOpeningGameplay||null).catch(()=>null)});throw e;}await page.waitForTimeout(100);continue;}
-  const premise='#good-boys-campaign-intro button';if(await page.locator(premise).count()){idle=0;await domClick(page,premise);await page.waitForTimeout(120);continue;}
-  const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){idle=0;await domClick(page,film);await page.waitForTimeout(120);continue;}
-  let handled=false;for(const selector of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button']){if(await activateAuthoredButton(page,selector)){handled=true;break;}}
-  if(handled){idle=0;await page.waitForTimeout(100);continue;}
-  const txt=await page.locator('body').innerText().catch(()=>'');if(/SELECT SHIFT DIFFICULTY/i.test(txt)){idle=0;await clickText(page,/Standard/i);await page.waitForTimeout(100);continue;}if(/BEGIN THE INCIDENT/i.test(txt)){idle=0;await clickText(page,/BEGIN THE INCIDENT/i);await page.waitForTimeout(100);continue;}if(/CLICK\s*[—-]\s*SKIP|E\s*\/\s*CLICK\s*[—-]\s*SKIP|SKIP CINEMATIC/i.test(txt)){idle=0;await page.keyboard.press('KeyE').catch(()=>{});await page.waitForTimeout(120);continue;}
-  const generic=page.locator('#dialogue:not(.hidden) #dlg-options button').first();if(await generic.count()&&await generic.isVisible().catch(()=>false)){idle=0;await generic.click({timeout:1500}).catch(()=>{});await page.waitForTimeout(100);continue;}
-  const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);if(introBusy){idle=0;await page.waitForTimeout(120);continue;}
-  const authoredBusy=await page.evaluate(()=>['good-boys-earthfall-cine','gb-prison-cine','good-boys-story-cine','good-boys-ship-flight','good-boys-prison-approach-cine'].some(id=>{const el=document.getElementById(id);if(!el)return false;const s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)!==0;})).catch(()=>false);if(authoredBusy){idle=0;log('authored-cinematic-wait',{probe:await runtimeProbe(page)});await page.waitForTimeout(120);continue;}
-  idle++;if(idle>=8)return true;await page.waitForTimeout(120);
-}return false;}
-async function state(page){return page.evaluate(()=>{let r={};try{r=window.eval(`(function(){var s=(typeof S!=='undefined'&&S)?S:null,n=(typeof NM!=='undefined'&&NM)?NM:null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysProgressionAuthority,w=window.TechOpsGoodBoysBibleWorld,b=window.TechOpsGoodBoysBackgroundAuthority,q=window.TechOpsGoodBoysAccessCoreAuthority,e=window.TechOpsGoodBoysEarthfallEnding,cs=window.TechOpsGoodBoysCampaignState,gd=window.TechOpsGoodDogsCampaignState;return {night:!!(s&&s.nightMode),inDialog:!!(s&&s.inDialog),mission:Number(c&&c.m||m&&m.m||0),metaMission:Number(m&&m.m||0),stateMission:cs&&cs.mission?Number(cs.mission()):0,done:!!(m&&m.done),k:!!(m&&m.k),waldo:!!(m&&m.waldo),breakout:!!(s&&s.meta&&s.meta._v736breakout),pair:!!(s&&s.meta&&s.meta._v736pair),active:!!c,x:n&&n.x,ship:!!(n&&n._gbShipRevealed),living:n&&n.enemies?(n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).length):0,enemyKinds:n&&n.enemies?n.enemies.filter(e=>e&&e.alive!==false&&Number(e.hp)>0).map(e=>e.kind||e.name):[],wave:Number(c&&c.wave||0),waveDelay:Number(c&&c.waveDelay||0),pendingSpawn:!!(c&&c.pendingSpawn),authority:!!a,campaignState:!!cs,semanticState:!!gd,semantic:gd&&gd.snapshot?gd.snapshot():null,semanticValidation:gd&&gd.validate?gd.validate():null,bibleWorld:!!w,accessCore:!!q,earthfall:!!e,worldAcceptance:w&&w.acceptance?w.acceptance():null,backgroundAcceptance:b&&b.acceptance?b.acceptance():null,accessAcceptance:q&&q.acceptance?q.acceptance():null,earthfallAcceptance:e&&e.acceptance?e.acceptance():null,acceptance:a&&a.acceptance?a.acceptance():null};})()`);}catch(e){r.error=String(e&&e.stack||e);}return {...r,shipFlight:window.TechOpsGoodBoysShipFlight&&window.TechOpsGoodBoysShipFlight.state?window.TechOpsGoodBoysShipFlight.state():null,opening:window.__goodBoysOpeningGameplay||null,openingPhase:window.__goodBoysOpeningPhase||null,directorCines:document.querySelectorAll('#good-boys-story-cine').length,prisonCines:document.querySelectorAll('#gb-prison-cine').length,earthfallCines:document.querySelectorAll('#good-boys-earthfall-cine').length,directorPads:document.querySelectorAll('#good-boys-director-controls').length,legacyPads:document.querySelectorAll('#good-boys-loop-controls').length,canonicalPads:document.querySelectorAll('#good-dogs-touch').length,followTrail:[...document.querySelectorAll('button')].filter(b=>/FOLLOW THE TRAIL/i.test(b.textContent||'')).length};});}
-async function waitMission(page,want,ms=7000){const until=Date.now()+ms;let s;while(Date.now()<until){s=await state(page);if(s.done||s.mission===want||s.metaMission===want)return s;await dismiss(page,500);await page.waitForTimeout(80);}return s||await state(page);}
 
-const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
+async function click(page,sel){return page.evaluate(s=>{const el=document.querySelector(s);if(!el)return false;el.click();return true;},sel).catch(()=>false);}
+async function snap(page){return page.evaluate(()=>{const s=window.S||null,n=window.NM||null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysProgressionAuthority,cs=window.TechOpsGoodBoysCampaignState,b=window.TechOpsGoodDogsCutsceneBridge,p=window.TechOpsGoodBoysPrisonGameplayV2;return{
+  phase:window.__goodBoysOpeningPhase||null,openingError:window.__goodBoysOpeningErrorDetail||null,hard:window.__goodBoysHardButtonLaunch||null,
+  mission:Number(c&&c.m||0),metaMission:Number(m&&m.m||0),stateMission:cs&&cs.mission?Number(cs.mission()):0,pair:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez),activeDog:c&&c.active||null,player:n?{x:n.x,y:n.y,hp:n.hp}:null,visibleDialogs:[...document.querySelectorAll("#dialogue:not(.hidden),#gb-prison-cine,#good-boys-earthfall-cine")].map(e=>({id:e.id,text:e.innerText.slice(0,600)})),inDialog:!!(s&&s.inDialog),cellOpened:!!(c&&c.cellOpened),
+  authority:!!a,campaignState:!!cs,bibleWorld:!!window.TechOpsGoodBoysBibleWorld,backgroundAuthority:!!window.TechOpsGoodBoysBackgroundAuthority,accessCore:!!window.TechOpsGoodBoysAccessCoreAuthority,earthfall:!!window.TechOpsGoodBoysEarthfallEnding,
+  acceptance:a&&a.acceptance?a.acceptance():null,prison:p&&p.acceptance?p.acceptance():null,bridge:b&&b.acceptance?b.acceptance():null,
+  deck:window.__goodBoysDeckAssetState||null,deckInteract:window.__goodBoysDeckInteract||null,cutsceneExit:window.__goodDogsCutsceneExit||null,flight:window.__goodBoysSpaceFlight||window.__goodBoysShipFlightState||null,crash:window.__goodBoysCrashScene||null
+};});}
+function assertContractCompatible(d){const v=Number(d?.hard?.version||0);if(v>CONTRACT_VERSION)throw new Error(`Bot contract v${CONTRACT_VERSION} stale, runtime reports v${v}`);if(v&&v<CONTRACT_VERSION)fail('runtime-authority-older-than-progression-contract',{runtimeVersion:v,botContract:CONTRACT_VERSION,...d});}
+async function moveToPilot(page){await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:7000});await page.keyboard.down('ArrowRight');try{await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:7000});}finally{await page.keyboard.up('ArrowRight').catch(()=>{});}if(!await click(page,'#gbs-use'))throw new Error('pilot interaction unavailable');}
+async function advanceTakeover(page){await page.waitForFunction(()=>{const e=window.__goodDogsCutsceneExit,f=window.__goodBoysShipFlightState,o=document.querySelector('#good-dogs-cutscene-overlay.active');return !!((e&&e.id==='GD_CUT_02')||(f&&(f.active||Number(f.progress||0)>0))||o);},null,{timeout:10000});if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await click(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');await page.waitForFunction(()=>window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0),null,{timeout:8000});}
+async function prisonBriefing(page,cards){const next=page.locator('#gb-prison-next');await next.waitFor({state:'visible',timeout:5000});for(let i=0;i<cards;i++)await next.click();await next.waitFor({state:'hidden',timeout:3000});}
+async function clearBlockingCines(page,ms=5000){const until=Date.now()+ms;while(Date.now()<until){let acted=false;for(const sel of ['#gb-prison-cine button','#good-boys-earthfall-cine button','#good-boys-story-cine button','#dialogue:not(.hidden) #dlg-options button']){if(await page.locator(sel).count()&&await page.locator(sel).first().isVisible().catch(()=>false)){await page.locator(sel).first().evaluate(el=>{el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:91,pointerType:'touch',isPrimary:true,buttons:1}));if(!el.isConnected)return;el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:91,pointerType:'touch',isPrimary:true,buttons:0}));if(el.isConnected)el.click();}).catch(()=>{});acted=true;break;}}if(!acted)return;await page.waitForTimeout(120);}}
+async function resolveCutscene(page,id,timeout=12000){
+  await page.waitForFunction(want=>{const e=window.__goodDogsCutsceneExit,o=document.querySelector('#good-dogs-cutscene-overlay.active');return !!((e&&e.id===want)||(o&&o.dataset.activeCutscene===want));},id,{timeout});
+  let d=await snap(page);log('cutscene-'+id+'-start',d);
+  const overlay=page.locator('#good-dogs-cutscene-overlay.active');if(await overlay.count()){const play=page.locator('#good-dogs-cutscene-overlay.active .gd-film-play.active');if(await play.count())await play.evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(100);if(await page.locator('#good-dogs-cutscene-overlay.active .gd-film-skip').count())await click(page,'#good-dogs-cutscene-overlay.active .gd-film-skip');}
+  await page.waitForFunction(want=>{const e=window.__goodDogsCutsceneExit;return !!(e&&e.id===want&&(e.status==='COMPLETED'||e.status==='USER_SKIPPED'));},id,{timeout});
+  await page.waitForFunction(()=>!document.querySelector('#good-dogs-cutscene-overlay.active'),null,{timeout:3000});
+  await page.waitForFunction(()=>{const bridge=window.TechOpsGoodDogsCutsceneBridge;return !!bridge&&!bridge.running&&!window.__goodDogsPreRenderedCutsceneActive;},null,{timeout:3000});
+  d=await snap(page);log('cutscene-'+id+'-complete',d);return d;
+}
+
+const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
 try{
-  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i)){fail('launch-button-missing');throw new Error('Good Boys launch button missing');}
-  await dismiss(page,14000);let s=await state(page);log('started',s);if(!s.opening||!s.opening.completed||s.opening.count!==3){fail('opening-three-system-inspection-not-complete',s);throw new Error('opening did not complete; downstream progression assertions suppressed');}if(!s.active||!s.authority||!s.campaignState||!s.semanticState||!s.accessCore||!s.earthfall)fail('campaign-authorities-not-attached',s);if(s.followTrail)fail('retired-follow-trail-returned',s);if(s.mission!==2||s.metaMission!==2||s.stateMission!==2)fail('opening-did-not-canonically-enter-m2',s);if(s.acceptance&&s.acceptance.invariant&&s.acceptance.invariant.ok===false)fail('opening-handoff-invariant-failed',s.acceptance);
-  if(s.directorPads!==0)fail('retired-director-pad-returned',{count:s.directorPads});if(s.legacyPads!==0)fail('legacy-control-pads-remain',{count:s.legacyPads});if(s.canonicalPads!==1)fail('canonical-good-dogs-pad-count',{count:s.canonicalPads});
+  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1500);if(!await clickGoodDogsLaunch(page))throw new Error('Good Dogs launch button missing');
+  await driveFreshRouteToCockpit(page,{onEvent:log,requireDecoded:true});
+  await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:9000});let d=await snap(page);assertContractCompatible(d);log('cockpit',d);if(!d.deckInteract||d.deckInteract.interaction!=='pilot')fail('pilot-interaction-contract-missing',d);if(d.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(d.hard?.version||0)<CONTRACT_VERSION)fail('hard-opening-authority-mismatch',d);await moveToPilot(page);
+  await advanceTakeover(page);await page.waitForSelector('#good-boys-ship-flight',{state:'visible',timeout:7000});await page.waitForFunction(()=>window.__goodBoysShipFlightState&&window.__goodBoysShipFlightState.completed===true,null,{timeout:13000});
+  await page.waitForFunction(()=>{const c=window.__goodBoysCrashScene;return !!(document.querySelector('#good-boys-crash-canonical')||(c&&(c.active||c.completed)));},null,{timeout:7000});d=await snap(page);log('crash-start',d);if(d.cutsceneExit?.id==='GD_CUT_03')fail('retired-gd-cut-03-played',d);if(d.crash?.procedural===true)fail('procedural-crash-authority-returned',d);await page.waitForFunction(()=>window.__goodBoysCrashScene&&window.__goodBoysCrashScene.completed===true,null,{timeout:18000});
 
-  await dismiss(page,2500);await page.evaluate(()=>{var n=window.NM,a=window.TechOpsGoodBoysProgressionAuthority;if(!n||!a)throw new Error('M2 runtime unavailable');n.enemies=[{kind:'guard',name:'HANGAR GUARD',x:n.x+40,y:n.y,w:28,h:38,hp:5,maxHp:5,alive:true}];a.tick();n.enemies[0].hp=0;n.enemies[0].alive=false;a.tick();});await page.waitForTimeout(500);s=await state(page);log('m2-ship-reveal',s);if(!s.ship)fail('m2-ship-not-revealed-after-clear',s);await page.evaluate(()=>{window.NM.x=1300;window.TechOpsGoodBoysProgressionAuthority.tick();});await page.waitForTimeout(400);s=await state(page);log('canonical-ship-flight-start',s.shipFlight||{});if(!s.shipFlight||!['loading','flight','approach-cinematic','handoff','flight-complete'].includes(s.shipFlight.phase))fail('canonical-ship-flight-not-entered',s);if(s.shipFlight&&s.shipFlight.assetReady===false&&s.shipFlight.phase==='asset-error')fail('canonical-ship-atlas-decode-failed',s.shipFlight);s=await waitMission(page,3,12500);log('m2-to-m3',s);log('m3-runtime-created',{probe:await runtimeProbe(page)});if(s.mission!==3&&s.metaMission!==3)fail('m2-did-not-advance-to-m3',s);
+  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===3,null,{timeout:7000});await prisonBriefing(page,3);let s=await snap(page);assertContractCompatible(s);log('m3-start',s);
+  if(s.openingError)fail('opening-error',s);if(s.mission!==3||s.metaMission!==3||s.stateMission!==3)fail('opening-did-not-canonically-enter-m3',s);if(!s.pair)fail('good-dogs-pair-not-attached',s);if(!s.authority||!s.campaignState||!s.accessCore||!s.earthfall)fail('campaign-authorities-not-attached',s);if(!s.prison||Number(s.prison.version||0)<2)fail('prison-breach-authority-missing',s);
 
-  if(await page.locator('#gb-prison-cine').count()){const blocked=await page.evaluate(()=>!!(window.S&&window.S.inDialog));const text=await page.locator('#gb-prison-cine').innerText().catch(()=>'');log('prison-cinematic',{blocked,text:text.slice(0,180),probe:await runtimeProbe(page)});if(!blocked)fail('prison-cinematic-does-not-block-gameplay');if(!/ORBITAL|BLACKSITE|BREACH/i.test(text))fail('prison-premise-not-clear',{text});}
-  await dismiss(page,9000);log('m3-post-cinematic',{probe:await runtimeProbe(page)});
+  // Mission metadata changes before the fresh runtime mounts. Prime only after
+  // the completed handoff, its transition cooldown, and the entry briefing.
+  await page.waitForFunction(()=>{
+    const a=window.TechOpsGoodBoysProgressionAuthority?.acceptance();
+    return a?.active&&a.mission===3&&a.handoffComplete?.mission===3&&!a.handoff&&!a.transition&&(a.lastAdvanceAge===null||a.lastAdvanceAge>=700);
+  },null,{timeout:9000});
+  await clearBlockingCines(page,2500);
+  await page.waitForFunction(()=>!window.S.inDialog,null,{timeout:5000});
+  const objectivePrimed=await page.evaluate(()=>window.TechOpsGoodBoysPrisonGameplayV2&&window.TechOpsGoodBoysPrisonGameplayV2.testPrimeComplete?window.TechOpsGoodBoysPrisonGameplayV2.testPrimeComplete():false);log('m3-objective-prime',{objectivePrimed});if(!objectivePrimed)fail('m3-objective-prime-unavailable',s);
+  const combatPrimed=await page.evaluate(()=>window.TechOpsGoodBoysProgressionAuthority&&window.TechOpsGoodBoysProgressionAuthority.testPrimeClear?window.TechOpsGoodBoysProgressionAuthority.testPrimeClear():false);log('m3-combat-prime-clear',{combatPrimed});if(!combatPrimed)fail('m3-prime-clear-unavailable',s);
+  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===4,null,{timeout:9000});
 
-  for(let m=3;m<=7;m++){
-    let cur=await waitMission(page,m,3500);if(cur.done)break;if(cur.mission!==m&&cur.metaMission!==m){fail('unexpected-mission-before-clear',{expected:m,state:cur});break;}
-    if(Number(cur.mission)!==Number(cur.metaMission)||Number(cur.mission)!==Number(cur.stateMission))fail('mission-authority-diverged-before-clear',{mission:m,state:cur});
-    if(m===5){await page.waitForTimeout(350);cur=await state(page);log('access-core-mike-index',{kinds:cur.enemyKinds,access:cur.accessAcceptance,semantic:cur.semantic});if(!cur.accessAcceptance||!cur.accessAcceptance.mikeIndexEncounterStarted)fail('m5-canonical-mike-index-missing',cur);if(cur.accessAcceptance&&cur.accessAcceptance.predictionHistoryOnly!==true)fail('m5-mike-index-not-history-only',cur);}
-    const primed=await page.evaluate(()=>window.TechOpsGoodBoysProgressionAuthority&&window.TechOpsGoodBoysProgressionAuthority.testPrimeClear());log('prime-clear',{mission:m,primed});if(!primed){fail('could-not-prime-clear',{mission:m});break;}await dismiss(page,8000);const next=m+1;cur=await waitMission(page,next,7000);log('mission-advance',{from:m,to:next,state:cur});if(!cur.done&&cur.mission!==next&&cur.metaMission!==next){fail('mission-did-not-advance',{from:m,to:next,state:cur});break;}if(m===4&&!cur.k)fail('k-not-unlocked-after-cell-118',cur);if(m===4&&(!cur.semantic||!cur.semantic.k_freed||cur.semantic.k_identity_status!=='K_pending'))fail('cell-118-semantic-state-missing',cur);if(m===5&&(!cur.semantic||!cur.semantic.mike_index_defeated||cur.semantic.k_identity_status!=='K'||!cur.semantic.cell_1984_route_open))fail('mike-index-semantic-state-missing',cur);if(m===6&&!cur.waldo)fail('waldo-not-unlocked-after-cell-1984',cur);if(m===6&&(!cur.semantic||!cur.semantic.waldo_freed||cur.semantic.waldo_relationship_k!=='accepted'||!cur.semantic.release_expected_seen))fail('cell-1984-semantic-state-missing',cur);if(m<7)await dismiss(page,6000);
+  s=await resolveCutscene(page,'GD_CUT_04',12000);if(s.mission!==4)fail('gd-cut-04-did-not-return-to-m4',s);if(s.inDialog&&!s.bridge?.visibleBlocker)fail('stale-dialog-after-gd-cut-04',s);
+  const before05=await snap(page);if(before05.bridge?.seen?.GD_CUT_05)fail('gd-cut-05-played-before-cell-open',before05);
+
+  await page.evaluate(()=>{if(window.NM&&window.NM._v736)window.NM._v736.cellOpened=true;if(window.TechOpsGoodDogsCutsceneBridge)window.TechOpsGoodDogsCutsceneBridge.tick();});
+  s=await resolveCutscene(page,'GD_CUT_05',12000);if(s.mission!==4)fail('gd-cut-05-did-not-return-to-m4',s);if(s.inDialog&&!s.bridge?.visibleBlocker)fail('stale-dialog-after-gd-cut-05',s);if(!s.bridge?.seen?.GD_CUT_05)fail('gd-cut-05-not-persisted',s);
+
+  await page.screenshot({path:path.join(OUT,'goodboys-progression-cell118-cutscenes.png')});
+
+  // Continue past the previously truncated Cell 118 check. These are explicit
+  // encounter fixtures: they exercise real transitions/cutscenes and Warden
+  // damage handling, not player skill or physical-device acceptance.
+  for(const from of [4,5,6]){
+    await clearBlockingCines(page,2500);
+    await page.waitForFunction(m=>{
+      const a=window.TechOpsGoodBoysProgressionAuthority,c=window.NM&&window.NM._v736;
+      return c&&Number(c.m)===m&&a&&!a.acceptance().transition&&!a.acceptance().cinematicVisible;
+    },from,{timeout:10000});
+    await page.waitForTimeout(750);
+    const primed=await page.evaluate(()=>window.TechOpsGoodBoysProgressionAuthority.testPrimeClear());
+    log('encounter-fixture-clear',{from,primed});
+    if(!primed)throw new Error('Encounter fixture failed at M'+from);
+    await page.waitForFunction(m=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===m,from+1,{timeout:10000});
+    s=await resolveCutscene(page,{4:'GD_CUT_06',5:'GD_CUT_07',6:'GD_CUT_08'}[from],12000);
+    // The bridge restores this briefing after the film exits. A momentarily
+    // clear modal state is not evidence that mission entry has settled.
+    await prisonBriefing(page,1);
+    if(s.mission!==from+1||s.metaMission!==from+1||s.stateMission!==from+1)fail('later-mission-authority-diverged',s);
   }
-
-  s=await state(page);log('earthfall-entered',s);if(!s.done&&s.metaMission!==8&&s.mission!==8)fail('campaign-did-not-reach-earthfall',s);if(!s.done){await page.waitForTimeout(250);s=await state(page);const earthText=await page.locator('#good-boys-earthfall-cine').innerText().catch(()=>'');log('earthfall-cinematic',{count:s.earthfallCines,blocked:s.inDialog,text:earthText.slice(0,220),acceptance:s.earthfallAcceptance});if(s.earthfallCines!==1)fail('authored-earthfall-cinematic-missing',s);if(!s.inDialog)fail('earthfall-cinematic-does-not-block-gameplay',s);if(!/EARTHFALL|WALDO'S PLACE|GOOD BOYS/i.test(earthText))fail('earthfall-story-contract-missing',{text:earthText});await dismiss(page,5000);}
-  for(let i=0;i<30;i++){s=await state(page);if(s.done&&s.semantic&&s.semantic.good_dogs_protocol_complete)break;await dismiss(page,500);await page.waitForTimeout(100);}s=await state(page);log('final',s);if(!s.done)fail('earthfall-did-not-complete-campaign',s);if(!s.k||!s.waldo)fail('ending-missing-rescued-party-flags',s);if(!s.breakout||!s.pair)fail('ending-missing-breakout-unlock-flags',s);if(!s.semantic||!s.semantic.good_dogs_protocol_complete||!s.semantic.good_dogs_returned||!s.semantic.watchdog_k_available||!s.semantic.watchdog_waldo_available||!s.semantic.watchdog_good_dogs_available)fail('main-campaign-good-dogs-writeback-missing',s);if(s.semanticValidation&&s.semanticValidation.valid===false)fail('good-dogs-semantic-validation-failed',s.semanticValidation);if(s.earthfallCines!==0)fail('earthfall-overlay-did-not-close',s);if(s.directorPads>1)fail('duplicate-director-pads-at-end',{count:s.directorPads});if(s.legacyPads!==0)fail('legacy-pads-returned',{count:s.legacyPads});await page.screenshot({path:path.join(OUT,'goodboys-progression-final.png'),fullPage:true});
-}catch(e){fail('bot-exception',{error:String(e&&e.stack||e)});await page.screenshot({path:path.join(OUT,'goodboys-progression-exception.png'),fullPage:true}).catch(()=>{});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-progression-trace.zip')}).catch(e=>log('trace-stop-error',{error:String(e&&e.stack||e)}));await browser.close();}
-const report={pass:failures.length===0,failures,events};fs.writeFileSync(path.join(OUT,'goodboys-progression.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-progression.md'),['# Good Boys Progression Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Failures: ${failures.length}`,'','## Authored progression','',...events.map(e=>`- ${e.name}: \`${JSON.stringify(e)}\``)].join('\n'));if(!report.pass)process.exitCode=1;
+  await clearBlockingCines(page,2500);
+  await page.waitForFunction(()=>{
+    const n=window.NM,a=window.TechOpsGoodBoysProgressionAuthority;
+    return n&&n._v736&&Number(n._v736.m)===7&&a&&!a.acceptance().cinematicVisible&&!a.acceptance().transition&&(n.enemies||[]).some(e=>e.kind==='warden1984'&&e.alive&&e.hp>0);
+  },null,{timeout:10000});
+  await page.waitForTimeout(800);
+  const warden=await page.evaluate(()=>{
+    const n=window.NM,c=n._v736,b=n.enemies.find(e=>e.kind==='warden1984'&&e.alive);
+    // Seed the documented finisher window, then call the actual combat action.
+    c.finisherReady=true;c.sync=100;c.pendingSpawn=null;
+    for(const dog of Object.values(c.chars)){dog.downed=false;dog.out=false;dog.hp=dog.maxHp||100;}
+    b.hp=1;window.v736.finisher();
+    return{kind:b.kind,hp:b.hp,alive:b.alive};
+  });
+  log('warden-real-finisher',warden);
+  if(warden.alive!==false||warden.hp>0)throw new Error('Warden remains alive after real tandem finisher');
+  await page.keyboard.down('ArrowRight');
+  try{await page.waitForFunction(()=>window.NM&&Number(window.NM.x)>=1500||document.querySelector('#good-boys-earthfall-cine'),null,{timeout:12000});}finally{await page.keyboard.up('ArrowRight');}
+  await page.waitForFunction(()=>document.querySelector('#good-boys-earthfall-cine'),null,{timeout:15000});
+  const beforeEnding=await snap(page);if(!beforeEnding.inDialog)fail('earthfall-does-not-block-gameplay',beforeEnding);
+  await page.screenshot({path:path.join(OUT,'goodboys-progression-earthfall.png')});
+  for(let i=0;i<4;i++)await click(page,'#gbe-next');
+  await page.waitForFunction(()=>window.S&&window.S.meta&&window.S.meta._v736&&window.S.meta._v736.done,null,{timeout:5000});
+  await page.waitForTimeout(300);
+  await page.screenshot({path:path.join(OUT,'goodboys-progression-completed.png')});
+  const ending=await page.evaluate(()=>({visibleDialogs:['dialogue','gb-prison-cine','good-boys-story-cine','good-boys-earthfall-cine','good-dogs-cutscene-overlay'].filter(id=>{const el=document.getElementById(id);return el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none';}).map(id=>({id,text:document.getElementById(id).innerText.slice(0,300)})),campaign:window.S.meta._v736,breakout:window.S.meta._v736breakout,pair:window.S.meta._v736pair,inDialog:window.S.inDialog,overlay:!!document.querySelector('#good-boys-earthfall-cine')}));
+  log('earthfall-complete',ending);
+  if(ending.campaign.m!==8||!ending.campaign.k||!ending.campaign.waldo||!ending.breakout||!ending.pair||ending.inDialog||ending.overlay)fail('earthfall-completion-contract',ending);
+}catch(e){fail('bot-exception',{error:String(e&&e.stack||e),state:await snap(page).catch(()=>null)});await page.screenshot({path:path.join(OUT,'goodboys-progression-exception.png')}).catch(()=>{});}finally{await context.tracing.stop({path:path.join(OUT,'goodboys-progression-trace.zip')}).catch(()=>{});await browser.close();}
+const report={pass:failures.length===0,contractVersion:CONTRACT_VERSION,contract:'GD_CUT_01 -> real-input M1 trail -> real-input M2 hangar -> cockpit/flight/crash -> M3 breach -> Cell 118/K -> M5/M6 rescue fixtures -> real Warden finisher -> Earthfall and unlocks',failures,events};fs.writeFileSync(path.join(OUT,'goodboys-progression.json'),JSON.stringify(report,null,2));
+fs.writeFileSync(path.join(OUT,'goodboys-progression.md'),['# Good Dogs Progression Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Contract: ${report.contract}`,`- Failures: ${failures.length}`,'','M1 and M2 use real keyboard input. Later encounter fixtures do not certify physical-device gameplay.','',...failures.map(f=>'- '+f.name+': '+JSON.stringify(f)),''].join('\n'));
+console.log(JSON.stringify(report,null,2));if(!report.pass)process.exitCode=1;

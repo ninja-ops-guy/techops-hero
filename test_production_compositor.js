@@ -43,3 +43,8 @@ assert.strictEqual(guard.health().globalDrawAligned,true);
 assert.strictEqual(guard.health().globalStepAligned,true);
 
 console.log("Production immutable parser compositor: PASS");
+
+context.document={getElementById(id){return id==='dialogue'?{classList:{contains(){return false;}},style:{display:'block',visibility:'visible',opacity:'0'}}:null;}};
+context.S.inDialog=true;
+assert.strictEqual(guard.repairStaleDialog(),false,'fade-in dialogue remains a real modal at opacity zero');
+assert.strictEqual(context.S.inDialog,true);

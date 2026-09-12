@@ -16,4 +16,11 @@ const api=sandbox.TechOpsGoodBoysReferenceMechanics;assert.ok(api&&api.VERSION>=
 assert.strictEqual(api.pairedAttack(),true,"real damage must advance paired combo");
 assert.strictEqual(api.state.comboStep,1);assert.strictEqual(api.state.hits,1);assert.strictEqual(api.state.whiffs,0);assert.strictEqual(sandbox.NM._v736.sync,2);
 mode="whiff";t+=120;const syncBefore=sandbox.NM._v736.sync;assert.strictEqual(api.pairedAttack(),false,"whiff must not count as paired hit");assert.strictEqual(api.state.comboStep,0,"whiff must reset combo");assert.strictEqual(api.state.whiffs,1);assert.strictEqual(sandbox.NM._v736.sync,syncBefore,"whiff must not grant SYNC");
+let interactions=0; sandbox.interact=()=>{interactions++;};delete sandbox.nmJab;
+assert.strictEqual(api.pairedAttack(),false,"missing combat engine must not open interaction UI");
+assert.strictEqual(interactions,0);assert.strictEqual(sandbox.NM._v736.sync,syncBefore);
+// Both old control entrypoints must use the same hit/whiff authority.
+vm.runInNewContext(fs.readFileSync('good_boys_campaign_director.js','utf8'),sandbox);
+assert.strictEqual(sandbox.TechOpsGoodBoysCampaignDirector.duoAttack(),false);
+assert.strictEqual(interactions,0);assert.strictEqual(sandbox.NM._v736.sync,syncBefore);
 console.log("Good Dogs combat separation + whiff contract: PASS");

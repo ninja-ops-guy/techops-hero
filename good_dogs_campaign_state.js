@@ -20,7 +20,7 @@
     root.S.story.facts=root.S.story.facts||{};root.S.story.completedActs=root.S.story.completedActs||[];
     return g;
   }
-  function persist(){try{if(typeof root.save==="function"){root.save();return true;}if(typeof root.saveGame==="function"){root.saveGame();return true;}return false;}catch(e){root.__goodDogsSemanticSaveError=String(e&&e.stack||e);return false;}}
+  function persist(){try{if(typeof root.save==="function"){return root.save()!==false;}if(typeof root.saveGame==="function"){return root.saveGame()!==false;}return false;}catch(e){root.__goodDogsSemanticSaveError=String(e&&e.stack||e);return false;}}
   function write(name,value){
     var g=ensure();if(!g)return false;value=value===undefined?true:value;g[name]=value;root.S.meta[name]=value;
     if(typeof value==="boolean"&&value)root.S.story.facts[name]=true;else if(name==="k_identity_status"||name==="waldo_relationship_k")root.S.story.facts[name]=value;
@@ -41,9 +41,17 @@
     if(from===5&&to===6)writeMany({mike_index_defeated:true,k_identity_status:"K",cell_1984_route_open:true});
     if(from===6&&to===7)writeMany({waldo_seen:true,waldo_freed:true,waldo_relationship_k:"accepted",release_expected_seen:true,orpheus_prediction_seeded:true,warden_null_active:true});
     if(from===7&&to===8){writeMany({shuttle_bay_reached:true,warden_null_defeated:true,orbital_custody_broken:true});watchReturn();}
-    persist();root.__goodDogsSemanticTransition={from:from,to:to,at:Date.now(),state:snapshot(),persisted:true};return true;
+    var persisted=persist();root.__goodDogsSemanticTransition={from:from,to:to,at:Date.now(),state:snapshot(),persisted:persisted};return true;
+  }
+  // Older saves already passed rescue checkpoints before named facts existed.
+  // Restore only checkpoint-backed rescue facts; do not invent an Index victory.
+  function restoreLegacyRescues(){
+    var m=root.S&&root.S.meta&&root.S.meta._v736;if(!m)return;
+    if(Number(m.m)>=5&&m.k)writeMany({cell_118_reached:true,k_seen:true,k_freed:true,k_identity_status:Number(m.m)>=6?"K":"K_pending"});
+    if(Number(m.m)>=7&&m.k&&m.waldo)writeMany({waldo_seen:true,waldo_freed:true,waldo_relationship_k:"accepted"});
   }
   function completeReturn(){
+    restoreLegacyRescues();
     var g=ensure();if(!g)return null;if(g.good_dogs_protocol_complete&&g.watchdog_k_available&&g.watchdog_waldo_available&&g.watchdog_good_dogs_available)return snapshot();
     writeMany({
       k_freed:true,k_identity_status:"K",waldo_freed:true,waldo_returned:true,good_dogs_returned:true,good_dogs_protocol_complete:true,
@@ -71,7 +79,7 @@
     var base=c.transition;var wrapped=function(from,to,reason,patch){var ok=base.apply(this,arguments);if(ok!==false)markTransition(from,to);return ok;};wrapped.__goodDogsSemanticBridge=true;wrapped.__baseTransition=base;c.transition=wrapped;bridgeInstalled=true;root.__goodDogsSemanticBridgeInstalled=true;return true;
   }
   var API=root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,persist:persist,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate,installTransitionBridge:installTransitionBridge,watchReturn:watchReturn};
-  ensure();
+  ensure();restoreLegacyRescues();
   try{var initial=root.S&&root.S.meta&&root.S.meta._v736;if(initial&&initial.done)completeReturn();else if(initial&&Number(initial.m)===8)watchReturn();}catch(_){}
   if(!installTransitionBridge()&&root.setInterval){bridgeTimer=root.setInterval(function(){if(installTransitionBridge()){root.clearInterval(bridgeTimer);bridgeTimer=null;}},50);root.setTimeout(function(){if(bridgeTimer){root.clearInterval(bridgeTimer);bridgeTimer=null;root.__goodDogsSemanticBridgeError="progression authority not found within bridge window";}},5000);}
 })(typeof globalThis!=="undefined"?globalThis:this);

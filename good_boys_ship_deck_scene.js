@@ -1,93 +1,57 @@
-/* Good Boys ship deck scene — supplied-art authority v2.
- * Uses the user-supplied cockpit art, KATRIN_MANCHEZ actor atlas, and the
- * extracted cockpit pilot asset. The player must physically approach the pilot
- * before INTERACT can advance the opening; no procedural pilot is permitted.
+/* TechOps Hero — Good Boys ship-deck production authority v7.
+ * Cockpit background remains non-blocking, while the supplied pilot extraction
+ * is now a required interaction target. Katrin/Manchez move across the deck and
+ * must approach the pilot before INTERACT advances the authored opening.
  */
 (function(root){
   "use strict";
   if(!root||!root.document)return;
-  var prior=root.TechOpsGoodBoysShipDeckScene;
-  if(prior&&Number(prior.VERSION||0)>=2)return;
-  var VERSION=2,PILOT_SRC="assets/v736/good_boys_ship/cockpit_pilot.jpg";
+  var PRIOR=root.TechOpsGoodBoysShipDeckScene;if(PRIOR&&Number(PRIOR.VERSION||0)>=7)return;
+  var VERSION=7,DECK_SRC="assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-gameplay-assets-r2",DECK_FRAME=[0,500,292,114],PILOT_SRC="assets/v736/good_boys_ship/cockpit_pilot.jpg?v=20260903-deck-center-r1",PRIME_KEY="__goodBoysCockpitPrimeV7";
   function remove(id){try{var n=root.document.getElementById(id);if(n)n.remove();}catch(_){}}
-  function drawActor(ctx,A,img,key,cx,base,h,flip){
-    try{
-      var fr=A&&A.frames&&A.frames[key];
-      if(!fr||!img||!img.complete||!img.naturalWidth)return false;
-      var w=h*(fr[2]/fr[3]);
-      ctx.save();ctx.imageSmoothingEnabled=false;
-      if(flip){ctx.translate(cx,0);ctx.scale(-1,1);ctx.drawImage(img,fr[0],fr[1],fr[2],fr[3],-w/2,base-h,w,h);}
-      else ctx.drawImage(img,fr[0],fr[1],fr[2],fr[3],cx-w/2,base-h,w,h);
-      ctx.restore();return true;
-    }catch(_){return false;}
+  function drawActor(ctx,A,img,key,cx,base,h,flip){try{var fr=A&&A.frames&&A.frames[key];if(!fr||!img||!img.complete||!img.naturalWidth)return false;var w=h*(fr[2]/fr[3]);ctx.save();ctx.imageSmoothingEnabled=false;if(flip){ctx.translate(cx,0);ctx.scale(-1,1);ctx.drawImage(img,fr[0],fr[1],fr[2],fr[3],-w/2,base-h,w,h);}else ctx.drawImage(img,fr[0],fr[1],fr[2],fr[3],cx-w/2,base-h,w,h);ctx.restore();return true;}catch(_){return false;}}
+  function drawGuaranteedDeck(ctx,now){var g=ctx.createLinearGradient(0,0,0,540);g.addColorStop(0,"#10213a");g.addColorStop(.5,"#07111f");g.addColorStop(1,"#02050a");ctx.fillStyle=g;ctx.fillRect(0,0,960,540);ctx.fillStyle="#121e2c";ctx.fillRect(0,340,960,200);ctx.fillStyle="#24364a";for(var x=0;x<960;x+=96)ctx.fillRect(x,344,2,196);ctx.strokeStyle="#4d7898";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(70,300);ctx.quadraticCurveTo(480,20,890,300);ctx.stroke();ctx.strokeStyle="#203b53";ctx.lineWidth=22;ctx.beginPath();ctx.moveTo(92,298);ctx.quadraticCurveTo(480,48,868,298);ctx.stroke();var starShift=Math.floor((now||0)/80)%41;ctx.fillStyle="#cfefff";for(var i=0;i<42;i++){var sx=(i*137+starShift*3)%760+100,sy=(i*67)%220+62;ctx.fillRect(sx,sy,i%5===0?3:2,i%5===0?3:2);}ctx.fillStyle="#19314a";ctx.fillRect(110,285,190,95);ctx.fillRect(660,285,190,95);ctx.strokeStyle="#ff9e3d";ctx.lineWidth=3;ctx.strokeRect(125,300,160,62);ctx.strokeRect(675,300,160,62);ctx.fillStyle="#0a1826";ctx.beginPath();ctx.moveTo(410,430);ctx.lineTo(455,290);ctx.lineTo(505,290);ctx.lineTo(550,430);ctx.closePath();ctx.fill();ctx.strokeStyle="#5d819e";ctx.stroke();ctx.fillStyle="#72dcff";ctx.font="700 13px monospace";ctx.textAlign="center";ctx.fillText("GOOD SHIP // CREW DECK",480,90);}
+  function primeAtlas(){if(root[PRIME_KEY])return root[PRIME_KEY];var img=new root.Image();root[PRIME_KEY]=img;img.decoding="async";try{img.src=DECK_SRC;}catch(_){}return img;}
+  function drawContain(ctx,img,x,y,w,h){
+    if(!img||!img.complete||!img.naturalWidth||!img.naturalHeight)return false;
+    var scale=Math.min(w/img.naturalWidth,h/img.naturalHeight);
+    var dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
+    ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);return true;
   }
   function install(){
-    var opening=root.TechOpsGoodBoysOpeningV4,asset=root.GOOD_BOYS_SHIP_DECK_USER_ASSET;
-    if(!opening||!asset||!asset.src)return false;
-    if(opening.showDeckInteraction&&opening.showDeckInteraction.__suppliedDeckAssetV2)return true;
+    var opening=root.TechOpsGoodBoysOpeningV4;if(!opening)return false;if(opening.showDeckInteraction&&opening.showDeckInteraction.__goodShipDeckV7)return true;
     function showDeckInteraction(){return new Promise(function(resolve){
-      remove("good-boys-ship-interlude");remove("good-boys-deck-v4");remove("good-boys-deck-supplied");
-      root.__goodBoysOpeningPhase={phase:"ship-deck-interact",owner:"supplied-ship-deck-scene-v2",at:Date.now()};
-      var host=root.document.createElement("div");host.id="good-boys-deck-supplied";
-      host.style.cssText="position:fixed;inset:0;z-index:150300;background:#02050a;color:#eff8ff;font-family:monospace;display:flex;align-items:center;justify-content:center;padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom));box-sizing:border-box";
+      ["good-boys-ship-interlude","good-boys-deck-v4","good-boys-deck-supplied"].forEach(remove);root.__goodBoysOpeningPhase={phase:"ship-deck-interact",owner:"good-ship-deck-v7",assetAuthority:"supplied-pilot",at:Date.now()};
+      var host=root.document.createElement("div");host.id="good-boys-deck-supplied";host.style.cssText="position:fixed;inset:0;z-index:150300;background:#02050a;color:#eff8ff;font-family:monospace;display:flex;align-items:center;justify-content:center;padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom));box-sizing:border-box";
       host.innerHTML='<div style="width:min(100%,980px);height:min(100%,760px);display:grid;grid-template-rows:auto 1fr auto;gap:8px;min-height:0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:4px 2px"><b style="color:#ffb14a;letter-spacing:.12em">GOOD SHIP · COCKPIT</b><span data-objective style="font-size:10px;color:#a8c6d8;text-align:right">MOVE TO THE PILOT · INTERACT</span></div><div data-stage style="position:relative;min-height:0;overflow:hidden;border:1px solid #5c3b26;background:#02050a;box-shadow:0 16px 50px #000"></div><div data-controls></div></div>';
-      var stage=host.querySelector("[data-stage]"),controls=host.querySelector("[data-controls]"),objective=host.querySelector("[data-objective]");
-      var canvas=root.document.createElement("canvas");canvas.width=960;canvas.height=420;canvas.style.cssText="width:100%;height:100%;object-fit:contain;image-rendering:auto;background:#02050a";stage.appendChild(canvas);
-      var ctx=canvas.getContext("2d"),env=new root.Image(),pilot=new root.Image(),A=root.KATRIN_MANCHEZ||null,dog=A&&A.src?new root.Image():null;
-      var done=false,start=(root.performance&&root.performance.now?root.performance.now():Date.now()),last=start,raf=0,move=0,playerX=270,partnerX=205,pilotX=780,near=false,pilotFailed=false;
-      env.src=asset.src;pilot.src=PILOT_SRC;if(dog)dog.src=A.src;
-      function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-      function pilotReady(){return !!(pilot.complete&&pilot.naturalWidth&&!pilotFailed);}
+      var stage=host.querySelector("[data-stage]"),controls=host.querySelector("[data-controls]"),objective=host.querySelector("[data-objective]"),canvas=root.document.createElement("canvas");canvas.width=960;canvas.height=540;canvas.style.cssText="width:100%;height:100%;object-fit:contain;image-rendering:pixelated;background:#02050a";stage.appendChild(canvas);
+      var ctx=canvas.getContext("2d"),atlas=primeAtlas(),inlineDef=root.GOOD_BOYS_SHIP_DECK_USER_ASSET||null,inlineImg=inlineDef&&inlineDef.src?new root.Image():null,pilot=new root.Image(),A=root.KATRIN_MANCHEZ||null,dog=A&&A.src?new root.Image():null;
+      var done=false,start=performance.now(),last=start,raf=0,inlineReady=false,atlasReady=!!(atlas&&atlas.complete&&atlas.naturalWidth),dogReady=false,pilotReady=false,pilotFailed=false,move=0,playerX=300,partnerX=220,pilotX=480,nearPilot=false;
       function setMove(v,e){if(e){try{e.preventDefault();e.stopPropagation();}catch(_){}}move=v;}
-      function updateTelemetry(completed){root.__goodBoysDeckInteract={version:VERSION,completed:!!completed,interaction:"pilot",playerX:Math.round(playerX),pilotX:pilotX,nearPilot:near,pilotAsset:PILOT_SRC,pilotAssetReady:pilotReady(),pilotAssetFailed:pilotFailed,actorAtlas:"KATRIN_MANCHEZ",at:Date.now()};}
-      function onKey(e){var k=String(e.key||"").toLowerCase();if(k==="arrowleft"||k==="a"){setMove(-1,e);}else if(k==="arrowright"||k==="d"){setMove(1,e);}else if(k==="e"||k==="enter"||k===" "){interact(e);}}
-      function onKeyUp(e){var k=String(e.key||"").toLowerCase();if(k==="arrowleft"||k==="a"||k==="arrowright"||k==="d")setMove(0,e);}
-      function cleanup(){try{root.cancelAnimationFrame(raf);}catch(_){}root.removeEventListener("keydown",onKey,true);root.removeEventListener("keyup",onKeyUp,true);remove("good-boys-deck-supplied");}
-      function interact(e){
-        if(e){try{e.preventDefault();e.stopPropagation();}catch(_){}}
-        near=Math.abs(playerX-pilotX)<=112;
-        if(!near){objective.textContent="MOVE CLOSER TO THE PILOT";updateTelemetry(false);return false;}
-        if(!pilotReady()){objective.textContent="PILOT ASSET NOT READY";updateTelemetry(false);return false;}
-        if(done)return true;done=true;updateTelemetry(true);root.__goodBoysOpeningPhase={phase:"ship-deck-complete",owner:"supplied-ship-deck-scene-v2",at:Date.now()};cleanup();resolve({completed:true,interaction:"pilot",pilotAsset:PILOT_SRC});return true;
-      }
-      function drawPilot(){
-        if(pilotReady()){
-          var h=154,w=h*(pilot.naturalWidth/pilot.naturalHeight);w=Math.min(w,154);
-          ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(pilot,pilotX-w/2,168,w,h);ctx.restore();
-          return true;
-        }
-        ctx.save();ctx.fillStyle="rgba(90,8,12,.92)";ctx.fillRect(704,182,152,112);ctx.strokeStyle="#ff475d";ctx.strokeRect(704.5,182.5,152,112);ctx.fillStyle="#ffd8dc";ctx.font="700 12px monospace";ctx.textAlign="center";ctx.fillText("PILOT ASSET",780,228);ctx.fillText(pilotFailed?"MISSING":"LOADING",780,248);ctx.restore();return false;
-      }
+      function telemetry(completed){root.__goodBoysDeckInteract={version:VERSION,completed:!!completed,interaction:"pilot",playerX:Math.round(playerX),pilotX:pilotX,nearPilot:nearPilot,pilotAsset:PILOT_SRC,pilotAssetReady:pilotReady,pilotAssetFailed:pilotFailed,actorAtlas:"KATRIN_MANCHEZ",at:Date.now()};}
+      function drawPilot(){return !!pilotReady;}
+      function cleanup(){try{root.cancelAnimationFrame(raf);}catch(_){}root.removeEventListener("keydown",keyDown,true);root.removeEventListener("keyup",keyUp,true);remove("good-boys-deck-supplied");}
+      function interact(e){if(e){try{e.preventDefault();e.stopPropagation();}catch(_){}}nearPilot=Math.abs(playerX-pilotX)<=88;if(!nearPilot){objective.textContent="MOVE CLOSER TO THE PILOT";telemetry(false);return false;}if(!pilotReady){objective.textContent="PILOT ASSET NOT READY";telemetry(false);return false;}if(done)return true;done=true;telemetry(true);root.__goodBoysOpeningPhase={phase:"ship-deck-complete",owner:"good-ship-deck-v7",at:Date.now()};cleanup();resolve({completed:true,interaction:"pilot",pilotAsset:PILOT_SRC});return true;}
+      function keyDown(e){var k=String(e.key||"").toLowerCase();if(k==="arrowleft"||k==="a")setMove(-1,e);else if(k==="arrowright"||k==="d")setMove(1,e);else if(k==="e"||k==="enter"||k===" ")interact(e);}
+      function keyUp(e){var k=String(e.key||"").toLowerCase();if(k==="arrowleft"||k==="a"||k==="arrowright"||k==="d")setMove(0,e);}
       function render(now){
-        if(done)return;
-        var dt=Math.min(34,Math.max(0,now-last));last=now;
-        playerX=clamp(playerX+move*0.31*dt,100,820);partnerX+=(playerX-72-partnerX)*Math.min(1,dt*.0085);near=Math.abs(playerX-pilotX)<=112;
-        ctx.fillStyle="#02050a";ctx.fillRect(0,0,960,420);
-        if(env.complete&&env.naturalWidth){ctx.imageSmoothingEnabled=true;ctx.drawImage(env,0,0,asset.width||640,asset.height||160,0,56,960,240);}
-        var floor=ctx.createLinearGradient(0,270,0,420);floor.addColorStop(0,"rgba(8,16,24,.12)");floor.addColorStop(1,"rgba(2,5,10,.98)");ctx.fillStyle=floor;ctx.fillRect(0,265,960,155);
-        drawPilot();
-        if(A&&dog){var walking=Math.abs(move)>.1,keyK=walking?"kat_idle1":"kat_idle0",keyM=walking?"man_idle1":"man_idle0";drawActor(ctx,A,dog,keyM,partnerX,350,108,move<0);drawActor(ctx,A,dog,keyK,playerX,350,116,move<0);}
-        var pulse=.55+.35*Math.sin((now-start)/180);ctx.save();ctx.strokeStyle=near?"rgba(85,223,255,"+pulse+")":"rgba(255,166,55,"+pulse+")";ctx.lineWidth=3;ctx.shadowColor=near?"#55dfff":"#ff8a22";ctx.shadowBlur=16;ctx.strokeRect(700,150,160,178);ctx.restore();
-        ctx.fillStyle="rgba(3,7,12,.88)";ctx.fillRect(650,332,260,42);ctx.fillStyle=near?"#9df5ff":"#ffd18a";ctx.font="700 14px monospace";ctx.textAlign="center";ctx.fillText(near?"PILOT · INTERACT":"PILOT · MOVE CLOSER",780,358);
-        objective.textContent=pilotFailed?"PILOT ASSET MISSING":near?"PILOT IN RANGE · INTERACT":"MOVE TO THE PILOT · INTERACT";
-        var ib=controls.querySelector("#gbs-use");if(ib){ib.textContent=near?"INTERACT":"MOVE TO PILOT";ib.style.opacity=near?"1":".62";}
-        root.__goodBoysDeckAssetState={asset:"GOOD_BOYS_SHIP_DECK_USER_ASSET",pilotAsset:PILOT_SRC,pilotAssetReady:pilotReady(),actorAtlas:"KATRIN_MANCHEZ",singleActorAtlas:true,at:Date.now()};updateTelemetry(false);
-        raf=root.requestAnimationFrame(render);
+        if(done)return;var dt=Math.min(34,Math.max(0,now-last));last=now;playerX=Math.max(105,Math.min(820,playerX+move*.31*dt));partnerX+=(playerX-78-partnerX)*Math.min(1,dt*.009);nearPilot=Math.abs(playerX-pilotX)<=88;drawGuaranteedDeck(ctx,now);
+        if(inlineReady){ctx.save();ctx.imageSmoothingEnabled=true;ctx.globalAlpha=.96;drawContain(ctx,inlineImg,0,70,960,330);ctx.restore();}
+        if(atlasReady){try{var r=DECK_FRAME;ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=inlineReady?.3:.7;ctx.drawImage(atlas,r[0],r[1],r[2],r[3],0,0,960,540);ctx.restore();}catch(_){atlasReady=false;}}
+        var shade=ctx.createLinearGradient(0,300,0,540);shade.addColorStop(0,"rgba(2,5,10,0)");shade.addColorStop(1,"rgba(2,5,10,.7)");ctx.fillStyle=shade;ctx.fillRect(0,300,960,240);
+        if(!drawPilot()){ctx.fillStyle="rgba(70,9,14,.9)";ctx.fillRect(410,222,140,104);ctx.strokeStyle="#ff475d";ctx.strokeRect(410.5,222.5,140,104);ctx.fillStyle="#ffd8dc";ctx.font="700 11px monospace";ctx.textAlign="center";ctx.fillText("PILOT ASSET",480,266);ctx.fillText(pilotFailed?"MISSING":"LOADING",480,286);}
+        if(dogReady&&A){var walking=Math.abs(move)>.1;drawActor(ctx,A,dog,walking?"man_idle1":"man_idle0",partnerX,475,116,move<0);drawActor(ctx,A,dog,walking?"kat_idle1":"kat_idle0",playerX,475,128,move<0);}else{ctx.fillStyle="#d9ecff";ctx.font="700 12px monospace";ctx.textAlign="center";ctx.fillText("KATRIN + MANCHEZ",playerX,470);}
+        var pulse=.55+.35*Math.sin((now-start)/190);ctx.save();ctx.strokeStyle=nearPilot?"rgba(85,223,255,"+pulse+")":"rgba(255,166,55,"+pulse+")";ctx.lineWidth=3;ctx.shadowColor=nearPilot?"#55dfff":"#ff8a22";ctx.shadowBlur=15;ctx.strokeRect(420,205,120,135);ctx.restore();ctx.fillStyle="rgba(3,7,12,.86)";ctx.fillRect(365,356,230,42);ctx.fillStyle=nearPilot?"#9df5ff":"#ffd18a";ctx.font="700 13px monospace";ctx.textAlign="center";ctx.fillText(nearPilot?"PILOT · INTERACT":"PILOT · CENTER",480,382);
+        objective.textContent=pilotFailed?"PILOT ASSET MISSING":nearPilot?"PILOT IN RANGE · INTERACT":"MOVE TO THE PILOT · INTERACT";var use=controls.querySelector("#gbs-use");if(use){use.textContent=nearPilot?"INTERACT":"MOVE TO PILOT";use.style.opacity=nearPilot?"1":".62";}
+        root.__goodBoysDeckAssetState={asset:inlineReady?"GOOD_BOYS_SHIP_DECK_USER_ASSET":atlasReady?"GOOD_BOYS_SHIP_ARCADE.ship_large":"guaranteed-cockpit-render",pilotAsset:PILOT_SRC,pilotAssetReady:pilotReady,actorAtlas:"KATRIN_MANCHEZ",actorReady:dogReady,at:Date.now()};telemetry(false);raf=root.requestAnimationFrame(render);
       }
-      controls.style.cssText="display:grid;grid-template-columns:72px 1fr 72px;gap:8px";
-      controls.innerHTML='<button id="gbs-left" type="button">◀</button><button id="gbs-use" type="button">MOVE TO PILOT</button><button id="gbs-right" type="button">▶</button>';
-      Array.prototype.forEach.call(controls.querySelectorAll("button"),function(b){b.style.cssText="min-height:56px;border:1px solid #ff9e3d;background:#0b1016;color:#fff;font:700 13px monospace;letter-spacing:.05em;touch-action:none;border-radius:4px";});
-      function bindMove(id,v){var b=controls.querySelector(id);b.addEventListener("pointerdown",function(e){setMove(v,e);},{passive:false});["pointerup","pointercancel","pointerleave"].forEach(function(type){b.addEventListener(type,function(e){setMove(0,e);},{passive:false});});}
-      bindMove("#gbs-left",-1);bindMove("#gbs-right",1);var use=controls.querySelector("#gbs-use");use.addEventListener("pointerup",interact,{passive:false});use.addEventListener("click",interact);
-      root.addEventListener("keydown",onKey,true);root.addEventListener("keyup",onKeyUp,true);
-      pilot.onerror=function(){pilotFailed=true;root.__goodBoysPilotAssetError={src:PILOT_SRC,at:Date.now()};updateTelemetry(false);};
-      root.document.body.appendChild(host);updateTelemetry(false);raf=root.requestAnimationFrame(render);
+      controls.style.cssText="display:grid;grid-template-columns:72px 1fr 72px;gap:8px";controls.innerHTML='<button id="gbs-left" type="button">◀</button><button id="gbs-use" type="button">MOVE TO PILOT</button><button id="gbs-right" type="button">▶</button>';Array.prototype.forEach.call(controls.querySelectorAll("button"),function(b){b.style.cssText="min-height:56px;border:1px solid #ff9e3d;background:#0b1016;color:#fff;font:700 12px monospace;letter-spacing:.05em;touch-action:none;border-radius:4px";});
+      function bindMove(id,v){var b=controls.querySelector(id);b.addEventListener("pointerdown",function(e){setMove(v,e);},{passive:false});["pointerup","pointercancel","pointerleave","lostpointercapture"].forEach(function(type){b.addEventListener(type,function(e){if(move===v)setMove(0,e);},{passive:false});});}bindMove("#gbs-left",-1);bindMove("#gbs-right",1);var use=controls.querySelector("#gbs-use");use.addEventListener("pointerup",interact,{passive:false});use.addEventListener("click",interact);
+      root.addEventListener("keydown",keyDown,true);root.addEventListener("keyup",keyUp,true);root.document.body.appendChild(host);telemetry(false);
+      if(inlineImg){inlineImg.onload=function(){inlineReady=!!inlineImg.naturalWidth;};inlineImg.onerror=function(){root.__goodBoysDeckInlineError="inline cockpit plate decode failed";};inlineImg.src=inlineDef.src;}if(atlas){atlas.onload=function(){atlasReady=!!atlas.naturalWidth;};atlas.onerror=function(){atlasReady=false;root.__goodBoysDeckAtlasError="Good Ship deck enhancement unavailable";};}
+      pilot.onload=function(){pilotReady=!!pilot.naturalWidth;telemetry(false);};pilot.onerror=function(){pilotFailed=true;pilotReady=false;root.__goodBoysPilotAssetError={src:PILOT_SRC,at:Date.now()};telemetry(false);};pilot.src=PILOT_SRC;if(dog){dog.onload=function(){dogReady=!!dog.naturalWidth;};dog.onerror=function(){dogReady=false;root.__goodBoysDeckActorError="KATRIN_MANCHEZ actor atlas unavailable in cockpit";};dog.src=A.src;}raf=root.requestAnimationFrame(render);
     });}
-    showDeckInteraction.__suppliedDeckAsset=true;showDeckInteraction.__suppliedDeckAssetV2=true;
-    opening.showDeckInteraction=showDeckInteraction;
-    root.__goodBoysDeckSceneAuthority={owner:"supplied-ship-deck-scene-v2",asset:"GOOD_BOYS_SHIP_DECK_USER_ASSET",pilotAsset:PILOT_SRC,actorAtlas:"KATRIN_MANCHEZ",version:VERSION,at:Date.now()};
-    return true;
+    showDeckInteraction.__goodShipDeckV7=true;showDeckInteraction.__goodShipDeckV6=true;showDeckInteraction.__goodShipDeckV5=true;showDeckInteraction.__goodShipDeckV4=true;showDeckInteraction.__goodShipDeckV3=true;opening.showDeckInteraction=showDeckInteraction;root.__goodBoysDeckSceneAuthority={owner:"good-ship-deck-v7",pilotAsset:PILOT_SRC,enhancement:DECK_SRC,actorAtlas:"KATRIN_MANCHEZ",version:VERSION,at:Date.now()};return true;
   }
-  var timer=root.setInterval(function(){if(install()){root.clearInterval(timer);}},50);
-  install();root.TechOpsGoodBoysShipDeckScene={VERSION:VERSION,PILOT_SRC:PILOT_SRC,install:install};
+  primeAtlas();var timer=root.setInterval(function(){if(install())root.clearInterval(timer);},50);install();root.TechOpsGoodBoysShipDeckScene={VERSION:VERSION,PILOT_SRC:PILOT_SRC,install:install,src:DECK_SRC,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);

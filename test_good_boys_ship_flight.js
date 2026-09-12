@@ -12,10 +12,10 @@ for(const [name,source] of [["flight",flight],["shim",shim],["deck",deck],["hard
 assert.ok(flight.includes("GOOD_BOYS_SHIP_ARCADE"),"canonical flight must own the supplied atlas contract");
 assert.ok(flight.includes("assets/good_boys/good_ship_arcade.atlas.png"),"canonical flight must load the supplied Good Ship atlas");
 for(const key of ["ship_player","asteroid_1","asteroid_2","asteroid_3","asteroid_4","asteroid_5","prison_station","prison_dock","lead_1","lead_2","lead_3","lead_4"]){assert.ok(flight.includes(key),`canonical flight missing supplied frame ${key}`);}
-assert.ok(flight.includes("AVOID ASTEROIDS")&&flight.includes("PRISON VECTOR"),"production flight must expose the authored avoidance objective and prison vector");
-assert.ok(flight.includes("runApproachCutscene"),"production flight must hand off through supplied approach frames");
-assert.ok(flight.includes("boarded-secret-ship")&&flight.includes("ship-flight-arrived-prison"),"production flight must own the real M2 -> M3 handoff");
-assert.ok(flight.includes("softlockPrevented")&&flight.includes("asset-error"),"asset failure must be visible in diagnostics while preserving progression");
+assert.ok(flight.includes("AVOID ASTEROIDS")&&flight.includes("REACH BLACKSITE MERIDIAN"),"production flight must expose the authored avoidance objective and prison vector");
+assert.ok(flight.includes("runBoardingSequence") && flight.includes("showCrashScene()"),"production flight must hand off to the authored crash");
+assert.ok(flight.includes("boarded-secret-ship")&&flight.includes("m2-board-flight-crash-complete"),"production flight must own the real M2 -> M3 handoff");
+assert.ok(flight.includes("resetBoard()")&&flight.includes("asset-error"),"asset failure must be visible in diagnostics while allowing boarding to retry");
 assert.ok(!flight.includes("pixelShip("),"canonical player ship must never fall back to procedural rectangles");
 assert.ok(!flight.includes("assets/v742/cutscenes/orbital_approach.png"),"canonical flight must not render the old prison plate as gameplay authority");
 assert.ok(!flight.includes("assets/v742/cutscenes/secret_ship_interior.png"),"canonical flight must not render the old ship interior as the player craft");
@@ -32,13 +32,11 @@ assert.ok(deck.includes("arrowleft")&&deck.includes("arrowright")&&deck.includes
 assert.ok(deck.includes('interaction:\"pilot\"'),"cockpit interaction must resolve against the pilot, not a generic station");
 assert.ok(!deck.includes('grid-template-columns:1fr;gap:8px\";\n      controls.innerHTML=\'<button'),"cockpit must not regress to the giant one-button interaction layout");
 
-// One terminal opening authority must auto-invoke movies and the canonical flight.
-assert.ok(/VERSION=8/.test(hard),"terminal Good Boys title owner must be v8+");
-assert.ok(hard.includes("TechOpsGoodBoysShipFlight")&&hard.includes("runCanonicalFlight"),"title opening must call the supplied-asset flight authority");
-assert.ok(hard.includes('playMovie(\"GD_CUT_02\")')&&hard.includes('playMovie(\"GD_CUT_03\")'),"takeover and prison-approach movies must start automatically from authored flow");
-assert.ok(hard.includes("GoodDogsCutscenes.play")&&hard.includes("automatic:true"),"cutscene invocation must be automatic; user gesture is recovery-only");
-assert.ok(/VERSION=3/.test(handoff)&&handoff.includes("TechOpsGoodBoysButtonHardFix"),"capture handoff must delegate to the terminal opening owner");
-assert.ok(!handoff.includes("repair.playOpening()"),"handoff capture must not retain a competing legacy opening path");
-assert.ok(registry.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"production asset registry must preload the pilot asset");
-assert.ok(registry.includes("assets/v736/good_boys_ship/canonical_dogs.webp"),"production asset registry must cover the extracted supplied dog source");
+// Fresh title launch preserves playable M1/M2; the boarding owner drives flight.
+assert.ok(hard.includes("freshConfig(){return{mission:1"),"fresh launch must preserve the playable opening missions");
+assert.ok(flight.includes('c.play("GD_CUT_02"')&&flight.includes("flightPromise()"),"boarding must own takeover and flight");
+assert.ok(!hard.includes('playMovie("GD_CUT_03")'),"retired second approach movie must not return");
+assert.ok(handoff.includes("TechOpsGoodBoysButtonHardFix"),"handoff capture must delegate to title authority");
+assert.ok(!handoff.includes("repair.playOpening()"),"handoff must not retain a competing opening path");
+assert.ok(registry.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"registry must preload the pilot");
 console.log("Good Boys canonical supplied-asset ship/cockpit opening: PASS");

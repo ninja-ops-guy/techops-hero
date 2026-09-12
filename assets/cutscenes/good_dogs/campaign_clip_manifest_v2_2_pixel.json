@@ -3,7 +3,7 @@
   "version": "2.2",
   "notes": [
     "Canonical Triple Jump clip replaced with the 7.03s 910x512 upload supplied on 2026-08-31. It begins in Sector 04 Docking Bay, shows the linked dog traversal through the laser grid, and ends at the Cell 118 MIKE OLIVEFIELD terminal.",
-    "Updated flow replaces the earlier orbital-arrival segment with the newer Gemini orbital approach clip.",
+    "Updated flow removes the extra orbital-arrival segment from the opening and uses the picked cockpit takeover and crash clips supplied on 2026-09-03.",
     "New Triple Jump clip is integrated as the Cell 118 prelude and must play immediately before the K reveal cutscene.",
     "K visual canon follows the newer orbital/cell footage: beanie, sunglasses, black tactical outfit. Do not substitute the drifted blue-jacket or generic alternates here.",
     "Waldo visual canon remains red-mask / black-leather presentation during this portion of the campaign.",
@@ -25,14 +25,21 @@
     {
       "id": "GD_CUT_02",
       "file": "02_signal_pull_transition_pixel.mp4",
-      "title": "Signal Pull Transition",
-      "placement": "Between Shuttle Launch and orbital sequence",
-      "trigger": "shuttle_launch_started == true",
-      "purpose": "Very short connective bridge out of Earth-side launch.",
+      "title": "Cockpit Pilot Takeover",
+      "placement": "Immediately after the center-pilot interaction",
+      "trigger": "pilot_interaction_complete == true",
+      "purpose": "Katrin and Manchez overrun the pilot and take control of the Good Ship before playable asteroid flight.",
       "writes": ["signal_pull_seen"],
-      "exit": "GD_CUT_03",
-      "source_file": "02_signal_pull_transition.mp4",
-      "pixel_filtered": true
+      "exit": "Good Ship Prison Run",
+      "source_file": "15D43A8D-BFC8-4C7B-9779-DE3F3BDE834E.mov",
+      "pixel_filtered": false,
+      "media": {
+        "duration_sec": 4.133333,
+        "width": 678,
+        "height": 512,
+        "fps": 30,
+        "sha256": "870e08a99f414c7559f5aaffb236570b157158891a6ee44570c17f56e9e28436"
+      }
     },
     {
       "id": "GD_CUT_03",
@@ -157,12 +164,13 @@
   },
   "processed_media": [
     {"source":"01_signal_beyond_earth.mp4","pixel_file":"01_signal_beyond_earth_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe"},
-    {"source":"02_signal_pull_transition.mp4","pixel_file":"02_signal_pull_transition_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"55271e67329053420b5f630e711a235337cbd6c960585de4cb0f60ad9a8d43f9"},
+    {"source":"15D43A8D-BFC8-4C7B-9779-DE3F3BDE834E.mov","pixel_file":"02_signal_pull_transition_pixel.mp4","width":678,"height":512,"pixel_grid_source":[678,512],"style":"picked cockpit pilot takeover clip, web H.264 transcode, no generated overlay","sha256":"870e08a99f414c7559f5aaffb236570b157158891a6ee44570c17f56e9e28436"},
     {"source":"03_orbital_approach.mp4","pixel_file":"03_orbital_approach_pixel.mp4","width":910,"height":512,"pixel_grid_source":[228,128],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4"},
     {"source":"04_cell118_triple_jump_to_terminal.mp4","pixel_file":"04_cell118_triple_jump_to_terminal_pixel.mp4","width":910,"height":512,"pixel_grid_source":[228,128],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2"},
     {"source":"05_cell118_approach_k_reveal.mp4","pixel_file":"05_cell118_approach_k_reveal_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf"},
     {"source":"06_k_freed_prison_escort.mp4","pixel_file":"06_k_freed_prison_escort_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94"},
     {"source":"07_cell1984_hack.mp4","pixel_file":"07_cell1984_hack_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838"},
-    {"source":"08_team_reunited_exit.mp4","pixel_file":"08_team_reunited_exit_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01"}
+    {"source":"08_team_reunited_exit.mp4","pixel_file":"08_team_reunited_exit_pixel.mp4","width":512,"height":910,"pixel_grid_source":[128,228],"style":"4x nearest-neighbor pixelation + subtle contrast/saturation lift","sha256":"24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01"},
+    {"source":"F4DF1080-8C69-46DF-ACCA-FC6F7659A275.mov","pixel_file":"09_prison_crash_selected_pixel.mp4","width":512,"height":678,"pixel_grid_source":[512,678],"style":"picked authored prison crash clip, web H.264 transcode, no procedural shuttle animation","sha256":"703dbd4da506b10e16c62a33b88f41159605d2f6daf4aaa43afdc67e9407e162"}
   ]
 }

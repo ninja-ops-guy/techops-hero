@@ -1,57 +1,201 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { webkit, devices } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
+
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
+const CONTRACT_VERSION=GOOD_DOGS_CONTRACT_VERSION;
 fs.mkdirSync(OUT,{recursive:true});
+
 const failures=[],events=[];
 const log=(name,data={})=>{events.push({at:new Date().toISOString(),name,...data});console.log(name,JSON.stringify(data));};
 const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data);};
-async function clickLaunch(page){for(const b of await page.locator('button').all()){const t=(await b.innerText().catch(()=>'' )).trim();if(/118\/1984|BREAKOUT|GOOD\s*BOYS/i.test(t)){await b.evaluate(el=>{el.click();return true;});return t;}}return null;}
-async function domClick(page,selector){return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);}
-async function snap(page){return page.evaluate(()=>{const o=document.getElementById('good-dogs-cutscene-overlay'),v=o&&o.querySelector('.gd-film-video'),p=document.getElementById('good-boys-campaign-intro'),i=document.getElementById('good-boys-ship-interlude');let r={};try{r=window.eval(`(function(){var s=(typeof S!=='undefined'&&S)?S:null,n=(typeof NM!=='undefined'&&NM)?NM:null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysCampaignState,p=window.TechOpsGoodBoysProgressionAuthority,pa=p&&p.acceptance?p.acceptance():null,living=n&&n.enemies?n.enemies.filter(function(e){return e&&e.alive!==false&&Number(e.hp)>0;}).length:0;return{campaign:!!(c&&!c.ending),mission:Number(c&&c.m||0),runtimeEnding:!!(c&&c.ending),metaMission:Number(m&&m.m||0),stateMission:a&&a.mission?Number(a.mission()):0,invariant:pa&&pa.invariant||null,directGameplay:pa&&pa.directGameplay||null,sState:s&&s.meta&&s.meta.goodDogsCutscenes||null,inDialog:!!(s&&s.inDialog),diff:Number(s&&s.diff||0),runtimeX:Number(n&&n.x||0),shipRevealed:!!(n&&n._gbShipRevealed),living:living};})()`);}catch(e){r.evalError=String(e&&e.stack||e);}const boardCount=document.querySelectorAll('#good-boys-board-ship').length;const boardEligible=!!(r.campaign&&r.mission===2&&r.metaMission===2&&r.shipRevealed&&r.living===0&&r.runtimeX>=1080);return{active:!!(o&&o.classList.contains('active')),src:v?(v.currentSrc||v.getAttribute('src')||''):'',muted:v?!!v.muted:null,volume:v?Number(v.volume):null,interlude:!!i,interludeState:window.__goodBoysOpeningGameplay||null,shipApi:window.TechOpsShipInteraction?{version:Number(window.TechOpsShipInteraction.VERSION||0),active:!!window.TechOpsShipInteraction.active,count:Number(window.TechOpsShipInteraction.systemsInspected||0),total:Number(window.TechOpsShipInteraction.totalSystems||0)}:null,premise:!!p,premiseCount:document.querySelectorAll('#good-boys-campaign-intro').length,premiseText:p?p.textContent:'',premiseButton:p&&p.querySelector('button')?p.querySelector('button').textContent:'',boardShipCount:boardCount,boardEligible,legacyStoryCount:document.querySelectorAll('#good-boys-story-cine').length,legacyFollowTrail:[...document.querySelectorAll('button')].filter(b=>/FOLLOW THE TRAIL/i.test(b.textContent||'')).length,phase:window.__goodBoysOpeningPhase||null,repairVersion:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,clockIn:window.__goodBoysCanonicalClockIn||null,direct:window.__goodBoysDirectIntro||null,directStartError:window.__goodBoysDirectIntroStartError||null,clockInError:window.__goodBoysDirectIntroClockInError||null,progressionError:window.__goodBoysProgressionError||null,cutsceneExit:window.__goodDogsCutsceneExit||null,iosBypass:window.__goodDogsCutsceneIOSBypass||null,...r};});}
-function assertOwner(a,phase){if(a.repairVersion<15)fail('intro-owner-v15-missing',{phase,...a});if(a.legacyStoryCount)fail('legacy-director-premise-visible',{phase,...a});if(a.legacyFollowTrail)fail('retired-follow-trail-visible',{phase,...a});if(a.premiseCount>1)fail('duplicate-premise',{phase,...a});if(a.boardShipCount&&!a.boardEligible)fail('premature-board-ship-surface',{phase,...a});}
-async function moveToSystem(page,id){
-  const result=await page.evaluate(async target=>{
-    const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
-    const interact=document.querySelector('#good-boys-ship-interlude [data-interact]');
-    if(!right||!interact)return {ok:false,error:'mobile controls missing'};
-    const before=window.__goodBoysOpeningGameplay||{};const xStart=Number(before.x||0);const pointerId=41;
-    const fire=(el,type,buttons)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId,pointerType:'touch',isPrimary:true,buttons}));
-    fire(right,'pointerdown',1);let moved=false,last=xStart;
-    try{
-      const deadline=performance.now()+5000;
-      while(performance.now()<deadline){
-        await new Promise(r=>setTimeout(r,40));
-        const s=window.__goodBoysOpeningGameplay||{};last=Number(s.x||last);if(Math.abs(last-xStart)>=5)moved=true;
-        if(s.near&&s.targetId===target){return {ok:true,moved,xStart,xEnd:last,target};}
-      }
-      return {ok:false,moved,xStart,xEnd:last,target,error:moved?'target proximity not reached':'pointer hold produced no movement'};
-    }finally{fire(right,'pointerup',0);}
-  },id);
-  log('ship-touch-hold',result);if(!result.ok)throw new Error('ship touch hold failed: '+JSON.stringify(result));
-  await page.waitForFunction(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');return !!(b&&!b.disabled);},null,{timeout:1000});
-  await page.evaluate(()=>{const b=document.querySelector('#good-boys-ship-interlude [data-interact]');if(!b||b.disabled)throw new Error('INTERACT unavailable');const e=new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:42,pointerType:'touch',isPrimary:true,buttons:0});b.dispatchEvent(e);});
-  await page.waitForFunction(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id,{timeout:2500});
+
+async function click(page,selector){
+  return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);
 }
-const browser=await webkit.launch({headless:true});const context=await browser.newContext({...devices['iPhone 15 Pro'],viewport:{width:393,height:852}});const page=await context.newPage();
+
+async function phase(page){
+  return page.evaluate(()=>({
+    phase:window.__goodBoysOpeningPhase||null,
+    deck:window.__goodBoysDeckAssetState||null,
+    deckInteract:window.__goodBoysDeckInteract||null,
+    cutsceneExit:window.__goodDogsCutsceneExit||null,
+    autoplay:window.__goodDogsCutsceneAutoplay||null,
+    gesture:window.__goodDogsCutsceneNeedsGesture||null,
+    flight:window.__goodBoysShipFlightState||null,
+    flightTrace:window.__goodBoysShipFlightTrace||null,
+    crash:window.__goodBoysCrashScene||null,
+    error:window.__goodBoysOpeningErrorDetail||null,
+    hard:window.__goodBoysHardButtonLaunch||null,
+    mission:window.NM&&window.NM._v736?Number(window.NM._v736.m||0):0,
+    pair:!!(window.NM&&window.NM._v736&&window.NM._v736.chars&&window.NM._v736.chars.katrin&&window.NM._v736.chars.manchez),
+    activeDog:window.NM&&window.NM._v736?window.NM._v736.active:null
+  }));
+}
+
+async function canvasSignal(page,selector){
+  return page.evaluate(sel=>{
+    const c=document.querySelector(sel);if(!c)return null;
+    const x=c.getContext('2d',{willReadFrequently:true});if(!x)return null;
+    const w=c.width,h=c.height,d=x.getImageData(0,0,w,h).data;
+    let nonBlack=0,alpha=0,min=255,max=0;
+    for(let i=0;i<d.length;i+=16){
+      const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
+      if(a)alpha++;
+      if(r||g||b)nonBlack++;
+      min=Math.min(min,r,g,b);max=Math.max(max,r,g,b);
+    }
+    return{nonBlack,alpha,range:max-min,w,h};
+  },selector).catch(()=>null);
+}
+
+async function waitForRenderReady(page,selector,{timeout=5000,minNonBlack=100,minRange=8}={}){
+  await page.waitForFunction(async ({sel,minNonBlack,minRange})=>{
+    const c=document.querySelector(sel);
+    if(!c||!c.width||!c.height)return false;
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const x=c.getContext&&c.getContext('2d',{willReadFrequently:true});
+    if(!x)return false;
+    const w=c.width,h=c.height;
+    const sx=Math.max(0,Math.floor(w*.1)),sy=Math.max(0,Math.floor(h*.1));
+    const sw=Math.max(1,Math.floor(w*.8)),sh=Math.max(1,Math.floor(h*.8));
+    const d=x.getImageData(sx,sy,sw,sh).data;
+    let nonBlack=0,min=255,max=0;
+    for(let i=0;i<d.length;i+=16){
+      const r=d[i],g=d[i+1],b=d[i+2];
+      if(r+g+b>24)nonBlack++;
+      min=Math.min(min,r,g,b);max=Math.max(max,r,g,b);
+    }
+    return nonBlack>=minNonBlack&&(max-min)>=minRange;
+  },{sel:selector,minNonBlack,minRange},{timeout,polling:100});
+}
+
+async function holdRightToPilot(page){
+  await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:7000});
+  await page.keyboard.down('ArrowRight');
+  try{
+    await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:7000});
+  }finally{
+    await page.keyboard.up('ArrowRight').catch(()=>{});
+  }
+}
+
+async function assertAutoplayThenSkip(page,id,srcFragment,nextState){
+  await page.waitForFunction(({want,fragment,next})=>{
+    const e=window.__goodDogsCutsceneExit;
+    if(e&&e.id===want)return true;
+    if(next==='flight'&&window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0))return true;
+    const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video');
+    return !!(o&&v&&String(v.currentSrc||v.getAttribute('src')||'').includes(fragment));
+  },{want:id,fragment:srcFragment,next:nextState||''},{timeout:10000});
+
+  await page.waitForFunction(({want,fragment,next})=>{
+    const e=window.__goodDogsCutsceneExit;
+    if(e&&e.id===want)return true;
+    if(next==='flight'&&window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0))return true;
+    const o=document.querySelector('#good-dogs-cutscene-overlay.active'),v=o&&o.querySelector('video'),p=o&&o.querySelector('.gd-film-play');
+    return !!(o&&v&&String(v.currentSrc||v.getAttribute('src')||'').includes(fragment)&&Number(v.currentTime||0)>.08&&!(p&&p.classList.contains('active')));
+  },{want:id,fragment:srcFragment,next:nextState||''},{timeout:8000});
+
+  let s=await phase(page);log('cutscene-autoplay-'+id,s);
+  if(s.gesture&&s.gesture.id===id)fail('cutscene-required-manual-play',{id,...s});
+  if(s.cutsceneExit&&s.cutsceneExit.id===id)return;
+  if(nextState==='flight'&&s.flight&&(s.flight.active||Number(s.flight.progress||0)>0))return;
+
+  if(!await click(page,'#good-dogs-cutscene-overlay.active .gd-film-skip'))throw new Error('skip unavailable for '+id);
+  await page.waitForFunction(({want,next})=>{
+    const e=window.__goodDogsCutsceneExit;
+    if(e&&e.id===want)return true;
+    return next==='flight'&&!!(window.__goodBoysShipFlightState&&(window.__goodBoysShipFlightState.active||Number(window.__goodBoysShipFlightState.progress||0)>0));
+  },{want:id,next:nextState||''},{timeout:7000});
+}
+
+const browser=await webkit.launch({headless:true});
+const context=await browser.newContext({...devices['iPhone 15 Pro'],viewport:{width:393,height:852}});
+await context.tracing.start({screenshots:true,snapshots:true,sources:true});
+const page=await context.newPage();
+
 try{
-  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1600);let a=await snap(page);assertOwner(a,'title');const clicked=await clickLaunch(page);if(!clicked)throw new Error('Good Boys launch button missing');log('launch',{clicked});
-  await page.waitForFunction(()=>!!document.querySelector('#good-dogs-cutscene-overlay.active')||!!document.getElementById('good-boys-ship-interlude')||!!(window.__goodDogsCutsceneExit&&window.__goodDogsCutsceneExit.id==='GD_CUT_01'),null,{timeout:8000});a=await snap(page);assertOwner(a,'clip1-or-ios-bypass');
-  if(a.active){log('clip1',a);if(!/01_signal_beyond_earth_pixel\.mp4/i.test(a.src))fail('clip1-order',a);if(a.muted!==true||a.volume!==0)fail('clip1-not-silent',a);await page.screenshot({path:path.join(OUT,'goodboys-clip1.png')});if(!await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip'))throw new Error('clip1 skip unavailable');}
-  else{log('clip1-ios-bypass',a);if(!(a.cutsceneExit&&a.cutsceneExit.id==='GD_CUT_01'&&a.cutsceneExit.source==='ios-nonblocking-bypass'))fail('clip1-ios-bypass-contract',a);if(!a.interlude)fail('clip1-ios-bypass-did-not-handoff',a);}
-  await page.waitForFunction(()=>{const exit=window.__goodDogsCutsceneExit,phase=window.__goodBoysOpeningPhase&&window.__goodBoysOpeningPhase.phase,interlude=document.getElementById('good-boys-ship-interlude');return !!(exit&&exit.id==='GD_CUT_01'&&phase&&phase!=='clip1'&&interlude);},null,{timeout:12000});
-  await page.waitForSelector('#good-boys-ship-interlude',{state:'visible',timeout:4000});a=await snap(page);log('ship-start',a);assertOwner(a,'ship-start');if(!a.shipApi||a.shipApi.version<2||a.shipApi.total!==3)fail('ship-three-system-contract-missing',a);if(a.active)fail('clip-overlaps-ship',a);
-  for(const id of ['nav','flight','dock']){await moveToSystem(page,id);a=await snap(page);log('ship-system-'+id,a);assertOwner(a,'ship-system-'+id);if(!a.interludeState||!a.interludeState.systems.includes(id))fail('ship-system-not-inspected',{id,...a});}
-  await page.waitForFunction(()=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&s.completed&&s.count===3);},null,{timeout:3000});await page.screenshot({path:path.join(OUT,'goodboys-ship-3of3.png')});
-  await page.waitForFunction(()=>{const v=document.querySelector('#good-dogs-cutscene-overlay.active .gd-film-video');return !!(v&&/02_signal_pull_transition_pixel\.mp4/i.test(v.currentSrc||v.getAttribute('src')||''))||!!document.getElementById('good-boys-campaign-intro');},null,{timeout:5000});a=await snap(page);assertOwner(a,'clip2-or-ios-bypass');
-  if(a.active){log('clip2',a);if(a.interlude)fail('ship-remained-under-clip2',a);if(a.muted!==true||a.volume!==0)fail('clip2-not-silent',a);if(!await domClick(page,'#good-dogs-cutscene-overlay.active .gd-film-skip'))throw new Error('clip2 skip unavailable');}
-  else{log('clip2-ios-bypass',a);if(!(a.cutsceneExit&&a.cutsceneExit.id==='GD_CUT_02'&&a.cutsceneExit.source==='ios-nonblocking-bypass'))fail('clip2-ios-bypass-contract',a);if(!(a.sState&&a.sState.GD_CUT_02&&a.sState.GD_CUT_02.seen))fail('clip2-ios-bypass-state-missing',a);}
-  await page.waitForSelector('#good-boys-campaign-intro',{state:'visible',timeout:4000});a=await snap(page);log('premise',a);assertOwner(a,'premise');if(a.premiseCount!==1)fail('premise-not-singleton',a);if(!/TAKE CONTROL/i.test(a.premiseButton))fail('wrong-premise-cta',a);if(!/Navigation|flight control|docking security/i.test(a.premiseText)||!/Cell 118/i.test(a.premiseText)||!/Cell 1984/i.test(a.premiseText))fail('premise-logic',a);if(!await domClick(page,'#good-boys-campaign-intro button'))throw new Error('TAKE CONTROL unavailable');
-  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736&&!window.NM._v736.ending)||!!window.__goodBoysDirectIntroStartError||!!window.__goodBoysDirectIntroClockInError||!!window.__goodBoysProgressionError||!!(window.__goodBoysDirectIntro&&window.__goodBoysDirectIntro.ok===false),null,{timeout:5000});await page.waitForTimeout(250);a=await snap(page);log('handoff-result',a);assertOwner(a,'handoff');if(!a.campaign){fail('m2-attachment-failed',a);throw new Error('Good Boys M2 attachment failed: '+JSON.stringify({clockIn:a.clockIn,direct:a.direct,directGameplay:a.directGameplay,directStartError:a.directStartError,clockInError:a.clockInError,progressionError:a.progressionError}));}
-  if(a.boardShipCount!==0)fail('board-ship-present-immediately-after-take-control',a);
-  await page.waitForTimeout(400);a=await snap(page);log('gameplay',a);assertOwner(a,'gameplay');if(!(a.clockIn&&a.clockIn.ok&&a.clockIn.difficulty==='standard'))fail('canonical-standard-clock-in-failed',a);if(a.inDialog||a.diff!==1)fail('canonical-startup-dialog-not-resolved',a);if(!a.campaign||a.mission!==2||a.metaMission!==2||a.stateMission!==2)fail('m2-canonical-handoff-failed',a);if(a.invariant&&a.invariant.ok===false)fail('mission-invariant-failed',a);if(!(a.directGameplay&&a.directGameplay.requested&&a.directGameplay.runtimeMission===2))fail('direct-m2-runtime-contract-failed',a);if(a.active||a.premise||a.interlude)fail('opening-overlay-remains',a);if(a.boardShipCount!==0)fail('board-ship-visible-before-live-boarding-conditions',a);if(!(a.sState&&a.sState.GD_CUT_01&&a.sState.GD_CUT_02))fail('opening-state-not-migrated',a);await page.screenshot({path:path.join(OUT,'goodboys-gameplay-m2.png')});
-  const persisted=await page.evaluate(()=>{try{const s=JSON.parse(localStorage.getItem('techops_save')||'null');return Number(s&&s.meta&&s.meta._v736&&s.meta._v736.m||0);}catch{return -1;}});log('persisted-before-reload',{mission:persisted});if(persisted!==2)fail('m2-not-persisted',{persisted});
-  await page.reload({waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(800);const after=await page.evaluate(()=>{try{const s=JSON.parse(localStorage.getItem('techops_save')||'null');return Number(s&&s.meta&&s.meta._v736&&s.meta._v736.m||0);}catch{return -1;}});log('persisted-after-reload',{mission:after});if(after!==2)fail('m2-not-persistent-after-reload',{after});
-}catch(e){fail('bot-exception',{error:String(e&&e.stack||e)});await page.screenshot({path:path.join(OUT,'goodboys-intro-exception.png')}).catch(()=>{});}finally{await browser.close();}
-const report={pass:failures.length===0,failures,events};fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(!report.pass)process.exitCode=1;
+  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});
+  await page.waitForTimeout(1800);
+
+  const clicked=await clickGoodDogsLaunch(page);
+  if(!clicked)throw new Error('Good Dogs launch button missing');
+  log('launch',{clicked});
+
+  await driveFreshRouteToCockpit(page,{onEvent:log,requireDecoded:true});
+
+  await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:9000});
+  await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:7000});
+  await waitForRenderReady(page,'#good-boys-deck-supplied canvas',{timeout:5000,minNonBlack:100,minRange:8});
+
+  const deckSignal=await canvasSignal(page,'#good-boys-deck-supplied canvas');
+  let deckState=await phase(page);log('cockpit',{deckSignal,...deckState});
+  if(!deckSignal||deckSignal.nonBlack<100||deckSignal.alpha<100||deckSignal.range<8)fail('cockpit-canvas-blank',{deckSignal,...deckState});
+
+  const pilotAsset=String(deckState.deck?.pilotAsset||deckState.deckInteract?.pilotAsset||'').split('?')[0];
+  if(pilotAsset!=='assets/v736/good_boys_ship/cockpit_pilot.jpg'||deckState.phase?.assetAuthority!=='supplied-pilot')fail('cockpit-pilot-asset-not-authoritative',deckState);
+  if(Number(deckState.hard?.version||0)>CONTRACT_VERSION)throw new Error(`Bot contract v${CONTRACT_VERSION} stale; runtime reports v${deckState.hard.version}`);
+  if(deckState.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(deckState.hard?.version||0)<CONTRACT_VERSION)fail('opening-authority-not-hard-button',deckState);
+
+  await page.screenshot({path:path.join(OUT,'goodboys-cockpit.png')});
+  await holdRightToPilot(page);
+  deckState=await phase(page);log('pilot-in-range',deckState);
+  if(!deckState.deckInteract?.nearPilot)fail('pilot-never-entered-interaction-range',deckState);
+  if(!await click(page,'#gbs-use'))throw new Error('pilot INTERACT unavailable');
+
+  await assertAutoplayThenSkip(page,'GD_CUT_02','02_signal_pull_transition_pixel.mp4','flight');
+
+  await page.waitForSelector('#good-boys-ship-flight',{state:'visible',timeout:7000});
+  await page.waitForFunction(()=>window.__goodBoysShipFlightState&&window.__goodBoysShipFlightState.assetReady===true,null,{timeout:6000});
+  await waitForRenderReady(page,'#good-boys-ship-flight canvas',{timeout:5000,minNonBlack:100,minRange:8});
+  const flightSignal=await canvasSignal(page,'#good-boys-ship-flight canvas');
+  const flightStart=await phase(page);log('flight-start',{flightSignal,...flightStart});
+  if(!flightSignal||flightSignal.nonBlack<100||flightSignal.alpha<100||flightSignal.range<8)fail('good-ship-canvas-blank',{flightSignal,...flightStart});
+  if(!String(flightStart.flight?.asset||'').includes('good_ship_arcade.atlas.png'))fail('good-ship-atlas-not-active',flightStart);
+  await page.screenshot({path:path.join(OUT,'goodboys-flight.png')});
+
+  await page.waitForFunction(()=>window.__goodBoysShipFlightState&&window.__goodBoysShipFlightState.completed===true,null,{timeout:13000});
+
+  // The retired GD_CUT_03 orbital/flying-ship movie must not play here. The
+  // authored crash scene follows the playable Good Ship flight directly.
+  await page.waitForFunction(()=>{
+    const c=window.__goodBoysCrashScene;
+    return !!(document.querySelector('#good-boys-crash-canonical')||(c&&(c.active||c.completed)));
+  },null,{timeout:7000});
+  const crashStart=await phase(page);log('crash-start',crashStart);
+  if(crashStart.cutsceneExit&&crashStart.cutsceneExit.id==='GD_CUT_03')fail('retired-gd-cut-03-played',crashStart);
+  await page.screenshot({path:path.join(OUT,'goodboys-crash.png')});
+
+  await page.waitForFunction(()=>window.__goodBoysCrashScene&&window.__goodBoysCrashScene.completed===true,null,{timeout:16000});
+  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===3,null,{timeout:7000});
+
+  const end=await phase(page);log('prison-handoff',end);
+  if(end.error)fail('opening-error-visible',end);
+  if(end.crash?.source!=='authored-crash-video'||end.crash?.watchdogTriggered||Number(end.crash?.mediaTime||0)<Number(end.crash?.mediaDuration||0)-.1)fail('crash-video-did-not-complete',end);
+  if(end.mission!==3)fail('opening-did-not-enter-m3',end);
+  if(!end.pair)fail('katrin-manchez-pair-not-attached',end);
+  if(!/katrin|manchez/i.test(String(end.activeDog||'')))fail('active-dog-missing',end);
+  if(Number(end.hard?.version||0)<CONTRACT_VERSION||end.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix')fail('wrong-opening-runtime-authority',end);
+  await page.screenshot({path:path.join(OUT,'goodboys-prison-m3.png')});
+}catch(e){
+  fail('bot-exception',{error:String(e&&e.stack||e),state:await phase(page).catch(()=>null)});
+  await page.screenshot({path:path.join(OUT,'goodboys-intro-exception.png')}).catch(()=>{});
+}finally{
+  await context.tracing.stop({path:path.join(OUT,'goodboys-intro-trace.zip')}).catch(()=>{});
+  await browser.close();
+}
+
+const report={
+  pass:failures.length===0,
+  contractVersion:CONTRACT_VERSION,
+  contract:'GD_CUT_01 autoplay -> real-input M1 trail -> real-input M2 hangar -> pilot interaction -> GD_CUT_02 autoplay -> supplied Good Ship flight -> authored crash -> M3 prison',
+  failures,
+  events
+};
+fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.json'),JSON.stringify(report,null,2));
+fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.md'),`# Good Dogs iPhone Intro Bot\n\n**Result:** ${report.pass?'PASS':'FAIL'}\n\nContract: ${report.contract}\n\n${failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``).join('\n'):'- GD_CUT_01 produced decoded autoplay evidence.\n- M1 trail and M2 hangar completed through real keyboard input.\n- Existing pilot asset rendered and became the interaction target.\n- GD_CUT_02 produced decoded autoplay evidence.\n- Supplied Good Ship atlas rendered the playable asteroid flight after render-ready confirmation.\n- Retired GD_CUT_03 did not replay.\n- The authored crash handed off to fresh M3 prison gameplay.'}\n`);
+console.log(JSON.stringify(report,null,2));
+if(!report.pass)process.exitCode=1;

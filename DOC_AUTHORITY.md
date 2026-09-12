@@ -10,7 +10,8 @@ In descending order when implementation guidance conflicts:
 2. `RUNTIME_AUTHORITY.md` — production ownership and no-new-numbered-hook policy.
 3. `VISUAL_REFERENCE_STANDARD.md` — approved gameplay/reference-art visual contract.
 4. `PRODUCTION_READINESS.md` — current release gate, unresolved risks, and acceptance evidence.
-5. `PRODUCTION_REVIEW.md` — current consolidation review where it does not conflict with the documents above.
+5. `CINEMATIC_COHESION_V1.md` — current Good Dogs route, level inventory, presentation architecture, mixed-media production spec, and bounded implementation lanes.
+6. `PRODUCTION_REVIEW.md` — current consolidation review where it does not conflict with the documents above.
 
 ## Historical / reference-only documents
 

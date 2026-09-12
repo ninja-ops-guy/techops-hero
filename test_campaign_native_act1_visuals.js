@@ -1,5 +1,6 @@
 "use strict";
 const assert = require("assert");
+const fs = require("fs");
 
 global.__techopsCampaignNativeAct1Assets = null;
 global.dlg = function () { return true; };
@@ -102,4 +103,18 @@ p = visuals.presentationFor("standup", owned);
 assert.strictEqual(p.variant, "owned");
 assert.deepStrictEqual(p.motion, ["board_lock", "ambient_drift"]);
 
-console.log("Campaign Day 1 world-camera continuity + state-reactive visuals: PASS");
+// The old workstation composition remains historical data in the visual bridge,
+// but production must retire it before paint so ordinary workstation/user
+// dialogue stays in the normal dialogue shell.
+const browserLoader = fs.readFileSync("campaign_native_act1_visuals.js", "utf8");
+const retirement = fs.readFileSync("workstation_cinematic_clarity_patch.js", "utf8");
+assert.match(browserLoader, /workstation_cinematic_clarity_patch\.js\?v=20260904-workstation-retired-v2/);
+assert.match(retirement, /VERSION:2/);
+assert.match(retirement, /RETIRED:true/);
+assert.match(retirement, /__techopsAct1ReferenceScene/);
+assert.match(retirement, /a1-first_person/);
+assert.match(retirement, /api\.hide\(true\)/);
+assert.doesNotMatch(retirement, /COMPANY FEED \/\/ FELICIA/);
+assert.doesNotMatch(retirement, /OPENING BRIEFING · SHIFT CLOCK PAUSED UNTIL CLOCK IN/);
+
+console.log("Campaign Day 1 world-camera continuity + retired workstation concept overlay: PASS");

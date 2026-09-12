@@ -1,4 +1,4 @@
-/* Good Boys campaign-bible world authority v2.
+/* Good Dogs campaign-bible world adapter v3.
  * Makes the late production runtime agree with the authored route, not just the
  * labels: Waldo's property -> hidden bay -> prison breach -> 118 -> Mike Index
  * -> 1984 -> Warden/shuttle -> Earthfall. It may normalize legacy enemy classes,
@@ -7,8 +7,8 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysBibleWorld)return;
-  var VERSION=2,lastMission=0,normalizedMission=0,drawInstalled=false,repairs=0;
-  var ROUTE={
+  var VERSION=3,lastMission=0,normalizedMission=0,drawInstalled=false,repairs=0;
+  var LEGACY_ROUTE={
     1:{name:"WALDO'S HOUSE",objective:"SEARCH THE PROPERTY · FOLLOW THE TRAIL THROUGH THE GARAGE · FIND THE HIDDEN BAY",zone:"WALDO'S PLACE — HOUSE / YARD / GARAGE",target:1460,color:"#ffd166"},
     2:{name:"THE HIDDEN BAY",objective:"CLEAR THE HANGAR · REACH THE SECRET SHIP · BOARD",zone:"WALDO'S CONCEALED LAUNCH BAY",target:1390,color:"#55dfff"},
     3:{name:"ORBITAL PRISON — BREACH",objective:"SURVIVE IMPACT · CROSS THE BREACH · REACH CELL BLOCK 118",zone:"BLACKSITE MERIDIAN — MAINTENANCE HULL",target:1450,color:"#ff8a4c"},
@@ -18,7 +18,7 @@
     7:{name:"ESCAPE VELOCITY",objective:"BREAK THE WARDEN · REACH THE MAINTENANCE SHUTTLE",zone:"BLACKSITE MERIDIAN — WARDEN CORE / SHUTTLE BAY",target:1580,color:"#f59e0b"},
     8:{name:"EARTHFALL",objective:"GET K · WALDO · KATRIN · MANCHEZ HOME",zone:"WALDO'S HOUSE — DAWN",target:820,color:"#ffd18b"}
   };
-  var STAGES={
+  var LEGACY_STAGES={
     1:{platforms:[],hazards:[],landmarks:[{x:520,label:"YARD",kind:"yard"},{x:790,label:"PORCH",kind:"porch"},{x:1120,label:"GARAGE",kind:"garage"},{x:1460,label:"HIDDEN BAY",kind:"door"}]},
     2:{platforms:[[420,338,210],[760,300,180],[1060,338,220]],hazards:[],landmarks:[{x:620,label:"HANGAR SECURITY",kind:"console"},{x:1390,label:"SECRET SHIP",kind:"shuttle"}]},
     3:{platforms:[[280,348,210],[590,320,190],[880,350,230],[1185,318,205],[1450,350,170]],hazards:[[505,55],[1090,55]],landmarks:[{x:330,label:"IMPACT BREACH",kind:"breach"},{x:900,label:"MAINTENANCE AIRLOCK",kind:"door"},{x:1450,label:"BLOCK 118",kind:"door"}]},
@@ -28,6 +28,9 @@
     7:{platforms:[[210,340,180],[465,295,160],[700,255,155],[930,305,180],[1190,255,180],[1450,325,170]],hazards:[[400,45],[1378,45]],landmarks:[{x:900,label:"WARDEN CORE",kind:"warden"},{x:1580,label:"MAINTENANCE SHUTTLE",kind:"shuttle"}]},
     8:{platforms:[],hazards:[],landmarks:[{x:640,label:"WALDO'S PORCH",kind:"porch"},{x:930,label:"GARAGE",kind:"garage"},{x:1180,label:"SHUTTLE WRECK",kind:"shuttle"}]}
   };
+  var REGISTRY=root.TechOpsLevelRegistry;
+  var ROUTE=REGISTRY&&REGISTRY.goodBoysRoute?REGISTRY.goodBoysRoute():LEGACY_ROUTE;
+  var STAGES=REGISTRY&&REGISTRY.goodBoysStages?REGISTRY.goodBoysStages():LEGACY_STAGES;
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function meta(){try{return root.S&&root.S.meta&&root.S.meta._v736?root.S.meta._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
@@ -70,7 +73,7 @@
       if(!active()||!root.NM)return false;var n=root.NM,c=cs(),m=mission();
       if(m!==normalizedMission){normalizedMission=m;n._gbBibleMissionNormalized=false;n._gbBibleM5Canonical=false;}
       if(m===1){c.wave=999;c.waveDelay=0;c.pendingSpawn=null;c.towers=[];c.evidence=null;c.uplink=null;c.decrypt=null;c.barrier=null;if(n.enemies&&n.enemies.length){n.enemies=[];repairs++;}n.clear=false;n._gbBibleMissionNormalized=true;}
-      if(m===2){if(!c.towers||!c.towers.length||!c.towers[0]._bibleSentinel){c.towers=[{x:-100000,done:false,_bibleSentinel:true}];repairs++;}c.pendingSpawn=c.pendingSpawn||null;n._gbBibleMissionNormalized=true;}
+      if(m===2){if(c.towers){c.towers=null;repairs++;}c.pendingSpawn=c.pendingSpawn||null;n._gbBibleMissionNormalized=true;}
       normalizeEnemies(m);
       if(m===5){n._gbBibleM5Canonical=true;n._gbBibleMissionNormalized=true;}
       if(m===6)n._gbBibleMissionNormalized=true;

@@ -1,4 +1,4 @@
-/* Good Boys canon runtime — production authority v7.
+/* Good Dogs canon runtime — production authority v8.
  * World law: shared Night engine, independent Good Boys campaign world.
  * Route: Waldo's house -> hidden ship -> prison impact -> 118 -> 1984 -> escape -> Earth.
  *
@@ -9,8 +9,8 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysCanon)return;
-  var VERSION=7,chain=false,baseLoad=null,basePlay=null,baseDraw=null,baseToast=null;
-  var SEQ={
+  var VERSION=8,chain=false,baseLoad=null,basePlay=null,baseDraw=null,baseToast=null;
+  var LEGACY_SEQ={
     1:{name:"WALDO'S HOUSE",objective:"FIND WALDO'S TRAIL · REACH THE HIDDEN BAY",zone:"WALDO'S HOUSE — EARTH",bg:"goodboys_home",district:"goodboys_home",light:"home_gold"},
     2:{name:"THE HIDDEN BAY",objective:"POWER THE SECRET SHIP · CLEAR THE HANGAR · LAUNCH",zone:"WALDO'S SECRET HANGAR",bg:"goodboys_hangar",district:"goodboys_hangar",light:"launch_blue"},
     3:{name:"MAKE A DOOR",objective:"SURVIVE IMPACT · CROSS THE BREACH · ENTER DETENTION",zone:"ORBITAL DETENTION — HULL BREACH",bg:"goodboys_breach",district:"goodboys_breach",light:"impact_orange"},
@@ -20,9 +20,11 @@
     7:{name:"ESCAPE VELOCITY",objective:"BREAK THE WARDEN · STEAL THE MAINTENANCE SHUTTLE",zone:"COLLAPSING SHUTTLE BAY",bg:"goodboys_escape",district:"goodboys_escape",light:"escape_purple"},
     8:{name:"EARTHFALL",objective:"GET K · WALDO · KATRIN · MANCHEZ HOME",zone:"WALDO'S HOUSE — DAWN",bg:"goodboys_earthfall",district:"goodboys_earthfall",light:"earthfall_gold"}
   };
+  var REGISTRY=root.TechOpsLevelRegistry;
+  var SEQ=REGISTRY&&REGISTRY.goodBoysSequence?REGISTRY.goodBoysSequence():LEGACY_SEQ;
   var INTRO={
     b736m1:{title:"WALDO'S HOUSE",body:"Waldo is gone. Katrin and Manchez pick up his trail inside the house and follow it through the garage to a concealed launch bay.",hint:"MOVE AS A PAIR · SWAP · BOOST JUMP ×3 · AIR DASH ×2",asset:"goodboys_home",cta:"FOLLOW THE TRAIL"},
-    b736m2:{title:"THE SECRET SHIP",body:"The hidden bay opens around an unregistered spacecraft. Restore the launch systems, clear the hangar, and get it airborne.",hint:"POWER COUPLERS · PARTNER THROW/CATCH · CLEAR THE BAY",asset:"goodboys_hangar",cta:"BOARD THE SHIP"},
+    b736m2:{title:"THE SECRET SHIP",body:"The hidden bay opens around an unregistered spacecraft. Clear the hangar and reach the ship together. Take the cockpit, then launch.",hint:"CLEAR BOTH WAVES · REACH THE SHIP · BOARD",asset:"goodboys_hangar",cta:"ENTER THE HANGAR"},
     b736m3:{title:"NO DOCKING",body:"The orbital prison rejects the stolen ship and lights up its defense grid. The dogs choose the shortest route inside: full-speed impact.",hint:"PRISON APPROACH · DEFENSE FIRE · IMPACT VECTOR",asset:"goodboys_approach",cta:"MAKE A DOOR"}
   };
   function productionCompositorActive(){try{return !!(root.TechOpsProductionWrapperGuard||root.__productionSingleCompositor||root.__productionCompositorPlanned);}catch(e){return false;}}
@@ -56,7 +58,7 @@
   }
   function showCampaignIntro(id,cb){
     var spec=INTRO[id];if(!spec)return false;
-    try{if(!root.document){prepareNightRuntime(cb);return true;}var old=root.document.getElementById("good-boys-campaign-intro");if(old)old.remove();closeLegacyDialog();var o=root.document.createElement("div");o.id="good-boys-campaign-intro";var src=assetSrc(spec.asset);o.style.cssText="position:fixed;inset:0;z-index:100000;background:#02050a center/cover no-repeat;display:flex;align-items:flex-end;justify-content:center;padding:max(18px,env(safe-area-inset-bottom)) 14px;color:#eef8ff;font-family:monospace";if(src)o.style.backgroundImage='linear-gradient(to bottom,rgba(1,4,8,.06),rgba(1,4,8,.32) 45%,rgba(1,4,8,.94)),url("'+src.replace(/"/g,"%22")+'")';o.innerHTML='<div style="width:min(720px,96vw);margin-bottom:3vh;background:#050914ee;border:2px solid #55dfff;border-radius:14px;padding:18px;box-shadow:0 0 34px #0ea5e944"><div style="color:#ffd166;font:700 24px monospace;line-height:1.05">GOOD BOYS PROTOCOL — '+spec.title+'</div><p style="font-size:16px;line-height:1.55;margin:14px 0">'+spec.body+'</p><div style="color:#9fdcf0;font-size:13px;line-height:1.45">'+spec.hint+'</div><button id="good-boys-begin" style="width:100%;min-height:54px;margin-top:18px;border:2px solid #55dfff;border-radius:10px;background:#0a1726;color:#e9f8ff;font:700 15px monospace">'+spec.cta+'</button></div>';root.document.body.appendChild(o);var done=false,go=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}if(done)return;done=true;try{o.remove();}catch(_){}closeLegacyDialog();prepareNightRuntime(cb);};var b=root.document.getElementById("good-boys-begin");if(b){b.addEventListener("pointerdown",go,{once:true});b.addEventListener("click",go,{once:true});}return true;}catch(e){root.__goodBoysIntroError=String(e&&e.stack||e);prepareNightRuntime(cb);return false;}
+    try{if(!root.document){prepareNightRuntime(cb);return true;}var old=root.document.getElementById("good-boys-campaign-intro");if(old)old.remove();closeLegacyDialog();var o=root.document.createElement("div");o.id="good-boys-campaign-intro";var src=assetSrc(spec.asset);o.style.cssText="position:fixed;inset:0;z-index:100000;background:#02050a center/cover no-repeat;display:flex;align-items:flex-end;justify-content:center;padding:max(18px,env(safe-area-inset-bottom)) 14px;color:#eef8ff;font-family:monospace";if(src)o.style.backgroundImage='linear-gradient(to bottom,rgba(1,4,8,.06),rgba(1,4,8,.32) 45%,rgba(1,4,8,.94)),url("'+src.replace(/"/g,"%22")+'")';o.innerHTML='<div style="width:min(720px,96vw);margin-bottom:3vh;background:#050914ee;border:2px solid #55dfff;border-radius:14px;padding:18px;box-shadow:0 0 34px #0ea5e944"><div style="color:#ffd166;font:700 24px monospace;line-height:1.05">GOOD DOGS PROTOCOL — '+spec.title+'</div><p style="font-size:16px;line-height:1.55;margin:14px 0">'+spec.body+'</p><div style="color:#9fdcf0;font-size:13px;line-height:1.45">'+spec.hint+'</div><button id="good-boys-begin" style="width:100%;min-height:54px;margin-top:18px;border:2px solid #55dfff;border-radius:10px;background:#0a1726;color:#e9f8ff;font:700 15px monospace">'+spec.cta+'</button></div>';root.document.body.appendChild(o);var done=false,go=function(ev){if(ev){ev.preventDefault();ev.stopPropagation();}if(done)return;done=true;try{o.remove();}catch(_){}closeLegacyDialog();prepareNightRuntime(cb);};var b=root.document.getElementById("good-boys-begin");if(b){b.addEventListener("pointerdown",go,{once:true});b.addEventListener("click",go,{once:true});}return true;}catch(e){root.__goodBoysIntroError=String(e&&e.stack||e);prepareNightRuntime(cb);return false;}
   }
   function installOpeningAuthority(){try{if(!root.v725||typeof root.v725.play!=="function"||root.v725.play.__goodBoysCanon)return false;basePlay=root.v725.play;root.v725.play=function(id,cb){if(!INTRO[id])return basePlay.apply(this,arguments);latch();ensureAssets();return showCampaignIntro(id,cb);};root.v725.play.__goodBoysCanon=true;return true;}catch(e){return false;}}
   function hideLegacyUi(){try{if(!root.document)return false;var on=isChain(),ids=["hud","quest-tracker","chaos-banner","btn-twin","btn-sweep","btn-music"];ids.forEach(function(id){var el=root.document.getElementById(id);if(!el)return;if(on){if(el.dataset.gbCanonDisplay===undefined)el.dataset.gbCanonDisplay=el.style.display||"";el.style.setProperty("display","none","important");}else if(el.dataset.gbCanonDisplay!==undefined){el.style.display=el.dataset.gbCanonDisplay;delete el.dataset.gbCanonDisplay;}});if(root.document.body)root.document.body.classList.toggle("good-boys-canon",on);return true;}catch(e){return false;}}

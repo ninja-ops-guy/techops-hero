@@ -78,6 +78,9 @@ const TICKET_TYPES = [
   { id: "shadow", label: "UNKNOWN ROOT PROCESS", icon: "🕳️", enemy: "THE SHADOW ADMINISTRATOR", eicon: "🌑", world: "The Root Directory", wbg: "#0a0a12", stat: "security",
     diag: { best: "Confront palan0 at the root terminal", okay: "Trace the process tree to its origin", wrong: ["Kill the process and move on", "Report it to the vendor SOC", "Shut down the affected subnet"] } },
 ];
+// Read-only catalog bridge for the cinematic level registry. Runtime ticket
+// state remains lexical and is not moved into the registry.
+globalThis.TechOpsTicketTypes = TICKET_TYPES;
 // moves unlocked by career rank (RANKS index) — your loadout evolves as you level
 const MOVE_LEVELS = [
   { rank: 1, ability: { id: "rdp", name: "Remote Desktop", icon: "🖥️", dmg: [8, 14], stress: 5, heal: 6, desc: "Fix it without leaving your desk" } },
@@ -684,13 +687,32 @@ function setupDay() {
 // ---------- rendering ----------
 const cv = $("game"), ctx = cv.getContext("2d");
 let camX = 0, camY = 0;
-function resize() {
-  const ar = innerWidth / innerHeight;
-  cv.height = Math.min(720, innerHeight);
-  cv.width = Math.round(cv.height * ar);
-  if (cv.width > innerWidth) { cv.width = innerWidth; cv.height = Math.round(cv.width / ar); }
+function viewportSize() {
+  const vv = window.visualViewport;
+  const w = Math.max(1, Math.round((vv && vv.width) || innerWidth || document.documentElement.clientWidth || 1));
+  const h = Math.max(1, Math.round((vv && vv.height) || innerHeight || document.documentElement.clientHeight || 1));
+  return { w, h };
 }
-addEventListener("resize", resize); resize();
+function resize() {
+  const vp = viewportSize(), ar = vp.w / vp.h;
+  const renderH = Math.min(720, vp.h);
+  cv.height = Math.max(1, Math.round(renderH));
+  cv.width = Math.max(1, Math.round(cv.height * ar));
+  // CSS size owns the physical viewport. The intrinsic buffer stays capped for
+  // predictable pixel-art cost, preventing iOS Safari from leaving a side strip
+  // when its visual viewport is shorter than the layout viewport.
+  cv.style.width = vp.w + "px";
+  cv.style.height = vp.h + "px";
+  cv.style.maxWidth = "none";
+  cv.style.maxHeight = "none";
+}
+addEventListener("resize", resize);
+addEventListener("orientationchange", resize);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", resize);
+  window.visualViewport.addEventListener("scroll", resize);
+}
+resize();
 
 // ---------- pixel art ----------
 let pxCtx = null; // v7.28: retargetable so the tile layer can render into its cache

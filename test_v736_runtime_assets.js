@@ -15,8 +15,8 @@ assert(
 );
 
 assert(
-  /const\s+frame\s*=\s*Math\.floor\(\(tm\s*\|\|\s*0\)\s*\/\s*140\)\s*%\s*7/.test(v736),
-  "v7.36 pair atlas selection must advance through the seven idle frames"
+  /const\s+frame\s*=\s*Math\.floor\(\(tm\s*\|\|\s*0\)\s*\/\s*720\)\s*%\s*2/.test(v736),
+  "v7.36 pair atlas selection must use only the two semantically verified idle frames"
 );
 
 assert(
@@ -105,11 +105,6 @@ assert(
 for (const key of [
   "kat_idle0",
   "kat_idle1",
-  "kat_idle2",
-  "kat_idle3",
-  "kat_idle4",
-  "kat_idle5",
-  "kat_idle6",
   "kat_hack",
   "kat_shield",
   "kat_pounce",
@@ -120,11 +115,6 @@ for (const key of [
   "kat_strike",
   "man_idle0",
   "man_idle1",
-  "man_idle2",
-  "man_idle3",
-  "man_idle4",
-  "man_idle5",
-  "man_idle6",
   "man_hack",
   "man_shield",
   "man_pounce",
@@ -137,6 +127,11 @@ for (const key of [
   assert(atlasJs.includes(`"${key}":[`), `atlas metadata must include ${key}`);
   assert(manifest.frames[key], `manifest must include ${key}`);
   assert(fs.existsSync(manifest.frames[key].png), `source-derived frame PNG must exist for ${key}`);
+}
+
+for (const key of ["kat_idle2","kat_idle3","kat_idle4","kat_idle5","kat_idle6","man_idle2","man_idle3","man_idle4","man_idle5","man_idle6"]) {
+  assert(!atlasJs.includes(`"${key}":[`), `unrelated ${key} source pose must remain quarantined from runtime idle semantics`);
+  assert(manifest.frames[key] && fs.existsSync(manifest.frames[key].png), `quarantined source crop must remain traceable for ${key}`);
 }
 
 assert(fs.existsSync("assets/v736/katrin_manchez_atlas.png"), "packed KATRIN_MANCHEZ runtime atlas PNG must exist");

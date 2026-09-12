@@ -9,8 +9,7 @@ const reference = fs.readFileSync("night_reference_visuals.js", "utf8");
 const referenceAtlas = fs.readFileSync("night_walker_reference_v1.js", "utf8");
 
 function scriptIndex(src) {
-  const marker = `<script src="${src}"></script>`;
-  const index = html.indexOf(marker);
+  const index = [...html.matchAll(/<script\s+src="([^"]+)"[^>]*><\/script>/g)].findIndex(match => match[1].split(/[?#]/, 1)[0] === src);
   assert.notStrictEqual(index, -1, `${src} must be loaded by index.html`);
   return index;
 }
@@ -67,4 +66,34 @@ assert.ok(fs.existsSync("night_walker_payload_p5.js"));
 assert.ok(fs.existsSync("night_walker_payload_p7.js"));
 assert.ok(!fs.existsSync("night_walker_payload_p1.js") && !fs.existsSync("night_walker_payload_p2.js"));
 
-console.log("Night reference visual authority: PASS");
+const ncPlayerStart = v737Hooks.indexOf("function drawNCPlayer");
+const ncPlayerEnd = v737Hooks.indexOf("// ---------- satellite beam special", ncPlayerStart);
+assert.ok(ncPlayerStart > -1 && ncPlayerEnd > ncPlayerStart, "Night Crawler production draw block must exist");
+const ncPlayer = v737Hooks.slice(ncPlayerStart, ncPlayerEnd);
+assert.ok(/TechOpsNightReferenceVisuals/.test(ncPlayer) && /drawReferenceNightWalker/.test(ncPlayer),
+  "Night Crawler form must delegate to the production reference visual authority");
+assert.ok(!/nwFrame\(/.test(ncPlayer),
+  "retired NIGHT_WALKER payload must not be the normal Night Crawler production sprite path");
+
+assert.ok(/function clearStaleNightSelectionForNormalStart/.test(v737Hooks),
+  "normal CLOCK IN must clear a stale Night Crawler selector");
+assert.ok(/__productionDesiredMode === "nightcrawler"/.test(v737Hooks) && /__v737NightStartIntent/.test(v737Hooks),
+  "normal-run cleanup must preserve intentional Night Crawler launches");
+assert.ok(/localStorage\.removeItem\("techops_char"\)/.test(v737Hooks),
+  "normal-run cleanup must remove persisted Night Crawler selection before newState()");
+
+console.log("Night reference visual authority + normal-run isolation: PASS");
+
+// The legacy scenery wrapper must delegate to Night interaction without then opening a Day prop.
+const vm=require('node:vm'),propsSource=fs.readFileSync('v720_hooks.js','utf8');
+const wrapper=propsSource.slice(propsSource.indexOf('const __origInteract720 ='),propsSource.indexOf('  window.v720 ='));
+let delegated=0,dialogs=0;
+const input={S:{nightMode:true,inDialog:false,inBattle:false,px:0,py:0},interact(){delegated++;},window:{v63:{v63PropSpots(){return [[0,1,0]];}}},PROP_INFO:[['Coffee','Day scenery']],dlg(){dialogs++;},closeDlg(){}};
+vm.createContext(input);vm.runInContext(wrapper,input);
+input.interact();assert.strictEqual(delegated,1);assert.strictEqual(dialogs,0,'Night combat/travel interaction must not open Day scenery');
+input.S.nightMode=false;input.interact();assert.strictEqual(delegated,2);assert.strictEqual(dialogs,1,'Day inspection remains available');
+
+// A campaign encounter must not escape into the Earth car hub.
+const carSource=nightHooks.slice(nightHooks.indexOf("function nmCarMenu()"),nightHooks.indexOf("function nmNextStage()"));
+let carDialogs=0;const car={NM:{_sector04:{active:true}},S:{},NM_ORDER:[],dlg(){carDialogs++;},closeDlg(){}};vm.createContext(car);vm.runInContext(carSource,car);
+assert.strictEqual(car.nmCarMenu(),false);assert.strictEqual(carDialogs,0);car.NM={};car.nmCarMenu();assert.strictEqual(carDialogs,1,"Earth Charger still opens");

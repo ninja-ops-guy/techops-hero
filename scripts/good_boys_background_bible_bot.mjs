@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
 
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
@@ -8,16 +9,26 @@ fs.mkdirSync(OUT,{recursive:true});
 const expected={
   1:{key:'goodboys_home',district:'goodboys_home',scene:"WALDO'S PLACE — HOUSE / YARD / GARAGE",landmarks:['YARD','PORCH','GARAGE','HIDDEN BAY']},
   2:{key:'goodboys_hangar',district:'goodboys_hangar',scene:"WALDO'S CONCEALED LAUNCH BAY",landmarks:['HANGAR SECURITY','SECRET SHIP']},
-  3:{key:'goodboys_breach',district:'goodboys_breach',scene:'ORBITAL PRISON — HULL BREACH',landmarks:['IMPACT BREACH','MAINTENANCE AIRLOCK','BLOCK 118']},
-  4:{key:'goodboys_cell118',district:'goodboys_cell118',scene:'DETENTION BLOCK 118',landmarks:['CELL 118']},
-  5:{key:'goodboys_core',district:'goodboys_core',scene:'ACCESS CORE',landmarks:['K — ROUTE KEY','ACCESS NODE','ROUTE 1984']},
-  6:{key:'goodboys_cell1984',district:'goodboys_cell1984',scene:'SURVEILLANCE BLOCK 1984',landmarks:['K UPLINK','CELL 1984']},
-  7:{key:'goodboys_escape',district:'goodboys_escape',scene:'WARDEN CORE / SHUTTLE BAY',landmarks:['WARDEN CORE','MAINTENANCE SHUTTLE']},
+  3:{key:'goodboys_breach',district:'goodboys_breach',scene:'BLACKSITE MERIDIAN — MAINTENANCE HULL',landmarks:['IMPACT BREACH','MAINTENANCE AIRLOCK','BLOCK 118']},
+  4:{key:'goodboys_cell118',district:'goodboys_cell118',scene:'BLACKSITE MERIDIAN — BLOCK 118',landmarks:['CELL 118']},
+  5:{key:'goodboys_core',district:'goodboys_core',scene:'BLACKSITE MERIDIAN — ORPHEUS ACCESS CORE',landmarks:['K — ROUTE KEY','ACCESS NODE','ROUTE 1984']},
+  6:{key:'goodboys_cell1984',district:'goodboys_cell1984',scene:'BLACKSITE MERIDIAN — SURVEILLANCE BLOCK 1984',landmarks:['K UPLINK','CELL 1984']},
+  7:{key:'goodboys_escape',district:'goodboys_escape',scene:'BLACKSITE MERIDIAN — WARDEN CORE / SHUTTLE BAY',landmarks:['WARDEN CORE','MAINTENANCE SHUTTLE']},
   8:{key:'goodboys_earthfall',district:'goodboys_earthfall',scene:"WALDO'S HOUSE — DAWN",landmarks:["WALDO'S PORCH",'GARAGE','SHUTTLE WRECK']}
 };
 const findings=[];const fail=(mission,issue,data={})=>findings.push({mission,issue,...data});
 async function clickText(page,re){for(const b of await page.locator('button').all()){let t='';try{t=(await b.innerText()).trim();}catch{}if(re.test(t)){try{await b.evaluate(el=>{el.click();return true;});return true;}catch{}}}return false;}
 async function domClick(page,selector){return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);}
+async function driveCurrentDeck(page){
+  if(!await page.locator('#good-boys-deck-supplied').count())return false;
+  await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:8000});
+  await page.keyboard.down('ArrowRight');
+  try{await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.nearPilot===true,null,{timeout:8000});}
+  finally{await page.keyboard.up('ArrowRight').catch(()=>{});}
+  if(!await domClick(page,'#gbs-use'))throw new Error('current cockpit pilot INTERACT unavailable');
+  await page.waitForFunction(()=>!document.getElementById('good-boys-deck-supplied')||(window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.completed===true),null,{timeout:5000});
+  return true;
+}
 async function moveShipTo(page,id){
   const result=await page.evaluate(async target=>{
     const right=document.querySelector('#good-boys-ship-interlude [data-move="right"]');
@@ -35,7 +46,10 @@ async function moveShipTo(page,id){
 }
 async function completeShip(page){if(!await page.locator('#good-boys-ship-interlude').count())return false;for(const id of ['nav','flight','dock']){const done=await page.evaluate(target=>{const s=window.__goodBoysOpeningGameplay;return !!(s&&Array.isArray(s.systems)&&s.systems.includes(target));},id).catch(()=>false);if(!done)await moveShipTo(page,id);}return true;}
 async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(Date.now()<until){
+  if(await page.locator('#good-boys-deck-supplied').count()){idle=0;await driveCurrentDeck(page);await page.waitForTimeout(100);continue;}
   if(await page.locator('#good-boys-ship-interlude').count()){idle=0;await completeShip(page);await page.waitForTimeout(100);continue;}
+  if(await page.locator('#good-boys-ship-flight').count()){idle=0;await page.waitForTimeout(180);continue;}
+  if(await page.locator('#good-boys-crash-canonical').count()){idle=0;await page.waitForTimeout(180);continue;}
   const premise='#good-boys-campaign-intro button';if(await page.locator(premise).count()){idle=0;await domClick(page,premise);await page.waitForTimeout(120);continue;}
   const film='#good-dogs-cutscene-overlay.active .gd-film-skip';if(await page.locator(film).count()){idle=0;await domClick(page,film);await page.waitForTimeout(100);continue;}
   let handled=false;for(const sel of ['#good-boys-earthfall-cine button','#gb-prison-cine button','#good-boys-story-cine button']){const b=page.locator(sel).first();if(!await b.count())continue;if(await b.isVisible().catch(()=>false)){await b.evaluate(el=>el.click()).catch(()=>{});handled=true;break;}}
@@ -45,13 +59,22 @@ async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(
   const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);if(introBusy){idle=0;await page.waitForTimeout(120);continue;}
   idle++;if(idle>=8)return true;await page.waitForTimeout(100);
 }return false;}
-const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
+const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
-  if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
-  await dismiss(page,12000);await page.waitForFunction(()=>!!(window.NM&&window.NM._v736),null,{timeout:7000});await page.waitForTimeout(300);
-  const opening=await page.evaluate(()=>({repair:window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.VERSION||0,ship:window.TechOpsShipInteraction&&window.TechOpsShipInteraction.VERSION||0,state:window.__goodBoysOpeningGameplay||null,clockIn:window.__goodBoysCanonicalClockIn||null}));
-  if(opening.repair<12||opening.ship<2||!opening.state||!opening.state.completed||opening.state.count!==3||!opening.clockIn||!opening.clockIn.ok)fail(0,'canonical-opening-not-complete',opening);
+  if(!await clickGoodDogsLaunch(page))throw new Error('Good Dogs launch button missing');
+  await driveFreshRouteToCockpit(page,{requireDecoded:true});
+  await dismiss(page,36000);
+  await page.waitForFunction(()=>!!(window.NM&&window.NM._v736&&Number(window.NM._v736.m)===3),null,{timeout:18000});
+  await page.waitForTimeout(300);
+  const opening=await page.evaluate(()=>({
+    deck:window.__goodBoysDeckInteract||null,
+    crash:window.__goodBoysCrashScene||null,
+    hard:window.__goodBoysHardButtonLaunch||null,
+    mission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||0),
+    pair:!!(window.NM&&window.NM._v736&&window.NM._v736.chars&&window.NM._v736.chars.katrin&&window.NM._v736.chars.manchez)
+  }));
+  if(!opening.deck||!opening.deck.completed||!opening.crash||!opening.crash.completed||opening.hard?.status!=='campaign-gameplay'||Number(opening.hard?.version||0)<GOOD_DOGS_CONTRACT_VERSION||opening.mission!==3||!opening.pair)fail(0,'canonical-opening-not-complete',opening);
   /* This bot samples the eight authored environments out of sequence. Pause the
      live progression timer so combat-clear state cannot legitimately advance a
      manually selected sample while its background contract is being observed. */
@@ -76,5 +99,16 @@ try{
     if(st.phase&&st.phase.bg!==e.key)fail(m,'gameplay-phase-background-drift',{expected:e.key,actual:st.phase.bg});
     await page.screenshot({path:path.join(OUT,`goodboys-bible-m${m}.png`),fullPage:false});
   }
-}catch(e){fail(0,'bot-exception',{error:String(e&&e.stack||e)});}finally{await browser.close();}
-const report={pass:findings.length===0,expected,findings};fs.writeFileSync(path.join(OUT,'goodboys-background-bible.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-background-bible.md'),['# Good Boys Background Bible Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Findings: ${findings.length}`,'','## Canon route','',...Object.entries(expected).map(([m,e])=>`- M${m}: ${e.scene} — \`${e.key}\` / \`${e.district}\``),'',...(findings.length?['## Findings','',...findings.map(f=>`- ${JSON.stringify(f)}`)]:[])].join('\n'));if(!report.pass)process.exitCode=1;
+}catch(e){
+  const state=await page.evaluate(()=>({
+    openingPhase:window.__goodBoysOpeningPhase||null,
+    deck:window.__goodBoysDeckInteract||null,
+    crash:window.__goodBoysCrashScene||null,
+    hard:window.__goodBoysHardButtonLaunch||null,
+    hasNM:!!window.NM,
+    runtimeMission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||0)
+  })).catch(()=>null);
+  fail(0,'bot-exception',{error:String(e&&e.stack||e),state});
+  await page.screenshot({path:path.join(OUT,'goodboys-background-bible-exception.png'),fullPage:true}).catch(()=>{});
+}finally{await browser.close();}
+const report={pass:findings.length===0,contractVersion:GOOD_DOGS_CONTRACT_VERSION,expected,findings};fs.writeFileSync(path.join(OUT,'goodboys-background-bible.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-background-bible.md'),['# Good Dogs Background Bible Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Findings: ${findings.length}`,'','## Canon route','',...Object.entries(expected).map(([m,e])=>`- M${m}: ${e.scene} — \`${e.key}\` / \`${e.district}\``),'',...(findings.length?['## Findings','',...findings.map(f=>`- ${JSON.stringify(f)}`)]:[])].join('\n'));if(!report.pass)process.exitCode=1;
