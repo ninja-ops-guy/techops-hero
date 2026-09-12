@@ -2,7 +2,9 @@ name: Verified gameplay integration
 on:
   push:
     branches: [feat/gameplay-feedback-workday-pass]
-    paths: [.quality-delivery/manifest.json]
+    paths:
+      - .quality-delivery/manifest.json
+      - .github/workflows/quality-integration-publish.yml
 permissions:
   contents: write
 concurrency:
@@ -10,7 +12,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    if: github.event.head_commit.message == 'ci: apply verified gameplay quality integration'
+    if: >-
+      github.event.head_commit.message == 'ci: apply verified gameplay quality integration'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
