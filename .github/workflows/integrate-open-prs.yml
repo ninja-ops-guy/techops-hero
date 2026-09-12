@@ -35,41 +35,28 @@ jobs:
           CACHE="20260912-integrated-r1"
           BUILD="20260912-production-v34-integrated-r1"
 
-          # One coherent parser cache contract for the campaign files changed by PR #26.
-          p=Path("index.html")
-          s=p.read_text()
+          p=Path("index.html"); s=p.read_text()
           for src in ("campaign_story.js","campaign_act1.js","campaign_native_act1.js"):
               pattern=r'src="'+re.escape(src)+r'(?:\?v=[^"]*)?"'
               s,n=re.subn(pattern,'src="'+src+'?v='+CACHE+'"',s,count=1)
-              if n != 1:
-                  raise SystemExit(f"entrypoint marker missing or duplicated: {src} ({n})")
+              if n != 1: raise SystemExit(f"entrypoint marker missing or duplicated: {src} ({n})")
           p.write_text(s)
 
-          # Preserve PR #27's richer HUD, while importing PR #26's mode isolation and verb ownership
-          # plus PR #28's mobile viewport/boarding hierarchy.
-          p=Path("good_boys_reference_ui_v1.js")
-          s=p.read_text()
-          s=s.replace('function active(){return !!cs();}',
-                      'function active(){try{var n=root.NM,s=root.S;return !!(n&&n._v736&&s&&!s.gameOver&&(s.nightMode===n||s.nightMode===true));}catch(e){return false;}}',1)
-          forced='var use=root.document.getElementById("gb-use");if(use)use.textContent=(use.dataset.context==="1"?"E   USE · CELL 118":"E   USE / INTERACT");'
-          s=s.replace(forced,'',1)
+          p=Path("good_boys_reference_ui_v1.js"); s=p.read_text()
+          s=s.replace('function active(){return !!cs();}', 'function active(){try{var n=root.NM,s=root.S;return !!(n&&n._v736&&s&&!s.gameOver&&(s.nightMode===n||s.nightMode===true));}catch(e){return false;}}',1)
+          s=s.replace('var use=root.document.getElementById("gb-use");if(use)use.textContent=(use.dataset.context==="1"?"E   USE · CELL 118":"E   USE / INTERACT");','',1)
           if '#good-boys-board-ship' not in s:
               anchor='"body.good-boys-reference-ui #good-dogs-touch button:active{transform:translateY(2px) scale(.98)!important;filter:brightness(1.3)!important}",'
               addition='"body.good-boys-reference-ui #good-boys-board-ship{box-sizing:border-box!important;max-width:min(68vw,360px)!important;min-height:48px!important;padding:10px 18px!important;font-size:clamp(11px,2.2vw,16px)!important;letter-spacing:.12em!important;border-width:2px!important;border-radius:12px!important;box-shadow:0 10px 26px rgba(0,0,0,.46)!important}",\n    "@media(max-width:560px){body.good-boys-reference-ui #good-boys-board-ship{max-width:54vw!important;min-height:42px!important;padding:8px 12px!important;font-size:11px!important}body.good-boys-reference-ui #dpad{transform:scale(.78)!important}}",'
               if anchor not in s: raise SystemExit("Good Dogs HUD style anchor missing")
               s=s.replace(anchor,anchor+'\n    '+addition,1)
-          if 'USE · CELL 118' in s:
-              raise SystemExit("stale Cell 118 verb override remains in Good Dogs HUD")
+          if 'USE · CELL 118' in s: raise SystemExit("stale Cell 118 verb override remains")
           p.write_text(s)
 
-          # Keep a single production owner stack: Night lifecycle from #24, quality services from #26,
-          # and the evidence-backed live-crawl guard from #28.
-          p=Path("production_bootstrap.js")
-          s=p.read_text()
+          p=Path("production_bootstrap.js"); s=p.read_text()
           s=re.sub(r'/\* TechOps Hero — production runtime bootstrap v\d+\.', '/* TechOps Hero — production runtime bootstrap v34.', s, count=1)
           s=re.sub(r'var VERSION=\d+,BUILD="[^"]+"', 'var VERSION=34,BUILD="'+BUILD+'"', s, count=1)
-          files=["runtime_combat_audio.js","production_gameplay_experience.js","orbital_scene_staging.js"]
-          for f in files:
+          for f in ("runtime_combat_audio.js","production_gameplay_experience.js","orbital_scene_staging.js"):
               if '"'+f+'"' not in s:
                   anchor='"state_validator.js",'
                   if anchor not in s: raise SystemExit("bootstrap state validator anchor missing")
@@ -80,31 +67,29 @@ jobs:
               s=s.replace(anchor,anchor+'\n    "visual_cohesion_live_crawl.js",',1)
           p.write_text(s)
 
-          p=Path("bg_noc.js")
-          s=p.read_text()
-          s=re.sub(r'var BUILD="[^"]+"','var BUILD="'+BUILD+'"',s,count=1)
-          p.write_text(s)
+          p=Path("bg_noc.js"); s=p.read_text(); s=re.sub(r'var BUILD="[^"]+"','var BUILD="'+BUILD+'"',s,count=1); p.write_text(s)
 
-          # Reconcile the two older exact-cache tests to the integrated cache contract rather than
-          # making either pre-integration cache key authoritative.
-          for name in ("test_campaign_browser_entrypoint.js","test_good_boys_ship_deck_mapping.js"):
-              p=Path(name); s=p.read_text()
-              s=s.replace("20260912-gameplay-feedback-r1",CACHE)
-              p.write_text(s)
+          p=Path("test_campaign_browser_entrypoint.js"); s=p.read_text().replace("20260912-gameplay-feedback-r1",CACHE)
+          old='''function scriptIndex(src) {\n  const marker = `<script src="${src}"></script>`;\n  const index = html.indexOf(marker);\n  assert.notStrictEqual(index, -1, `${src} must be loaded by index.html`);\n  return index;\n}'''
+          new='''function scriptIndex(src) {\n  const bare = src.split("?")[0];\n  const match = new RegExp(`<script src="${bare.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}(?:\\\\?v=[^\\\"]+)?"></script>`).exec(html);\n  assert.ok(match, `${bare} must be loaded by index.html`);\n  return match.index;\n}'''
+          if old not in s: raise SystemExit("campaign browser scriptIndex contract changed")
+          s=s.replace(old,new,1); p.write_text(s)
 
-          p=Path("test_static_entrypoint_integrity.js")
-          s=p.read_text()
-          s=s.replace('["good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]',
-                      '["good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js"]')
+          p=Path("test_good_boys_ship_deck_mapping.js"); s=p.read_text().replace("20260912-gameplay-feedback-r1",CACHE); p.write_text(s)
+
+          p=Path("test_static_entrypoint_integrity.js"); s=p.read_text()
+          s=s.replace('["good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]','["good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js"]')
           marker='for(const src of ["campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");'
           if marker not in s: raise SystemExit("static entrypoint cache anchor missing")
           s=s.replace(marker,marker+'\nfor(const src of ["campaign_story.js","campaign_act1.js","campaign_native_act1.js"])assert.strictEqual(refFor(src),src+"?v='+CACHE+'");',1)
           s=s.replace(', "campaign_native_act1.js", "campaign_native_act2.js",', ', "campaign_native_act2.js",')
           p.write_text(s)
 
-          p=Path("test_live_crawl_visual_cohesion.js")
-          s=p.read_text().replace("bootstrap.includes('VERSION=32')","bootstrap.includes('VERSION=34')")
+          p=Path("test_quality_integration.js"); s=p.read_text()
+          s=s.replace("assert.match(src,/TechOpsNightFlow\\.install\\(\\)/);", "assert.equal(r.TechOpsProductionBootstrap.FILES.filter(x=>x==='runtime_night.js').length,1);")
           p.write_text(s)
+
+          p=Path("test_live_crawl_visual_cohesion.js"); s=p.read_text().replace("bootstrap.includes('VERSION=32')","bootstrap.includes('VERSION=34')"); p.write_text(s)
           PY
       - name: Static and aggregate validation
         run: |
@@ -127,7 +112,7 @@ jobs:
       - name: Remove temporary workflow and publish reconciled branch
         run: |
           set -euo pipefail
-          git add index.html good_boys_reference_ui_v1.js production_bootstrap.js bg_noc.js test_campaign_browser_entrypoint.js test_good_boys_ship_deck_mapping.js test_static_entrypoint_integrity.js test_live_crawl_visual_cohesion.js
+          git add index.html good_boys_reference_ui_v1.js production_bootstrap.js bg_noc.js test_campaign_browser_entrypoint.js test_good_boys_ship_deck_mapping.js test_static_entrypoint_integrity.js test_quality_integration.js test_live_crawl_visual_cohesion.js
           git commit -m "Reconcile reviewed PR overlap contracts"
           git rm .github/workflows/integrate-open-prs.yml
           git commit -m "Remove temporary integration workflow"
