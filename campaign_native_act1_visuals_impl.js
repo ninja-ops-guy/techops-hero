@@ -83,11 +83,16 @@
     return null;
   }
 
+  // Use the native read model: a closure object alone is not verified restoration.
+  function casebookRecord(state, ticketId) {
+    var native = root && root.TechOpsCampaignNativeAct1;
+    return native && typeof native.ticketRecord === "function" ? native.ticketRecord(state, ticketId) : null;
+  }
+
   function presentationFor(sceneId, state, dialogName) {
     state = state || null;
     var flags = state && state.flags || {};
     var tickets = state && state.tickets || {};
-    var evidence = state && state.evidence && state.evidence.ghostIdentityEvidence || { status: "unknown", sources: [] };
     var p = { sceneId: sceneId, variant: "default", props: (SCENES[sceneId] && SCENES[sceneId].props || []).slice(), motion: [], statusText: null };
 
     if (sceneId === "standup") {
@@ -102,19 +107,24 @@
       if (video) p.motion.push("orpheus_glitch");
       p.statusText = flags.day_work_unlocked ? "DAY SHIFT ACTIVE" : "TICKET CLOCK PAUSED";
     } else if (sceneId === "shipping") {
-      var shippingDone = !!tickets.shipping_cannot_print;
-      p.variant = shippingDone ? "verified" : "fault";
+      var shipping = casebookRecord(state, "shipping_cannot_print");
+      var shippingDone = !!(shipping && shipping.status === "VERIFIED / RESTORED");
+      var shippingFollowUp = !!tickets.shipping_cannot_print && !shippingDone;
+      p.variant = shippingDone ? "verified" : shippingFollowUp ? "follow_up" : "fault";
       p.props = shippingDone ? ["shipping.printed_label_success"] : ["shipping.label_printer"];
-      p.motion = shippingDone ? ["verification_glow", "printer_eject", "camera_push"] : ["forklift_pass", "printer_feed", "camera_track"];
-      p.statusText = shippingDone ? "CUSTOMS LABEL VERIFIED BY REQUESTER" : "PRINT JOBS DISAPPEAR FROM QUEUE";
+      p.motion = shippingDone ? ["verification_glow", "printer_eject", "camera_push"] : shippingFollowUp ? ["camera_push"] : ["forklift_pass", "printer_feed", "camera_track"];
+      p.statusText = shippingDone ? "CUSTOMS LABEL VERIFIED BY REQUESTER" : shippingFollowUp ? "SHIPPING OUTCOME NEEDS FOLLOW-UP" : "PRINT JOBS DISAPPEAR FROM QUEUE";
     } else if (sceneId === "plating") {
-      var platingDone = !!tickets.plating_workstation_down;
-      p.variant = platingDone ? "restored" : "stopped";
-      p.props = platingDone ? [] : ["plating.workstation_cracked", "plating.line_stopped_display"];
-      p.motion = platingDone ? ["machine_run", "status_clear", "camera_push"] : ["warning_beacon", "machine_idle", "camera_track"];
-      p.statusText = platingDone ? "OPERATOR VERIFIED — LINE RESUMED" : "LINE STOPPED — DIGITAL DEPENDENCY";
+      var plating = casebookRecord(state, "plating_workstation_down");
+      var platingDone = !!(plating && plating.status === "VERIFIED / RESTORED");
+      var platingFollowUp = !!tickets.plating_workstation_down && !platingDone;
+      p.variant = platingDone ? "restored" : platingFollowUp ? "follow_up" : "stopped";
+      p.props = platingDone || platingFollowUp ? [] : ["plating.workstation_cracked", "plating.line_stopped_display"];
+      p.motion = platingDone ? ["machine_run", "status_clear", "camera_push"] : platingFollowUp ? ["camera_push"] : ["warning_beacon", "machine_idle", "camera_track"];
+      p.statusText = platingDone ? "OPERATOR VERIFIED — LINE RESUMED" : platingFollowUp ? "PLATING OUTCOME NEEDS FOLLOW-UP" : "LINE STOPPED — DIGITAL DEPENDENCY";
     } else if (sceneId === "access") {
-      var established = evidence.status === "established";
+      var access = casebookRecord(state, "impossible_access_event");
+      var established = !!(access && access.sources.length);
       p.variant = established ? "documented" : "unresolved";
       p.motion = established ? ["audit_lock", "evidence_stack", "camera_push"] : ["audit_sweep", "evidence_pulse", "camera_push"];
       p.statusText = established ? "CONTRADICTION PRESERVED WITH PROVENANCE" : "VALID IDENTITY ≠ VERIFIED PRESENCE";
@@ -142,7 +152,7 @@
       ".act1-reference.a1-side_view .a1-actor{right:13%;height:48%}.act1-reference.a1-side_view .a1-props{justify-content:flex-start;left:14%;right:42%;bottom:20%}",
       ".act1-reference.a1-first_person .a1-bg{filter:brightness(.58) saturate(.8)}.act1-reference.a1-first_person .a1-props{left:15%;right:15%;bottom:24%;height:46%;align-items:center}.act1-reference.a1-first_person .a1-prop{max-width:44%;max-height:100%;box-shadow:0 0 0 2px rgba(126,255,205,.16),0 18px 40px rgba(0,0,0,.45)}",
       ".act1-reference.a1-board .a1-bg{background-size:contain;background-repeat:no-repeat;background-color:#10171b}.act1-reference.a1-board .a1-props{bottom:14%;height:24%}",
-      ".act1-reference.a1-investigation .a1-bg{filter:brightness(.42) contrast(1.1)}.act1-reference.a1-investigation:after{content:'02:13  //  SECTOR04-EAST';position:absolute;left:8%;right:8%;top:22%;padding:18px;border:1px solid rgba(126,255,205,.32);background:rgba(5,16,20,.76);color:#7effcd;font-size:10px;line-height:1.7;text-align:center;text-shadow:0 0 9px rgba(126,255,205,.55)}",
+      ".act1-reference.a1-investigation .a1-bg{filter:brightness(.42) contrast(1.1)}.act1-reference.a1-investigation.a1-documented:after{content:'02:13  //  SECTOR04-EAST';position:absolute;left:8%;right:8%;top:22%;padding:18px;border:1px solid rgba(126,255,205,.32);background:rgba(5,16,20,.76);color:#7effcd;font-size:10px;line-height:1.7;text-align:center;text-shadow:0 0 9px rgba(126,255,205,.55)}",
       ".act1-reference .a1-motion{position:absolute;pointer-events:none}.act1-reference .a1-scan{inset:0;background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(126,255,205,.035) 6px 7px);animation:a1-scan 4s linear infinite}",
       ".act1-reference .a1-glitch{left:13%;right:13%;top:20%;height:2px;background:#8d5cff;box-shadow:0 0 15px rgba(141,92,255,.85);opacity:0;animation:a1-glitch 5.4s steps(1,end) infinite}",
       ".act1-reference .a1-forklift{left:-24%;bottom:21%;width:18%;height:11%;border:3px solid rgba(213,178,75,.42);background:linear-gradient(90deg,rgba(65,52,19,.72),rgba(128,99,28,.62));box-shadow:28px -18px 0 -12px rgba(80,64,22,.7);animation:a1-forklift 10s linear infinite}",
