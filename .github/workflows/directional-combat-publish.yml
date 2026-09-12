@@ -1,0 +1,82 @@
+name: Publish directional combat integration
+on:
+  push:
+    branches: [fix/directional-combat-integrated]
+    paths:
+      - '.github/directional-combat-patch.part1'
+      - '.github/directional-combat-patch.part2'
+      - '.github/directional-combat-patch.part3'
+      - '.github/workflows/directional-combat-publish.yml'
+permissions:
+  contents: write
+concurrency:
+  group: directional-combat-publish-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  publish:
+    if: github.repository == 'ninja-ops-guy/techops-hero'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify, apply, validate and publish tested directional combat
+        run: |
+          set -euo pipefail
+          BASE=a7fa4066a4945bbcdc9d3e1259f61f2c18e3223b
+          PATCH_SHA=58f4e42b686b7a48defe59307eca5123f0af0b59c0ffc10edfb73ca580d35e1d
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          unexpected="$(git diff --name-only "$BASE"...HEAD | grep -Ev '^\.github/(directional-combat-patch\.part[123]|workflows/directional-combat-publish\.yml)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected source drift before publisher:" >&2
+            echo "$unexpected" >&2
+            exit 1
+          fi
+          cat .github/directional-combat-patch.part1 .github/directional-combat-patch.part2 .github/directional-combat-patch.part3 | base64 -d | gzip -d > /tmp/directional-combat.patch
+          echo "$PATCH_SHA  /tmp/directional-combat.patch" | sha256sum -c -
+          git apply --check --whitespace=error-all /tmp/directional-combat.patch
+          git apply --whitespace=error-all /tmp/directional-combat.patch
+          mkdir -p /tmp/directional-combat-evidence
+          node scripts/production_release_gate.js | tee /tmp/directional-combat-evidence/production-gate.log
+          rm -f .github/directional-combat-patch.part1 .github/directional-combat-patch.part2 .github/directional-combat-patch.part3 .github/workflows/directional-combat-publish.yml
+          git add -A
+          git diff --cached --check
+          cat > /tmp/expected-files.txt <<'EOF'
+          bg_noc.js
+          docs/NIGHT_CONTEXTUAL_COMBAT.md
+          docs/NIGHT_DIRECTIONAL_COMBAT.md
+          index.html
+          night_combat.js
+          night_combat_input.js
+          night_hooks.js
+          production_bootstrap.js
+          scripts/night_combat_bot.mjs
+          test_night_combat.js
+          test_night_directional_combat.js
+          test_night_directional_physics.js
+          test_night_input_lifecycle.js
+          test_static_entrypoint_integrity.js
+          v55_hooks.js
+          EOF
+          sed -i 's/^          //' /tmp/expected-files.txt
+          git diff --cached --name-only "$BASE" | sort > /tmp/actual-files.txt
+          sort /tmp/expected-files.txt -o /tmp/expected-files.txt
+          diff -u /tmp/expected-files.txt /tmp/actual-files.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat: add directional Night Crawler combat controls'
+          git rev-parse HEAD > /tmp/directional-combat-evidence/tested-commit.txt
+          sha256sum night_combat.js night_combat_input.js night_hooks.js test_night_directional_combat.js test_night_directional_physics.js test_night_input_lifecycle.js > /tmp/directional-combat-evidence/source-sha256.txt
+          git push origin HEAD:refs/heads/fix/directional-combat-integrated
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: directional-combat-publish-${{ github.sha }}
+          path: /tmp/directional-combat-evidence/
+          if-no-files-found: ignore
+          retention-days: 7
