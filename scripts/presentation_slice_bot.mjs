@@ -5,6 +5,35 @@ import {chromium,webkit,devices} from 'playwright';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/',out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
 fs.mkdirSync(out,{recursive:true});
 const enabled=new Set((process.env.BOT_BROWSERS||'chromium,webkit').split(',')),reports=[];
+async function stableMount(page,errors){
+ for(let attempt=1;attempt<=2;attempt++){
+  errors.length=0;
+  await page.goto(base,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.TechOpsProductionModeRouter&&window.TechOpsNightReferenceVisuals&&window.__techopsWrapperGuardInstalled,null,{timeout:10000});
+  // A corrupted classic-script cold load can leave later production hooks alive while
+  // lexical dependencies (player atlas/music state) are missing. Retry one fresh load,
+  // but never normalize a persistent page error into a pass.
+  await page.waitForTimeout(250);
+  if(!errors.length)return attempt;
+  if(attempt===2)throw Error('Persistent startup page errors after retry: '+errors.join('\n'));
+ }
+ throw Error('Presentation mount did not stabilize');
+}
+async function enterNight(page){
+ await page.getByRole('button',{name:/NIGHT\s*CRAWLER/i}).click();
+ const until=Date.now()+20000;
+ while(Date.now()<until){
+  if(await page.evaluate(()=>!!(window.NM&&window.S?.nightMode&&!window.S.inDialog)))return;
+  for(const name of [/Standard/i,/BEGIN THE INCIDENT/i]){
+   const button=page.getByRole('button',{name}).first();
+   if(await button.isVisible().catch(()=>false))await button.click();
+  }
+  await page.evaluate(()=>{if(window.v722?.active?.())window.v722.skip();});
+  await page.waitForTimeout(120);
+ }
+ const state=await page.evaluate(()=>({night:!!window.S?.nightMode,inDialog:window.S?.inDialog,desired:window.__productionDesiredMode,hasNM:!!window.NM,title:!document.querySelector('#title-screen')?.classList.contains('hidden')}));
+ throw Error('Night launch did not become playable: '+JSON.stringify(state));
+}
 for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,height:800}}],['webkit',webkit,{...devices['iPhone 13']}]] ){
  if(!enabled.has(name))continue;
  const browser=await type.launch({headless:true,...(name==='chromium'&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
@@ -13,20 +42,8 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
   page.setDefaultTimeout(10000);page.setDefaultNavigationTimeout(15000);
   page.on('pageerror',e=>errors.push(String(e)));
   try{
-   await page.goto(base,{waitUntil:'domcontentloaded'});
-   await page.waitForFunction(()=>window.TechOpsProductionModeRouter&&window.TechOpsNightReferenceVisuals&&window.__techopsWrapperGuardInstalled,null,{timeout:10000});
-   await page.getByRole('button',{name:/NIGHT\s*CRAWLER/i}).click();
-   const until=Date.now()+10000;
-   while(Date.now()<until){
-    if(await page.evaluate(()=>!!(window.NM&&window.S?.nightMode&&!window.S.inDialog)))break;
-    for(const name of [/Standard/i,/BEGIN THE INCIDENT/i]){
-     const button=page.getByRole('button',{name}).first();
-     if(await button.isVisible().catch(()=>false))await button.click();
-    }
-    await page.evaluate(()=>{if(window.v722?.active?.())window.v722.skip();});
-    await page.waitForTimeout(120);
-   }
-   await page.waitForFunction(()=>window.NM&&window.S?.nightMode&&!window.S.inDialog,null,{timeout:1000});
+   const mountAttempts=await stableMount(page,errors);
+   await enterNight(page);
    await page.evaluate(id=>{
     if(id==='gooddogs.m3')window.v736.start({mission:3,directGameplay:true});
     else if(id==='sector04'){const api=window.TechOpsCampaign,c=api.createInitialState();
@@ -51,7 +68,7 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
    }));
    if(errors.length)throw Error(errors.join('\n'));
    if(scene==='gooddogs.m3'&&!evidence.m3.ready)throw Error('Authored M3 asset did not decode');
-   reports.push({browser:name,scene,pass:true,fixture:true,evidence});
+   reports.push({browser:name,scene,pass:true,fixture:true,mountAttempts,evidence});
   }catch(e){reports.push({browser:name,scene,pass:false,error:String(e.stack||e),errors});await page.screenshot({path:path.join(out,'slice-'+name+'-'+scene+'-error.png'),timeout:5000}).catch(()=>{});}
   finally{fs.writeFileSync(path.join(out,'presentation-slices.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(reports.at(-1)));await context.close();}
  }}finally{await browser.close();}
