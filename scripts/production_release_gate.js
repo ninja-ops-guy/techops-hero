@@ -58,6 +58,9 @@ const tests = [
   "test_static_entrypoint_integrity.js",
   "test_v736_runtime_assets.js",
   "test_night_runtime_assets.js",
+  "test_night_directional_combat.js",
+  "test_night_directional_physics.js",
+  "test_night_directional_integration.js",
   "test_night_combat.js",
   "test_night_lifecycle.js",
   "test_ui_coop_contract.js"

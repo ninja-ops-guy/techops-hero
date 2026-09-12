@@ -301,7 +301,7 @@ function enterNight() {
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
   if (qt) { NM._qtHidden = qt.classList.contains("hidden"); qt.classList.add("hidden"); }
-  toast("Walk in + attack: grab. ←/→ throw · ↑ launch. Tap on gold for combos.", 3400);
+  toast("G / GRAB · E punch · J kick · ↑ high / ↓ low · SPACE / JUMP follows launch.", 3400);
   updateHUD();
 }
 
