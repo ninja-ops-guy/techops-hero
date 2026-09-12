@@ -35,6 +35,16 @@ async function enterNight(page,touch){
  throw new Error('Night launch did not reach a playable state: '+JSON.stringify(await snapshot(page)));
 }
 async function returnScene(page){await page.waitForFunction(()=>window.v725?.active()||!window.S?.nightMode);if(await page.evaluate(()=>!!window.v725?.active()))await page.locator('#night-home-skip').click();await page.waitForFunction(()=>!S.nightMode);}
+async function waitForStepFreeze(page,timeout=2500){
+ const deadline=Date.now()+timeout;let previous=null,stableSince=0;
+ while(Date.now()<deadline){
+  const current=await page.evaluate(()=>TechOpsProductionWrapperGuard.health().baseStepCount);
+  if(current===previous){if(!stableSince)stableSince=Date.now();if(Date.now()-stableSince>=160)return current;}
+  else{previous=current;stableSince=0;}
+  await page.waitForTimeout(40);
+ }
+ throw new Error('Production step counter did not freeze during blocking transition: '+JSON.stringify(await snapshot(page)));
+}
 async function prepareStory(page){return page.evaluate(()=>{
  const C=TechOpsCampaign,c=C.createInitialState();for(const[id,owner]of [['shipping_cannot_print','mike'],['plating_workstation_down','amit'],['impossible_access_event','mike']])C.assignTicket(c,id,owner);
  C.completeStandup(c);C.completeWorkstation(c,{redInTheMirrorHeard:true,feliciaVideoSeen:true});
@@ -77,7 +87,7 @@ async function run(name,engine,touch,viewport){
   await click(page.locator('#night-home-interact'));await click(option('Stay out tonight'));assert.equal(await page.evaluate(()=>!!S.nightMode),true);
   await click(page.locator('#night-home-interact'));const clock=await page.evaluate(()=>S.clock);await click(option('Sleep — return to day mode'));await page.locator('#night-home-skip').waitFor({state:'visible'});
   const transitionState=()=>page.evaluate(()=>({runtime:window.NM?{x:NM.x,hp:NM.hp}:null,steps:TechOpsProductionWrapperGuard.health().baseStepCount}));
-  const position=await transitionState();
+  const frozenSteps=await waitForStepFreeze(page),position=await transitionState();assert.equal(position.steps,frozenSteps);
   await page.keyboard.down('ArrowRight');await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');
   const afterInput=await transitionState();
   assert.equal(await page.evaluate(()=>S.clock),clock);assert.equal(afterInput.steps,position.steps);
