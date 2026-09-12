@@ -1,5 +1,7 @@
 # Art gaps requiring source work
 
+Update: the user approved the bounded 16-pose dog walk generation task. The resulting candidates and exact prompts are in `art-review/dog-walk-v1/`. They failed gait/edge acceptance after targeted corrections and remain quarantined; generation approval has not been extended to other source tasks. See that directory's README for the evidence and required corrections.
+
 This is a specification, not authorization to generate. The supplied archive has already been inspected and its usable poses integrated. No new generation is needed for the committed graphics pass. The following gaps prevent certifying the full animation and 3D backlog.
 
 ## First proposed art task: two grounded walk cycles
