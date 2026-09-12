@@ -16,6 +16,7 @@
     "state_validator.js",
     "runtime_combat_audio.js",
     "night_combat.js",
+    "night_combat_input.js",
     "production_gameplay_experience.js",
     "orbital_scene_staging.js",
     "good_boys_legacy_hud_filter.js",

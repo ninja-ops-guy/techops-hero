@@ -1,55 +1,126 @@
-// Encounter fixtures set position/health only. Attacks and throws use real keys.
+// Full production page. Encounter fixtures arrange position/health, never inputs.
+// Every attack uses browser keys or touch; Chromium-touch additionally holds two fingers.
 import fs from 'node:fs';
 import path from 'node:path';
 import {chromium,webkit,devices} from 'playwright';
-const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/',out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
+const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
+const out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
 const results=[];
-for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
- const browser=await type.launch({headless:true,...(name==='chromium'&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
- const context=await browser.newContext(name==='webkit'?{...devices['iPhone 13']}:{viewport:{width:1440,height:900}}),page=await context.newPage();
- const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(12000);
- const shot=label=>page.screenshot({path:path.join(out,`night-combat-${name}-${label}.png`)});
- const setup=async x=>page.evaluate(enemyX=>{const n=window.NM;window.TechOpsNightCombat.cancel(n);delete n._nightCombat;Object.assign(n,{x:650,y:396,w:22,h:34,vx:0,vy:0,onGround:true,hp:100,ifr:0,block:false,clear:false,hitStop:0,jHeld:false,cam:200});n.platforms=[];n.enemies=[{x:enemyX,y:396,w:24,h:34,hp:500,maxHp:500,kind:'thug',name:'Sparring fixture',alive:true,dmg:0,spd:0,windup:0,hitT:0,cd:999,cash:[0,0],tint:'#7ee787'}];},x);
- const waitIdle=()=>page.waitForFunction(()=>!NM._nightCombat?.attack);
+const profiles=[['chromium',chromium,false],['chromium-touch',chromium,true],['webkit',webkit,true]];
+const selected=process.env.NIGHT_COMBAT_BROWSERS?.split(',');
+for(const [name,type,touch] of profiles){
+ if(selected&&!selected.includes(name))continue;
+ let browser,context,page;
+ const errors=[],checks=[];
+ const record={browser:name,touch,fixture:true,checks,errors,pass:false};results.push(record);
  try{
-  await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsNightCombat&&document.querySelector('#btn-nightcrawler'));
-  await page.locator('#btn-nightcrawler').click();
-  // A fresh save must choose difficulty and begin the incident before Night mounts.
-  const launchDeadline=Date.now()+12000;
-  while(Date.now()<launchDeadline){
-   if(await page.evaluate(()=>!!(window.NM&&window.S?.nightMode&&!window.S.inDialog)))break;
-   for(const name of [/Standard/i,/BEGIN THE INCIDENT/i]){
-    const button=page.getByRole('button',{name}).first();
-    if(await button.isVisible().catch(()=>false))await button.click();
-   }
-   if(await page.evaluate(()=>!!window.v722?.active?.()))await page.keyboard.press('Escape');
-   await page.waitForTimeout(120);
+  browser=await type.launch({headless:true,...(type===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(type===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
+  record.browserVersion=browser.version();
+  context=await browser.newContext(touch?{...devices['iPhone 13']}:{viewport:{width:1440,height:900}});
+  await context.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
+  page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(60000);
+  const shot=label=>page.screenshot({path:path.join(out,`night-combat-${name}-${label}.png`)});
+  const click=locator=>touch?locator.tap():locator.click();
+  const setup=async (enemyX=700)=>page.evaluate(x=>{
+   const n=NM;TechOpsNightInput.reset();for(const k of Object.keys(keys))keys[k]=false;joy.x=joy.y=0;
+   TechOpsNightCombat.cancel(n);delete n._nightCombat;
+   Object.assign(n,{x:650,y:396,w:22,h:34,vx:0,vy:0,face:1,onGround:true,hp:100,ifr:0,block:false,clear:false,hitStop:0,jHeld:false,cam:200});
+   n.platforms=[];n.enemies=[{x,y:396,w:24,h:34,hp:500,maxHp:500,kind:'thug',name:'Sparring fixture',alive:true,dmg:0,spd:0,windup:0,hitT:0,cd:999,cash:[0,0],tint:'#7ee787'}];
+  },enemyX);
+  const idle=()=>page.waitForFunction(()=>!NM._nightCombat?.attack);
+  await page.goto(base,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsNightInput&&document.querySelector('#btn-nightcrawler'));
+  await click(page.locator('#btn-nightcrawler'));
+  const deadline=Date.now()+20000;
+  while(Date.now()<deadline){
+   if(await page.evaluate(()=>!!(typeof S!=='undefined'&&S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode)))break;
+   const dialog=page.locator('#dlg-options button').first();
+   if(await page.evaluate(()=>!(typeof S!=='undefined'&&S?.nightMode)&&!window.v722?.active()&&!document.querySelector('#dialogue')?.classList.contains('hidden'))&&await dialog.isVisible().catch(()=>false))await click(dialog);
+   if(await page.evaluate(()=>!!window.v722?.active()))await page.keyboard.press('Escape');
+   await page.waitForTimeout(100);
   }
-  await page.waitForFunction(()=>window.NM&&window.S?.nightMode&&!window.S.inDialog&&!window.NM._v736);
-  for(const direction of ['left','right','up']){
-   await setup(690);await page.keyboard.down('ArrowRight');await page.waitForTimeout(45);await page.keyboard.press('KeyE');await page.waitForFunction(()=>!!NM._nightCombat?.grab);await page.keyboard.up('ArrowRight');
-   await page.waitForFunction(()=>NM._nightCombat.grab.armed&&NM._nightCombat.time-NM._nightCombat.grab.at>=140);
-   if(direction==='up')await shot('grab');
-   const throwKey='Arrow'+direction[0].toUpperCase()+direction.slice(1);await page.keyboard.down(throwKey);
-   await page.waitForFunction(()=>NM.enemies[0]._nightCombat?.air&&!NM._nightCombat.grab);await page.keyboard.up(throwKey);
+  await page.waitForFunction(()=>window.TechOpsNightInput.ready());checks.push('canonical fresh-save Night launch');
+  if(touch){
+   const original=page.viewportSize();
+   for(const viewport of [{width:320,height:640},{width:390,height:844},{width:844,height:390}]){
+    await page.setViewportSize(viewport);
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const layout=await page.evaluate(()=>{
+     const ids=['tb-interact','night-input-grab','night-input-kick','night-input-jump'];
+     return ids.map(id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {id,reachable:!!top&&(top===el||el.contains(top)),x:r.x,y:r.y,w:r.width,h:r.height,inViewport:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight};});
+    });
+    if(layout.some(r=>!r.reachable||!r.inViewport))throw Error('Touch control layout '+JSON.stringify({viewport,layout}));
+   }
+   await page.setViewportSize(original);
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   checks.push('non-occluded touch targets at 320/390 portrait and 844 landscape');
+  }
+  // The spawn is beside the Charger: E/Punch must still open its routes.
+  if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('KeyE');
+  await page.getByText('THE CHARGER',{exact:false}).first().waitFor({state:'visible'});
+  await click(page.locator('#dlg-options button').filter({hasText:'Back to the street.'}));checks.push('Charger interaction preserved');
+  for(const direction of ['left','right','up','down']){
+   await setup(690);
+   if(touch)await click(page.locator('#night-input-grab'));else await page.keyboard.press('KeyG');
+   await page.waitForFunction(()=>!!NM._nightCombat?.grab);
+   await page.waitForFunction(()=>NM._nightCombat.time-NM._nightCombat.grab.at>=140);
+   if(direction==='up')await shot('stationary-grab');
+   const arrow='Arrow'+direction[0].toUpperCase()+direction.slice(1);
+   await page.keyboard.down(arrow);
+   try{await page.waitForFunction(()=>!NM._nightCombat.grab&&NM._nightCombat.events.some(e=>e.type==='throw'));}
+   finally{await page.keyboard.up(arrow);}
    const thrown=await page.evaluate(()=>({vx:NM.enemies[0]._nightCombat.vx,vy:NM.enemies[0]._nightCombat.vy}));
-   if(direction==='left'?thrown.vx>=0:thrown.vx<=0)throw Error('Wrong throw direction '+direction+': '+JSON.stringify(thrown));
-   if(direction==='up'){
-    if(thrown.vy>=0)throw Error('Up throw did not launch');await shot('launch');await waitIdle();
-    // Jump follows the up throw; steer alongside the target and make an air hit.
-    await page.keyboard.down('ArrowRight');await page.keyboard.press('KeyE');
-    await page.waitForFunction(()=>NM._nightCombat.events.some(e=>e.type==='air'&&e.damage>0));await page.keyboard.up('ArrowRight');await shot('air-hit');
-   }
+   if(direction==='left'&&thrown.vx>=0||direction==='right'&&thrown.vx<=0||direction==='up'&&thrown.vy>=0)throw Error('Wrong throw direction '+direction+': '+JSON.stringify(thrown));
   }
-  await setup(700);
+  checks.push('stationary grabs and four directional throws');
+  for(const [aim,key,kind,launches] of [['ArrowUp','KeyE','uppercut',true],['ArrowDown','KeyE','low',false],[null,'KeyJ','kick',true],['ArrowUp','KeyJ','rising-kick',true],['ArrowDown','KeyJ','sweep',false]]){
+   await setup();if(aim)await page.keyboard.down(aim);
+   try{await page.keyboard.press(key);}finally{if(aim)await page.keyboard.up(aim);}
+   await page.waitForFunction(k=>NM._nightCombat?.events.some(e=>e.type===k&&e.damage>0),kind);
+   const state=await page.evaluate(()=>({ground:NM.onGround,air:!!NM.enemies[0]._nightCombat.air}));
+   if(!state.ground||state.air!==launches)throw Error(kind+' aim/launch mismatch: '+JSON.stringify(state));
+  }
+  checks.push('upper/lower punches and neutral/rising/sweep kicks');
+  await setup();await page.keyboard.down('ArrowUp');await page.keyboard.press('KeyJ');await page.keyboard.up('ArrowUp');
+  await page.waitForFunction(()=>NM.enemies[0]._nightCombat?.air);
+  if(touch)await click(page.locator('#night-input-jump'));else await page.keyboard.press('Space');
+  await page.waitForFunction(()=>!NM.onGround);
+  for(let i=0;i<3;i++){
+   await idle();
+   if(touch&&i===1)await click(page.locator('#night-input-kick'));else await page.keyboard.press(i===1?'KeyJ':'KeyE');
+   await page.waitForFunction(count=>NM._nightCombat.events.filter(e=>['air','air-kick'].includes(e.type)&&e.damage>0).length>=count,i+1);
+  }
+  await shot('air-combo');
+  const combo=await page.evaluate(()=>NM._nightCombat.events.filter(e=>['air','air-kick'].includes(e.type)&&e.damage>0));
+  if(combo.length!==3)throw Error('Expected three confirmed air contacts');checks.push('launch -> explicit jump -> punch/kick/punch air combo');
+  await setup();
   for(let i=0;i<3;i++){
    if(i)await page.waitForFunction(()=>{const c=NM._nightCombat;return !c.attack&&c.time-c.lastInput>=310&&c.time-c.lastInput<480;});
    await page.keyboard.press('KeyE');await page.waitForFunction(count=>NM._nightCombat?.hits>=count,i+1);
   }
-  if(!await page.evaluate(()=>NM.enemies[0]._nightCombat.air&&NM._nightCombat.stage===2))throw Error('Paced hits did not reach rising finisher');await shot('rhythm-finisher');
+  if(!await page.evaluate(()=>NM.enemies[0]._nightCombat.air&&NM._nightCombat.stage===2))throw Error('Paced rising finisher regressed');checks.push('original rhythm finisher retained');
+  if(name==='chromium-touch'){
+   // Actual simultaneous touchscreen contacts, including the game's D-pad.
+   await setup();const cdp=await context.newCDPSession(page);
+   const center=async selector=>{const b=await page.locator(selector).boundingBox();if(!b)throw Error('Missing touch target '+selector);return {x:b.x+b.width/2,y:b.y+b.height/2};};
+   const up=await center('#dpad .d-up'),kick=await center('#night-input-kick');
+   const points=[{...up,id:1,radiusX:3,radiusY:3,force:1},{...kick,id:2,radiusX:3,radiusY:3,force:1}];
+   try{
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[points[0]]});
+    await page.waitForFunction(()=>joy.y<-.4);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points});
+    await page.waitForFunction(()=>NM._nightCombat?.attack?.kind==='rising-kick');
+   }finally{await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+   await page.waitForFunction(()=>NM._nightCombat.events.some(e=>e.type==='rising-kick'&&e.damage>0));
+   await shot('simultaneous-aim-kick');await cdp.detach();checks.push('trusted simultaneous D-pad up + KICK');
+  }
+  await setup();await click(page.locator('#night-campaign'));const hp=await page.evaluate(()=>NM.enemies[0].hp);
+  await page.keyboard.press('KeyJ');await page.keyboard.press('KeyG');
+  if(await page.evaluate(()=>NM.enemies[0].hp)!==hp)throw Error('Combat leaked into campaign dialog');
+  await click(page.locator('#dlg-options button').filter({hasText:'Back to Night Walker'}));checks.push('campaign-dialog combat isolation');
   if(errors.length)throw Error(errors.join('\n'));
-  results.push({browser:name,pass:true,fixture:true,realKeys:true,throws:['left','right','up'],airHit:true,rhythmFinisher:true,events:await page.evaluate(()=>NM._nightCombat.events)});
- }catch(e){results.push({browser:name,pass:false,error:String(e.stack||e),errors,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,n:window.NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:window.S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null)});await shot('error').catch(()=>{});}
- finally{await context.close();await browser.close();console.log(JSON.stringify(results.at(-1)));fs.writeFileSync(path.join(out,'night-combat.json'),JSON.stringify(results,null,2));}
+  record.pass=true;
+ }catch(e){record.error=String(e.stack||e);if(page){record.state=await page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:typeof NM!=='undefined'&&NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:typeof S!=='undefined'&&S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null);await page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000}).catch(()=>{});}}
+ finally{if(context)await context.close();if(browser)await browser.close();console.log(JSON.stringify(record));fs.writeFileSync(path.join(out,'night-combat.json'),JSON.stringify(results,null,2));}
 }
-if(results.some(r=>!r.pass))process.exitCode=1;
+if(!results.length||results.some(r=>!r.pass))process.exitCode=1;
