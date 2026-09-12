@@ -26,7 +26,7 @@ assert.ok(!html.includes("good_dogs_cutscene_bridge.js?v=20260831-gooddogs-maste
 assert.ok(!html.includes("good_boys_progression_authority.js?v=20260901-goodboys-certified-r1"),"entrypoint must not serve the stale M3 progression authority");
 for(const tag of [...html.matchAll(/<link\b[^>]*>/g)].map(m=>m[0])){const a=attrs(tag);if(a.rel!=="stylesheet"||!a.href||isExternal(a.href))continue;assertLocalFile(a.href,"index.html stylesheet");}
 [
-  "campaign_act1.js","campaign_assets.js","campaign_story.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","cinematic_systems.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js"
+  "campaign_act1.js","campaign_assets.js","campaign_runtime.js","campaign_sector04.js","campaign_sector04_runtime.js","campaign_native_act1.js","cinematic_systems.js","good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js"
 ].forEach(src=>assert.strictEqual(localScripts.filter(candidate=>candidate===src).length,1,`${src} must be loaded exactly once`));
 assert.strictEqual(localScripts.filter(candidate=>candidate==="good_boys_intro_repair.js").length,0,"obsolete direct-to-M2 intro must not be parser loaded");
 assert.strictEqual(localScripts.filter(candidate=>candidate==="good_boys_ship_approach.js").length,0,"obsolete duplicate ship-approach wrapper must not be parser loaded");

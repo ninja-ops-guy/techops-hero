@@ -29,7 +29,7 @@ function clone(v){return JSON.parse(JSON.stringify(v));}
 
 for(const [id,correct,evidence] of [
   [SHIPPING,"permissions",["printer_self_test","queue_trace"]],
-  [PLATING,"integration_failure",["local_login","controller_reachability"]]
+  [PLATING,"integration_failure",["local_login","integration_service"]]
 ]){
   test(id+" cannot skip evidence",()=>{const b=boot(),s=shift(b);assert.throws(()=>b.I.chooseHypothesis(s,id,correct),/at least two/);assert.equal(s.tickets[id],undefined);});
   test(id+" wrong hypothesis is evidence-backed and non-terminal",()=>{const b=boot(),s=shift(b);b.I.recordEvidence(s,id,evidence[0]);b.I.recordEvidence(s,id,evidence[1]);const wrong=id===SHIPPING?"network_path":"credential_state";const r=b.I.chooseHypothesis(s,id,wrong);assert.equal(r.correct,false);assert.ok(r.reason.length>20);assert.ok(s.investigations[id].ruledOut.includes(wrong));assert.equal(s.tickets[id],undefined);});
@@ -52,10 +52,10 @@ test("interaction intercepts only unresolved Shipping and Plating after day unlo
 
 test("UI path requires gather -> hypothesis -> remediation -> technical -> requester",()=>{const b=boot();shift(b);b.I.openInvestigation(SHIPPING);click(b,"Begin investigation");click(b,"Run printer self-test");click(b,"Continue investigation");click(b,"Trace one customs-label job");click(b,"Continue investigation");click(b,"Form hypothesis");click(b,"Permissions");assert.match(b.context.dialog.name,/HYPOTHESIS SUPPORTED/);click(b,"Plan remediation");click(b,"Apply remediation");assert.match(b.context.dialog.name,/VERIFY TECHNICALLY/);click(b,"Run technical check");assert.match(b.context.dialog.name,/VERIFY WITH REQUESTER/);click(b,"Requester confirms restored");assert.match(b.context.dialog.body,/VERIFIED \/ RESTORED/);assert.equal(b.C.load(b.store).tickets[SHIPPING].humanOutcome,"restored");});
 
-test("reload between every investigation phase resumes from canonical state",()=>{const b=boot();let s=shift(b);b.I.recordEvidence(s,PLATING,"local_login");b.C.save(s,b.store);s=b.C.load(b.store);b.I.recordEvidence(s,PLATING,"controller_reachability");b.I.chooseHypothesis(s,PLATING,"integration_failure");b.C.save(s,b.store);s=b.C.load(b.store);b.I.applyFix(s,PLATING);b.C.save(s,b.store);s=b.C.load(b.store);b.I.runTechnicalCheck(s,PLATING);b.C.save(s,b.store);s=b.C.load(b.store);b.I.verifyHumanOutcome(s,PLATING);b.C.save(s,b.store);assert.equal(b.C.load(b.store).investigations[PLATING].phase,"complete");});
+test("reload between every investigation phase resumes from canonical state",()=>{const b=boot();let s=shift(b);b.I.recordEvidence(s,PLATING,"local_login");b.C.save(s,b.store);s=b.C.load(b.store);b.I.recordEvidence(s,PLATING,"integration_service");b.I.chooseHypothesis(s,PLATING,"integration_failure");b.C.save(s,b.store);s=b.C.load(b.store);b.I.applyFix(s,PLATING);b.C.save(s,b.store);s=b.C.load(b.store);b.I.runTechnicalCheck(s,PLATING);b.C.save(s,b.store);s=b.C.load(b.store);b.I.verifyHumanOutcome(s,PLATING);b.C.save(s,b.store);assert.equal(b.C.load(b.store).investigations[PLATING].phase,"complete");});
 
 test("investigation copy contains no ORPHEUS/reveal leakage",()=>{const src=investigationSource.toLowerCase();assert.ok(!src.includes("orpheus"));assert.ok(!src.includes("violinist"));assert.ok(!src.includes("ghost fork"));});
 
-test("bootstrap loader references the stable investigation module",()=>{const loader=fs.readFileSync(path.join(__dirname,"campaign_native_act1_visuals.js"),"utf8");assert.match(loader,/campaign_act1_investigations\.js\?v=20260912-day1-investigation-v1/);assert.doesNotMatch(loader,/v738_hooks|v739_hooks/);});
+test("bootstrap loader references the stable investigation module",()=>{const loader=fs.readFileSync(path.join(__dirname,"campaign_native_act1_visuals.js"),"utf8");assert.match(loader,/campaign_act1_investigations\.js\?v=20260912-gameplay-feedback-r1/);assert.doesNotMatch(loader,/v738_hooks|v739_hooks/);});
 
 console.log(`Campaign Day 1 investigations: ${passed} tests passed`);

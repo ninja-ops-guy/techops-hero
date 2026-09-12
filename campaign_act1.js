@@ -286,10 +286,128 @@
     state.history.push({ type: "dependency_isolated", dependency: "identity_controller", at: now() });
     syncLegacyFlags(state); return guard;
   }
+  // The first workday boundary materializes a bounded, deterministic handoff.
+  // Day 1 closures/evidence stay immutable; new work gets its own provenance.
+  var FOLLOWUP_TICKETS = ["shipping_cannot_print", "plating_workstation_down"];
+  function followupTicket(ticketId) {
+    assert(FOLLOWUP_TICKETS.indexOf(ticketId) >= 0, "Unknown ordinary follow-up ticket: " + ticketId);
+  }
+  function handoffItem(state, ticketId) {
+    var ticket = (state.tickets || {})[ticketId], outcome = (state.humanOutcomes || {})[ticketId];
+    var conflict = !!ticket && !!outcome && ticket.humanOutcome !== outcome;
+    var kind = !ticket ? "carryover" : conflict ? "reconcile" :
+      ticket.status === "resolved" && ticket.technicalResolution === true && ticket.verification === "strong" && ticket.humanOutcome === "restored" ? "stable" :
+      ticket.humanOutcome === "degraded" || ticket.humanOutcome === "unmet" ? "restore" : "recheck";
+    return { id:"day2:"+ticketId, ticketId:ticketId, day:2, sourceDay:1, kind:kind,
+      phase:kind === "stable" ? "complete" : kind === "carryover" ? "carryover" : "gather",
+      source:{ assignedOwner:state.assignments[ticketId] || null, completionOwner:ticket && ticket.ownerId || null,
+        verification:ticket && ticket.verification || null, humanOutcome:ticket && ticket.humanOutcome || null,
+        recordedOutcome:outcome || null, completedAt:ticket && ticket.completedAt || null },
+      evidence:[], ruledOut:[], hypothesis:null, events:[], result:null };
+  }
+  function workdayHandoff(state) {
+    assert(state && state.campaign && state.flags, "Campaign state is required");
+    if (!state.flags.tuesday_morning_reached || state.campaign.day < 2) return [];
+    var saved = state.workdayContinuity && state.workdayContinuity.day2;
+    return FOLLOWUP_TICKETS.map(function (ticketId) {
+      var record = saved && saved[ticketId] ? clone(saved[ticketId]) : handoffItem(state, ticketId);
+      // Carried, never-closed Day 1 work still uses its original investigation.
+      // A later verified closure is read, not retroactively inserted into the snapshot.
+      if (record.kind === "carryover") {
+        var current = handoffItem(state, ticketId);
+        if (current.kind === "stable") { record.phase="complete"; record.result={ verification:"strong", humanOutcome:"restored", ownerId:current.source.completionOwner, fromCarryover:true }; }
+      }
+      return record;
+    });
+  }
+  function initializeWorkdayHandoff(state) {
+    if (state.workdayContinuity && state.workdayContinuity.day2) return;
+    var records = workdayHandoff(state), day2 = {};
+    records.forEach(function (record) { day2[record.ticketId] = record; });
+    state.workdayContinuity = Object.assign({}, state.workdayContinuity || {}, { version:1, day2:day2 });
+    state.history.push({ type:"workday_handoff_created", day:2, at:now() });
+  }
+  function followupDefinition(record) {
+    followupTicket(record.ticketId);
+    var shipping = record.ticketId === "shipping_cannot_print", repair = record.kind === "restore";
+    var template = getTicketTemplate(record.ticketId);
+    var correct = repair ? (shipping ? "shift_access_gap" : "startup_dependency_gap") : "confirm_real_work";
+    return { title:shipping ? "SHIPPING // NEXT SHIFT" : "PLATING // NEXT SHIFT", humanNeed:template.humanNeed,
+      reason:record.kind === "stable" ? "Strong verification and a restored human outcome carried forward. No repeat work is required." :
+        record.kind === "carryover" ? "This ticket was not closed on Day 1. Resume the original investigation; nothing has been reset." :
+        record.kind === "restore" ? "The previous closure explicitly recorded degraded or unmet service. Find what is still blocking the next shift." :
+        record.kind === "reconcile" ? "The two saved outcome records disagree. Neither is silently rewritten. Establish a new, separately recorded outcome." :
+        "Verification was incomplete. A recheck is due; that is not evidence that the fault has returned.",
+      correctHypothesis:correct,
+      evidence:[
+        {id:"requester",label:"Ask the next-shift requester",text:repair ? (shipping ? "The new shift cannot print customs labels under its own approved Shipping account." : "The operator reports the integration drops out again after a controlled restart; the line is waiting.") : (shipping ? "Shipping reports usable customs labels on the next shift. The report still needs a direct task check." : "The next operator reports the line is available. Verify the real production interaction, not only that report.")},
+        {id:"technical",label:shipping ? "Trace the next-shift label job" : "Check integration across a controlled restart",text:repair ? (shipping ? "The printer self-test passes. The new shift account is authorized in the role catalogue but absent from the queue's approved group. Its job fails authorization." : "Local sign-in and the controller path are healthy. The integration dependency starts manually but is not enabled to return at boot.") : (shipping ? "A label job from the next-shift session passes authorization and reaches the printer. The shipment details still need requester verification." : "The integration dependency survives a controlled restart and the controller session reconnects. The operator still needs to test production.")},
+        {id:"handoff",label:"Review the previous handoff",text:"Previous verification: "+(record.source.verification || "not recorded")+". Closure outcome: "+(record.source.humanOutcome || "not recorded")+". Outcome ledger: "+(record.source.recordedOutcome || "not recorded")+". These are historical records, not new observations."}
+      ],
+      hypotheses:repair ? [
+        {id:correct,label:shipping ? "Next-shift queue authorization gap" : "Integration dependency not persistent at boot"},
+        {id:"replace_hardware",label:shipping ? "Replace the printer" : "Replace the workstation"},
+        {id:"close_from_status",label:"Close from a healthy status indicator"}
+      ] : [
+        {id:"confirm_real_work",label:"Technical path is healthy; verify the real task"},
+        {id:"assume_recurrence",label:"Assume the original fault has returned"},
+        {id:"close_from_status",label:"Close from a healthy status indicator"}
+      ],
+      remediation:shipping ? "Apply the approved queue-group membership for the next shift and refresh that session. Keep unrelated permissions unchanged." : "Restore the integration dependency's automatic start, then bring up the service and controller session.",
+      technicalCheck:shipping ? "A fresh next-shift label job passes authorization and arrives at the printer." : "The dependency returns after a controlled restart and the controller session reconnects.",
+      humanVerification:shipping ? "The next-shift clerk prints the actual customs label, checks the shipment details, and confirms it is usable." : "The next operator completes the real production interaction and confirms the line can resume." };
+  }
+  function performWorkdayFollowup(state, ticketId, action, value) {
+    followupTicket(ticketId);
+    assert(state.flags.tuesday_morning_reached && state.campaign.day >= 2 && state.flags.day_work_unlocked, "Next-shift follow-up requires Tuesday");
+    var before = workdayHandoff(state).find(function (item) { return item.ticketId === ticketId; });
+    assert(before && before.kind !== "stable" && before.kind !== "carryover", "This ticket has no separate next-shift investigation");
+    var def = followupDefinition(before);
+    assert(["observe","hypothesis","remediate","technical_check","verify_requester"].indexOf(action) >= 0, "Unknown follow-up action");
+    if (action === "observe") assert(def.evidence.some(function (e) { return e.id === value; }), "Unknown follow-up evidence");
+    if (action === "hypothesis") assert(def.hypotheses.some(function (h) { return h.id === value; }), "Unknown follow-up hypothesis");
+    // Work on a copy. Rejected/stale callbacks cannot partially mutate the save.
+    var record = clone(before), event = { type:action, at:now(), actor:"mike" };
+    if (record.phase === "complete") return record;
+    if (action === "observe") {
+      if (record.evidence.indexOf(value) >= 0) return record;
+      record.evidence.push(value); event.evidenceId=value;
+    } else if (action === "hypothesis") {
+      assert(record.evidence.indexOf("requester") >= 0 && record.evidence.indexOf("technical") >= 0, "Requester and technical observations are both required");
+      if (record.hypothesis === value) return record;
+      assert(record.phase === "gather", "The supported hypothesis cannot be replaced after remediation begins");
+      event.hypothesis=value;
+      if (value !== def.correctHypothesis) {
+        if (record.ruledOut.indexOf(value) >= 0) return record;
+        record.ruledOut.push(value); event.result="ruled_out";
+      } else { record.hypothesis=value; record.phase=record.kind === "restore" ? "remediate" : "human_verify"; event.result="supported"; }
+    } else if (action === "remediate") {
+      if (record.fixApplied) return record;
+      assert(record.phase === "remediate" && record.hypothesis === def.correctHypothesis, "A supported repair hypothesis is required");
+      record.fixApplied=true; record.phase="technical_check";
+    } else if (action === "technical_check") {
+      if (record.technicalCheckPassed) return record;
+      assert(record.phase === "technical_check" && record.fixApplied, "Remediation must precede the technical recheck");
+      record.technicalCheckPassed=true; record.phase="human_verify";
+    } else {
+      assert(record.phase === "human_verify" && record.hypothesis === def.correctHypothesis, "Technical validation and a supported conclusion must precede requester verification");
+      assert(record.kind !== "restore" || record.technicalCheckPassed === true, "A repaired service must pass its technical recheck");
+      record.phase="complete"; record.completedAt=event.at;
+      record.result={ ownerId:"mike", perspective:"firsthand", verification:"strong", humanOutcome:"restored", at:event.at };
+    }
+    record.events.push(event);
+    initializeWorkdayHandoff(state);
+    state.workdayContinuity.day2[ticketId]=record;
+    state.history.push({ type:"workday_followup", ticketId:ticketId, followupId:record.id, action:action, at:event.at });
+    return clone(record);
+  }
+
   function transitionToTuesday(state) {
     assert(state.flags.sector04_completed, "Sector 04 must be understood and verified before Tuesday");
+    if (state.flags.tuesday_morning_reached) { validate(state); return state; }
     state.campaign.day = 2; state.campaign.chapter = "ghost_frequency"; state.campaign.phase = "morning";
     state.flags.tuesday_morning_reached = true; state.night = initialState().night;
+    initializeWorkdayHandoff(state);
     state.history.push({ type: "day_transition", fromDay: 1, toDay: 2, at: now() });
     syncLegacyFlags(state); validate(state); return state;
   }
@@ -314,6 +432,7 @@
     checkWorkstation: checkWorkstation, hearRedInMirror: hearRedInMirror, findFeliciaBlog: findFeliciaBlog, completeFeliciaVideo: completeFeliciaVideo, unlockDayWork: unlockDayWork, completeWorkstation: completeWorkstation,
     recordGhostEvidence: recordGhostEvidence, resolveTicket: resolveTicket, enterSector04: enterSector04,
     insightAccessGuard: insightAccessGuard, suppressAccessGuard: suppressAccessGuard, severAccessController: severAccessController, transitionToTuesday: transitionToTuesday,
+    workdayHandoff: workdayHandoff, followupDefinition: followupDefinition, performWorkdayFollowup: performWorkdayFollowup,
     save: save, load: load
   };
   if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:campaign-ready", { detail: { version: VERSION, api: api } }));

@@ -110,7 +110,7 @@
     if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
     window.__techopsAct1VisualLoader = true;
     var script = window.document.createElement("script");
-    script.src = "campaign_native_act1_visuals.js?v=20260912-local-coop-r3";
+    script.src = "campaign_native_act1_visuals.js?v=20260912-gameplay-feedback-r1";
     script.async = false;
     window.document.head.appendChild(script);
     return true;

@@ -316,8 +316,9 @@
   function drawEnvironment(ctx,n,pass,at){
     var id=level(n),spec=layers[id];if(!spec)return false;var floor=typeof root.NM_FLOOR==='number'?root.NM_FLOOR:430,W=ctx.canvas.width,calm=reduced();
     ctx.save();ctx.beginPath();ctx.rect(0,115,W,Math.max(0,ctx.canvas.height-155));ctx.clip();
+    var staged=false;try{if(root.TechOpsOrbitalStaging)staged=root.TechOpsOrbitalStaging.draw(ctx,n,pass,at,drawFrame);}catch(e){root.__orbitalStagingError=String(e);}
     if(pass==='back'){
-      spec.forEach(function(l){var sx=l.x-(n.cam||0)*l.parallax;if(sx<-230||sx>W+230)return;drawFrame(ctx,'prison',l.frame,sx,floor+(l.y||0),l.height,false,l.role==='mid'?.62:1);});
+      if(!staged)spec.forEach(function(l){var sx=l.x-(n.cam||0)*l.parallax;if(sx<-230||sx>W+230)return;drawFrame(ctx,'prison',l.frame,sx,floor+(l.y||0),l.height,false,l.role==='mid'?.62:1);});
       if(n._v736&&n._v736.m===6){var beam=surveillance(n,at);ctx.globalAlpha=.09;ctx.fillStyle='#ff475d';ctx.beginPath();ctx.moveTo(1010-(n.cam||0),floor-250);ctx.lineTo(beam.center-(n.cam||0)-beam.radius,floor);ctx.lineTo(beam.center-(n.cam||0)+beam.radius,floor);ctx.closePath();ctx.fill();}
       if(n._v736&&n._v736.m===4){ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#b5edff';ctx.fillText('118',1320-(n.cam||0),floor-165);}
       if(n._v736&&n._v736.m===6){ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#ffadb4';ctx.fillText('1984',1360-(n.cam||0),floor-165);}
