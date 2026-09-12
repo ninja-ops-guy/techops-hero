@@ -1,0 +1,95 @@
+name: Publish verified Night combat source
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/night-combat-publish.yml'
+permissions:
+  contents: read
+concurrency:
+  group: publish-night-combat-29
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  publish:
+    if: github.repository == 'ninja-ops-guy/techops-hero' && github.event.pull_request.number == 29 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/night-directional-combat-integration'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PUBLISH_HEAD: ${{ github.event.pull_request.head.sha }}
+      PUBLISH_BRANCH: fix/night-directional-combat-integration
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source identity and install the reviewed patch
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, os, pathlib, subprocess
+          root = pathlib.Path.cwd().resolve()
+          assert subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip() == os.environ['PUBLISH_HEAD']
+          parts = [root / ('.github/night-combat-transfer/part%d.b64' % i) for i in range(1, 5)]
+          encoded = ''.join(p.read_text().strip() for p in parts)
+          assert len(encoded) == 36160, 'Transfer length changed'
+          raw = lzma.decompress(base64.b64decode(encoded, validate=True), memlimit=256*1024*1024)
+          assert hashlib.sha256(raw).hexdigest() == 'fbe53012e8094e0ad17b245d9a56cf229a46bab0e94813dbdcbeaaf1a9f608cd', 'Transfer checksum mismatch'
+          payload = json.loads(raw)
+          assert payload['base'] == '3f098d0ffd6ac22bcca431c254e26322b4af41c3'
+          expected = set('''.github/workflows/night-combat-validation.yml bg_noc.js docs/NIGHT_COMBAT_INTEGRATION_REVIEW.md docs/NIGHT_CONTEXTUAL_COMBAT.md docs/NIGHT_DIRECTIONAL_COMBAT.md index.html night_combat.js night_combat_input.js night_hooks.js production_bootstrap.js scripts/night_combat_bot.mjs scripts/production_release_gate.js test_night_directional_combat.js test_night_directional_integration.js test_night_directional_physics.js test_static_entrypoint_integrity.js v55_hooks.js v730_hooks.js'''.split())
+          assert set(payload['files']) == expected and len(expected) == 18
+          for name, hashes in payload['files'].items():
+              path = root / name
+              assert path.resolve().is_relative_to(root) and not path.is_symlink()
+              assert not any(p.is_symlink() for p in path.parents)
+              if hashes['old'] is None:
+                  assert not path.exists(), 'New path already exists: ' + name
+              else:
+                  assert hashlib.sha256(path.read_bytes()).hexdigest() == hashes['old'], 'Source changed: ' + name
+          patch = payload['patch'].encode('utf-8')
+          subprocess.run(['git','apply','--index','--check','-'], input=patch, check=True)
+          subprocess.run(['git','apply','--index','-'], input=patch, check=True)
+          for name, hashes in payload['files'].items():
+              data = (root / name).read_bytes()
+              assert hashlib.sha256(data).hexdigest() == hashes['new'], 'Installed source mismatch: ' + name
+              print('VERIFIED', hashes['new'], name)
+          temporary = [str(p.relative_to(root)) for p in parts] + ['.github/workflows/night-combat-publish.yml']
+          subprocess.run(['git','rm','--',*temporary], check=True)
+          staged = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          assert staged == expected | set(temporary), 'Unexpected staged change'
+          receipt = {'base':payload['base'],'publisher_head':os.environ['PUBLISH_HEAD'],'files':payload['files'],'temporary_paths_removed':temporary}
+          pathlib.Path(os.environ['RUNNER_TEMP'],'combat-source-receipt.json').write_text(json.dumps(receipt, indent=2))
+          PY
+      - name: Enforce all current production and directional combat tests
+        run: |
+          set -euo pipefail
+          node scripts/production_release_gate.js | tee "$RUNNER_TEMP/combat-production-gate.log"
+          git diff --cached --check
+      - name: Commit only the verified source tree without force pushing
+        run: |
+          set -euo pipefail
+          current=$(git ls-remote origin "refs/heads/$PUBLISH_BRANCH" | cut -f1)
+          test "$current" = "$PUBLISH_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: reliable mobile grabs, directional kicks and bounded air combos'
+          git push origin "HEAD:refs/heads/$PUBLISH_BRANCH"
+          git rev-parse HEAD > "$RUNNER_TEMP/combat-published-commit.txt"
+          git rev-parse HEAD^{tree} > "$RUNNER_TEMP/combat-published-tree.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: night-combat-publication-evidence
+          path: |
+            ${{ runner.temp }}/combat-source-receipt.json
+            ${{ runner.temp }}/combat-production-gate.log
+            ${{ runner.temp }}/combat-published-commit.txt
+            ${{ runner.temp }}/combat-published-tree.txt
+          retention-days: 7
