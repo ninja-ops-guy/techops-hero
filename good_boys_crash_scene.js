@@ -32,7 +32,7 @@
     host.innerHTML='<div style="width:min(100%,980px);height:min(100%,760px);display:grid;grid-template-rows:auto 1fr auto;gap:8px;min-height:0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b style="color:#ffb14a;letter-spacing:.12em">IMPACT VECTOR</b><span style="font-size:10px;color:#c8d8e4">ORBITAL DETENTION PERIMETER</span></div><div data-stage style="position:relative;min-height:0;overflow:hidden;border:1px solid #6c3e2b;background:#02050a;box-shadow:0 16px 50px #000"></div><div style="text-align:center;color:#ffd166;font:700 11px monospace">AUTOMATIC CINEMATIC</div></div>';
     var stage=host.querySelector("[data-stage]"),video=root.document.createElement("video"),plate=root.document.createElement("img"),done=false,plateTimer=0,loadTimer=0,watchdogTimer=0,absoluteTimer=0,lastMediaTime=0,lastAdvanceAt=Date.now(),playStarted=false;
     function clearVideoTimers(){clearTimeout(loadTimer);clearTimeout(absoluteTimer);if(watchdogTimer)root.clearInterval(watchdogTimer);watchdogTimer=0;}
-    function complete(source){if(done)return;done=true;clearVideoTimers();clearTimeout(plateTimer);try{video.pause();video.removeAttribute("src");video.load();}catch(_){}finish(resolve,host,source);}
+    function complete(source){if(done)return;mark({mediaTime:Number(video.currentTime||0),mediaDuration:Number(video.duration||0)});done=true;clearVideoTimers();clearTimeout(plateTimer);try{video.pause();video.removeAttribute("src");video.load();}catch(_){}finish(resolve,host,source);}
     function showPlate(reason){
       if(done||plate.dataset.active)return;
       plate.dataset.active="1";clearVideoTimers();
@@ -56,7 +56,10 @@
         noteProgress();
         if(playStarted&&Date.now()-lastAdvanceAt>3000)showPlate("video-stall");
       },400);
-      absoluteTimer=root.setTimeout(function(){showPlate("video-absolute-watchdog");},9000);
+      // The committed film lasts 9.433 s; a fixed 9 s ceiling cut healthy playback short.
+      var duration=Number(video.duration),budget=Number.isFinite(duration)&&duration>0?Math.min(60000,Math.ceil(duration*1000)+3000):12000;
+      mark({playbackBudgetMs:budget});
+      absoluteTimer=root.setTimeout(function(){showPlate("video-absolute-watchdog");},budget);
     }
     video.style.cssText="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#02050a";
     video.playsInline=true;video.muted=true;video.defaultMuted=true;video.preload="auto";video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");
@@ -70,7 +73,7 @@
     video.onstalled=function(){mark({phase:"video",source:"authored-crash-video",stalled:true,currentTime:Number(video.currentTime||0)});};
     video.onended=function(){complete("authored-crash-video");};
     video.onerror=function(){showPlate("video-error");};
-    stage.appendChild(video);root.document.body.appendChild(host);mark({phase:"loading"});
+    stage.appendChild(video);root.document.body.appendChild(host);mark({phase:"loading",watchdogTriggered:false,watchdogReason:null,videoUnavailable:false,mediaTime:0,mediaDuration:0});
     loadTimer=root.setTimeout(function(){showPlate("video-load-timeout");},3000);
     video.src=CRASH_VIDEO;try{video.load();}catch(_){showPlate("load-throw");}
   });}

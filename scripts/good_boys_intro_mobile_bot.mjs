@@ -174,6 +174,7 @@ try{
 
   const end=await phase(page);log('prison-handoff',end);
   if(end.error)fail('opening-error-visible',end);
+  if(end.crash?.source!=='authored-crash-video'||end.crash?.watchdogTriggered||Number(end.crash?.mediaTime||0)<Number(end.crash?.mediaDuration||0)-.1)fail('crash-video-did-not-complete',end);
   if(end.mission!==3)fail('opening-did-not-enter-m3',end);
   if(!end.pair)fail('katrin-manchez-pair-not-attached',end);
   if(!/katrin|manchez/i.test(String(end.activeDog||'')))fail('active-dog-missing',end);
