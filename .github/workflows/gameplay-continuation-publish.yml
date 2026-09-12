@@ -2,7 +2,9 @@ name: Publish verified gameplay continuation
 on:
   push:
     branches: [feat/gameplay-feedback-workday-pass]
-    paths: [.gameplay-r4-delivery/manifest.json]
+    paths:
+      - .gameplay-r4-delivery/manifest.json
+      - .github/workflows/gameplay-continuation-publish.yml
 permissions:
   contents: write
 concurrency:
@@ -10,14 +12,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    if: github.event.head_commit.message == 'ci: publish verified gameplay continuation r4'
+    if: >-
+      github.event.head_commit.message == 'ci: publish verified gameplay continuation r4'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 2
+          fetch-depth: 3
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

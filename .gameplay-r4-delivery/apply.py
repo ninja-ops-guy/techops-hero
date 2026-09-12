@@ -9,11 +9,11 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-import tempfile
 
 BRANCH = 'feat/gameplay-feedback-workday-pass'
 DELIVERY = '.gameplay-r4-delivery'
 WORKFLOW = '.github/workflows/gameplay-continuation-publish.yml'
+TRIGGER_PARENT = '8ad591228fa21e261721ad57a0f5e00583c9a513'
 
 def git(repo: Path, *args: str, data: bytes | None = None) -> str:
     return subprocess.check_output(['git', *args], cwd=repo, input=data).decode().strip()
@@ -33,8 +33,6 @@ def safe(repo: Path, name: str) -> Path:
     return target
 
 def assemble(repo: Path, manifest: dict, changes: list, parent: str) -> None:
-    # Both parent commits are fetched before this function. All reused blobs are
-    # checked by the exact basis tree, not trusted as arbitrary downloaded text.
     git(repo, 'read-tree', parent)
     entries = []
     for row in manifest['recipe']:
@@ -77,7 +75,6 @@ def assemble(repo: Path, manifest: dict, changes: list, parent: str) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
         target.chmod(0o755 if row['mode'] == '100755' else 0o644)
-    # The final PR contains normal source, not an encoded delivery mechanism.
     safe(repo, WORKFLOW).unlink(missing_ok=True)
     shutil.rmtree(safe(repo, DELIVERY), ignore_errors=True)
     git(repo, 'add', '--all')
@@ -98,7 +95,7 @@ def main() -> None:
     head = git(repo, 'rev-parse', 'HEAD')
     if os.environ.get('GITHUB_REPOSITORY') != 'ninja-ops-guy/techops-hero' or os.environ.get('GITHUB_REF') != 'refs/heads/' + BRANCH:
         raise ValueError('Wrong repository/branch')
-    if manifest['branch'] != BRANCH or git(repo, 'rev-parse', 'HEAD^') != manifest['parent']:
+    if manifest['branch'] != BRANCH or git(repo, 'rev-parse', 'HEAD^') != TRIGGER_PARENT or git(repo, 'rev-parse', 'HEAD~2') != manifest['parent']:
         raise ValueError('Branch advanced or wrong parent')
     if git(repo, 'rev-parse', manifest['parent'] + '^{tree}') != manifest['parent_tree'] or git(repo, 'status', '--porcelain'):
         raise ValueError('Parent or checkout mismatch')
