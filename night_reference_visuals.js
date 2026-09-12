@@ -21,6 +21,8 @@
 
   function framePlan(NM, now) {
     NM = NM || {};
+    var combatPose=root.TechOpsNightCombat&&root.TechOpsNightCombat.pose(NM);
+    if(combatPose)return combatPose.frame;
     if (NM.down > 0 || NM.hp <= 0) return "down0";
     if (NM.hitT > 0 || NM.ifr > 0 && NM.vy > 1.5) return "hit0";
     if (NM.block) return "guard0";
@@ -34,8 +36,8 @@
   }
 
   function drawReferenceNightWalker(x, NM, px, py, now) {
-    var art=root.TechOpsArtHandoff;
-    if(art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+7,Math.max(92,(NM.h||34)*2.9),now||0))return true;
+    var art=root.TechOpsArtHandoff,combatPose=root.TechOpsNightCombat&&root.TechOpsNightCombat.pose(NM);
+    if(!combatPose&&art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+7,Math.max(92,(NM.h||34)*2.9),now||0))return true;
     var img = imageReady();
     if (!img || !atlas || !atlas.frames) return false;
     var key = framePlan(NM, now || 0);
@@ -53,6 +55,7 @@
     var dy = Math.round(py + (NM.h || 34) + 7 - (atlas.pivot ? atlas.pivot[1] : C) * scale + bob);
     x.save();
     x.imageSmoothingEnabled = false;
+    if(combatPose){var calm=root.matchMedia&&root.matchMedia("(prefers-reduced-motion: reduce)").matches,ax=px+(NM.w||22)/2,ay=py+(NM.h||34);x.translate(ax+(calm?0:combatPose.shift),ay);x.rotate(calm?0:combatPose.lean);x.translate(-ax,-ay);}
     // grounded contact shadow helps the heavier reference silhouette read on wet streets
     if (NM.onGround) {
       x.save(); x.globalAlpha = .28; x.fillStyle = "#000";

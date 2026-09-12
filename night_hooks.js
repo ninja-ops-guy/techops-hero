@@ -187,7 +187,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -268,6 +268,7 @@ function nmSpawnEnemies(st, dist) {
 }
 
 function nmLoadDistrict(id) {
+  if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const D = NM_DISTRICTS[id];
   try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset(NM && NM._v736 ? "gooddogs" : "nightcrawler"); } catch (e) { }
   NM.district = id; NM.street = 1;
@@ -297,7 +298,7 @@ function enterNight() {
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
   if (qt) { NM._qtHidden = qt.classList.contains("hidden"); qt.classList.add("hidden"); }
-  toast("🌃 NEW HAVEN AFTER DARK — ←/→ move · W/↑ jump (x2 = flip) · SHIFT dash · E/A jab · K block · E at the Charger to drive", 4600);
+  toast("Walk in + attack: grab. ←/→ throw · ↑ launch. Tap on gold for combos.", 3400);
   updateHUD();
 }
 
@@ -319,6 +320,7 @@ function nmCarMenu() {
 }
 
 function nmNextStage() {
+  if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
   advanceClock(20); // each street takes 20 minutes
   if (NM.district === "home") return exitNight(true);
@@ -354,6 +356,7 @@ function exitNight(homeSafe) {
 
 // ---------- combat ----------
 function nmJab() {
+  if (window.TechOpsNightCombat && window.TechOpsNightCombat.active(NM)) return window.TechOpsNightCombat.attack(NM, keys);
   if (!NM || NM.block || NM.drive) return;
   const now = performance.now(), gap = now - NM.lastJab;
   NM.lastJab = now; NM.jabAnim = 9;
@@ -409,6 +412,8 @@ function nmCheckClear() {
 function stepNM(dt) {
   if (!NM) return;
   if (S.inDialog) return; // map open / dialog — the night waits
+  // Player motion and combat reactions must share the same slow-frame clock.
+  if (window.TechOpsNightCombat && window.TechOpsNightCombat.active(NM)) dt = Math.max(0, Math.min(dt, .05));
   const f = dt * 60, now = performance.now();
   // drive transition: frozen street, the car rolls
   if (NM.drive) {
@@ -418,7 +423,8 @@ function stepNM(dt) {
   }
   // hit-stop: the world freezes for a beat on impact
   if (NM.hitStop > 0) { NM.hitStop -= f; return; }
-  const pairDown = NM._v736 && (NM._v736.chars[NM._v736.active].downed || NM._v736.chars[NM._v736.active].out);
+  const streetCombat=window.TechOpsNightCombat,streetControl=streetCombat&&streetCombat.active(NM)?streetCombat.tick(NM,dt,keys):{locked:false};
+  const pairDown = streetControl.locked || NM._v736 && (NM._v736.chars[NM._v736.active].downed || NM._v736.chars[NM._v736.active].out);
   const localPair=window.TechOpsGoodDogsCoop&&window.TechOpsGoodDogsCoop.active();
   const L = !pairDown && ((!localPair&&keys.a) || keys.arrowleft), R = !pairDown && ((!localPair&&keys.d) || keys.arrowright), J = !pairDown && ((!localPair&&keys.w) || keys.arrowup);
   NM.block = false; // re-evaluated after ground collision resolves
@@ -461,12 +467,13 @@ function stepNM(dt) {
   if (NM.flip > 0) NM.flip -= f;
   if (NM.ifr > 0) NM.ifr -= f;
   if (NM.jabAnim > 0) NM.jabAnim -= f;
-  if (now > NM.comboT) { NM.combo = 0; NM.jabStage = 0; }
+  if (!(streetCombat&&streetCombat.active(NM)) && now > NM.comboT) { NM.combo = 0; NM.jabStage = 0; }
   // enemies — attack tokens: at most 2 aggressors press in at once
   let tokens = 0;
   for (const e of NM.enemies) if (e.alive && e._press) e._press = false;
   for (const e of NM.enemies) {
     if (!e.alive) continue;
+    if (streetCombat && streetCombat.stepEnemy(NM,e,dt)) continue;
     // launch / downed states first
     if (e.launch > 0) { e.launch -= f; e.y -= 3.2 * f; e.x += (e.kb || 0) * f; if (e.launch <= 0) e.kb = 0; continue; }
     if (e.down > 0) { e.down -= f; e.y = NM_FLOOR - e.h; continue; }
@@ -490,7 +497,7 @@ function stepNM(dt) {
         const chip = NM.block;
         NM.hp -= chip ? Math.ceil(e.dmg * .25) : e.dmg;
         NM.ifr = 22;
-        if (!chip) { NM.vx = Math.sign(dx) * -5; NM.vy = -3; }
+        if (!chip) { NM.vx = Math.sign(dx) * -5; NM.vy = -3; if(streetCombat)streetCombat.hurt(NM); }
         sfx(chip ? "block" : "bad");
         NM.msg = chip ? "🛡️ blocked!" : `💥 ${e.name} hits you!`; NM.msgT = now + 900;
         if (NM.hp <= 0) return exitNight(false);
@@ -504,6 +511,7 @@ function stepNM(dt) {
         if (NM.ifr <= 0) {
           const chip = NM.block;
           NM.hp -= chip ? Math.ceil(e.dmg * .3) : Math.ceil(e.dmg * .8);
+          if(!chip&&streetCombat)streetCombat.hurt(NM);
           NM.ifr = 22;
           sfx(chip ? "block" : "bad");
           NM.msg = chip ? "🛡️ zap caught on the stance!" : `⚡ drone zap — ${e.dmg} arc damage!`; NM.msgT = now + 900;
@@ -713,6 +721,9 @@ function drawNM() {
     // tint underglow — figures read against the dark street
     ctx.save(); ctx.globalAlpha = .45; ctx.fillStyle = e.tint;
     ctx.beginPath(); ctx.ellipse(ex + e.w / 2, NM_FLOOR + 4, e.w * .9, 6, 0, 0, 7); ctx.fill(); ctx.restore();
+    ctx.save();
+    const ec=e._nightCombat;
+    if(ec&&ec.air&&!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)){const ax=ex+e.w/2,ay=e.y+e.h/2;ctx.translate(ax,ay);ctx.rotate(Math.max(-.5,Math.min(.5,ec.vy*.035))*Math.sign(ec.vx||1));ctx.translate(-ax,-ay);}
     if (!drawNightEnemyAtlas(ctx, e, ex, now)) {
       const flick = e.hitT > 0 || (e.kind === "hunter" && Math.floor(now / 140 + e.x) % 7 === 0);
       ctx.fillStyle = flick ? "#ffffff" : "#2a3a56";
@@ -727,6 +738,7 @@ function drawNM() {
         ctx.fillRect(ex + e.w / 2 - 6, dy, 12, 5); ctx.fillRect(ex + e.w / 2 - 2, dy - 3, 4, 3);
       }
     }
+    ctx.restore();
     if (e.down > 0) { ctx.save(); ctx.translate(ex + e.w / 2, e.y + e.h / 2); ctx.rotate(.35 * Math.sign(e.kb || 1)); ctx.globalAlpha = .7; ctx.restore(); }
     if (e.windup > 8) { ctx.fillStyle = "#ff5252"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center"; ctx.fillText("!", ex + e.w / 2, e.y - 12); }
     // hp pip
@@ -758,6 +770,7 @@ function drawNM() {
     ctx.restore();
   }
   if (NM.block) { ctx.strokeStyle = "#7ec8ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cxp, cyp, 24, -1.2, 1.2); ctx.stroke(); }
+  if(window.TechOpsNightCombat)window.TechOpsNightCombat.draw(ctx,NM);
   // ---------- sheet-style HUD ----------
   const compactHud = W < 620;
   const leftX = compactHud ? 6 : 10, leftY = compactHud ? 6 : 10;
@@ -803,10 +816,10 @@ function drawNM() {
     ctx.font = msgFont + "px monospace";
     for (const word of words) { const last = lines.length - 1, trial = last < 0 ? word : lines[last] + " " + word; if (last < 0 || ctx.measureText(trial).width > msgW - 18) lines.push(word); else lines[last] = trial; }
     if (lines.length > 3) { lines.length = 3; lines[2] = lines[2].replace(/[.…]*$/, "…"); }
-    const msgH = 12 + lines.length * (msgFont + 4);
-    ctx.fillStyle = "#000a"; ctx.fillRect((W - msgW) / 2, 96, msgW, msgH);
+    const msgH = 12 + lines.length * (msgFont + 4),msgY=window.TechOpsNightCombat&&window.TechOpsNightCombat.active(NM)?142:96;
+    ctx.fillStyle = "#000a"; ctx.fillRect((W - msgW) / 2, msgY, msgW, msgH);
     ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
-    lines.forEach((line, i) => ctx.fillText(line, W / 2, 106 + (i + 1) * (msgFont + 3)));
+    lines.forEach((line, i) => ctx.fillText(line, W / 2, msgY+10 + (i + 1) * (msgFont + 3)));
   }
   ctx.textAlign = "center";
 }

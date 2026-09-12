@@ -56,6 +56,7 @@ const tests = [
   "test_static_entrypoint_integrity.js",
   "test_v736_runtime_assets.js",
   "test_night_runtime_assets.js",
+  "test_night_combat.js",
   "test_ui_coop_contract.js"
 ];
 

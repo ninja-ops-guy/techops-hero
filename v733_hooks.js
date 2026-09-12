@@ -432,6 +432,7 @@
   const _nmJab733 = nmJab;
   window.nmJab = function () {
     if (atWaldo733()) return;
+    if(window.TechOpsNightCombat&&window.TechOpsNightCombat.active(NM))return _nmJab733(); // Augments resolve on the contact frame.
     // GROUND STATION PIVOT: jab 2 becomes the launcher sweep
     if (equip733().includes("pivot") && NM && NM.jabStage === 1 && (performance.now() - NM.lastJab) <= 700) NM.jabStage = 2;
     const perfectBefore = NM ? NM.perfectT : 0;
