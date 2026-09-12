@@ -11,6 +11,7 @@ on:
       - "package.json"
       - "package-lock.json"
       - "scripts/**"
+      - "test_runtime_triage.mjs"
       - "assets/**/*.mp4"
       - "assets/**/*.png"
       - ".github/workflows/runtime-bot.yml"
@@ -23,26 +24,42 @@ on:
       - "package.json"
       - "package-lock.json"
       - "scripts/**"
+      - "test_runtime_triage.mjs"
       - "assets/**/*.png"
       - ".github/workflows/runtime-bot.yml"
       - ".github/workflows/runtime-fixer.yml"
   schedule:
     - cron: "17 */2 * * *"
 
+# Browser/PR jobs have no repository write permissions. Issue posting is isolated.
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: runtime-bot-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  triage-contracts:
+    name: Runtime triage contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test test_runtime_triage.mjs
+
   media-isolation:
     runs-on: macos-14
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -69,23 +86,21 @@ jobs:
       BOT_CHROMIUM_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install portable timeout command
         run: |
           brew install coreutils
           echo "$(brew --prefix coreutils)/libexec/gnubin" >> "$GITHUB_PATH"
-
       - name: Install browser bot
         run: |
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium webkit
           if [ ! -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then brew install --cask google-chrome; fi
           "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
-
       - name: Start exact-commit local server
         run: |
           python3 scripts/test_media_http_server.py
@@ -97,7 +112,6 @@ jobs:
           done
           cat /tmp/techops-runtime-server.log
           exit 1
-
       - name: Review extracted art in Chrome and WebKit
         id: art
         continue-on-error: true
@@ -107,7 +121,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Compare M3, Sector 04 and Night presentation
         id: presentation
         continue-on-error: true
@@ -117,7 +130,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Verify contextual Night Crawler combat
         id: night_combat
         continue-on-error: true
@@ -127,7 +139,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Verify local co-op, solo puzzles and home presentation
         id: coop
         continue-on-error: true
@@ -137,7 +148,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Run Good Dogs iPhone M1 to M3 regression
         id: intro
         continue-on-error: true
@@ -150,7 +160,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Run MORNINGSTAR + swarm iPhone regression
         id: late_game
         continue-on-error: true
@@ -163,7 +172,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Run Night Crawler + Good Dogs runtime bot
         id: bot
         continue-on-error: true
@@ -176,7 +184,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Run Good Dogs progression bot
         id: progression
         continue-on-error: true
@@ -189,7 +196,6 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Run Good Dogs background bible bot
         id: backgrounds
         continue-on-error: true
@@ -202,41 +208,19 @@ jobs:
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-
       - name: Add reports to workflow summary
         if: always()
         run: |
-          if [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ]; then
-            cat runtime-bot-artifacts/goodboys-intro-mobile.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            printf '# Good Dogs iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
-          if [ -f runtime-bot-artifacts/late-game-mobile.md ]; then
-            cat runtime-bot-artifacts/late-game-mobile.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            printf '# MORNINGSTAR + Swarm iPhone Runtime\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
-          if [ -f runtime-bot-artifacts/report.md ]; then
-            cat runtime-bot-artifacts/report.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            printf '# Runtime bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
-          if [ -f runtime-bot-artifacts/goodboys-progression.md ]; then
-            cat runtime-bot-artifacts/goodboys-progression.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            printf '# Good Dogs Progression Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
-          if [ -f runtime-bot-artifacts/goodboys-background-bible.md ]; then
-            cat runtime-bot-artifacts/goodboys-background-bible.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            printf '# Good Dogs Background Bible Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
-          fi
-
+          for report in goodboys-intro-mobile late-game-mobile report goodboys-progression goodboys-background-bible; do
+            if [ -f "runtime-bot-artifacts/$report.md" ]; then
+              cat "runtime-bot-artifacts/$report.md" >> "$GITHUB_STEP_SUMMARY"
+            else
+              printf '\nReport missing: %s.md\n' "$report" >> "$GITHUB_STEP_SUMMARY"
+            fi
+            printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
+          done
       - name: Upload REPL, screenshots and traces
+        id: evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -244,37 +228,23 @@ jobs:
           path: runtime-bot-artifacts/
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Report failure to GitHub issue
-        if: always() && github.event_name != 'pull_request' && (steps.intro.outputs.exit_code != '0' || steps.late_game.outputs.exit_code != '0' || steps.bot.outputs.exit_code != '0' || steps.progression.outputs.exit_code != '0' || steps.backgrounds.outputs.exit_code != '0')
+      - name: Build agent triage bundle
+        id: triage
+        if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
-          SHA: ${{ github.sha }}
-          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          title="Runtime Bot: playable-mode regression"
-          issue="$(gh issue list --state open --json number,title --jq '.[] | select(.title=="Runtime Bot: playable-mode regression") | .number' | head -n1)"
-          {
-            echo
-            echo "Commit: \`$SHA\`"
-            echo "Run: $RUN_URL"
-            echo
-            [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ] && cat runtime-bot-artifacts/goodboys-intro-mobile.md || echo "Good Boys iPhone intro report missing."
-            echo
-            [ -f runtime-bot-artifacts/late-game-mobile.md ] && cat runtime-bot-artifacts/late-game-mobile.md || echo "MORNINGSTAR + swarm mobile report missing."
-            echo
-            [ -f runtime-bot-artifacts/report.md ] && cat runtime-bot-artifacts/report.md || echo "Runtime mode report missing."
-            echo
-            [ -f runtime-bot-artifacts/goodboys-progression.md ] && cat runtime-bot-artifacts/goodboys-progression.md || echo "Progression report missing."
-            echo
-            [ -f runtime-bot-artifacts/goodboys-background-bible.md ] && cat runtime-bot-artifacts/goodboys-background-bible.md || echo "Background bible report missing."
-          } > /tmp/runtime-bot-issue.md
-          if [ -n "$issue" ]; then
-            gh issue comment "$issue" --body-file /tmp/runtime-bot-issue.md
-          else
-            gh issue create --title "$title" --body-file /tmp/runtime-bot-issue.md
-          fi
-
+          RUNTIME_STEP_RESULTS: ${{ toJSON(steps) }}
+          RUNTIME_ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+          RUNTIME_ARTIFACT_URL: ${{ steps.evidence.outputs.artifact-url }}
+          RUNTIME_ARTIFACT_DIGEST: ${{ steps.evidence.outputs.artifact-digest }}
+        run: node scripts/runtime_triage.mjs
+      - name: Upload compact agent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-triage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime-triage/
+          if-no-files-found: error
+          retention-days: 14
       - name: Enforce runtime bot result
         if: always()
         run: |
@@ -287,5 +257,93 @@ jobs:
           test "${{ steps.bot.outputs.exit_code }}" = "0"
           test "${{ steps.progression.outputs.exit_code }}" = "0"
           test "${{ steps.backgrounds.outputs.exit_code }}" = "0"
+          test "${{ steps.triage.outputs.status }}" = "pass"
+
+  pr-triage:
+    name: PR agent triage (read-only)
+    needs: [browser-runtime, media-isolation]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      # No checkout, no code execution from the archive, no comments or repairs.
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: runtime-triage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime-triage
+      - name: Expose triage in PR checks
+        env:
+          BROWSER_RESULT: ${{ needs.browser-runtime.result }}
+          MEDIA_RESULT: ${{ needs.media-isolation.result }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const file = 'runtime-triage/triage.md';
+          const header = `# PR evidence handoff\n\nBrowser runtime: ${process.env.BROWSER_RESULT}; media isolation: ${process.env.MEDIA_RESULT}.\n\n`;
+          const body = fs.existsSync(file) && fs.statSync(file).isFile() && fs.statSync(file).size <= 60000
+            ? fs.readFileSync(file, 'utf8')
+            : 'Triage artifact missing or invalid. Inspect the source run logs and artifacts; this is not passing evidence.\n';
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, header + body);
+          JS
+
+  report-failure:
+    name: Report main runtime failure
+    needs: [browser-runtime, media-isolation, triage-contracts]
+    if: >-
+      always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' &&
+      (needs.browser-runtime.result == 'failure' || needs.media-isolation.result == 'failure' || needs.triage-contracts.result == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    concurrency:
+      group: runtime-issue-report-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      # This privileged job never checks out code or executes artifact content.
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: runtime-triage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime-triage
+      - name: Post idempotent artifact-backed failure report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BROWSER_RESULT: ${{ needs.browser-runtime.result }}
+          MEDIA_RESULT: ${{ needs.media-isolation.result }}
+          CONTRACT_RESULT: ${{ needs.triage-contracts.result }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const {GITHUB_REPOSITORY: repo, GITHUB_RUN_ID: run, GITHUB_RUN_ATTEMPT: attempt, GITHUB_SHA: sha} = process.env;
+          const gh = (...args) => execFileSync('gh', args, {encoding: 'utf8', maxBuffer: 8 * 1024 * 1024});
+          const title = 'Runtime Bot: playable-mode regression';
+          const marker = `<!-- runtime-triage:${run}:${attempt} -->`;
+          const url = `https://github.com/${repo}/actions/runs/${run}`;
+          const file = 'runtime-triage/triage.md';
+          const report = fs.existsSync(file) && fs.statSync(file).isFile() && fs.statSync(file).size <= 60000
+            ? fs.readFileSync(file, 'utf8')
+            : 'Agent triage evidence is missing or invalid. Consult run logs; do not treat missing reports as passing.\n';
+          const body = `${marker}\nCommit: ${sha}\nRun: ${url}\nBrowser: ${process.env.BROWSER_RESULT}; media: ${process.env.MEDIA_RESULT}; triage contracts: ${process.env.CONTRACT_RESULT}.\n\n${report}`;
+          const issues = JSON.parse(gh('issue', 'list', '--repo', repo, '--state', 'open', '--search', '"Runtime Bot: playable-mode regression" in:title', '--limit', '100', '--json', 'number,title,body'));
+          const issue = issues.find(item => item.title === title);
+          if (issue) {
+            const comments = gh('api', '--paginate', `repos/${repo}/issues/${issue.number}/comments`, '--jq', '.[].body');
+            if ((issue.body || '').includes(marker) || comments.includes(marker)) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'This run attempt was already reported.\n');
+              process.exit(0);
+            }
+          }
+          fs.writeFileSync('/tmp/runtime-bot-issue.md', body);
+          if (issue) gh('issue', 'comment', String(issue.number), '--repo', repo, '--body-file', '/tmp/runtime-bot-issue.md');
+          else gh('issue', 'create', '--repo', repo, '--title', title, '--body-file', '/tmp/runtime-bot-issue.md');
+          JS
 
 # validation touch: story bible gaps 4-7 runtime v1

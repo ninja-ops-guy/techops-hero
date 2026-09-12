@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {chromium,webkit,devices} from 'playwright';
+import {beginRuntimeEvidence} from './runtime_evidence_capture.mjs';
 import {clickGoodDogsLaunch,moveDogTo,driveMissionOne,mountFreshProperty,clearMissionTwoWithInput} from './good_dogs_route_driver.mjs';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/',out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
 const names=new Set((process.env.BOT_BROWSERS||'chromium,webkit').split(',')),results=[];
@@ -15,7 +16,9 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
   if(mode==='local'){const gate=new Promise(resolve=>{releaseBootstrap=resolve;});await page.route('**/production_wrapper_guard.js?*',async route=>{await gate;await route.continue();});}
   const snap=async label=>page.screenshot({path:path.join(out,`coop-${name}-${mode}-${label}.png`)});
   page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(10000);
+  let capture=null;
   try{
+   capture=await beginRuntimeEvidence(context,page,{out,prefix:`coop-${name}-${mode}`});
    await page.goto(base,{waitUntil:'domcontentloaded'});
    if(mode==='local'){
     // Hold one production dependency while clicking the real title button.
@@ -78,7 +81,12 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
    if(errors.length)throw Error(errors.join('\n'));
    results.push({browser:name,mode,pass:true,controls:'real keyboard',m2CombatFixture:mode==='local',evidence:await page.evaluate(()=>({mode:TechOpsGoodDogsCoop.mode(),mission:NM._v736.m,puzzles:S.meta._v736.pairPuzzles,home:__goodDogsHomeSceneExit}))});
   }catch(e){results.push({browser:name,mode,pass:false,error:String(e.stack||e),errors,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,error:window.__goodBoysOpeningErrorDetail,step:window.__err736p,x:window.NM?.x,p:window.NM?._v736?.partner,puzzle:window.NM?._v736?.pairPuzzle,meta:window.S?.meta?._v736,dialog:window.S?.inDialog})).catch(()=>null)});await snap('error').catch(()=>{});}
-  finally{releaseBootstrap();console.log(JSON.stringify(results.at(-1)));fs.writeFileSync(path.join(out,'coop.json'),JSON.stringify(results,null,2));await context.close();}
+  finally{
+   releaseBootstrap();
+   try{results.at(-1).artifacts=capture?await capture.finish():{trace:null,runtime:null,captureErrors:['Capture did not start']};}
+   catch(error){results.at(-1).artifacts={trace:null,runtime:null,captureErrors:[String(error)]};}
+   console.log(JSON.stringify(results.at(-1)));fs.writeFileSync(path.join(out,'coop.json'),JSON.stringify(results,null,2));await context.close();
+  }
  }}finally{await browser.close();}
 }
 if(!results.length||results.some(r=>!r.pass))process.exitCode=1;
