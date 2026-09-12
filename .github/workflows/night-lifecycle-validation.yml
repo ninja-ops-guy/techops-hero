@@ -2,42 +2,30 @@ name: Night lifecycle validation
 on:
   push:
     branches: [fix/night-walker-lifecycle]
+  pull_request:
+    paths:
+      - '**.js'
+      - 'scripts/night_lifecycle_browser.mjs'
+      - 'scripts/night_browser_limits.mjs'
+      - 'index.html'
+      - '.github/workflows/night-lifecycle-validation.yml'
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: night-lifecycle-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   validate:
-    if: github.ref == 'refs/heads/fix/night-walker-lifecycle'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply exact locally validated source patch
-        run: |
-          python3 - <<'PY'
-          import base64, hashlib, lzma, pathlib, subprocess
-          parts = sorted(pathlib.Path('scripts').glob('.night-patch-*.b64'))
-          if parts:
-              assert len(parts) == 4, 'Incomplete source patch'
-              raw = lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts), validate=True))
-              assert hashlib.sha256(raw).hexdigest() == '472b228735718dde63fc428437cd3735f6c893b56793ff17e188ca44a5cc6e31', 'Patch bytes changed'
-              patch = pathlib.Path('/tmp/night-lifecycle.patch'); patch.write_bytes(raw)
-              subprocess.run(['git','apply','--check',str(patch)], check=True)
-              subprocess.run(['git','apply',str(patch)], check=True)
-              for p in parts: p.unlink()
-          PY
-          if ! git diff --quiet; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add -A
-            git commit -m 'fix: Night Walker lifecycle, cinematic home return, campaign route and day isolation'
-            git push origin HEAD:fix/night-walker-lifecycle
-          fi
+          cache: npm
       - name: Production and lifecycle regression gate
         run: |
           mkdir -p artifacts/night-lifecycle
@@ -45,14 +33,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: Browser acceptance
-        run: node scripts/night_lifecycle_browser.mjs
+        run: timeout 480s node --import ./scripts/night_browser_limits.mjs scripts/night_lifecycle_browser.mjs
       - name: Tested source identity
         if: always()
         run: |
           mkdir -p artifacts/night-lifecycle
           git rev-parse HEAD > artifacts/night-lifecycle/tested-commit.txt
-          git status --short > artifacts/night-lifecycle/worktree-status.txt
-          sha256sum runtime_night.js scripts/night_lifecycle_browser.mjs > artifacts/night-lifecycle/source-sha256.txt || true
+          sha256sum runtime_night.js scripts/night_lifecycle_browser.mjs > artifacts/night-lifecycle/source-sha256.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
