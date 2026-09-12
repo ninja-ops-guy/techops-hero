@@ -37,7 +37,7 @@
     kick:Object.freeze({damage:22,reach:104,windup:100,recovery:300,launch:true,vx:3.5,vy:-8}),
     'rising-kick':Object.freeze({damage:26,reach:94,windup:110,recovery:320,launch:true,vx:1.3,vy:-11.8}),
     sweep:Object.freeze({damage:16,reach:96,windup:90,recovery:300,low:true,knockdown:true}),
-    air:Object.freeze({damage:14,reach:88,windup:70,recovery:230}),
+    air:Object.freeze({damage:14,reach:112,windup:70,recovery:230}),
     'air-kick':Object.freeze({damage:18,reach:102,windup:70,recovery:230}),
     'air-slam':Object.freeze({damage:22,reach:98,windup:85,recovery:260,slam:true})
   });
