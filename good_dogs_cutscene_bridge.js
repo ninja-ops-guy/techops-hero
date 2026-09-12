@@ -22,7 +22,7 @@
   function seen(id){try{var s=cutState();return!!(s&&s[id]&&s[id].seen);}catch(e){return false;}}
   function unseen(m){var ids=MISSION_SEQUENCE[m]||[],o=[];for(var i=0;i<ids.length;i++)if(!seen(ids[i]))o.push(ids[i]);return o;}
   function prisonPatch(){try{return root.TechOpsGoodBoysPrisonCinematicPatch||null;}catch(e){return null;}}
-  function elementVisible(id){try{var el=root.document&&root.document.getElementById(id);if(!el)return false;if(el.classList&&el.classList.contains("hidden"))return false;var s=root.getComputedStyle?root.getComputedStyle(el):el.style;return !s||s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity||1)!==0;}catch(e){return false;}}
+  function elementVisible(id){try{var el=root.document&&root.document.getElementById(id);if(!el)return false;if(el.classList&&el.classList.contains("hidden"))return false;var s=root.getComputedStyle?root.getComputedStyle(el):el.style;return !s||s.display!=="none"&&s.visibility!=="hidden";}catch(e){return false;}}
   function blockerVisible(){return elementVisible("good-dogs-cutscene-overlay")||elementVisible("gb-prison-cine")||elementVisible("good-boys-story-cine")||elementVisible("good-boys-earthfall-cine")||elementVisible("good-boys-campaign-intro")||elementVisible("dialogue");}
   function suppress(){try{var p=prisonPatch();if(!p)return false;if(p.pendingEntry&&root.clearTimeout)root.clearTimeout(p.pendingEntry);if(typeof p.closePrisonCinematic==="function")p.closePrisonCinematic(true);return true;}catch(e){return false;}}
   function restore(m){if(m<3||m>7||m===4)return false;try{var p=prisonPatch();if(!p||typeof p.showPrisonCinematic!=="function")return false;root.setTimeout(function(){try{if(!running&&active()&&mission()===m&&!blockerVisible())p.showPrisonCinematic(m);}catch(_){}},80);return true;}catch(e){return false;}}
@@ -56,7 +56,7 @@
   function tick(){
     try{
       if(running){suppress();if(root.S)root.S.inDialog=true;return;}
-      if(!active()){lastObservedMission=0;block(false);return;}
+      if(!active()){lastObservedMission=0;root.__goodDogsPreRenderedCutsceneActive=false;return;}
       var m=mission(),rule=CONDITIONAL_SEQUENCE[m],c=cs();
       if(rule&&c&&c[rule.when]&&!seen(rule.id)){playConditional(m);return;}
       if(m!==lastObservedMission){lastObservedMission=m;if(MISSION_SEQUENCE[m]&&unseen(m).length)playMission(m);}

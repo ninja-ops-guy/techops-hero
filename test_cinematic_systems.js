@@ -122,3 +122,13 @@ assert.ok(png.length > 100000, "M3 mixed-media backplate must be a substantive a
 console.log("Cinematic systems, exact level inventory, animation semantics, camera determinism, and M3 mixed-media asset: PASS");
 
 assert.ok(registry.get("day.sector04").districtConfig.sky&&registry.get("day.sector04").districtConfig.accent,"Sector 04 must supply a complete Night renderer palette");
+
+// Inactive campaign media must never release the normal-run dialog lock.
+{
+ const bridgeSource=require("node:fs").readFileSync("good_dogs_cutscene_bridge.js","utf8");
+ const faded={classList:{contains:()=>false},style:{display:"block",visibility:"visible",opacity:"0"}};
+ const bridgeRoot={S:{inDialog:true,meta:{}},document:{getElementById:id=>id==="dialogue"?faded:null},getComputedStyle:e=>e.style,setInterval(){return 1;},clearInterval(){}};
+ require("node:vm").createContext(bridgeRoot);require("node:vm").runInContext(bridgeSource,bridgeRoot);
+ bridgeRoot.TechOpsGoodDogsCutsceneBridge.tick();assert.strictEqual(bridgeRoot.S.inDialog,true,"inactive bridge must preserve Day dialog ownership");
+ bridgeRoot.NM={_v736:{m:3}};bridgeRoot.TechOpsGoodDogsCutsceneBridge.tick();bridgeRoot.TechOpsGoodDogsCutsceneBridge.tick();assert.strictEqual(bridgeRoot.S.inDialog,true,"a fading campaign dialog remains modal");
+}
