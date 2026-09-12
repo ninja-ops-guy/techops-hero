@@ -33,15 +33,15 @@ for(const [name,type,touch] of profiles){
   await click(page.locator('#btn-nightcrawler'));
   const deadline=Date.now()+20000;
   while(Date.now()<deadline){
-   if(await page.evaluate(()=>!!(window.NM&&window.S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode)))break;
+   if(await page.evaluate(()=>!!(typeof S!=='undefined'&&S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode)))break;
    const dialog=page.locator('#dlg-options button').first();
-   if(await page.evaluate(()=>!window.S?.nightMode&&!window.v722?.active()&&!document.querySelector('#dialogue')?.classList.contains('hidden'))&&await dialog.isVisible().catch(()=>false))await click(dialog);
+   if(await page.evaluate(()=>!(typeof S!=='undefined'&&S?.nightMode)&&!window.v722?.active()&&!document.querySelector('#dialogue')?.classList.contains('hidden'))&&await dialog.isVisible().catch(()=>false))await click(dialog);
    if(await page.evaluate(()=>!!window.v722?.active()))await page.keyboard.press('Escape');
    await page.waitForTimeout(100);
   }
   await page.waitForFunction(()=>window.TechOpsNightInput.ready());checks.push('canonical fresh-save Night launch');
   // The spawn is beside the Charger: E/Punch must still open its routes.
-  await click(page.locator('#tb-interact'));
+  if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('KeyE');
   await page.getByText('THE CHARGER',{exact:false}).first().waitFor({state:'visible'});
   await click(page.locator('#dlg-options button').filter({hasText:'Back to the street.'}));checks.push('Charger interaction preserved');
   for(const direction of ['left','right','up','down']){
@@ -50,8 +50,10 @@ for(const [name,type,touch] of profiles){
    await page.waitForFunction(()=>!!NM._nightCombat?.grab);
    await page.waitForFunction(()=>NM._nightCombat.time-NM._nightCombat.grab.at>=140);
    if(direction==='up')await shot('stationary-grab');
-   await page.keyboard.press('Arrow'+direction[0].toUpperCase()+direction.slice(1));
-   await page.waitForFunction(()=>!NM._nightCombat.grab&&NM._nightCombat.events.some(e=>e.type==='throw'));
+   const arrow='Arrow'+direction[0].toUpperCase()+direction.slice(1);
+   await page.keyboard.down(arrow);
+   try{await page.waitForFunction(()=>!NM._nightCombat.grab&&NM._nightCombat.events.some(e=>e.type==='throw'));}
+   finally{await page.keyboard.up(arrow);}
    const thrown=await page.evaluate(()=>({vx:NM.enemies[0]._nightCombat.vx,vy:NM.enemies[0]._nightCombat.vy}));
    if(direction==='left'&&thrown.vx>=0||direction==='right'&&thrown.vx<=0||direction==='up'&&thrown.vy>=0)throw Error('Wrong throw direction '+direction+': '+JSON.stringify(thrown));
   }
@@ -103,7 +105,7 @@ for(const [name,type,touch] of profiles){
   await click(page.locator('#dlg-options button').filter({hasText:'Back to Night Walker'}));checks.push('campaign-dialog combat isolation');
   if(errors.length)throw Error(errors.join('\n'));
   record.pass=true;
- }catch(e){record.error=String(e.stack||e);if(page){record.state=await page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:window.NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:window.S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null);await page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000}).catch(()=>{});}}
+ }catch(e){record.error=String(e.stack||e);if(page){record.state=await page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:typeof NM!=='undefined'&&NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:typeof S!=='undefined'&&S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null);await page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000}).catch(()=>{});}}
  finally{if(context)await context.close();if(browser)await browser.close();console.log(JSON.stringify(record));fs.writeFileSync(path.join(out,'night-combat.json'),JSON.stringify(results,null,2));}
 }
 if(!results.length||results.some(r=>!r.pass))process.exitCode=1;

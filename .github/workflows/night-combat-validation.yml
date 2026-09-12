@@ -47,6 +47,24 @@ jobs:
           set -euo pipefail
           mkdir -p runtime-bot-artifacts
           node scripts/production_release_gate.js | tee runtime-bot-artifacts/production-gate.log
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Exercise real keyboard and touch combat on the full game
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
+        run: |
+          set -euo pipefail
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > runtime-bot-artifacts/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for i in {1..30}; do
+            if curl -fsS "$BOT_BASE_URL" >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          timeout 300s node scripts/night_combat_bot.mjs | tee runtime-bot-artifacts/night-combat.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
