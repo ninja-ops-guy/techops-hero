@@ -1,8 +1,9 @@
-/* TechOps Hero — Good Dogs pre-rendered cutscene player v3.5.
+/* TechOps Hero — Good Dogs pre-rendered cutscene player v3.6.
  * Production playback contract:
  *   - authored movie is the only cinematic image on screen
  *   - fresh <video> element for every play() session (no stale media lifecycle)
- *   - muted + playsInline autoplay, user PLAY fallback only on actual failure/stall
+ *   - muted + playsInline autoplay begins immediately; media events are retries, not the trigger
+ *   - user PLAY fallback only on actual failure/stall
  *   - reveal only after a decoded frame exists
  *   - only COMPLETED or USER_SKIPPED advances campaign state
  */
@@ -57,7 +58,7 @@
     ensureCss();
     const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip");
     const ticket=++sessionSerial,state=ensureState(),priorOverflow=document.body.style.overflow,ios=isIOSDevice(),autoRequested=options.autoplay!==false;
-    const video=document.createElement("video");video.className="gd-film-video";video.playsInline=true;video.muted=true;video.defaultMuted=true;video.volume=0;video.preload="auto";video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");frame.insertBefore(video,playBtn);
+    const video=document.createElement("video");video.className="gd-film-video";video.playsInline=true;video.muted=true;video.defaultMuted=true;video.volume=0;video.preload="auto";video.autoplay=autoRequested;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");if(autoRequested)video.setAttribute("autoplay","");frame.insertBefore(video,playBtn);
     root.classList.add("active");root.dataset.activeCutscene=id;document.body.style.overflow="hidden";frame.classList.remove("gd-playing","gd-frame-ready");playBtn.classList.remove("active");skip.disabled=false;skip.textContent="SKIP";
     let done=false,startTimer=0,stallTimer=0,hardTimer=0,lastTime=-1,progressed=false,retryReason="",playInFlight=false,frameRevealed=false,autoAttempted=false;
     window.__goodDogsCutscenePresentation={id,authoredVideoOnly:true,poster:false,proceduralPlate:false,crt:false,vignette:false,freshVideoNode:true,session:ticket,at:Date.now()};
@@ -69,8 +70,6 @@
       const finish=(resultStatus,source)=>{
         if(!valid())return;done=true;const skipped=resultStatus===STATUS.USER_SKIPPED,at=Date.now(),currentTime=Number(video.currentTime||0),readyState=Number(video.readyState||0);
         window.__goodDogsCutsceneExit={id,status:resultStatus,skipped,source,at,currentTime,readyState,ios,session:ticket};
-        /* Detach callbacks before touching media. Never call load() during teardown: on
-           WebKit that can dispatch an abort/error into the next back-to-back clip. */
         cleanup();
         try{video.pause();}catch(_){}
         try{video.removeAttribute("src");}catch(_){}
@@ -86,7 +85,7 @@
       const armStall=()=>{clearTimeout(stallTimer);stallTimer=setTimeout(()=>waitForUser("media-stall"),4200);};
       const markPlaying=()=>{if(!valid())return;progressed=true;playInFlight=false;playBtn.classList.remove("active");frame.classList.add("gd-playing");requestDecodedFrame();armStall();clearTimeout(hardTimer);hardTimer=setTimeout(()=>waitForUser("hard-timeout"),60000);};
       const attemptPlay=()=>{if(!valid()||playInFlight)return;playInFlight=true;playBtn.classList.remove("active");let p;try{p=video.play();}catch(err){window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err),ios,session:ticket};waitForUser("play-throw");return;}if(p&&typeof p.then==="function")p.then(()=>{if(!valid())return;playInFlight=false;requestDecodedFrame();}).catch(err=>{if(!valid())return;window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err),ios,session:ticket};waitForUser("play-rejected");});clearTimeout(startTimer);startTimer=setTimeout(()=>{if(valid()&&!progressed)waitForUser("no-first-frame");},4200);};
-      const attemptAutoplay=()=>{if(!valid()||!autoRequested||autoAttempted)return;autoAttempted=true;window.__goodDogsCutsceneAutoplay={id,requested:true,ios,muted:true,playsInline:true,session:ticket,at:Date.now()};attemptPlay();};
+      const attemptAutoplay=()=>{if(!valid()||!autoRequested||autoAttempted)return;autoAttempted=true;window.__goodDogsCutsceneAutoplay={id,requested:true,ios,muted:true,playsInline:true,immediate:true,session:ticket,at:Date.now()};attemptPlay();};
       const skipEvent=e=>{if(!valid())return;try{e.preventDefault();e.stopPropagation();}catch(_){}skip.disabled=true;skip.textContent="SKIPPING…";finish(STATUS.USER_SKIPPED,"click-skip");};
       const playEvent=e=>{if(!valid())return;try{e.preventDefault();e.stopPropagation();}catch(_){}progressed=false;if(retryReason==="media-error"){try{video.pause();video.src=options.src||def.src;video.load();}catch(_){}}attemptPlay();};
       const key=e=>{if(e.key==="Escape")finish(STATUS.USER_SKIPPED,"keyboard-skip");};
@@ -98,8 +97,8 @@
       video.ontimeupdate=()=>{if(!valid())return;const t=Number(video.currentTime||0);if(t>lastTime+.01){lastTime=t;if(t>.02){progressed=true;requestDecodedFrame();markPlaying();}}};
       video.onwaiting=video.onstalled=()=>{if(valid()&&progressed)armStall();};
       video.src=options.src||def.src;try{video.load();}catch(_){}
-      if(autoRequested)startTimer=setTimeout(()=>{if(valid()&&!progressed&&!playInFlight&&!autoAttempted)waitForUser("autoplay-timeout");},3000);else waitForUser("autoplay-disabled");
+      if(autoRequested)attemptAutoplay();else waitForUser("autoplay-disabled");
     });
   }
-  window.GoodDogsCutscenes={VERSION:"3.5",STATUS,play,clips:CLIPS,state:ensureState,isIOSDevice};
+  window.GoodDogsCutscenes={VERSION:"3.6",STATUS,play,clips:CLIPS,state:ensureState,isIOSDevice};
 })();
