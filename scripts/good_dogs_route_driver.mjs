@@ -104,7 +104,9 @@ export async function moveDogTo(page,target,{player=1,tolerance=15,timeout=15000
 }
 export async function solvePairPuzzleSolo(page,mission,{onEvent=()=>{}}={}){
   const d=await page.evaluate(m=>window.TechOpsLevelRegistry.goodDogsMission(m).pairPuzzle,mission);
-  await moveDogTo(page,d.a-11);await page.keyboard.press('KeyE');
+  await moveDogTo(page,d.a-11);
+  await page.waitForFunction(()=>window.NM.onGround&&Math.abs(window.NM.y+window.NM.h-430)<20,null,{timeout:4000});
+  if(!await page.evaluate(()=>window.TechOpsGoodDogsCoop.aiHolding()))await page.keyboard.press('KeyE');
   await page.waitForFunction(()=>window.TechOpsGoodDogsCoop.aiHolding(),null,{timeout:2000});
   await moveDogTo(page,d.b-11);
   await page.waitForFunction(x=>Math.abs(window.NM._v736.partner.x+11-x)<40,d.a,{timeout:6000});

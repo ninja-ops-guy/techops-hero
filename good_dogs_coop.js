@@ -31,7 +31,7 @@
     var n=root.NM,c=state();if(!n||blocked())return false;
     if(active()&&revive(player))return true;
     var who=player===2?partnerWho(c):c.active;if(!live(c,who))return true;
-    var d=definition(n);if(!d||complete(c.m))return false;
+    var d=definition(n);if(!d||complete(c.m)||(d.requiresClear&&!n._gbShipRevealed))return false;
     var body=player===2?c.partner:n,q=progress(n);
     if(!active()&&near(body,d.a)){
       holdX=holdX===null?d.a-(c.partner.w||22)/2:null;
@@ -90,9 +90,9 @@
     if(d){
       var solved=complete(c.m),col=solved?'#8de5ac':c.m===1?'#ffd18b':'#72dfff';
       ctx.strokeStyle=col;ctx.globalAlpha=.45;ctx.beginPath();ctx.moveTo(d.a-cam,F+7);ctx.lineTo(d.b-cam,F+7);ctx.stroke();ctx.globalAlpha=1;
-      [d.a,d.b].forEach(function(x,i){var sx=x-cam,on=solved||(i?q.b:q.a);ctx.fillStyle=on?col:'#122029';ctx.fillRect(sx-33,F-4,66,7);ctx.strokeStyle=col;ctx.strokeRect(sx-33.5,F-4.5,67,8);ctx.fillStyle='#061018';ctx.fillRect(sx-43,F-72,86,17);ctx.fillStyle=col;ctx.fillText(i&&d.kind==='power-console'?'CONSOLE':'PAD '+(i+1),sx,F-60);});
+      [d.a,d.b].forEach(function(x,i){var sx=x-cam,on=solved||(i?q.b:q.a);ctx.fillStyle=on?col:'#122029';ctx.fillRect(sx-33,F-4,66,7);ctx.strokeStyle=col;ctx.strokeRect(sx-33.5,F-4.5,67,8);ctx.fillStyle='#061018';ctx.fillRect(sx-43,F+14,86,17);ctx.fillStyle=col;ctx.fillText(i&&d.kind==='power-console'?'CONSOLE':'PAD '+(i+1),sx,F+26);});
       var mid=(d.a+d.b)/2-cam;ctx.fillStyle='#071018';ctx.fillRect(mid-115,F-154,230,29);ctx.fillStyle=col;ctx.fillText(solved?'LINK OPEN':d.label,mid,F-142);ctx.fillStyle='#27313b';ctx.fillRect(mid-101,F-134,202,3);ctx.fillStyle=col;ctx.fillRect(mid-101,F-134,202*(solved?1:q.charge/d.seconds),3);
-      if(!solved){ctx.font='9px monospace';ctx.fillStyle='#f3e8ce';ctx.fillText(active()?(d.kind==='power-console'?'Hold PAD 1 + use CONSOLE (E / R)':'One dog on each pad · hold together'):'USE on PAD 1: partner stays · take the other side',Math.max(180,Math.min(ctx.canvas.width-180,mid)),F+32);}
+      if(!solved){ctx.font='9px monospace';ctx.fillStyle='#f3e8ce';ctx.fillText(active()?(d.kind==='power-console'?'Hold PAD 1 + use CONSOLE (E / R)':'One dog on each pad · hold together'):'USE on PAD 1: partner stays · take the other side',Math.max(180,Math.min(ctx.canvas.width-180,mid)),F+48);}
     }
     if(active())[{body:n,id:'P1',color:'#72dfff'},{body:c.partner,id:'P2',color:'#ffc477'}].forEach(function(a){ctx.fillStyle='#041019';ctx.fillRect(a.body.x-cam-2,a.body.y-78,28,15);ctx.fillStyle=a.color;ctx.fillText(a.id,a.body.x-cam+12,a.body.y-67);});
     ctx.restore();
