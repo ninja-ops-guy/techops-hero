@@ -33,7 +33,7 @@ async function resolveCutscene(page,id,timeout=12000){
   d=await snap(page);log('cutscene-'+id+'-complete',d);return d;
 }
 
-const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
+const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});await context.tracing.start({screenshots:true,snapshots:true,sources:true});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1500);if(!await clickGoodDogsLaunch(page))throw new Error('Good Dogs launch button missing');
   await driveFreshRouteToCockpit(page,{onEvent:log,requireDecoded:true});
@@ -89,6 +89,8 @@ try{
   });
   log('warden-real-finisher',warden);
   if(warden.alive!==false||warden.hp>0)throw new Error('Warden remains alive after real tandem finisher');
+  await page.keyboard.down('ArrowRight');
+  try{await page.waitForFunction(()=>window.NM&&Number(window.NM.x)>=1500||document.querySelector('#good-boys-earthfall-cine'),null,{timeout:12000});}finally{await page.keyboard.up('ArrowRight');}
   await page.waitForFunction(()=>document.querySelector('#good-boys-earthfall-cine'),null,{timeout:15000});
   const beforeEnding=await snap(page);if(!beforeEnding.inDialog)fail('earthfall-does-not-block-gameplay',beforeEnding);
   await page.screenshot({path:path.join(OUT,'goodboys-progression-earthfall.png')});

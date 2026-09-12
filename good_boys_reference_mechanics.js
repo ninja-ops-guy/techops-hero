@@ -20,7 +20,7 @@
     try{var n=root.NM,arr=livingEnemies();if(!n)return null;var best=null,bd=max||150;for(var i=0;i<arr.length;i++){var e=arr[i];var d=Math.abs(enemyCenter(e)-((Number(n.x)||0)+(Number(n.w)||22)/2));if(d<bd){bd=d;best=e;}}return best;}catch(e){return null;}
   }
   function hitEnemy(e,damage,kb,down){
-    try{if(!e)return false;e.hp=Math.max(0,(Number(e.hp)||1)-damage);e.hitT=Math.max(Number(e.hitT)||0,8);e.kb=(Number(root.NM&&root.NM.face)||1)*(kb||4);if(down)e.down=Math.max(Number(e.down)||0,down);if(e.hp<=0){e.alive=false;if(root.NM)root.NM.kills=(Number(root.NM.kills)||0)+1;}if(root.NM)root.NM.hitStop=Math.max(Number(root.NM.hitStop)||0,4);return true;}catch(_){return false;}
+    try{if(!e)return false;e.hp=Math.max(0,(Number(e.hp)||1)-damage);e.hitT=Math.max(Number(e.hitT)||0,8);if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(root.NM,e,"paired-hit");e.kb=(Number(root.NM&&root.NM.face)||1)*(kb||4);if(down)e.down=Math.max(Number(e.down)||0,down);if(e.hp<=0){e.alive=false;if(root.NM)root.NM.kills=(Number(root.NM.kills)||0)+1;}if(root.NM)root.NM.hitStop=Math.max(Number(root.NM.hitStop)||0,4);return true;}catch(_){return false;}
   }
   function boostJump(){
     try{var c=cs(),n=root.NM;if(!c||!n||n.onGround||state.boostUsed||Number(n.jumps||0)<2)return false;n.vy=-10.2;n.jumps=3;n.flip=Math.max(n.flip||0,16);state.boostUsed=true;c.sync=Math.min(100,(c.sync||0)+8);msg("🐾 BOOST JUMP · partner launch");try{if(root.sfx)root.sfx("jump");}catch(_){}return true;}catch(e){return false;}

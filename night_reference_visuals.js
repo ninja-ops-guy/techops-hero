@@ -28,12 +28,14 @@
       var stage = Math.max(0, Math.min(2, Number(NM.jabStage || 1) - 1));
       return ["light0", "light1", "light2"][stage];
     }
-    if (NM.dashT > 0) return (Math.floor(now / 70) % 2) ? "heavy0" : "heavy1";
+    if (NM.dashT > 0) return "guard0"; // conservative brace until a distinct dash pose is approved
     if (Math.abs(NM.vx || 0) > .45) return (Math.floor(now / 145) % 2) ? "idle0" : "idle1";
     return (Math.floor(now / 420) % 2) ? "idle0" : "idle1";
   }
 
   function drawReferenceNightWalker(x, NM, px, py, now) {
+    var art=root.TechOpsArtHandoff;
+    if(art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+7,Math.max(92,(NM.h||34)*2.9),now||0))return true;
     var img = imageReady();
     if (!img || !atlas || !atlas.frames) return false;
     var key = framePlan(NM, now || 0);
@@ -70,6 +72,7 @@
   // muscular rear haunch, four side windows/door seams and full-width rear lamp cue.
   function drawCharger(x, cx, cy, w, tm) {
     var W = Math.max(154, w * 1.38), H = W * .285;
+    var art=root.TechOpsArtHandoff;if(art&&art.drawFrame(x,"charger",0,cx,cy,H,false,1))return;
     var L = cx - W / 2, T = cy - H;
     x.save();
     x.shadowColor = "#39ff88"; x.shadowBlur = 18;

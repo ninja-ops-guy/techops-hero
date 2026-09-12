@@ -314,6 +314,8 @@
       x.restore();
     }
     function waldoFig736(x, dx, dy, h, pose) { // WALDO_FULL contract first (guarded); shapes otherwise
+      const art=window.TechOpsArtHandoff,mt=meta736();
+      if(art&&mt&&mt.m>=6&&mt.m<=7&&art.drawFrame(x,"waldo",12,dx,dy,h,false,1))return;
       if (atlasFrame736("WALDO_FULL", "w_" + (pose || "point"), x, dx - h * 0.36, dy - h, h * 0.72, h)) return;
       {
       const u = h / 100;
@@ -490,7 +492,7 @@
           { dur: 2800, cap: "Phase one imitates Technician Mike. Phase two, the Night Walker. K will call the vulnerable one.", draw(x, tm) { stationBg736(x, tm); H.txt(x, "PHASE 1 — TECHNICIAN: traps & drones", LW / 2, BAR + 90, 14, AMBER, "center", true); H.txt(x, "PHASE 2 — NIGHT WALKER: air combos", LW / 2, BAR + 130, 14, PUR, "center", true); pair736(x, tm); } },
         ],
         b736m6: [
-          { dur: 2600, cap: "CELL 1984 — the year of total surveillance. Waldo is alive. Beanie. Balaclava down.", draw(x, tm) { stationBg736(x, tm); cell736(x, tm, 1984, AMBER); waldoFig736(x, LW / 2, LH - BAR - 60, 150); } },
+          { dur: 2600, cap: "CELL 1984 — the year of total surveillance. Waldo is alive. Red-and-black mask. Silver chain.", draw(x, tm) { stationBg736(x, tm); cell736(x, tm, 1984, AMBER); waldoFig736(x, LW / 2, LH - BAR - 60, 150); } },
           { dur: 2800, cap: "Defend BOTH sides: Katrin at the uplink, Manchez in the corridor. K decrypts the lock.", draw(x, tm) { stationBg736(x, tm); cell736(x, tm, 1984, AMBER); H.txt(x, "PROTECT THE UPLINK — K DECRYPTS UNDER FIRE", LW / 2, BAR + 60, 14, GREEN, "center", true); pair736(x, tm); } },
           { dur: 2600, cap: "Waldo's dismantled surveillance unit is now a transmitter. He's been feeding them lies.", draw(x, tm) { stationBg736(x, tm); waldoFig736(x, LW / 2 + 200, LH - BAR - 60, 150); pair736(x, tm); H.bubble(x, "Took you long enough. I made friends with the camera.", 60, BAR + 60, 460); } },
         ],
@@ -741,6 +743,7 @@
       if (who === "manchez" && e.tracked) { dealt = Math.round(dealt * 1.5); e.tracked = 0; NM.msg = "❄ TRACKED — Manchez converts!"; NM.msgT = now + 800; }
       if (e.weak) dealt = Math.round(dealt * 1.25);
       e.hp -= dealt; e.hitT = 8;
+      if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.impact(NM,e,"hit",now);
       NM.hitStop = Math.max(NM.hitStop, 3);
       // alternating hits within 2s build Sync
       if (cs.lastHit.who && cs.lastHit.who !== who && now - cs.lastHit.t < 2000) {
@@ -994,7 +997,10 @@
       }
       // m6 — split defense + decrypt
       if (cs.m === 6) {
-        if (cs.decrypt > 0) cs.decrypt -= dt;
+        const view=window.TechOpsArtHandoff&&window.TechOpsArtHandoff.surveillance(NM,now);
+        cs._gbSurveillance=view||null;
+        // Visible sweeps disrupt the decrypt; shelter under catwalks restores full speed.
+        if (cs.decrypt > 0) cs.decrypt -= dt*(view&&view.observed?.35:1);
         if (cs.uplink && cs.uplink.hp > 0) {
           for (const e of NM.enemies) {
             if (!e.alive || e.down > 0) continue;
@@ -1187,13 +1193,13 @@
           // the partner fighter
           if (!ch[pw].downed && !ch[pw].out) {
             const px = p.x - NM.cam + p.w / 2, py = p.y + p.h;
-            if (p.anim > 0) drawPairFig736(ctx, pw, px, py, 46, pw === "manchez" ? "strike" : "cast", p.face < 0, now);
-            else drawPairFig736(ctx, pw, px, py, 46, null, p.face < 0, now);
+            if (p.anim > 0) drawPairFig736(ctx, pw, px, py, 72, pw === "manchez" ? "strike" : "cast", p.face < 0, now);
+            else if(!(window.TechOpsArtHandoff&&window.TechOpsArtHandoff.drawActor(ctx,pw==="manchez"?"man":"kat",p,px,py,72,now)))drawPairFig736(ctx, pw, px, py, 72, null, p.face < 0, now);
             ctx.fillStyle = pw === "katrin" ? "#3fa9f5" : "#f59e0b";
-            ctx.font = "9px monospace"; ctx.textAlign = "center"; ctx.fillText(pw.toUpperCase(), px, py - 56);
-            ctx.fillStyle = "#222"; ctx.fillRect(px - 16, py - 52, 32, 3);
+            ctx.font = "9px monospace"; ctx.textAlign = "center"; ctx.fillText(pw.toUpperCase(), px, py - 82);
+            ctx.fillStyle = "#222"; ctx.fillRect(px - 16, py - 78, 32, 3);
             ctx.fillStyle = pw === "katrin" ? "#3fa9f5" : "#f59e0b";
-            ctx.fillRect(px - 16, py - 52, 32 * Math.max(0, ch[pw].hp) / ch[pw].maxHp, 3);
+            ctx.fillRect(px - 16, py - 78, 32 * Math.max(0, ch[pw].hp) / ch[pw].maxHp, 3);
           }
           // downed bodies + revive prompt
           for (const who of ["katrin", "manchez"]) {

@@ -1,6 +1,6 @@
 # TechOps Hero — Cinematic Cohesion v1
 
-**Status:** implemented foundation + M3 mixed-media vertical slice  
+**Status:** foundation published in PR #15; supplied-art and backlog follow-up in validation  
 **Canonical player-facing campaign name:** **GOOD DOGS PROTOCOL**  
 **Runtime authority:** `cinematic_systems.js` + existing mode-specific engines  
 **Release rule:** presentation may observe gameplay events; it may not own damage, collision, progression, saves, or media retries.
@@ -83,7 +83,7 @@ The presentation director provides mode-scoped, idempotent ownership for blockin
 The common camera API currently supplies:
 
 - `day.grid`: restrained two-axis lookahead with 170 ms response;
-- `night.street`: the existing locked side-view snap, unchanged;
+- `night.street`: the same side-view anchor with 115 ms eased follow, 12 px lookahead and a bounded 20 px lag;
 - `gooddogs.sideview`: 18 px directional lookahead, 125 ms exponential response, and a bounded 28 px lag.
 
 Camera response is elapsed-time based and tested for effectively identical 60/120 Hz convergence. Reduced-motion mode removes lookahead. Hard mission handoffs reset camera history.
@@ -92,7 +92,7 @@ Camera response is elapsed-time based and tested for effectively identical 60/12
 
 The controller chooses frames by actor state and source-approved meaning. It explicitly refuses to turn attack, crouch, heavy-hit, or knockdown poses into locomotion.
 
-Katrin and Manchez currently have two verified idle frames plus hack, pounce, bark, roll, wall-hit, look, strike, crouch, leap, shield, and down poses. Five previously mislabeled “idle” crops per dog are quarantined from runtime metadata. Until source art exists, ground movement holds the two valid idle frames and reports `source-art-required`.
+Katrin and Manchez currently have two verified idle frames plus hack, pounce, bark, roll, wall-hit, look, strike, crouch, leap, shield, and down poses. Five previously mislabeled “idle” crops per dog are quarantined from runtime metadata. The supplied September 11 handoff now supplies extracted run loops and airborne dash key poses. Slow walking still holds the two valid idle frames because the new walk row does not prove an alternating gait. Each actor uses a stable bottom-center anchor and separate source rectangles; no atlas coordinates were copied from the older sheets.
 
 ### M3 mixed-media vertical slice
 
@@ -157,14 +157,14 @@ The foundation lanes have landed in this pass; remaining lanes are bounded so mu
 |---|---|---|---|
 | S1 Canon authority | `cinematic_systems.js`, registry projections | **Landed** | One immutable registry; 42-space validation; no duplicated M1–M8 identity |
 | S2 M1/M2 continuity | title, progression, M2 board/flight | **Landed** | Fresh M1; explicit Hidden Bay; explicit board; full media/flight/crash before M3 |
-| S3 Animation source | new atlases/manifests only | **Blocked on art**: create real dog and Night Walker locomotion/transitions | No pose relabeling; contact markers; semantic coverage test green |
-| S4 Camera | camera consumers only | **Foundation landed**; tune profiles from captured play traces | Same API in Day, Night, Good Dogs; reduced-motion; no collision/input changes |
-| S5 2.5D environments | DCC sources + layer manifests + renderer adapter | **M3 proof landed**; next Sector 04, then one Night street | Stable mobile pacing; collision unchanged; match-frame proof; decode fallback |
-| S6 Combat presentation | event subscribers / FX assets | Add hit-stop, recoil, particles, finisher framing | No damage/combo/SYNC rule change; FX only on confirmed events |
-| S7 Level differentiation | mission encounter modules, one owner per mission | Deepen M3 survive, M4 rescue, M5 control, M6 surveillance, M7 boss/escape | Each mission has a distinct tested verb and cannot auto-complete on enemy clear alone |
-| S8 Main-run cohesion | Day/Night transition presentation | Apply shared transition/camera/animation language to South Exit and portal entry | Regular run and Night Crawler remain fully playable; no Good Dogs state leakage |
-| S9 Story continuity | player-facing strings + story-state tests | **Core naming/state pass landed**; continue copy review | GOOD DOGS everywhere player-facing; K never rendered as Mike; Act VII state intact |
-| S10 Visual QA/performance | tests and evidence only | **Automated foundation landed**; physical devices remain | Chrome + WebKit; decoded media evidence; screenshots; resume/replay; frame/memory report |
+| S3 Animation source | new atlases/manifests only | **Partial art integration**: dog run/air-dash and Mike run/jump use extracted handoff poses; alternating walk and Mike dash remain unapproved | No pose relabeling; contact markers; semantic coverage test green |
+| S4 Camera | camera consumers only | **Implemented**: eased, bounded Night/Good Dogs profiles; reduced motion and 60/120 Hz contract | Same API in Day, Night, Good Dogs; reduced-motion; no collision/input changes |
+| S5 2.5D environments | DCC sources + layer manifests + renderer adapter | **Raster layering implemented**: existing prison props on M3–M7, Sector 04 and Industrial street; DCC masters and matched cinematic frames still absent | Stable mobile pacing; collision unchanged; match-frame proof; decode fallback |
+| S6 Combat presentation | event subscribers / FX assets | **Implemented at confirmed-hit seams**: bounded impact particles/rings, existing hit-stop and directional recoil retained; no new damage authority | No damage/combo/SYNC rule change; FX only on confirmed events |
+| S7 Level differentiation | mission encounter modules, one owner per mission | **Implemented**: mission objective gates; M6 visible sweeps slow decrypt while catwalk shelter restores it; M7 requires shuttle after real finisher | Each mission has a distinct tested verb and cannot auto-complete on enemy clear alone |
+| S8 Main-run cohesion | Day/Night transition presentation | **Implemented**: common 180 ms entrance treatment on day dialogue/portals and Night travel; reduced-motion alternative; common Night actor/camera art | Regular run and Night Crawler remain fully playable; no Good Dogs state leakage |
+| S9 Story continuity | player-facing strings + story-state tests | **Implemented with remaining art exclusions**: prison Waldo stays masked; outdated M2 coupler copy removed; unresolved blue-jacket actor excluded | GOOD DOGS everywhere player-facing; K never rendered as Mike; Act VII state intact |
+| S10 Visual QA/performance | tests and evidence only | **In validation**: mandatory Chrome/WebKit asset decode/playback screenshots plus campaign/runtime gates; physical devices remain | Chrome + WebKit; decoded media evidence; screenshots; resume/replay; frame/memory report |
 
 ### Landing order and collision policy
 
@@ -193,3 +193,9 @@ Automated acceptance requires:
 
 Physical iPhone Safari remains a release-evidence requirement. Playwright WebKit is necessary cross-browser coverage, but it is not a substitute for final-device input, safe-area, decode, memory, and thermal validation.
 
+
+## September 11 supplied-art follow-up
+
+See `ART_HANDOFF_INTEGRATION.md` for exact sources, accepted/excluded poses, extraction, source hashes and remaining acceptance. Six lazy atlases total 553,194 bytes before any later extraction refinement. No new image generation was used in this follow-up. The existing M3 raster from the earlier foundation is retained. This is raster compositing, not a delivered Blender/DCC project.
+
+PR #15 initial CI exposed an outgoing-runtime race in the M1→M2 browser driver and a stale GD_CUT_02 checksum inherited from before source restore commit 776df25. The driver now waits for a fresh runtime with cleared mission transients. The checksum remains mandatory and matches the restored committed master; the MP4 is unchanged. H.264 checks continue using Chrome and WebKit.

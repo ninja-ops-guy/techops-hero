@@ -66,6 +66,16 @@ jobs:
           cat /tmp/techops-runtime-server.log
           exit 1
 
+      - name: Review extracted art in Chrome and WebKit
+        id: art
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 90s node scripts/art_handoff_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Run Good Dogs iPhone M1 to M3 regression
         id: intro
         continue-on-error: true
@@ -206,6 +216,7 @@ jobs:
       - name: Enforce runtime bot result
         if: always()
         run: |
+          test "${{ steps.art.outputs.exit_code }}" = "0"
           test "${{ steps.intro.outputs.exit_code }}" = "0"
           test "${{ steps.late_game.outputs.exit_code }}" = "0"
           test "${{ steps.bot.outputs.exit_code }}" = "0"

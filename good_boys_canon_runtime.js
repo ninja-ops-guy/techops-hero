@@ -24,7 +24,7 @@
   var SEQ=REGISTRY&&REGISTRY.goodBoysSequence?REGISTRY.goodBoysSequence():LEGACY_SEQ;
   var INTRO={
     b736m1:{title:"WALDO'S HOUSE",body:"Waldo is gone. Katrin and Manchez pick up his trail inside the house and follow it through the garage to a concealed launch bay.",hint:"MOVE AS A PAIR · SWAP · BOOST JUMP ×3 · AIR DASH ×2",asset:"goodboys_home",cta:"FOLLOW THE TRAIL"},
-    b736m2:{title:"THE SECRET SHIP",body:"The hidden bay opens around an unregistered spacecraft. Restore the launch systems, clear the hangar, and get it airborne.",hint:"POWER COUPLERS · PARTNER THROW/CATCH · CLEAR THE BAY",asset:"goodboys_hangar",cta:"BOARD THE SHIP"},
+    b736m2:{title:"THE SECRET SHIP",body:"The hidden bay opens around an unregistered spacecraft. Clear the hangar and reach the ship together. Take the cockpit, then launch.",hint:"CLEAR BOTH WAVES · REACH THE SHIP · BOARD",asset:"goodboys_hangar",cta:"ENTER THE HANGAR"},
     b736m3:{title:"NO DOCKING",body:"The orbital prison rejects the stolen ship and lights up its defense grid. The dogs choose the shortest route inside: full-speed impact.",hint:"PRISON APPROACH · DEFENSE FIRE · IMPACT VECTOR",asset:"goodboys_approach",cta:"MAKE A DOOR"}
   };
   function productionCompositorActive(){try{return !!(root.TechOpsProductionWrapperGuard||root.__productionSingleCompositor||root.__productionCompositorPlanned);}catch(e){return false;}}

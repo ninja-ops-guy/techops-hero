@@ -13,7 +13,7 @@ export async function clickGoodDogsLaunch(page){
   for(let i=0;i<count;i++){
     const button=buttons.nth(i),text=(await button.innerText().catch(()=>'' )).trim();
     if(GOOD_DOGS_LAUNCH_RE.test(text)){
-      await button.evaluate(el=>{el.click();return true;});
+      await button.click();
       return text;
     }
   }
@@ -88,10 +88,10 @@ export async function driveMissionOne(page,{onEvent=()=>{}}={}){
   if(state.trailStep<4||!state.trailComplete)throw new Error('M1 trail did not complete');
   await page.keyboard.press('KeyE');
   await page.waitForFunction(()=>window.S&&window.S.meta&&window.S.meta._v736&&Number(window.S.meta._v736.m)===2,null,{timeout:5000});
-  await page.waitForFunction(()=>!!document.getElementById('good-boys-campaign-intro')||window.NM&&window.NM._v736&&Number(window.NM._v736.m)===2,null,{timeout:9000});
+  await page.waitForFunction(()=>!!document.getElementById('good-boys-campaign-intro')||window.NM&&window.NM._v736&&!window.NM._v736.ending&&!window.NM._gbHiddenBayEntered&&Number(window.NM._v736.m)===2,null,{timeout:9000});
   const intro=page.locator('#good-boys-campaign-intro button').first();
   if(await intro.count()&&await intro.isVisible().catch(()=>false))await intro.evaluate(el=>el.click());
-  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===2&&!(window.S&&window.S.inDialog),null,{timeout:9000});
+  await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===2&&!window.NM._v736.ending&&!window.NM._gbHiddenBayEntered&&!(window.S&&window.S.inDialog),null,{timeout:9000});
   state=await routeState(page);onEvent('m2-mounted',state);
   if(state.metaMission!==2||state.hiddenBayEntered)throw new Error('M1 -> M2 handoff diverged: '+JSON.stringify(state));
   return state;

@@ -102,7 +102,7 @@ assert.ok(/^kat_(strike|pounce)$/.test(strike.key));
 assert.strictEqual(animations.resolve("nightcrawler", { dash: true }, 0, { heavy0: [0], heavy1: [0] }), null, "Night dash gaps must not borrow heavy-attack art");
 const coverage = animations.coverage();
 assert.strictEqual(coverage.goodDogs.walk, "source-art-required");
-assert.strictEqual(coverage.nightCrawler.locomotion, "source-art-required");
+assert.strictEqual(coverage.nightCrawler.locomotion, "run-integrated-walk-required");
 
 const atlasSource = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
 assert.ok(!/kat_idle[2-9]|man_idle[2-9]/.test(atlasSource), "unrelated source poses may not be aliased as extra idle/locomotion frames");

@@ -389,7 +389,7 @@ async function exerciseGameplay(page,mode,profileName,before){
 
 async function runMode(browserType,profileName,contextOptions,mode){
   repl(`launch ${profileName} :: ${mode}`);
-  const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
+  const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(browserType===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
   const context=await browser.newContext(contextOptions);
   await context.tracing.start({screenshots:true,snapshots:false,sources:false});
   const page=await context.newPage();

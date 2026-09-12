@@ -378,6 +378,7 @@ function nmJab() {
         if (finisher) { e.launch = 14; e.down = 34; } // launched, then floored
       }
       e.hp -= Math.round(dealt);
+      if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.impact(NM,e,finisher?"finisher":"hit",now);
       e.hitT = 8;
       NM.hitStop = Math.max(NM.hitStop, finisher ? 6 : 3); // hit-stop sells the impact
       if (e.hp <= 0) {
@@ -676,6 +677,7 @@ function drawNM() {
     g.addColorStop(0, D.accent + "30"); g.addColorStop(1, "transparent");
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(lx + 2, NM_FLOOR - 10, 90, 26, 0, 0, 7); ctx.fill();
   }
+  if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   // platforms
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }

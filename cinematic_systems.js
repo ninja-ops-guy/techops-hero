@@ -194,7 +194,7 @@
     var cameraState={};
     var CAMERA_PROFILES=freeze({
       "day.grid":{axes:"xy",anchorX:.5,anchorY:.5,lookAhead:.5,responseMs:170,maxLag:.6,snap:false},
-      "night.street":{axes:"x",anchorX:1/2.4,anchorY:.5,lookAhead:0,responseMs:0,maxLag:0,snap:true},
+      "night.street":{axes:"x",anchorX:1/2.4,anchorY:.5,lookAhead:12,responseMs:115,maxLag:20,snap:false},
       "gooddogs.sideview":{axes:"x",anchorX:1/2.4,anchorY:.5,lookAhead:18,responseMs:125,maxLag:28,snap:false}
     });
     function cameraProfile(id){return CAMERA_PROFILES[id]||null;}
@@ -228,7 +228,7 @@
     registerActor("mike.day",{atlas:"PLAYER_ATLAS",fallbackState:"idle_down",select:function(s){var d=s.facing||"down";return(s.moving?"walk_":"idle_")+d;},states:{idle_down:{frames:["down0"],frameMs:720},idle_up:{frames:["up0"],frameMs:720},idle_left:{frames:["left0"],frameMs:720},idle_right:{frames:["right0"],frameMs:720},walk_down:{frames:["down0","down1","down0","down2"],frameMs:135},walk_up:{frames:["up0","up1","up0","up2"],frameMs:135},walk_left:{frames:["left0","left1","left0","left2"],frameMs:135},walk_right:{frames:["right0","right1","right0","right2"],frameMs:135}}});
     registerActor("nightcrawler",{atlas:"NIGHT_WALKER_REFERENCE_V1",fallbackState:"idle",select:function(s){if(s.down)return"down";if(s.hit)return"hit";if(s.attack)return"attack";if(s.dash)return"dash_gap";if(!s.onGround)return"air_gap";if(Math.abs(Number(s.vx)||0)>.35)return"locomotion_gap";return"idle";},states:{idle:{frames:["idle0","idle1"],frameMs:560},locomotion_gap:{frames:["idle0","idle1"],frameMs:150,semantic:"locomotion_hold",coverage:"source-art-required",fallback:true},air_gap:{frames:[],frameMs:720,semantic:"unresolved_airborne",coverage:"source-art-required",fallback:true},dash_gap:{frames:[],frameMs:720,semantic:"unresolved_dash",coverage:"source-art-required",fallback:true},attack:{frames:["jab0","jab1"],frameMs:90},hit:{frames:["hit"],frameMs:720},down:{frames:["down"],frameMs:720}}});
     function dogFrame(who,runtime,nowMs,frames){var id=who==="manchez"?"gooddogs.manchez":"gooddogs.katrin",s=runtime||{};return resolveAnimation(id,{hp:Number(s.hp),downed:!!s.downed,hit:Number(s.ifr)>0,attack:Number(s.jabAnim)>0,block:!!s.block,dash:Number(s.dashT)>0,onGround:s.onGround!==false,vx:Number(s.vx)||0},nowMs,frames);}
-    function coverage(){return{goodDogs:{idle:"approved",walk:"source-art-required",run:"source-art-required",startStop:"source-art-required",jump:"key-pose-only",land:"source-art-required",dash:"key-pose-only",attack:"key-poses-only",partnerSync:"source-art-required"},nightCrawler:{locomotion:"source-art-required",jumpLand:"source-art-required",dash:"borrowed-heavy-pose"},mikeDay:{idle:"approved",walk:"approved",transitions:"source-art-required"}};}
+    function coverage(){return{goodDogs:{idle:"approved",walk:"source-art-required",run:"handoff-run-loop",startStop:"source-art-required",jump:"key-pose-only",land:"source-art-required",dash:"key-pose-only",attack:"key-poses-only",partnerSync:"source-art-required"},nightCrawler:{locomotion:"run-integrated-walk-required",jumpLand:"handoff-key-poses",dash:"source-art-required"},mikeDay:{idle:"approved",walk:"approved",transitions:"source-art-required"}};}
     root.TechOpsAnimationController={VERSION:1,registerActor:registerActor,resolve:resolveAnimation,definition:actorDefinition,dogFrame:dogFrame,coverage:coverage,health:function(){return{version:1,actors:Object.keys(actors),coverage:coverage(),pass:true};}};
   }
 
@@ -253,3 +253,80 @@
 
   if(typeof module==="object"&&module.exports)module.exports={TechOpsLevelRegistry:root.TechOpsLevelRegistry,TechOpsPresentationDirector:root.TechOpsPresentationDirector,TechOpsCameraDirector:root.TechOpsCameraDirector,TechOpsAnimationController:root.TechOpsAnimationController};
 })(typeof globalThis!=="undefined"?globalThis:this);
+
+/* Handoff art and shared staging: passive consumers, no gameplay timers/hooks. */
+(function(root){
+  'use strict';
+  var manifest=null,loadState='idle',loadError=null,images={},tracks=new WeakMap(),effects=new WeakMap();
+  function clock(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
+  function reduced(){return !!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);}
+  function load(){
+    if(loadState!=='idle'||typeof root.fetch!=='function')return;
+    loadState='loading';root.fetch('assets/handoff/atlas.json?v=1').then(function(r){if(!r.ok)throw Error('art manifest HTTP '+r.status);return r.json();}).then(function(m){
+      if(m.version!==1||!m.atlases)throw Error('Unsupported art manifest');manifest=m;loadState='ready';
+    }).catch(function(e){loadState='error';loadError=String(e);});
+  }
+  function image(id){load();var a=manifest&&manifest.atlases[id];if(!a||!root.Image)return null;
+    var rec=images[id];if(!rec){var im=new root.Image();rec=images[id]={image:im,status:'loading'};im.onload=function(){rec.status='ready';};im.onerror=function(){rec.status='error';};im.src=a.src;}
+    return rec.status==='ready'?rec.image:null;
+  }
+  function drawFrame(ctx,id,index,cx,base,height,flip,alpha){
+    var im=image(id),a=manifest&&manifest.atlases[id],f=a&&a.frames[index];if(!im||!f||!ctx)return false;
+    var r=f.rect,s=height/a.standingHeight;ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha*=alpha==null?1:alpha;
+    ctx.translate(Math.round(cx),Math.round(base));if(flip)ctx.scale(-1,1);
+    ctx.drawImage(im,r[0],r[1],r[2],r[3],-f.pivot[0]*s,-f.pivot[1]*s,r[2]*s,r[3]*s);ctx.restore();return true;
+  }
+  function select(id,n,at){
+    if(!n)return null;var isDog=id==='kat'||id==='man',state='idle',seq=null,ms=100;
+    if(n.hp<=0||n.downed||n.down>0||n.hitT>0||n.jabAnim>0||n.anim>0||n.block)return null;
+    if(n.dashT>0&&isDog&&!n.onGround){state='airdash';seq=[13,14,15,16,17];ms=65;}
+    else if(!n.onGround){state=n.vy<-2?'ascent':n.vy>2?'descent':'apex';if(!isDog)seq=[state==='ascent'?14:state==='apex'?15:16];}
+    else if(Math.abs(n.vx||0)>=2.5){state='run';seq=[6,7,8,9,10,11];ms=Math.max(65,Math.min(130,400/Math.abs(n.vx)));}
+    var prev=tracks.get(n);if(!prev||prev.id!==id||prev.state!==state){prev={id:id,state:state,at:at};tracks.set(n,prev);}
+    if(!seq)return null;var elapsed=Math.max(0,at-prev.at),idx=state==='airdash'?Math.min(seq.length-1,Math.floor(elapsed/ms)):Math.floor(elapsed/ms)%seq.length;
+    if(state==="run"&&prev.phase!==idx){prev.phase=idx;if(idx===0||idx===3)root.__techOpsFootContact={actor:id,phase:idx,at:at};}
+    return{id:id,state:state,frame:seq[idx],phase:idx,source:'handoff-extracted',loop:state==='run'};
+  }
+  function drawActor(ctx,id,n,cx,base,height,at){var choice=select(id,n,at||0);if(!choice)return false;var ok=drawFrame(ctx,id,choice.frame,cx,base,height,(n.face||1)<0,n.ifr>0?.7:1);if(ok)root.__techOpsArtLastActor=choice;return ok;}
+  function impact(n,e,kind,at){
+    if(!n||!e)return false;var rows=effects.get(n)||[];rows.push({x:Number(e.x)+(Number(e.w)||24)/2,y:Number(e.y)+(Number(e.h)||36)/2,at:at==null?clock():at,kind:kind||'hit',face:Math.sign(Number(e.kb)||Number(n.face)||1)});if(rows.length>24)rows.splice(0,rows.length-24);effects.set(n,rows);return true;
+  }
+  function drawImpacts(ctx,n,at){
+    var rows=effects.get(n)||[],calm=reduced();rows=rows.filter(function(e){return at-e.at<260&&at>=e.at;});effects.set(n,rows);
+    if(!rows.length)return;ctx.save();ctx.beginPath();ctx.rect(0,112,ctx.canvas.width,Math.max(0,ctx.canvas.height-156));ctx.clip();
+    rows.forEach(function(e){var age=(at-e.at)/260,s=1-age,cx=e.x-(n.cam||0),cy=e.y;ctx.globalAlpha=.7*s;ctx.strokeStyle=n._v736?(n._v736.active==='manchez'?'#ff9f1c':'#55dfff'):'#ffab4c';ctx.lineWidth=calm?1:2;
+      ctx.beginPath();ctx.arc(cx,cy,4+(calm?4:23)*age,0,Math.PI*2);ctx.stroke();if(!calm)for(var i=0;i<5;i++){var a=(i/5*Math.PI*2)+e.face*.2,dist=6+age*30;ctx.fillStyle=ctx.strokeStyle;ctx.fillRect(Math.round(cx+Math.cos(a)*dist),Math.round(cy+Math.sin(a)*dist),3,2);}
+    });ctx.restore();
+  }
+  // The same layer roles serve orbital prison, grounded Sector 04 and one street.
+  // Source props decorate existing geometry. They never create collision surfaces.
+  var layers={
+    'gooddogs.m3':[{frame:2,x:330,height:182,role:'back',parallax:1},{frame:6,x:730,height:95,role:'mid',parallax:.55,y:-170},{frame:3,x:900,height:155,role:'back',parallax:1},{frame:9,x:1440,height:86,role:'back',parallax:1}],
+    'gooddogs.m4':[{frame:0,x:1320,height:182,role:'back',parallax:1},{frame:8,x:500,height:80,role:'back',parallax:1},{frame:6,x:890,height:86,role:'mid',parallax:.55,y:-150}],
+    'gooddogs.m5':[{frame:8,x:1070,height:100,role:'back',parallax:1},{frame:3,x:1480,height:180,role:'back',parallax:1},{frame:6,x:430,height:96,role:'mid',parallax:.55,y:-155}],
+    'gooddogs.m6':[{frame:0,x:1360,height:180,role:'back',parallax:1},{frame:8,x:420,height:95,role:'back',parallax:1},{frame:11,x:1010,height:70,role:'back',parallax:1,y:-155}],
+    'gooddogs.m7':[{frame:3,x:1580,height:176,role:'back',parallax:1},{frame:7,x:470,height:96,role:'mid',parallax:.55,y:-185},{frame:11,x:980,height:80,role:'back',parallax:1,y:-175}],
+    'sector04':[{frame:6,x:550,height:105,role:'mid',parallax:.55,y:-178},{frame:10,x:280,height:65,role:'back',parallax:1},{frame:11,x:1100,height:72,role:'back',parallax:1,y:-173}],
+    'night.industrial':[{frame:6,x:550,height:100,role:'mid',parallax:.55,y:-155},{frame:10,x:1050,height:67,role:'back',parallax:1}]
+  };
+  function level(n){return n&&n._v736?'gooddogs.m'+n._v736.m:n&&n._sector04?'sector04':n&&n.district==='industrial'?'night.industrial':null;}
+  function drawEnvironment(ctx,n,pass,at){
+    var id=level(n),spec=layers[id];if(!spec)return false;var floor=typeof root.NM_FLOOR==='number'?root.NM_FLOOR:430,W=ctx.canvas.width,calm=reduced();
+    ctx.save();ctx.beginPath();ctx.rect(0,115,W,Math.max(0,ctx.canvas.height-155));ctx.clip();
+    if(pass==='back'){
+      spec.forEach(function(l){var sx=l.x-(n.cam||0)*l.parallax;if(sx<-230||sx>W+230)return;drawFrame(ctx,'prison',l.frame,sx,floor+(l.y||0),l.height,false,l.role==='mid'?.62:1);});
+      if(n._v736&&n._v736.m===6){var beam=surveillance(n,at);ctx.globalAlpha=.09;ctx.fillStyle='#ff475d';ctx.beginPath();ctx.moveTo(1010-(n.cam||0),floor-250);ctx.lineTo(beam.center-(n.cam||0)-beam.radius,floor);ctx.lineTo(beam.center-(n.cam||0)+beam.radius,floor);ctx.closePath();ctx.fill();}
+      if(n._v736&&n._v736.m===4){ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#b5edff';ctx.fillText('118',1320-(n.cam||0),floor-165);}
+      if(n._v736&&n._v736.m===6){ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#ffadb4';ctx.fillText('1984',1360-(n.cam||0),floor-165);}
+    }else{
+      // Foreground atmosphere is bounded and never hides actor silhouettes.
+      if(!calm){ctx.globalAlpha=.10;ctx.fillStyle=id==='night.industrial'?'#a5d9eb':'#8ac5d8';for(var i=0;i<12;i++){var px=((i*149-(n.cam||0)*1.18+at*.006)% (W+160)+W+160)%(W+160)-80;ctx.fillRect(px,floor+12+(i%3)*7,26,1);}}
+      var c=n._v736,meta=root.S&&root.S.meta&&root.S.meta._v736;
+      if(c&&Number(c.m)>=6&&Number(c.m)<=7&&meta&&meta.waldo){drawFrame(ctx,'waldo',12,n.x-(n.cam||0)-85,floor+2,85,false,.92);}
+    }
+    ctx.restore();root.__techOpsLayerEvidence={level:id,pass:pass,asset:'prison',collisionOwned:false};return true;
+  }
+  function surveillance(n,at){var center=1010+Math.sin(at/1900)*470,radius=88,x=Number(n.x)+(Number(n.w)||22)/2;var sheltered=(n.platforms||[]).some(function(p){return x>p.x&&x<p.x+p.w&&Number(n.y)>p.y+14;});return{center:center,radius:radius,observed:Math.abs(x-center)<radius&&!sheltered,sheltered:sheltered};}
+  if(root.TechOpsAnimationController)root.TechOpsAnimationController.resolveHandoff=select;
+  root.TechOpsArtHandoff={VERSION:1,load:load,image:image,drawFrame:drawFrame,drawActor:drawActor,select:select,impact:impact,drawImpacts:drawImpacts,drawEnvironment:drawEnvironment,surveillance:surveillance,layers:layers,health:function(){return{status:loadState,error:loadError,atlases:Object.keys(images).map(function(id){return{id:id,status:images[id].status};}),generatedThisPass:false};}};
+})(typeof globalThis!=='undefined'?globalThis:this);
