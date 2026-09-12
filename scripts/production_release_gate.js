@@ -48,6 +48,7 @@ const tests = [
   "test_campaign_runtime.js",
   "test_campaign_native_act1.js",
   "test_campaign_casebook.js",
+  "test_campaign_act1_investigations.js",
   "test_campaign_day1_runtime_gate.js",
   "test_campaign_opening_acceptance.js",
   "test_campaign_sector04.js",
