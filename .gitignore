@@ -3,3 +3,4 @@ runtime-bot-artifacts/
 runtime-fixer-input/
 runtime-autofix-result.json
 runtime-autofix-summary.md
+__pycache__/

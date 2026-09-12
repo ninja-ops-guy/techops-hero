@@ -9,8 +9,7 @@ const reference = fs.readFileSync("night_reference_visuals.js", "utf8");
 const referenceAtlas = fs.readFileSync("night_walker_reference_v1.js", "utf8");
 
 function scriptIndex(src) {
-  const marker = `<script src="${src}"></script>`;
-  const index = html.indexOf(marker);
+  const index = [...html.matchAll(/<script\s+src="([^"]+)"[^>]*><\/script>/g)].findIndex(match => match[1].split(/[?#]/, 1)[0] === src);
   assert.notStrictEqual(index, -1, `${src} must be loaded by index.html`);
   return index;
 }
@@ -84,3 +83,17 @@ assert.ok(/localStorage\.removeItem\("techops_char"\)/.test(v737Hooks),
   "normal-run cleanup must remove persisted Night Crawler selection before newState()");
 
 console.log("Night reference visual authority + normal-run isolation: PASS");
+
+// The legacy scenery wrapper must delegate to Night interaction without then opening a Day prop.
+const vm=require('node:vm'),propsSource=fs.readFileSync('v720_hooks.js','utf8');
+const wrapper=propsSource.slice(propsSource.indexOf('const __origInteract720 ='),propsSource.indexOf('  window.v720 ='));
+let delegated=0,dialogs=0;
+const input={S:{nightMode:true,inDialog:false,inBattle:false,px:0,py:0},interact(){delegated++;},window:{v63:{v63PropSpots(){return [[0,1,0]];}}},PROP_INFO:[['Coffee','Day scenery']],dlg(){dialogs++;},closeDlg(){}};
+vm.createContext(input);vm.runInContext(wrapper,input);
+input.interact();assert.strictEqual(delegated,1);assert.strictEqual(dialogs,0,'Night combat/travel interaction must not open Day scenery');
+input.S.nightMode=false;input.interact();assert.strictEqual(delegated,2);assert.strictEqual(dialogs,1,'Day inspection remains available');
+
+// A campaign encounter must not escape into the Earth car hub.
+const carSource=nightHooks.slice(nightHooks.indexOf("function nmCarMenu()"),nightHooks.indexOf("function nmNextStage()"));
+let carDialogs=0;const car={NM:{_sector04:{active:true}},S:{},NM_ORDER:[],dlg(){carDialogs++;},closeDlg(){}};vm.createContext(car);vm.runInContext(carSource,car);
+assert.strictEqual(car.nmCarMenu(),false);assert.strictEqual(carDialogs,0);car.NM={};car.nmCarMenu();assert.strictEqual(carDialogs,1,"Earth Charger still opens");

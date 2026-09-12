@@ -259,3 +259,8 @@ body.v67-cb .v66-float.phit { color: #d55e00; }
 body.v67-cb .v66-float.crit, body.v67-cb .v67-flavor { color: #f0e442; }
 body.v67-cb #battle-log .heal { color: #56b4e9; }
 body.v67-cb #battle-log .dmg { color: #e69f00; }
+
+/* Shared restrained scene entrance; no input delay or additional modal owner. */
+@keyframes techops-scene-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+#dialogue:not(.hidden),#battle:not(.hidden),#v722-cine,#good-boys-campaign-intro{animation:techops-scene-in 180ms ease-out both}
+@media(prefers-reduced-motion:reduce){#dialogue:not(.hidden),#battle:not(.hidden),#v722-cine,#good-boys-campaign-intro{animation:none}}

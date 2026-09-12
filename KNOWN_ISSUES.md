@@ -8,12 +8,12 @@ This list is intentionally stricter than deterministic CI. A green test suite do
 
 - Main campaign: current production SHA must complete New Run -> Tuesday on iPhone Safari.
 - Main campaign: same SHA must complete New Run -> Tuesday on desktop Chromium.
-- Good Boys: current SHA must complete The Incident -> playable breach -> Cell 118 on iPhone Safari.
+- Good Dogs: current SHA must complete GD_CUT_01 -> playable M1/M2 -> decoded GD_CUT_02 -> playable flight -> crash -> M3 breach -> Cell 118 on iPhone Safari.
 - Screenshots/tester output must be retained for the accepted SHA.
 
-### Good Boys animation source gap
+### Good Dogs and Night Crawler animation source gaps
 
-The shipped `KATRIN_MANCHEZ` atlas has verified idle/action/shield/hit/down/leap/roll frames, but it does not contain a verified dedicated walk/run row matching the newest approved concept sheets. Production intentionally uses conservative locomotion rather than mislabeling attack or knockdown art as walking.
+The shipped `KATRIN_MANCHEZ` atlas has two verified idle frames plus action/shield/hit/down/leap/roll frames, but it does not contain a verified dedicated walk/run row matching the newest approved concept sheets. Five unrelated crops previously labeled as extra idle frames are quarantined from runtime metadata. Night Crawler also lacks verified transition, jump/land, and dash rows. Production intentionally uses conservative holds rather than mislabeling attack or knockdown art as locomotion.
 
 Required closeout: extract/author transparent walk/run/true air-dash frames from approved reference material, classify them semantically, then wire and regression-test them.
 
@@ -30,7 +30,7 @@ Required closeout: profile dependency order, move still-required behavior into s
 ## Accepted temporary fallbacks — not final art
 
 - The Charger runtime silhouette is a compatibility fallback until a verified production four-door Charger sprite is integrated.
-- Good Boys orbital stage geometry uses the shared Night engine's continuous floor plus authored raised routes and breach hazard zones. This preserves engine stability while requiring boost/air-dash traversal; a future Night-physics refactor may support true floor holes.
+- Good Dogs M3 uses an authored mixed-media backplate over the shared Night engine's continuous floor and stage geometry. M4–M7 still use orbital-tile generated environment fallbacks pending the layer-manifest pipeline described in `CINEMATIC_COHESION_V1.md`.
 - Static performance budgets are enforced, but real-device first-playable time, long-frame, memory, thermal and image-decode measurements are still required before final release.
 
 ## Non-negotiable visual failures
@@ -39,7 +39,7 @@ Any of the following reopens release readiness immediately:
 
 - Mike appears as the playable body in Good Boys.
 - Day Shift or generic Night HUD bleeds into Good Boys.
-- Good Boys starts in Suburbs / Dead Satellite rather than the canon orbital incident.
+- Good Dogs skips Waldo's House or the Hidden Bay and begins at the cockpit, flight, or prison.
 - Katrin/Manchez color identity swaps (Katrin blue, Manchez amber/orange).
 - Night Walker uses Day Shift poses for attacks or blocks.
 - the production car reads as a two-door coupe rather than a modern four-door Charger.

@@ -28,12 +28,14 @@
       var stage = Math.max(0, Math.min(2, Number(NM.jabStage || 1) - 1));
       return ["light0", "light1", "light2"][stage];
     }
-    if (NM.dashT > 0) return (Math.floor(now / 70) % 2) ? "heavy0" : "heavy1";
+    if (NM.dashT > 0) return "guard0"; // conservative brace until a distinct dash pose is approved
     if (Math.abs(NM.vx || 0) > .45) return (Math.floor(now / 145) % 2) ? "idle0" : "idle1";
     return (Math.floor(now / 420) % 2) ? "idle0" : "idle1";
   }
 
   function drawReferenceNightWalker(x, NM, px, py, now) {
+    var art=root.TechOpsArtHandoff;
+    if(art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+7,Math.max(92,(NM.h||34)*2.9),now||0))return true;
     var img = imageReady();
     if (!img || !atlas || !atlas.frames) return false;
     var key = framePlan(NM, now || 0);
@@ -43,11 +45,12 @@
     // Reference target is the large readable Sector 04 silhouette. The old
     // runtime rendered Mike near debug-sprite scale; production is intentionally larger.
     var h = Math.round(Math.max(92, (NM.h || 34) * 2.9));
-    var w = h;
+    var scale = h / (atlas.standingHeight || C);
+    var w = C * scale, spriteH = C * scale;
     var moving = Math.abs(NM.vx || 0) > .45;
     var bob = moving && NM.onGround ? Math.round(Math.sin((now || 0) / 92) * 1.5) : 0;
     var dx = Math.round(px + (NM.w || 22) / 2 - w / 2);
-    var dy = Math.round(py + (NM.h || 34) - h + 7 + bob);
+    var dy = Math.round(py + (NM.h || 34) + 7 - (atlas.pivot ? atlas.pivot[1] : C) * scale + bob);
     x.save();
     x.imageSmoothingEnabled = false;
     // grounded contact shadow helps the heavier reference silhouette read on wet streets
@@ -58,9 +61,9 @@
     if (NM.ifr > 0 && Math.floor((now || 0) / 80) % 2) x.globalAlpha = .55;
     if ((NM.face || 1) < 0) {
       x.translate(dx + w, 0); x.scale(-1, 1);
-      x.drawImage(img, fr[0], fr[1], C, C, 0, dy, w, h);
+      x.drawImage(img, fr[0], fr[1], C, C, 0, dy, w, spriteH);
     } else {
-      x.drawImage(img, fr[0], fr[1], C, C, dx, dy, w, h);
+      x.drawImage(img, fr[0], fr[1], C, C, dx, dy, w, spriteH);
     }
     x.restore();
     return true;
@@ -70,6 +73,7 @@
   // muscular rear haunch, four side windows/door seams and full-width rear lamp cue.
   function drawCharger(x, cx, cy, w, tm) {
     var W = Math.max(154, w * 1.38), H = W * .285;
+    var art=root.TechOpsArtHandoff;if(art&&art.drawFrame(x,"charger",0,cx,cy,H,false,1))return;
     var L = cx - W / 2, T = cy - H;
     x.save();
     x.shadowColor = "#39ff88"; x.shadowBlur = 18;

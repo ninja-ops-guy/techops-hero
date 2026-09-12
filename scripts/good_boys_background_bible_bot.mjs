@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
 
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
@@ -8,11 +9,11 @@ fs.mkdirSync(OUT,{recursive:true});
 const expected={
   1:{key:'goodboys_home',district:'goodboys_home',scene:"WALDO'S PLACE — HOUSE / YARD / GARAGE",landmarks:['YARD','PORCH','GARAGE','HIDDEN BAY']},
   2:{key:'goodboys_hangar',district:'goodboys_hangar',scene:"WALDO'S CONCEALED LAUNCH BAY",landmarks:['HANGAR SECURITY','SECRET SHIP']},
-  3:{key:'goodboys_breach',district:'goodboys_breach',scene:'ORBITAL PRISON — HULL BREACH',landmarks:['IMPACT BREACH','MAINTENANCE AIRLOCK','BLOCK 118']},
-  4:{key:'goodboys_cell118',district:'goodboys_cell118',scene:'DETENTION BLOCK 118',landmarks:['CELL 118']},
-  5:{key:'goodboys_core',district:'goodboys_core',scene:'ACCESS CORE',landmarks:['K — ROUTE KEY','ACCESS NODE','ROUTE 1984']},
-  6:{key:'goodboys_cell1984',district:'goodboys_cell1984',scene:'SURVEILLANCE BLOCK 1984',landmarks:['K UPLINK','CELL 1984']},
-  7:{key:'goodboys_escape',district:'goodboys_escape',scene:'WARDEN CORE / SHUTTLE BAY',landmarks:['WARDEN CORE','MAINTENANCE SHUTTLE']},
+  3:{key:'goodboys_breach',district:'goodboys_breach',scene:'BLACKSITE MERIDIAN — MAINTENANCE HULL',landmarks:['IMPACT BREACH','MAINTENANCE AIRLOCK','BLOCK 118']},
+  4:{key:'goodboys_cell118',district:'goodboys_cell118',scene:'BLACKSITE MERIDIAN — BLOCK 118',landmarks:['CELL 118']},
+  5:{key:'goodboys_core',district:'goodboys_core',scene:'BLACKSITE MERIDIAN — ORPHEUS ACCESS CORE',landmarks:['K — ROUTE KEY','ACCESS NODE','ROUTE 1984']},
+  6:{key:'goodboys_cell1984',district:'goodboys_cell1984',scene:'BLACKSITE MERIDIAN — SURVEILLANCE BLOCK 1984',landmarks:['K UPLINK','CELL 1984']},
+  7:{key:'goodboys_escape',district:'goodboys_escape',scene:'BLACKSITE MERIDIAN — WARDEN CORE / SHUTTLE BAY',landmarks:['WARDEN CORE','MAINTENANCE SHUTTLE']},
   8:{key:'goodboys_earthfall',district:'goodboys_earthfall',scene:"WALDO'S HOUSE — DAWN",landmarks:["WALDO'S PORCH",'GARAGE','SHUTTLE WRECK']}
 };
 const findings=[];const fail=(mission,issue,data={})=>findings.push({mission,issue,...data});
@@ -58,10 +59,11 @@ async function dismiss(page,ms=6500){const until=Date.now()+ms;let idle=0;while(
   const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);if(introBusy){idle=0;await page.waitForTimeout(120);continue;}
   idle++;if(idle>=8)return true;await page.waitForTimeout(100);
 }return false;}
-const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
+const browser=await chromium.launch({headless:true,...(process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();
 try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(1900);
-  if(!await clickText(page,/(118\/1984|BREAKOUT|GOOD\s*BOYS)/i))throw new Error('Good Boys launch button missing');
+  if(!await clickGoodDogsLaunch(page))throw new Error('Good Dogs launch button missing');
+  await driveFreshRouteToCockpit(page,{requireDecoded:true});
   await dismiss(page,36000);
   await page.waitForFunction(()=>!!(window.NM&&window.NM._v736&&Number(window.NM._v736.m)===3),null,{timeout:18000});
   await page.waitForTimeout(300);
@@ -72,7 +74,7 @@ try{
     mission:Number(window.NM&&window.NM._v736&&window.NM._v736.m||0),
     pair:!!(window.NM&&window.NM._v736&&window.NM._v736.chars&&window.NM._v736.chars.katrin&&window.NM._v736.chars.manchez)
   }));
-  if(!opening.deck||!opening.deck.completed||!opening.crash||!opening.crash.completed||opening.hard?.status!=='prison-gameplay'||opening.mission!==3||!opening.pair)fail(0,'canonical-opening-not-complete',opening);
+  if(!opening.deck||!opening.deck.completed||!opening.crash||!opening.crash.completed||opening.hard?.status!=='campaign-gameplay'||Number(opening.hard?.version||0)<GOOD_DOGS_CONTRACT_VERSION||opening.mission!==3||!opening.pair)fail(0,'canonical-opening-not-complete',opening);
   /* This bot samples the eight authored environments out of sequence. Pause the
      live progression timer so combat-clear state cannot legitimately advance a
      manually selected sample while its background contract is being observed. */
@@ -109,4 +111,4 @@ try{
   fail(0,'bot-exception',{error:String(e&&e.stack||e),state});
   await page.screenshot({path:path.join(OUT,'goodboys-background-bible-exception.png'),fullPage:true}).catch(()=>{});
 }finally{await browser.close();}
-const report={pass:findings.length===0,expected,findings};fs.writeFileSync(path.join(OUT,'goodboys-background-bible.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-background-bible.md'),['# Good Boys Background Bible Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Findings: ${findings.length}`,'','## Canon route','',...Object.entries(expected).map(([m,e])=>`- M${m}: ${e.scene} — \`${e.key}\` / \`${e.district}\``),'',...(findings.length?['## Findings','',...findings.map(f=>`- ${JSON.stringify(f)}`)]:[])].join('\n'));if(!report.pass)process.exitCode=1;
+const report={pass:findings.length===0,contractVersion:GOOD_DOGS_CONTRACT_VERSION,expected,findings};fs.writeFileSync(path.join(OUT,'goodboys-background-bible.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(OUT,'goodboys-background-bible.md'),['# Good Dogs Background Bible Bot','',`- Result: **${report.pass?'PASS':'FAIL'}**`,`- Findings: ${findings.length}`,'','## Canon route','',...Object.entries(expected).map(([m,e])=>`- M${m}: ${e.scene} — \`${e.key}\` / \`${e.district}\``),'',...(findings.length?['## Findings','',...findings.map(f=>`- ${JSON.stringify(f)}`)]:[])].join('\n'));if(!report.pass)process.exitCode=1;

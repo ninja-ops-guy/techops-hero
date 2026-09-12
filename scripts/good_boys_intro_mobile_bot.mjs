@@ -1,26 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { webkit, devices } from 'playwright';
+import { GOOD_DOGS_CONTRACT_VERSION, clickGoodDogsLaunch, driveFreshRouteToCockpit } from './good_dogs_route_driver.mjs';
 
 const BASE=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const OUT=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';
-const CONTRACT_VERSION=13;
+const CONTRACT_VERSION=GOOD_DOGS_CONTRACT_VERSION;
 fs.mkdirSync(OUT,{recursive:true});
 
 const failures=[],events=[];
 const log=(name,data={})=>{events.push({at:new Date().toISOString(),name,...data});console.log(name,JSON.stringify(data));};
 const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data);};
-
-async function clickLaunch(page){
-  for(const b of await page.locator('button').all()){
-    const t=(await b.innerText().catch(()=>'' )).trim();
-    if(/118\/1984|BREAKOUT|GOOD\s*BOYS/i.test(t)){
-      await b.evaluate(el=>{el.click();return true;});
-      return t;
-    }
-  }
-  return null;
-}
 
 async function click(page,selector){
   return page.evaluate(sel=>{const el=document.querySelector(sel);if(!el)return false;el.click();return true;},selector).catch(()=>false);
@@ -131,9 +121,11 @@ try{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForTimeout(1800);
 
-  const clicked=await clickLaunch(page);
-  if(!clicked)throw new Error('Good Boys launch button missing');
+  const clicked=await clickGoodDogsLaunch(page);
+  if(!clicked)throw new Error('Good Dogs launch button missing');
   log('launch',{clicked});
+
+  await driveFreshRouteToCockpit(page,{onEvent:log,requireDecoded:true});
 
   await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:9000});
   await page.waitForFunction(()=>window.__goodBoysDeckInteract&&window.__goodBoysDeckInteract.pilotAssetReady===true,null,{timeout:7000});
@@ -182,6 +174,7 @@ try{
 
   const end=await phase(page);log('prison-handoff',end);
   if(end.error)fail('opening-error-visible',end);
+  if(end.crash?.source!=='authored-crash-video'||end.crash?.watchdogTriggered||Number(end.crash?.mediaTime||0)<Number(end.crash?.mediaDuration||0)-.1)fail('crash-video-did-not-complete',end);
   if(end.mission!==3)fail('opening-did-not-enter-m3',end);
   if(!end.pair)fail('katrin-manchez-pair-not-attached',end);
   if(!/katrin|manchez/i.test(String(end.activeDog||'')))fail('active-dog-missing',end);
@@ -198,11 +191,11 @@ try{
 const report={
   pass:failures.length===0,
   contractVersion:CONTRACT_VERSION,
-  contract:'pilot interaction -> GD_CUT_02 autoplay -> supplied Good Ship asteroid flight -> authored crash -> M3 prison',
+  contract:'GD_CUT_01 autoplay -> real-input M1 trail -> real-input M2 hangar -> pilot interaction -> GD_CUT_02 autoplay -> supplied Good Ship flight -> authored crash -> M3 prison',
   failures,
   events
 };
 fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.json'),JSON.stringify(report,null,2));
-fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.md'),`# Good Boys iPhone Intro Bot\n\n**Result:** ${report.pass?'PASS':'FAIL'}\n\nContract: ${report.contract}\n\n${failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``).join('\n'):'- Existing pilot asset rendered and became the interaction target.\n- GD_CUT_02 advanced under muted inline autoplay without the old forced VIDEO READY gate.\n- Supplied Good Ship atlas rendered the playable asteroid flight after render-ready confirmation.\n- Retired GD_CUT_03 did not replay.\n- The authored crash handed off to fresh M3 prison gameplay.'}\n`);
+fs.writeFileSync(path.join(OUT,'goodboys-intro-mobile.md'),`# Good Dogs iPhone Intro Bot\n\n**Result:** ${report.pass?'PASS':'FAIL'}\n\nContract: ${report.contract}\n\n${failures.length?failures.map(f=>`- ${f.name}: \`${JSON.stringify(f)}\``).join('\n'):'- GD_CUT_01 produced decoded autoplay evidence.\n- M1 trail and M2 hangar completed through real keyboard input.\n- Existing pilot asset rendered and became the interaction target.\n- GD_CUT_02 produced decoded autoplay evidence.\n- Supplied Good Ship atlas rendered the playable asteroid flight after render-ready confirmation.\n- Retired GD_CUT_03 did not replay.\n- The authored crash handed off to fresh M3 prison gameplay.'}\n`);
 console.log(JSON.stringify(report,null,2));
 if(!report.pass)process.exitCode=1;

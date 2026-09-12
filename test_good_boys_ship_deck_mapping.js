@@ -48,12 +48,14 @@ assert.ok(!scene.includes("ctx.drawImage(inlineImg,0,0,inlineImg.naturalWidth,in
 
 const atlas = fs.readFileSync("katrin_manchez.atlas.js", "utf8");
 const opening = fs.readFileSync("good_boys_opening_sequence_v4.js", "utf8");
+const flight = fs.readFileSync("good_boys_ship_flight.js", "utf8");
 const entry = fs.readFileSync("index.html", "utf8");
 for (const source of [atlas, opening]) {
-  assert.ok(source.includes("20260903-deck-center-r1"), "every live deck renderer must bypass the off-center cached cockpit");
+  assert.ok(source.includes("20260903-deck-center-r1"), "every live deck renderer must request the corrected cockpit crop");
   assert.ok(!source.includes("20260902-deck-map-r2"), "live deck renderers must not request the stale cockpit cache key");
 }
-assert.ok(entry.includes("20260903-good-ship-gameplay-assets-r2"), "entrypoint must pull the corrected gameplay atlas cache chain");
+assert.ok(entry.includes("katrin_manchez.atlas.js?v=20260911-cinematic-cohesion-r1"), "entrypoint must bypass stale board-action and animation metadata");
+assert.ok(flight.includes("20260903-good-ship-gameplay-assets-r2"), "canonical flight authority must pull the corrected gameplay atlas cache chain");
 assert.ok(entry.includes("campaign_story.js?v=20260905-crash-watchdog-r1"), "entrypoint must bypass the stale campaign story bootstrap");
 assert.ok(entry.includes("20260903-picked-pilot-crash-r1"), "entrypoint must pull the picked pilot/crash cache chain");
 

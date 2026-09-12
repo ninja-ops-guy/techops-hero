@@ -12,6 +12,7 @@ on:
       - "package-lock.json"
       - "scripts/**"
       - "assets/**/*.mp4"
+      - "assets/**/*.png"
       - ".github/workflows/runtime-bot.yml"
   pull_request:
     branches: [main]
@@ -22,6 +23,7 @@ on:
       - "package.json"
       - "package-lock.json"
       - "scripts/**"
+      - "assets/**/*.png"
       - ".github/workflows/runtime-bot.yml"
       - ".github/workflows/runtime-fixer.yml"
   schedule:
@@ -36,8 +38,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  media-isolation:
+    runs-on: macos-14
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install WebKit diagnostic
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps webkit
+      - name: Decode original films without game scripts
+        run: |
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > /tmp/media-probe-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          python3 -c 'import subprocess; subprocess.run(["node", "scripts/media_decode_probe.mjs"], timeout=45, check=True)'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: media-isolation-${{ github.sha }}
+          path: runtime-bot-artifacts/media-isolation.json
+          retention-days: 14
+
   browser-runtime:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 18
     env:
       BOT_CHROMIUM_CHANNEL: chrome
@@ -48,14 +74,22 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install portable timeout command
+        run: |
+          brew install coreutils
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> "$GITHUB_PATH"
+
       - name: Install browser bot
         run: |
           npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium webkit chrome
+          npx playwright install --with-deps chromium webkit
+          if [ ! -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then brew install --cask google-chrome; fi
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
 
       - name: Start exact-commit local server
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/techops-runtime-server.log 2>&1 &
+          python3 scripts/test_media_http_server.py
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > /tmp/techops-runtime-server.log 2>&1 &
           echo $! > /tmp/techops-runtime-server.pid
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
@@ -64,7 +98,27 @@ jobs:
           cat /tmp/techops-runtime-server.log
           exit 1
 
-      - name: Run Good Boys iPhone intro regression
+      - name: Review extracted art in Chrome and WebKit
+        id: art
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 90s node scripts/art_handoff_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Compare M3, Sector 04 and Night presentation
+        id: presentation
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 120s node scripts/presentation_slice_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Run Good Dogs iPhone M1 to M3 regression
         id: intro
         continue-on-error: true
         env:
@@ -72,7 +126,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 90s node scripts/good_boys_intro_mobile_bot.mjs
+          timeout 150s node scripts/good_boys_intro_mobile_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -90,7 +144,7 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Run Night Crawler + Good Boys REPL bot
+      - name: Run Night Crawler + Good Dogs runtime bot
         id: bot
         continue-on-error: true
         env:
@@ -103,7 +157,7 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Run Good Boys progression bot
+      - name: Run Good Dogs progression bot
         id: progression
         continue-on-error: true
         env:
@@ -111,12 +165,12 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 180s node scripts/good_boys_progression_bot.mjs
+          timeout 240s node scripts/good_boys_progression_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Run Good Boys background bible bot
+      - name: Run Good Dogs background bible bot
         id: backgrounds
         continue-on-error: true
         env:
@@ -124,7 +178,7 @@ jobs:
           BOT_OUT_DIR: runtime-bot-artifacts
         run: |
           set +e
-          timeout 120s node scripts/good_boys_background_bible_bot.mjs
+          timeout 180s node scripts/good_boys_background_bible_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -135,7 +189,7 @@ jobs:
           if [ -f runtime-bot-artifacts/goodboys-intro-mobile.md ]; then
             cat runtime-bot-artifacts/goodboys-intro-mobile.md >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '# Good Boys iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '# Good Dogs iPhone Intro Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
           printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [ -f runtime-bot-artifacts/late-game-mobile.md ]; then
@@ -153,13 +207,13 @@ jobs:
           if [ -f runtime-bot-artifacts/goodboys-progression.md ]; then
             cat runtime-bot-artifacts/goodboys-progression.md >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '# Good Boys Progression Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '# Good Dogs Progression Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
           printf '\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [ -f runtime-bot-artifacts/goodboys-background-bible.md ]; then
             cat runtime-bot-artifacts/goodboys-background-bible.md >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '# Good Boys Background Bible Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '# Good Dogs Background Bible Bot\n\nReport file was not produced.\n' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload REPL, screenshots and traces
@@ -204,6 +258,8 @@ jobs:
       - name: Enforce runtime bot result
         if: always()
         run: |
+          test "${{ steps.art.outputs.exit_code }}" = "0"
+          test "${{ steps.presentation.outputs.exit_code }}" = "0"
           test "${{ steps.intro.outputs.exit_code }}" = "0"
           test "${{ steps.late_game.outputs.exit_code }}" = "0"
           test "${{ steps.bot.outputs.exit_code }}" = "0"

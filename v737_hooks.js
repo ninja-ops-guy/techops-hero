@@ -84,9 +84,9 @@
       }
       if (NM.block && has(p + "shield")) return p + "shield";
       if (!NM.onGround && has(p + "leap")) return p + "leap";
-      // There is no authored walk row in this source sheet. Cycle the seven
-      // clean idle/motion frames instead of pretending attack poses are walk.
-      const idle = p + "idle" + (Math.floor(now / (Math.abs(NM.vx) > .5 ? 105 : 155)) % 7);
+      // There is no authored walk row in this source sheet. Hold the two
+      // verified idle frames instead of relabeling attack/down poses as walk.
+      const idle = p + "idle" + (Math.floor(now / (Math.abs(NM.vx) > .5 ? 145 : 720)) % 2);
       return has(idle) ? idle : p + "idle0";
     }
     function drawGoodDogActive737(x, NM, now, oldW, oldH) {
@@ -94,9 +94,11 @@
         const cs = NM && NM._v736;
         if (!cs || !cs.active || (cs.chars && cs.chars[cs.active] && cs.chars[cs.active].downed)) return false;
         const who = cs.active === "manchez" ? "manchez" : "katrin";
-        const h = Math.max(50, (oldH || 42) * 1.45);
+        const h = Math.max(84, (oldH || 42) * 2.1);
         const cx = NM.x - NM.cam + (oldW || 28) / 2;
         const base = NM.y + (oldH || 42);
+        const art=window.TechOpsArtHandoff;
+        if(art&&art.drawActor(x,who==="manchez"?"man":"kat",NM,cx,base,h,now))return true;
         return gdFrame737(gdKey737(who, NM, now), x, cx, base, h, NM.face < 0);
       } catch (e) { return false; }
     }

@@ -187,7 +187,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -223,7 +223,14 @@ const NM_DISTRICTS = {
   suburbs:    { name: "SUBURBS",             streets: 2, danger: 1.8,  accent: "#fbbf24", sky: "#0a0c16", far: "#12142a", mid: "#1a1c34", signs: ["MAPLE ST", "GARAGE"], roster: ["hunter", "guard", "skimmer"] },
   home:       { name: "HOME STREET",         streets: 1, danger: 0,    accent: "#7dd87d", sky: "#080d1c", far: "#0e1428", mid: "#141a30", signs: ["APT 4B"], roster: [] },
 };
+// Sector 04 uses the Night renderer but remains outside the Charger route.
+const sector04Visual = globalThis.TechOpsLevelRegistry && globalThis.TechOpsLevelRegistry.get("day.sector04");
+if (sector04Visual && sector04Visual.districtConfig) NM_DISTRICTS.sector04 = {...sector04Visual.districtConfig};
 const NM_ORDER = ["downtown", "longwharf", "industrial", "wooster", "airport", "suburbs"];
+// Passive metadata bridge. Night progression and district state remain owned
+// by this module; the shared registry only inventories them.
+globalThis.TechOpsNightDistricts = NM_DISTRICTS;
+globalThis.TechOpsNightOrder = NM_ORDER;
 // enemy archetypes from the night-drive sheets (night-glitch silhouettes, canon palette)
 const NM_KINDS = {
   thug:    { name: "Street Thug",    hp: 34, spd: 1.05, dmg: 8,  tint: "#7ee787", cash: [15, 25], w: 24, h: 30 },
@@ -262,6 +269,7 @@ function nmSpawnEnemies(st, dist) {
 
 function nmLoadDistrict(id) {
   const D = NM_DISTRICTS[id];
+  try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset(NM && NM._v736 ? "gooddogs" : "nightcrawler"); } catch (e) { }
   NM.district = id; NM.street = 1;
   NM.x = NM_CAR_X + 84; NM.y = NM_FLOOR - NM.h; NM.vx = 0; NM.vy = 0; NM.face = 1;
   NM.platforms = nmStagePlatforms(1, id); NM.enemies = nmSpawnEnemies(1, id);
@@ -284,6 +292,7 @@ function enterNight() {
     msg: `DOWNTOWN — STREET 1/2 · clear every enemy · ← the Charger waits`, msgT: performance.now() + 3600,
   };
   s.nightMode = NM;
+  try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("nightcrawler"); } catch (e) { }
   sfx("portal");
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
@@ -294,8 +303,8 @@ function enterNight() {
 
 // the Charger: drive the district map
 function nmCarMenu() {
-  // Good Boys borrows Night physics, not the Earth district travel hub.
-  if (!NM || NM._v736) return false;
+  // Campaign encounters borrow Night physics, not the Earth travel hub.
+  if (!NM || NM._v736 || NM._sector04) return false;
   const s = S;
   const opts = NM_ORDER.filter(id => !NM.done[id]).map(id => {
     const D = NM_DISTRICTS[id];
@@ -372,6 +381,7 @@ function nmJab() {
         if (finisher) { e.launch = 14; e.down = 34; } // launched, then floored
       }
       e.hp -= Math.round(dealt);
+      if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.impact(NM,e,finisher?"finisher":"hit",now);
       e.hitT = 8;
       NM.hitStop = Math.max(NM.hitStop, finisher ? 6 : 3); // hit-stop sells the impact
       if (e.hp <= 0) {
@@ -501,7 +511,16 @@ function stepNM(dt) {
     }
   }
   // camera + exits: right edge advances, the car waits at the left
-  NM.cam = clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
+  const cameraDirector = window.TechOpsCameraDirector;
+  const cameraChannel = NM._v736 ? "gooddogs" : "nightcrawler";
+  const cameraResult = cameraDirector && cameraDirector.update(cameraChannel, {
+    profile: NM._v736 ? "gooddogs.sideview" : "night.street",
+    nowMs: now, targetX: NM.x, targetY: NM.y, facingX: NM.face,
+    viewportW: cv.width, viewportH: cv.height, worldW: NM_W, worldH: cv.height,
+    enabled: !window.V67SET || V67SET.anims !== false,
+    reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  });
+  NM.cam = cameraResult ? cameraResult.x : clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
   if (NM.clear && NM.x > NM_W - 110) nmNextStage();
   if (NM.district === "home" && NM.x > NM_W - 240) exitNight(true);
 }
@@ -604,11 +623,14 @@ function drawNM() {
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
   if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
-    const bs = Math.max(W / __bg734.naturalWidth, (horizon + 60) / __bg734.naturalHeight);
+    const m3Authority = NM._v736 && Number(NM._v736.m) === 3 && window.TechOpsM3CinematicAsset;
+    const m3Image = m3Authority && m3Authority.image ? m3Authority.image() : null;
+    const m3Asset = m3Image && m3Image === __bg734 ? m3Authority : null;
+    const bs = m3Asset ? Math.max(W / __bg734.naturalWidth, NM_FLOOR / (__bg734.naturalHeight * m3Asset.gameplayHorizonRatio)) : Math.max(W / __bg734.naturalWidth, (horizon + 60) / __bg734.naturalHeight);
     const bw = __bg734.naturalWidth * bs, bh = __bg734.naturalHeight * bs;
     const bx = -((NM.cam * .18) % Math.max(1, bw - W + 1));
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(__bg734, bx, horizon + 40 - bh, bw, bh);
+    ctx.imageSmoothingEnabled = !m3Asset;
+    ctx.drawImage(__bg734, bx, m3Asset ? 0 : horizon + 40 - bh, bw, bh);
   } else {
   // moon + stars
   ctx.fillStyle = "#e8ecff"; ctx.beginPath(); ctx.arc(W - 90, 60, 22, 0, 7); ctx.fill();
@@ -650,7 +672,7 @@ function drawNM() {
   ctx.fillStyle = "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
-  if (!NM._v736) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
+  if (!NM._v736 && !NM._sector04) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
   for (let i = 0; i < 7; i++) {
     const lx = ((i * 300 - NM.cam) % (NM_W + 300)) - 150;
     ctx.fillStyle = "#2a3350"; ctx.fillRect(lx, NM_FLOOR - 96, 4, 96); // lamp post
@@ -658,11 +680,12 @@ function drawNM() {
     g.addColorStop(0, D.accent + "30"); g.addColorStop(1, "transparent");
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(lx + 2, NM_FLOOR - 10, 90, 26, 0, 0, 7); ctx.fill();
   }
+  if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   // platforms
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
-  if (!NM._v736) {
+  if (!NM._v736 && !NM._sector04) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
     if (NM.x < NM_CAR_X + 150) {
     ctx.save(); ctx.globalAlpha = .7 + Math.sin(now / 260) * .3;

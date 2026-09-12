@@ -5,6 +5,7 @@ on:
     paths:
       - "assets/campaign/**"
       - "assets/v736/**"
+      - "assets/cinematic/**"
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_*.js"
@@ -26,6 +27,8 @@ on:
       - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_good_dogs_*.js"
+      - "test_cinematic_*.js"
       - "test_runtime_autofix.mjs"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
@@ -40,6 +43,7 @@ on:
     paths:
       - "assets/campaign/**"
       - "assets/v736/**"
+      - "assets/cinematic/**"
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_*.js"
@@ -61,6 +65,8 @@ on:
       - "scripts/**"
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
+      - "test_good_dogs_*.js"
+      - "test_cinematic_*.js"
       - "test_runtime_autofix.mjs"
       - "test_production_*.js"
       - "test_mobile_production_tester.js"
@@ -94,6 +100,7 @@ jobs:
           node --check campaign_runtime.js
           node --check campaign_native_act1.js
           node --check campaign_native_act1_visuals.js
+          node --check cinematic_systems.js
           node --check campaign_native_act2.js
           node --check campaign_visual_direction.js
           node --check campaign_world_visuals.js
@@ -130,6 +137,9 @@ jobs:
           node --check v737_hooks.js
           node --check scripts/production_release_gate.js
           node --check scripts/runtime_bot.mjs
+          node --check scripts/runtime_bot_v13.mjs
+          node --check scripts/good_dogs_route_driver.mjs
+          node --check scripts/good_boys_intro_mobile_bot.mjs
           node --check scripts/good_boys_progression_bot.mjs
           node --check scripts/good_boys_background_bible_bot.mjs
           node --check test_campaign_act2.js
@@ -138,6 +148,8 @@ jobs:
           node --check test_campaign_native_act1_visuals.js
           node --check test_campaign_native_act2.js
           node --check test_campaign_world_visuals.js
+          node --check test_cinematic_systems.js
+          node --check test_good_dogs_route_contract.js
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js
@@ -241,4 +253,3 @@ jobs:
         run: node test_ui_coop_contract.js
       - name: Verify aggregate production release gate
         run: node scripts/production_release_gate.js
-

@@ -1,6 +1,6 @@
 /* TechOps Hero — Good Dogs single-atlas / single-actor authority v3.
  * Physical-device invariant:
- *   - KATRIN_MANCHEZ is the only Good Dogs character atlas.
+ *   - KATRIN_MANCHEZ owns base poses; reviewed handoff locomotion is supplemental.
  *   - sanitize pseudo-idle aliases so locomotion never cycles attack/leap/roll art.
  *   - v7.37 owns the visible _v736 active fighter draw.
  *   - suppress the secondary drawNightPlayerAtlas path unconditionally while

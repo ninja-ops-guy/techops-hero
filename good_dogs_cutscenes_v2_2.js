@@ -44,7 +44,8 @@
     const css=document.createElement("style");css.id="good-dogs-cutscene-v35-style";css.textContent=`
       #good-dogs-cutscene-overlay{position:fixed;inset:0;z-index:150000;background:#000;display:none;align-items:center;justify-content:center;overscroll-behavior:none;touch-action:manipulation}
       #good-dogs-cutscene-overlay.active{display:flex}.gd-film-frame{position:relative;width:100vw;height:100vh;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
-      .gd-film-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;visibility:hidden}.gd-film-frame.gd-frame-ready .gd-film-video{opacity:1;visibility:visible}
+      /* Fresh video nodes have no stale frame. Keep them visible so WebKit can submit decoded frames. */
+      .gd-film-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:1;visibility:visible}
       .gd-film-play{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;min-width:210px;min-height:58px;padding:12px 18px;border:1px solid #8df1ce;background:#071019f2;color:#fff;font:700 13px monospace;letter-spacing:.08em;touch-action:manipulation}.gd-film-play.active{display:block}
       .gd-film-skip{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));z-index:11;min-width:86px;min-height:48px;background:#09121bf2;color:#fff;border:1px solid #71879a;padding:8px 12px;font:700 12px monospace;touch-action:manipulation}
     `;(document.head||document.documentElement).appendChild(css);
@@ -79,7 +80,7 @@
         if(typeof options.onStateWrite==="function")try{options.onStateWrite({id,status:resultStatus,skipped});}catch(_){}
         settle(resolve,{id,status:resultStatus,skipped,source,session:ticket});
       };
-      const waitForUser=(reason)=>{if(!valid())return;retryReason=reason;playInFlight=false;clearTimers();frame.classList.remove("gd-playing");playBtn.textContent=reason==="media-error"?"RETRY VIDEO":"PLAY CUTSCENE";playBtn.classList.add("active");window.__goodDogsCutsceneNeedsGesture={id,reason,at:Date.now(),currentTime:Number(video.currentTime||0),readyState:Number(video.readyState||0),networkState:Number(video.networkState||0),mediaError:video.error?{code:video.error.code,message:video.error.message}:null,ios,session:ticket};};
+      const waitForUser=(reason)=>{if(!valid())return;retryReason=reason;playInFlight=false;clearTimers();frame.classList.remove("gd-playing");playBtn.textContent=reason==="media-error"?"RETRY VIDEO":"PLAY CUTSCENE";playBtn.classList.add("active");window.__goodDogsCutsceneNeedsGesture={id,reason,at:Date.now(),currentTime:Number(video.currentTime||0),readyState:Number(video.readyState||0),networkState:Number(video.networkState||0),paused:video.paused,ended:video.ended,duration:video.duration,buffered:Array.from({length:video.buffered.length},(_,i)=>[video.buffered.start(i),video.buffered.end(i)]),paint:video.getBoundingClientRect().toJSON(),visibility:getComputedStyle(video).visibility,mediaError:video.error?{code:video.error.code,message:video.error.message}:null,ios,session:ticket};};
       const revealFrame=()=>{if(!valid()||frameRevealed)return;frameRevealed=true;frame.classList.add("gd-frame-ready");};
       const requestDecodedFrame=()=>{if(!valid()||frameRevealed)return;if(typeof video.requestVideoFrameCallback==="function"){try{video.requestVideoFrameCallback(()=>{if(valid())revealFrame();});return;}catch(_){}}if(Number(video.readyState||0)>=2&&Number(video.currentTime||0)>.02)revealFrame();};
       const armStall=()=>{clearTimeout(stallTimer);stallTimer=setTimeout(()=>waitForUser("media-stall"),4200);};
