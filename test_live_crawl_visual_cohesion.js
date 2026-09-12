@@ -6,6 +6,7 @@ const bootstrap = fs.readFileSync('production_bootstrap.js','utf8');
 const nightAssets = fs.readFileSync('night_production_assets.js','utf8');
 const goodDogsUi = fs.readFileSync('good_boys_reference_ui_v1.js','utf8');
 
+assert.doesNotThrow(() => new Function(cohesion), 'live-crawl cohesion authority must parse as executable JavaScript');
 assert.ok(bootstrap.includes('visual_cohesion_live_crawl.js'), 'production bootstrap must load live-crawl cohesion authority');
 assert.ok(bootstrap.includes('VERSION=34'), 'bootstrap version must advance with the new production owner');
 
