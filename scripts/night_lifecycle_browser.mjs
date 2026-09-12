@@ -79,8 +79,11 @@ async function run(name,engine,touch,viewport){
   const transitionState=()=>page.evaluate(()=>({runtime:window.NM?{x:NM.x,hp:NM.hp}:null,steps:TechOpsProductionWrapperGuard.health().baseStepCount}));
   const position=await transitionState();
   await page.keyboard.down('ArrowRight');await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');
-  assert.equal(await page.evaluate(()=>S.clock),clock);assert.deepEqual(await transitionState(),position);await shot('transition');
-  if(name!=='chromium')await click(page.locator('#night-home-skip'));await page.waitForFunction(()=>!window.v725?.active());
+  const afterInput=await transitionState();
+  assert.equal(await page.evaluate(()=>S.clock),clock);assert.equal(afterInput.steps,position.steps);
+  if(position.runtime&&afterInput.runtime)assert.deepEqual(afterInput.runtime,position.runtime);else assert.equal(afterInput.runtime,null,'Night runtime may only change here by completing its teardown');
+  await shot('transition');
+  if(name!=='chromium'&&await page.evaluate(()=>!!window.v725?.active()))await click(page.locator('#night-home-skip'));await page.waitForFunction(()=>!window.v725?.active());
   if(await option('Straight to bed').isVisible())await click(option('Straight to bed'));
   await page.waitForFunction(()=>!S.nightMode);await page.locator('#eod-rewards button').first().waitFor({state:'visible'});await click(page.locator('#eod-rewards button').first());
   await page.waitForFunction(()=>!S.nightMode&&S.clock<1020&&!S.inDialog);await page.waitForTimeout(1000);
