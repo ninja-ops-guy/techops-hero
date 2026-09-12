@@ -2,6 +2,8 @@
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
+ * v32 adds the evidence-grounded live-crawl visual cohesion authority last so
+ * mode ownership and presentation contracts can police the historical hook stack.
  */
 (function(root){
   "use strict";
@@ -66,6 +68,7 @@
     try{if(root.TechOpsDayCinematicMobileGuard)root.TechOpsDayCinematicMobileGuard.install();}catch(e){root.__productionDayCineGuardError=String(e&&e.stack||e);}
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
+    try{if(root.TechOpsLiveCrawlVisualCohesion)root.TechOpsLiveCrawlVisualCohesion.tick();}catch(e){root.__productionLiveCrawlVisualError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
