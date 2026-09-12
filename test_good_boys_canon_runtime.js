@@ -21,3 +21,13 @@ assert.strictEqual(context.S.nightMode,true);assert.strictEqual(handed,true);ass
 const raw=src.toLowerCase();assert.ok(raw.includes("play as mike instead"));assert.ok(raw.includes("night_runtime_timeout"));assert.ok(raw.includes("preparenightruntime"));assert.ok(raw.includes("productioncompositoractive"));
 const assets=fs.readFileSync("good_boys_campaign_assets.js","utf8");assert.ok(/production art only/i.test(assets));assert.ok(!/data:image\/svg\+xml/i.test(assets));assert.ok(assets.includes("assets/v736/katrin_manchez_atlas.png"));assert.ok(assets.includes("waldo_garage")&&assets.includes("orbital_gate")&&assets.includes("orbital_eye"));
 console.log("Good Boys Waldo-house canon + production-art authority: PASS");
+
+// Real wrapper composition, not isolated stubs: repeated installation used to
+// mutate a shared predecessor and form canon -> mobile -> canon recursion.
+{
+  let calls=0,done=0; const c={console,Math,Date,isFinite,S:{meta:{},nightMode:null},NM:null,document:null,setInterval(){return 1;},setTimeout(){return 1;},clearInterval(){},v725:{play(id,cb){calls++;if(cb)cb();return true;}}}; c.globalThis=c;vm.createContext(c);
+  vm.runInContext(src,c);vm.runInContext(fs.readFileSync("good_boys_mobile_launch_guard.js","utf8"),c);
+  for(let i=0;i<100;i++){c.TechOpsGoodBoysCanon.installOpeningAuthority();c.TechOpsGoodBoysMobileLaunchGuard.watchdog();}
+  c.v725.play("night_home_return",()=>done++);assert.strictEqual(calls,1);assert.strictEqual(done,1);
+  console.log("Night cinematic passes through composed Good Dogs guards exactly once: PASS");
+}
