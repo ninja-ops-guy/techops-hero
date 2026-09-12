@@ -45,10 +45,11 @@ jobs:
           s=s.replace("function damage(n,e,value,kind){", "function damage(n,e,value,kind,flags){",1)
           s=s.replace("event(n,kind,e,{damage:Math.round(value)});", "event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));",1)
           s=s.replace("a.connected=damage(n,e,value,a.kind)&&!shield;", "a.connected=damage(n,e,value,a.kind,{guarded:!!shield})&&!shield;",1)
-          # PR29 uses blocked() for input gating while current main exposes blocked(n,e) as a semantic block event.
-          # Keep both contracts by renaming the predicate and restoring the event method.
           s=s.replace("function blocked(){const s=typeof S!=='undefined'?S:root.S;", "function inputBlocked(){const s=typeof S!=='undefined'?S:root.S;",1)
-          s=s.replace("if(!active(n)||blocked()||!['legacy','punch','kick','grab'].includes(action))", "if(!active(n)||inputBlocked()||!['legacy','punch','kick','grab'].includes(action))",1)
+          original="if(!active(n)||blocked()||!['legacy','punch','kick','grab'].includes(action))return false;"
+          replacement="if(!active(n)||inputBlocked()||!['legacy','punch','kick','grab'].includes(action))return false;try{if(root.TechOpsCombatAudio)root.TechOpsCombatAudio.unlock();}catch(_){}"
+          if original not in s: raise SystemExit('attack gate contract missing')
+          s=s.replace(original,replacement,1)
           s=s.replace("if(!active(n))return {locked:false};if(n.drive||blocked())return {locked:true};", "if(!active(n))return {locked:false};if(n.drive||inputBlocked())return {locked:true};",1)
           marker="  function hurt(n){if(!active(n))return;cancel(n);const c=state(n);c.stunUntil=c.time+180;event(n,'hurt');}"
           if marker not in s: raise SystemExit('hurt contract missing')
@@ -75,7 +76,6 @@ jobs:
           p.write_text(s)
 
           p=Path('test_static_entrypoint_integrity.js'); s=p.read_text()
-          # Remove the two changed hooks from the old shared-cache assertion, then assert their new cache explicitly.
           s=s.replace('"game.js", "night_hooks.js", "v55_hooks.js", "v57_hooks.js"', '"game.js", "v57_hooks.js"',1)
           anchor='for(const src of ["game.js", "v57_hooks.js", "v64_hooks.js", "v69_hooks.js", "v70_hooks.js", "v710_hooks.js", "v716_hooks.js", "v733_hooks.js", "v735_hooks.js", "bg_noc.js", "campaign_sector04_runtime.js", "campaign_native_act2.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");'
           if anchor not in s: raise SystemExit('current-main cache assertion changed')
