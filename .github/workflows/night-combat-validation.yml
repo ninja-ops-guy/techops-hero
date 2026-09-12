@@ -1,0 +1,74 @@
+name: Night combat integration
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.js'
+      - 'scripts/**'
+      - '*.html'
+      - '*.css'
+      - 'package*.json'
+      - '.github/workflows/night-combat-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: night-combat-integration-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record exact source for reproducible review
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/night-source"
+          git rev-parse HEAD > "$RUNNER_TEMP/night-source/tested-commit.txt"
+          git archive --format=tar HEAD | gzip -1 > "$RUNNER_TEMP/night-source/source.tar.gz"
+          sha256sum "$RUNNER_TEMP/night-source/source.tar.gz" > "$RUNNER_TEMP/night-source/source-sha256.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: night-combat-source-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/night-source/
+          compression-level: 0
+          retention-days: 1
+      - name: Enforce checked-out production contracts
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts
+          node scripts/production_release_gate.js | tee runtime-bot-artifacts/production-gate.log
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Exercise real keyboard and touch combat on the full game
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
+        run: |
+          set -euo pipefail
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > runtime-bot-artifacts/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for i in {1..30}; do
+            if curl -fsS "$BOT_BASE_URL" >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          timeout 300s node scripts/night_combat_bot.mjs | tee runtime-bot-artifacts/night-combat.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: night-combat-validation-${{ github.event.pull_request.head.sha }}
+          path: runtime-bot-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

@@ -1,3 +1,5 @@
+> Controls updated by PR #29. See [directional controls](NIGHT_DIRECTIONAL_COMBAT.md). Up is aim; Space/JUMP jumps in ordinary Night. The historical rhythm/grab implementation below is retained for context.
+
 # Night Crawler: contextual street combat
 
 The street fight now has contact, timing and recovery. This applies to normal Night Crawler streets, including Mike's after-work run. Good Dogs, Sector 04 and Waldo's peaceful property retain their existing authorities.

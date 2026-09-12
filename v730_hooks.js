@@ -122,6 +122,8 @@
     }
 
     // ---- world input ----
+    const streetInput = window.TechOpsNightInput;
+    const directionalNight = !!(streetInput && streetInput.owns());
     const busy = !s || s.inDialog || s.inBattle || (typeof panelOpen !== "undefined" && panelOpen) || (typeof eodOpen !== "undefined" && eodOpen);
     if (!busy && s && s.map && (typeof keys !== "undefined")) {
       const ax = p.axes[0] || 0, ay = p.axes[1] || 0;
@@ -132,7 +134,12 @@
       // night-mode combat buttons ride the same keys the keyboard uses
       keys.k = heldBtn(p, 1);        // B = block
       keys.shift = heldBtn(p, 2);    // X = dash
-      if (pressEdge(p, 0)) { try { window.__padPresses = (window.__padPresses || 0) + 1; interact(); } catch (e) { } }          // A: interact / jab
+      if (pressEdge(p, 0)) { try { window.__padPresses = (window.__padPresses || 0) + 1; if (directionalNight) streetInput.dispatch("punch"); else interact(); } catch (e) { } }          // A: interact / jab
+      if (directionalNight && streetInput.ready()) {
+        if (pressEdge(p, 3)) streetInput.dispatch("kick"); // Y: aim high/low
+        if (pressEdge(p, 4)) streetInput.dispatch("grab"); // LB: stationary grab
+        if (pressEdge(p, 5)) streetInput.dispatch("jump"); // RB: distinct jump edge
+      }
       if (pressEdge(p, 2) && !s.nightMode) { try { toggleTwin(); } catch (e) { } } // X: twin (day)
     }
     // panel & phone work from any non-battle state
@@ -143,7 +150,7 @@
       } catch (e) { }
     }
     if (pressEdge(p, 1) && (typeof panelOpen !== "undefined") && panelOpen) { try { closePanel(); } catch (e) { } } // B = back
-    if (pressEdge(p, 3) && s && !s.inBattle && !s.inDialog && !(typeof panelOpen !== "undefined" && panelOpen) && !(typeof eodOpen !== "undefined" && eodOpen)) {
+    if (pressEdge(p, 3) && !directionalNight && s && !s.inBattle && !s.inDialog && !(typeof panelOpen !== "undefined" && panelOpen) && !(typeof eodOpen !== "undefined" && eodOpen)) {
       try { if (typeof phonePanel !== "undefined") phonePanel(); } catch (e) { }
     }
     prev = p.buttons.map(b => b.pressed);
