@@ -38,6 +38,19 @@ for(const dir of ['left','right','up']){
 }
 // Verify the actual integration surfaces retain one loop and apply damage at contact.
 const hooks=fs.readFileSync('night_hooks.js','utf8'),boot=fs.readFileSync('production_bootstrap.js','utf8');
+// Run the real player/enemy step at normal and slow render cadences. A launched
+// enemy must remain reachable when the follow-up attack reaches its contact frame.
+for(const dt of [.016,.1,.25]){
+ const f=fixture(),r=f.root;r.window=r;r.keys={};r.clamp=(v,a,b)=>Math.max(a,Math.min(b,v));r.NM_W=1800;r.NM_FLOOR=430;r.NM_GRAV=.48;r.cv={width:960,height:540};
+ Object.assign(f.n,{hitStop:0,jHeld:false,jumps:0,dashT:0,dashCD:0,ifr:0,flip:0,clear:false});
+ vm.runInNewContext(hooks.slice(hooks.indexOf('function stepNM(dt)'),hooks.indexOf('// ---------- night rendering')),r);
+ const until=pred=>{for(let i=0;i<150&&!pred();i++)r.stepNM(dt);assert.ok(pred(),'condition must resolve at dt='+dt);};
+ f.e.x=130;f.api.attack(f.n,{arrowright:true});until(()=>f.n._nightCombat.time>=150);
+ r.keys.arrowup=true;r.stepNM(dt);r.keys.arrowup=false;until(()=>!f.n._nightCombat.attack);
+ assert.ok(!f.n.onGround,'player must still be airborne when throw recovers at dt='+dt);
+ r.keys.arrowright=true;f.api.attack(f.n,r.keys);until(()=>f.n._nightCombat.events.some(e=>e.type==='air'||e.type==='whiff'));
+ assert.ok(f.n._nightCombat.events.some(e=>e.type==='air'&&e.damage>0),'slow frames must preserve the real up-throw air follow-up at dt='+dt);
+}
 assert.ok(hooks.indexOf('streetCombat.stepEnemy(NM,e,dt)')<hooks.indexOf('// launch / downed states first'));
 assert.ok(hooks.includes('streetCombat.hurt(NM)'));assert.ok(hooks.includes('TechOpsNightCombat.attack(NM, keys)'));
 assert.ok(boot.includes('"night_combat.js"'));assert.ok(!/setInterval|requestAnimationFrame|addEventListener/.test(source),'combat service must not add a competing loop or input handler');

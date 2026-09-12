@@ -412,6 +412,8 @@ function nmCheckClear() {
 function stepNM(dt) {
   if (!NM) return;
   if (S.inDialog) return; // map open / dialog — the night waits
+  // Player motion and combat reactions must share the same slow-frame clock.
+  if (window.TechOpsNightCombat && window.TechOpsNightCombat.active(NM)) dt = Math.max(0, Math.min(dt, .05));
   const f = dt * 60, now = performance.now();
   // drive transition: frozen street, the car rolls
   if (NM.drive) {

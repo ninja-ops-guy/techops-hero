@@ -70,8 +70,8 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
     await page.keyboard.press('KeyE');await page.waitForFunction(()=>TechOpsGoodDogsCoop.complete(2));await snap('power-puzzle');
     // P1 down must not transfer P2's identity or position. P2 explicitly revives.
     await page.evaluate(()=>{NM.x=1180;NM._v736.partner.x=1210;exitNight(false);});
-    await page.keyboard.press('KeyR');await page.waitForTimeout(100);
-    if(!await page.evaluate(()=>NM._v736.active==='katrin'&&!NM._v736.chars.katrin.downed&&NM._v736.chars.katrin.hp>1))throw Error('P2 revive/ownership failed');
+    await page.keyboard.press('KeyR');
+    await page.waitForFunction(()=>NM._v736.active==='katrin'&&!NM._v736.chars.katrin.downed&&NM._v736.chars.katrin.hp>1);
     await page.keyboard.down('KeyD');await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.waitForTimeout(250);await page.keyboard.up('KeyD');
     if(!await page.evaluate(()=>Math.abs(NM._v736.partner.vx)<.1))throw Error('P2 input stuck after blur');
    }
