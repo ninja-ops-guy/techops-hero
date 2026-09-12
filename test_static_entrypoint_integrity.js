@@ -14,13 +14,12 @@ for(const tag of scriptTags){const src=attrs(tag).src;if(!src||isExternal(src))c
 const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src)!==index);
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
 const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
-const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260904-m3-prison-breach-r1","production bootstrap entrypoint must bypass stale mobile caches");
+for(const src of ["cinematic_systems.js","good_boys_bible_world.js","good_boys_access_core_authority.js","good_boys_progression_authority.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-pr12-canon");}
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-pr12-canon","production bootstrap entrypoint must bypass stale mobile caches");
 [
-  "cinematic_systems.js",
   "night_hooks.js",
   "v736_hooks.js",
   "good_boys_prison_cinematic_patch.js",
-  "good_boys_progression_authority.js"
 ].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260911-cinematic-cohesion-r1",src+" must bypass stale caches for the cinematic-cohesion handoff"));
 assert.strictEqual(refFor("good_dogs_cutscene_bridge.js"),"good_dogs_cutscene_bridge.js?v=20260904-m3-prison-breach-r1");
 assert.ok(!html.includes("good_dogs_cutscene_bridge.js?v=20260831-gooddogs-master-v1"),"entrypoint must not serve the stale M3 cutscene bridge");
@@ -86,7 +85,7 @@ assert.ok(boardSource.includes('if(!isLiveM2(s)||!s.revealed||s.living>0||s.x<BO
 assert.ok(boardSource.includes('if(!visible){if(b)remove();return;}'),"boarding UI must be removed immediately whenever ownership is lost");
 
 const accessSource=fs.readFileSync(path.join(__dirname,"good_boys_access_core_authority.js"),"utf8");new Function(accessSource);
-assert.ok(accessSource.includes('VERSION=6'),"Access Core must expose the explicit route-control interaction v6 contract");
+assert.ok(accessSource.includes('VERSION=8'),"Access Core must expose the explicit Mike Index and route-control interaction v8 contract");
 assert.ok(accessSource.includes('function seizeAccessNode()'),"M5 must require seizing the Access Node after security clears");
 assert.ok(accessSource.includes('TechOpsGoodBoysCampaignState'),"Access Core mission reads must delegate to canonical campaign state");
 assert.ok(accessSource.includes('timer:null'),"Access Core must not own an independent competing timer");

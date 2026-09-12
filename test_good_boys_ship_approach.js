@@ -2,9 +2,15 @@
 const assert=require("assert");
 const fs=require("fs");
 const source=fs.readFileSync("good_boys_ship_approach.js","utf8");
-const flight=fs.readFileSync("good_boys_ship_flight.js","utf8");
 new Function(source);
-new Function(flight);
+assert.ok(/compatibility shim/i.test(source),"legacy approach module must be explicitly compatibility-only");
+assert.ok(source.includes("TechOpsGoodBoysShipFlight"),"legacy approach module must delegate to canonical ship flight");
+assert.ok(source.includes("compatibilityOnly:true"),"compatibility status must be observable");
+assert.ok(!source.includes('id==="GD_CUT_02"'),"legacy approach must not intercept authored cutscenes");
+assert.ok(!source.includes("GoodDogsCutscenes.play"),"legacy approach must not wrap the Good Dogs cutscene player");
+assert.ok(!source.includes("asteroid_1"),"supplied ship artwork must have one production authority, not a duplicate shim copy");
+console.log("Good Boys legacy ship approach compatibility guard: PASS");
+
 function crc32(bytes){
   let c=~0>>>0;
   for(const x of bytes){c^=x;for(let k=0;k<8;k++)c=(c>>>1)^((-(c&1))&0xedb88320);}
@@ -24,21 +30,5 @@ function pngInfo(path){
   assert.ok(ended,"Good Ship atlas must terminate with IEND");
   return info;
 }
-assert.ok(source.includes("GOOD_BOYS_SHIP_ARCADE"),"ship approach must expose the supplied-asset atlas contract");
-assert.ok(source.includes('assets/good_boys/good_ship_arcade.atlas.png'),"ship approach must load the extracted supplied artwork");
-assert.ok(source.includes("20260903-good-ship-gameplay-assets-r2"),"ship approach must bypass the corrupt mobile-cached atlas");
-assert.ok(flight.includes("VERSION=6"),"canonical ship flight must own the complete M2 exit sequence");
-assert.ok(flight.includes("20260903-good-ship-gameplay-assets-r2"),"canonical ship flight must bypass the corrupt mobile-cached atlas");
-assert.ok(flight.includes("space_bg:[0,0,552,220]"),"canonical flight must use the tall gameplay backdrop frame, not a repeated UI strip");
-assert.ok(!fs.readFileSync("index.html","utf8").includes('src="good_boys_ship_approach.js'),"obsolete duplicate approach wrapper must remain retired from production");
-assert.ok(flight.includes("runBoardingSequence")&&flight.includes('c.play("GD_CUT_02"')&&flight.includes("flightPromise()")&&flight.includes("showCrashScene()"),"the v6 flight authority must own the deck-to-crash sequence");
+
 assert.deepStrictEqual(pngInfo("assets/good_boys/good_ship_arcade.atlas.png"),{width:768,height:620});
-for(const key of ["ship_player","asteroid_1","asteroid_2","asteroid_3","asteroid_4","asteroid_5","prison_station","lead_1","lead_2","lead_3","lead_4"]){assert.ok(source.includes(key),`missing supplied asset frame ${key}`);}
-assert.ok(source.includes('id==="GD_CUT_02"'),"ship gameplay hook must preserve the picked cockpit takeover clip contract");
-assert.ok(source.includes('p.phase==="clip2"'),"ship gameplay must only intercept the authored opening transition");
-assert.ok(source.includes('AVOID ASTEROIDS'),"ship gameplay must present the asteroid-avoidance objective");
-assert.ok(source.includes('PRISON VECTOR'),"ship gameplay must visually advance toward the prison");
-assert.ok(source.includes('runApproachCutscene'),"ship gameplay must end in an in-engine prison approach cutscene using supplied frames");
-assert.ok(source.includes('DURATION_MS=4200'),"opening flight beat must remain bounded for runtime automation and mobile pacing");
-assert.ok(source.includes('root.__goodBoysShipApproach'),"ship approach must expose runtime diagnostics");
-console.log("Good Boys supplied-asset ship approach contract: PASS");

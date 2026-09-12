@@ -98,6 +98,8 @@ assert.strictEqual(authority.completionStatus(3).ok, true);
 c = setMission(4); c.evidence = [{ found: true }, { found: true }, { found: true }]; c.cellOpened = true; c._gbCell118AmbushCommitted = true; c._gbCell118AmbushCleared = true;
 assert.strictEqual(authority.completionStatus(4).ok, true);
 c = setMission(5); c._gbAccessNodeSeized = true;
+assert.strictEqual(authority.completionStatus(5).ok, false, "the node alone must not bypass the Mike Index encounter");
+c._gbMikeIndexDefeated = true;
 assert.strictEqual(authority.completionStatus(5).ok, true);
 c = setMission(6); c._gbDecryptComplete = true; c._gbFinalWaveComplete = true; c._gbWaldoFreed = true; c.uplink = { hp: 1 };
 assert.strictEqual(authority.completionStatus(6).ok, true);

@@ -117,6 +117,9 @@ jobs:
           node --check good_boys_reference_mechanics.js
           node --check good_boys_gameplay_loop.js
           node --check good_boys_mobile_launch_guard.js
+          node --check good_boys_ship_approach.js
+          node --check good_boys_ship_flight.js
+          node --check good_dogs_campaign_state.js
           node --check good_dogs_production_runtime.js
           node --check good_dogs_cutscenes_v2_2.js
           node --check good_dogs_cutscene_bridge.js
@@ -153,6 +156,9 @@ jobs:
           node --check test_good_boys_canon_runtime.js
           node --check test_good_boys_ui_ownership.js
           node --check test_good_boys_mobile_launch_guard.js
+          node --check test_good_boys_ship_approach.js
+          node --check test_good_boys_ship_flight.js
+          node --check test_good_dogs_bible_contract.js
           node --check test_good_boys_ship_deck_mapping.js
           node --check test_production_asset_registry.js
           node --check test_production_compositor.js
@@ -191,6 +197,12 @@ jobs:
         run: node test_good_boys_ui_ownership.js
       - name: Verify Good Boys mobile launch recovery
         run: node test_good_boys_mobile_launch_guard.js
+      - name: Verify canonical Good Boys ship flight
+        run: |
+          node test_good_boys_ship_approach.js
+          node test_good_boys_ship_flight.js
+      - name: Verify Good Dogs Story Bible semantics
+        run: node test_good_dogs_bible_contract.js
       - name: Verify production asset inventory
         run: node test_production_asset_registry.js
       - name: Verify single Night compositor
