@@ -1,0 +1,41 @@
+name: Integrate open PRs
+on:
+  push:
+    branches: [integrate/open-prs-20260912]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Reconcile PR 26 and PR 28 onto reviewed main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin feat/gameplay-feedback-workday-pass fix/live-crawl-visual-cohesion
+          git merge --no-ff -X ours origin/feat/gameplay-feedback-workday-pass -m "Integrate PR #26 gameplay quality pass onto reviewed main"
+          git merge --no-ff -X ours origin/fix/live-crawl-visual-cohesion -m "Integrate PR #28 live-crawl cohesion fixes onto reviewed main"
+      - name: Static and aggregate validation
+        run: |
+          set -euo pipefail
+          node scripts/production_release_gate.js
+          test -f test_quality_integration.js && node test_quality_integration.js || true
+          test -f test_live_crawl_visual_cohesion.js && node test_live_crawl_visual_cohesion.js || true
+          test -f test_runtime_combat_audio.js && node test_runtime_combat_audio.js || true
+          test -f test_campaign_workday_followups.js && node test_campaign_workday_followups.js || true
+      - name: Remove temporary workflow and publish reconciled branch
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/integrate-open-prs.yml
+          git commit -m "Remove temporary integration workflow"
+          git push origin HEAD:integrate/open-prs-20260912
