@@ -1,74 +1,61 @@
-name: Gameplay review workspace
+name: Gameplay quality validation
 on:
   pull_request:
     branches: [main]
     paths:
+      - '**.js'
+      - 'scripts/**'
+      - '*.html'
+      - '*.css'
+      - 'package*.json'
       - '.github/workflows/gameplay-review-bundle.yml'
 permissions:
-  contents: write
+  contents: read
+concurrency:
+  group: gameplay-quality-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
-  publish-reviewed-source:
-    if: github.event.pull_request.number == 23 && github.event.pull_request.head.ref == 'feat/gameplay-roadmap-quality' && github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'ninja-ops-guy/techops-hero'
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify and reconstruct the locally tested source
+          cache: npm
+      - name: Validate checked-out production sources
         run: |
-          python3 - <<'PY'
-          import hashlib, json, lzma, pathlib, subprocess
-          root = pathlib.Path.cwd().resolve()
-          packed = b''.join((root / ('.github/gameplay-transfer/part%d.xz' % i)).read_bytes() for i in range(1, 5))
-          raw = lzma.decompress(packed)
-          assert hashlib.sha256(raw).hexdigest() == 'ca0b29093a7b78bd7e89b342863055d9483d97a5094c734b90aad9c33bb8b041', 'Transfer checksum mismatch'
-          data = json.loads(raw)
-          assert len(data) == 25
-          pending = {}
-          for name, entry in data.items():
-              path = (root / name).resolve()
-              assert path.is_relative_to(root) and not name.startswith('.') and '..' not in pathlib.PurePosixPath(name).parts
-              assert path.suffix in ('.js', '.mjs', '.html', '.css', '.md')
-              assert not (root / name).is_symlink()
-              if entry['old'] is None:
-                  assert not path.exists(), 'Refusing to replace new path ' + name
-                  text = entry['text']
-              else:
-                  old = path.read_bytes()
-                  assert hashlib.sha256(old).hexdigest() == entry['old'], 'Base changed: ' + name
-                  text = old.decode('utf-8')
-                  previous = len(text)
-                  for start, end, value in reversed(entry['edits']):
-                      assert 0 <= start <= end <= previous
-                      text = text[:start] + value + text[end:]
-                      previous = start
-              result = text.encode('utf-8')
-              assert hashlib.sha256(result).hexdigest() == entry['new'], 'Reconstruction mismatch: ' + name
-              pending[name] = result
-          for name, result in pending.items():
-              path = root / name
-              path.parent.mkdir(parents=True, exist_ok=True)
-              path.write_bytes(result)
-              print('VERIFIED', hashlib.sha256(result).hexdigest(), name)
-          subprocess.run(['git', 'add', '--', *pending], check=True)
-          PY
-      - name: Enforce all deterministic gameplay and production contracts
-        run: node scripts/production_release_gate.js | tee /tmp/gameplay-production-gate.log
-      - name: Commit only verified gameplay sources to the review branch
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts
+          git rev-parse HEAD > runtime-bot-artifacts/tested-commit.txt
+          node scripts/production_release_gate.js | tee runtime-bot-artifacts/gameplay-production-gate.log
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Check gameplay in Chromium and WebKit
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+          BOT_OUT_DIR: runtime-bot-artifacts
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git diff --cached --check
-          git commit -m 'feat: contact audio, complete night handoff and persistent office follow-ups'
-          git push origin HEAD:refs/heads/feat/gameplay-roadmap-quality
-          git rev-parse HEAD
+          set -euo pipefail
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > runtime-bot-artifacts/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for i in {1..30}; do
+            if curl -fsS "$BOT_BASE_URL" >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          timeout 480s node scripts/gameplay_quality_bot.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: gameplay-transfer-validation
-          path: /tmp/gameplay-production-gate.log
-          retention-days: 2
+          name: gameplay-quality-${{ github.sha }}
+          path: runtime-bot-artifacts/
+          retention-days: 7
