@@ -66,3 +66,7 @@ These target names describe destination architecture; they should only be create
 ## No-new-hook rule
 
 Do not add `v738_hooks.js`, `v739_hooks.js`, or another numbered production hook. New work must either extend the existing canonical module responsible for that concern or create a stable concern module with an explicit authority boundary and tests.
+
+## Contextual Night Crawler combat
+
+`night_combat.js` owns street attack phases, grabs, throws, stun and finite air juggles. The existing `night_hooks.js` step calls it directly and retains locomotion, district travel and enemy AI outside reaction states. Contact resolves augments and KO rewards once; `night_reference_visuals.js` consumes presentation poses. Good Dogs, Sector 04 and Waldo's property are excluded.

@@ -15,8 +15,9 @@ const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
 const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
 for(const src of ["good_boys_bible_world.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-pr12-canon");}
-for(const src of ["game.js","good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","night_hooks.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
-const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-local-coop-r3","production bootstrap entrypoint must bypass stale mobile caches");
+for(const src of ["game.js","good_boys_access_core_authority.js","cinematic_systems.js","good_boys_progression_authority.js","v736_hooks.js","katrin_manchez.atlas.js","campaign_story.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
+for(const src of ["night_hooks.js","v733_hooks.js","campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
+const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v=20260912-night-combat-r1","production bootstrap entrypoint must bypass stale mobile caches");
 [
   "good_boys_prison_cinematic_patch.js",
 ].forEach(src=>assert.strictEqual(refFor(src),src+"?v=20260911-cinematic-cohesion-r1",src+" must bypass stale caches for the cinematic-cohesion handoff"));
