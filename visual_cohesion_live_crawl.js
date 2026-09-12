@@ -27,7 +27,7 @@
       "body.live-crawl-good-dogs #good-boys-loop-controls,body.live-crawl-good-dogs #v55-nmbtns,body.live-crawl-good-dogs #touch-buttons{display:none!important;visibility:hidden!important;pointer-events:none!important}",
       /* Contextual board action remains readable without becoming the composition. */
       "body.live-crawl-good-dogs #good-boys-board-ship{z-index:10040!important}",
-      "@media(max-width:520px){body.live-crawl-good-dogs #good-boys-board-ship{max-width:54vw!important;min-height:42px!important;padding:8px 12px!important;font-size:11px!important}}
+      "@media(max-width:520px){body.live-crawl-good-dogs #good-boys-board-ship{max-width:54vw!important;min-height:42px!important;padding:8px 12px!important;font-size:11px!important}}"
     ].join("");
     return true;
   }
