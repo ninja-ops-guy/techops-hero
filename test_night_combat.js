@@ -43,8 +43,18 @@ const hooks=fs.readFileSync('night_hooks.js','utf8'),boot=fs.readFileSync('produ
 for(const dt of [.016,.1,.25]){
  const f=fixture(),r=f.root;r.window=r;r.keys={};r.clamp=(v,a,b)=>Math.max(a,Math.min(b,v));r.NM_W=1800;r.NM_FLOOR=430;r.NM_GRAV=.48;r.cv={width:960,height:540};
  Object.assign(f.n,{hitStop:0,jHeld:false,jumps:0,dashT:0,dashCD:0,ifr:0,flip:0,clear:false});
+ Object.assign(f.e,{kind:'thug',spd:0,dmg:0,cd:999,windup:0});
  vm.runInNewContext(hooks.slice(hooks.indexOf('function stepNM(dt)'),hooks.indexOf('// ---------- night rendering')),r);
  const until=pred=>{for(let i=0;i<150&&!pred();i++)r.stepNM(dt);assert.ok(pred(),'condition must resolve at dt='+dt);};
+ for(let i=0;i<3;i++){
+  if(i)until(()=>!f.n._nightCombat.attack&&f.n._nightCombat.time-f.n._nightCombat.lastInput>=310);
+  f.api.attack(f.n,{});until(()=>!f.n._nightCombat.attack);
+  assert.equal(f.n._nightCombat.hits,i+1,'knockback must keep a spaced ground chain in reach at dt='+dt);
+ }
+ assert.equal(f.n._nightCombat.stage,2);assert.ok(f.e._nightCombat.air);
+ // Reset the encounter, then exercise the up-throw follow-up with real physics.
+ f.api.cancel(f.n);delete f.n._nightCombat;delete f.e._nightCombat;
+ Object.assign(f.n,{x:100,y:396,vx:0,vy:0,onGround:true,hitStop:0});Object.assign(f.e,{x:130,y:396,kb:0,alive:true,hp:200});
  f.e.x=130;f.api.attack(f.n,{arrowright:true});until(()=>f.n._nightCombat.time>=150);
  r.keys.arrowup=true;r.stepNM(dt);r.keys.arrowup=false;until(()=>!f.n._nightCombat.attack);
  assert.ok(!f.n.onGround,'player must still be airborne when throw recovers at dt='+dt);

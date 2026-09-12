@@ -17,7 +17,7 @@ The street fight now has contact, timing and recovery. This applies to normal Ni
 
 The gold meter teaches a broad beat window of 260–500 ms between attack presses. First contact occurs after 70 ms; recovery lasts 230 ms total. A single input can buffer in the last 65 ms of recovery. Early buffered presses retain their original timing and do not earn a perfect beat. Damage occurs once at contact; wind-up and misses do not earn hits or money.
 
-Player motion and enemy reactions share a maximum 50 ms simulation step on ordinary streets. Slow render frames therefore cannot advance the player's jump faster than the launched enemy. A regression runs the actual Night step at 16, 100 and 250 ms render intervals and confirms the up-throw air follow-up remains reachable.
+Player motion and enemy reactions share a maximum 50 ms simulation step on ordinary streets. Slow render frames therefore cannot advance the player's jump faster than the launched enemy. Knockback integrates its decay over that step, preserving the same total push distance at different frame rates. A regression runs the actual Night step at 16, 100 and 250 ms render intervals and confirms both the three-beat ground chain and up-throw air follow-up remain reachable.
 
 Stun cancels enemy wind-up for 240 ms, or 360 ms on paced hits. A grab lasts at most 1.6 seconds, and being hit releases it. Grabs require a grounded, non-hovering target; content may set `grabbable: false`. The initial walking direction does not immediately throw: release it, choose another direction, or press attack again. Air juggles are capped at three hits per launch, with a landing/recovery boundary before another launch.
 

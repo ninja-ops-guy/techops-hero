@@ -56,7 +56,7 @@
       if(e.y+e.h>=floor&&ec.vy>=0){e.y=floor-e.h;ec.air=false;ec.thrown=false;ec.recoverUntil=c.time+420;ec.stunUntil=c.time+420;ec.airHits=0;event(n,'land',e);if(ec.locked)damage(n,e,8,'slam');ec.locked=false;}
       return true;
     }
-    if(ec.stunUntil>c.time||ec.recoverUntil>c.time){e.windup=0;e.x=clamp(e.x+(e.kb||0)*f,0,1800-e.w);e.kb=(e.kb||0)*Math.pow(.7,f);return true;}return false;
+    if(ec.stunUntil>c.time||ec.recoverUntil>c.time){e.windup=0;const decay=Math.pow(.7,f);e.x=clamp(e.x+(e.kb||0)*(1-decay)/.3,0,1800-e.w);e.kb=(e.kb||0)*decay;return true;}return false;
   }
   function hurt(n){if(!active(n))return;cancel(n);const c=state(n);c.stunUntil=c.time+180;event(n,'hurt');}
   function pose(n){if(!active(n))return null;const c=state(n);if(c.grab)return {frame:'guard0',lean:(n.face||1)*.08,shift:0};if(c.stunUntil>c.time)return {frame:'hit0',lean:-(n.face||1)*.12,shift:0};const a=c.attack;if(!a)return null;const age=c.time-a.at,wind=age<RULES.windup,progress=clamp((age-RULES.windup)/160,0,1),power=1-progress;return {frame:wind?'guard0':a.kind==='launcher'||a.kind==='throw-up'?'heavy0':a.kind==='throw'?'light2':['light0','light1','light2'][a.stage],lean:a.face*(wind?-.08:.16*power),shift:a.face*(wind?-3:9*power)};}
