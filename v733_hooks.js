@@ -197,11 +197,11 @@
       if (s.stress <= 25) {
         s.clock = 8 * 60 + 30; // Clear Head: up early — the recovered morning block
         s._v733clear = true;
-        toast("🌅 CLEAR HEAD — good sleep. You're in at 8:30, a full block ahead.", 4200);
+        if (!window.__productionDesiredMode) toast("🌅 CLEAR HEAD — good sleep. You're in at 8:30, a full block ahead.", 4200);
       } else if (s.stress >= 80) {
         s.clock = 9 * 60 + 30; // burned out: overslept
         s._v733clear = false;
-        toast("😮‍💨 You slept through the alarm. In at 9:30 — the morning's already gone.", 4200);
+        if (!window.__productionDesiredMode) toast("😮‍💨 You slept through the alarm. In at 9:30 — the morning's already gone.", 4200);
       } else s._v733clear = false;
       if (roadReady733()) { const m = meta733(); if (m._v733roadReadyDay !== (m.day || s.day)) { m._v733roadReady = false; } }
     } catch (e) { window.__err733 = String(e && e.stack || e); }

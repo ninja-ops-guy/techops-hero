@@ -241,6 +241,7 @@ const NM_KINDS = {
 };
 
 function nmStagePlatforms(st, dist) {
+  if (dist === "home") return []; // Mike's door is reached from a quiet, level sidewalk.
   const D = NM_DISTRICTS[dist || "downtown"];
   const base = [
     { x: 300, y: 330, w: 130, h: 14 }, { x: 560, y: 262, w: 110, h: 14 },
@@ -281,6 +282,7 @@ function nmLoadDistrict(id) {
 
 function enterNight() {
   const s = S;
+  if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.beforeEnter(s);
   s.clock = Math.max(s.clock, 18 * 60); // night falls at 18:00 sharp
   NM = {
     district: "downtown", street: 1, done: {}, drive: null,
@@ -293,6 +295,7 @@ function enterNight() {
     msg: `DOWNTOWN — STREET 1/2 · clear every enemy · ← the Charger waits`, msgT: performance.now() + 3600,
   };
   s.nightMode = NM;
+  if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.onEntered(s, NM);
   try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("nightcrawler"); } catch (e) { }
   sfx("portal");
   // the day shift is over — its tracker leaves the screen until morning
@@ -322,8 +325,9 @@ function nmCarMenu() {
 function nmNextStage() {
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
-  advanceClock(20); // each street takes 20 minutes
-  if (NM.district === "home") return exitNight(true);
+  if (NM.district === "home") return window.TechOpsNightRuntime && window.TechOpsNightRuntime.openHome();
+  if (NM._sector04) return; // The authored terminal owns this encounter's exit.
+  if (!window.TechOpsNightRuntime) advanceClock(20); // compatibility without the continuous clock
   const st = NM.street + 1;
   if (st > D.streets) {
     // district cleared — back to the car, map reopens
@@ -343,10 +347,12 @@ function nmNextStage() {
 }
 
 function exitNight(homeSafe) {
+  if (!S || !NM) return; // duplicate scene/after-hours callbacks cannot pay twice
   const s = S, cash = NM.cash, kills = NM.kills, districts = Object.keys(NM.done).length;
   const qt = document.getElementById("quest-tracker");
   if (qt && !NM._qtHidden) qt.classList.remove("hidden"); // day HUD returns in the morning
   s.nightMode = null; NM = null;
+  if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.endVisit(s);
   s.budget += cash;
   if (homeSafe) toast(`🏠 Home safe. Night crawl: ${kills} enemies cleared, ${districts} district${districts === 1 ? "" : "s"}, +$${cash} earned.`, 4600);
   else { addStress(20); toast(`🤕 You limp home battered. +20 stress. (+$${cash} salvage)`, 4200); }
@@ -531,8 +537,8 @@ function stepNM(dt) {
     reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
   });
   NM.cam = cameraResult ? cameraResult.x : clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
-  if (NM.clear && NM.x > NM_W - 110) nmNextStage();
-  if (NM.district === "home" && NM.x > NM_W - 240) exitNight(true);
+  if (NM.clear && NM.district !== "home" && !NM._sector04 && NM.x > NM_W - 110) nmNextStage();
+  // Home is an explicit interaction, not an invisible end-of-map trigger.
 }
 
 // ---------- night rendering ----------
@@ -694,6 +700,7 @@ function drawNM() {
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(lx + 2, NM_FLOOR - 10, 90, 26, 0, 0, 7); ctx.fill();
   }
   if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
+  if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.drawHome(ctx, NM);
   // platforms
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }

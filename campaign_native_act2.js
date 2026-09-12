@@ -130,7 +130,7 @@
     var base = root.interact;
     var wrapped = function () {
       var state = gs();
-      if (state && state.npcs && typeof root.adjacent === "function") {
+      if (state && !state.nightMode && !state.inDialog && !state.inBattle && state.npcs && typeof root.adjacent === "function") {
         var player = { x: state.px, y: state.py };
         for (var i = 0; i < state.npcs.length; i++) {
           var npc = state.npcs[i];

@@ -117,6 +117,7 @@
   const __origInteract69 = interact;
   interact = function () {
     const s = S;
+    if (s && s.nightMode) return __origInteract69.apply(this, arguments);
     if (s && s.room) {
       if (s.inDialog) return;
       if (nearClueOrFel(s)) { exitRoom(); return __origInteract69(); }

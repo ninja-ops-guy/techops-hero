@@ -262,7 +262,7 @@
           cands[i].type = nt;
         }
         s.theme = th;
-        setTimeout(() => toast(`${th.name}<br><small>${th.desc}</small>`, 3800), 3400);
+        setTimeout(dayNotice(() => toast(`${th.name}<br><small>${th.desc}</small>`, 3800)), 3400);
       }
     }
     try { reconcile716(); } catch (e) { }

@@ -83,6 +83,17 @@ global.S.npcs[0].ambient = true;
 assert.strictEqual(global.interact(), "base-interaction");
 assert.strictEqual(originalInteractCalls, 1);
 
+// A stale daytime ticket under Mike's day coordinates must not steal Night input.
+global.S.npcs[0].ambient = false;
+global.S.nightMode = { district: "downtown" };
+lastDialog = null;
+const beforeNightInteract = originalInteractCalls;
+assert.strictEqual(global.interact(), "base-interaction");
+assert.strictEqual(originalInteractCalls, beforeNightInteract + 1);
+assert.strictEqual(lastDialog, null);
+global.S.nightMode = false;
+originalInteractCalls--; // Preserve the existing daytime counter expectations below.
+
 // Complete the canonical workstation contract and explicitly unlock the shift.
 let unlocked = Campaign.load(global.localStorage);
 Campaign.checkWorkstation(unlocked);

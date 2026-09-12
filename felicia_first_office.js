@@ -41,7 +41,7 @@
   function trigger(){if(!canTrigger())return false;root.__feliciaFirstOfficeBeat={complete:false,started:Date.now(),version:VERSION};return play(0);}
   function adjacentFelicia(){
     try{
-      var s=root.S;if(!s||!s.npcs||typeof root.adjacent!=="function")return false;
+      var s=root.S;if(!s||s.nightMode||s.inDialog||s.inBattle||!s.npcs||typeof root.adjacent!=="function")return false;
       var p={x:s.px,y:s.py};
       for(var i=0;i<s.npcs.length;i++){var n=s.npcs[i];if(n&&n.campaignAct2==="felicia_daylight"&&root.adjacent(p,n))return true;}
     }catch(e){}return false;

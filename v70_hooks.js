@@ -85,6 +85,7 @@
   const __origInteract70 = interact;
   interact = function () {
     const s = S;
+    if (s && s.nightMode) return __origInteract70.apply(this, arguments);
     const f = (typeof fel === "function") ? fel() : null;
     const npcFel = f && f.pos && !f.defeated && !(typeof isFel === "function" && isFel());
     // Felicia stationed inside a side-view room: step back out next to her, then talk
