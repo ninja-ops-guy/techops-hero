@@ -25,6 +25,44 @@ jobs:
           git fetch origin feat/gameplay-feedback-workday-pass fix/live-crawl-visual-cohesion
           git merge --no-ff -X ours origin/feat/gameplay-feedback-workday-pass -m "Integrate PR #26 gameplay quality pass onto reviewed main"
           git merge --no-ff -X ours origin/fix/live-crawl-visual-cohesion -m "Integrate PR #28 live-crawl cohesion fixes onto reviewed main"
+      - name: Resolve reviewed overlap contracts
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("index.html")
+          s=p.read_text()
+          for src,ver in [
+              ("campaign_story.js","20260912-gameplay-feedback-r1"),
+              ("campaign_act1.js","20260912-gameplay-feedback-r1"),
+              ("campaign_native_act1.js","20260912-gameplay-feedback-r1"),
+          ]:
+              pattern=r'(<script src="'+re.escape(src)+r')(?:\?v=[^"]+)?("></script>)'
+              s,n=re.subn(pattern,lambda m:m.group(1)+"?v="+ver+m.group(2),s,count=1)
+              if n != 1:
+                  raise SystemExit(f"entrypoint marker missing or duplicated: {src} ({n})")
+          p.write_text(s)
+
+          p=Path("good_boys_reference_ui_v1.js")
+          s=p.read_text()
+          old='var use=root.document.getElementById("gb-use");if(use)use.textContent=(use.dataset.context==="1"?"E   USE · CELL 118":"E   USE / INTERACT");'
+          if old in s:
+              s=s.replace(old,'',1)
+          elif 'USE · CELL 118' in s:
+              raise SystemExit("unexpected Good Dogs mission-label override remains")
+          p.write_text(s)
+
+          p=Path("production_bootstrap.js")
+          s=p.read_text()
+          if '"visual_cohesion_live_crawl.js"' not in s:
+              anchor='"good_boys_reference_ui_v1.js",'
+              if anchor not in s:
+                  raise SystemExit("production bootstrap anchor missing")
+              s=s.replace(anchor,anchor+'\n    "visual_cohesion_live_crawl.js",',1)
+          p.write_text(s)
+          PY
       - name: Static and aggregate validation
         run: |
           set +e
@@ -46,6 +84,8 @@ jobs:
       - name: Remove temporary workflow and publish reconciled branch
         run: |
           set -euo pipefail
+          git add index.html good_boys_reference_ui_v1.js production_bootstrap.js
+          git commit -m "Reconcile reviewed PR overlap contracts"
           git rm .github/workflows/integrate-open-prs.yml
           git commit -m "Remove temporary integration workflow"
           git push origin HEAD:integrate/open-prs-20260912
