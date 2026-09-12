@@ -13,7 +13,19 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
  const waitIdle=()=>page.waitForFunction(()=>!NM._nightCombat?.attack);
  try{
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsNightCombat&&document.querySelector('#btn-nightcrawler'));
-  await page.locator('#btn-nightcrawler').click();await page.waitForFunction(()=>window.NM&&!window.S.inDialog&&!window.NM._v736);
+  await page.locator('#btn-nightcrawler').click();
+  // A fresh save must choose difficulty and begin the incident before Night mounts.
+  const launchDeadline=Date.now()+12000;
+  while(Date.now()<launchDeadline){
+   if(await page.evaluate(()=>!!(window.NM&&window.S?.nightMode&&!window.S.inDialog)))break;
+   for(const name of [/Standard/i,/BEGIN THE INCIDENT/i]){
+    const button=page.getByRole('button',{name}).first();
+    if(await button.isVisible().catch(()=>false))await button.click();
+   }
+   if(await page.evaluate(()=>!!window.v722?.active?.()))await page.keyboard.press('Escape');
+   await page.waitForTimeout(120);
+  }
+  await page.waitForFunction(()=>window.NM&&window.S?.nightMode&&!window.S.inDialog&&!window.NM._v736);
   for(const direction of ['left','right','up']){
    await setup(690);await page.keyboard.down('ArrowRight');await page.waitForTimeout(45);await page.keyboard.press('KeyE');await page.waitForFunction(()=>!!NM._nightCombat?.grab);await page.keyboard.up('ArrowRight');
    await page.waitForFunction(()=>NM._nightCombat.grab.armed&&NM._nightCombat.time-NM._nightCombat.grab.at>=140);
