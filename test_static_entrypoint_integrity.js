@@ -109,4 +109,5 @@ assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK B
 console.log("Static entrypoint integrity: PASS");
 
 // Every changed parser-time lifecycle dependency bypasses the old mobile cache.
-for(const src of ["game.js", "night_hooks.js", "v55_hooks.js", "v57_hooks.js", "v64_hooks.js", "v69_hooks.js", "v70_hooks.js", "v710_hooks.js", "v716_hooks.js", "v733_hooks.js", "v735_hooks.js", "bg_noc.js", "campaign_sector04_runtime.js", "campaign_native_act2.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
+for(const src of ["game.js", "v57_hooks.js", "v64_hooks.js", "v69_hooks.js", "v70_hooks.js", "v710_hooks.js", "v716_hooks.js", "v733_hooks.js", "v735_hooks.js", "bg_noc.js", "campaign_sector04_runtime.js", "campaign_native_act2.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
+for(const src of ["night_hooks.js","v55_hooks.js","v730_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-directional-integrated-r2");
