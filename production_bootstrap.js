@@ -1,14 +1,14 @@
-/* TechOps Hero — production runtime bootstrap v34.
+/* TechOps Hero — production runtime bootstrap v35.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
- * v32 adds the evidence-grounded live-crawl visual cohesion authority last so
- * mode ownership and presentation contracts can police the historical hook stack.
+ * v35 adds evidence-grounded Night mobile composition cleanup after canonical
+ * Night input ownership so the live iPhone HUD remains readable and compact.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=34,BUILD="20260912-production-v34-integrated-r1",started=false,done=false;
+  var VERSION=35,BUILD="20260912-production-v35-night-mobile-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -17,6 +17,7 @@
     "runtime_combat_audio.js",
     "night_combat.js",
     "night_combat_input.js",
+    "night_mobile_visual_cohesion.js",
     "production_gameplay_experience.js",
     "orbital_scene_staging.js",
     "good_boys_legacy_hud_filter.js",
@@ -71,6 +72,7 @@
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     try{if(root.TechOpsLiveCrawlVisualCohesion)root.TechOpsLiveCrawlVisualCohesion.tick();}catch(e){root.__productionLiveCrawlVisualError=String(e&&e.stack||e);}
+    try{if(root.TechOpsNightMobileVisualCohesion)root.TechOpsNightMobileVisualCohesion.sync();}catch(e){root.__productionNightMobileVisualError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
