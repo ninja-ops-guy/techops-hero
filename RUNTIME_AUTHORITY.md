@@ -70,3 +70,18 @@ Do not add `v738_hooks.js`, `v739_hooks.js`, or another numbered production hook
 ## Contextual Night Crawler combat
 
 `night_combat.js` owns street attack phases, grabs, throws, stun and finite air juggles. The existing `night_hooks.js` step calls it directly and retains locomotion, district travel and enemy AI outside reaction states. Contact resolves augments and KO rewards once; `night_reference_visuals.js` consumes presentation poses. Good Dogs, Sector 04 and Waldo's property are excluded.
+
+## Street combat feedback and next-shift continuity
+
+`runtime_combat_audio.js` owns only the street-combat SFX bus and its volume/caption
+preferences. `night_combat.js` emits semantic events directly; `night_hooks.js`
+provides actual incoming block contacts and access through the existing Charger
+menu. The new service never owns damage, rewards, a frame loop, or soundtrack
+playback. Good Dogs, Sector 04 and Waldo are excluded.
+
+`campaign_act1.js` owns the deterministic Tuesday handoff and independently recorded
+ordinary-ticket follow-up outcomes in the existing campaign save. The native Act I
+adapter owns contact/workstation presentation. Historical `ticketRecord` and
+current-service presentation remain separate: later verification cannot rewrite
+the original casebook's outcome, completion owner, or evidence provenance.
+See `docs/GAMEPLAY_FEEDBACK_WORKDAY_PASS_2026-09-12.md` for scope and validation limits.

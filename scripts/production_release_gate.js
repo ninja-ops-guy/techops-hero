@@ -49,6 +49,9 @@ const tests = [
   "test_campaign_native_act1.js",
   "test_campaign_casebook.js",
   "test_campaign_act1_investigations.js",
+  "test_campaign_investigation_integrity.js",
+  "test_campaign_workday_followups.js",
+  "test_campaign_workday_followups_ui.js",
   "test_campaign_day1_runtime_gate.js",
   "test_campaign_opening_acceptance.js",
   "test_campaign_sector04.js",
@@ -59,6 +62,10 @@ const tests = [
   "test_v736_runtime_assets.js",
   "test_night_runtime_assets.js",
   "test_night_combat.js",
+  "test_runtime_combat_audio.js",
+  "test_quality_integration.js",
+  "test_production_gameplay_experience.js",
+  "test_orbital_scene_staging.js",
   "test_night_lifecycle.js",
   "test_ui_coop_contract.js"
 ];

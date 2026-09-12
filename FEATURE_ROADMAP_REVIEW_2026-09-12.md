@@ -7,6 +7,12 @@ historical feature has been exhaustively playtested. Story and release authority
 remain in `DOC_AUTHORITY.md`, `PRODUCTION_BASELINE_v1.2.md`,
 `RUNTIME_AUTHORITY.md`, and `PRODUCTION_READINESS.md`.
 
+> Follow-on update: PRs #20 and #22 have since merged. The earlier review below
+> describes their predecessor scope. The gameplay-first extension at the end
+> records the new local implementation against `31cdf77264d657e0a43c291b163e143546dd0325`;
+> this scope is now integrated with the quality pass and newer main. See
+> `docs/QUALITY_INTEGRATION_2026-09-12.md` for current validation and limitations.
+
 ## The roadmap is not literally complete
 
 The README's historical "every planned feature has shipped" statement does not
@@ -118,3 +124,26 @@ with a new multi-step investigation. A future opening-depth pass should establis
 which live runtime route owns questioning, competing hypotheses, field verification
 and persistence before changing it, then prove the full route with real input.
 Do not call the new read-only casebook that missing investigation mechanic.
+
+
+## Gameplay-first extension: fighting feedback and Tuesday continuity
+
+Reviewed base: `31cdf77264d657e0a43c291b163e143546dd0325` (after PRs #20 and #22).
+The contextual combat and Day 1 investigation implementations are now on the base;
+they are not counted as newly invented systems in this follow-on patch.
+
+| Priority | New local implementation | Remaining boundary |
+| --- | --- | --- |
+| P1 feedback | Distinct semantic street-combat sounds, shared-context SFX bus, finite voice pool, master mute, combat-volume options and captions | Hardware listening and real-browser first-gesture/background behavior need acceptance |
+| P1 loop integrity | Diagnostic-clue requirements, phase-preserving evidence review, idempotent mutations, safe stale callbacks and fail-closed field contact routing | Full unassisted browser opening remains a release requirement |
+| P1 persistent consequence | Player-selected workarounds/reported restoration, deterministic Tuesday handoff, playable rechecks/service-gap investigations, carryover and independent outcome provenance | Full procedural and late-campaign recurrence remains unimplemented |
+| P1 presentation | Reachable Tuesday contacts and workstation links; current restoration visuals separated from original casebook visuals | Does not supply missing approved character or orbital art |
+| P0 validation | Original 57-suite baseline passes; 61-suite patched local gate with 98 added focused tests | Node/VM and instrumented audio are not cross-browser/device certification |
+
+The original direct resolver remains a compatibility API, but production ordinary
+contact interaction cannot use a missing/broken investigation module as permission
+to close a first-time case instantly. Existing Day 1 evidence and final closure
+remain canonical, and the Tuesday follow-up is a new record rather than a rewrite.
+
+Implementation, play paths, evidence and remaining acceptance:
+`docs/GAMEPLAY_FEEDBACK_WORKDAY_PASS_2026-09-12.md`.
