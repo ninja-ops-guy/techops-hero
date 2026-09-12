@@ -131,6 +131,7 @@ console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity:
 
 // Execute the orchestration: image order must follow player discovery, including
 // resume, skip and failure boundaries. These checks do not rely on source order.
+const chronologyWatchdog=setTimeout(()=>{console.error("Chronology test stalled before its final assertions");process.exit(1);},2000);
 (async()=>{
   const order=[],saved=[],root={console,Date,Math,Object,Array,Number,String,Promise,
     document:{getElementById(){return null;},addEventListener(){}},
@@ -164,6 +165,9 @@ console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity:
   finishMovie({status:'COMPLETED'});await new Promise(resolve=>setImmediate(resolve));
   assert.deepStrictEqual(order,['GD_CUT_01','GD_CUT_01','pilot']);
   // The base title launcher can recreate S; preserve the M2 scene checkpoint.
+  const homeEvents=[];
+  root.TechOpsGoodDogsHomeScene={choose:async()=>{homeEvents.push("choose");return "local";},play:async()=>{homeEvents.push("house");return true;}};
+  root.TechOpsGoodDogsCoop={configure:mode=>{homeEvents.push("mode:"+mode);}};
   root.TechOpsGoodDogsSingleAtlasAuthority={VERSION:2,installed:true};
   root.TechOpsGoodBoysProgressionAuthority={VERSION:14};
   root.v736={start(options){root.S={meta:{_v736:{m:options.mission}}};root.NM={_v736:{m:options.mission,chars:{katrin:{},manchez:{}}}};return true;}};
@@ -173,9 +177,13 @@ console.log("Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity:
   await title.opening('fresh-test',title.freshConfig());
   assert.strictEqual(root.NM._v736.m,1);
   assert.strictEqual(order.length,moviesBefore,'fresh title launch must not play any movie');
-  root.S.meta._v736={m:2,ship_establishing_seen:true};
+  assert.deepStrictEqual(homeEvents,["choose","mode:local","house","mode:local"]);
+  root.S.meta._v736={m:2,ship_establishing_seen:true,pairPuzzles:{garage_latches:true,hangar_power:true},playMode:"local"};
   await title.opening('resume-test',title.launchConfig());
   assert.strictEqual(root.S.meta._v736.ship_establishing_seen,true,'title state recreation must retain the chronology checkpoint');
   assert.strictEqual(order.length,moviesBefore,'M2 resume may not replay opening footage at title');
+  assert.strictEqual(homeEvents.filter(e=>e==='house').length,1,'resume must not replay the house prologue');
+  assert.strictEqual(root.S.meta._v736.pairPuzzles.hangar_power,true,'resume preserves solved mechanisms across state recreation');
+  assert.strictEqual(root.S.meta._v736.playMode,'local');
   console.log('Good Dogs executable chronology, legacy-save, skip and failure boundaries: PASS');
-})().catch(e=>{console.error(e);process.exitCode=1;});
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>clearTimeout(chronologyWatchdog));
