@@ -40,6 +40,21 @@ for(const [name,type,touch] of profiles){
    await page.waitForTimeout(100);
   }
   await page.waitForFunction(()=>window.TechOpsNightInput.ready());checks.push('canonical fresh-save Night launch');
+  if(touch){
+   const original=page.viewportSize();
+   for(const viewport of [{width:320,height:640},{width:390,height:844},{width:844,height:390}]){
+    await page.setViewportSize(viewport);
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const layout=await page.evaluate(()=>{
+     const ids=['tb-interact','night-input-grab','night-input-kick','night-input-jump'];
+     return ids.map(id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {id,reachable:!!top&&(top===el||el.contains(top)),x:r.x,y:r.y,w:r.width,h:r.height,inViewport:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight};});
+    });
+    if(layout.some(r=>!r.reachable||!r.inViewport))throw Error('Touch control layout '+JSON.stringify({viewport,layout}));
+   }
+   await page.setViewportSize(original);
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   checks.push('non-occluded touch targets at 320/390 portrait and 844 landscape');
+  }
   // The spawn is beside the Charger: E/Punch must still open its routes.
   if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('KeyE');
   await page.getByText('THE CHARGER',{exact:false}).first().waitFor({state:'visible'});

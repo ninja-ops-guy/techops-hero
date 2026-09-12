@@ -1,7 +1,8 @@
 # Night Crawler: directional combat follow-up
 
-Prepared against main `31cdf77264d657e0a43c291b163e143546dd0325`.
-This document describes the patch, not a claim that it has been deployed.
+Integrated in PR #29 on main `a7fa4066a4945bbcdc9d3e1259f61f2c18e3223b`,
+preserving the consolidated Night lifecycle and Good Dogs HUD. Code committed
+to the review branch is not a claim of deployment or physical-device acceptance.
 
 ## Controls (ordinary Night Crawler only)
 
@@ -26,7 +27,9 @@ Up is attack aim, not jump, in ordinary Night Crawler with the new input adapter
 Good Dogs, Sector 04 and Waldo retain their existing input and combat owners.
 A legacy direct call to `TechOpsNightCombat.attack(n, keys)` still supports
 walk-toward + attack grabs; explicit new input uses separate punch/kick/grab actions.
-Controller mappings have not been certified for this change.
+Standard controller mapping: A punch/context interaction, Y kick, left bumper
+grab, right bumper jump; existing B block and X dash remain. Controller polling
+is regression-tested, but physical controller ergonomics are not certified.
 
 ## Grab defect
 
@@ -61,7 +64,7 @@ with pose staging. There are no newly authored punch/kick/grab sprite sheets.
 render loop or timer. `night_combat_input.js` owns input and touch controls. The
 existing v55 frame bridge calls `runStep`, and the existing draw calls `sync`.
 The production bootstrap loads the input adapter immediately after combat.
-The installer rotates cache identifiers and updates the launch instructions.
+The integration rotates cache identifiers and updates the launch instructions.
 
 The existing combat gate is retained. It additionally invokes
 `test_night_directional_combat.js` and `test_night_directional_physics.js`.
@@ -70,16 +73,24 @@ additional directional attack checks. Do not weaken existing CI checks to merge.
 
 ## Evidence and limitations
 
-Locally observed: 33 focused checks, nine real extracted Night-step physics
+Locally observed: 61 aggregate production suites plus atlas quarantine, 38
+focused checks, nine real extracted Night-step physics
 sequences at 16/100/250 ms render intervals, and seven system-Chromium touch-input
 fixture checks. The mobile fixture uses genuine browser touch events, including
 two simultaneous touch pointers, but a fixture joystick and an isolated DOM.
 It is not the full production page or a physical iPhone.
 
-Not executed locally: complete production gate, full startup/historical wrapper
-stack, updated repository Chrome/WebKit bot, physical iPhone/controller ergonomics.
-Full Chrome and WebKit CI, preserved campaign gates, and touch layout inspection
-on the actual game remain required before merge/deployment.
+The first full-page GitHub browser run passed desktop Chromium combat and found
+a touch-layout failure in Chromium and WebKit: the expanded controls intercepted
+the existing A/PUNCH button. The panel now sits above that control; empty grid
+space is pointer-transparent and short landscape uses three columns. The full-page
+bot checks visible hit targets at 320/390 portrait and 844 landscape before tapping.
+An isolated real-stylesheet fixture reproduces the old obstruction and passes the
+corrected layout, including trusted contextual taps.
+
+Local full-page navigation is blocked by the execution environment. Full Chrome
+and WebKit CI on the corrected head, preserved campaign gates, and physical
+iPhone/controller ergonomics remain required before release acceptance.
 
 ## Current lifecycle integration (PR #29)
 
