@@ -1,16 +1,16 @@
-/* TechOps Hero — Good Dogs title-button authority v14.
+/* TechOps Hero — Good Dogs title-button authority v15.
  *
- * Fresh route: GD_CUT_01 -> playable M1 at Waldo's property.
+ * Fresh route: playable M1 at Waldo's property; no ship footage before discovery.
  * Resume route: the persisted campaign mission, without replaying the opener.
- * M2 owns cockpit -> GD_CUT_02 -> flight -> crash -> M3 through the ship-flight
+ * M2 owns GD_CUT_01 -> cockpit -> GD_CUT_02 -> flight -> crash -> M3 through the ship-flight
  * authority. This module never resets an existing save to M3.
  */
 (function(root){
   "use strict";
   if(!root||!root.document)return;
   var PRIOR=root.TechOpsGoodBoysButtonHardFix;
-  if(PRIOR&&Number(PRIOR.VERSION||0)>=14)return;
-  var VERSION=14,lastLaunch=0,launching=false,depTimer=0,presentationToken=null;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=15)return;
+  var VERSION=15,lastLaunch=0,launching=false,depTimer=0,presentationToken=null;
 
   function target(t){try{return t&&t.closest&&t.closest("#btn-v736");}catch(_){return null;}}
   function meta(){try{return root.S&&root.S.meta&&root.S.meta._v736||null;}catch(_){return null;}}
@@ -22,7 +22,7 @@
     if(mission===1)return freshConfig();
     return{mission:mission,k:!!m.k,waldo:!!m.waldo,evidence:(m.evidence||[]).slice(),fresh:false,done:false};
   }
-  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v14",at:Date.now()},extra||{});}
+  function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"hard-title-button-v15",at:Date.now()},extra||{});}
   function clearForeignUi(){
     try{["act1-reference","good-boys-story-cine","good-boys-premise","good-boys-ship-interlude","good-boys-opening-error","good-boys-deck-v4","good-boys-deck-supplied","good-boys-flight-v4","good-boys-crash-v4","good-boys-crash-canonical","good-boys-prison-approach-cine","good-boys-ship-flight"].forEach(function(id){var n=root.document.getElementById(id);if(n)n.remove();});}catch(_){}
     try{var d=root.document.getElementById("dialogue");if(d)d.classList.add("hidden");if(root.S)root.S.inDialog=false;}catch(_){}
@@ -47,20 +47,19 @@
     if(!root.v736||typeof root.v736.start!=="function")throw new Error("v736.start unavailable");clearForeignUi();endPresentation("completed");
     if(cfg.done){phase("earthfall-replay",{mission:8});root.v736.start({mission:8,k:true,waldo:true,evidence:cfg.evidence||[]});launching=false;root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:true,status:"earthfall-replay",source:source||"unknown",mission:8,resume:true,openingAuthority:"TechOpsGoodBoysButtonHardFix",at:Date.now(),version:VERSION};return true;}
     phase(cfg.fresh?"waldo-property-handoff":"campaign-resume",{mission:cfg.mission});
+    var established=!!(!cfg.fresh&&meta()&&meta().ship_establishing_seen);
     var ok=root.v736.start({mission:cfg.mission,k:cfg.k,waldo:cfg.waldo,evidence:cfg.evidence||[],directGameplay:true}),c=root.NM&&root.NM._v736;
     if(!c||c.ending)throw new Error("Katrin/Manchez runtime did not mount synchronously");if(Number(c.m||0)!==cfg.mission)throw new Error("Good Dogs mounted wrong mission: "+String(c.m));
-    phase("campaign-gameplay",{mission:cfg.mission});root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:ok!==false,status:"campaign-gameplay",source:source||"unknown",mission:cfg.mission,resume:!cfg.fresh,pair:!!(c.chars&&c.chars.katrin&&c.chars.manchez),atlasAuthority:root.__goodDogsAtlasAuthority||null,actorAuthority:root.__goodDogsActorRenderAuthority||null,openingAuthority:"TechOpsGoodBoysButtonHardFix",openingContract:"GD_CUT_01 -> playable M1 -> playable M2 -> cockpit -> GD_CUT_02 -> playable flight -> authored crash -> M3",at:Date.now(),version:VERSION};launching=false;return ok!==false;
+    if(established&&meta()){meta().ship_establishing_seen=true;meta().good_dogs_signal_heard=true;meta().signal_beyond_earth_seen=true;}
+    phase("campaign-gameplay",{mission:cfg.mission});root.__goodBoysPhysicalLaunchActive=false;root.__goodBoysHardButtonLaunch={ok:ok!==false,status:"campaign-gameplay",source:source||"unknown",mission:cfg.mission,resume:!cfg.fresh,pair:!!(c.chars&&c.chars.katrin&&c.chars.manchez),atlasAuthority:root.__goodDogsAtlasAuthority||null,actorAuthority:root.__goodDogsActorRenderAuthority||null,openingAuthority:"TechOpsGoodBoysButtonHardFix",openingContract:"playable M1 -> playable M2 -> board -> GD_CUT_01 -> cockpit -> GD_CUT_02 -> playable flight -> authored crash -> M3",at:Date.now(),version:VERSION};launching=false;return ok!==false;
   }
   async function opening(source,cfg){
     phase("opening-dependencies");setButton("LOADING GOOD DOGS…",true);await waitForDeps(9000);
-    if(!cfg.fresh)return mount(cfg,source);
-    var director=root.TechOpsPresentationDirector;if(director&&director.begin){presentationToken=director.begin({id:"gooddogs-opening-signal",owner:"TechOpsGoodBoysButtonHardFix",mode:"gooddogs",kind:"movie",blocking:true});if(!presentationToken)throw new Error("another presentation currently owns the Good Dogs opening");}
-    phase("opening-signal");setButton("FOLLOWING WALDO'S SIGNAL…",true);root.__goodBoysHardOpeningClip=validMovieResult(await root.GoodDogsCutscenes.play("GD_CUT_01",{force:true,muted:true,autoplay:true,noPoster:true}),"GD_CUT_01");
     return mount(cfg,source);
   }
   function launch(source){
     var now=Date.now();if(launching||now-lastLaunch<700)return true;lastLaunch=now;launching=true;root.__goodBoysPhysicalLaunchActive=true;clearForeignUi();var cfg=launchConfig();
-    root.__goodBoysHardButtonLaunch={ok:null,status:cfg.fresh?"opening":"resuming",source:source||"unknown",mission:cfg.mission,freshStoryStart:cfg.fresh,resume:!cfg.fresh,openingAuthority:"TechOpsGoodBoysButtonHardFix",openingContract:"GD_CUT_01 -> M1 -> M2 -> boarding sequence -> M3",at:now,version:VERSION};
+    root.__goodBoysHardButtonLaunch={ok:null,status:cfg.fresh?"opening":"resuming",source:source||"unknown",mission:cfg.mission,freshStoryStart:cfg.fresh,resume:!cfg.fresh,openingAuthority:"TechOpsGoodBoysButtonHardFix",openingContract:"M1 -> M2 -> board -> GD_CUT_01 -> cockpit -> GD_CUT_02 -> flight -> crash -> M3",at:now,version:VERSION};
     setButton(cfg.fresh?"OPENING GOOD DOGS PROTOCOL…":"RESUMING GOOD DOGS M"+cfg.mission+"…",true);
     opening(source,cfg).catch(function(err){launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY GOOD DOGS PROTOCOL",false);showOpeningError(err);});return true;
   }

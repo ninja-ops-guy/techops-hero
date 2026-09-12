@@ -41,7 +41,7 @@
         stage:{platforms:[],hazards:[],landmarks:[{x:520,label:"YARD",kind:"yard"},{x:790,label:"PORCH",kind:"porch"},{x:1120,label:"GARAGE",kind:"garage"},{x:1460,label:"HIDDEN BAY",kind:"door"}]},
         encounter:{waves:[]},
         districtConfig:{streets:1,danger:.1,sky:"#11131b",far:"#20232b",mid:"#28251f",signs:["WALDO'S HOUSE","HIDDEN BAY"],roster:[]},
-        cameraProfile:"gooddogs.sideview",presentationProfile:"quiet_investigation",animationProfile:"gooddogs.pair",musicProfile:"home_missing",cinematicEntry:"GD_CUT_01",cinematicExit:"hidden-bay-found",saveCheckpoint:"gooddogs.m1.property",acceptanceTest:"m1-trail-to-hidden-bay",nextMission:"gooddogs.m2",completionContract:"trail-complete-and-hidden-bay-entered"
+        cameraProfile:"gooddogs.sideview",presentationProfile:"quiet_investigation",animationProfile:"gooddogs.pair",musicProfile:"home_missing",cinematicEntry:null,cinematicExit:"hidden-bay-found",saveCheckpoint:"gooddogs.m1.property",acceptanceTest:"m1-trail-to-hidden-bay",nextMission:"gooddogs.m2",completionContract:"trail-complete-and-hidden-bay-entered"
       },
       {
         id:"gooddogs.m2",mode:"gooddogs",kind:"mission",ordinal:2,
@@ -52,7 +52,7 @@
         stage:{platforms:[[420,338,210],[760,300,180],[1060,338,220]],hazards:[],landmarks:[{x:620,label:"HANGAR SECURITY",kind:"console"},{x:1390,label:"SECRET SHIP",kind:"shuttle"}]},
         encounter:{waves:[["guard","guard"],["skimmer","guard","guard"]]},
         districtConfig:{streets:1,danger:.4,sky:"#070b12",far:"#0c1620",mid:"#111820",signs:["SECRET SHIP","LAUNCH"],roster:["guard"]},
-        cameraProfile:"gooddogs.sideview",presentationProfile:"discovery_launch",animationProfile:"gooddogs.pair",musicProfile:"hidden_bay",cinematicEntry:null,cinematicExit:"GD_CUT_02",saveCheckpoint:"gooddogs.m2.hangar",acceptanceTest:"m2-board-flight-crash",nextMission:"gooddogs.m3",completionContract:"explicit-board-sequence-complete"
+        cameraProfile:"gooddogs.sideview",presentationProfile:"discovery_launch",animationProfile:"gooddogs.pair",musicProfile:"hidden_bay",cinematicEntry:null,boardingCinematics:["GD_CUT_01","pilot-interaction","GD_CUT_02","playable-flight","authored-crash"],cinematicExit:"GD_CUT_02",saveCheckpoint:"gooddogs.m2.hangar",acceptanceTest:"m2-board-flight-crash",nextMission:"gooddogs.m3",completionContract:"explicit-board-sequence-complete"
       },
       {
         id:"gooddogs.m3",mode:"gooddogs",kind:"mission",ordinal:3,

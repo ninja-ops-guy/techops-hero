@@ -191,7 +191,7 @@ try{
 const report={
   pass:failures.length===0,
   contractVersion:CONTRACT_VERSION,
-  contract:'GD_CUT_01 autoplay -> real-input M1 trail -> real-input M2 hangar -> pilot interaction -> GD_CUT_02 autoplay -> supplied Good Ship flight -> authored crash -> M3 prison',
+  contract:'real-input M1 trail -> real-input M2 hangar -> board -> GD_CUT_01 autoplay -> pilot interaction -> GD_CUT_02 autoplay -> supplied Good Ship flight -> authored crash -> M3 prison',
   failures,
   events
 };

@@ -2,7 +2,7 @@
 
 ## Cinematic Cohesion v1 — 2026-09-11
 
-- Restored the canonical fresh Good Dogs route: GD_CUT_01 → playable M1 → playable M2 → cockpit → GD_CUT_02 → playable flight → authored crash → M3.
+- Restored the canonical fresh Good Dogs route: playable M1 → playable M2 → BOARD → GD_CUT_01 → cockpit → GD_CUT_02 → playable flight → authored crash → M3.
 - Added explicit completion contracts for M1–M7; enemy clear alone no longer advances story objectives that require investigation, interaction, rescue, control, tandem defeat, or shuttle arrival.
 - Added an immutable 42-space level registry spanning 8 Good Dogs missions, 12 Night Crawler streets, 17 ticket worlds, and 5 Day/story spaces.
 - Added passive presentation, deterministic camera, and semantic animation services without adding a draw/step/progression owner.

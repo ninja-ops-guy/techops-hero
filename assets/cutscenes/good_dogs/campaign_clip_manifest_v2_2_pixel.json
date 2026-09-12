@@ -2,6 +2,7 @@
   "package": "TechOps Hero — Good Dogs Campaign Clips v2.2 PIXEL",
   "version": "2.2",
   "notes": [
+    "Chronology correction: clip 01 is aboard-ship footage, not a pre-M1 prologue. Its filename/legacy title does not override the visual event order.",
     "Canonical Triple Jump clip replaced with the 7.03s 910x512 upload supplied on 2026-08-31. It begins in Sector 04 Docking Bay, shows the linked dog traversal through the laser grid, and ends at the Cell 118 MIKE OLIVEFIELD terminal.",
     "Updated flow removes the extra orbital-arrival segment from the opening and uses the picked cockpit takeover and crash clips supplied on 2026-09-03.",
     "New Triple Jump clip is integrated as the Cell 118 prelude and must play immediately before the K reveal cutscene.",
@@ -14,11 +15,15 @@
       "id": "GD_CUT_01",
       "file": "01_signal_beyond_earth_pixel.mp4",
       "title": "Signal Beyond Earth",
-      "placement": "After Garage Receiver",
-      "trigger": "good_dogs_campaign_started == true",
-      "purpose": "First indication that the dogs' rescue signal extends beyond Earth.",
-      "writes": ["good_dogs_signal_heard", "signal_beyond_earth_seen"],
-      "exit": "Shuttle Launch",
+      "placement": "After M1 garage discovery and M2 hangar clearance, immediately after BOARD and before the pilot interaction",
+      "trigger": "mission == 2 && board_requested == true && ship_establishing_seen != true",
+      "purpose": "The supplied footage already shows the dogs aboard the ship. Establish their boarding before pilot takeover; never play this before Waldo property discovery.",
+      "writes": [
+        "good_dogs_signal_heard",
+        "signal_beyond_earth_seen",
+        "ship_establishing_seen"
+      ],
+      "exit": "Cockpit pilot interaction",
       "source_file": "01_signal_beyond_earth.mp4",
       "pixel_filtered": true
     },
