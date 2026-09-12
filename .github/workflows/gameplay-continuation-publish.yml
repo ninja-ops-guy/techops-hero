@@ -1,0 +1,31 @@
+name: Publish verified gameplay continuation
+on:
+  push:
+    branches: [feat/gameplay-feedback-workday-pass]
+    paths: [.gameplay-r4-delivery/manifest.json]
+permissions:
+  contents: write
+concurrency:
+  group: gameplay-continuation-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.event.head_commit.message == 'ci: publish verified gameplay continuation r4'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct exact reviewed source, test and push PR branch
+        run: python3 .gameplay-r4-delivery/apply.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-continuation-publication-${{ github.sha }}
+          path: /tmp/gameplay-continuation-evidence/
+          retention-days: 7
