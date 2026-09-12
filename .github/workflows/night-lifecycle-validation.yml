@@ -1,0 +1,33 @@
+name: Night lifecycle validation
+on:
+  push:
+    branches: [fix/night-walker-lifecycle]
+  pull_request:
+    paths:
+      - 'runtime_night.js'
+      - 'test_night_lifecycle.js'
+      - 'tests/night-lifecycle.spec.js'
+      - '.github/workflows/night-lifecycle-validation.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Night lifecycle regression tests
+        run: |
+          if [ -f test_night_lifecycle.js ]; then node test_night_lifecycle.js; fi
+      - name: Package tracked source for reproducible offline validation
+        run: git archive --format=tar HEAD | gzip > /tmp/night-lifecycle-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: night-lifecycle-source
+          path: /tmp/night-lifecycle-source.tar.gz
+          retention-days: 3
