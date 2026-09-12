@@ -39,6 +39,7 @@
         zone:"WALDO'S PLACE — HOUSE / YARD / GARAGE",target:1460,gameplayVerb:"investigate",
         environment:{district:"goodboys_home",background:"goodboys_home",fallback:"waldo_loft",light:"home_gold",accent:"#ffd166",palette:"earth_night",assetClass:"physical_authored"},
         stage:{platforms:[],hazards:[],landmarks:[{x:520,label:"YARD",kind:"yard"},{x:790,label:"PORCH",kind:"porch"},{x:1120,label:"GARAGE",kind:"garage"},{x:1460,label:"HIDDEN BAY",kind:"door"}]},
+        pairPuzzle:{id:"garage_latches",kind:"dual-pad",label:"GARAGE · TWIN LATCHES",a:1190,b:1380,seconds:.8,success:"FALSE WALL UNLOCKED · REGROUP AT THE GARAGE EXIT"},
         encounter:{waves:[]},
         districtConfig:{streets:1,danger:.1,sky:"#11131b",far:"#20232b",mid:"#28251f",signs:["WALDO'S HOUSE","HIDDEN BAY"],roster:[]},
         cameraProfile:"gooddogs.sideview",presentationProfile:"quiet_investigation",animationProfile:"gooddogs.pair",musicProfile:"home_missing",cinematicEntry:null,cinematicExit:"hidden-bay-found",saveCheckpoint:"gooddogs.m1.property",acceptanceTest:"m1-trail-to-hidden-bay",nextMission:"gooddogs.m2",completionContract:"trail-complete-and-hidden-bay-entered"
@@ -50,6 +51,7 @@
         zone:"WALDO'S CONCEALED LAUNCH BAY",target:1390,gameplayVerb:"secure",
         environment:{district:"goodboys_hangar",background:"goodboys_hangar",fallback:"waldo_garage",light:"launch_blue",accent:"#55dfff",palette:"hangar_cyan",assetClass:"physical_authored"},
         stage:{platforms:[[420,338,210],[760,300,180],[1060,338,220]],hazards:[],landmarks:[{x:620,label:"HANGAR SECURITY",kind:"console"},{x:1390,label:"SECRET SHIP",kind:"shuttle"}]},
+        pairPuzzle:{id:"hangar_power",kind:"power-console",label:"BAY · POWER INTERLOCK",a:980,b:1210,seconds:1.2,requiresClear:true,success:"LAUNCH POWER LINKED · BOARD THE SECRET SHIP"},
         encounter:{waves:[["guard","guard"],["skimmer","guard","guard"]]},
         districtConfig:{streets:1,danger:.4,sky:"#070b12",far:"#0c1620",mid:"#111820",signs:["SECRET SHIP","LAUNCH"],roster:["guard"]},
         cameraProfile:"gooddogs.sideview",presentationProfile:"discovery_launch",animationProfile:"gooddogs.pair",musicProfile:"hidden_bay",cinematicEntry:null,boardingCinematics:["GD_CUT_01","pilot-interaction","GD_CUT_02","playable-flight","authored-crash"],cinematicExit:"GD_CUT_02",saveCheckpoint:"gooddogs.m2.hangar",acceptanceTest:"m2-board-flight-crash",nextMission:"gooddogs.m3",completionContract:"explicit-board-sequence-complete"
@@ -282,6 +284,7 @@
     if(n.dashT>0&&isDog&&!n.onGround){state='airdash';seq=[13,14,15,16,17];ms=65;}
     else if(!n.onGround){state=n.vy<-2?'ascent':n.vy>2?'descent':'apex';if(!isDog)seq=[state==='ascent'?14:state==='apex'?15:16];}
     else if(Math.abs(n.vx||0)>=2.5){state='run';seq=[6,7,8,9,10,11];ms=Math.max(65,Math.min(130,400/Math.abs(n.vx)));}
+    if(isDog&&state==='idle'&&Math.abs(n.vx||0)<.05)seq=[0];
     var prev=tracks.get(n);if(!prev||prev.id!==id||prev.state!==state){prev={id:id,state:state,at:at};tracks.set(n,prev);}
     if(!seq)return null;var elapsed=Math.max(0,at-prev.at),idx=state==='airdash'?Math.min(seq.length-1,Math.floor(elapsed/ms)):Math.floor(elapsed/ms)%seq.length;
     if(state==="run"&&prev.phase!==idx){prev.phase=idx;if(idx===0||idx===3)root.__techOpsFootContact={actor:id,phase:idx,at:at};}

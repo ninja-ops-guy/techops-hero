@@ -17,7 +17,7 @@ for (const [file, source] of [["hard", hard], ["flight", flight], ["progression"
   assert.doesNotThrow(() => new Function(source), `${file} must parse`);
 }
 
-assert.ok(hard.includes("VERSION=15"));
+assert.ok(hard.includes("VERSION=16"));
 assert.ok(hard.includes("function freshConfig(){return{mission:1"), "a fresh campaign must begin at M1");
 assert.ok(!hard.includes('GoodDogsCutscenes.play("GD_CUT_01"'), "title may not play the ship movie before discovery");
 assert.ok(flight.includes('player.play("GD_CUT_01"'), "M2 boarding owns the ship establishing movie");
@@ -31,7 +31,7 @@ assert.ok(!runtime.includes("cs.towers.every"), "M2 may not retain obsolete upli
 assert.ok(runtime.includes("Hidden Bay completion is owned by the explicit BOARD action"));
 assert.ok(runtime.includes("clearMissionTransients736()"), "mission-local discovery/boarding flags must not leak into the next level");
 assert.ok(board.includes('BOARD_X=1210')&&board.includes('s.p.advance(3,"boarded-secret-ship-button")'), "the mounted M2 BOARD action must require reaching the ship and request the exit sequence");
-assert.ok(browserDriver.includes("GOOD_DOGS_CONTRACT_VERSION=15"), "browser acceptance must track the M1-first v15 contract");
+assert.ok(browserDriver.includes("GOOD_DOGS_CONTRACT_VERSION=16"), "browser acceptance must track the M1-first v16 contract");
 assert.ok(browserDriver.includes("page.keyboard.down('ArrowRight')")&&browserDriver.includes("page.keyboard.press('KeyE')"), "browser acceptance must traverse M1/M2 through player input");
 assert.ok(!browserDriver.includes("testPrimeClear")&&!browserDriver.includes("testPrimeComplete"), "M1/M2 browser acceptance may not use encounter fixtures");
 

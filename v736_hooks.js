@@ -762,6 +762,7 @@
     }
     function swap736() {
       const cs = NM && NM._v736; if (!cs || cs.ending || cs.resolving) return;
+      if (window.TechOpsGoodDogsCoop && window.TechOpsGoodDogsCoop.active()) return;
       const pw = partnerWho(cs), ch = cs.chars;
       if (ch[pw].downed || ch[pw].out) { NM.msg = "⚠ partner is down — revive them (E)"; NM.msgT = now736() + 1200; return; }
       // player becomes the partner AI, partner steps into player control
@@ -775,7 +776,7 @@
       try { sfx("dash"); } catch (e) { }
     }
     function tandemFinisher736() {
-      const cs = NM && NM._v736; if (!cs || cs.ending) return;
+      const cs = NM && NM._v736; if (!cs || cs.ending || cs.chars[cs.active].downed || cs.chars[cs.active].out) return;
       const pw = partnerWho(cs), ch = cs.chars;
       if (ch[pw].downed || ch[pw].out) return;
       if (cs.sync < 100 && !cs.finisherReady) { NM.msg = "🤝 Sync not full yet"; NM.msgT = now736() + 900; return; }
@@ -810,8 +811,10 @@
     function handleDown736() { // replaces exitNight(false) during the campaign
       const cs = NM && NM._v736; if (!cs || cs.ending) return;
       const ch = cs.chars, act = cs.active, pw = partnerWho(cs);
+      if (ch[act].downed || ch[act].out) return;
       ch[act].hp = 0; ch[act].downed = true; ch[act].downT = 8; ch[act].bodyX = NM.x;
       if (ch[pw].downed || ch[pw].out) { missionFail736("Both fighters are down."); return; }
+      if (window.TechOpsGoodDogsCoop && window.TechOpsGoodDogsCoop.active()) { NM.hp=1; NM.vx=0; NM.ifr=600; NM.msg="P1 DOWN · P2: R NEAR YOUR PARTNER TO REVIVE"; NM.msgT=now736()+2600; return; }
       // control transfers to the standing partner
       const p = cs.partner;
       ch[pw].hp = Math.max(1, ch[pw].hp);
@@ -821,6 +824,7 @@
       try { sfx("bad"); } catch (e) { }
     }
     function revive736() {
+      if(window.TechOpsGoodDogsCoop && window.TechOpsGoodDogsCoop.active())return window.TechOpsGoodDogsCoop.revive(1);
       const cs = NM._v736, ch = cs.chars, now = now736();
       const down = (ch.katrin.downed ? "katrin" : ch.manchez.downed ? "manchez" : null);
       if (!down) return false;
@@ -835,12 +839,13 @@
     function stepPair736(dt, f) { // partner AI + pair bookkeeping, runs after base stepNM
       const cs = NM._v736, ch = cs.chars, now = now736();
       const pw = partnerWho(cs), p = cs.partner, F = FLOOR736();
-      ch[cs.active].hp = NM.hp; // mirror the engine's HP back into the sheet
+      if (!ch[cs.active].downed && !ch[cs.active].out) ch[cs.active].hp = NM.hp; // mirror the engine's HP back into the sheet
       // revive countdown
       for (const who of ["katrin", "manchez"]) {
         const c = ch[who];
         if (c.downed) {
           c.downT -= dt;
+          if (c.downT <= 0 && window.TechOpsGoodDogsCoop && window.TechOpsGoodDogsCoop.active()) { missionFail736("Revive window expired. Retry together."); return; }
           if (c.downT <= 0) { c.downed = false; c.out = true; NM.msg = `💀 ${who.toUpperCase()} is out for this mission`; NM.msgT = now + 2000; }
         }
       }
@@ -879,9 +884,11 @@
       // partner AI — stay near, attack the player's target
       if (!ch[pw].downed && !ch[pw].out && !cs.ending) {
         p.hp = ch[pw].hp;
-        const tx = NM.x - NM.face * 70, dx = tx - p.x;
+        const coop=window.TechOpsGoodDogsCoop;
+        if (coop && coop.active()) { coop.stepPartner(NM,dt,f,dealDamage736,NMW736()); } else {
+        const tx = coop ? coop.aiTarget(NM) : NM.x - NM.face * 70, dx = tx - p.x;
         const spd = 3.4;
-        if (Math.abs(dx) > 46) { p.vx += Math.sign(dx) * .5 * f; p.face = Math.sign(dx); }
+        if (Math.abs(dx) > (coop && coop.aiHolding() ? 3 : 46)) { p.vx += Math.sign(dx) * .5 * f; p.face = Math.sign(dx); }
         else p.vx *= Math.pow(.7, f);
         p.vx = Math.max(-spd, Math.min(spd, p.vx));
         if (NM.y < p.y - 70 && p.onGround && Math.abs(dx) < 120) { p.vy = -10; p.onGround = false; }
@@ -904,13 +911,14 @@
             dealDamage736(best, pw === "manchez" ? 11 : 9, pw);
           } else p.cd = 0.15;
         }
+        }
         // enemies clip the partner too (light pressure, throttled)
         cs.ptCD -= dt;
         if (cs.ptCD <= 0) {
           for (const e of NM.enemies) {
             if (!e.alive || e.down > 0 || e.launch > 0) continue;
             if (Math.abs(e.x - p.x) < 38 && Math.abs(e.y - p.y) < 42 && Math.random() < 0.3) {
-              ch[pw].hp -= Math.round(e.dmg * 0.7); cs.ptCD = 1.2; p.anim = 10;
+              ch[pw].hp -= Math.round(e.dmg * (p.block ? 0.25 : 0.7)); cs.ptCD = 1.2; p.anim = 10;
               if (ch[pw].hp <= 0) {
                 ch[pw].hp = 0; ch[pw].downed = true; ch[pw].downT = 8; ch[pw].bodyX = p.x;
                 NM.msg = `⚠ ${pw.toUpperCase()} IS DOWN — 8s to revive (E)`; NM.msgT = now + 2200;
@@ -1047,12 +1055,13 @@
         if (!campOn()) return _stepNM736(dt);
         const cs = NM._v736;
         if (cs.ending || cs.resolving) return; // mission over — world holds
+        if(window.TechOpsGoodDogsCoop)window.TechOpsGoodDogsCoop.beginStep(NM);
         NM.hp = Math.max(1, cs.chars[cs.active].hp); // mirror the active fighter into the engine
         _stepNM736(dt);
         if (!campOn()) return;
         if (typeof S !== "undefined" && S && S.inDialog) return; // dialogs hold the mission clock
         const f = dt * 60;
-        try { stepPair736(dt, f); stepObjectives736(dt, f); } catch (e) { window.__err736p = String(e && e.stack || e); }
+        try { stepPair736(dt, f); if(window.TechOpsGoodDogsCoop){window.TechOpsGoodDogsCoop.stepPuzzle(NM,dt);window.TechOpsGoodDogsCoop.constrain(NM,typeof cv!=="undefined"?cv.width:960);} stepObjectives736(dt, f); } catch (e) { window.__err736p = String(e && e.stack || e); }
       };
     }
     // ---------- death intercept: knockdown → transfer, never a night bail ----------
@@ -1080,7 +1089,7 @@
       window.nmJab = function () {
         if (!campOn()) return _nmJab736();
         const cs = NM._v736, now = now736();
-        if (NM.block || NM.drive || cs.ending) return;
+        if (NM.block || NM.drive || cs.ending || cs.chars[cs.active].downed || cs.chars[cs.active].out) return;
         const who = cs.active;
         NM.jabAnim = 9;
         if (who === "katrin") {
@@ -1117,12 +1126,13 @@
       window.interact = function () {
         if (campOn() && typeof S !== "undefined" && S && !S.inDialog) {
           const cs = NM._v736, now = now736();
+          if (window.TechOpsGoodDogsCoop && window.TechOpsGoodDogsCoop.interact(1)) return;
           // revive the downed partner
           const down = cs.chars.katrin.downed ? cs.chars.katrin : cs.chars.manchez.downed ? cs.chars.manchez : null;
           if (down && Math.abs(NM.x - down.bodyX) < 90) { revive736(); return; }
           // The domestic opening ends with a deliberate shared interaction,
           // rather than crossing an invisible X-coordinate trigger.
-          if (cs.m === 1 && NM._gbWaldoTrailComplete && NM.x >= Number(missionSpec(1).target || 1460) - 35 && Math.abs(cs.partner.x - NM.x) < 180) {
+          if (cs.m === 1 && (!window.TechOpsGoodDogsCoop || window.TechOpsGoodDogsCoop.complete(1)) && NM._gbWaldoTrailComplete && NM.x >= Number(missionSpec(1).target || 1460) - 35 && Math.abs(cs.partner.x - NM.x) < 180) {
             NM._gbHiddenBayEntered = true; NM.msg = "FALSE WALL OPEN · DESCENDING TO THE HIDDEN BAY"; NM.msgT = now + 1600; missionWin736(); return;
           }
           // m2 uplink towers
@@ -1193,10 +1203,10 @@
           // the partner fighter
           if (!ch[pw].downed && !ch[pw].out) {
             const px = p.x - NM.cam + p.w / 2, py = p.y + p.h;
-            if (p.anim > 0) drawPairFig736(ctx, pw, px, py, 72, pw === "manchez" ? "strike" : "cast", p.face < 0, now);
-            else if(!(window.TechOpsArtHandoff&&window.TechOpsArtHandoff.drawActor(ctx,pw==="manchez"?"man":"kat",p,px,py,72,now)))drawPairFig736(ctx, pw, px, py, 72, null, p.face < 0, now);
+            if (p.anim > 0) drawPairFig736(ctx, pw, px, py, 84, pw === "manchez" ? "strike" : "cast", p.face < 0, now);
+            else if(!(window.TechOpsArtHandoff&&window.TechOpsArtHandoff.drawActor(ctx,pw==="manchez"?"man":"kat",p,px,py,84,now)))drawPairFig736(ctx, pw, px, py, 84, null, p.face < 0, now);
             ctx.fillStyle = pw === "katrin" ? "#3fa9f5" : "#f59e0b";
-            ctx.font = "9px monospace"; ctx.textAlign = "center"; ctx.fillText(pw.toUpperCase(), px, py - 82);
+            ctx.font = "9px monospace"; ctx.textAlign = "center"; if(!(window.TechOpsGoodDogsCoop&&window.TechOpsGoodDogsCoop.active()))ctx.fillText(pw.toUpperCase(), px, py - 94);
             ctx.fillStyle = "#222"; ctx.fillRect(px - 16, py - 78, 32, 3);
             ctx.fillStyle = pw === "katrin" ? "#3fa9f5" : "#f59e0b";
             ctx.fillRect(px - 16, py - 78, 32 * Math.max(0, ch[pw].hp) / ch[pw].maxHp, 3);

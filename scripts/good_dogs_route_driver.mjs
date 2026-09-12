@@ -5,7 +5,7 @@
  * never mutates campaign, enemy, objective, save, or media state.
  */
 
-export const GOOD_DOGS_CONTRACT_VERSION=15;
+export const GOOD_DOGS_CONTRACT_VERSION=16;
 export const GOOD_DOGS_LAUNCH_RE=/(118\/1984|BREAKOUT|GOOD\s*(?:BOYS|DOGS))/i;
 
 export async function clickGoodDogsLaunch(page){
@@ -50,13 +50,21 @@ async function tapDirection(page,direction,ms){
   try{await page.waitForTimeout(ms);}finally{await page.keyboard.up(key).catch(()=>{});}
 }
 
-export async function mountFreshProperty(page,{onEvent=()=>{}}={}){
+export async function mountFreshProperty(page,{onEvent=()=>{},onHomeShot=async()=>{}}={}){
+  await page.locator('#gd-mode-solo').click();
+  await page.locator('#gd-home-next').waitFor({state:'visible',timeout:12000});
+  for(let shot=0;shot<3;shot++){
+    await page.waitForFunction(i=>window.__goodDogsHomeScene?.shot===i,shot+1);
+    onEvent('home-shot-'+(shot+1),await page.evaluate(()=>window.__goodDogsHomeScene));
+    await onHomeShot(shot+1);
+    await page.locator('#gd-home-next').click();
+  }
   await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===1,null,{timeout:9000});
   const state=await routeState(page);onEvent('m1-mounted',state);
   if(state.cutscene.id||state.cutscene.exit?.id==='GD_CUT_01')throw new Error('Ship movie played before the property investigation');
   if(state.metaMission!==1||!state.pair)throw new Error('Fresh Good Dogs launch did not mount the canonical M1 pair: '+JSON.stringify(state));
   if(state.openingError)throw new Error('Good Dogs opening error: '+JSON.stringify(state.openingError));
-  if(state.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(state.hard?.version||0)<GOOD_DOGS_CONTRACT_VERSION)throw new Error('Good Dogs v15 title authority is not active: '+JSON.stringify(state.hard));
+  if(state.hard?.openingAuthority!=='TechOpsGoodBoysButtonHardFix'||Number(state.hard?.version||0)<GOOD_DOGS_CONTRACT_VERSION)throw new Error('Good Dogs v16 title authority is not active: '+JSON.stringify(state.hard));
   return state;
 }
 
@@ -83,7 +91,30 @@ export async function resolveOpeningSignal(page,{onEvent=()=>{},requireDecoded=t
   return state;
 }
 
+export async function moveDogTo(page,target,{player=1,tolerance=15,timeout=15000}={}){
+  const left=player===2?'KeyA':'ArrowLeft',right=player===2?'KeyD':'ArrowRight';
+  const end=Date.now()+timeout;
+  while(Date.now()<end){
+    const x=await page.evaluate(p=>p===2?window.NM._v736.partner.x:window.NM.x,player);
+    if(Math.abs(x-target)<=tolerance)return;
+    const key=x<target?right:left;await page.keyboard.down(key);
+    try{await page.waitForTimeout(Math.min(100,Math.max(20,Math.abs(x-target)*3)) );}finally{await page.keyboard.up(key);}
+  }
+  throw Error('Dog '+player+' did not reach '+target);
+}
+export async function solvePairPuzzleSolo(page,mission,{onEvent=()=>{}}={}){
+  const d=await page.evaluate(m=>window.TechOpsLevelRegistry.goodDogsMission(m).pairPuzzle,mission);
+  await moveDogTo(page,d.a-11);await page.keyboard.press('KeyE');
+  await page.waitForFunction(()=>window.TechOpsGoodDogsCoop.aiHolding(),null,{timeout:2000});
+  await moveDogTo(page,d.b-11);
+  await page.waitForFunction(x=>Math.abs(window.NM._v736.partner.x+11-x)<40,d.a,{timeout:6000});
+  if(d.kind==='power-console')await page.keyboard.press('KeyE');
+  await page.waitForFunction(m=>window.TechOpsGoodDogsCoop.complete(m),mission,{timeout:5000});
+  onEvent('pair-puzzle-complete',await page.evaluate(()=>({mission:window.NM._v736.m,mode:window.TechOpsGoodDogsCoop.mode(),puzzles:window.S.meta._v736.pairPuzzles})));
+}
+
 export async function driveMissionOne(page,{onEvent=()=>{}}={}){
+  await solvePairPuzzleSolo(page,1,{onEvent});
   await page.keyboard.down('ArrowRight');
   try{
     await page.waitForFunction(()=>window.NM&&Number(window.NM.x)>=1430&&window.NM._gbWaldoTrailComplete===true,null,{timeout:14000});
@@ -104,7 +135,7 @@ export async function driveMissionOne(page,{onEvent=()=>{}}={}){
   return state;
 }
 
-export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45000,requireDecoded=true}={}){
+export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45000,requireDecoded=true,board=true}={}){
   await page.waitForFunction(()=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===2,null,{timeout:9000});
   await tapDirection(page,1,260);
   const deadline=Date.now()+timeoutMs;
@@ -131,6 +162,8 @@ export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45
   }
   let state=await routeState(page);
   if(!state.shipRevealed||state.living!==0)throw new Error('M2 hangar did not clear through real input: '+JSON.stringify(state));
+  await solvePairPuzzleSolo(page,2,{onEvent});
+  state=await routeState(page);
   if(state.x<1210){
     await page.keyboard.down('ArrowRight');
     try{await page.waitForFunction(()=>window.NM&&Number(window.NM.x)>=1210,null,{timeout:9000});}
@@ -138,6 +171,7 @@ export async function clearMissionTwoWithInput(page,{onEvent=()=>{},timeoutMs=45
   }
   await page.waitForSelector('#good-boys-board-ship',{state:'visible',timeout:5000});
   state=await routeState(page);onEvent('m2-board-ready',state);
+  if(!board)return state;
   if(!await domClick(page,'#good-boys-board-ship'))throw new Error('BOARD THE SHIP action unavailable');
   await resolveOpeningSignal(page,{onEvent,requireDecoded});
   await page.waitForSelector('#good-boys-deck-supplied',{state:'visible',timeout:12000});

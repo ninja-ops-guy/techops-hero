@@ -13,6 +13,7 @@ const tests = [
   "test_art_handoff.js",
   "test_crash_playback_budget.js",
   "test_good_dogs_route_contract.js",
+  "test_good_dogs_coop.js",
   "test_campaign_world_visuals.js",
   "test_campaign_late_game_contracts.js",
   "test_good_boys_canon_runtime.js",

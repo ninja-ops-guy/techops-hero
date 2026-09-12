@@ -118,6 +118,16 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
+      - name: Verify local co-op, solo puzzles and home presentation
+        id: coop
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 360s node scripts/good_dogs_coop_bot.mjs
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Run Good Dogs iPhone M1 to M3 regression
         id: intro
         continue-on-error: true
@@ -258,6 +268,7 @@ jobs:
       - name: Enforce runtime bot result
         if: always()
         run: |
+          test "${{ steps.coop.outputs.exit_code }}" = "0"
           test "${{ steps.art.outputs.exit_code }}" = "0"
           test "${{ steps.presentation.outputs.exit_code }}" = "0"
           test "${{ steps.intro.outputs.exit_code }}" = "0"

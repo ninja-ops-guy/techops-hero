@@ -14,6 +14,8 @@ The repository contains a long historical hook stack. Those files are still allo
 | Scene schema | `campaign_scene_schema.js` | Validates authored scene IDs, speakers, text limits, state writes, branches, and dead-end protection. |
 | Runtime adapter | `campaign_runtime.js` | Bridges systems to canonical campaign state; must not invent parallel story state. |
 | Day 1 presentation/world | `campaign_native_act1.js` | Owns authored standup/workstation/ticket presentation and base-runtime gating. |
+| Good Dogs home opening | `good_dogs_home_scene.js` / `good_boys_button_hard_fix.js` | Title mode selection and domestic prologue; the ship movie remains owned by M2 boarding. |
+| Good Dogs co-op | `good_dogs_coop.js` | Independent local input and pair mechanisms; consumes `cinematic_systems.js` puzzle definitions and the existing pair damage/step provider. |
 | Campaign assets | `campaign_assets.js` | Owns canonical campaign asset IDs and filenames. |
 | Sector 04 semantics | `campaign_sector04.js` | Owns mission understanding/suppression/dependency/verification semantics. |
 | Sector 04 browser bridge | `campaign_sector04_runtime.js` | Adapts Sector 04 semantics into the Night Walker browser runtime and recovery path. |

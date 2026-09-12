@@ -68,6 +68,7 @@
       else if(which===6){ok=!!(c._gbDecryptComplete&&c._gbFinalWaveComplete&&c.uplink&&Number(c.uplink.hp)>0&&(c._gbWaldoFreed||m&&m.waldo));reason=ok?"complete":"cell1984-rescue-incomplete";}
       else if(which===7){ok=!!(c._gbWardenTandemDefeated&&c._gbShuttleReached);reason=ok?"complete":"warden-or-shuttle-incomplete";}
       else if(which===8){ok=true;reason="earthfall-owned";}
+      if(ok&&root.TechOpsGoodDogsCoop&&!root.TechOpsGoodDogsCoop.complete(which)){ok=false;reason="pair-puzzle-incomplete";}
       return{ok:ok,mission:which,contract:contract,reason:reason};
     }catch(e){return{ok:false,mission:which,contract:"error",reason:String(e&&e.stack||e)};}
   }

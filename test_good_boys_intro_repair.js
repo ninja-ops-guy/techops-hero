@@ -13,7 +13,7 @@ for (const candidate of [source, progression, board, flight, core]) new Function
 
 assert.ok(!html.includes('src="good_boys_intro_repair.js'), "retired direct-to-M2 opening must stay out of production");
 assert.ok(!html.includes('src="good_boys_ship_approach.js'), "retired duplicate flight wrapper must stay out of production");
-assert.ok(source.includes("VERSION=15"), "canonical Good Dogs title authority must be v15");
+assert.ok(source.includes("VERSION=16"), "canonical Good Dogs title authority must be v16");
 assert.ok(source.includes("function freshConfig(){return{mission:1"), "fresh play must begin at M1");
 assert.ok(!source.includes('GoodDogsCutscenes.play("GD_CUT_01"'), "ship footage must not precede M1");
 assert.ok(source.includes("return mount(cfg,source)"), "the opening film must hand off to mounted gameplay");
