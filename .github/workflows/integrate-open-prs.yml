@@ -27,12 +27,22 @@ jobs:
           git merge --no-ff -X ours origin/fix/live-crawl-visual-cohesion -m "Integrate PR #28 live-crawl cohesion fixes onto reviewed main"
       - name: Static and aggregate validation
         run: |
-          set -euo pipefail
-          node scripts/production_release_gate.js
-          test -f test_quality_integration.js && node test_quality_integration.js || true
-          test -f test_live_crawl_visual_cohesion.js && node test_live_crawl_visual_cohesion.js || true
-          test -f test_runtime_combat_audio.js && node test_runtime_combat_audio.js || true
-          test -f test_campaign_workday_followups.js && node test_campaign_workday_followups.js || true
+          set +e
+          mkdir -p artifacts/open-pr-integration
+          node scripts/production_release_gate.js 2>&1 | tee artifacts/open-pr-integration/production-release-gate.log
+          s1=${PIPESTATUS[0]}
+          if test -f test_quality_integration.js; then node test_quality_integration.js 2>&1 | tee artifacts/open-pr-integration/quality.log; s2=${PIPESTATUS[0]}; else s2=0; fi
+          if test -f test_live_crawl_visual_cohesion.js; then node test_live_crawl_visual_cohesion.js 2>&1 | tee artifacts/open-pr-integration/live-crawl.log; s3=${PIPESTATUS[0]}; else s3=0; fi
+          if test -f test_runtime_combat_audio.js; then node test_runtime_combat_audio.js 2>&1 | tee artifacts/open-pr-integration/combat-audio.log; s4=${PIPESTATUS[0]}; else s4=0; fi
+          if test -f test_campaign_workday_followups.js; then node test_campaign_workday_followups.js 2>&1 | tee artifacts/open-pr-integration/workday.log; s5=${PIPESTATUS[0]}; else s5=0; fi
+          printf 'release=%s\nquality=%s\nlive_crawl=%s\ncombat_audio=%s\nworkday=%s\n' "$s1" "$s2" "$s3" "$s4" "$s5" > artifacts/open-pr-integration/status.txt
+          if [ "$s1" -ne 0 ] || [ "$s2" -ne 0 ] || [ "$s3" -ne 0 ] || [ "$s4" -ne 0 ] || [ "$s5" -ne 0 ]; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: open-pr-integration-${{ github.sha }}
+          path: artifacts/open-pr-integration/
+          retention-days: 7
       - name: Remove temporary workflow and publish reconciled branch
         run: |
           set -euo pipefail
