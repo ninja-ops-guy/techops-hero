@@ -15,7 +15,7 @@ const fail=(name,data={})=>{failures.push({name,...data});log('FAIL '+name,data)
 async function click(page,sel){return page.evaluate(s=>{const el=document.querySelector(s);if(!el)return false;el.click();return true;},sel).catch(()=>false);}
 async function snap(page){return page.evaluate(()=>{const s=window.S||null,n=window.NM||null,c=n&&n._v736,m=s&&s.meta&&s.meta._v736,a=window.TechOpsGoodBoysProgressionAuthority,cs=window.TechOpsGoodBoysCampaignState,b=window.TechOpsGoodDogsCutsceneBridge,p=window.TechOpsGoodBoysPrisonGameplayV2;return{
   phase:window.__goodBoysOpeningPhase||null,openingError:window.__goodBoysOpeningErrorDetail||null,hard:window.__goodBoysHardButtonLaunch||null,
-  mission:Number(c&&c.m||0),metaMission:Number(m&&m.m||0),stateMission:cs&&cs.mission?Number(cs.mission()):0,pair:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez),activeDog:c&&c.active||null,inDialog:!!(s&&s.inDialog),cellOpened:!!(c&&c.cellOpened),
+  mission:Number(c&&c.m||0),metaMission:Number(m&&m.m||0),stateMission:cs&&cs.mission?Number(cs.mission()):0,pair:!!(c&&c.chars&&c.chars.katrin&&c.chars.manchez),activeDog:c&&c.active||null,player:n?{x:n.x,y:n.y,hp:n.hp}:null,visibleDialogs:[...document.querySelectorAll("#dialogue:not(.hidden),#gb-prison-cine,#good-boys-earthfall-cine")].map(e=>({id:e.id,text:e.innerText.slice(0,600)})),inDialog:!!(s&&s.inDialog),cellOpened:!!(c&&c.cellOpened),
   authority:!!a,campaignState:!!cs,bibleWorld:!!window.TechOpsGoodBoysBibleWorld,backgroundAuthority:!!window.TechOpsGoodBoysBackgroundAuthority,accessCore:!!window.TechOpsGoodBoysAccessCoreAuthority,earthfall:!!window.TechOpsGoodBoysEarthfallEnding,
   acceptance:a&&a.acceptance?a.acceptance():null,prison:p&&p.acceptance?p.acceptance():null,bridge:b&&b.acceptance?b.acceptance():null,
   deck:window.__goodBoysDeckAssetState||null,deckInteract:window.__goodBoysDeckInteract||null,cutsceneExit:window.__goodDogsCutsceneExit||null,flight:window.__goodBoysSpaceFlight||window.__goodBoysShipFlightState||null,crash:window.__goodBoysCrashScene||null
@@ -80,6 +80,9 @@ try{
     if(!primed)throw new Error('Encounter fixture failed at M'+from);
     await page.waitForFunction(m=>window.NM&&window.NM._v736&&Number(window.NM._v736.m)===m,from+1,{timeout:10000});
     s=await resolveCutscene(page,{4:'GD_CUT_06',5:'GD_CUT_07',6:'GD_CUT_08'}[from],12000);
+    // The bridge restores this briefing after the film exits. A momentarily
+    // clear modal state is not evidence that mission entry has settled.
+    await prisonBriefing(page,1);
     if(s.mission!==from+1||s.metaMission!==from+1||s.stateMission!==from+1)fail('later-mission-authority-diverged',s);
   }
   await clearBlockingCines(page,2500);
