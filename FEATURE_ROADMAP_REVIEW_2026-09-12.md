@@ -73,7 +73,10 @@ First-time evidence capture and ordinary ticket-resolution semantics are unchang
 
 ## Authority and compatibility
 
-All behavior lives in the existing `campaign_native_act1.js` presentation authority.
+Gameplay behavior lives in the existing `campaign_native_act1.js` presentation authority.
+The existing visual bridge consumes the same read model: partial/conflicting work
+gets a neutral follow-up presentation, not success animation or a restoration
+claim. The badge timestamp/door overlay is gated on its recorded source.
 There is no new numbered hook, duplicate story authority, asset, timer, reward path,
 save version, or persistence namespace. The five workstation tabs remain unchanged.
 
@@ -91,6 +94,14 @@ VM contexts. Coverage includes UI callback reachability, the six valid
 verification/outcome combinations, provenance, outcome conflicts, cold reload,
 Tuesday persistence, stale callbacks, repeated reads, HTML escaping, old history,
 and unavailable storage. Syntax checks pass.
+
+The existing `test_campaign_native_act1_visuals.js` suite is also expanded to
+compare both Shipping and Plating visuals with the native read model across all
+six verification/outcome combinations, missing technical proof, reopened tickets,
+conflicting outcomes, missing read-model initialization, and unrelated identity
+evidence. Success fixtures now explicitly include technical resolution, as real
+canonical completions do. The badge CSS overlay requires the documented variant.
+Both local suites pass; the original visual assertions are retained.
 
 `test_campaign_casebook.js` is included in the aggregate production release gate.
 Full-repository CI and actual browser/device acceptance are separate requirements;

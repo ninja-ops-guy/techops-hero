@@ -7,6 +7,8 @@ global.dlg = function () { return true; };
 global.closeDlg = function () { return true; };
 global.S = { px: 10, py: 8, room: "factory", area: "plating", facing: "right", clock: 540, day: 1 };
 
+require("./campaign_act1.js");
+const native = require("./campaign_native_act1.js");
 const visuals = require("./campaign_native_act1_visuals.js");
 
 assert.strictEqual(visuals.VERSION, 4);
@@ -52,7 +54,7 @@ assert.deepStrictEqual(p.props, ["shipping.label_printer"]);
 assert.deepStrictEqual(p.motion, ["forklift_pass", "printer_feed", "camera_track"]);
 
 const shippingDone = JSON.parse(JSON.stringify(base));
-shippingDone.tickets.shipping_cannot_print = { status: "resolved", verification: "strong", humanOutcome: "restored" };
+shippingDone.tickets.shipping_cannot_print = { status: "resolved", technicalResolution: true, verification: "strong", humanOutcome: "restored" };
 p = visuals.presentationFor("shipping", shippingDone);
 assert.strictEqual(p.variant, "verified");
 assert.deepStrictEqual(p.props, ["shipping.printed_label_success"]);
@@ -65,7 +67,7 @@ assert.deepStrictEqual(p.props, ["plating.workstation_cracked", "plating.line_st
 assert.deepStrictEqual(p.motion, ["warning_beacon", "machine_idle", "camera_track"]);
 
 const platingDone = JSON.parse(JSON.stringify(base));
-platingDone.tickets.plating_workstation_down = { status: "resolved", verification: "strong", humanOutcome: "restored" };
+platingDone.tickets.plating_workstation_down = { status: "resolved", technicalResolution: true, verification: "strong", humanOutcome: "restored" };
 p = visuals.presentationFor("plating", platingDone);
 assert.strictEqual(p.variant, "restored");
 assert.deepStrictEqual(p.props, []);
@@ -102,6 +104,53 @@ owned.flags.standup_completed = true;
 p = visuals.presentationFor("standup", owned);
 assert.strictEqual(p.variant, "owned");
 assert.deepStrictEqual(p.motion, ["board_lock", "ambient_drift"]);
+
+// Text and visual success must share the same canonical read model.
+for (const [scene, id, successfulVariant] of [
+  ["shipping", "shipping_cannot_print", "verified"],
+  ["plating", "plating_workstation_down", "restored"]
+]) {
+  for (const verification of ["partial", "strong"]) {
+    for (const humanOutcome of ["restored", "degraded", "unmet"]) {
+      const state = JSON.parse(JSON.stringify(base));
+      state.tickets[id] = { status: "resolved", technicalResolution: true, verification, humanOutcome };
+      const before = JSON.stringify(state), view = native.ticketRecord(state, id);
+      const profile = visuals.show(scene, "CASEBOOK", state).presentation;
+      const expected = view.status === "VERIFIED / RESTORED" ? successfulVariant : "follow_up";
+      assert.strictEqual(profile.variant, expected, scene + ": " + verification + "/" + humanOutcome);
+      if (expected === "follow_up") {
+        assert.match(profile.statusText, /NEEDS FOLLOW-UP/);
+        assert.deepStrictEqual(profile.motion, ["camera_push"]);
+        assert.ok(!profile.props.includes("shipping.printed_label_success"));
+      }
+      assert.strictEqual(JSON.stringify(state), before, "visual review is read-only");
+    }
+  }
+  for (const failure of ["missing_technical", "reopened", "conflict"]) {
+    const state = JSON.parse(JSON.stringify(base));
+    state.tickets[id] = { status: "resolved", technicalResolution: true, verification: "strong", humanOutcome: "restored" };
+    if (failure === "missing_technical") delete state.tickets[id].technicalResolution;
+    if (failure === "reopened") state.tickets[id].status = "reopened";
+    if (failure === "conflict") state.humanOutcomes = { [id]: "degraded" };
+    assert.strictEqual(visuals.presentationFor(scene, state).variant, "follow_up", scene + ": " + failure);
+  }
+}
+
+const unrelated = JSON.parse(JSON.stringify(base));
+unrelated.evidence.ghostIdentityEvidence = { status: "established", sources: [{ id: "unrelated_clue", perspective: "firsthand" }] };
+assert.strictEqual(visuals.presentationFor("access", unrelated).variant, "unresolved");
+const nativeApi = global.TechOpsCampaignNativeAct1;
+global.TechOpsCampaignNativeAct1 = null;
+assert.strictEqual(visuals.presentationFor("shipping", shippingDone).variant, "follow_up", "missing read model cannot certify restoration");
+assert.strictEqual(visuals.presentationFor("access", accessDone).variant, "unresolved");
+global.TechOpsCampaignNativeAct1 = nativeApi;
+
+// The badge timestamp/door overlay must not leak through the CSS pseudo-element
+// when an uninvestigated casebook entry is opened.
+const visualSource = fs.readFileSync("campaign_native_act1_visuals_impl.js", "utf8");
+assert.ok(visualSource.includes(".act1-reference.a1-investigation.a1-documented:after{content:"));
+assert.ok(!visualSource.includes(".act1-reference.a1-investigation:after{content:"));
+console.log("Campaign casebook visual outcome/provenance parity: PASS");
 
 // The old workstation composition remains historical data in the visual bridge,
 // but production must retire it before paint so ordinary workstation/user
