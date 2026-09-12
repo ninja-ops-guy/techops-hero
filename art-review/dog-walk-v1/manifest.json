@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "status": "QUARANTINED",
+  "runtimeApproved": false,
+  "tool": "built-in image_gen",
+  "frameCount": 16,
+  "contactEvents": [],
+  "notes": "Distinct image bytes are not proof of valid gait. Preserve the live walk fallback. Alpha is preserved; no synthesized poses, recoloring or matte repair in this build.",
+  "actors": {
+    "kat": {
+      "source": "source/katrin-v1.png",
+      "sourceSha256": "9d27e00838c19cb93a2bde255ac61dd4b2a981c3d8f7bd74af4877dfb6f7b4cc",
+      "sourceSize": [
+        1774,
+        887
+      ],
+      "sourceHasAlpha": true,
+      "scale": 0.35,
+      "atlas": "kat-review.png",
+      "atlasSha256": "44fc9bb080de857a629049a7f8b579c39c91168c9231471d752f4da6f4f7b623",
+      "frames": [
+        {
+          "index": 1,
+          "src": "frames/kat-01.png",
+          "sourceRect": [
+            61,
+            110,
+            297,
+            274
+          ],
+          "sourceAnchor": [
+            215,
+            374
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "735a44943b2a0e2844ab21ba57fccf2b8ae9b7778a34c1f1137cd67c3106dee2"
+        },
+        {
+          "index": 2,
+          "src": "frames/kat-02.png",
+          "sourceRect": [
+            520,
+            107,
+            305,
+            277
+          ],
+          "sourceAnchor": [
+            660,
+            374
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "08c4e75c56e1d9b87728431e9249a5fbed84b40d8114d4b4da3139dac20f5888"
+        },
+        {
+          "index": 3,
+          "src": "frames/kat-03.png",
+          "sourceRect": [
+            961,
+            107,
+            304,
+            277
+          ],
+          "sourceAnchor": [
+            1104,
+            374
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "7052c4b338ce241352adbf556351013fac7eb1d6ae1641ff6e96806468b9f37d"
+        },
+        {
+          "index": 4,
+          "src": "frames/kat-04.png",
+          "sourceRect": [
+            1406,
+            100,
+            305,
+            280
+          ],
+          "sourceAnchor": [
+            1547,
+            374
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "3a35b447f89069bf0d12596b854f623ab1ee6632100f09019d570eeaefd516ec"
+        },
+        {
+          "index": 5,
+          "src": "frames/kat-05.png",
+          "sourceRect": [
+            53,
+            558,
+            308,
+            270
+          ],
+          "sourceAnchor": [
+            215,
+            819
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "b4859772d63415eaf14475694f6ebd3d681c47b3703461c428d77642f0acebaf"
+        },
+        {
+          "index": 6,
+          "src": "frames/kat-06.png",
+          "sourceRect": [
+            519,
+            559,
+            294,
+            270
+          ],
+          "sourceAnchor": [
+            660,
+            819
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "78dc967fdaefb29ad14d161d660b4b3206c81c89eb3ce6cd7f499a8febd39464"
+        },
+        {
+          "index": 7,
+          "src": "frames/kat-07.png",
+          "sourceRect": [
+            964,
+            556,
+            305,
+            273
+          ],
+          "sourceAnchor": [
+            1104,
+            819
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "28bb13cb71fe84757852240b0b4b0f068590e6567558b619eede1af2092f1ade"
+        },
+        {
+          "index": 8,
+          "src": "frames/kat-08.png",
+          "sourceRect": [
+            1399,
+            559,
+            303,
+            270
+          ],
+          "sourceAnchor": [
+            1547,
+            819
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "ee2d0524bb2887c35ab4af71ca26014fe641a6b8e7aab02a1b0e0396b32ea955"
+        }
+      ]
+    },
+    "man": {
+      "source": "source/manchez-alpha-v2.png",
+      "sourceSha256": "a6b097f7a9f626f017cb9102b5f0118c73694fd4dc81559b51f062ad2057bb30",
+      "sourceSize": [
+        1774,
+        887
+      ],
+      "sourceHasAlpha": true,
+      "scale": 0.33,
+      "atlas": "man-review.png",
+      "atlasSha256": "afe4a00639cd305c6b100a8331b15044c5a53d2b48003f7dc79063e3bed80bf2",
+      "frames": [
+        {
+          "index": 1,
+          "src": "frames/man-01.png",
+          "sourceRect": [
+            74,
+            110,
+            316,
+            295
+          ],
+          "sourceAnchor": [
+            232,
+            394
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "9815c0ab3d5b747a857fabff29d9d1f6832bd5be365d5fa06f9cd70b2af0b9a2"
+        },
+        {
+          "index": 2,
+          "src": "frames/man-02.png",
+          "sourceRect": [
+            515,
+            109,
+            319,
+            293
+          ],
+          "sourceAnchor": [
+            675,
+            394
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "71a8fd85af027534a38502d4620ca2e14a11eeb99ac6b2ea24f87ebe172f8c5c"
+        },
+        {
+          "index": 3,
+          "src": "frames/man-03.png",
+          "sourceRect": [
+            945,
+            109,
+            331,
+            293
+          ],
+          "sourceAnchor": [
+            1117,
+            394
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "a13722c98893b84a99484238ef92bb0a98017491ee8f8af2f60302f2cc90bc9a"
+        },
+        {
+          "index": 4,
+          "src": "frames/man-04.png",
+          "sourceRect": [
+            1399,
+            109,
+            322,
+            293
+          ],
+          "sourceAnchor": [
+            1560,
+            394
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "07e7d8796e1cdd2b91c49665fe4a72206ac3d6feda513578f01b171e3de6613a"
+        },
+        {
+          "index": 5,
+          "src": "frames/man-05.png",
+          "sourceRect": [
+            67,
+            514,
+            323,
+            295
+          ],
+          "sourceAnchor": [
+            232,
+            799
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "bfe54435604476e2b851a8d7571b1ba7708e89c864b002d75f8cb4aa755c9715"
+        },
+        {
+          "index": 6,
+          "src": "frames/man-06.png",
+          "sourceRect": [
+            511,
+            515,
+            323,
+            294
+          ],
+          "sourceAnchor": [
+            675,
+            799
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "b32b2ae521b51748930be58e59d2eb8dfadaf6360bf53a6debeb0b964bf6db84"
+        },
+        {
+          "index": 7,
+          "src": "frames/man-07.png",
+          "sourceRect": [
+            954,
+            514,
+            322,
+            295
+          ],
+          "sourceAnchor": [
+            1117,
+            799
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "a8948999e14a0151a79099dba473d3bc51ceb991889eab940ab7d754488c25e7"
+        },
+        {
+          "index": 8,
+          "src": "frames/man-08.png",
+          "sourceRect": [
+            1383,
+            515,
+            337,
+            294
+          ],
+          "sourceAnchor": [
+            1560,
+            799
+          ],
+          "pivot": [
+            80,
+            124
+          ],
+          "sha256": "b4976ce457715e19cb7a30fd1ae11a767d319f31b790e592efb9ba91a6cc991e"
+        }
+      ]
+    }
+  }
+}
