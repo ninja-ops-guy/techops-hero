@@ -1,0 +1,162 @@
+name: Merge Gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: merge-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  static:
+    name: Static and release contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Aggregate production release gate
+        run: |
+          set -euo pipefail
+          node scripts/production_release_gate.js
+      - name: Runtime triage contracts
+        run: |
+          set -euo pipefail
+          node --test test_runtime_triage.mjs
+      - name: Good Dogs cutscene integrity
+        run: |
+          set -euo pipefail
+          node --check good_dogs_cutscenes_v2_2.js
+          node --check good_dogs_cutscene_bridge.js
+          node test_static_entrypoint_integrity.js
+          cat > /tmp/good-dogs.sha256 <<'SUMS'
+          a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe  assets/cutscenes/good_dogs/01_signal_beyond_earth_pixel.mp4
+          870e08a99f414c7559f5aaffb236570b157158891a6ee44570c17f56e9e28436  assets/cutscenes/good_dogs/02_signal_pull_transition_pixel.mp4
+          687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4  assets/cutscenes/good_dogs/03_orbital_approach_pixel.mp4
+          60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2  assets/cutscenes/good_dogs/04_cell118_triple_jump_to_terminal_pixel.mp4
+          ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf  assets/cutscenes/good_dogs/05_cell118_approach_k_reveal_pixel.mp4
+          4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94  assets/cutscenes/good_dogs/06_k_freed_prison_escort_pixel.mp4
+          53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838  assets/cutscenes/good_dogs/07_cell1984_hack_pixel.mp4
+          24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01  assets/cutscenes/good_dogs/08_team_reunited_exit_pixel.mp4
+          SUMS
+          sha256sum -c /tmp/good-dogs.sha256
+
+  browser:
+    name: Browser acceptance
+    runs-on: macos-14
+    timeout-minutes: 24
+    env:
+      BOT_CHROMIUM_CHANNEL: chrome
+      BOT_BASE_URL: http://127.0.0.1:4173/
+      BOT_OUT_DIR: runtime-bot-artifacts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install portable timeout command
+        run: |
+          brew install coreutils
+          echo "$(brew --prefix coreutils)/libexec/gnubin" >> "$GITHUB_PATH"
+      - name: Install browser dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium firefox webkit
+          if [ ! -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then brew install --cask google-chrome; fi
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
+      - name: Start exact-commit local server
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts
+          python3 scripts/test_media_http_server.py
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > runtime-bot-artifacts/server.log 2>&1 &
+          echo $! > runtime-bot-artifacts/server.pid
+          for i in {1..30}; do
+            if curl -fsS "$BOT_BASE_URL" >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat runtime-bot-artifacts/server.log
+          exit 1
+      - name: Media decode probe
+        run: |
+          set -euo pipefail
+          timeout 60s node scripts/media_decode_probe.mjs
+      - name: Night lifecycle acceptance
+        run: |
+          set -euo pipefail
+          timeout 480s node scripts/night_lifecycle_browser.mjs
+      - name: Night combat acceptance
+        run: |
+          set -euo pipefail
+          timeout 300s node scripts/night_combat_bot.mjs
+      - name: Presentation and art acceptance
+        run: |
+          set -euo pipefail
+          timeout 120s node scripts/art_handoff_bot.mjs
+          timeout 150s node scripts/presentation_slice_bot.mjs
+      - name: Good Dogs co-op and home acceptance
+        run: |
+          set -euo pipefail
+          timeout 360s node scripts/good_dogs_coop_bot.mjs
+      - name: Good Dogs iPhone M1 to M3
+        run: |
+          set -euo pipefail
+          timeout 180s node scripts/good_boys_intro_mobile_bot.mjs
+      - name: MORNINGSTAR and swarm iPhone regression
+        run: |
+          set -euo pipefail
+          timeout 120s node scripts/late_game_mobile_bot.mjs
+      - name: Night Crawler and Good Dogs runtime
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=15s 360s npm run runtime-bot
+      - name: Good Dogs progression
+        run: |
+          set -euo pipefail
+          timeout 270s node scripts/good_boys_progression_bot.mjs
+      - name: Good Dogs background bible
+        run: |
+          set -euo pipefail
+          timeout 210s node scripts/good_boys_background_bible_bot.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: merge-gate-browser-${{ github.sha }}
+          path: runtime-bot-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+
+  required:
+    name: required
+    if: always()
+    needs: [static, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Enforce authoritative gate
+        env:
+          STATIC_RESULT: ${{ needs.static.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          set -euo pipefail
+          printf 'static=%s\nbrowser=%s\n' "$STATIC_RESULT" "$BROWSER_RESULT"
+          test "$STATIC_RESULT" = success
+          test "$BROWSER_RESULT" = success
