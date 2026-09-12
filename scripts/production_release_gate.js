@@ -71,6 +71,9 @@ const tests = [
   "test_production_gameplay_experience.js",
   "test_orbital_scene_staging.js",
   "test_night_lifecycle.js",
+  "test_night_mobile_visual_contract.js",
+  "test_gameplay_recording_cohesion.js",
+  "test_recording_world_cohesion.js",
   "test_ui_coop_contract.js"
 ];
 

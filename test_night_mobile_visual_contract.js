@@ -9,5 +9,5 @@ assert.ok(src.includes("#toast{top:auto"),"Night tutorial toast must move out of
 assert.ok(src.includes("E PUNCH · J KICK · G GRAB · SPACE JUMP · ↑/↓ AIM"),"Night mobile tutorial must use the compact control hint");
 assert.ok(src.includes("MutationObserver"),"Night mobile presentation must follow runtime ownership without another polling timer");
 assert.ok(boot.includes('"night_mobile_visual_cohesion.js"'),"Production bootstrap must load Night mobile cohesion after Night input");
-assert.ok(/VERSION=35/.test(boot),"Production bootstrap must cache-bump the Night mobile presentation change");
+const version=Number((boot.match(/VERSION=(\d+)/)||[])[1]);assert.ok(version>=35,"Production bootstrap must retain or advance the Night mobile cache-bump contract");
 console.log("Night mobile visual contract: PASS");
