@@ -403,7 +403,15 @@ function sfx(kind) {
   if (sfxMuted) return;
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    if (AC.state === "suspended") AC.resume();
+    if (AC.state === "suspended") { const resumed=AC.resume(); if(resumed&&resumed.catch)resumed.catch(()=>{}); }
+    const combatAudio=window.TechOpsCombatAudio;
+    const combatAliases={jump:"jump",dash:"dash",block:"block",parry:"parry",ping:"whiff",hit:"jab",bad:"hurt"};
+    const combatCue=String(kind).startsWith("combat_")?kind:(S&&S.nightMode&&combatAliases[kind]?"combat_"+combatAliases[kind]:null);
+    if(combatCue&&combatAudio){
+      const nm=S&&S.nightMode,at=window.__nightCombatEvent;
+      const pan=nm&&at&&String(kind).startsWith("combat_")?(at.x-(nm.x+nm.w/2))/500:0;
+      if(combatAudio.play(combatCue,{context:AC,volume:window.V67SET?window.V67SET.volSfx:1,pan}))return;
+    }
     const t0 = AC.currentTime;
     const notes = {
       hit: [[220, 0, .08, "square"], [110, .06, .1, "square"]],
@@ -1961,6 +1969,7 @@ function rollLoot(minRarity) {
   return { ...pool[0] };
 }
 function resolveTicket(n) {
+  if(!n || n.done)return false;
   const s = S;
   n.done = true; s.ticketsDone++;
   s.meta.recentTypes = s.meta.recentTypes || [];
@@ -2022,6 +2031,7 @@ function resolveTicket(n) {
   s.rep[n.dept] = clamp(s.rep[n.dept] + repGain, 0, 5);
   addXP(10);
   toast(`✅ Ticket closed — ${n.type.label}<br>${n.dept} rep +${repGain} ${"⭐".repeat(s.rep[n.dept])}`);
+  if(n.done && window.TechOpsOfficeMemory)window.TechOpsOfficeMemory.captureTicket(n,s);
   advanceClock(20);
   updateHUD();
   checkDayEnd();
@@ -2144,7 +2154,7 @@ function advanceClock(min) {
   }
   updateHUD();
 }
-function fmtClock(c) { const h = Math.floor(c / 60), m = c % 60; return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`; }
+function fmtClock(c) { c=((Math.floor(Number(c)||0)%1440)+1440)%1440; const h = Math.floor(c / 60), m = c % 60; return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`; }
 function updateHUD() {
   const s = S; if (!s) return;
   $("hud-day").textContent = `DAY ${s.day}`;
@@ -2298,6 +2308,7 @@ function staffWork() {
     if (roll < acc - misChance) {
       // clean solve
       open.done = true; s.ticketsDone++;
+      if(window.TechOpsOfficeMemory)window.TechOpsOfficeMemory.captureTicket(open,s,m.name);
       s.rep[open.dept] = clamp(s.rep[open.dept] + 1, 0, 5);
       addXP(tier.xp);
       s.meta.closed++;

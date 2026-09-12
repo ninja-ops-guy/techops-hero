@@ -42,5 +42,18 @@ elements.dialogue.classList.remove("hidden");
 context.S={nightMode:false,meta:{_v736:{m:6}},inDialog:true};context.NM=null;context.__productionModeRouterError="good_boys_pair_timeout";api.launchGoodBoys();flush();
 assert.ok(context.S.nightMode,"Good Boys resume must enter Night engine");assert.ok(api.pairReady(),"Good Boys resume must attach Katrin and Manchez");assert.strictEqual(context.S.inDialog,false,"Good Boys handoff must not leave a hidden dialog blocking pair input");assert.ok(v736Calls>=1);assert.strictEqual(context.localStorage.getItem("techops_char"),null,"Good Boys cannot inherit Night Crawler character selection");assert.strictEqual(context.__productionModeRouterError,null,"successful pair attach clears stale timeout telemetry");
 
+// A deferred pair provider must still prime the engine independently of the
+// street-launch transaction. Cancellation must not restart either mode later.
+context.S={nightMode:false,meta:{},map:[[0]],inDialog:false};context.NM=null;
+context.v736.start=function(){v736Calls++;if(!context.NM)return;context.NM._v736={active:"katrin",chars:{katrin:{hp:120},manchez:{hp:120}},partner:{x:60,y:220}};};
+api.returnToDay();api.launchGoodBoys();flush();
+assert.ok(api.pairReady(),"deferred Good Dogs provider must be primed without a Night Crawler poll");
+context.S={nightMode:false,meta:{},map:[[0]],inDialog:false};context.NM=null;
+const originalEnter=context.enterNight;context.enterNight=function(){enterCalls++;};
+api.launchNightCrawler();const beforeCancel=enterCalls;api.returnToDay();flush();
+assert.equal(enterCalls,beforeCancel,"cancelled launch must not re-enter night");
+assert.equal(context.__productionActiveMode,null);assert.equal(context.localStorage.getItem("techops_char"),null);
+context.enterNight=originalEnter;
+
 const raw=src.toUpperCase();assert.ok(raw.includes("NIGHT CRAWLER"));assert.ok(raw.includes("118/1984"));assert.ok(raw.includes("GOOD_BOYS_PAIR_TIMEOUT"));assert.ok(raw.includes("CLEARBLOCKINGDIALOG"));assert.ok(src.includes('typeof S!=="undefined"'));assert.ok(src.includes('typeof NM!=="undefined"'));assert.ok(src.includes("never calls feature tick()"),"v7+ router must not re-enter feature wrapper installers");assert.ok(src.includes("defers authored Good Boys title-button launches to the campaign director"),"v7+ router must preserve single-authority title launch routing");assert.ok(!src.includes('root.NM&&'));
 console.log(`Production mode router v${api.VERSION} input/coop regression: PASS`);

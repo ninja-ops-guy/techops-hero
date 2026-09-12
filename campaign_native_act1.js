@@ -281,6 +281,9 @@
     ]);
   }
 
+  function handoffOption() {
+    return { t: "Shift handoff / follow-up work", f: function () { if(root.TechOpsOfficeMemory)return root.TechOpsOfficeMemory.open();return callDialog("SHIFT HANDOFF", "The follow-up service is still loading. Your current casebook remains available.", [{t:"Back",f:openWorkstation}]); } };
+  }
   function workstationOptions() {
     return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat([{ t: "Exit workstation", f: closeDialog }]);
   }
@@ -297,11 +300,11 @@
     setAssetContext("workstation");
     var state = ensureWorkstationChecked(loadState());
     if (tab === "QUEUE") {
-      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL OPENING COMPLETE") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL OPENING COMPLETE") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, handoffOption(), { t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "TEAMS") {
       var messages = Object.keys(TICKET_COPY).map(function (id) { return casebookEscape(ticketFollowUp(state, id)); }).join("<br><br>");
-      return callDialog("WORKSTATION // TEAMS", messages, [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // TEAMS", messages, [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, handoffOption(), { t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "ALERTS") {
       return callDialog("WORKSTATION // ALERTS", "02:13  SECTOR04-EAST  ACCESS GRANTED<br>05:42  PLATING-WS07  SERVICE RECOVERY FAILED<br>07:18  SHIP-LBL02  QUEUE RETRY LIMIT<br><br>Nothing here says conspiracy. It says the morning has work in it.", [{ t: "Back to desktop", f: openWorkstation }]);
@@ -500,7 +503,7 @@
     root.__techopsCampaignNativeAct1Installed = true;
     if (typeof root.setupDay === "function") {
       var originalSetupDay = root.setupDay;
-      root.setupDay = function () { originalSetupDay.apply(this, arguments); ensureWorld(); syncDayWorkMeta(); };
+      root.setupDay = function () { originalSetupDay.apply(this, arguments); ensureWorld(); syncDayWorkMeta(); if(root.TechOpsOfficeMemory){try{root.TechOpsOfficeMemory.syncKnowledge(loadState(),gameState());}catch(e){root.__officeMemoryError=String(e&&e.message||e);}} };
     }
     if (typeof root.advanceClock === "function") {
       var originalAdvanceClock = root.advanceClock;

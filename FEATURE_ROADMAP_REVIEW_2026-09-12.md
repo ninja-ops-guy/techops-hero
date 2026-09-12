@@ -118,3 +118,18 @@ with a new multi-step investigation. A future opening-depth pass should establis
 which live runtime route owns questioning, competing hypotheses, field verification
 and persistence before changing it, then prove the full route with real input.
 Do not call the new read-only casebook that missing investigation mechanic.
+
+## Follow-on gameplay pass (PR #23)
+
+PRs #20 and #22 are now merged: contextual combat and the first-time Shipping/
+Plating investigation loop are no longer merely proposed/open. The preceding
+review sections are retained as an audit of their original review time.
+
+The next implementation adds contact-based fighting SFX, continuous ordinary-night
+time, a route journal/field guide, a skippable home-to-shift handoff, and persistent
+next-day office rechecks with publishable operational knowledge. Scope, access,
+authority boundaries and remaining acceptance are in
+`docs/GAMEPLAY_QUALITY_PASS_2026-09-12.md`. The recurrence feature distinguishes
+unverified risk from observed failure; it does not manufacture a fault for every
+partial closure or rewrite the original owner's evidence. Art/hardware acceptance
+and full unassisted campaign completion are not marked complete by this pass.

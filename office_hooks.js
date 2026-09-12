@@ -186,8 +186,9 @@ const REMOTE_NO = {
 };
 function mikeDesk() {
   const s = S;
+  const handoff = window.TechOpsOfficeMemory ? [{t:"Shift handoff / follow-up work",f:()=>window.TechOpsOfficeMemory.open()}] : [];
   const open = s.tickets.filter(t => !t.done && !t.ambient && t.type);
-  if (!open.length) return dlg("🖥️ MIKE'S DESK", "You log in. Dual monitors bloom to life.<br><br>The queue is <b>empty</b>. A rare, beautiful thing.", [{ t: "Bask in it", f: closeDlg }]);
+  if (!open.length) return dlg("🖥️ MIKE'S DESK", "You log in. Dual monitors bloom to life.<br><br>The queue is <b>empty</b>. A rare, beautiful thing.", handoff.concat([{ t: "Bask in it", f: closeDlg }]));
   const opts = open.slice(0, 6).map(t => {
     const ok = REMOTE_OK[t.type.id];
     return {
@@ -195,6 +196,7 @@ function mikeDesk() {
       f: () => ok ? remoteFix(t) : dlg("🔴 HANDS-ON ONLY", `<b>${t.type.label}</b> can't be fixed from a chair — ${REMOTE_NO[t.type.id] || "it needs a site visit"}.<br><small>Real helpdesk rule: know which tickets are desk work and which are shoe leather.</small>`, [{ t: "Back", f: mikeDesk }]),
     };
   });
+  opts.push(...handoff);
   opts.push({ t: "Log off", f: closeDlg });
   dlg("🖥️ MIKE'S DESK — REMOTE SESSION", `You log in. RMM, ADUC, Exchange admin, DNS manager — all one alt-tab away.<br><br><small>🟢 remote-fixable · 🔴 needs a site visit · Each attempt: 10 min</small>`, opts);
 }

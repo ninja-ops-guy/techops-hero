@@ -264,3 +264,20 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
 @keyframes techops-scene-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 #dialogue:not(.hidden),#battle:not(.hidden),#v722-cine,#good-boys-campaign-intro{animation:techops-scene-in 180ms ease-out both}
 @media(prefers-reduced-motion:reduce){#dialogue:not(.hidden),#battle:not(.hidden),#v722-cine,#good-boys-campaign-intro{animation:none}}
+
+/* Ordinary Night has its own in-world HUD. Keep music/menu available, not day counters. */
+body.techops-night-streets #hud { display:block !important; pointer-events:none; }
+body.techops-night-streets #hud-left,body.techops-night-streets #hud-bars,
+body.techops-night-streets #hud-budget,body.techops-night-streets #hud-tickets,
+body.techops-night-streets #hud-prod,body.techops-night-streets #btn-twin,
+body.techops-night-streets #btn-sweep,body.techops-night-streets #chaos-banner,
+body.techops-night-streets #quest-tracker { display:none !important; }
+body.techops-night-streets #hud-top { background:transparent; border:0; box-shadow:none; justify-content:flex-end; }
+body.techops-night-streets #hud-right { pointer-events:auto; }
+#night-home-transition { position:fixed; inset:0; z-index:20000; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:24px; padding:24px; background:linear-gradient(180deg,rgba(2,6,12,.9),rgba(9,17,24,.72)); color:#f2f5f8; font-family:monospace; text-align:center; animation:night-home-fade .65s ease both; }
+#night-home-transition .night-home-frame { width:min(680px,95%); padding:45px 14px; border-block:1px solid #99b8c35c; }
+#night-home-transition small { letter-spacing:.17em; color:#b0c5ce; }
+#night-home-caption { font-size:clamp(18px,4vw,30px); line-height:1.4; min-height:3em; }
+#night-home-transition button { min-height:48px; padding:12px 20px; margin-bottom:env(safe-area-inset-bottom); border:1px solid #9dbfcf; border-radius:8px; background:#07151e; color:#f5fafc; font:700 14px monospace; touch-action:manipulation; }
+@keyframes night-home-fade { from { opacity:0; } to { opacity:1; } }
+@media(prefers-reduced-motion:reduce){ #night-home-transition { animation:none; } }

@@ -1,4 +1,4 @@
-/* TechOps Hero — production mode router v10.
+/* TechOps Hero — production mode router v11.
  * Owns alternate-mode convergence and clears legacy dialogue state before
  * handing input to the Night engine. Production wrapper installation is a
  * one-shot bootstrap concern; this router only refreshes mode state/UI and
@@ -13,7 +13,7 @@
   "use strict";
   if(!root)return;
   try{if(root.TechOpsProductionModeRouter&&root.TechOpsProductionModeRouter.timer)root.clearInterval(root.TechOpsProductionModeRouter.timer);}catch(e){}
-  var VERSION=10,desired=null,timer=null,introAutomationAt=0,
+  var VERSION=11,nightGeneration=0,desired=null,timer=null,introAutomationAt=0,
       nightLaunchPhase="idle",nightLaunchIssued=false,nightPollActive=false,
       nightCallbacks=[],nightTraceSeq=0,nightTitleStartIssued=false;
 
@@ -43,7 +43,7 @@
   function nightSnapshot(event,extra){var s=state(),n=world(),o={seq:++nightTraceSeq,at:(root.performance&&typeof root.performance.now==="function")?root.performance.now():(Date.now?Date.now():0),event:event||"snapshot",phase:nightLaunchPhase,desired:desired,inDialog:!!(s&&s.inDialog),nightMode:!!(s&&s.nightMode),hasS:!!s,hasNM:!!n,runInitialized:runInitialized(),cinematic:nightCinematicVisible(),runtimeMounted:nightRuntimeMounted()};if(extra)for(var k in extra)if(Object.prototype.hasOwnProperty.call(extra,k))o[k]=extra[k];return o;}
   function nightTrace(event,extra){var a=root.__productionNightLaunchTrace||(root.__productionNightLaunchTrace=[]),o=nightSnapshot(event,extra);a.push(o);if(a.length>160)a.splice(0,a.length-160);root.__productionNightLaunchPhase=nightLaunchPhase;return o;}
   function setNightPhase(phase,event,extra){nightLaunchPhase=phase;root.__productionNightLaunchPhase=phase;return nightTrace(event||("phase."+phase),extra);}
-  function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
+  function beginNightLaunch(fromCapture){nightGeneration++;nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
   function runNightCallbacks(){var cbs=nightCallbacks.splice(0);for(var i=0;i<cbs.length;i++)try{cbs[i]();}catch(e){}}
   function finishNightLaunch(){clearBlockingDialog();forceNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionNightLaunchOk=true;root.__productionActiveMode="nightcrawler";setNightPhase("ready","router.ready");runNightCallbacks();}
   function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];}
@@ -91,9 +91,10 @@
     if(typeof done==="function")nightCallbacks.push(done);
     if(nightWorldReady()){finishNightLaunch();return true;}
     if(nightPollActive)return true;
-    nightPollActive=true;var tries=0,max=600,wasCinematic=nightCinematicVisible();
+    nightPollActive=true;var generation=nightGeneration,tries=0,max=600,wasCinematic=nightCinematicVisible();
     if(wasCinematic){nightLaunchIssued=true;setNightPhase("cinematic","v722.observe");}else issueNightEnter();
     function poll(){
+      if(!nightPollActive||generation!==nightGeneration)return;
       var cine=nightCinematicVisible();
       if(cine){if(!wasCinematic)nightTrace("v722.begin");wasCinematic=true;nightLaunchIssued=true;nightLaunchPhase="cinematic";root.__productionNightLaunchPhase=nightLaunchPhase;}
       else if(wasCinematic){wasCinematic=false;setNightPhase("mounting","v722.end");}
@@ -109,8 +110,9 @@
   }
 
   function primeNightRuntime(done){
-    var tries=0,max=600,issued=false;
+    var generation=nightGeneration,tries=0,max=600,issued=false;
     function poll(){
+      if(generation!==nightGeneration)return;
       var cine=nightCinematicVisible();
       if(nightRuntimeMounted()&&!cine){clearBlockingDialog();if(typeof done==="function")done();return;}
       if(!cine&&!issued){
@@ -140,12 +142,14 @@
   function confirmAutomationIntro(){try{if(!(root.navigator&&root.navigator.webdriver)||!goodBoysIntroVisible())return false;var now=Date.now?Date.now():0;if(!introAutomationAt)introAutomationAt=now;if(now-introAutomationAt<450)return false;var b=root.document&&root.document.getElementById("good-boys-begin");if(b&&typeof b.click==="function"){b.click();root.__productionAutomationConfirmedGoodBoysIntro=true;introAutomationAt=0;return true;}}catch(e){}return false;}
   function finishGoodBoys(){clearBlockingDialog();clearNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionGoodBoysLaunchOk=true;root.__productionActiveMode="goodboys";root.__productionGoodBoysLaunchOwner=null;}
   function launchGoodBoys(){
+    nightGeneration++;nightPollActive=false;nightCallbacks=[];
     setDesired("goodboys");root.__productionGoodBoysLaunchOwner="router_fallback";clearNightIdentity();hideLegacyShell();introAutomationAt=0;
     if(goodBoysCinematicVisible()){root.__productionModeRouterError="good_boys_launch_deferred_for_cinematic";return false;}
     clearBlockingDialog();
     try{if(root.v736&&typeof root.v736.start==="function")root.v736.start();else root.__productionModeRouterGoodBoysStartError="v736_start_missing";}catch(e){root.__productionModeRouterGoodBoysStartError=String(e&&e.stack||e);}
-    var tries=0,max=400,priming=false;
+    var generation=nightGeneration,tries=0,max=400,priming=false;
     function poll(){
+      if(generation!==nightGeneration)return;
       restoreRuntimeUi();if(pairReady())return finishGoodBoys();
       if(goodBoysCinematicVisible()){tries=0;confirmAutomationIntro();(root.setTimeout||setTimeout)(poll,25);return;}
       introAutomationAt=0;
@@ -164,6 +168,12 @@
     if(nightButton||t.indexOf("NIGHT CRAWLER")>=0){try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();ev&&ev.stopImmediatePropagation&&ev.stopImmediatePropagation();}catch(e){}setDesired("nightcrawler");forceNightIdentity();launchNightCrawler(true);return;}
     if(t.indexOf("118/1984")>=0||t.indexOf("BREAKOUT")>=0||t.indexOf("GOOD BOYS")>=0){setDesired("goodboys");clearNightIdentity();var director=root.TechOpsGoodBoysCampaignDirector;if(director&&typeof director.showOpening==="function"){root.__productionGoodBoysLaunchOwner="campaign_director";return;}(root.setTimeout||setTimeout)(launchGoodBoys,0);}
   }
+  function returnToDay(){
+    nightGeneration++;setDesired(null);nightLaunchPhase="idle";nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;
+    root.__productionActiveMode=null;root.__productionNightLaunchOk=false;root.__productionNightLaunchPhase="idle";clearNightIdentity();
+    try{const d=root.document;["hud","dialogue","panel","battle","eod"].forEach(id=>{const el=d&&d.getElementById(id);if(el&&el.style)el.style.removeProperty("display");});}catch(e){}
+    nightTrace("return.day");return true;
+  }
   function healthTick(){
     if(desired==="nightcrawler"){forceNightIdentity();hideLegacyShell(!runInitialized());if(nightWorldReady()){if(nightLaunchPhase!=="ready")finishNightLaunch();}else{if(!state())issueCanonicalTitleStart();enterNightCrawlerReliably();}}
     else if(desired==="goodboys"){hideLegacyShell();if(goodBoysCinematicVisible()){confirmAutomationIntro();return;}if(nightRuntimeMounted()&&pairReady())finishGoodBoys();}
@@ -172,5 +182,5 @@
   }
   try{root.document&&root.document.addEventListener("click",captureIntent,true);}catch(e){}
   timer=root.setInterval?root.setInterval(healthTick,100):null;
-  root.TechOpsProductionModeRouter={VERSION:VERSION,setDesired:setDesired,state:state,world:world,runInitialized:runInitialized,nightRuntimeMounted:nightRuntimeMounted,nightWorldReady:nightWorldReady,nightCinematicVisible:nightCinematicVisible,pairReady:pairReady,clearErrors:clearErrors,clearBlockingDialog:clearBlockingDialog,hideLegacyShell:hideLegacyShell,restoreRuntimeUi:restoreRuntimeUi,launchNightCrawler:launchNightCrawler,launchGoodBoys:launchGoodBoys,enterNightReliably:enterNightReliably,goodBoysIntroVisible:goodBoysIntroVisible,goodBoysCinematicVisible:goodBoysCinematicVisible,confirmAutomationIntro:confirmAutomationIntro,healthTick:healthTick,timer:timer};
+  root.TechOpsProductionModeRouter={VERSION:VERSION,returnToDay:returnToDay,setDesired:setDesired,state:state,world:world,runInitialized:runInitialized,nightRuntimeMounted:nightRuntimeMounted,nightWorldReady:nightWorldReady,nightCinematicVisible:nightCinematicVisible,pairReady:pairReady,clearErrors:clearErrors,clearBlockingDialog:clearBlockingDialog,hideLegacyShell:hideLegacyShell,restoreRuntimeUi:restoreRuntimeUi,launchNightCrawler:launchNightCrawler,launchGoodBoys:launchGoodBoys,enterNightReliably:enterNightReliably,goodBoysIntroVisible:goodBoysIntroVisible,goodBoysCinematicVisible:goodBoysCinematicVisible,confirmAutomationIntro:confirmAutomationIntro,healthTick:healthTick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);

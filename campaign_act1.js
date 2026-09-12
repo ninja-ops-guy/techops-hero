@@ -140,6 +140,7 @@
     if (!state.history) state.history = [];
     if (!state.evidence) state.evidence = { ghostIdentityEvidence: emptyFact() };
     if (!state.evidence.ghostIdentityEvidence) state.evidence.ghostIdentityEvidence = emptyFact();
+    rememberAuthoredWork(state);
     return syncLegacyFlags(state);
   }
 
@@ -256,8 +257,120 @@
     state.tickets[ticketId] = { status: "resolved", ownerId: state.assignments[ticketId], technicalResolution: true, verification: result.verification, humanOutcome: result.humanOutcome, completedAt: now() };
     state.verificationHistory.push({ ticketId: ticketId, strength: result.verification, at: now() });
     state.humanOutcomes[ticketId] = result.humanOutcome;
+    rememberAuthoredWork(state);
     return state.tickets[ticketId];
   }
+
+  // Ordinary work remembers outcomes without changing story evidence or old closures.
+  function officeMemory(state) {
+    if (!state.officeMemory) state.officeMemory = { version: 1, records: {}, order: [], knowledge: {} };
+    var memory = state.officeMemory;
+    assert(memory.version === 1 && memory.records && Array.isArray(memory.order) && memory.knowledge, "Unsupported office memory");
+    return memory;
+  }
+  function recordOfficeClosure(state, source) {
+    assert(source && ["authored", "procedural"].indexOf(source.kind) >= 0, "Ordinary closure source required");
+    assert(typeof source.id === "string" && source.id.length > 0 && source.id.length <= 160, "Closure id required");
+    assert(Number.isInteger(source.day) && source.day >= 1, "Closure day required");
+    assert(["partial", "strong"].indexOf(source.verification) >= 0, "Explicit verification required");
+    assert(["restored", "degraded", "unmet", "unknown"].indexOf(source.humanOutcome) >= 0, "Explicit human outcome required");
+    if (source.kind === "authored") assert(TICKET_TEMPLATES[source.id] && TICKET_TEMPLATES[source.id].ordinary, "Story evidence is not ordinary follow-up work");
+    var m = officeMemory(state), id = source.kind + ":" + source.day + ":" + source.id;
+    if (Object.prototype.hasOwnProperty.call(m.records, id)) return clone(m.records[id]);
+    // Only archive completed follow-ups when the ledger fills; never evict active work.
+    if (m.order.length >= 240) {
+      var old = m.order.find(function (key) { return m.records[key].followUp.phase === "closed"; });
+      if (!old) return null;
+      delete m.records[old]; m.order.splice(m.order.indexOf(old), 1);
+    }
+    function text(v, fallback) { return typeof v === "string" ? v.slice(0, 240) : fallback; }
+    var record = { id: id, sourceId: source.id, kind: source.kind, day: source.day, dueDay: source.day + 1,
+      title: text(source.title, "Service follow-up"), department: text(source.department, "Unrecorded"),
+      ownerId: text(source.ownerId, "unrecorded"), typeId: text(source.typeId, ""),
+      humanNeed: text(source.humanNeed, "The requester must complete the original task."),
+      verification: source.verification, humanOutcome: source.humanOutcome,
+      repeatRisk: source.verification !== "strong" || source.humanOutcome !== "restored",
+      // This is a simulation seed, not an observed recurrence. It is never displayed
+      // as an incident until a player performs the next-day checks.
+      pendingRepeat: source.pendingRepeat === true,
+      completedAt: typeof source.completedAt === "string" ? source.completedAt : null,
+      followUp: { phase: "intake", observations: {}, ruledOut: [], hypothesis: null, fixApplied: false, verified: false, published: false, events: [] }
+    };
+    m.records[id] = record; m.order.push(id); return clone(record);
+  }
+  function rememberAuthoredWork(state) {
+    Object.keys(TICKET_TEMPLATES).forEach(function (id) {
+      var t = state.tickets && state.tickets[id], def = TICKET_TEMPLATES[id];
+      if (!def.ordinary || !t || t.status !== "resolved" || t.technicalResolution !== true) return;
+      if (["partial", "strong"].indexOf(t.verification) < 0 || ["restored", "degraded", "unmet"].indexOf(t.humanOutcome) < 0) return;
+      recordOfficeClosure(state, { kind: "authored", id: id, day: 1, title: id === "shipping_cannot_print" ? "Shipping Cannot Print" : "Plating Workstation Down",
+        department: def.department, humanNeed: def.humanNeed, ownerId: t.ownerId || state.assignments[id],
+        verification: t.verification, humanOutcome: t.humanOutcome, completedAt: t.completedAt });
+    });
+    return state;
+  }
+  function officeRecords(state, day) {
+    var m = state.officeMemory; if (!m) return [];
+    return m.order.map(function (key) {
+      var r = m.records[key], f = r.followUp;
+      // Never return the unobserved recurrence seed or an answer catalogue to the UI.
+      return { id: r.id, title: r.title, day: r.day, dueDay: r.dueDay, due: day >= r.dueDay,
+        department: r.department, ownerId: r.ownerId, humanNeed: r.humanNeed, verification: r.verification,
+        humanOutcome: r.humanOutcome, repeatRisk: r.repeatRisk, completedAt: r.completedAt,
+        followUp: clone(f) };
+    });
+  }
+  function followUpAction(state, id, day, action, value) {
+    var m = officeMemory(state), r = Object.prototype.hasOwnProperty.call(m.records, id) && m.records[id];
+    assert(r, "Unknown follow-up record"); assert(Number.isInteger(day) && day >= r.dueDay, "Follow-up is not due yet");
+    var f = r.followUp;
+    if (f.phase === "closed") return { changed: false, message: "Follow-up already closed." };
+    function event(type, message) { f.events.push({ type: type, day: day, by: "mike", at: now(), message: message }); return { changed: true, message: message }; }
+    if (action === "intake") {
+      if (f.phase !== "intake") return { changed: false, message: "Requester context is already recorded." };
+      f.phase = "evidence"; return event("requester_context", r.humanNeed);
+    }
+    if (action === "observe") {
+      assert(f.phase === "evidence", "Gather observations before forming a hypothesis");
+      assert(["service_probe", "requester_trial"].indexOf(value) >= 0, "Unknown observation");
+      if (f.observations[value]) return { changed: false, message: f.observations[value].text };
+      var degraded = r.humanOutcome === "degraded" || r.humanOutcome === "unmet", pass, text;
+      if (value === "service_probe") { pass = !degraded; text = pass ? "The service and device checks pass. This alone does not prove the requester's work succeeds." : "The service dependency check fails; the earlier degraded outcome is still reproducible."; }
+      else { pass = !degraded && !r.pendingRepeat; text = pass ? "The requester completes the original task successfully in their own session." : "The requester cannot complete the original task. Follow-up now confirms a real service problem, not just recurrence risk."; }
+      f.observations[value] = { passed: pass, text: text, day: day };
+      if (Object.keys(f.observations).length === 2) f.phase = "hypothesis";
+      return event("observation_" + value, text);
+    }
+    if (action === "hypothesis") {
+      assert(f.phase === "hypothesis", "Two independent observations are required");
+      assert(["service_dependency", "requester_path", "verification_only"].indexOf(value) >= 0, "Unknown hypothesis");
+      var expected = !f.observations.service_probe.passed ? "service_dependency" : !f.observations.requester_trial.passed ? "requester_path" : "verification_only";
+      if (value !== expected) {
+        if (f.ruledOut.indexOf(value) < 0) f.ruledOut.push(value);
+        return { changed: true, correct: false, message: "That does not explain both observations. Compare the service check with the requester's actual result; do not repair a healthy dependency." };
+      }
+      f.hypothesis = value; f.phase = expected === "verification_only" ? "verify" : "remediation";
+      var result = event("hypothesis_supported", expected === "verification_only" ? "No recurrence is observed. Close the verification gap without inventing a fault." : "The observed failure has a specific scope. Remediate that scope before declaring restoration."); result.correct = true; return result;
+    }
+    if (action === "remediate") {
+      assert(f.phase === "remediation" && f.hypothesis, "Supported remediation required");
+      f.fixApplied = true; f.phase = "verify";
+      return event("targeted_remediation", f.hypothesis === "requester_path" ? "Restore the requester's approved service path and refresh their session, without changing healthy shared infrastructure." : "Restore the failed service dependency using its documented recovery procedure.");
+    }
+    if (action === "verify") {
+      assert(f.phase === "verify" && (f.fixApplied || f.hypothesis === "verification_only"), "Verification requires a supported resolution");
+      f.verified = true; f.verifiedDay = day; f.phase = "prevention";
+      return event("follow_up_verified", "Technical checks pass and the requester repeats the real task successfully. The new verification belongs to this follow-up, not the old closure.");
+    }
+    if (action === "publish" || action === "close") {
+      assert(f.phase === "prevention" && f.verified, "Requester verification required before closing");
+      f.published = action === "publish"; f.phase = "closed";
+      if (f.published && r.typeId && /^[a-z][a-z0-9_]{0,39}$/.test(r.typeId)) m.knowledge[r.typeId] = { sourceId: id, day: day, verified: true };
+      return event(f.published ? "verified_handoff_published" : "follow_up_closed", f.published ? "Publish the verified method and requester check for the next shift. Future remote and staff work can reuse this knowledge." : "Close the verified follow-up without publishing a reusable method.");
+    }
+    throw new Error("Unknown follow-up action");
+  }
+
   function enterSector04(state) {
     assert(state.flags.day_work_unlocked, "Day shift must unlock before Night Walker");
     state.flags.sector04_entered = true; state.campaign.phase = "night_walker";
@@ -288,6 +401,8 @@
   }
   function transitionToTuesday(state) {
     assert(state.flags.sector04_completed, "Sector 04 must be understood and verified before Tuesday");
+    if(state.flags.tuesday_morning_reached)return state;
+    rememberAuthoredWork(state);
     state.campaign.day = 2; state.campaign.chapter = "ghost_frequency"; state.campaign.phase = "morning";
     state.flags.tuesday_morning_reached = true; state.night = initialState().night;
     state.history.push({ type: "day_transition", fromDay: 1, toDay: 2, at: now() });
@@ -314,6 +429,7 @@
     checkWorkstation: checkWorkstation, hearRedInMirror: hearRedInMirror, findFeliciaBlog: findFeliciaBlog, completeFeliciaVideo: completeFeliciaVideo, unlockDayWork: unlockDayWork, completeWorkstation: completeWorkstation,
     recordGhostEvidence: recordGhostEvidence, resolveTicket: resolveTicket, enterSector04: enterSector04,
     insightAccessGuard: insightAccessGuard, suppressAccessGuard: suppressAccessGuard, severAccessController: severAccessController, transitionToTuesday: transitionToTuesday,
+    recordOfficeClosure: recordOfficeClosure, rememberAuthoredWork: rememberAuthoredWork, officeRecords: officeRecords, followUpAction: followUpAction,
     save: save, load: load
   };
   if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:campaign-ready", { detail: { version: VERSION, api: api } }));

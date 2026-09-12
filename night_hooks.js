@@ -186,6 +186,7 @@ const __origInteractV50 = interact;
 interact = function () {
   const s = S;
   if (s && s.nightMode) {
+    if (window.TechOpsNightSession && window.TechOpsNightSession.active(NM) && NM.district === "home" && NM.x >= window.TechOpsNightSession.HOME_X - 90 && !s.inDialog) return window.TechOpsNightSession.requestHome(NM);
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
     if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
@@ -293,6 +294,7 @@ function enterNight() {
     msg: `DOWNTOWN — STREET 1/2 · clear every enemy · ← the Charger waits`, msgT: performance.now() + 3600,
   };
   s.nightMode = NM;
+  if(window.TechOpsNightSession)window.TechOpsNightSession.ui(NM);
   try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("nightcrawler"); } catch (e) { }
   sfx("portal");
   // the day shift is over — its tracker leaves the screen until morning
@@ -315,6 +317,7 @@ function nmCarMenu() {
     };
   });
   opts.push({ t: `🏠 HOME STREET <small>· call it a night</small>`, f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: "home" }; sfx("portal"); } });
+  if(globalThis.TechOpsNightSession)opts.push({t:"Route journal / combat guide",f:globalThis.TechOpsNightSession.openJournal});
   opts.push({ t: "Back to the street.", f: closeDlg });
   dlg("🚗 THE CHARGER — where to?", `The engine idles. New Haven glows wet and neon.<br><small>Cleared districts stay cleared tonight. Pay scales with danger.</small>`, opts);
 }
@@ -322,8 +325,7 @@ function nmCarMenu() {
 function nmNextStage() {
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
-  advanceClock(20); // each street takes 20 minutes
-  if (NM.district === "home") return exitNight(true);
+  if (NM.district === "home") return window.TechOpsNightSession ? window.TechOpsNightSession.requestHome(NM) : exitNight(true);
   const st = NM.street + 1;
   if (st > D.streets) {
     // district cleared — back to the car, map reopens
@@ -343,6 +345,8 @@ function nmNextStage() {
 }
 
 function exitNight(homeSafe) {
+  if(!NM || !S) return false;
+  if(window.TechOpsNightSession && window.TechOpsNightSession.active(NM) && !window.TechOpsNightSession.settle(NM,S,homeSafe))return false;
   const s = S, cash = NM.cash, kills = NM.kills, districts = Object.keys(NM.done).length;
   const qt = document.getElementById("quest-tracker");
   if (qt && !NM._qtHidden) qt.classList.remove("hidden"); // day HUD returns in the morning
@@ -498,7 +502,7 @@ function stepNM(dt) {
         NM.hp -= chip ? Math.ceil(e.dmg * .25) : e.dmg;
         NM.ifr = 22;
         if (!chip) { NM.vx = Math.sign(dx) * -5; NM.vy = -3; if(streetCombat)streetCombat.hurt(NM); }
-        sfx(chip ? "block" : "bad");
+        if(chip || !streetCombat || !streetCombat.active(NM)) sfx(chip ? "block" : "bad");
         NM.msg = chip ? "🛡️ blocked!" : `💥 ${e.name} hits you!`; NM.msgT = now + 900;
         if (NM.hp <= 0) return exitNight(false);
       }
@@ -513,7 +517,7 @@ function stepNM(dt) {
           NM.hp -= chip ? Math.ceil(e.dmg * .3) : Math.ceil(e.dmg * .8);
           if(!chip&&streetCombat)streetCombat.hurt(NM);
           NM.ifr = 22;
-          sfx(chip ? "block" : "bad");
+          if(chip || !streetCombat || !streetCombat.active(NM)) sfx(chip ? "block" : "bad");
           NM.msg = chip ? "🛡️ zap caught on the stance!" : `⚡ drone zap — ${e.dmg} arc damage!`; NM.msgT = now + 900;
           if (NM.hp <= 0) return exitNight(false);
         }
@@ -532,7 +536,7 @@ function stepNM(dt) {
   });
   NM.cam = cameraResult ? cameraResult.x : clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
   if (NM.clear && NM.x > NM_W - 110) nmNextStage();
-  if (NM.district === "home" && NM.x > NM_W - 240) exitNight(true);
+  if (NM.district === "home" && NM.x > NM_W - 240) { if(window.TechOpsNightSession)window.TechOpsNightSession.requestHome(NM);else exitNight(true); }
 }
 
 // ---------- night rendering ----------
