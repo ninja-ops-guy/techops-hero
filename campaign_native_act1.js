@@ -149,6 +149,138 @@
     ].join(" · ");
   }
 
+  // Read-only views of canonical campaign records. Never create evidence, rewards,
+  // ticket completions, or an independent memory save just by opening a screen.
+  function casebookText(value) { return typeof value === "string" ? value.slice(0, 180) : ""; }
+  function casebookEscape(value) {
+    return (typeof value === "string" ? value : "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+  function casebookOwner(id) { var names = { mike: "Mike", amit: "Amit", security: "Security Ops" }; return Object.prototype.hasOwnProperty.call(names, id) ? names[id] : casebookText(id) || "UNASSIGNED"; }
+  function badgeSources(state) {
+    var fact = state && state.evidence && state.evidence.ghostIdentityEvidence;
+    return fact && Array.isArray(fact.sources) ? fact.sources.filter(function (source) { return source && source.id === "badge_impossible_access"; }) : [];
+  }
+  function ticketRecord(state, ticketId) {
+    if (!Object.prototype.hasOwnProperty.call(TICKET_COPY, ticketId)) throw new Error("Unknown casebook ticket");
+    state = state || {};
+    var template = act1().getTicketTemplate(ticketId), record = (state.tickets || {})[ticketId];
+    var access = ticketId === "impossible_access_event", sources = access ? badgeSources(state) : [];
+    var outcome = record && casebookText(record.humanOutcome) || "unrecorded";
+    var summary = (state.humanOutcomes || {})[ticketId];
+    var conflict = !!(record && summary && summary !== record.humanOutcome);
+    var technical = !!(record && record.technicalResolution === true);
+    var verification = record && casebookText(record.verification) || "unrecorded";
+    var verified = !!(record && record.status === "resolved" && technical && verification === "strong" && outcome === "restored" && !conflict);
+    var status = access ? (sources.length ? "DOCUMENTED / UNRESOLVED" : "AWAITING INVESTIGATION") :
+      verified ? "VERIFIED / RESTORED" : record ? "FOLLOW-UP NEEDED" : "OPEN";
+    var need = access ? "Security needs an accountable investigation of an access anomaly." : template.humanNeed;
+    var symptom = access && !sources.length ? "No badge evidence has been documented in this record yet." : template.visibleSymptom;
+    var next = access ? "Document the inconsistency; a valid identity record is not proof of physical presence." :
+      verified ? "Retain the verified outcome for the next handoff." : template.verificationCondition;
+    return {
+      id: ticketId, title: TICKET_COPY[ticketId].title, requester: template.requester,
+      humanNeed: need, symptom: symptom, status: status, needsAttention: access || !verified,
+      assignedOwner: casebookOwner((state.assignments || {})[ticketId]),
+      completionOwner: record ? casebookOwner(record.ownerId) : "Not recorded",
+      technical: access ? "Not a solved ticket" : technical ? "Recorded" : "Not recorded",
+      verification: access ? "Unresolved inconsistency" : verification,
+      humanOutcome: access ? "Unresolved" : outcome, conflict: conflict, next: next,
+      sources: sources.map(function (source) { return { perspective: casebookText(source.perspective) || "unrecorded", discoveredBy: casebookOwner(source.discoveredBy), at: casebookText(source.at) }; })
+    };
+  }
+  function ticketHistory(state) {
+    return Object.keys(TICKET_COPY).map(function (id) { return ticketRecord(state, id); });
+  }
+  function ticketFollowUp(state, ticketId) {
+    var item = ticketRecord(state, ticketId), prefix = item.requester + ": ";
+    if (ticketId === "impossible_access_event") return prefix + (item.sources.length ?
+      "The badge report is on file. We still have a contradiction, not a solved case." : "The access anomaly still needs documented investigation.");
+    if (item.status === "OPEN") return prefix + (ticketId === "shipping_cannot_print" ?
+      "The customs labels are still waiting. Please confirm the actual label, not just the queue." :
+      "The line is waiting. A working desktop alone will not prove production can resume.");
+    if (item.conflict) return prefix + "The closure and human-outcome records disagree. Please reconcile them before calling this restored.";
+    if (item.status === "VERIFIED / RESTORED") return prefix + (ticketId === "shipping_cannot_print" ?
+      "The customs label was confirmed accurate. That was the outcome we needed." :
+      "The production interaction was confirmed. That was the outcome the line needed.");
+    return prefix + "The closure records " + item.humanOutcome + " service with " + item.verification +
+      " verification. Please follow up; a technical fix is not the same as getting our work back.";
+  }
+  function ticketEvents(state, ticketId) {
+    ticketRecord(state, ticketId); // Reject unknown IDs before reading any history.
+    var events = [];
+    function add(at, text) { events.push({ at: casebookText(at), text: text, order: events.length }); }
+    (Array.isArray(state.history) ? state.history : []).forEach(function (event) {
+      if (event && event.type === "ticket_assigned" && event.ticketId === ticketId) add(event.at, "Assigned to " + casebookOwner(event.ownerId));
+    });
+    if (ticketId === "impossible_access_event") {
+      badgeSources(state).forEach(function (source) { add(source.at, "Badge report: " + (casebookText(source.perspective) || "unrecorded perspective") + "; source " + casebookOwner(source.discoveredBy)); });
+    } else {
+      (Array.isArray(state.verificationHistory) ? state.verificationHistory : []).forEach(function (event) {
+        if (event && event.ticketId === ticketId) add(event.at, "Verification recorded: " + (casebookText(event.strength) || "unrecorded"));
+      });
+      var record = (state.tickets || {})[ticketId];
+      if (record) add(record.completedAt, "Closure by " + casebookOwner(record.ownerId) + "; human outcome: " + (casebookText(record.humanOutcome) || "unrecorded"));
+    }
+    events.sort(function (a, b) {
+      var ta = Date.parse(a.at), tb = Date.parse(b.at);
+      if (!Number.isFinite(ta)) ta = Infinity;
+      if (!Number.isFinite(tb)) tb = Infinity;
+      return ta === tb ? a.order - b.order : ta - tb;
+    });
+    return { total: events.length, events: events.slice(-8).map(function (event) { return { at: event.at, text: event.text }; }) };
+  }
+  function readCasebook() {
+    try { return loadState(); }
+    catch (error) {
+      callDialog("TICKET HISTORY UNAVAILABLE", "The saved campaign record could not be read. No progress was changed or replaced.", [{ t: "Close", f: closeDialog }]);
+      return null;
+    }
+  }
+  function openTicketHistory(filter) {
+    var state = readCasebook(); if (!state) return false;
+    setAssetContext("workstation");
+    filter = filter === "attention" ? "attention" : "all";
+    var records = ticketHistory(state).filter(function (item) { return filter !== "attention" || item.needsAttention; });
+    var options = records.map(function (item) { return { t: item.title + " — " + item.status, f: function () { openTicketRecord(item.id, filter); } }; });
+    options.push({ t: filter === "all" ? "Show needs attention" : "Show all records", f: function () { openTicketHistory(filter === "all" ? "attention" : "all"); } });
+    options.push({ t: "Close history", f: closeDialog });
+    return callDialog("WORKSTATION // TICKET HISTORY", "<b>DAY 1 CASEBOOK</b><br>" + (records.length ? "Choose a record to review ownership, verification, and the human outcome." : "No records in this view.") + "<br><br>This is recorded work, not a new investigation. Reading never changes evidence or completes a ticket.", options);
+  }
+  function openTicketRecord(ticketId, filter) {
+    var state = readCasebook(); if (!state) return false;
+    var item = ticketRecord(state, ticketId), esc = casebookEscape;
+    setAssetContext(TICKET_COPY[ticketId].assetContext);
+    var body = "<b>" + esc(item.status) + "</b><br><br>" + esc(item.humanNeed) + "<br>Reported symptom: " + esc(item.symptom) +
+      "<br><br>Assigned owner: " + esc(item.assignedOwner) + "<br>Completion owner: " + esc(item.completionOwner) +
+      "<br>Technical resolution: " + esc(item.technical) + "<br>Verification: " + esc(item.verification) +
+      "<br>Human outcome: " + esc(item.humanOutcome);
+    if (item.conflict) body += "<br><b>Conflicting outcome records — follow-up required.</b>";
+    if (item.sources.length) body += "<br>Recorded perspective: " + esc(item.sources[0].perspective) + " (" + esc(item.sources[0].discoveredBy) + ")";
+    body += "<br><br><b>NEXT:</b> " + esc(item.next);
+    return callDialog("CASEBOOK // " + item.title, body, [
+      { t: "Recorded events", f: function () { openTicketEvents(ticketId, filter); } },
+      { t: "Back to history", f: function () { openTicketHistory(filter); } },
+      { t: "Close record", f: closeDialog }
+    ]);
+  }
+  function openTicketEvents(ticketId, filter) {
+    var state = readCasebook(); if (!state) return false;
+    var log = ticketEvents(state, ticketId), esc = casebookEscape;
+    var body = log.events.map(function (event) {
+      return esc(Number.isFinite(Date.parse(event.at)) ? event.at : "Time not recorded") + "<br>" + esc(event.text);
+    }).join("<br><br>") || "No recorded events. Older saves are not backfilled with invented history.";
+    if (log.total > 8) body = "Latest 8 of " + log.total + " recorded events.<br><br>" + body;
+    return callDialog("CASEBOOK // RECORDED EVENTS", body, [{ t: "Back to record", f: function () { openTicketRecord(ticketId, filter); } }, { t: "Close", f: closeDialog }]);
+  }
+  function openTicketFollowUp(ticketId) {
+    var state = readCasebook(); if (!state) return false;
+    var item = ticketRecord(state, ticketId);
+    return callDialog(item.title, casebookEscape(ticketFollowUp(state, ticketId)) + "<br><br>Recorded completion owner: " + casebookEscape(item.completionOwner) + "<br><b>" + casebookEscape(item.status) + "</b>", [
+      { t: "Review ticket record", f: function () { openTicketRecord(ticketId); } },
+      { t: "Back", f: closeDialog }
+    ]);
+  }
+
   function workstationOptions() {
     return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat([{ t: "Exit workstation", f: closeDialog }]);
   }
@@ -165,10 +297,11 @@
     setAssetContext("workstation");
     var state = ensureWorkstationChecked(loadState());
     if (tab === "QUEUE") {
-      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + (state.assignments.shipping_cannot_print || "UNASSIGNED") + "<br>Plating Workstation Down -> " + (state.assignments.plating_workstation_down || "UNASSIGNED") + "<br>Impossible Access Event -> " + (state.assignments.impossible_access_event || "UNASSIGNED") + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL OPENING COMPLETE") + "</b>", [{ t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL OPENING COMPLETE") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "TEAMS") {
-      return callDialog("WORKSTATION // TEAMS", "Amit: Plating rebooted overnight and did not recover.<br>Shipping: customs labels are vanishing after submission.<br>Security Ops: overnight access anomaly needs an owner.<br><br>The messages establish people and consequences before symptoms become mechanics.", [{ t: "Back to desktop", f: openWorkstation }]);
+      var messages = Object.keys(TICKET_COPY).map(function (id) { return casebookEscape(ticketFollowUp(state, id)); }).join("<br><br>");
+      return callDialog("WORKSTATION // TEAMS", messages, [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "ALERTS") {
       return callDialog("WORKSTATION // ALERTS", "02:13  SECTOR04-EAST  ACCESS GRANTED<br>05:42  PLATING-WS07  SERVICE RECOVERY FAILED<br>07:18  SHIP-LBL02  QUEUE RETRY LIMIT<br><br>Nothing here says conspiracy. It says the morning has work in it.", [{ t: "Back to desktop", f: openWorkstation }]);
@@ -247,7 +380,7 @@
     setAssetContext(TICKET_COPY[ticketId] && TICKET_COPY[ticketId].assetContext);
     var campaign = withAssignedState();
     if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "The queue exists, but its timer has not started. Complete the workstation opening before treating Day 1 tickets.", [{ t: "Open workstation", f: openWorkstation }, { t: "Back", f: closeDialog }]);
-    if (campaign.tickets[ticketId]) return callDialog(TICKET_COPY[ticketId].title, "Already verified.<br><br>" + TICKET_COPY[ticketId].verify, [{ t: "Back", f: closeDialog }]);
+    if (campaign.tickets[ticketId]) return openTicketFollowUp(ticketId);
     act1().resolveTicket(campaign, ticketId, { technicalResolution: true, verification: "strong", humanOutcome: "restored" });
     saveState(campaign);
     return callDialog(TICKET_COPY[ticketId].title, TICKET_COPY[ticketId].body + "<br><br><b>VERIFY:</b> " + TICKET_COPY[ticketId].verify, [{ t: "Document closure", f: closeDialog }]);
@@ -257,6 +390,7 @@
     setAssetContext("access");
     var campaign = withAssignedState();
     if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "Mike needs the complete workstation context before he can investigate access control responsibly.", [{ t: "Open workstation", f: openWorkstation }, { t: "Back", f: closeDialog }]);
+    if (badgeSources(campaign).length) return openTicketFollowUp("impossible_access_event");
     var perspective = campaign.assignments.impossible_access_event === "security" ? "delegated_verified" : "firsthand";
     act1().recordGhostEvidence(campaign, { id: "badge_impossible_access", perspective: perspective, reliability: "high", completeness: "partial", discoveredBy: perspective === "firsthand" ? "mike" : "security", authority: "access_control" });
     saveState(campaign);
@@ -414,6 +548,14 @@
     openStandup: openStandup,
     openWorkstation: openWorkstation,
     openWorkstationTab: openWorkstationTab,
+    ticketRecord: ticketRecord,
+    ticketHistory: ticketHistory,
+    ticketFollowUp: ticketFollowUp,
+    ticketEvents: ticketEvents,
+    openTicketHistory: openTicketHistory,
+    openTicketRecord: openTicketRecord,
+    openTicketEvents: openTicketEvents,
+    openTicketFollowUp: openTicketFollowUp,
     openMusicTab: openMusicTab,
     openCompanyTab: openCompanyTab,
     playFeliciaVideo: playFeliciaVideo,
