@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0-prototype",
+  "mission": "gooddogs.m5",
+  "entry": "after Cell 118 release",
+  "canon": "Story Bible v1.2 production baseline",
+  "source_pack": "techops-hero-coop-3d-prototype.zip",
+  "models": [
+    {
+      "file": "models/char.k.glb",
+      "sha256": "ecbc3dd526ec2ed28057a9b9415824033dfe151df873cf225806ec6ef6a88061",
+      "bytes": 1136572,
+      "bones": 17
+    },
+    {
+      "file": "models/dog.katrin.glb",
+      "sha256": "cf62abe7887121332565b4064def0995e9578e8d207f266455a4ef488fa34671",
+      "bytes": 2796968,
+      "bones": 17
+    },
+    {
+      "file": "models/dog.manchez.glb",
+      "sha256": "6d45695ffcb325ffe1e5a316975db1e8f16313cea2161bf48c8cab6dc99197ef",
+      "bytes": 3689116,
+      "bones": 17
+    }
+  ]
+}
