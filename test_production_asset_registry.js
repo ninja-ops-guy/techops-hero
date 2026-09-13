@@ -10,7 +10,7 @@ const context={console,Promise,Image:function(){},fetch:null,document:{scripts:[
 context.globalThis=context;vm.createContext(context);vm.runInContext(registry,context,{filename:"production_asset_registry.js"});
 const api=context.TechOpsProductionAssets;assert.ok(api,"production asset registry must export TechOpsProductionAssets");assert.ok(api.VERSION>=10,"production asset registry must include cockpit-pilot image inventory");
 
-for(const src of [...api.SCRIPT_ASSETS,...api.SOURCE_PARTS,...api.PNG_ASSETS,...api.JPG_ASSETS,...api.JSON_ASSETS]){
+for(const src of [...api.SCRIPT_ASSETS,...api.SOURCE_PARTS,...api.PNG_ASSETS,...api.JPG_ASSETS,...api.WEBP_ASSETS,...api.JSON_ASSETS]){
   assert.ok(fs.existsSync(src),`production asset registry references missing file: ${src}`);
 }
 assert.ok(api.PNG_ASSETS.length>=70,"expected the full campaign + Katrin/Manchez physical PNG inventory");
@@ -42,8 +42,8 @@ function walk(dir){
   }
   return out;
 }
-const physical=walk("assets").filter(f=>/\.(png|jpe?g|json)$/i.test(f));
-const registered=new Set([...api.PNG_ASSETS,...api.JPG_ASSETS,...api.JSON_ASSETS]);
+const physical=walk("assets").filter(f=>/\.(png|jpe?g|json)$/i.test(f)||api.WEBP_ASSETS.includes(f));
+const registered=new Set([...api.PNG_ASSETS,...api.JPG_ASSETS,...api.WEBP_ASSETS,...api.JSON_ASSETS]);
 for(const f of physical) assert.ok(registered.has(f),`unintegrated physical asset: ${f}`);
 for(const f of registered) assert.ok(physical.includes(f),`registered physical asset not found in assets tree: ${f}`);
 

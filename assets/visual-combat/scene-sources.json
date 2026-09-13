@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "provenance": "ImageGen cleanup of real-frame concept overpaints; these are assets, not gameplay screenshots.",
+  "plates": {
+    "industrial": {
+      "src": "assets/visual-combat/industrial.webp",
+      "qa": "QA-011",
+      "groundRatio": 0.6,
+      "width": 1514,
+      "height": 1039,
+      "sourceSha256": "5bda473a67ffdb15fd0d090ccda302f77cad1681ad43b0734a50b262221ddc64",
+      "sha256": "6cca3cec34b2150d838a9eeef084d4ff34abec68b4c8cf1130eb41531562d3ca",
+      "capture": {
+        "path": "docs/visual-combat/qa-011.jpg",
+        "sha256": "496bd96f6f6db57f62e71487c162a8710f7b6367ef0e1b1191178c0535eb5bb2"
+      }
+    },
+    "longwharf": {
+      "src": "assets/visual-combat/longwharf.webp",
+      "qa": "QA-015",
+      "groundRatio": 0.6,
+      "width": 1513,
+      "height": 1039,
+      "sourceSha256": "c6a95728b2941bb65c59c39843b248193e767ac2e32b7bbc30f4dcb3781c13e8",
+      "sha256": "cdfd26f80e3dc44f9b4ab761430ca802ccaf2286fc3387dc28793301d963833b",
+      "capture": {
+        "path": "docs/visual-combat/qa-015.jpg",
+        "sha256": "ab841ee236ef5358547e33e046cd6d3bd1cdc18fba732193f0ad98a27a11434d"
+      }
+    },
+    "gooddogs-home": {
+      "src": "assets/visual-combat/gooddogs-home.webp",
+      "qa": "QA-017",
+      "groundRatio": 0.61,
+      "width": 1513,
+      "height": 1039,
+      "sourceSha256": "386bb6cfe78ed083e3d8286d15d56f0cd1242f83aeb6644ba0f44d35335899ba",
+      "sha256": "dc8cb5beb43e5b835a25a4ba6933333930492f318c865b3dde2c8934b8f01a2b",
+      "capture": {
+        "path": "docs/visual-combat/qa-017.jpg",
+        "sha256": "cd69ab379f2a8a3600e5fc59caa3baed8272eee986c4982d4856095f181690d3"
+      }
+    },
+    "waldo": {
+      "src": "assets/visual-combat/waldo.webp",
+      "qa": "QA-025",
+      "groundRatio": 0.6305170239596469,
+      "width": 1983,
+      "height": 793,
+      "sourceSha256": "5d7ceb2fc61a5068b2311956d8e908ec9da4611f775ae80268565a125bafabe3",
+      "sha256": "5cac09b4d1ab614005696d23a1fdc1d8714a7125f7b495d09145aec5b9502694",
+      "capture": {
+        "path": "docs/visual-combat/qa-025.jpg",
+        "sha256": "35ee37c35282760f13ea82ef8ec49c5293b2cef5ea623f589feef3e72f621f57"
+      }
+    },
+    "home": {
+      "src": "assets/visual-combat/home.webp",
+      "qa": "QA-027",
+      "groundRatio": 0.617906683480454,
+      "width": 1983,
+      "height": 793,
+      "sourceSha256": "e0b1b20b67ae18b3cdc95f50a723230a0e0cc29b4a1bafb64a7362baec444f4d",
+      "sha256": "9904487798538f3c178eea1c8336b64a7d87783addf07617dfe7959daa290ac5",
+      "capture": {
+        "path": "docs/visual-combat/qa-027.jpg",
+        "sha256": "8654aa856a10b7aa95898f2c8427f3ed0e29544e0ea738366810d24cf4c12b83"
+      }
+    }
+  }
+}

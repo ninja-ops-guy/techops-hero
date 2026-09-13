@@ -6,7 +6,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsLiveCrawlVisualCohesion)return;
-  var VERSION=1,timer=null,nightImage=null,interactWrapped=false;
+  var VERSION=1,timer=null,interactWrapped=false;
 
   function state(){try{return root.S||null;}catch(e){return null;}}
   function night(){var s=state();return !!(s&&s.nightMode);}
@@ -67,31 +67,12 @@
   }
 
   function installNightScale(){
-    try{
-      var ref=root.TechOpsNightReferenceVisuals,atlas=ref&&ref.atlas;
-      if(!ref||!atlas||!atlas.frames||ref.__liveCrawlScaleV1)return false;
-      ref.__liveCrawlScaleV1=true;
-      ref.drawReferenceNightWalker=function(ctx,NM,px,py,now){
-        try{
-          if(!nightImage&&atlas.src&&root.Image){nightImage=new root.Image();nightImage.src=atlas.src;}
-          if(!nightImage||!nightImage.complete||!nightImage.naturalWidth)return false;
-          var key=ref.framePlan?ref.framePlan(NM,now||0):"idle0",fr=atlas.frames[key]||atlas.frames.idle0;if(!fr)return false;
-          var C=atlas.cell||128;
-          /* Live QA showed Mike visually overpowering the Charger. Keep him readable,
-             but target ~74 px standing height instead of the previous hard 92 px floor. */
-          var h=Math.round(Math.max(70,Math.min(82,(Number(NM&&NM.h)||34)*2.2)));
-          var scale=h/(atlas.standingHeight||C),w=C*scale,spriteH=C*scale;
-          var moving=Math.abs(Number(NM&&NM.vx)||0)>.45,bob=moving&&NM.onGround?Math.round(Math.sin((now||0)/92)*1.2):0;
-          var dx=Math.round(px+(NM.w||22)/2-w/2),dy=Math.round(py+(NM.h||34)+5-(atlas.pivot?atlas.pivot[1]:C)*scale+bob);
-          ctx.save();ctx.imageSmoothingEnabled=false;
-          if(NM.onGround){ctx.save();ctx.globalAlpha=.25;ctx.fillStyle="#000";ctx.beginPath();ctx.ellipse(px+(NM.w||22)/2,py+(NM.h||34)+2,w*.24,4,0,0,Math.PI*2);ctx.fill();ctx.restore();}
-          if(NM.ifr>0&&Math.floor((now||0)/80)%2)ctx.globalAlpha=.55;
-          if((NM.face||1)<0){ctx.translate(dx+w,0);ctx.scale(-1,1);ctx.drawImage(nightImage,fr[0],fr[1],C,C,0,dy,w,spriteH);}else ctx.drawImage(nightImage,fr[0],fr[1],C,C,dx,dy,w,spriteH);
-          ctx.restore();return true;
-        }catch(e){root.__liveCrawlNightScaleError=String(e&&e.stack||e);return false;}
-      };
-      return true;
-    }catch(e){root.__liveCrawlNightScaleError=String(e&&e.stack||e);return false;}
+    // Scale now lives in the stable renderer, shared by locomotion and the new
+    // move atlas. Never replace that renderer with a static-pose-only draw.
+    var ref=root.TechOpsNightReferenceVisuals;
+    if(!ref||ref.VERSION<3)return false;
+    ref.__liveCrawlScaleV1=true;
+    return true;
   }
 
   function separateFreshPair(){

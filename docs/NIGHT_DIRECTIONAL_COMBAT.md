@@ -1,7 +1,9 @@
-# Night Crawler: directional combat follow-up
+# Night Crawler: directional combat and movement combos
 
 Integrated in PR #29 on main `a7fa4066a4945bbcdc9d3e1259f61f2c18e3223b`,
-preserving the consolidated Night lifecycle and Good Dogs HUD. Code committed
+preserving the consolidated Night lifecycle and Good Dogs HUD. The September 13
+visual/combat integration adds movement gestures and an authored move atlas; see
+`VISUAL_COMBAT_INTEGRATION.md` for its separate evidence. Code committed
 to the review branch is not a claim of deployment or physical-device acceptance.
 
 ## Controls (ordinary Night Crawler only)
@@ -15,18 +17,22 @@ to the review branch is not a claim of deployment or physical-device acceptance.
 | Launching kick | J, optionally left/right | KICK, optionally aim left/right |
 | Higher rising kick | W/up + J | Aim up + KICK |
 | Low sweep / knockdown | S/down + J | Aim down + KICK |
-| Grab a nearby grounded target | G | GRAB |
+| Dash | Double-tap A/D or left/right arrows | Double-flick joystick; double-click direction control |
+| Grab a nearby grounded target | Punch or kick within 340 ms of dash | PUNCH or KICK after dash |
+| Optional direct grab / dash | G / Shift | MORE → GRAB / DASH |
 | Throw held target | Left/right; up launch; down slam | Aim selected direction |
 | Confirm a throw | G, E or J during hold | GRAB, PUNCH or KICK during hold |
 | Jump / jump follow-up | Space | JUMP |
 | Air punches and kicks | E / J while airborne | PUNCH / KICK while airborne |
 | Early air slam | Down + J while airborne | Aim down + KICK while airborne |
-| Block / dash | Existing K / Shift | Existing BLOCK / DASH |
+| Block | K | BLOCK |
 
 Up is attack aim, not jump, in ordinary Night Crawler with the new input adapter.
 Good Dogs, Sector 04 and Waldo retain their existing input and combat owners.
 A legacy direct call to `TechOpsNightCombat.attack(n, keys)` still supports
-walk-toward + attack grabs; explicit new input uses separate punch/kick/grab actions.
+walk-toward + attack grabs. The primary controls use a dash followed by an attack;
+holding a direction alone does not dash. High/low attacks remain available during
+the dash window. Missing a grab target produces the normal punch/kick.
 Standard controller mapping: A punch/context interaction, Y kick, left bumper
 grab, right bumper jump; existing B block and X dash remain. Controller polling
 is regression-tested, but physical controller ergonomics are not certified.
@@ -49,21 +55,26 @@ inside the initial 120 ms is buffered rather than silently discarded.
 Uppercuts, rising kicks and neutral/side kicks launch on contact. A connected
 launcher can cancel recovery into an explicitly requested jump. Tap-jump remains
 queued during hit-stop; it is not lost between render frames. No auto-hop or
-player/target teleport is used. Confirmed air hits supply a small forward drift
-and lift. Each flight permits at most three follow-up hits, then forces descent.
+player/free-target teleport is used. A held target releases on the chosen side of
+the player. Side and up throws use shorter trajectories and permit jump-cancel;
+bounded follow drift lasts up to 800 ms and yields to directional input. Confirmed
+air hits supply a small forward drift and lift. Each flight permits at most three
+follow-up hits, then forces descent.
 Down-air kick ends the chain early with a slam. Another launcher cannot reset the
 air-hit budget. Landing recovery prevents immediate re-grabs/relaunch loops.
 
 Damage, hit sounds, combo credit and KO rewards are resolved on contact. Whiffs
-give no combo credit; KO rewards are paid once. Approved existing art is reused
-with pose staging. There are no newly authored punch/kick/grab sprite sheets.
+give no combo credit; KO rewards are paid once. The new Mike atlas supplies 80
+authored keyframes across all 20 street combat/reaction states. Approved idle,
+running and jumping art remains in the handoff atlas. Contact poses consume the
+same simulation clock as damage; there is no animation-owned hit timer.
 
 ## Ownership and installation
 
 `night_combat.js` remains the sole street combat service; it owns no listener,
 render loop or timer. `night_combat_input.js` owns input and touch controls. The
 existing v55 frame bridge calls `runStep`, and the existing draw calls `sync`.
-The production bootstrap loads the input adapter immediately after combat.
+The production bootstrap loads combat, passive move/scene art, then the input adapter.
 The integration rotates cache identifiers and updates the launch instructions.
 
 The existing combat gate is retained. It additionally invokes
@@ -71,7 +82,7 @@ The existing combat gate is retained. It additionally invokes
 The existing Chrome/WebKit combat bot uses explicit grab/jump inputs and receives
 additional directional attack checks. Do not weaken existing CI checks to merge.
 
-## Evidence and limitations
+## Prior directional-combat evidence and limitations
 
 Locally observed: 61 aggregate production suites plus atlas quarantine, 38
 focused checks, nine real extracted Night-step physics

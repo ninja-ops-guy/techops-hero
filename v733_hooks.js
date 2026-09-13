@@ -486,6 +486,8 @@
     const cam = NM.cam, ground = NM_FLOOR;
     const W = cv.width, H = cv.height; // same convention as night_hooks drawNM
     ctx.save();
+    const sceneArt=window.TechOpsSceneArt,paintedProperty=sceneArt&&sceneArt.ready(NM);
+    if(!paintedProperty){
     // house facade behind the porch
     ctx.fillStyle = "#131a2e"; ctx.fillRect(640 - cam, ground - 260, 480, 260);
     ctx.fillStyle = "#0e1424"; ctx.beginPath(); ctx.moveTo(620 - cam, ground - 260); ctx.lineTo(880 - cam, ground - 330); ctx.lineTo(1140 - cam, ground - 260); ctx.closePath(); ctx.fill(); // gable
@@ -518,8 +520,10 @@
     ctx.fillStyle = "#26304e"; ctx.beginPath(); ctx.ellipse(1420 - cam, ground - 84, 34, 22, -.6, 0, 7); ctx.fill();
     ctx.strokeStyle = "#39d3ff"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(1420 - cam, ground - 84, 34, 22, -.6, 0, 7); ctx.stroke();
     if (((now / 900) | 0) % 2) { ctx.strokeStyle = "rgba(57,211,255,.5)"; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.arc(1420 - cam, ground - 110, i * 12, -2.2, -.9); ctx.stroke(); } }
+    }
     // the lawn (mow state)
     const ws = ws733();
+    if(paintedProperty)ctx.globalAlpha=ws.mow?.cells?.some(v=>v>0) ? .45 : 0;
     for (let i = 0; i < W_MOW_CELLS; i++) {
       const lx = W_MOW_X - cam + i * W_MOW_CELL_W;
       const v = ws.mow ? ws.mow.cells[i] : 0;
@@ -527,16 +531,20 @@
       ctx.fillRect(lx, ground - 26, W_MOW_CELL_W - 2, 26);
       if (v < 2) { ctx.strokeStyle = v === 1 ? "#3a6a34" : "#40793a"; ctx.lineWidth = 1.5; for (let b = 0; b < 4; b++) { const bx = lx + 6 + b * 9; ctx.beginPath(); ctx.moveTo(bx, ground - 24); ctx.lineTo(bx + 2, ground - 32 - (v ? 0 : 3)); ctx.stroke(); } }
     }
+    ctx.globalAlpha=1;
+    const paintedProps=paintedProperty&&sceneArt.drawPropertyProps(ctx,NM,ground);
+    if(!paintedProps){
     // the mower
     ctx.fillStyle = "#a83226"; ctx.fillRect(330 - cam, ground - 44, 40, 22); ctx.fillStyle = "#0d0f14"; ctx.beginPath(); ctx.arc(340 - cam, ground - 18, 8, 0, 7); ctx.arc(362 - cam, ground - 18, 8, 0, 7); ctx.fill();
     ctx.strokeStyle = "#444"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(336 - cam, ground - 42); ctx.lineTo(320 - cam, ground - 74); ctx.stroke();
     // the grill with smoke
     ctx.fillStyle = "#151920"; ctx.beginPath(); ctx.arc(560 - cam, ground - 40, 20, Math.PI, 0); ctx.fill(); ctx.fillRect(540 - cam, ground - 40, 40, 8);
     ctx.strokeStyle = "#151920"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(548 - cam, ground - 32); ctx.lineTo(544 - cam, ground); ctx.moveTo(572 - cam, ground - 32); ctx.lineTo(576 - cam, ground); ctx.stroke();
+    }
     for (let i = 0; i < 3; i++) { const sy = ground - 60 - ((now / 14 + i * 30) % 90); ctx.fillStyle = `rgba(180,190,210,${.25 - i * .06})`; ctx.beginPath(); ctx.arc(560 - cam + Math.sin(now / 700 + i) * 8, sy, 7 + i * 3, 0, 7); ctx.fill(); }
     // Waldo himself
     const wig = Math.sin(now / 480) * 1.5;
-    drawWaldo733(ctx, ws.waldoX - cam, ground + wig * 0, 46 + wig, ws.waldoDir > 0 ? "idle" : "idle", ws.waldoDir < 0);
+    drawWaldo733(ctx, ws.waldoX - cam, ground, (paintedProperty?74:46) + wig, "idle", ws.waldoDir < 0);
     // hotspot prompt
     const h = hotspot733();
     if (h && !S.inDialog && !ws.repair) {

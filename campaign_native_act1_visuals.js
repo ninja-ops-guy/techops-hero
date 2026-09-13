@@ -16,7 +16,7 @@
   if(!root.TechOpsGoodBoysShipDeckScene||Number(root.TechOpsGoodBoysShipDeckScene.VERSION||0)<7)load("good_boys_ship_deck_scene.js?v=20260903-good-ship-gameplay-assets-r2","__techopsGoodBoysShipDeckSceneLoaderV7");
   if(!root.TechOpsGoodBoysCrashScene||Number(root.TechOpsGoodBoysCrashScene.VERSION||0)<5)load("good_boys_crash_scene.js?v=20260905-crash-watchdog-r1","__techopsGoodBoysCrashSceneLoaderV4");
   if(!root.TechOpsGoodDogsCoop)load("good_dogs_coop.js?v=20260912-local-coop-r3","__techopsGoodDogsCoopLoader");
-  if(!root.TechOpsGoodDogsHomeScene)load("good_dogs_home_scene.js?v=20260912-local-coop-r3","__techopsGoodDogsHomeSceneLoader");
+  if(!root.TechOpsGoodDogsHomeScene)load("good_dogs_home_scene.js?v=20260913-production-v38-visual-combat-r2","__techopsGoodDogsHomeSceneLoader");
   if(!root.TechOpsGoodBoysButtonHardFix||Number(root.TechOpsGoodBoysButtonHardFix.VERSION||0)<16)load("good_boys_button_hard_fix.js?v=20260912-local-coop-r3","__techopsGoodBoysButtonHardFixLoaderV16");
   if(!root.TechOpsGoodDogsMobileVisualPolish)load("good_dogs_mobile_visual_polish.js?v=20260901-mobile-polish-v1","__techopsGoodDogsMobileVisualPolishLoader");
   if(!root.TechOpsWorkstationClarityPatch||Number(root.TechOpsWorkstationClarityPatch.VERSION||0)<2)load("workstation_cinematic_clarity_patch.js?v=20260904-workstation-retired-v2","__techopsWorkstationClarityPatchLoaderV2");

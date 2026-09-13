@@ -8,7 +8,7 @@ const goodDogsUi = fs.readFileSync('good_boys_reference_ui_v1.js','utf8');
 
 assert.doesNotThrow(() => new Function(cohesion), 'live-crawl cohesion authority must parse as executable JavaScript');
 assert.ok(bootstrap.includes('visual_cohesion_live_crawl.js'), 'production bootstrap must load live-crawl cohesion authority');
-assert.ok(bootstrap.includes('VERSION=34'), 'bootstrap version must advance with the new production owner');
+assert.ok(Number((bootstrap.match(/VERSION=(\d+)/)||[])[1])>=38, 'bootstrap version must advance with the new production owner');
 
 assert.ok(cohesion.includes('live-crawl-night #hud'), 'Night mode must explicitly suppress legacy Day HUD');
 assert.ok(cohesion.includes('f.pos=null;f.spots=null'), 'Night interaction must mask Felicia day-world targets while delegating');
@@ -18,7 +18,7 @@ assert.ok(cohesion.includes('p.x=n.x+dir*84'), 'fresh pair must receive a readab
 assert.ok(cohesion.includes('controls-outside-viewport'), 'mobile visual contract must detect clipped controls');
 assert.ok(cohesion.includes('board-prompt-clipped'), 'mobile visual contract must detect clipped board prompt');
 assert.ok(cohesion.includes('day-ui-visible:'), 'visual contract must detect Day HUD leakage in Night');
-assert.ok(cohesion.includes('Math.max(70,Math.min(82'), 'Night Mike scale must be capped to the live-crawl target range');
+assert.ok(fs.readFileSync('night_reference_visuals.js','utf8').includes('Math.max(70,Math.min(82'), 'Night Mike scale must be capped to the live-crawl target range');
 
 assert.ok(!/longwharf\s*:\s*"noc_twin"/.test(nightAssets), 'Long Wharf must not use the NOC interior plate');
 assert.ok(!/wooster\s*:\s*"music_venue"/.test(nightAssets), 'Wooster must not use the music venue plate');
