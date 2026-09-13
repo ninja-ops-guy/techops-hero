@@ -1,0 +1,34 @@
+name: Good Dogs video reference renderer
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'assets/good-dogs-3d/**'
+      - 'scripts/check_good_dogs_3d_reference.cjs'
+      - '.github/workflows/good-dogs-3d-video.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: good-dogs-3d-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Render all cameras and verify keyboard and touch
+        run: node scripts/check_good_dogs_3d_reference.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: good-dogs-video-reference-${{ github.sha }}
+          path: docs/qa-good-dogs-video/
+          retention-days: 14

@@ -7,13 +7,13 @@ export function positionCamera(camera,side,{view,targetZ,focusY,aspect,separatio
   side.position.set(-12,3.0,targetZ);side.lookAt(0,1,targetZ);side.updateProjectionMatrix();return side;
  }
  if(view==='crew'){
-  camera.position.set(.55,1.15,targetZ+3.25);camera.lookAt(0,1.04,targetZ-.35);camera.fov=48;
+  camera.position.set(.55,1.15,targetZ+2.75);camera.lookAt(0,.68,targetZ-.15);camera.fov=48;
  }else if(view==='first'){
   camera.position.copy(kPosition).add(new THREE.Vector3(0,1.67,0));camera.lookAt(0,1.1,targetZ+4);camera.fov=65;
  }else{
-  const back=3.1+Math.min(3,separation*.5)+(aspect<.8?1.5:0);
-  camera.position.set(.65,focusY+.80,Math.max(-4,Math.min(open?28:end-.4,targetZ-back)));
-  camera.lookAt(0,focusY+.12,targetZ+2.8);camera.fov=50;
+  const back=2.8+Math.min(3,separation*.5)+(aspect<.8?.6:0);
+  camera.position.set(.65,focusY+.64,Math.max(-4,Math.min(open?28:end-.4,targetZ-back)));
+  camera.lookAt(0,focusY+.12,targetZ+1.9);camera.fov=50;
  }
  camera.aspect=aspect;camera.updateProjectionMatrix();return camera;
 }

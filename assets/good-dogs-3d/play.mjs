@@ -1,5 +1,5 @@
-import {createLevel,objective} from './level.mjs?v=20260913-reference-r2';
-import {movementInput} from './camera.mjs?v=20260913-reference-r2';
+import {createLevel,objective} from './level.mjs?v=20260913-video-r1';
+import {movementInput} from './camera.mjs?v=20260913-video-r1';
 import {createSession} from './session.mjs';
 const $=id=>document.getElementById(id),STORE='techops.gooddogs.m5.review.v1';
 let session=createSession(),level,held=new Set(),pointers=new Map(),ready=false,started=false,saved=null,last=0,saveAt=0,captionUntil=0,soundOn=true,audio;
@@ -22,6 +22,7 @@ const movement=['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Ke
 addEventListener('keydown',e=>{if(e.target.matches('button,input,textarea')&&['Space','Enter'].includes(e.code))return;if(e.code==='Escape'){e.preventDefault();if(session.paused&&started)resume();else pause();return;}if(!started||session.paused)return;if(movement.includes(e.code)){e.preventDefault();held.add(e.code);}if(!e.repeat&&keys[e.code]){e.preventDefault();act(keys[e.code]);}if(session.localCoop&&!e.repeat&&['KeyR','KeyT','KeyU'].includes(e.code)){e.preventDefault();act(e.code==='KeyR'?'attack':e.code==='KeyT'?'jump':'use',2);}});
 addEventListener('keyup',e=>held.delete(e.code));
 for(const button of document.querySelectorAll('[data-hold],[data-action]')){
+ button.addEventListener('contextmenu',e=>e.preventDefault());
  button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);button.classList.add('held');if(button.dataset.hold)pointers.set(e.pointerId,button.dataset.hold);else act(button.dataset.action);});
  button.addEventListener('click',e=>{if(e.detail===0&&button.dataset.action)act(button.dataset.action);});
  const release=e=>{pointers.delete(e.pointerId);button.classList.remove('held');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);

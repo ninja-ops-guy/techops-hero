@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {surface} from './fidelity.mjs?v=20260913-reference-r2';
+import {surface} from './fidelity.mjs?v=20260913-video-r1';
 
 export function beveledBox(){
  const g=new THREE.BoxGeometry(1,1,1,4,4,4),p=g.attributes.position,normal=g.attributes.normal;
@@ -10,11 +10,11 @@ export function beveledBox(){
 
 // Architectural detail is batched by material and corridor side. Beveled panels,
 // flanges, drain slots and fasteners all remain actual mesh geometry.
-export function buildCorridor(scene,geo){
- const steel=surface(new THREE.MeshStandardMaterial({color:0x343b40,metalness:.78,roughness:.45}),'steel',{world:true});
- const dark=surface(new THREE.MeshStandardMaterial({color:0x192025,metalness:.7,roughness:.51}),'steel',{world:true});
- const rust=surface(new THREE.MeshStandardMaterial({color:0x514132,metalness:.48,roughness:.68}),'steel',{world:true});
- const floor=surface(new THREE.MeshPhysicalMaterial({color:0x303335,metalness:.66,roughness:.4,clearcoat:.3,clearcoatRoughness:.24}),'floor',{world:true});
+export function buildCorridor(scene,geo,maps={}){
+ const steel=surface(new THREE.MeshStandardMaterial({color:0x4b5358,metalness:.78,roughness:.45}),'steel',{world:true,texture:maps.steel});
+ const dark=surface(new THREE.MeshStandardMaterial({color:0x272e34,metalness:.7,roughness:.51}),'steel',{world:true,texture:maps.steel});
+ const rust=surface(new THREE.MeshStandardMaterial({color:0x514132,metalness:.48,roughness:.68}),'steel',{world:true,texture:maps.steel});
+ const floor=surface(new THREE.MeshPhysicalMaterial({color:0x40464a,metalness:.66,roughness:.4,clearcoat:.3,clearcoatRoughness:.24}),'floor',{world:true,texture:maps.steel});
  const trim=new THREE.MeshStandardMaterial({color:0x5d625d,metalness:.85,roughness:.34});
  const caution=new THREE.MeshStandardMaterial({color:0xb89b49,metalness:.46,roughness:.64});
  const amber=new THREE.MeshStandardMaterial({color:0xffd9a0,emissive:0xffa339,emissiveIntensity:4.5});
@@ -49,7 +49,7 @@ export function buildCorridor(scene,geo){
    for(const x of [-2.90,2.90])part(caution,0,x,.03,z,.046,.045,1.30);
   }
  }
- const pipeMat=surface(new THREE.MeshStandardMaterial({color:0x32312b,roughness:.61,metalness:.68}),'steel',{world:true});
+ const pipeMat=surface(new THREE.MeshStandardMaterial({color:0x32312b,roughness:.61,metalness:.68}),'steel',{world:true,texture:maps.steel});
  for(const side of [-1,1])for(let j=0;j<3;j++){
   const p=new THREE.Mesh(new THREE.CylinderGeometry(.045+j*.015,.045+j*.015,31,20,1),pipeMat);p.rotation.x=Math.PI/2;p.position.set(side*(2.78-j*.17),3.36,12);p.receiveShadow=true;scene.add(p);pipes.push(p);
   for(let z=-3;z<28;z+=3.1)part(trim,side,side*(2.78-j*.17),3.36,z,.16,.17,.05);
@@ -58,7 +58,7 @@ export function buildCorridor(scene,geo){
   const batch=new THREE.InstancedMesh(geo,mat,transforms.length);transforms.forEach((m,i)=>batch.setMatrixAt(i,m));batch.receiveShadow=true;batch.castShadow=false;batch.computeBoundingSphere();scene.add(batch);if(side===-1)cutaway.push(batch);
  }
  // Restrained beam haze uses depth testing, so it cannot glow through the wall.
- const beamMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,uniforms:{color:{value:new THREE.Color(0xffb669)}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;uniform vec3 color;void main(){float fade=pow(sin(vUv.y*3.14159),2.)*.009;gl_FragColor=vec4(color,fade);}'});
+ const beamMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,uniforms:{color:{value:new THREE.Color(0xffb669)}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;uniform vec3 color;void main(){float fade=pow(sin(vUv.y*3.14159),2.)*.018;gl_FragColor=vec4(color,fade);}'});
  const beamGeo=new THREE.ConeGeometry(.92,3.15,24,1,true);for(let z=-1.55;z<28;z+=6.2){const b=new THREE.Mesh(beamGeo,beamMat);b.position.set(0,1.92,z);scene.add(b);}
  return {steel,dark,rust,floor,trim,caution,amber,count,setRetro(value){cutaway.forEach(o=>o.visible=!value);pipes.filter(o=>o.position.x<0).forEach(o=>o.visible=!value);}};
 }

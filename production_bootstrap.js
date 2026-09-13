@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=41,BUILD="20260913-production-v41-reference-r2",started=false,done=false;
+  var VERSION=42,BUILD="20260913-production-v42-video-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",

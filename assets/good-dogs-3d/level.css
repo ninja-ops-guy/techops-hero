@@ -3,3 +3,12 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}body.hurt #game{filter:none}}
 
 .graphics{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.08em;margin:20px 0 0}.graphics select{color:#e8e4da;background:#132029;border:1px solid #687980;border-radius:5px;padding:10px;min-height:44px;font:inherit}
+
+/* The game owns press-and-hold gestures, including Safari's text callout. */
+body,button,canvas,header,nav,footer,#caption{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media(max-width:760px){
+ header{top:max(10px,env(safe-area-inset-top))}header .eyebrow{font-size:8px}h1{font-size:19px;margin:3px 0}header p{font-size:11px;line-height:1.3;margin:4px 0 7px;max-width:94vw}
+ nav{top:120px;gap:4px}nav button{min-height:44px;padding:6px;font-size:8px}
+ #enemy{top:174px;padding:6px 12px;font-size:9px;min-width:190px}#enemy meter{width:195px;height:8px;margin-top:3px}
+ #movement{flex-direction:column-reverse}#caption{background:linear-gradient(90deg,transparent,#090d12d9 16%,#090d12d9 84%,transparent);padding:7px 13px}
+}

@@ -1,8 +1,8 @@
 const {chromium}=require('playwright');
 const http=require('http'),fs=require('fs'),path=require('path'),assert=require('assert/strict');
 (async()=>{
- const root=path.resolve(__dirname,'..'),out=root+'/docs/qa-good-dogs-reference';fs.mkdirSync(out,{recursive:true});
- const server=http.createServer((req,res)=>{const suffix=decodeURIComponent(req.url.split('?')[0]);const name=path.resolve(root,'.'+suffix+(suffix.endsWith('/')?'index.html':''));if(!name.startsWith(root+'/')){res.writeHead(403).end();return;}fs.readFile(name,(e,b)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.glb':'model/gltf-binary','.png':'image/png','.json':'application/json'})[path.extname(name)]||'application/octet-stream');res.end(b);});});
+ const root=path.resolve(__dirname,'..'),out=root+'/docs/qa-good-dogs-video';fs.mkdirSync(out,{recursive:true});
+ const server=http.createServer((req,res)=>{const suffix=decodeURIComponent(req.url.split('?')[0]);const name=path.resolve(root,'.'+suffix+(suffix.endsWith('/')?'index.html':''));if(!name.startsWith(root+'/')){res.writeHead(403).end();return;}fs.readFile(name,(e,b)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.json':'application/json'})[path.extname(name)]||'application/octet-stream');res.end(b);});});
  await new Promise(r=>server.listen(8081,'127.0.0.1',r));const launch={headless:true,args:['--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader']};if(process.env.CHROMIUM_EXECUTABLE)launch.executablePath=process.env.CHROMIUM_EXECUTABLE;
  let browser=await chromium.launch(launch);
  const page=await browser.newPage({viewport:{width:960,height:640},deviceScaleFactor:1});const errors=[];
@@ -37,6 +37,7 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
  await browser.close();browser=await chromium.launch(launch);
  const mobile=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true,deviceScaleFactor:1});mobile.on('pageerror',e=>errors.push(e.message));
  await mobile.goto('http://127.0.0.1:8081/assets/good-dogs-3d/',{waitUntil:'networkidle'});await mobile.waitForFunction(()=>__goodDogs3DReview?.ready,null,{timeout:90000});assert.equal(await mobile.locator('#quality').inputValue(),'balanced');
+ assert.equal(await mobile.locator('[data-hold=forward]').evaluate(e=>getComputedStyle(e).userSelect),'none');
  await mobile.locator('#begin').tap({noWaitAfter:true});await mobile.evaluate(()=>{__captureDraw=__goodDogs3DReview.level.draw;__goodDogs3DReview.level.draw=()=>true;});
  const cdp=await mobile.context().newCDPSession(mobile);
  for(const [hold,direction] of [['forward',1],['back',-1]]){

@@ -22,7 +22,9 @@ export function identityDetails(actor,id){
  x.clearRect(0,0,768,192);x.font='bold 112px Georgia';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#d8af55';x.fillText(id==='katrin'?'Katrin':'Manchez',384,96,730);
  const map=new THREE.CanvasTexture(c);map.colorSpace=THREE.SRGBColorSpace;
  const tag=new THREE.Mesh(new THREE.PlaneGeometry(.30,.075),new THREE.MeshStandardMaterial({map,transparent:true,alphaTest:.15,roughness:.7,metalness:.5,side:THREE.DoubleSide}));
- tag.name=id+' / embroidered name';tag.position.set(0,.37,.345);tag.rotation.x=-.20;actor.add(tag);
+ tag.name=id+' / embroidered name';tag.position.set(0,actor.userData.videoMatch?.42:.37,actor.userData.videoMatch?.279:.345);tag.rotation.x=-.20;actor.add(tag);
+ (actor.userData.detailTextures??=[]).push(map);
+ if(actor.userData.videoMatch)return;
  // The reference chain is a prominent collar, with individual interlocked links.
  const gold=new THREE.MeshStandardMaterial({color:0xd5a748,metalness:.92,roughness:.29});
  const geometry=new THREE.TorusGeometry(.017,.0042,6,14);
@@ -31,5 +33,5 @@ export function identityDetails(actor,id){
   const a=i/32*Math.PI*2;o.position.set(Math.cos(a)*.188,.49-Math.sin(a)*.04,.18+Math.sin(a)*.16);o.rotation.set(Math.PI/2+(i%2)*.65,0,a);o.scale.set(1.2,.85,1);o.updateMatrix();links.setMatrixAt(i,o.matrix);
  }
  links.computeBoundingSphere();actor.add(links);
- actor.userData.detailTextures=[map];
+
 }

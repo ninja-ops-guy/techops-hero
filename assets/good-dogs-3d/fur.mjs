@@ -16,11 +16,12 @@ export function groomFur(actor,id){
   const triangles=[],a=new THREE.Vector3(),b=new THREE.Vector3(),d=new THREE.Vector3();let total=0;
   for(let t=0;t<ix.count;t+=3){const ia=ix.getX(t),ib=ix.getX(t+1),ic=ix.getX(t+2);a.fromBufferAttribute(p,ia);b.fromBufferAttribute(p,ib);d.fromBufferAttribute(p,ic);
    const y=(a.y+b.y+d.y)/3,z=(a.z+b.z+d.z)/3-originZ;
-   if(y>.21&&y<.52&&z<.17&&z>-.30)continue;
+   if(!actor.userData.videoMatch&&y>.21&&y<.52&&z<.17&&z>-.30)continue;
+   if(actor.userData.videoMatch&&y>.77&&source.material.color.r>.3)continue;
    const area=b.sub(a).cross(d.sub(a)).length()*.5;if(area<1e-9)continue;total+=area;triangles.push([total,ia,ib,ic]);
   }
   if(!total)continue;
-  const count=Math.min(2000,Math.max(100,Math.round(total*3300))),pos=[],norm=[],uv=[],bones=[],boneWeights=[],indices=[];
+  const count=Math.min(actor.userData.videoMatch?9500:2000,Math.max(100,Math.round(total*(actor.userData.videoMatch?10500:3300)))),pos=[],norm=[],uv=[],bones=[],boneWeights=[],indices=[];
   const point=new THREE.Vector3(),normal=new THREE.Vector3(),tangent=new THREE.Vector3(),across=new THREE.Vector3(),tip=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
   for(let i=0;i<count;i++){
    const sample=random()*total;let lo=0,hi=triangles.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(triangles[mid][0]<sample)lo=mid+1;else hi=mid;}
@@ -29,7 +30,7 @@ export function groomFur(actor,id){
    normal.fromBufferAttribute(n,ia).multiplyScalar(w).addScaledVector(a.fromBufferAttribute(n,ib),u).addScaledVector(b.fromBufferAttribute(n,ic),v).normalize();
    tangent.crossVectors(normal,Math.abs(normal.y)>.9?new THREE.Vector3(1,0,0):up).normalize();across.crossVectors(normal,tangent).normalize();
    const angle=random()*Math.PI*2;tangent.multiplyScalar(Math.cos(angle)).addScaledVector(across,Math.sin(angle)).normalize();
-   const len=.018+random()*.023,width=.012+random()*.007;point.addScaledVector(normal,.0015);tip.copy(point).addScaledVector(normal,len*.80);tip.y-=len*.18;
+   const face=point.y>.58&&point.z>.29;const len=(face?.007:.014)+random()*(face?.010:.024),width=.007+random()*.009;point.addScaledVector(normal,.0015);tip.copy(point).addScaledVector(normal,len*.80);tip.y-=len*.18;
    const start=pos.length/3;
    for(let k=0;k<4;k++){
     a.copy(k<2?point:tip).addScaledVector(tangent,(k%2?1:-1)*width*.5);pos.push(a.x,a.y,a.z);norm.push(normal.x,normal.y,normal.z);uv.push(k%2,k<2?0:1);
@@ -38,7 +39,7 @@ export function groomFur(actor,id){
    indices.push(start,start+1,start+2,start+2,start+1,start+3);
   }
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geometry.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(bones,4));geometry.setAttribute('skinWeight',new THREE.Float32BufferAttribute(boneWeights,4));geometry.setIndex(indices);
-  const mat=new THREE.MeshStandardMaterial({map,color:source.material.color,roughness:1,side:THREE.DoubleSide,transparent:true,depthWrite:false,opacity:.82,alphaTest:.015,metalness:0});
+  const mat=new THREE.MeshStandardMaterial({map,color:source.material.color,roughness:1,side:THREE.DoubleSide,transparent:false,depthWrite:true,opacity:1,alphaTest:.22,alphaToCoverage:true,metalness:0});
   const hair=new THREE.SkinnedMesh(geometry,mat);hair.name=id+' / groomed fur';hair.position.copy(source.position);hair.quaternion.copy(source.quaternion);hair.scale.copy(source.scale);hair.bindMode=source.bindMode;hair.bind(source.skeleton,source.bindMatrix);hair.frustumCulled=false;source.parent.add(hair);
  }
 }
