@@ -39,3 +39,5 @@ nav{max-width:230px}#instruction{color:#f5d7a2;font-size:13px;margin:5px 0 9px;l
 @media(max-height:500px){#enemy{top:106px;left:60%}#waypoint{top:153px;left:60%}header{max-width:42vw}nav{flex-direction:row;width:auto}#caption{bottom:170px}#overlay{padding:8px}}
 
 @media(max-width:760px) and (min-height:501px){#enemy{top:calc(var(--hud-bottom,118px) + 10px)}#waypoint{top:calc(var(--hud-bottom,118px) + 54px)}}
+
+@media(max-width:760px){#movement{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,60px)}#movement button{width:52px;height:60px}}
