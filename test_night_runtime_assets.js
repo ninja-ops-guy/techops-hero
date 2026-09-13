@@ -28,13 +28,13 @@ assert.ok(/function drawNightPlayerAtlas/.test(nightHooks) && /PLAYER_ATLAS/.tes
 assert.ok(/loadNightReference/.test(world));
 assert.ok(/night_walker_reference_v1\.js/.test(world));
 assert.ok(/night_reference_visuals\.js/.test(world));
-assert.ok(/var VERSION = 2/.test(reference));
+assert.ok(/var VERSION = 3/.test(reference));
 assert.ok(/root\.drawNightPlayerAtlas = drawReferenceNightWalker/.test(reference),
   "production Night mode must override the daytime PLAYER_ATLAS consumer");
 assert.ok(!/typeof\s+PLAYER_ATLAS/.test(reference) && !/\bplayerImg\b/.test(reference),
   "reference-locked Night Walker renderer must not execute against the Day Shift atlas");
-assert.ok(/Math\.max\(92, \(NM\.h \|\| 34\) \* 2\.9\)/.test(reference),
-  "Night Walker must render at the larger reference-readable scale");
+assert.ok(/Math\.max\(70,Math\.min\(82/.test(reference),
+  "Night Walker must share the live-crawl standing scale in idle, locomotion and combat");
 
 assert.ok(/NIGHT_WALKER_REFERENCE_V1/.test(referenceAtlas));
 assert.ok(/production Night Walker combat atlas v2/.test(referenceAtlas),

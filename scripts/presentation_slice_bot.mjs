@@ -9,12 +9,21 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
  if(!enabled.has(name))continue;
  const browser=await type.launch({headless:true,...(name==='chromium'&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
  try{for(const scene of ['gooddogs.m3','sector04','night.industrial']){
-  const context=await browser.newContext(options),page=await context.newPage(),errors=[];
+  const context=await browser.newContext(options),page=await context.newPage(),errors=[],requests=[];
   page.setDefaultTimeout(10000);page.setDefaultNavigationTimeout(15000);
-  page.on('pageerror',e=>errors.push(String(e)));
+  page.on('pageerror',e=>errors.push(String(e.stack||e)));
+  page.on('requestfailed',r=>requests.push({url:r.url(),type:r.resourceType(),error:r.failure()?.errorText}));
+  page.on('response',r=>{if(r.status()>=400)requests.push({url:r.url(),status:r.status()});});
   try{
    await page.goto(base,{waitUntil:'domcontentloaded'});
-   await page.waitForFunction(()=>window.TechOpsProductionModeRouter&&window.TechOpsNightReferenceVisuals&&window.__techopsWrapperGuardInstalled,null,{timeout:10000});
+   // Router and wrapper globals appear before the sequential asset install ends.
+   // Use the same complete bootstrap boundary as the combat acceptance suite.
+   await page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsProductionModeRouter&&window.TechOpsNightReferenceVisuals&&window.__techopsWrapperGuardInstalled,null,{timeout:15000});
+   if(errors.length)throw Error('Page startup failed:\n'+errors.join('\n'));
+   await page.evaluate(()=>{
+    if(typeof TO_P2A==='undefined'||typeof TO_PANELS==='undefined')throw Error('Required parser-loaded cinematic panels are missing');
+    if(window.__productionBootstrapError)throw Error('Bootstrap asset failed: '+window.__productionBootstrapError);
+   });
    await page.getByRole('button',{name:/NIGHT\s*CRAWLER/i}).click();
    const until=Date.now()+10000;
    while(Date.now()<until){
@@ -52,7 +61,10 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
    if(errors.length)throw Error(errors.join('\n'));
    if(scene==='gooddogs.m3'&&!evidence.m3.ready)throw Error('Authored M3 asset did not decode');
    reports.push({browser:name,scene,pass:true,fixture:true,evidence});
-  }catch(e){reports.push({browser:name,scene,pass:false,error:String(e.stack||e),errors});await page.screenshot({path:path.join(out,'slice-'+name+'-'+scene+'-error.png'),timeout:5000}).catch(()=>{});}
+  }catch(e){
+   const startup=await page.evaluate(()=>({ready:window.TechOpsProductionBootstrap?.ready(),bootstrapError:window.__productionBootstrapError,assets:window.TechOpsProductionAssets?.status(),nightTrace:window.__productionNightLaunchTrace})).catch(()=>null);
+   reports.push({browser:name,scene,pass:false,error:String(e.stack||e),errors,requests,startup});await page.screenshot({path:path.join(out,'slice-'+name+'-'+scene+'-error.png'),timeout:5000}).catch(()=>{});
+  }
   finally{fs.writeFileSync(path.join(out,'presentation-slices.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(reports.at(-1)));await context.close();}
  }}finally{await browser.close();}
 }

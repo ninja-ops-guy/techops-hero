@@ -8,7 +8,7 @@
  */
 (function (root) {
   "use strict";
-  var VERSION = 2;
+  var VERSION = 3;
   var atlas = root.NIGHT_WALKER_REFERENCE_V1 || null;
   var image = null;
   var portraitObserver = null;
@@ -36,23 +36,23 @@
   }
 
   function drawReferenceNightWalker(x, NM, px, py, now) {
+    var h=Math.round(Math.max(70,Math.min(82,(Number(NM&&NM.h)||34)*2.2)));
+    if(root.TechOpsNightMoves&&root.TechOpsNightMoves.draw(x,NM,px,py,now,h))return true;
     var art=root.TechOpsArtHandoff,combatPose=root.TechOpsNightCombat&&root.TechOpsNightCombat.pose(NM);
-    if(!combatPose&&art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+7,Math.max(92,(NM.h||34)*2.9),now||0))return true;
+    if(!combatPose&&art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+3,h,now||0))return true;
     var img = imageReady();
     if (!img || !atlas || !atlas.frames) return false;
     var key = framePlan(NM, now || 0);
     var fr = atlas.frames[key] || atlas.frames.idle0;
     if (!fr) return false;
     var C = atlas.cell || 128;
-    // Reference target is the large readable Sector 04 silhouette. The old
-    // runtime rendered Mike near debug-sprite scale; production is intentionally larger.
-    var h = Math.round(Math.max(92, (NM.h || 34) * 2.9));
+    // Match the approved street scale across idle, locomotion and combat.
     var scale = h / (atlas.standingHeight || C);
     var w = C * scale, spriteH = C * scale;
     var moving = Math.abs(NM.vx || 0) > .45;
     var bob = moving && NM.onGround ? Math.round(Math.sin((now || 0) / 92) * 1.5) : 0;
     var dx = Math.round(px + (NM.w || 22) / 2 - w / 2);
-    var dy = Math.round(py + (NM.h || 34) + 7 - (atlas.pivot ? atlas.pivot[1] : C) * scale + bob);
+    var dy = Math.round(py + (NM.h || 34) + 3 - (atlas.pivot ? atlas.pivot[1] : C) * scale + bob);
     x.save();
     x.imageSmoothingEnabled = false;
     if(combatPose){var calm=root.matchMedia&&root.matchMedia("(prefers-reduced-motion: reduce)").matches,ax=px+(NM.w||22)/2,ay=py+(NM.h||34);x.translate(ax+(calm?0:combatPose.shift),ay);x.rotate(calm?0:combatPose.lean);x.translate(-ax,-ay);}
@@ -75,7 +75,7 @@
   // Side-view 2015–2023 Charger silhouette: long four-door sedan, short deck,
   // muscular rear haunch, four side windows/door seams and full-width rear lamp cue.
   function drawCharger(x, cx, cy, w, tm) {
-    var W = Math.max(154, w * 1.38), H = W * .285;
+    var W = Math.max(228, w * 1.38), H = W * .285;
     var art=root.TechOpsArtHandoff;if(art&&art.drawFrame(x,"charger",0,cx,cy,H,false,1))return;
     var L = cx - W / 2, T = cy - H;
     x.save();

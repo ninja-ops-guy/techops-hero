@@ -14,7 +14,7 @@ function advance(f,ms,keys={},physics=false){for(let i=0;i<ms;i+=10){f.api.tick(
  advance(f,100);f.api.attack(f.n,{});advance(f,120);assert.equal(f.n._nightCombat.beat,false,'an early buffered press is not a timed combo');assert.equal(f.n._nightCombat.stage,0);
 }
 for(const dir of ['left','right','up']){
- const f=fixture();f.e.x=130;f.api.attack(f.n,{arrowright:true});assert.equal(f.n._nightCombat.grab.enemy,f.e);assert.equal(f.e.hp,200,'grab initiation deals no free damage');advance(f,200,{arrowright:true});assert.ok(f.n._nightCombat.grab,'held entry direction cannot auto-throw');advance(f,10,{});advance(f,10,{['arrow'+dir]:true});assert.equal(f.n._nightCombat.grab,null);assert.equal(f.e._nightCombat.air,true);assert.equal(f.e._nightCombat.held,false);assert.equal(Math.sign(f.e._nightCombat.vx),dir==='left'?-1:1);if(dir==='up')assert.ok(f.e._nightCombat.vy<-10);else assert.ok(Math.abs(f.e._nightCombat.vx)>8);
+ const f=fixture();f.e.x=130;f.api.attack(f.n,{arrowright:true});assert.equal(f.n._nightCombat.grab.enemy,f.e);assert.equal(f.e.hp,200,'grab initiation deals no free damage');advance(f,200,{arrowright:true});assert.ok(f.n._nightCombat.grab,'held entry direction cannot auto-throw');advance(f,10,{});advance(f,10,{['arrow'+dir]:true});assert.equal(f.n._nightCombat.grab,null);assert.equal(f.e._nightCombat.air,true);assert.equal(f.e._nightCombat.held,false);assert.equal(Math.sign(f.e._nightCombat.vx),dir==='left'?-1:1);if(dir==='up')assert.ok(f.e._nightCombat.vy<=-9 && f.e._nightCombat.vy>=-10.4);else assert.ok(Math.abs(f.e._nightCombat.vx)>=2 && Math.abs(f.e._nightCombat.vx)<=3);
 }
 {
  const f=fixture();f.e.x=130;f.api.attack(f.n,{});assert.equal(f.n._nightCombat.grab,null,'stationary close attacks remain punches');

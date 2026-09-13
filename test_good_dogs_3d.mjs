@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 import {createSession} from './assets/good-dogs-3d/session.mjs';
 import {eligible} from './assets/good-dogs-3d/level.mjs';
 function fixture(){const root={console,Date,performance:{now:()=>1000}};root.globalThis=root;const game=createSession(root);vm.runInNewContext(fs.readFileSync('good_boys_access_core_authority.js','utf8'),root);return {root,game,api:root.TechOpsGoodBoysAccessCoreAuthority};}
@@ -30,4 +31,19 @@ test('local partner has independent movement, can be revived, and a dead checkpo
  const {game,root,api}=fixture();game.setCoop(true);const x=game.n.x,p=game.c.partner.x;game.tick(.05,{partnerAxis:1});assert.equal(game.n.x,x);assert.ok(game.c.partner.x>p);
  game.c.chars.manchez.hp=0;game.n.x=game.c.partner.x;assert.equal(game.action('use'),true);assert.equal(game.c.chars.manchez.hp,48);
  game.c.chars.katrin.hp=0;game.c.chars.manchez.hp=0;const saved=game.snapshot(),again=createSession(root);api.tick();again.restore(saved);assert.equal(root.S.gameOver,true);assert.equal(again.action('attack'),false);
+});
+
+test('all six quality-tier models match the shipped manifest and GLB envelope',()=>{
+ const base='assets/good-dogs-3d/';
+ const manifest=JSON.parse(fs.readFileSync(base+'asset-manifest.json','utf8'));
+ const expected=['char.k','dog.katrin','dog.manchez'].flatMap(id=>['models/'+id+'.glb','models/'+id+'.lite.glb']).sort();
+ assert.deepEqual(manifest.models.map(m=>m.file).sort(),expected);
+ for(const model of manifest.models){
+  const bytes=fs.readFileSync(base+model.file);
+  assert.equal(bytes.length,model.bytes,model.file+' size');
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),model.sha256,model.file+' digest');
+  assert.equal(bytes.toString('ascii',0,4),'glTF');
+  assert.equal(bytes.readUInt32LE(4),2);
+  assert.equal(bytes.readUInt32LE(8),bytes.length);
+ }
 });

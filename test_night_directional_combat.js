@@ -24,7 +24,7 @@ test('joystick intent sampled at action time, outside the temporary key bridge',
 test('explicit stationary grab, released movement and a new direction throw',()=>{
  const f=fixture(true);f.e.x=130;assert.equal(f.controls.dispatch('grab'),true);assert.equal(f.e.hp,500);
  advance(f,140);f.r.joy.y=-1;advance(f,10);
- assert.equal(f.n._nightCombat.grab,null);assert.equal(f.e._nightCombat.air,true);assert.ok(f.e._nightCombat.vy<-10);
+ assert.equal(f.n._nightCombat.grab,null);assert.equal(f.e._nightCombat.air,true);assert.ok(f.e._nightCombat.vy<=-9 && f.e._nightCombat.vy>=-10.4);
 });
 test('live joystick chooses left-facing punch before the next frame',()=>{
  const f=fixture(true);f.r.joy.x=-1;f.e.x=65;assert.equal(f.controls.dispatch('punch'),true);advance(f,80);

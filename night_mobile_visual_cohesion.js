@@ -32,7 +32,8 @@
       var t=root.document&&root.document.getElementById("toast");
       if(!t||!active())return false;
       var text=String(t.textContent||"");
-      if(/G\s*\/\s*GRAB|SPACE\s*\/\s*JUMP/i.test(text))t.textContent="E PUNCH · J KICK · G GRAB · SPACE JUMP · ↑/↓ AIM";
+      var hint="Double-tap ←/→: DASH · Then ATTACK: GRAB · ↑/↓ AIM · JUMP to follow";
+      if(/G\s*\/\s*GRAB|SPACE\s*\/\s*JUMP|Double-tap/i.test(text)&&text!==hint)t.textContent=hint;
       return true;
     }catch(e){return false;}
   }

@@ -6,7 +6,7 @@ assert.ok(src.includes("grid-template-columns:repeat(3,52px)"),"Night actions mu
 assert.ok(src.includes("#touch-buttons #tb-interact"),"Night context/punch control must receive a scoped compact size");
 assert.ok(src.includes("#dpad{left:max(12px"),"Night d-pad must use the compact coarse-pointer layout");
 assert.ok(src.includes("#toast{top:auto"),"Night tutorial toast must move out of the gameplay focal area");
-assert.ok(src.includes("E PUNCH · J KICK · G GRAB · SPACE JUMP · ↑/↓ AIM"),"Night mobile tutorial must use the compact control hint");
+assert.ok(src.includes("Double-tap ←/→: DASH · Then ATTACK: GRAB · ↑/↓ AIM · JUMP to follow"),"Night mobile tutorial must use the compact control hint");
 assert.ok(src.includes("MutationObserver"),"Night mobile presentation must follow runtime ownership without another polling timer");
 assert.ok(boot.includes('"night_mobile_visual_cohesion.js"'),"Production bootstrap must load Night mobile cohesion after Night input");
 const version=Number((boot.match(/VERSION=(\d+)/)||[])[1]);assert.ok(version>=35,"Production bootstrap must retain or advance the Night mobile cache-bump contract");

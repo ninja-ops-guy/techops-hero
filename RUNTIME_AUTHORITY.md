@@ -71,6 +71,18 @@ Do not add `v738_hooks.js`, `v739_hooks.js`, or another numbered production hook
 
 `night_combat.js` owns street attack phases, grabs, throws, stun and finite air juggles. The existing `night_hooks.js` step calls it directly and retains locomotion, district travel and enemy AI outside reaction states. Contact resolves augments and KO rewards once; `night_reference_visuals.js` consumes presentation poses. Good Dogs, Sector 04 and Waldo's property are excluded.
 
+`night_combat_input.js` owns double-tap/flick detection and the optional touch
+controls. It calls the same combat service for dash/grab and queues explicit jump
+edges; it cannot move enemies or award hits. `night_move_visuals.js` samples that
+service's paused simulation clock and draws `night_move_atlas.js` frames through
+the stable reference renderer. It owns no damage, input listener or frame loop.
+
+`runtime_scene_art.js` supplies passive background, ground, platform and property
+prop layers at existing render call sites. Its five scene bindings are presentation
+only. `good_dogs_home_scene.js` retains the domestic prologue/garage handoff; no
+campaign progression or collision authority is transferred to the art module.
+See `docs/VISUAL_COMBAT_INTEGRATION.md` for capture provenance and acceptance scope.
+
 ## Street combat feedback and next-shift continuity
 
 `runtime_combat_audio.js` owns only the street-combat SFX bus and its volume/caption

@@ -31,3 +31,9 @@ The `qa-good-dogs-fidelity` folder contains actual WebGL scene captures and vali
 The six local 3D/progression tests and nine quality-integration cases pass. All six GLB variants have zero Khronos validator errors; each retains the existing non-root skinned-mesh hierarchy warning. These results do not certify physical iPhone frame rates or the entire campaign. The previously failing PR-wide CI gates are separate outstanding release work; this PR should remain draft.
 
 Fal replacement-mesh generation was attempted, but the connected account reported exhausted balance. No Fal-generated replacement mesh was used. The delivered assets are refinements of the existing authored Blender scene. The editable refinement scripts are in `assets/good-dogs-3d/source/`; material shaders and the scene renderer are in the adjacent modules.
+
+## PR integration repair — 2026-09-13
+
+Merged main `fb8ce24` into the PR branch, preserving the authored visual/combat updates. Resolved the three bootstrap/cache conflicts with production build v40. Registered the 3D asset manifest and module package metadata with the production JSON inventory; GLBs remain loaded on demand by the M5 renderer.
+
+The previous five failing workflows shared the unregistered physical-asset assertion. The aggregate production release gate now includes the post-K 3D contracts and a six-model size/hash/GLB-envelope check. The complete aggregate gate passes locally. Remote checks must pass on the new commit before merge; this does not establish physical-device FPS or photoreal character quality.

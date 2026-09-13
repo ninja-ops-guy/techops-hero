@@ -302,7 +302,7 @@ function enterNight() {
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
   if (qt) { NM._qtHidden = qt.classList.contains("hidden"); qt.classList.add("hidden"); }
-  toast("G / GRAB · E punch · J kick · ↑ high / ↓ low · SPACE / JUMP follows launch.", 3400);
+  toast("Double-tap ← / → to dash · Attack after dash to grab · ↑ / ↓ aim · Jump to follow launches", 5200);
   updateHUD();
 }
 
@@ -453,7 +453,10 @@ function stepNM(dt) {
   }
   NM.jHeld = !!J;
   // dash
-  if (!pairDown && keys.shift && NM.dashCD <= 0 && !NM.block) { NM.dashT = 10; NM.dashCD = 42; NM.ifr = Math.max(NM.ifr, 12); NM.vx = NM.face * 9.5; sfx("dash"); }
+  if (!pairDown && keys.shift && NM.dashCD <= 0 && !NM.block) {
+    if(streetCombat&&streetCombat.active(NM))streetCombat.dash(NM,NM.face);
+    else { NM.dashT = 10; NM.dashCD = 42; NM.ifr = Math.max(NM.ifr, 12); NM.vx = NM.face * 9.5; sfx("dash"); }
+  }
   if (NM.dashCD > 0) NM.dashCD -= f;
   if (NM.dashT > 0) NM.dashT -= f;
   // gravity (tighter than the old float)
@@ -643,9 +646,10 @@ function drawNM() {
   // v7.34: painted district backdrop (payload-loaded) replaces the procedural
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
-  const domestic = NM._v736 && Number(NM._v736.m)===1 && window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR);
+  const sceneArt=window.TechOpsSceneArt,paintedBackdrop=sceneArt&&sceneArt.drawBackdrop(ctx,NM,NM_FLOOR);
+  const domestic = NM._v736 && Number(NM._v736.m)===1 && (paintedBackdrop || window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR));
   const stagedBackdrop = window.TechOpsOrbitalStaging && window.TechOpsOrbitalStaging.drawBackdrop(ctx,NM);
-  if(stagedBackdrop) { /* World-aligned prison staging; original fallback remains until source decode. */ } else if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
+  if(paintedBackdrop||stagedBackdrop) { /* Decoded, scene-specific production art owns this layer. */ } else if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
     const m3Authority = NM._v736 && Number(NM._v736.m) === 3 && window.TechOpsM3CinematicAsset;
     const m3Image = m3Authority && m3Authority.image ? m3Authority.image() : null;
     const m3Asset = m3Image && m3Image === __bg734 ? m3Authority : null;
@@ -685,7 +689,7 @@ function drawNM() {
     }
   }
   } // v7.34: end procedural-sky else (painted backdrop drew instead)
-  if(!domestic){
+  if(!domestic&&!paintedBackdrop){
   // near railing (fast parallax)
   ctx.strokeStyle = "#232c44"; ctx.lineWidth = 3;
   ctx.beginPath();
@@ -694,6 +698,7 @@ function drawNM() {
   ctx.strokeStyle = "#2c3652"; ctx.beginPath(); ctx.moveTo(0, horizon - 20); ctx.lineTo(W, horizon - 20); ctx.stroke();
   }
   // street: asphalt, lane marks, wet sheen under lamps
+  if(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
@@ -705,11 +710,14 @@ function drawNM() {
     g.addColorStop(0, D.accent + "30"); g.addColorStop(1, "transparent");
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(lx + 2, NM_FLOOR - 10, 90, 26, 0, 0, 7); ctx.fill();
   }
+  }
   if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.drawHome(ctx, NM);
   // platforms
+  if(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR)){
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
+  }
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
   if (!NM._v736 && !NM._sector04) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
