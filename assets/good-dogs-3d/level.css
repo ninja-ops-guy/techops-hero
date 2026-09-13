@@ -29,3 +29,15 @@ body,button,canvas,header,nav,footer,#caption{-webkit-user-select:none;user-sele
  #actions [data-action=use]{grid-column:1/3}
  #caption{bottom:178px}
 }
+
+/* Focused play HUD; settings and keyboard reference live in the paused help panel. */
+nav{max-width:230px}#instruction{color:#f5d7a2;font-size:13px;margin:5px 0 9px;line-height:1.4}#waypoint{position:fixed;top:208px;left:50%;transform:translateX(-50%);border-radius:20px;padding:7px 14px;background:#071015d9;color:#b3ead3;font-size:12px;pointer-events:none}#enemy{top:153px}#actions .ready{border-color:#f6d18b;box-shadow:0 0 0 2px #c79644}#actions button:disabled{opacity:.45;pointer-events:none}.lesson{padding-left:20px;color:#d4dcdf;font-size:14px;line-height:1.55}.lesson li{margin:9px 0}.lesson strong{color:#efcf94}.settings{display:flex;gap:8px;flex-wrap:wrap}#overlay{overflow-y:auto}section{max-height:calc(100dvh - 32px);overflow-y:auto}section h2{font-size:clamp(25px,4vw,42px);margin:12px 0}.keys{font-size:11px}#movement button{font-weight:700}
+@media(max-width:760px){
+ header{max-width:calc(100vw - 120px);left:12px}header .eyebrow,h1{display:none}header #objective{font-size:13px;font-weight:700;line-height:1.3;margin-top:0}#instruction{font-size:11px;line-height:1.35;margin:5px 0}#vitals{flex-wrap:wrap;gap:4px;font-size:9px}nav{top:max(10px,env(safe-area-inset-top));left:auto;right:8px;width:100px;display:flex;flex-direction:column;gap:5px}nav button{font-size:9px;min-height:44px}#enemy{top:130px;padding:5px 10px;font-size:9px}#waypoint{top:177px;font-size:11px;padding:5px 12px}section{padding:18px}.lesson{font-size:12px;line-height:1.45}.lesson li{margin:7px 0}section p{font-size:12px;line-height:1.45}.graphics{margin-top:12px}#begin{margin-top:12px}#caption{bottom:181px}
+}
+@media(pointer:coarse){.keys{display:none}}
+@media(max-height:500px){#enemy{top:106px;left:60%}#waypoint{top:153px;left:60%}header{max-width:42vw}nav{flex-direction:row;width:auto}#caption{bottom:170px}#overlay{padding:8px}}
+
+@media(max-width:760px) and (min-height:501px){#enemy{top:calc(var(--hud-bottom,118px) + 10px)}#waypoint{top:calc(var(--hud-bottom,118px) + 54px)}}
+
+@media(max-width:760px){#movement{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,60px)}#movement button{width:52px;height:60px}}

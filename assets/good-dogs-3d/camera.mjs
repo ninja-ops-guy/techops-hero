@@ -14,7 +14,7 @@ export function positionCamera(camera,side,{view,targetZ,focusY,aspect,separatio
  }else{
   const spread=Math.min(3,separation*.5);
   const back=aspect<.8?Math.max(2.8+spread,Math.max(1.0,lateralSpan*.5+.70)/(Math.tan(25*Math.PI/180)*aspect)+spread+.5):2.8+spread;
-  camera.position.set(targetX+(aspect<.8?0:.65),focusY+.64,Math.max(-4,Math.min(open?28:end-.4,targetZ-back)));
+  camera.position.set(Math.max(-1.25,Math.min(1.25,targetX+(aspect<.8?0:.65))),focusY+.64,Math.max(-4,Math.min(open?28:end-.4,targetZ-back)));
   camera.lookAt(targetX,focusY+.12,targetZ+1.9);camera.fov=50;
  }
  camera.aspect=aspect;camera.updateProjectionMatrix();return camera;
