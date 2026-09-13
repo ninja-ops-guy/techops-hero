@@ -34,4 +34,5 @@ jobs:
           node --check good_dogs_coop.js
           node --check scripts/good_dogs_coop_bot.mjs
           node --check scripts/night_combat_bot.mjs
-          node --test scripts/test_coop_world_input.mjs scripts/test_room_bootstrap_snapshot.mjs
+          node --check scripts/good_dogs_coop_exit.mjs
+          node --test scripts/test_coop_world_input.mjs scripts/test_room_bootstrap_snapshot.mjs scripts/test_good_dogs_coop_exit.mjs

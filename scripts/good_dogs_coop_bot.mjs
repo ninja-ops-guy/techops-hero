@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {chromium,webkit,devices} from 'playwright';
 import {beginRuntimeEvidence} from './runtime_evidence_capture.mjs';
+import {enterLocalHiddenBay} from './good_dogs_coop_exit.mjs';
 import {clickGoodDogsLaunch,moveDogTo,driveMissionOne,mountFreshProperty,clearMissionTwoWithInput} from './good_dogs_route_driver.mjs';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/',out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
 const names=new Set((process.env.BOT_BROWSERS||'chromium,webkit').split(',')),results=[];
@@ -16,7 +17,7 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
   if(mode==='local'){const gate=new Promise(resolve=>{releaseBootstrap=resolve;});await page.route('**/production_wrapper_guard.js?*',async route=>{await gate;await route.continue();});}
   const snap=async label=>page.screenshot({path:path.join(out,`coop-${name}-${mode}-${label}.png`)});
   page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(10000);
-  let capture=null,jumpEvidence=null;
+  let capture=null,jumpEvidence=null,exitEvidence=null;
   try{
    capture=await beginRuntimeEvidence(context,page,{out,prefix:`coop-${name}-${mode}`});
    await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -54,8 +55,7 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
     for(const x of [450,720,990,1179]){await moveDogTo(page,x);await moveDogTo(page,x,{player:2});}
     await moveDogTo(page,1369);await page.waitForTimeout(1200);await snap('garage-puzzle');
     if(!await page.evaluate(()=>TechOpsGoodDogsCoop.complete(1)))throw Error('Two human dogs failed garage puzzle');
-    await moveDogTo(page,1440);await moveDogTo(page,1410,{player:2});
-    await page.keyboard.press('KeyE');await page.waitForFunction(()=>S.meta._v736.m===2);
+    exitEvidence=await enterLocalHiddenBay(page,moveDogTo);
     const intro=page.locator('#good-boys-campaign-intro button').first();await intro.waitFor();await intro.click();
     // Mission metadata is not an input-readiness signal: resolving can outlive it.
     await page.waitForFunction(()=>NM._v736.m===2&&S.meta._v736.m===2&&!S.inDialog&&!TechOpsGoodDogsCoop.blocked());
@@ -87,8 +87,8 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
     if(!await page.evaluate(()=>Math.abs(NM._v736.partner.vx)<.1))throw Error('P2 input stuck after blur');
    }
    if(errors.length)throw Error(errors.join('\n'));
-   results.push({browser:name,mode,pass:true,controls:'real keyboard',m2CombatFixture:mode==='local',jumpEvidence,evidence:await page.evaluate(()=>({mode:TechOpsGoodDogsCoop.mode(),mission:NM._v736.m,puzzles:S.meta._v736.pairPuzzles,home:__goodDogsHomeSceneExit}))});
-  }catch(e){results.push({browser:name,mode,pass:false,error:String(e.stack||e),errors,jumpEvidence,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,error:window.__goodBoysOpeningErrorDetail,step:window.__err736p,x:window.NM?.x,p:window.NM?._v736?.partner,puzzle:window.NM?._v736?.pairPuzzle,meta:window.S?.meta?._v736,dialog:window.S?.inDialog,nightMode:window.S?.nightMode,mission:window.NM?._v736?.m,resolving:window.NM?._v736?.resolving,ending:window.NM?._v736?.ending,coopBlocked:!!window.TechOpsGoodDogsCoop?.blocked(),coopVersion:window.TechOpsGoodDogsCoop?.VERSION,wrapper:window.TechOpsProductionWrapperGuard?.health()})).catch(()=>null)});await snap('error').catch(()=>{});}
+   results.push({browser:name,mode,pass:true,controls:'real keyboard',m2CombatFixture:mode==='local',jumpEvidence,exitEvidence,evidence:await page.evaluate(()=>({mode:TechOpsGoodDogsCoop.mode(),mission:NM._v736.m,puzzles:S.meta._v736.pairPuzzles,home:__goodDogsHomeSceneExit}))});
+  }catch(e){results.push({browser:name,mode,pass:false,error:String(e.stack||e),errors,jumpEvidence,exitEvidence:exitEvidence||e.exitEvidence||null,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,error:window.__goodBoysOpeningErrorDetail,step:window.__err736p,x:window.NM?.x,p:window.NM?._v736?.partner,puzzle:window.NM?._v736?.pairPuzzle,meta:window.S?.meta?._v736,dialog:window.S?.inDialog,nightMode:window.S?.nightMode,mission:window.NM?._v736?.m,resolving:window.NM?._v736?.resolving,ending:window.NM?._v736?.ending,coopBlocked:!!window.TechOpsGoodDogsCoop?.blocked(),coopVersion:window.TechOpsGoodDogsCoop?.VERSION,wrapper:window.TechOpsProductionWrapperGuard?.health()})).catch(()=>null)});await snap('error').catch(()=>{});}
   finally{
    releaseBootstrap();
    try{results.at(-1).artifacts=capture?await capture.finish():{trace:null,runtime:null,captureErrors:['Capture did not start']};}
