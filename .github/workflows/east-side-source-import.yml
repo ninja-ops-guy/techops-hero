@@ -1,0 +1,37 @@
+name: Approved EAST SIDE source import
+on:
+  pull_request:
+    paths:
+      - scripts/build_eastside_sources.py
+      - .github/workflows/east-side-source-import.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sources:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'release/roadmap-convergence-v8')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned image decoder
+        run: python -m pip install Pillow==12.3.0
+      - name: Verify approved sources and create immutable Git blobs only
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/build_eastside_sources.py --upload-blobs --receipt eastside-blob-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eastside-source-receipt
+          path: eastside-blob-receipt.json
+          if-no-files-found: error
+          retention-days: 14
