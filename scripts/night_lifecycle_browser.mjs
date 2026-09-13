@@ -50,7 +50,17 @@ async function run(name,engine,touch,viewport){
   const context=await browser.newContext({viewport,hasTouch:touch,deviceScaleFactor:1});context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(60000);
   await context.route('**/*',r=>r.request().url().startsWith(URL)?r.continue():r.abort());
   page=await context.newPage();page.on('pageerror',e=>record.errors.push(String(e.stack||e)));
-  const click=async locator=>touch?locator.tap():locator.click();
+  // On the touch profile, drive the browser touchscreen at the locator's rendered
+  // center instead of relying on locator.tap() actionability. This remains real
+  // browser touch input: if an overlay owns the hit target, the state assertion
+  // after the tap still fails rather than force-clicking through it.
+  const click=async locator=>{
+    if(!touch)return locator.click();
+    await locator.scrollIntoViewIfNeeded();
+    const box=await locator.boundingBox();
+    assert.ok(box&&box.width>0&&box.height>0,'Touch target has no rendered bounds');
+    await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
+  };
   const option=text=>page.locator('#dlg-options button').filter({hasText:text});
   const shot=label=>page.screenshot({path:`${OUT}/${name}-${label}.png`});
   await mount(page);await enterNight(page,touch);record.steps.push('reachable title/difficulty/Night Drive launch');

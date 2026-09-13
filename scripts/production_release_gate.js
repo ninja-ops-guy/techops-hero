@@ -65,6 +65,7 @@ const tests = [
   "test_night_runtime_assets.js",
   "test_night_directional_combat.js",
   "test_night_directional_physics.js",
+  "test_night_follow_window.js",
   "test_night_directional_integration.js",
   "test_night_movement_combos.js",
   "test_visual_combat_assets.js",
