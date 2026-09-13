@@ -16,7 +16,7 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
   if(mode==='local'){const gate=new Promise(resolve=>{releaseBootstrap=resolve;});await page.route('**/production_wrapper_guard.js?*',async route=>{await gate;await route.continue();});}
   const snap=async label=>page.screenshot({path:path.join(out,`coop-${name}-${mode}-${label}.png`)});
   page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(10000);
-  let capture=null;
+  let capture=null,jumpEvidence=null;
   try{
    capture=await beginRuntimeEvidence(context,page,{out,prefix:`coop-${name}-${mode}`});
    await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -57,12 +57,20 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
     await moveDogTo(page,1440);await moveDogTo(page,1410,{player:2});
     await page.keyboard.press('KeyE');await page.waitForFunction(()=>S.meta._v736.m===2);
     const intro=page.locator('#good-boys-campaign-intro button').first();await intro.waitFor();await intro.click();
-    await page.waitForFunction(()=>NM._v736.m===2&&!S.inDialog);
+    // Mission metadata is not an input-readiness signal: resolving can outlive it.
+    await page.waitForFunction(()=>NM._v736.m===2&&S.meta._v736.m===2&&!S.inDialog&&!TechOpsGoodDogsCoop.blocked());
     if(!await page.evaluate(()=>TechOpsGoodDogsCoop.active()))throw Error('Local mode lost at M2 handoff');
     // Isolate second-player collision and combat without rewriting the combat resolver.
     await page.evaluate(()=>{NM.enemies=[];NM._v736.pendingSpawn=null;NM._v736.wave=99;NM.x=700;NM._v736.partner.x=650;});
-    await page.keyboard.press('KeyW');await page.waitForTimeout(100);
-    if(!await page.evaluate(()=>NM._v736.partner.vy<0&&!NM._v736.partner.onGround))throw Error('P2 jump failed');
+    jumpEvidence={before:await page.evaluate(()=>({y:NM._v736.partner.y,blocked:!!TechOpsGoodDogsCoop.blocked(),mission:NM._v736.m}))};
+    // One real key edge, no retries and no synthetic velocity/grounding writes.
+    await page.keyboard.down('KeyW');
+    try{
+     await page.waitForFunction(y=>{const p=NM._v736.partner;return p.vy<0&&!p.onGround&&p.y<y;},jumpEvidence.before.y,{timeout:1500});
+     jumpEvidence.after=await page.evaluate(()=>({y:NM._v736.partner.y,vy:NM._v736.partner.vy,onGround:NM._v736.partner.onGround,jumps:NM._v736.partner.jumps}));
+    }catch(error){throw new Error('P2 jump failed: no airborne acknowledgement after one KeyW edge',{cause:error});}
+    finally{await page.keyboard.up('KeyW');}
+    await snap('m2-p2-jump');
     await page.waitForTimeout(1000);
     await page.evaluate(()=>{const p=NM._v736.partner;p.face=1;NM.enemies=[{x:p.x+35,y:p.y,w:24,h:34,hp:30,maxHp:30,alive:true,kind:'guard',name:'Coop test',dmg:0,spd:0,cd:999,down:0}];});
     await page.keyboard.press('KeyF');await page.waitForTimeout(120);
@@ -79,8 +87,8 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
     if(!await page.evaluate(()=>Math.abs(NM._v736.partner.vx)<.1))throw Error('P2 input stuck after blur');
    }
    if(errors.length)throw Error(errors.join('\n'));
-   results.push({browser:name,mode,pass:true,controls:'real keyboard',m2CombatFixture:mode==='local',evidence:await page.evaluate(()=>({mode:TechOpsGoodDogsCoop.mode(),mission:NM._v736.m,puzzles:S.meta._v736.pairPuzzles,home:__goodDogsHomeSceneExit}))});
-  }catch(e){results.push({browser:name,mode,pass:false,error:String(e.stack||e),errors,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,error:window.__goodBoysOpeningErrorDetail,step:window.__err736p,x:window.NM?.x,p:window.NM?._v736?.partner,puzzle:window.NM?._v736?.pairPuzzle,meta:window.S?.meta?._v736,dialog:window.S?.inDialog})).catch(()=>null)});await snap('error').catch(()=>{});}
+   results.push({browser:name,mode,pass:true,controls:'real keyboard',m2CombatFixture:mode==='local',jumpEvidence,evidence:await page.evaluate(()=>({mode:TechOpsGoodDogsCoop.mode(),mission:NM._v736.m,puzzles:S.meta._v736.pairPuzzles,home:__goodDogsHomeSceneExit}))});
+  }catch(e){results.push({browser:name,mode,pass:false,error:String(e.stack||e),errors,jumpEvidence,state:await page.evaluate(()=>({phase:window.__goodBoysOpeningPhase,error:window.__goodBoysOpeningErrorDetail,step:window.__err736p,x:window.NM?.x,p:window.NM?._v736?.partner,puzzle:window.NM?._v736?.pairPuzzle,meta:window.S?.meta?._v736,dialog:window.S?.inDialog,nightMode:window.S?.nightMode,mission:window.NM?._v736?.m,resolving:window.NM?._v736?.resolving,ending:window.NM?._v736?.ending,coopBlocked:!!window.TechOpsGoodDogsCoop?.blocked(),coopVersion:window.TechOpsGoodDogsCoop?.VERSION,wrapper:window.TechOpsProductionWrapperGuard?.health()})).catch(()=>null)});await snap('error').catch(()=>{});}
   finally{
    releaseBootstrap();
    try{results.at(-1).artifacts=capture?await capture.finish():{trace:null,runtime:null,captureErrors:['Capture did not start']};}

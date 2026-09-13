@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {chromium,webkit,devices} from 'playwright';
+import {beginRuntimeEvidence} from './runtime_evidence_capture.mjs';
+import {roomBootstrapSnapshot} from './room_bootstrap_snapshot.mjs';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
 const results=[];
@@ -10,7 +12,7 @@ const profiles=[['chromium',chromium,false],['chromium-touch',chromium,true],['w
 const selected=process.env.NIGHT_COMBAT_BROWSERS?.split(',');
 for(const [name,type,touch] of profiles){
  if(selected&&!selected.includes(name))continue;
- let browser,context,page;
+ let browser,context,page,capture=null;
  const errors=[],checks=[];
  const record={browser:name,touch,fixture:true,checks,errors,pass:false};results.push(record);
  try{
@@ -28,7 +30,9 @@ for(const [name,type,touch] of profiles){
    n.platforms=[];n.enemies=[{x,y:396,w:24,h:34,hp:500,maxHp:500,kind:'thug',name:'Sparring fixture',alive:true,dmg:0,spd:0,windup:0,hitT:0,cd:999,cash:[0,0],tint:'#7ee787'}];
   },enemyX);
   const idle=()=>page.waitForFunction(()=>!NM._nightCombat?.attack);
+  capture=await beginRuntimeEvidence(context,page,{out,prefix:`night-combat-${name}`});
   await page.goto(base,{waitUntil:'domcontentloaded'});
+  record.roomBootstrap=await page.evaluate(roomBootstrapSnapshot);
   await page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsNightInput&&document.querySelector('#btn-nightcrawler'));
   await click(page.locator('#btn-nightcrawler'));
   const deadline=Date.now()+20000;
@@ -152,6 +156,14 @@ for(const [name,type,touch] of profiles){
   if(errors.length)throw Error(errors.join('\n'));
   record.pass=true;
  }catch(e){record.error=String(e.stack||e);if(page){record.state=await page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:typeof NM!=='undefined'&&NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:typeof S!=='undefined'&&S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null);await page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000}).catch(()=>{});}}
- finally{if(context)await context.close();if(browser)await browser.close();console.log(JSON.stringify(record));fs.writeFileSync(path.join(out,'night-combat.json'),JSON.stringify(results,null,2));}
+ finally{
+  if(page&&!record.roomBootstrap)record.roomBootstrap=await page.evaluate(roomBootstrapSnapshot).catch(()=>null);
+  try{record.artifacts=capture?await capture.finish():{trace:null,runtime:null,captureErrors:['Capture did not start']};}
+  catch(error){record.artifacts={trace:null,runtime:null,captureErrors:[String(error)]};}
+  // Evidence failures cannot turn an unobserved run green. Preserve gameplay errors.
+  if(record.artifacts.captureErrors.length){record.pass=false;record.error=record.error||'Night combat evidence capture failed';}
+  if(context)await context.close();if(browser)await browser.close();
+  console.log(JSON.stringify(record));fs.writeFileSync(path.join(out,'night-combat.json'),JSON.stringify(results,null,2));
+ }
 }
 if(!results.length||results.some(r=>!r.pass))process.exitCode=1;

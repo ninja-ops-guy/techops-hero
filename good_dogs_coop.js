@@ -10,6 +10,9 @@
   function mode(){return meta()&&meta().playMode||selected;}
   function active(){return !!state()&&mode()==='local';}
   function clear(){held={};pressed={};}
+  // Own keys per mission object before accepting or consuming an edge.
+  // A late puzzle reset must not erase fresh input or replay the prior world.
+  function syncWorld(c){if(lastWorld!==c){lastWorld=c;holdX=null;clear();}}
   function blocked(){var c=state();return !c||c.ending||c.resolving||root.S&&root.S.inDialog||root.document&&root.document.querySelector('#good-dogs-mode-select, #good-dogs-home-scene');}
   function configure(value){selected=value==='local'?'local':'solo';holdX=null;clear();if(meta())meta().playMode=selected;if(root.document&&root.document.body)root.document.body.dataset.goodDogsMode=selected;return selected;}
   function floor(){return typeof root.NM_FLOOR==='number'?root.NM_FLOOR:430;}
@@ -43,7 +46,7 @@
   function aiTarget(n){return holdX===null?n.x-n.face*70:holdX;}
   function aiHolding(){return holdX!==null;}
   function stepPuzzle(n,dt){
-    if(lastWorld!==n._v736){lastWorld=n._v736;holdX=null;clear();}
+    syncWorld(n._v736);
     var c=n._v736,d=definition(n);if(!d)return;
     var q=progress(n);q.solved=complete(c.m);if(q.solved)return;
     var p=c.partner,allLive=live(c,c.active)&&live(c,partnerWho(c));
@@ -55,6 +58,7 @@
     if(q.charge>=d.seconds){var mt=meta();if(!mt)return;mt.pairPuzzles=mt.pairPuzzles||{};mt.pairPuzzles[d.id]=true;q.solved=true;holdX=null;say(n,d.success);try{if(root.save)root.save();}catch(_){} }
   }
   function stepPartner(n,dt,f,damage,worldWidth){
+    syncWorld(n._v736);
     var c=n._v736,p=c.partner,who=partnerWho(c);if(blocked()){clear();return;}
     if(!live(c,who)){pressed={};p.vx=0;return;}
     p.hp=c.chars[who].hp;p.cd=Math.max(0,(p.cd||0)-dt);p.anim=Math.max(0,(p.anim||0)-f);p.dashCD=Math.max(0,(p.dashCD||0)-dt);
@@ -76,7 +80,7 @@
     if(pressed.KeyR)interact(2);
     pressed={};
   }
-  function beginStep(n){if(active())n._v736.coopPrevious={a:n.x,b:n._v736.partner.x};}
+  function beginStep(n){syncWorld(n._v736);if(active())n._v736.coopPrevious={a:n.x,b:n._v736.partner.x};}
   function constrain(n,width){
     if(!active())return;var c=n._v736,p=c.partner,old=c.coopPrevious||{a:n.x,b:p.x},span=Math.max(270,Math.min(680,width-180)),delta=n.x-p.x,over=Math.abs(delta)-span;
     if(over<=0)return;var dir=Math.sign(delta),a=Math.max(0,(n.x-old.a)*dir),b=Math.max(0,(p.x-old.b)*-dir),total=a+b;
@@ -99,9 +103,10 @@
   }
   function onKey(e,down){
     if(!active()||bindings.indexOf(e.code)<0)return;
+    syncWorld(state());
     e.preventDefault();e.stopImmediatePropagation();
     if(blocked()){clear();return;}if(down&&!held[e.code])pressed[e.code]=true;held[e.code]=down;
   }
   if(root.addEventListener){root.addEventListener('keydown',function(e){onKey(e,true);},true);root.addEventListener('keyup',function(e){onKey(e,false);},true);root.addEventListener('blur',clear);if(root.document)root.document.addEventListener('visibilitychange',clear);}
-  root.TechOpsGoodDogsCoop={VERSION:1,configure:configure,mode:mode,active:active,clear:clear,stepPartner:stepPartner,beginStep:beginStep,stepPuzzle:stepPuzzle,interact:interact,revive:revive,aiTarget:aiTarget,aiHolding:aiHolding,complete:complete,constrain:constrain,cameraTarget:cameraTarget,draw:draw,blocked:blocked};
+  root.TechOpsGoodDogsCoop={VERSION:2,configure:configure,mode:mode,active:active,clear:clear,stepPartner:stepPartner,beginStep:beginStep,stepPuzzle:stepPuzzle,interact:interact,revive:revive,aiTarget:aiTarget,aiHolding:aiHolding,complete:complete,constrain:constrain,cameraTarget:cameraTarget,draw:draw,blocked:blocked};
 })(typeof globalThis!=='undefined'?globalThis:this);
