@@ -1,4 +1,4 @@
-import {createLevel,objective} from './level.mjs';
+import {createLevel,objective} from './level.mjs?v=20260913-fidelity-r1';
 import {createSession} from './session.mjs';
 const $=id=>document.getElementById(id),STORE='techops.gooddogs.m5.review.v1';
 let session=createSession(),level,held=new Set(),pointers=new Map(),ready=false,started=false,saved=null,last=0,saveAt=0,captionUntil=0,soundOn=true,audio;
@@ -14,7 +14,7 @@ function pause(){if(!started||session.complete||S.gameOver)return;session.setPau
 function act(name,player=1){if(!ready||!started||session.paused)return;if(name==='use'&&!session.action('use',player)){say(Math.abs(NM.x-1070)>120?'Reach the Access Node after breaking the Index and clearing security.':'The Access Node is locked until the Index and security are cleared.');return;}else if(name!=='use')session.action(name,player);}
 $('begin').onclick=resume;$('restart').onclick=restart;$('pause').onclick=pause;
 $('coop').onclick=()=>{session.setCoop(!session.localCoop);$('coop').textContent=session.localCoop?'LOCAL CO-OP · P1 / P2':'SOLO + PARTNER AI';say(session.localCoop?'P2: I/K move · T jump · R strike':'Partner AI is following.');save();};
-let mode=0;$('camera').onclick=()=>{mode=(mode+1)%3;const view=['third','retro','first'][mode];level?.setView(view);$('camera').textContent=['DOG CAMERA','RETRO SIDE VIEW','K OBSERVATION VIEW'][mode];document.body.classList.toggle('retro',view==='retro');if(view==='first')say('K’s observation camera. You still control the dogs.');};
+let mode=0;$('camera').onclick=()=>{mode=(mode+1)%4;const view=['third','retro','first','crew'][mode];level?.setView(view);$('camera').textContent=['DOG CAMERA','RETRO SIDE VIEW','K OBSERVATION VIEW','CREW CLOSE-UP'][mode];document.body.classList.toggle('retro',view==='retro');if(view==='first')say('K’s observation camera. You still control the dogs.');};
 $('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'SOUND ON':'SOUND OFF';$('sound').setAttribute('aria-pressed',String(soundOn));};
 const keys={KeyF:'attack',Space:'jump',ShiftLeft:'dash',ShiftRight:'dash',KeyQ:'swap',KeyE:'use'};
 const movement=['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyA','KeyD','KeyB','KeyI','KeyK'];
@@ -44,7 +44,8 @@ function frame(now){const dt=last?Math.min(.25,(now-last)/1000):0;last=now;if(re
  }requestAnimationFrame(frame);}
 try{
  await import('../../good_boys_access_core_authority.js');
- level=await createLevel({canvas:$('game')});level.draw(NM,innerWidth,innerHeight,performance.now());ready=true;if(saved)session.restore(saved);$('coop').textContent=session.localCoop?'LOCAL CO-OP · P1 / P2':'SOLO + PARTNER AI';session.setPause(true);$('begin').disabled=false;$('begin').textContent=saved?'CONTINUE ESCORT':'BEGIN AFTER K’S RELEASE';$('restart').hidden=!saved;
+ let graphics=matchMedia('(pointer:coarse)').matches?'balanced':'high';try{graphics=localStorage.getItem('techops.gooddogs.graphics.v1')||graphics;}catch{}
+ level=await createLevel({canvas:$('game'),quality:graphics});$('quality').value=level.quality;$('quality').onchange=async()=>{const value=$('quality').value;$('quality').disabled=true;try{await level.setQuality(value);localStorage.setItem('techops.gooddogs.graphics.v1',level.quality);}catch{say('Graphics could not be changed. The current setting is still active.',5000);$('quality').value=level.quality;}finally{$('quality').disabled=false;}};level.draw(NM,innerWidth,innerHeight,performance.now());ready=true;if(saved)session.restore(saved);$('coop').textContent=session.localCoop?'LOCAL CO-OP · P1 / P2':'SOLO + PARTNER AI';session.setPause(true);$('begin').disabled=false;$('begin').textContent=saved?'CONTINUE ESCORT':'BEGIN AFTER K’S RELEASE';$('restart').hidden=!saved;
  if(saved&&!session.complete&&S.gameOver){$('title').textContent='ESCORT DOWN';$('brief').textContent='Both dogs are down. Restart this review from K’s release.';$('begin').textContent='RETRY AFTER 118';}
  if(saved?.complete){$('title').textContent='ROUTE 1984 OPEN';$('brief').textContent='This review checkpoint completed the Access Core level. Replay from K’s release.';}
  window.__goodDogs3DReview={get ready(){return ready;},get session(){return session;},get level(){return level;},get state(){return session.snapshot();}};

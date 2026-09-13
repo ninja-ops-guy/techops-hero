@@ -48,3 +48,7 @@ The full deployed campaign has not been crawled on this branch, and physical iPh
 ## Asset provenance
 
 The GLBs come from `techops-hero-coop-3d-prototype.zip`, authored from the supplied prison references. Model identities and hashes are in `assets/good-dogs-3d/asset-manifest.json`. They retain the original 17-bone prototype rigs and material groups. Three.js 0.186.0 and its loader utilities are vendored with their MIT license. No runtime CDN or paid generation service is needed to open this level.
+
+## Geometry and material refinement
+
+The subsequent [fidelity revision](GOOD_DOGS_3D_FIDELITY.md) adds higher-density meshes, material shaders, shadowing, film processing, three graphics settings and a crew close-up. See that document and `qa-good-dogs-fidelity/` for the current visual evidence. Earlier `qa-good-dogs-3d/` images remain the original baseline.

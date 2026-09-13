@@ -1,13 +1,13 @@
-/* TechOps Hero — production runtime bootstrap v38.
+/* TechOps Hero — production runtime bootstrap v39.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
- * v38 adds M5 3D presentation while retaining the physical-iPhone world/render cohesion authority last.
+ * v39 refines M5 3D presentation while retaining the physical-iPhone world/render cohesion authority last.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=38,BUILD="20260913-production-v38-post-k-3d-r2",started=false,done=false;
+  var VERSION=39,BUILD="20260913-production-v39-fidelity-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
