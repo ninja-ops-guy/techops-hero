@@ -186,8 +186,9 @@ const __origInteractV50 = interact;
 interact = function () {
   const s = S;
   if (s && s.nightMode) {
+    if (globalThis.TechOpsNightTravel && globalThis.TechOpsNightTravel.interact(NM)) return;
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && (globalThis.TechOpsNightTravel ? globalThis.TechOpsNightTravel.nearCar(NM) : NM.x < NM_CAR_X + 150) && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -279,6 +280,7 @@ function nmLoadDistrict(id) {
   NM.clear = false; NM.cam = 0;
   NM.msg = D.roster.length ? `${D.name} — STREET 1/${D.streets} · clear every enemy, → to push on, ← the Charger waits` : `${D.name} — home. Head right →`;
   NM.msgT = performance.now() + 3600;
+  if(globalThis.TechOpsNightTravel)globalThis.TechOpsNightTravel.arrive(NM);
 }
 
 function enterNight() {
@@ -296,6 +298,7 @@ function enterNight() {
     msg: `DOWNTOWN — STREET 1/2 · clear every enemy · ← the Charger waits`, msgT: performance.now() + 3600,
   };
   s.nightMode = NM;
+  if(globalThis.TechOpsNightTravel)globalThis.TechOpsNightTravel.arrive(NM);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.onEntered(s, NM);
   try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("nightcrawler"); } catch (e) { }
   sfx("portal");
@@ -306,19 +309,24 @@ function enterNight() {
   updateHUD();
 }
 
+function nmStartDrive(to) {
+  if(globalThis.TechOpsNightTravel)return globalThis.TechOpsNightTravel.start(NM,to);
+  return false;
+}
+
 // the Charger: drive the district map
 function nmCarMenu() {
   // Campaign encounters borrow Night physics, not the Earth travel hub.
-  if (!NM || NM._v736 || NM._sector04) return false;
+  if (!NM || NM._v736 || NM._sector04 || globalThis.TechOpsNightTravel && !globalThis.TechOpsNightTravel.nearCar(NM)) return false;
   const s = S;
   const opts = NM_ORDER.filter(id => !NM.done[id]).map(id => {
     const D = NM_DISTRICTS[id];
     return {
       t: `🚗 ${D.name} <small>· DANGER ${Math.round(D.danger * 100)}% · ${NM_ORDER.indexOf(id) === 0 ? "" : "+" + Math.round((D.danger - 1) * 100) + "% pay"}</small>`,
-      f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: id }; sfx("portal"); },
+      f: () => { closeDlg(); nmStartDrive(id); sfx("portal"); },
     };
   });
-  opts.push({ t: `🏠 HOME STREET <small>· call it a night</small>`, f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: "home" }; sfx("portal"); } });
+  opts.push({ t: `🏠 HOME STREET <small>· call it a night</small>`, f: () => { closeDlg(); nmStartDrive("home"); sfx("portal"); } });
   if(typeof window!=="undefined"&&window.TechOpsCombatAudio)opts.push({t:"Combat sound & captions",f:()=>window.TechOpsCombatAudio.openSettings(nmCarMenu)});
   opts.push({ t: "Back to the street.", f: closeDlg });
   dlg("🚗 THE CHARGER — where to?", `The engine idles. New Haven glows wet and neon.<br><small>Cleared districts stay cleared tonight. Pay scales with danger.</small>`, opts);
@@ -339,6 +347,7 @@ function nmNextStage() {
     NM.x = NM_CAR_X + 84; NM.y = NM_FLOOR - NM.h; NM.vx = 0; NM.vy = 0;
     NM.enemies = []; NM.clear = false;
     NM.msg = `✅ ${D.name} CLEAR — +$40 · the Charger waits (← E to drive)`; NM.msgT = performance.now() + 4200;
+    if(globalThis.TechOpsNightTravel)globalThis.TechOpsNightTravel.cleared(NM);
     sfx("promote");
     return;
   }
@@ -424,10 +433,9 @@ function stepNM(dt) {
   // Player motion and combat reactions must share the same slow-frame clock.
   if (window.TechOpsNightCombat && window.TechOpsNightCombat.active(NM)) dt = Math.max(0, Math.min(dt, .05));
   const f = dt * 60, now = performance.now();
-  // drive transition: frozen street, the car rolls
+  // Travel owns traffic only; street physics resumes after parking.
   if (NM.drive) {
-    NM.drive.t += dt * 1000;
-    if (NM.drive.t >= NM.drive.dur) { const to = NM.drive.to; NM.drive = null; nmLoadDistrict(to); }
+    if(globalThis.TechOpsNightTravel)globalThis.TechOpsNightTravel.step(NM,dt,keys,typeof joy!=="undefined"?joy:{});
     return;
   }
   // hit-stop: the world freezes for a beat on impact
@@ -615,37 +623,14 @@ function drawNM() {
   const now = performance.now();
   const W = cv.width, H = cv.height, horizon = NM_FLOOR - 60;
   const D = NM_DISTRICTS[NM.district];
-  // drive transition: the Charger owns the frame, world streams past
-  if (NM.drive) {
-    const t = NM.drive.t / NM.drive.dur;
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, "#05070f"); sky.addColorStop(1, "#141c34");
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-    for (let layer = 0; layer < 3; layer++) {
-      const par = [3.2, 2.1, 1.2][layer] * (1 + t);
-      ctx.fillStyle = ["#0c1326", "#111a33", "#182444"][layer];
-      for (let i = 0; i < 10; i++) {
-        const bw = 110 + (i * 67 % 90), bh = 130 + (i * 83 % 160) + layer * 50;
-        const bx = ((i * 210 - now / 16 * par) % (W + 320)) - 160;
-        ctx.fillRect(bx, horizon - bh, bw, bh);
-        if (layer === 2) { ctx.fillStyle = "#ffd24a2e"; for (let wy = 0; wy < 4; wy++) for (let wx = 0; wx < 3; wx++) if ((i + wy + wx) % 3 === 0) ctx.fillRect(bx + 14 + wx * 26, horizon - bh + 16 + wy * 30, 9, 12); ctx.fillStyle = "#182444"; }
-      }
-    }
-    ctx.fillStyle = "#1c2333"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
-    ctx.fillStyle = "#ffd24a66";
-    for (let i = 0; i < 10; i++) ctx.fillRect(((i * 150 - now / 3) % (W + 150)) - 75, NM_FLOOR + 24, 60, 5);
-    nmCar(ctx, W / 2, NM_FLOOR - 6, 300, now);
-    ctx.fillStyle = "#9fb7d9"; ctx.font = "13px monospace"; ctx.textAlign = "center";
-    ctx.fillText(`DRIVING — ${NM_DISTRICTS[NM.drive.to].name}`, W / 2, 70);
-    return;
-  }
+  if (NM.drive && globalThis.TechOpsNightTravel) {globalThis.TechOpsNightTravel.draw(ctx,NM,now);return;}
   // night sky per district
   const sky = ctx.createLinearGradient(0, 0, 0, H);
   sky.addColorStop(0, D.sky); sky.addColorStop(.7, D.far); sky.addColorStop(1, D.mid);
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
   // v7.34: painted district backdrop (payload-loaded) replaces the procedural
   // sky layers when present; the street/railing/HUD stay procedural either way
-  const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
+  const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[globalThis.TechOpsNightTravel?.outside(NM)?"downtown":NM.district];
   const sceneArt=window.TechOpsSceneArt,paintedBackdrop=sceneArt&&sceneArt.drawBackdrop(ctx,NM,NM_FLOOR);
   const domestic = NM._v736 && Number(NM._v736.m)===1 && (paintedBackdrop || window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR));
   const stagedBackdrop = window.TechOpsOrbitalStaging && window.TechOpsOrbitalStaging.drawBackdrop(ctx,NM);
@@ -713,18 +698,20 @@ function drawNM() {
   }
   if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.drawHome(ctx, NM);
+  if(globalThis.TechOpsNightTravel)globalThis.TechOpsNightTravel.drawEntrance(ctx,NM);
   // platforms
   if(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR)){
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   }
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
-  if (!NM._v736 && !NM._sector04) {
-    nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
-    if (NM.x < NM_CAR_X + 150) {
+  if (!NM._v736 && !NM._sector04 && (!globalThis.TechOpsNightTravel || globalThis.TechOpsNightTravel.parked(NM))) {
+    const parkedX=globalThis.TechOpsNightTravel?.PARK_X||NM_CAR_X+60;
+    nmCar(ctx, parkedX - NM.cam, NM_FLOOR - 4, 120, now);
+    if (globalThis.TechOpsNightTravel ? globalThis.TechOpsNightTravel.nearCar(NM) : NM.x < NM_CAR_X + 150) {
     ctx.save(); ctx.globalAlpha = .7 + Math.sin(now / 260) * .3;
     ctx.fillStyle = "#9fb7d9"; ctx.font = "11px monospace"; ctx.textAlign = "center";
-    ctx.fillText("Ⓔ DRIVE", NM_CAR_X + 60 - NM.cam, NM_FLOOR - 92);
+    ctx.fillText("Ⓔ DRIVE", parkedX - NM.cam, NM_FLOOR - 92);
     ctx.restore();
     }
   }

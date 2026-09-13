@@ -27,6 +27,7 @@
     if(!ready())return null;
     const n=runtime(),lifecycle=root.TechOpsNightRuntime;
     if(lifecycle&&lifecycle.atHome())return 'home';
+    const travel=root.TechOpsNightTravel;if(travel){if(travel.doorway(n))return 'door';return travel.nearCar(n)?'charger':null;}
     const car=typeof NM_CAR_X==='number'?NM_CAR_X:26;
     if(n.x<car+150&&!(n.enemies||[]).some(e=>e.alive&&Math.abs(e.x-n.x)<90))return 'charger';
     return null;
@@ -69,6 +70,7 @@
   function runStep(step,dt,k,j){
     if(!owns()){reset();lastRuntime=null;return step(dt);}
     const n=runtime();if(n!==lastRuntime){reset();lastRuntime=n;}
+    if(n.drive){reset();return step(dt);}
     if(!ready())reset();
     movementGesture(n,k,j||{});
     const saved=['a','d','w','arrowleft','arrowright','arrowup','shift'].map(key=>({key,owned:Object.prototype.hasOwnProperty.call(k,key),value:k[key]}));
@@ -161,7 +163,7 @@
     const punch=doc.getElementById('tb-interact');bindButton(punch,'punch',true);
     if(active&&punch){
       const context=contextAction();punch.textContent=context?'A':'PUNCH';
-      punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':'Directional punch');
+      punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':context==='door'?'Use building door':'Directional punch');
       punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E punch / J kick / Space jump. More: optional dash and grab buttons.';
     }
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}

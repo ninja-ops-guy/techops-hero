@@ -9,7 +9,7 @@
   let installed=false,transition=null,observed=null,chapterAge=0,chapterKey='',ui=null,tokenSerial=0;
   const state=()=>{try{return typeof S!=='undefined'?S:root.S;}catch(_){return root.S;}};
   const world=()=>{const s=state();return s&&s.nightMode||null;};
-  const active=n=>!!(n&&typeof n==='object'&&typeof n.district==='string'&&!n._v736&&n.district!=='waldo'&&root.__productionDesiredMode!=='goodboys');
+  const active=n=>!!(n&&typeof n==='object'&&typeof n.district==='string'&&!n._v736&&(n.district!=='waldo'||n.drive)&&root.__productionDesiredMode!=='goodboys');
   const el=id=>root.document&&root.document.getElementById(id);
   const reduced=()=>!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function saveGame(){try{if(typeof save==='function')return save();if(root.save)return root.save();}catch(e){root.__nightSaveError=String(e);}return false;}
@@ -99,6 +99,7 @@
   }
   function dialog(title,text,options){if(!root.dlg)return false;const box=el('dialogue');if(box){box.style.removeProperty('display');box.style.removeProperty('visibility');}root.dlg(title,text,options);return true;}
   function openCampaign(){
+    if(world()?.drive)return false;
     if(!active(world())||transition)return false;
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
     const f=c.flags,options=[],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
@@ -186,10 +187,10 @@
     const chapter=root.document.createElement('div');chapter.id='night-chapter';chapter.setAttribute('aria-live','polite');host.append(campaign,home,chapter);(el('game-wrap')||root.document.body).appendChild(host);ui={host,campaign,home,chapter};return ui;
   }
   function presentation(dt){
-    const n=world(),view=ensureUI();if(!view)return;
-    const shown=active(n)&&!blocked();view.host.hidden=!shown;view.home.hidden=!atHome();
+    const n=world(),view=ensureUI();if(root.TechOpsNightTravel)root.TechOpsNightTravel.syncUI(n);if(!view)return;
+    const shown=active(n)&&!blocked()&&!n.drive;view.host.hidden=!shown;view.home.hidden=!atHome();
     if(!active(n))return;
-    const key=n.district+':'+n.street;if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+' / STREET '+n.street;}
+    const key=n.district+':'+n.street+':'+(n.location||'street');if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+(n.location==='exterior'?' / PARKED OUTSIDE':n.location==='interior'?' / INSIDE / FLOOR '+n.street:' / STREET '+n.street);}
     if(shown)chapterAge+=Math.min(.1,Math.max(0,Number(dt)||0));view.chapter.style.opacity=chapterAge<2.6?'1':'0';
     if(el('v55-nmbtns'))el('v55-nmbtns').classList.toggle('on',shown);
     if(root.TechOpsNightInput)root.TechOpsNightInput.sync();
@@ -198,23 +199,23 @@
   function frame(dt){
     const s=state(),n=world();
     if(transition&&(transition.state!==s||transition.night!==n))transition.finish();
-    if(!s||!active(n)){if(ui)ui.host.hidden=true;if(s&&s.meta&&s.meta.nightVisit&&visible('eod')){if(root.draw)root.draw();return true;}return false;}
+    if(!s||!active(n)){if(root.TechOpsNightTravel)root.TechOpsNightTravel.syncUI(null);if(ui)ui.host.hidden=true;if(s&&s.meta&&s.meta.nightVisit&&visible('eod')){if(root.draw)root.draw();return true;}return false;}
     if(observed!==n){if(!n._nightLifecycle)onEntered(s,n);observed=n;}
     // Repair only a flag with no visible modal/claim before deciding to pause.
     // The older dispatch paused before the guard could perform this repair.
     const guard=root.TechOpsProductionWrapperGuard;if(guard&&guard.repairStaleDialog)guard.repairStaleDialog();
-    if(tick(dt)&&root.stepNM)root.stepNM(dt);
-    if(active(world())){if(root.drawNM)root.drawNM();presentation(dt);}else{if(ui)ui.host.hidden=true;if(root.draw)root.draw();}
+    if(tick(dt)){if(n.drive&&root.TechOpsNightTravel)root.TechOpsNightTravel.step(n,dt,typeof keys!=='undefined'?keys:root.keys,typeof joy!=='undefined'?joy:root.joy);else if(root.stepNM)root.stepNM(dt);}
+    if(active(world())){if(world().drive&&root.TechOpsNightTravel)root.TechOpsNightTravel.draw(typeof ctx!=='undefined'?ctx:root.ctx,world(),root.performance.now());else if(root.drawNM)root.drawNM();presentation(dt);}else{if(ui)ui.host.hidden=true;if(root.draw)root.draw();}
     return true;
   }
   function install(){
     if(installed)return;installed=true;
     const oldClock=root.advanceClock;if(oldClock)root.advanceClock=function(minutes){if(active(world()))return advance(minutes);return oldClock.apply(this,arguments);};
     if(root.fmtClock)root.fmtClock=clockLabel;
-    const oldInteract=root.interact;if(oldInteract)root.interact=function(){if(atHome()&&!blocked())return openHome();return oldInteract.apply(this,arguments);};
+    const oldInteract=root.interact;if(oldInteract)root.interact=function(){if(!blocked()&&root.TechOpsNightTravel?.interact(world()))return true;if(atHome()&&!blocked())return openHome();return oldInteract.apply(this,arguments);};
     const oldExit=root.exitNight;if(oldExit)root.exitNight=function(){const n=world();if(!active(n))return n?oldExit.apply(this,arguments):false;n._nightLifecycle=n._nightLifecycle||{};if(n._nightLifecycle.exitCommitted)return false;n._nightLifecycle.exitCommitted=true;clearNightSelection();return oldExit.apply(this,arguments);};
     const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
-    if(root.document)root.document.addEventListener('keydown',e=>{if(!active(world()))return;if(transition&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(root.v725)root.v725.skip();return;}if(blocked())return;if(e.key.toLowerCase()==='c'){e.preventDefault();e.stopImmediatePropagation();openCampaign();}else if(atHome()&&e.key.toLowerCase()==='e'){e.preventDefault();e.stopImmediatePropagation();openHome();}},true);
+    if(root.document)root.document.addEventListener('keydown',e=>{if(!active(world()))return;if(transition&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(root.v725)root.v725.skip();return;}if(blocked())return;if(world().drive)return;if(e.key.toLowerCase()==='c'){e.preventDefault();e.stopImmediatePropagation();openCampaign();}else if(atHome()&&e.key.toLowerCase()==='e'){e.preventDefault();e.stopImmediatePropagation();openHome();}},true);
     registerScenes();ensureUI();
   }
   root.TechOpsNightRuntime={VERSION:2,MINUTE_SECONDS,HOME_X,active,state,world,beforeEnter,onEntered,advance,clockLabel,tick,frame,blocked,atHome,openHome,sleep,openCampaign,resumeDay,restoreDayShell,endVisit,drawHome,registerScenes,install,health:()=>({active:active(world()),transitioning:!!transition,clock:state()&&state().clock,returnDay:state()&&state().meta&&state().meta.nightVisit&&state().meta.nightVisit.day})};

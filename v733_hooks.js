@@ -152,21 +152,22 @@
   window.nmCarMenu = function () {
     const s = S;
     if (!NM) return _nmCarMenu733();
+    if(window.TechOpsNightTravel && !window.TechOpsNightTravel.nearCar(NM))return false;
     const opts = [];
     if (NM.district !== "waldo" && !NM.done.waldoSocial) {
       opts.push({
         t: `🛰️ WALDO'S PLACE <small>· no danger · mow, wrench, hang out</small>`,
-        f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: "waldo" }; sfx("portal"); },
+        f: () => { closeDlg(); nmStartDrive("waldo"); sfx("portal"); },
       });
     }
     NM_ORDER.filter(id => !NM.done[id]).forEach(id => {
       const D = NM_DISTRICTS[id];
       opts.push({
         t: `🚗 ${D.name} <small>· DANGER ${Math.round(D.danger * 100)}% · ${NM_ORDER.indexOf(id) === 0 ? "" : "+" + Math.round((D.danger - 1) * 100) + "% pay"}</small>`,
-        f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: id }; sfx("portal"); },
+        f: () => { closeDlg(); nmStartDrive(id); sfx("portal"); },
       });
     });
-    opts.push({ t: `🏠 HOME STREET <small>· call it a night</small>`, f: () => { closeDlg(); NM.drive = { t: 0, dur: 1500, to: "home" }; sfx("portal"); } });
+    opts.push({ t: `🏠 HOME STREET <small>· call it a night</small>`, f: () => { closeDlg(); nmStartDrive("home"); sfx("portal"); } });
     opts.push({ t: "Back to the street.", f: closeDlg });
     const c = car733(), worst = c ? c[worstPart733()] : 100;
     dlg("🚗 THE CHARGER — where to?", `The engine idles. New Haven glows wet and neon.<br><small>Cleared districts stay cleared tonight. Pay scales with danger.` +
@@ -208,14 +209,10 @@
   };
 
   // ---------- car wear: every drive costs something; worn cars break down ----------
-  const _stepNM733 = stepNM;
-  window.stepNM = function (dt) {
-    const hadDrive = (typeof NM !== "undefined" && NM && NM.drive) ? NM.drive.to : null;
-    _stepNM733(dt);
-    try {
-      if (hadDrive && typeof NM !== "undefined" && NM && !NM.drive) {
+  // Travel completion calls this once, after arrival; retries incur no wear.
+  window.nmApplyDriveWear733 = function(destination) {
         const c = car733();
-        if (c && hadDrive !== "waldo") { // social call is a gentle cruise
+        if (c && destination !== "waldo") { // social call is a gentle cruise
           const p = CAR_PARTS[Math.floor(Math.random() * CAR_PARTS.length)];
           c[p] = Math.max(5, c[p] - (1 + Math.floor(Math.random() * 3)));
           const worst = c[worstPart733()];
@@ -225,7 +222,12 @@
             sfx("hit");
           }
         }
-      }
+  };
+
+  const _stepNM733 = stepNM;
+  window.stepNM = function (dt) {
+    _stepNM733(dt);
+    try {
       // Waldo wander + repair minigame marker
       if (atWaldo733()) {
         const ws = ws733(), now = performance.now();
@@ -421,7 +423,7 @@
   window.interact = function () {
     const s = S;
     if (s && s.nightMode && atWaldo733() && !s.inDialog) {
-      if (NM && !NM.drive && NM.x < NM_CAR_X + 150) return nmCarMenu();
+      if (NM && !NM.drive && (window.TechOpsNightTravel ? window.TechOpsNightTravel.nearCar(NM) : NM.x < NM_CAR_X + 150)) return nmCarMenu();
       const ws = ws733();
       if (ws && ws.repair) return repairRound733();
       return waldoMenu733();
