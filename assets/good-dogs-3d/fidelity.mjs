@@ -1,4 +1,6 @@
 import * as THREE from './vendor/three.module.js';
+import {groomFur} from './fur.mjs?v=20260913-reference-r2';
+import {softenCurls,identityDetails} from './character-detail.mjs?v=20260913-reference-r2';
 
 // Materials are evaluated in object/world metres, so no external texture request
 // or frame-dependent random texture is needed. This is all presentation state.
@@ -9,7 +11,7 @@ float fbm(vec3 p){return noise3(p)*.56+noise3(p*2.03)*.28+noise3(p*4.11)*.12+noi
 vec3 surfaceBump(vec3 N,vec3 pos,float h,float amount){vec3 dx=dFdx(pos),dy=dFdy(pos);vec3 r1=cross(dy,N),r2=cross(N,dx);float det=dot(dx,r1);vec3 grad=sign(det)*(dFdx(h)*r1+dFdy(h)*r2);return normalize(abs(det)*N-amount*grad);}
 `;
 
-export function surface(material,kind,{world=false}={}){
+export function surface(material,kind,{world=false,headwear=false}={}){
  material.userData.detailKind=kind;
  material.onBeforeCompile=shader=>{
   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vDetail;');
@@ -19,20 +21,20 @@ export function surface(material,kind,{world=false}={}){
   const floor=`float grain=fbm(vDetail*12.);float wet=smoothstep(.46,.69,fbm(vDetail*2.1));float tread=pow(abs(sin((vDetail.x+vDetail.z)*52.)*sin((vDetail.x-vDetail.z)*52.)),8.);diffuseColor.rgb*=.74+.36*grain;diffuseColor.rgb*=mix(1.,.63,wet);float relief=grain*.04+tread*.026;`;
   const cloth=`float fibers=noise3(vDetail*460.);float weave=sin(vDetail.x*1000.)*sin(vDetail.z*850.);diffuseColor.rgb*=.85+.28*fibers;float relief=weave*.018+fibers*.016;`;
   const knit=`float rows=sin(vDetail.z*630.+sin(vDetail.x*440.)*1.9);float knit=pow(abs(sin(vDetail.x*460.)*.6+rows*.4),2.);diffuseColor.rgb*=.74+.50*knit;float relief=knit*.026+noise3(vDetail*850.)*.012;`;
-  const fur=`float strands=noise3(vDetail*270.);diffuseColor.rgb*=.83+.22*strands;float relief=strands*.028;`;
-  const camo=`float camoField=fbm(vDetail*vec3(21.,17.,23.));vec3 fabric=mix(vec3(.095,.11,.07),vec3(.22,.19,.115),smoothstep(.38,.50,camoField));fabric=mix(fabric,vec3(.042,.048,.029),smoothstep(.58,.63,camoField));diffuseColor.rgb=fabric*(.83+.23*noise3(vDetail*450.));float relief=noise3(vDetail*370.)*.024;`;
+  const fur=`float strands=fbm(vDetail*vec3(320.,65.,300.));diffuseColor.rgb*=.94+.09*strands;float relief=strands*.009;`;
+  const camo=`float camoField=fbm(vDetail*vec3(11.,9.,13.));vec3 fabric=mix(vec3(.10,.115,.078),vec3(.23,.205,.15),smoothstep(.38,.50,camoField));fabric=mix(fabric,vec3(.052,.062,.043),smoothstep(.58,.63,camoField));diffuseColor.rgb=fabric*(.83+.23*noise3(vDetail*450.));float relief=noise3(vDetail*370.)*.024;`;
   const leather=`float grain=fbm(vDetail*180.);float creases=pow(1.-abs(2.*noise3(vDetail*vec3(16.,45.,12.))-1.),9.);diffuseColor.rgb*=.82+.40*grain-creases*.12;float relief=grain*.014-creases*.015;`;
-  const code=({steel,floor,cloth,knit,fur,camo,leather})[kind]||cloth;
+  const code=(({steel,floor,cloth,knit,fur,camo,leather})[kind]||cloth)+(headwear?'diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.026,.032,.024),smoothstep(.62,.72,vDetail.y));':'');
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n'+code);
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\nnormal=surfaceBump(normal,-vViewPosition,relief,'+(world?'.035':'.025')+');');
   if(kind==='floor')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=mix(.68,.24,wet);');
   if(kind==='steel')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+oxide*.22+(grain-.5)*.10,.24,.94);');
  };
- material.customProgramCacheKey=()=>`gooddogs-fidelity-v1-${kind}-${world}`;
+ material.customProgramCacheKey=()=>`gooddogs-fidelity-v2-${kind}-${world}-${headwear}`;
  return material;
 }
 
-export function dressActors(object){
+export function dressActors(object,id){
  const cache=new Map();
  object.traverse(o=>{
   if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;
@@ -40,18 +42,23 @@ export function dressActors(object){
    if(cache.has(m))return cache.get(m);
    const p=new THREE.MeshPhysicalMaterial();THREE.MeshStandardMaterial.prototype.copy.call(p,m);
    const name=m.name.toLowerCase();let kind;
-   if(name.includes('knit')){kind='knit';p.sheen=.85;p.sheenColor.set(0x65666c);p.sheenRoughness=.92;}
+   if(id!=='k'&&name.includes('eye')){const g=o.geometry,ps=g.attributes.position;g.computeBoundingBox();const mid=(g.boundingBox.min.x+g.boundingBox.max.x)/2;const centers=[new THREE.Vector3(),new THREE.Vector3()],counts=[0,0];for(let i=0;i<ps.count;i++){const k=ps.getX(i)>mid?1:0;centers[k].add(new THREE.Vector3().fromBufferAttribute(ps,i));counts[k]++;}centers.forEach((c,i)=>c.divideScalar(counts[i]||1));for(let i=0;i<ps.count;i++){const k=ps.getX(i)>mid?1:0,v=new THREE.Vector3().fromBufferAttribute(ps,i).sub(centers[k]).multiplyScalar(.78).add(centers[k]);ps.setXYZ(i,v.x,v.y,v.z);}ps.needsUpdate=true;g.computeBoundingSphere();}
+   if(name.includes('knit')){kind='knit';p.sheen=.5;p.sheenColor.set(0x35383c);p.sheenRoughness=.92;}
    else if(name.includes('cloth')){kind='camo';p.sheen=.4;p.sheenColor.set(0x77714e);p.sheenRoughness=.95;}
-   else if(name.includes('fur')){kind='fur';p.roughness=.94;p.sheen=.35;p.sheenColor.copy(p.color).multiplyScalar(1.1);p.sheenRoughness=.9;}
+   else if(name.includes('fur')){kind='fur';p.color.setRGB(.83,.82,.78);p.roughness=1;p.sheen=.6;p.sheenColor.set(0xf0f0e9);p.sheenRoughness=1;if(name.includes('oat'))p.color.setRGB(.65,.64,.59);}
    else if(name.includes('leather')){kind='leather';p.clearcoat=.22;p.clearcoatRoughness=.55;p.roughness=.49;}
    else if(name.includes('gold')||name.includes('silver')){p.metalness=1;p.roughness=.24;}
    else if(name.includes('eye')||name.includes('nose')){p.clearcoat=1;p.roughness=.22;}
-   if(kind)surface(p,kind);p.envMapIntensity=.8;cache.set(m,p);return p;
+   if(id==='manchez'&&name.includes('oat')){p.color.setRGB(.045,.055,.043);p.sheenColor.set(0x656653);}
+   if(kind)surface(p,kind,{headwear:id==='manchez'&&name.includes('cloth')});p.envMapIntensity=.8;cache.set(m,p);return p;
   };
+  const fur=(!Array.isArray(o.material)&&o.material.name.includes('Fur'));if(fur){softenCurls(o.geometry);o.receiveShadow=false;}
   o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);
  });
  // Imported materials have no external textures in this revision.
  for(const old of cache.keys())old.dispose();
+ identityDetails(object,id);
+ groomFur(object,id);
 }
 
 export function environmentMap(renderer){

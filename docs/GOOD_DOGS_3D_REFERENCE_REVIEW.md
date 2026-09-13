@@ -1,0 +1,9 @@
+# Controls and reference direction — post-K M5
+
+The deployed v40 renderer put its orthographic camera on the wrong side of the route, so increasing the simulation position moved left on screen. The third-person camera also multiplied its offset by the dog's facing, jumping to the opposite side on reverse input. Production v41 keeps the route camera fixed and positions the retro camera so right input projects right. Crew inspection looks toward Cell 118 and maps its controls to that view. Switching camera clears held input; keyboard, P2, and touch use the same mapping. Normal third-person follow is damped; reduced-motion mode keeps direct tracking.
+
+The visual revision follows the supplied Cell 118 images: neutral white fur, charcoal knit on Katrin, a dark olive ushanka and broader camouflage on Manchez, readable gold names and collars, a heavy open pressure door, recessed masonry, barred door leaves, amber practical lamps, and restrained cool fill. Small solid fur clusters are removed from the rendered skin and replaced by short curved fur cards that copy the original skin weights. Original GLBs and animation clips are preserved. Architectural details and collar links are instanced to limit draw calls.
+
+This is a refinement of the existing stylized prototype. It is not a photoreal reconstruction, finished facial rig, or physical-device performance certification. In the production campaign the native side-scroller still owns movement, combat, saves, and story; the first-person camera remains K's observation view. The standalone review retains its independent checkpoint.
+
+Validation and actual WebGL captures are in `docs/qa-good-dogs-reference/`. Direction tests project route movement through the real camera matrices. Browser checks use real keyboard events and emulated touch events; paused captures submit actual WebGL frames. Graphics changes preserve the paused save state, saved quality survives reload, and mobile defaults to Balanced.

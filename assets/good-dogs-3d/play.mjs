@@ -1,4 +1,5 @@
-import {createLevel,objective} from './level.mjs?v=20260913-fidelity-r1';
+import {createLevel,objective} from './level.mjs?v=20260913-reference-r2';
+import {movementInput} from './camera.mjs?v=20260913-reference-r2';
 import {createSession} from './session.mjs';
 const $=id=>document.getElementById(id),STORE='techops.gooddogs.m5.review.v1';
 let session=createSession(),level,held=new Set(),pointers=new Map(),ready=false,started=false,saved=null,last=0,saveAt=0,captionUntil=0,soundOn=true,audio;
@@ -14,7 +15,7 @@ function pause(){if(!started||session.complete||S.gameOver)return;session.setPau
 function act(name,player=1){if(!ready||!started||session.paused)return;if(name==='use'&&!session.action('use',player)){say(Math.abs(NM.x-1070)>120?'Reach the Access Node after breaking the Index and clearing security.':'The Access Node is locked until the Index and security are cleared.');return;}else if(name!=='use')session.action(name,player);}
 $('begin').onclick=resume;$('restart').onclick=restart;$('pause').onclick=pause;
 $('coop').onclick=()=>{session.setCoop(!session.localCoop);$('coop').textContent=session.localCoop?'LOCAL CO-OP · P1 / P2':'SOLO + PARTNER AI';say(session.localCoop?'P2: I/K move · T jump · R strike':'Partner AI is following.');save();};
-let mode=0;$('camera').onclick=()=>{mode=(mode+1)%4;const view=['third','retro','first','crew'][mode];level?.setView(view);$('camera').textContent=['DOG CAMERA','RETRO SIDE VIEW','K OBSERVATION VIEW','CREW CLOSE-UP'][mode];document.body.classList.toggle('retro',view==='retro');if(view==='first')say('K’s observation camera. You still control the dogs.');};
+let mode=0;$('camera').onclick=()=>{$('caption').textContent='';captionUntil=0;mode=(mode+1)%4;const view=['third','retro','first','crew'][mode];clear();level?.setView(view);document.querySelector('[data-hold=back]').textContent=view==='retro'?'◀':'▼';document.querySelector('[data-hold=forward]').textContent=view==='retro'?'▶':'▲';$('camera').textContent=['DOG CAMERA','RETRO SIDE VIEW','K OBSERVATION VIEW','CREW CLOSE-UP'][mode];document.body.classList.toggle('retro',view==='retro');if(view==='first')say('K’s observation camera. You still control the dogs.');};
 $('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'SOUND ON':'SOUND OFF';$('sound').setAttribute('aria-pressed',String(soundOn));};
 const keys={KeyF:'attack',Space:'jump',ShiftLeft:'dash',ShiftRight:'dash',KeyQ:'swap',KeyE:'use'};
 const movement=['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyA','KeyD','KeyB','KeyI','KeyK'];
@@ -26,7 +27,7 @@ for(const button of document.querySelectorAll('[data-hold],[data-action]')){
  const release=e=>{pointers.delete(e.pointerId);button.classList.remove('held');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
 }
 addEventListener('blur',()=>{clear();if(started&&!session.paused)pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clear();if(started&&!session.paused)pause();}});addEventListener('pagehide',()=>{if(started)save();level?.dispose();});
-function input(){const pointer=[...pointers.values()];return {axis:(held.has('KeyW')||held.has('KeyD')||held.has('ArrowUp')||held.has('ArrowRight')||pointer.includes('forward')?1:0)-(held.has('KeyS')||held.has('KeyA')||held.has('ArrowDown')||held.has('ArrowLeft')||pointer.includes('back')?1:0),block:held.has('KeyB')||pointer.includes('block'),partnerAxis:(held.has('KeyI')?1:0)-(held.has('KeyK')?1:0)};}
+function input(){return movementInput(held,pointers.values(),level?.view);}
 function frame(now){const dt=last?Math.min(.25,(now-last)/1000):0;last=now;if(ready){
  for(let remaining=dt;remaining>0;){const step=Math.min(.05,remaining);session.tick(step,input());remaining-=step;}if(!level.draw(NM,innerWidth,innerHeight,now)){session.setPause(true);overlay('3D CONTEXT LOST','Reload this level to restore your review checkpoint.','RELOAD');$('begin').onclick=()=>location.reload();}
  $('objective').textContent=objective(NM);$('active').textContent=session.c.active.toUpperCase();$('health').value=session.c.chars[session.c.active].hp;$('partner-health').textContent='PARTNER '+session.c.chars[session.c.active==='katrin'?'manchez':'katrin'].hp;$('sync').textContent='SYNC '+session.c.sync+'%';

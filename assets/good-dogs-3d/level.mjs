@@ -1,7 +1,9 @@
 import * as THREE from './vendor/three.module.js';
+import {prisonEntry} from './prison-entry.mjs?v=20260913-reference-r2';
+import {positionCamera} from './camera.mjs?v=20260913-reference-r2';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {surface,dressActors,environmentMap,filmPipeline,QUALITY} from './fidelity.mjs';
-import {buildCorridor,beveledBox} from './corridor.mjs';
+import {surface,dressActors,environmentMap,filmPipeline,QUALITY} from './fidelity.mjs?v=20260913-reference-r2';
+import {buildCorridor,beveledBox} from './corridor.mjs?v=20260913-reference-r2';
 
 // Presentation only: the host remains the owner of NM, damage, story and time.
 export function eligible(root){
@@ -21,11 +23,11 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
  renderer.info.autoReset=false;
- const scene=new THREE.Scene();scene.background=new THREE.Color('#090c10');scene.fog=new THREE.FogExp2('#181b1e',.026);
- const env=environmentMap(renderer);scene.environment=env.texture;scene.environmentIntensity=.38;
- scene.add(new THREE.HemisphereLight(0xb4c9de,0x44301e,.6));
- const fill=new THREE.DirectionalLight(0xb9d4e8,1.45);fill.position.set(-3,7,-3);scene.add(fill);
- const key=new THREE.DirectionalLight(0xffc88a,2.8);key.position.set(-2,6,-2);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-5;key.shadow.camera.right=5;key.shadow.camera.top=5;key.shadow.camera.bottom=-5;key.shadow.camera.near=.1;key.shadow.camera.far=18;key.shadow.normalBias=.025;key.shadow.bias=-.0002;key.shadow.radius=2;scene.add(key,key.target);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#0b0e11');scene.fog=new THREE.FogExp2('#282019',.022);
+ const env=environmentMap(renderer);scene.environment=env.texture;scene.environmentIntensity=.32;
+ scene.add(new THREE.HemisphereLight(0xd7deec,0x2f2922,.72));
+ const fill=new THREE.DirectionalLight(0xcadbed,1.15);fill.position.set(-3,7,-3);scene.add(fill);
+ const key=new THREE.DirectionalLight(0xffe9cc,2.15);key.position.set(-2,6,-2);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-5;key.shadow.camera.right=5;key.shadow.camera.top=5;key.shadow.camera.bottom=-5;key.shadow.camera.near=.1;key.shadow.camera.far=18;key.shadow.normalBias=.008;key.shadow.bias=-.0002;key.shadow.radius=2;scene.add(key,key.target);
  const camera=new THREE.PerspectiveCamera(53,1,.08,80),side=new THREE.OrthographicCamera(-9,9,6,-6,.05,100);
  const geo=beveledBox(),kit=buildCorridor(scene,geo),metal=kit.steel,rust=kit.rust,black=kit.dark,gold=kit.caution,amber=kit.amber,green=new THREE.MeshStandardMaterial({color:0xa4f2c8,emissive:0x43cf91,emissiveIntensity:2});
  const pipeline=filmPipeline(renderer);
@@ -36,9 +38,8 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;textures.push(t);const o=new THREE.Mesh(new THREE.PlaneGeometry(width,width/6),new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide}));o.position.set(x,y,z);o.rotation.y=rotate;scene.add(o);return o;
  }
  // Pools of motivated sodium light along the service corridor.
- for(let z=-1.55;z<28;z+=6.2){const light=new THREE.PointLight(0xffbd73,16,7.8,2);light.position.set(0,3.2,z);scene.add(light);}
- box(0,1.9,-5,6.4,3.8,.20);label('CELL 118 · RELEASED',0,2.7,-4.85,3.7,'#e7c394');
- box(-1.55,1.15,-4.83,.42,2.3,.28,black);box(1.55,1.15,-4.83,.42,2.3,.28,black);box(0,2.1,-4.69,1.4,.09,.12,amber);
+ for(let z=-1.55;z<28;z+=6.2){const light=new THREE.PointLight(0xffae57,11,7.8,2);light.position.set(0,3.2,z);scene.add(light);}
+ const entry=prisonEntry(scene,geo,kit);textures.push(...entry.textures);
  label('ORPHEUS / ACCESS CORE',0,3.24,9.5,4.6,'#b3ead3',Math.PI);
  label('1984 →',-2.9,2,12,1.8,'#ecd09c',Math.PI/2);
  // Physical platforms mirror the current M5 registry coordinates (60 px/metre).
@@ -53,11 +54,11 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
  const door=box(0,1.35,end,2.7,2.7,.18,black);label('ROUTE 1984',0,3.15,end-.19,2.5,'#f7cc85',Math.PI);
  const lockLight=box(1.7,1.2,end-.22,.16,.4,.06,amber);
  const loader=new GLTFLoader(),actorSets=new Map(),pendingSets=new Map();let actors={},mixers=[],requestedQuality=qualityMode;
- function releaseActorSet(set){const geometries=new Set(),materials=new Set();for(const o of Object.values(set.actors)){o.traverse(n=>{if(n.geometry)geometries.add(n.geometry);if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>materials.add(m));});}set.mixers.forEach(a=>a.mixer.stopAllAction());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
+ function releaseActorSet(set){for(const a of Object.values(set.actors))a.userData.detailTextures?.forEach(t=>t.dispose());const geometries=new Set(),materials=new Set();for(const o of Object.values(set.actors)){o.traverse(n=>{if(n.geometry)geometries.add(n.geometry);if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>materials.add(m));});}set.mixers.forEach(a=>a.mixer.stopAllAction());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
  async function loadActors(tier){
   if(actorSets.has(tier))return actorSets.get(tier);if(pendingSets.has(tier))return pendingSets.get(tier);
   const promise=Promise.all(['dog.katrin','dog.manchez','char.k'].map(id=>loader.loadAsync(new URL('models/'+id+(tier==='high'?'':'.lite')+'.glb',assetBase).href))).then(loaded=>{
-   const set={actors:{},mixers:[]};['katrin','manchez','k'].forEach((id,i)=>{const gltf=loaded[i],o=gltf.scene;dressActors(o);const mixer=new THREE.AnimationMixer(o);for(const clip of gltf.animations)mixer.clipAction(clip).play();set.mixers.push({mixer,id});set.actors[id]=o;});actorSets.set(tier,set);return set;
+   const set={actors:{},mixers:[]};['katrin','manchez','k'].forEach((id,i)=>{const gltf=loaded[i],o=gltf.scene;dressActors(o,id);const mixer=new THREE.AnimationMixer(o);for(const clip of gltf.animations)mixer.clipAction(clip).play();set.mixers.push({mixer,id});set.actors[id]=o;});actorSets.set(tier,set);return set;
   });pendingSets.set(tier,promise);try{return await promise;}finally{pendingSets.delete(tier);}
  }
  function activate(set){for(const o of Object.values(actors))scene.remove(o);actors=set.actors;mixers=set.mixers;for(const o of Object.values(actors))scene.add(o);}
@@ -71,7 +72,7 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
  }
  const projectileGeometry=new THREE.SphereGeometry(.075,8,6),projectiles=[];
  const cueRing=new THREE.Mesh(new THREE.RingGeometry(.45,.6,40),new THREE.MeshBasicMaterial({color:0xff653c,side:THREE.DoubleSide,transparent:true,opacity:.6}));cueRing.rotation.x=-Math.PI/2;scene.add(cueRing);
- let view='third',lastTime=0,lost=false,disposed=false;const look=new THREE.Vector3();
+ let view='third',lastTime=0,lastCameraView='',lost=false,disposed=false;
  const onLost=e=>{e.preventDefault();lost=true;};renderer.domElement.addEventListener('webglcontextlost',onLost);
  function draw(n,width,height,time=performance.now()){
   if(lost||disposed)return false;
@@ -81,7 +82,7 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   place(actors[active],n,-.44);place(actors[other],p,.44);
   for(const id of ['katrin','manchez'])actors[id].rotation.z=c.chars?.[id]?.hp<=0?Math.PI/2:0;
   const lead=(Number(n.x)||0)/60,partner=(Number(p.x)||0)/60;
-  actors.k.position.set(-2.2,0,Math.max(.8,Math.min(lead,partner)-1.15));actors.k.rotation.y=(n.face||1)<0?Math.PI:0;
+  actors.k.position.set(-1.5,0,Math.max(.8,Math.min(lead,partner)-1.15));actors.k.rotation.y=(n.face||1)<0?Math.PI:0;
   const speed=Math.abs(n.vx||0)+Math.abs(p.vx||0);mixers.forEach(a=>{if(a.id==='k'||speed>.15)a.mixer.update(dt);});
   const present=new Set();let telegraph=null;
   for(const e of n.enemies||[]){if(e.alive===false||e.hp<=0)continue;present.add(e);let o=enemyMeshes.get(e);if(!o){o=enemyMesh(e);enemyMeshes.set(e,o);}o.position.set(0,Math.max(0,(430-(e.y||390)-(e.h||40))/60),e.x/60);o.rotation.y=Math.PI;o.scale.setScalar(Math.max(.55,(e.h||70)/130));o.userData.healthBar.scale.x=.7*Math.max(0,e.hp/(e.maxHp||e.hp));if(e.windup>0)telegraph=e;}
@@ -92,13 +93,11 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   screen.material=n._gbMikeIndexDefeated?green:amber;hazard.visible=true;
   const aspect=width/height;const targetZ=(lead+partner)*.5;
   const focusY=Math.max(actors[active].position.y,actors[other].position.y)+.53;
-  let cam=camera;
-  if(view==='retro'){cam=side;const h=5.8,w=h*aspect;side.left=-w;side.right=w;side.top=h;side.bottom=-h;side.position.set(12,4.2,targetZ);side.lookAt(0,1,targetZ);side.updateProjectionMatrix();}
-  else if(view==='crew'){camera.position.set(2.2,1.25,targetZ+2.75);camera.lookAt(0,.58,targetZ);camera.fov=46;}
-  else if(view==='first'){camera.position.copy(actors.k.position).add(new THREE.Vector3(0,1.67,0));look.set(0,1.1,lead+4);camera.lookAt(look);camera.fov=68;}
-  else{const separation=Math.abs(lead-partner),back=3.2+Math.min(3,separation*.5)+(aspect<.8?1.7:0);const face=(n.face||1)<0?-1:1;camera.position.set(.9,focusY+1.05,Math.max(-4,Math.min(open?28:end-.4,targetZ-back*face)));look.set(0,focusY,targetZ+2.5*face);camera.lookAt(look);camera.fov=53;}
+  const previousPosition=camera.position.clone(),previousRotation=camera.quaternion.clone();
+  const cam=positionCamera(camera,side,{view,targetZ,focusY,aspect,separation:Math.abs(lead-partner),end,open,kPosition:actors.k.position});
+  if(view==='third'&&lastCameraView===view&&dt>0&&!reducedMotion){const blend=1-Math.exp(-12*dt);camera.position.lerpVectors(previousPosition,camera.position,blend);camera.quaternion.slerpQuaternions(previousRotation,camera.quaternion,blend);}lastCameraView=view;
   kit.setRetro(view==='retro');
-  for(const o of objects)if(o.position.x>2.7&&o.position.y>.2)o.visible=view!=='retro';
+  for(const o of objects)if(o.position.x< -2.7&&o.position.y>.2)o.visible=view!=='retro';
   for(const pl of platformMeshes){const blocked=view!=='retro'&&focusY<pl.height&&pl.min<=Math.max(camera.position.z,targetZ)&&pl.max>=Math.min(camera.position.z,targetZ);pl.deck.visible=pl.edge.visible=!blocked;}
   actors.k.visible=view!=='first';camera.aspect=aspect;camera.updateProjectionMatrix();
   key.position.set(-2,6,targetZ-2);key.target.position.set(0,0,targetZ+1);
@@ -108,6 +107,6 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   const size=renderer.getSize(new THREE.Vector2());if(size.x!==width||size.y!==height)renderer.setSize(width,height,false);
   renderer.info.reset();if(qualityMode==='low'||view==='retro')renderer.render(scene,cam);else pipeline.render(scene,cam,Math.max(1,Math.round(width*pixelRatio)),Math.max(1,Math.round(height*pixelRatio)),{quality:qualityMode});return true;
  }
- function dispose(){if(disposed)return;disposed=true;renderer.domElement.removeEventListener('webglcontextlost',onLost);for(const set of actorSets.values())if(set.actors!==actors)releaseActorSet(set);mixers.forEach(a=>a.mixer.stopAllAction());const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>materials.add(m));});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();pipeline.dispose();renderer.dispose();}
+ function dispose(){if(disposed)return;disposed=true;renderer.domElement.removeEventListener('webglcontextlost',onLost);for(const set of actorSets.values())if(set.actors!==actors)releaseActorSet(set);mixers.forEach(a=>a.mixer.stopAllAction());for(const a of Object.values(actors))a.userData.detailTextures?.forEach(t=>t.dispose());const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>materials.add(m));});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());env.dispose();pipeline.dispose();renderer.dispose();}
  return {draw,dispose,canvas:renderer.domElement,setView(value){view=['third','retro','first','crew'].includes(value)?value:'third';lastTime=0;},get view(){return view;},get lost(){return lost;},async setQuality(value){const next=QUALITY[value]?value:'balanced';requestedQuality=next;const set=await loadActors(next==='high'?'high':'lite');if(disposed){releaseActorSet(set);return;}if(requestedQuality!==next)return;activate(set);qualityMode=next;},get quality(){return qualityMode;},stats(){return {...renderer.info.render,quality:qualityMode,hdr:pipeline.hdr,meshes:renderer.info.memory.geometries,textures:renderer.info.memory.textures};}};
 }
