@@ -12,7 +12,7 @@
   function active(n){return !!n&&!n._v736&&!n._sector04&&typeof n.district==='string';}
   function building(n){return active(n)&&BUILDINGS[n.district];}
   function outside(n){return !!(building(n)&&n.location==='exterior');}
-  function parked(n){return active(n)&&!n.drive&&(!building(n)||outside(n))&&(n.street===1||outside(n));}
+  function parked(n){return active(n)&&!n._nightMission&&!n.drive&&(!building(n)||outside(n))&&(n.street===1||outside(n));}
   function grounded(n){return !!n.onGround&&Math.abs(n.y+(n.h||34)-FLOOR)<24;}
   function nearCar(n){return parked(n)&&grounded(n)&&Math.abs(n.x+(n.w||22)/2-PARK_X)<165&&!(n.enemies||[]).some(e=>e.alive&&Math.abs(e.x-n.x)<90);}
   function doorway(n){if(!building(n)||n.drive||!grounded(n))return null;return Math.abs(n.x+(n.w||22)/2-(outside(n)?BUILDINGS[n.district].door:72))<65?(outside(n)?'enter':'exit'):null;}

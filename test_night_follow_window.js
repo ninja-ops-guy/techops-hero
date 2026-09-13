@@ -61,7 +61,7 @@ test('launcher follow is inert until the player explicitly jumps',()=>{
 });
 
 test('engaged follow keeps a transient grounded third punch classified as air and consumes on contact',()=>{
-  const f=fixture();engageLauncherFollow(f);
+  const f=fixture();engageLauncherFollow(f);f.e._nightCombat.airHits=2;
   f.n.onGround=true;f.n.y=396;f.e.y=286;f.e.x=150;
   const hp=f.e.hp;
   assert.equal(f.api.attack(f.n,{},'punch'),true);
@@ -95,4 +95,13 @@ test('landing ends follow ownership even without a timeout',()=>{
   assert.equal(f.n._nightCombat.follow,null);
 });
 
+test('second contact retains engaged follow across a grounded recovery frame without auto-jump',()=>{
+  const f=fixture();engageLauncherFollow(f);f.e._nightCombat.airHits=1;
+  f.n.onGround=true;f.n.y=396;f.n.vy=0;f.e.y=286;f.e.x=150;
+  assert.equal(f.api.attack(f.n,{},'kick'),true);advance(f,80);
+  assert.equal(f.n._nightCombat.follow.enemy,f.e);assert.equal(f.n._nightCombat.follow.engaged,true);
+  assert.equal(f.n.onGround,true);assert.equal(f.n.vy,0);
+  advance(f,230);assert.equal(f.api.attack(f.n,{},'punch'),true);assert.equal(f.n._nightCombat.attack.kind,'air');
+  advance(f,80);assert.equal(f.n._nightCombat.follow,null);assert.equal(f.e._nightCombat.locked,true);
+});
 console.log(JSON.stringify({suite:'night-follow-window',passed,failed:0}));

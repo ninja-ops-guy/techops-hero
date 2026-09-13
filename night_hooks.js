@@ -186,6 +186,7 @@ const __origInteractV50 = interact;
 interact = function () {
   const s = S;
   if (s && s.nightMode) {
+    if (globalThis.TechOpsNightCampaign && globalThis.TechOpsNightCampaign.interact(NM)) return;
     if (globalThis.TechOpsNightTravel && globalThis.TechOpsNightTravel.interact(NM)) return;
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
     if (NM && !NM._v736 && !NM._sector04 && !NM.drive && (globalThis.TechOpsNightTravel ? globalThis.TechOpsNightTravel.nearCar(NM) : NM.x < NM_CAR_X + 150) && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
@@ -333,6 +334,7 @@ function nmCarMenu() {
 }
 
 function nmNextStage() {
+  if(NM?._nightMission)return; // the rooftop investigation owns its exit
   if(typeof window!=="undefined"&&window.TechOpsCombatAudio)window.TechOpsCombatAudio.silence();
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
@@ -421,7 +423,7 @@ function nmJab() {
 function nmCheckClear() {
   if (!NM.clear && NM.enemies.length && NM.enemies.every(e => !e.alive)) {
     NM.clear = true;
-    NM.msg = "✅ STREET CLEAR — head right →"; NM.msgT = performance.now() + 3000;
+    NM.msg = NM._nightMission ? "ROOFTOP SECURE — inspect both signal points" : "✅ STREET CLEAR — head right →"; NM.msgT = performance.now() + 3000;
     sfx("promote");
   }
 }
@@ -687,7 +689,7 @@ function drawNM() {
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
-  if (!NM._v736 && !NM._sector04) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
+  if (!NM._v736 && !NM._sector04 && !NM._nightMission) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
   if(!domestic) for (let i = 0; i < 7; i++) {
     const lx = ((i * 300 - NM.cam) % (NM_W + 300)) - 150;
     ctx.fillStyle = "#2a3350"; ctx.fillRect(lx, NM_FLOOR - 96, 4, 96); // lamp post
@@ -699,6 +701,7 @@ function drawNM() {
   if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.drawHome(ctx, NM);
   if(globalThis.TechOpsNightTravel)globalThis.TechOpsNightTravel.drawEntrance(ctx,NM);
+  if(globalThis.TechOpsNightCampaign)globalThis.TechOpsNightCampaign.draw(ctx,NM);
   // platforms
   if(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR)){
   ctx.fillStyle = "#3a4663";
@@ -716,7 +719,7 @@ function drawNM() {
     }
   }
   // exit marker
-  if (NM.clear) {
+  if (NM.clear && !NM._nightMission) {
     ctx.font = "22px serif"; ctx.textAlign = "center";
     ctx.globalAlpha = .6 + Math.sin(now / 200) * .4;
     ctx.fillText("➡️", NM_W - 70 - NM.cam, NM_FLOOR - 50);
@@ -807,7 +810,7 @@ function drawNM() {
   // right: district / time / danger
   ctx.fillStyle = "#0009"; ctx.fillRect(rightX, leftY, rightW, rightH);
   ctx.fillStyle = D.accent; ctx.font = "bold " + (compactHud ? 10 : 13) + "px monospace"; ctx.textAlign = "right";
-  ctx.fillText(`${D.name} · ST ${NM.street}/${D.streets}`, rightX + rightW - 8, leftY + 20);
+  ctx.fillText(NM._nightMission ? "ROOFTOP · SIGNAL" : `${D.name} · ST ${NM.street}/${D.streets}`, rightX + rightW - 8, leftY + 20);
   ctx.fillStyle = "#9fb7d9"; ctx.font = (compactHud ? "9px" : "11px") + " monospace";
   ctx.fillText(fmtClock(S.clock), rightX + rightW - 8, leftY + 38);
   ctx.textAlign = "left"; ctx.fillText("DANGER", rightX + 6, leftY + 38);
@@ -819,7 +822,7 @@ function drawNM() {
   ctx.fillStyle = "#9fb7d9";
   const guidance = window.TechOpsGameplayExperience;
   const encounter = guidance && guidance.streetStatus(NM);
-  const status = encounter ? encounter.replace('REINFORCEMENTS INBOUND', 'INBOUND').replace('STREET SECURED · CONTINUE OR RETURN TO CHARGER', 'STREET SECURED').replace('CHECK THE STREET', 'CHECK STREET') : `💀 ${NM.kills}`;
+  const status = NM._nightMission ? (NM.enemies.some(e=>e.alive) ? "CLEAR SECURITY" : "INSPECT SIGNALS") : encounter ? encounter.replace('REINFORCEMENTS INBOUND', 'INBOUND').replace('STREET SECURED · CONTINUE OR RETURN TO CHARGER', 'STREET SECURED').replace('CHECK THE STREET', 'CHECK STREET') : `💀 ${NM.kills}`;
   ctx.textAlign = "right"; ctx.fillText(status, rightX + rightW - 8, leftY + 56);
   // center message
   if (NM.msgT > now) {

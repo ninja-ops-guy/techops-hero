@@ -43,7 +43,7 @@ async function driveRoute(page,touch,click){
 async function walkTo(page,target){
  const x=await page.evaluate(()=>NM.x),key=target<x?'ArrowLeft':'ArrowRight';
  await page.keyboard.down(key);
- try{await page.waitForFunction(({target,dir})=>dir<0?NM.x<=target:NM.x>=target,{target,dir:target<x?-1:1},{timeout:5000});}
+ try{await page.waitForFunction(({target,dir})=>dir<0?NM.x<=target:NM.x>=target,{target,dir:target<x?-1:1},{timeout:10000});}
  finally{await page.keyboard.up(key);}
  await page.waitForFunction(()=>NM.onGround&&Math.abs(NM.vx)<.3);
 }
@@ -138,7 +138,30 @@ async function run(name,engine,touch,viewport){
   const evidence=await prepareStory(page);assert.equal((await page.evaluate(()=>TechOpsSector04Runtime.enterBrowser())).pending,true);await page.waitForFunction(()=>window.v722?.active());await page.keyboard.press('Escape');await page.waitForFunction(()=>S.nightMode?._sector04?.active&&!S.inDialog);
   await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});await click(page.locator('#night-campaign'));await click(option('Continue Sector 04 investigation'));
   assert.equal(await page.evaluate(()=>NM._continuityCheck),'same-session');assert.equal(await page.evaluate(()=>JSON.stringify(TechOpsCampaign.load(localStorage).evidence)),evidence);assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).flags.tuesday_morning_reached),false);await shot('sector04');
-  record.steps.push('asynchronous Sector 04 entry and evidence-preserving resume');assert.deepEqual(record.errors,[]);record.status='passed';
+  record.steps.push('asynchronous Sector 04 entry and evidence-preserving resume');
+  await page.evaluate(()=>localStorage.clear());await mount(page);await enterNight(page,touch);
+  await page.evaluate(()=>{
+   // Labeled prerequisites and cleared-security fixtures isolate mission routing;
+   // combat is exercised by the separate Night combat browser suite.
+   const C=TechOpsCampaign,A=TechOpsCampaignAct2,c=C.createInitialState();
+   for(const id of C.TICKETS)C.assignTicket(c,id,'mike');C.completeStandup(c);C.completeWorkstation(c,{redInTheMirrorHeard:true,feliciaVideoSeen:true});
+   c.flags.tuesday_morning_reached=true;A.beginGhostFrequency(c);A.recordBadgeClonerEvidence(c,{physicalArtifact:true,auditContradiction:true});A.firstDaylightFeliciaConversation(c,{});A.recordMorningstarTrace(c,{component:'telemetry',source:'browser fixture',verified:true});C.save(c,localStorage);
+   NM.enemies=[];NM.x=1400;NM.y=396;NM.onGround=true;NM.vx=NM.vy=0;
+  });
+  await walkTo(page,1549);
+  const contextAction=async()=>{if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('e');};
+  await contextAction();await page.waitForFunction(()=>NM?._nightMission?.id==='rooftop');
+  assert.equal(await page.evaluate(()=>TechOpsNightTravel.parked(NM)),false);
+  await page.evaluate(()=>NM.enemies.forEach(e=>{e.alive=false;e.hp=0;}));
+  await walkTo(page,639);await contextAction();await page.waitForFunction(()=>NM._nightMission.observed.source);
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.evidence.rooftopViolinVerified),false);
+  await walkTo(page,1319);await contextAction();await page.waitForFunction(()=>TechOpsCampaign.load(localStorage).p1.evidence.rooftopViolinVerified);
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.reveal.violinistRevealed),false);
+  await click(option('Recognize the violinist'));
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.reveal.violinistRevealed),true);
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.duet.freeplayUnlocked),false);
+  await shot('rooftop-investigation');record.steps.push('spatial rooftop route, two observations, explicit recognition and retained Duet gate (prerequisite/security fixtures)');
+  assert.deepEqual(record.errors,[]);record.status='passed';
  }catch(e){record.status='failed';record.failure=String(e.stack||e);if(page){record.state=await snapshot(page).catch(()=>null);await page.screenshot({path:`${OUT}/${name}-failure.png`,timeout:5000}).catch(()=>{});}}
  finally{if(browser)await browser.close();await writeFile(`${OUT}/report.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(record));}
 }

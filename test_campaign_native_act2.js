@@ -54,10 +54,15 @@ assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).morningstarSignat
 
 native.rooftop();
 assert.strictEqual(lastDialog.name, "ROOFTOP // SIGNAL");
-choose("Observe signal timing");
+let nightEntries=0;global.enterNight=()=>nightEntries++;
+choose("Follow the signal in Night Walker");
+assert.strictEqual(nightEntries,1);
+assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).rooftopViolinVerified,false,"Day dialog cannot award rooftop evidence");
+// Completed Night investigation fixture; spatial observations are covered in test_night_campaign.
+const roof=load();global.TechOpsCampaignAct2.recordRooftopViolinEvidence(roof,{signalObserved:true,corroborated:true});global.TechOpsCampaign.save(roof,global.localStorage);native.rooftop();
 assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).rooftopViolinVerified, true);
 assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).violinistRevealEligible, true);
-choose("Recognize Felicia");
+choose("Recognize the violinist");
 assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).violinistRevealed, true);
 
 const visual = global.TechOpsCampaignVisuals.show("rooftop_violin");

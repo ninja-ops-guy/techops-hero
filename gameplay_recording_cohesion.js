@@ -18,7 +18,7 @@
 /* Night: one information hierarchy. Keep combat state, remove duplicate tutorial chrome. */
 body.recording-night #quest-tracker,body.recording-night #chaos-banner{display:none!important}
 body.recording-night #v63-card{display:none!important}
-body.recording-night #night-campaign{max-width:112px!important;min-height:38px!important;padding:6px 9px!important;font-size:10px!important;opacity:.82}
+body.recording-night #night-campaign{max-width:min(540px,calc(100vw - 24px))!important;min-height:48px!important;padding:8px 12px!important;font-size:12px!important;opacity:.94}
 body.recording-night #toast{top:auto!important;bottom:max(116px,calc(env(safe-area-inset-bottom) + 116px))!important;max-width:min(76vw,360px)!important;padding:7px 10px!important;font-size:10px!important;line-height:1.35!important;border-width:1px!important}
 /* Day mobile: preserve the world as the primary surface. */
 @media(pointer:coarse) and (max-width:640px){

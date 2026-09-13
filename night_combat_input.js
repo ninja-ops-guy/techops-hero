@@ -27,6 +27,7 @@
     if(!ready())return null;
     const n=runtime(),lifecycle=root.TechOpsNightRuntime;
     if(lifecycle&&lifecycle.atHome())return 'home';
+    if(root.TechOpsNightCampaign?.atPoint(n))return 'mission';
     const travel=root.TechOpsNightTravel;if(travel){if(travel.doorway(n))return 'door';return travel.nearCar(n)?'charger':null;}
     const car=typeof NM_CAR_X==='number'?NM_CAR_X:26;
     if(n.x<car+150&&!(n.enemies||[]).some(e=>e.alive&&Math.abs(e.x-n.x)<90))return 'charger';
@@ -38,7 +39,12 @@
   function dispatch(action,k){
     if(!ready())return false;
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
-    if(action==='punch'&&contextAction()&&typeof root.interact==='function'){root.interact();return true;}
+    if(action==='punch'){
+      const context=contextAction();
+      if(context==='charger'&&typeof root.nmCarMenu==='function'){root.nmCarMenu();return true;}
+      if(context==='mission')return root.TechOpsNightCampaign.interact(runtime());
+      if(context&&typeof root.interact==='function'){root.interact();return true;}
+    }
     if(action==='jump'){jumpQueued=true;return true;}
     if(action==='dash')return root.TechOpsNightCombat.dash(runtime(),runtime().face||1);
     return root.TechOpsNightCombat.attack(runtime(),snapshot(k),action);
@@ -145,6 +151,10 @@
       (doc.head||doc.documentElement).appendChild(style);
     }
     const active=owns(),enabled=ready();
+    const primary=doc.getElementById('tb-interact'),home=doc.getElementById('touch-buttons');
+    if(primary&&active&&primary.parentNode!==box){box.prepend(primary);primary.classList.add('v55-nbtn');}
+    if(primary&&!active&&home&&primary.parentNode===box){home.prepend(primary);primary.classList.remove('v55-nbtn');}
+    for(const legacy of Array.from(box.children).filter(b=>!b.id))legacy.hidden=active&&!assistControls;
     for(const b of doc.querySelectorAll?doc.querySelectorAll('#dpad .d-left, #dpad .d-right'):[]){
       if(bound.has(b))continue;bound.add(b);
       b.addEventListener('dblclick',e=>{if(!ready())return;stop(e);root.TechOpsNightCombat.dash(runtime(),Number(b.dataset.dx)<0?-1:1);});
@@ -162,8 +172,8 @@
     more.hidden=!active;more.disabled=!enabled;more.setAttribute('aria-expanded',String(assistControls));
     const punch=doc.getElementById('tb-interact');bindButton(punch,'punch',true);
     if(active&&punch){
-      const context=contextAction();punch.textContent=context?'A':'PUNCH';
-      punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':context==='door'?'Use building door':'Directional punch');
+      const context=contextAction();punch.textContent=context==='charger'?'DRIVE':context==='home'?'ENTER':context==='door'?(root.TechOpsNightTravel?.doorway(runtime())==='exit'?'EXIT':'ENTER'):context==='mission'?(root.TechOpsNightCampaign.atPoint(runtime())?.id==='stairs'?'ENTER':root.TechOpsNightCampaign.atPoint(runtime())?.id==='exit'?'EXIT':'INSPECT'):'ATTACK';
+      punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':context==='door'?'Use building door':context==='mission'?'Inspect campaign objective':'Directional punch');
       punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E punch / J kick / Space jump. More: optional dash and grab buttons.';
     }
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
