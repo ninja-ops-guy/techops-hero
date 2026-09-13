@@ -109,3 +109,39 @@ test('actual native M5 simulation walks four directions on the floor and isolate
  r.TechOpsGoodDogs3D={status:()=>({view:'crew'})};r.keys={arrowup:true};const prior=n.x;r.stepNM(.05);assert.ok(n.x<prior,'crew view reverses forward into the view');
  n._v736.m=4;n.jHeld=false;r.keys={arrowup:true};r.stepNM(.05);assert.ok(n.y+n.h<430,'the earlier authored retro mission retains its jump');
 });
+
+
+test('guided play uses proximity targeting without facing misses or remote hits',()=>{
+ const {game}=fixture(),e=game.n.enemies[0];e.x=game.n.x-55;e._gdLane=game.n._gdLane;game.n.face=1;const hp=e.hp;
+ assert.equal(game.action('attack'),true);assert.equal(e.hp,hp-26);assert.equal(game.n.face,-1);assert.ok(game.n._gdAttack>0);
+ game.setCoop(true);e.x=game.n.x+500;const farHp=e.hp;for(let i=0;i<10;i++)game.tick(.05,{attack:true});assert.equal(e.hp,farHp);
+});
+test('solo partner contributes attacks and hold-strike respects cooldown and pause',()=>{
+ const {game}=fixture(),e=game.n.enemies[0];e.x=game.n.x+35;e._gdLane=0;const hp=e.hp;
+ game.tick(.05,{attack:true});assert.ok(e.hp<=hp-52,'player and AI partner both land attacks');const after=e.hp;
+ game.tick(.05,{attack:true});assert.equal(e.hp,after,'holding must not attack on every frame');game.setPause(true);game.tick(.05,{attack:true});assert.equal(e.hp,after);
+});
+test('objective and enabled interaction follow encounter, console range, partner and door readiness',()=>{
+ const {game,api}=fixture();assert.equal(game.guidance().step,1);assert.equal(game.guidance().canUse,false);
+ game.n.enemies.forEach(e=>{e.hp=0;e.alive=false;});api.tick();assert.equal(game.guidance().step,2);
+ game.n.enemies.forEach(e=>{e.hp=0;e.alive=false;});assert.equal(game.guidance().step,3);assert.equal(game.guidance().canUse,false);
+ game.n.x=1070;game.n._gdLane=2;assert.equal(game.guidance().canUse,false);game.n._gdLane=-1.4;assert.equal(game.guidance().useLabel,'UNLOCK ROUTE');assert.equal(game.guidance().canUse,true);assert.equal(game.action('use'),true);
+ game.n.x=1450;assert.equal(game.guidance().useLabel,'WAIT FOR PARTNER');game.c.partner.x=1400;assert.equal(game.guidance().useLabel,'NEXT BLOCK');assert.equal(game.action('use'),true);
+});
+test('distant enemies cannot damage the dogs before the encounter is reached',()=>{
+ const {game}=fixture(),hp=game.c.chars.katrin.hp;for(let i=0;i<80;i++)game.tick(.05,{});assert.equal(game.c.chars.katrin.hp,hp);assert.equal(game.n.enemies[0].windup,0);
+});
+
+
+test("guided inputs complete all four beats without editing health or encounter flags",()=>{
+const {game,root}=fixture(),stages=[];
+for(let i=0;i<15000&&!game.complete&&!root.S.gameOver;i++){
+ const g=game.guidance(),n=game.n; if(stages.at(-1)!==g.step)stages.push(g.step);
+ if(g.canUse)game.action('use');
+ const t=g.target,dx=(t.x-n.x)/60,dy=(t._gdLane||0)-(n._gdLane||0),d=Math.hypot(dx,dy);
+ const threat=game.n.enemies.some(e=>e.hp>0&&e.windup>0&&Math.hypot((n.x-e.recordedTarget)/60,(n._gdLane||0)-e.recordedLane)<1.25);
+ const stop=g.step<3?d<1.4:g.step===3?g.canUse:n.x>=1430;
+ game.tick(.05,{axis:stop?0:Math.abs(dx)>.15?Math.sign(dx):0,strafe:stop?0:Math.abs(dy)>.12?Math.sign(dy):0,attack:g.step<3,block:threat});
+}
+assert.equal(game.complete,true);assert.deepEqual(stages,[1,2,3,4]);assert.ok(game.c.chars.katrin.hp>0);assert.equal(root.S.meta._v736.waldo,false);
+});

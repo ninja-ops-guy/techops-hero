@@ -1,3 +1,4 @@
+import {nearest,strikeTarget,distance,guidance} from './guidance.mjs?v=20260913-guided-r1';
 import '../../good_dogs_grounded.js?v=20260913-grounded-r1';
 const ground=globalThis.TechOpsGoodDogsGrounded;
 // Standalone playable review harness only. Production never imports this file.
@@ -20,13 +21,14 @@ export function createSession(root=globalThis,saveData=null){
  function canAct(){return !paused&&!complete&&!root.S.gameOver;}
  function identity(player=1){return player===1?c.active:(c.active==='katrin'?'manchez':'katrin');}
  function attack(player=1){if(!canAct()||c.chars[identity(player)].hp<=0||(player===1&&block))return false;const body=player===2?c.partner:n;if(player===2?p2attackCD>0:attackCD>0)return false;
-  if(player===2)p2attackCD=.34;else attackCD=.34;attackPose=.18;
-  let hit=false;for(const e of n.enemies){if(e.alive===false||e.hp<=0)continue;const dx=e.x-body.x;if(ground.within(body,e)&&Math.abs(dx)<135&&dx*body.face>-25){e.hp=Math.max(0,e.hp-26);e.hitT=8;if(!e.hp)e.alive=false;hit=true;}}
-  if(hit)c.sync=Math.min(100,c.sync+8);event(hit?'hit':'swing',{player});return hit;
+  if(player===2)p2attackCD=localCoop?.34:.8;else attackCD=.34;attackPose=.18;
+  const e=strikeTarget(n,body);body._gdAttack=.22;
+  if(e){const dx=e.x-body.x;body.face=dx<0?-1:1;body._gdHeading=Math.atan2((e._gdLane||0)-(body._gdLane||0),dx/60);e.hp=Math.max(0,e.hp-26);e.hitT=8;if(!e.hp)e.alive=false;c.sync=Math.min(100,c.sync+8);}
+  event(e?'hit':'swing',{player});return !!e;
  }
  function dash(){if(!canAct()||c.chars[c.active].hp<=0||dashCD>0)return;dashCD=.75;n.dash=.15;n._gdDodgeHeading=n._gdHeading;invulnerable=.2;event('dash');}
  function swap(){if(!canAct()||localCoop||c.chars[identity(2)].hp<=0)return false;c.active=c.active==='katrin'?'manchez':'katrin';event('switch');return true;}
- function use(player=1){if(!canAct()||c.chars[identity(player)].hp<=0)return false;const other=identity(player===1?2:1);if(c.chars[other].hp<=0&&Math.abs(n.x-c.partner.x)<110){c.chars[other].hp=48;event('revive');return true;}if(player===2)return false;
+ function use(player=1){if(!canAct()||c.chars[identity(player)].hp<=0)return false;const other=identity(player===1?2:1);if(c.chars[other].hp<=0&&distance(n,c.partner)<=1.8){c.chars[other].hp=48;event('revive');return true;}if(player===2)return false;
   if(c._gbAccessNodeSeized&&n.x>=1400&&c.partner.x>=1320){complete=true;facts.cell_1984_route_open=true;event('complete');return true;}
   const ok=root.TechOpsGoodBoysAccessCoreAuthority?.seizeAccessNode()||false;if(ok){facts.cell_1984_route_open=true;event('node');}return ok;
  }
@@ -38,17 +40,18 @@ export function createSession(root=globalThis,saveData=null){
  }
  function damage(amount,player=1){if(player===1?invulnerable>0:invulnerable2>0)return;const ch=c.chars[identity(player)],guarded=player===1&&block;if(ch.hp<=0)return;ch.hp=Math.max(0,ch.hp-(guarded?Math.ceil(amount*.2):amount));if(player===1){n.hp=ch.hp;invulnerable=.8;}else invulnerable2=.8;event(guarded?'block':'hurt',{player});if(c.chars.katrin.hp<=0&&c.chars.manchez.hp<=0){root.S.gameOver=true;event('down');}}
  function tick(dt,input={}){
-  if(!canAct())return;dt=Math.min(.05,Math.max(0,dt));time+=dt;attackCD=Math.max(0,attackCD-dt);p2attackCD=Math.max(0,p2attackCD-dt);dashCD=Math.max(0,dashCD-dt);invulnerable=Math.max(0,invulnerable-dt);invulnerable2=Math.max(0,invulnerable2-dt);attackPose=Math.max(0,attackPose-dt);block=!!input.block;
+  if(!canAct())return;dt=Math.min(.05,Math.max(0,dt));time+=dt;attackCD=Math.max(0,attackCD-dt);p2attackCD=Math.max(0,p2attackCD-dt);dashCD=Math.max(0,dashCD-dt);invulnerable=Math.max(0,invulnerable-dt);invulnerable2=Math.max(0,invulnerable2-dt);attackPose=Math.max(0,attackPose-dt);block=!!input.block;n._gdAttack=Math.max(0,(n._gdAttack||0)-dt);p2attackCD=Math.max(0,p2attackCD);c.partner._gdAttack=Math.max(0,(c.partner._gdAttack||0)-dt);
   if(c.chars[c.active].hp>0)physics(n,block?0:(input.axis||0),block?0:(input.strafe||0),dt);else n.vx=0;
   const p=c.partner;
   if(c.chars[identity(2)].hp<=0)p.vx=0;else if(localCoop)physics(p,input.partnerAxis||0,input.partnerStrafe||0,dt);
   else{const delta=n.x-55-p.x;physics(p,Math.abs(delta)>35?Math.sign(delta):0,Math.max(-1,Math.min(1,(ground.lane(n)+.8-ground.lane(p))*2)),dt);}
+  if(input.attack)attack();if(!localCoop&&strikeTarget(n,p))attack(2);
   if(localCoop&&Math.abs(n.x-p.x)>420){if(n.x>p.x)n.x=p.x+420;else p.x=n.x+420;}
   if(!localCoop&&c.chars[c.active].hp<=0&&c.chars[identity(2)].hp>0&&Math.abs(p.x-n.x)<110){reviveT+=dt;if(reviveT>2){c.chars[c.active].hp=48;reviveT=0;event('revive');}}else reviveT=0;
   sampleCD-=dt;if(sampleCD<=0){sampleCD=.25;history.push({time,x:n.x,lane:ground.lane(n)});history=history.filter(s=>s.time>=time-4);}
   for(const e of n.enemies){if(e.alive===false||e.hp<=0)continue;e.hitT=Math.max(0,(e.hitT||0)-dt*60);e.cooldown=(e.cooldown??1.4)-dt;
    if(e.windup>0){e.windup-=dt;if(e.windup<=0){if(Math.hypot((n.x-(e.recordedTarget??e.x))/60,ground.lane(n)-(e.recordedLane??ground.lane(e)))<1.25)damage(e.kind==='mikeindex'?20:12);if(Math.hypot((p.x-(e.recordedTarget??e.x))/60,ground.lane(p)-(e.recordedLane??ground.lane(e)))<1.25)damage(e.kind==='mikeindex'?20:12,2);e.cooldown=e.kind==='mikeindex'?1.6:1.1;event('enemy-strike');}}
-   else if(e.cooldown<=0){const prior=history.filter(s=>s.time<=time-.9).at(-1);e.recordedTarget=prior?prior.x:e.x;e.recordedLane=prior?prior.lane:ground.lane(e);e.windup=.9;event('warning');}
+   else if(e.cooldown<=0&&distance(n,e)<5){const prior=history.filter(s=>s.time<=time-.9).at(-1);e.recordedTarget=prior?prior.x:e.x;e.recordedLane=prior?prior.lane:ground.lane(e);e.windup=.9;event('warning',{kind:e.kind});}
    else{ground.enemy(n,e,dt);if(Math.abs(e.x-n.x)>100)e.x+=Math.sign(n.x-e.x)*dt*(e.kind==='mikeindex'?48:62);}
   }
   const before=n._gbMikeIndexDefeated;root.TechOpsGoodBoysAccessCoreAuthority?.tick();if(!before&&n._gbMikeIndexDefeated)event('index-defeated');
@@ -63,5 +66,5 @@ export function createSession(root=globalThis,saveData=null){
   root.S.gameOver=c.chars.katrin.hp<=0&&c.chars.manchez.hp<=0;
   if(data.indexDefeated){facts.mike_index_defeated=true;facts.k_identity_status='K';}if(c._gbAccessNodeSeized)facts.cell_1984_route_open=true;return true;
  }
- return {root,n,c,action,tick,snapshot,restore,setPause,setCoop(v){localCoop=!!v;},get paused(){return paused;},get complete(){return complete;},get localCoop(){return localCoop;},get time(){return time;},drainEvents(){const e=events;events=[];return e;}};
+ return {root,n,c,guidance(){return guidance(n,{nearNode:root.TechOpsGoodBoysAccessCoreAuthority?.nearNode()||false,localCoop});},action,tick,snapshot,restore,setPause,setCoop(v){localCoop=!!v;},get paused(){return paused;},get complete(){return complete;},get localCoop(){return localCoop;},get time(){return time;},drainEvents(){const e=events;events=[];return e;}};
 }

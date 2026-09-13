@@ -1,6 +1,7 @@
+import {guidance} from './guidance.mjs?v=20260913-guided-r1';
 import * as THREE from './vendor/three.module.js';
 import {prisonEntry} from './prison-entry.mjs?v=20260913-grounded-r1';
-import {positionCamera} from './camera.mjs?v=20260913-grounded-r1';
+import {positionCamera} from './camera.mjs?v=20260913-guided-r1';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {surface,dressActors,loadSurfaceMaps,environmentMap,filmPipeline,QUALITY} from './fidelity.mjs?v=20260913-grounded-r1';
 import {buildCorridor,beveledBox} from './corridor.mjs?v=20260913-grounded-r1';
@@ -12,7 +13,7 @@ export function eligible(root){
 }
 export function objective(n){
  const c=n._v736;
- if(!n._gbMikeIndexDefeated)return 'Break the Mike Index. Its prediction follows recorded movement.';
+ if(!n._gbMikeIndexDefeated)return 'Defeat the white projection. Strike up close; step out of orange circles.';
  if((n.enemies||[]).some(e=>e.alive!==false&&e.hp>0))return 'Clear route security. Keep K and your partner moving.';
  if(!c._gbAccessNodeSeized)return 'Escort K to the Access Node. USE to open Route 1984.';
  return 'Route 1984 is open. Regroup at the marked door.';
@@ -69,7 +70,8 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   group.userData.healthBar=box(0,2.1,0,.7,.025,.035,green,group);scene.add(group);return group;
  }
  const projectileGeometry=new THREE.SphereGeometry(.075,8,6),projectiles=[];
- const cueRing=new THREE.Mesh(new THREE.RingGeometry(.45,.6,40),new THREE.MeshBasicMaterial({color:0xff653c,side:THREE.DoubleSide,transparent:true,opacity:.6}));cueRing.rotation.x=-Math.PI/2;scene.add(cueRing);
+ const cueRing=new THREE.Mesh(new THREE.RingGeometry(1.18,1.25,48),new THREE.MeshBasicMaterial({color:0xff653c,side:THREE.DoubleSide,transparent:true,opacity:.6}));cueRing.rotation.x=-Math.PI/2;scene.add(cueRing);
+ const goalRing=new THREE.Mesh(new THREE.RingGeometry(.5,.55,40),new THREE.MeshBasicMaterial({color:0x96e8cc,side:THREE.DoubleSide,transparent:true,opacity:.8}));goalRing.rotation.x=-Math.PI/2;scene.add(goalRing);
  let view='third',lastTime=0,lastCameraView='',lost=false,disposed=false;
  const onLost=e=>{e.preventDefault();lost=true;};renderer.domElement.addEventListener('webglcontextlost',onLost);
  function draw(n,width,height,time=performance.now()){
@@ -77,7 +79,7 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   const dt=lastTime?Math.min(.05,Math.max(0,(time-lastTime)/1000)):0;lastTime=time;const c=n._v736,p=c.partner||n;
   const active=c.active==='manchez'?'manchez':'katrin',other=active==='katrin'?'manchez':'katrin';
   function place(o,b,lane){o.position.set(Number.isFinite(b._gdLane)?b._gdLane:lane,0,(Number(b.x)||0)/60);o.rotation.y=Number.isFinite(b._gdHeading)?b._gdHeading:(b.face||1)<0?Math.PI:0;}
-  place(actors[active],n,-.33);place(actors[other],p,.33);
+  place(actors[active],n,-.33);place(actors[other],p,.33);actors[active].rotation.x=-Math.sin((n._gdAttack||0)/.22*Math.PI)*.16;actors[other].rotation.x=-Math.sin((p._gdAttack||0)/.22*Math.PI)*.16;
   for(const id of ['katrin','manchez'])actors[id].rotation.z=c.chars?.[id]?.hp<=0?Math.PI/2:0;
   const lead=(Number(n.x)||0)/60,partner=(Number(p.x)||0)/60;
   actors.k.position.set(-1.5,0,Math.max(.8,Math.min(lead,partner)-1.15));actors.k.rotation.y=(n.face||1)<0?Math.PI:0;
@@ -87,6 +89,7 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   for(const [e,o] of enemyMeshes)if(!present.has(e)){scene.remove(o);enemyMeshes.delete(e);o.userData.mixer?.stopAllAction();if(!o.userData.sharedGeometry)o.traverse(a=>{if(a.geometry&&a.geometry!==geo)a.geometry.dispose();});}
   cueRing.visible=!!telegraph;if(telegraph)cueRing.position.set(telegraph.recordedLane??telegraph._gdLane??0,.04,(telegraph.recordedTarget??telegraph.x)/60);
   const shots=c.shots||[];for(let i=0;i<Math.max(shots.length,projectiles.length);i++){let o=projectiles[i];if(!o){o=new THREE.Mesh(projectileGeometry,green);scene.add(o);projectiles.push(o);}o.visible=i<shots.length;if(o.visible){o.position.set(shots[i]._gdLane||0,(430-shots[i].y)/60,shots[i].x/60);o.scale.set(1,1,2);}}
+  const goal=guidance(n).target;goalRing.position.set(goal._gdLane||0,.035,goal.x/60);goalRing.visible=view==='third';
   const open=!!c._gbAccessNodeSeized;door.position.y=1.35+(open?2.9:0);lockLight.material=open?green:amber;
   screen.material=n._gbMikeIndexDefeated?green:amber;
   const aspect=width/height;const targetZ=(lead+partner)*.5;

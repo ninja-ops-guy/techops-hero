@@ -7,7 +7,7 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
  let browser=await chromium.launch(launch);
  const page=await browser.newPage({viewport:{width:960,height:640},deviceScaleFactor:1});const errors=[];
  page.on('pageerror',e=>{errors.push(e.message);console.log('pageerror',e.message)});page.on('console',m=>{if(m.type()==='error'){errors.push(m.text());console.log('ERROR',m.text().slice(0,800));}});
- await page.goto('http://127.0.0.1:8081/assets/good-dogs-3d/',{waitUntil:'networkidle'});await page.waitForFunction(()=>window.__goodDogs3DReview?.ready,null,{timeout:90000});await page.locator('#begin').click({noWaitAfter:true});
+ await page.goto('http://127.0.0.1:8081/assets/good-dogs-3d/',{waitUntil:'networkidle'});await page.waitForFunction(()=>window.__goodDogs3DReview?.ready,null,{timeout:90000});await page.locator('#begin').click({noWaitAfter:true});await page.locator('#help').click();assert.equal(await page.evaluate(()=>__goodDogs3DReview.session.paused),true);assert.match(await page.locator('#title').innerText(),/HOW TO PLAY/);await page.locator('#begin').click();
  // Freeze only frame submission for software-GPU screenshots. These are real
  // rendered gameplay frames; no image editing or state progression shortcuts.
  await page.evaluate(()=>{const l=window.__goodDogs3DReview.level;window.__captureDraw=l.draw;l.draw=()=>true;});
@@ -15,15 +15,15 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
  const snapshots=[],controls=[];
  async function capture(name,view,quality){
   await page.addStyleTag({content:'#overlay{visibility:hidden}'});
-  while(await page.evaluate(()=>__goodDogs3DReview.level.view)!==view)await page.locator('#camera').click();
+  await page.evaluate(view=>__goodDogs3DReview.level.setView(view),view);
   const stats=await page.evaluate(async q=>{const r=__goodDogs3DReview;await r.level.setQuality(q);__captureDraw(NM,innerWidth,innerHeight,performance.now());return r.level.stats();},quality);
   await page.screenshot({path:out+'/'+name+'.png',timeout:90000});snapshots.push({name,view,...stats});
  }
  await capture('01-escort-high','third','high');await capture('02-crew-high','crew','high');await capture('03-retro','retro','balanced');await capture('04-k-view','first','balanced');
  await page.addStyleTag({content:'#overlay{visibility:visible}'});
- for(const view of ['third','retro','first','crew']){
+ for(const view of ['third']){
   await page.locator('#restart').click({noWaitAfter:true});
-  while(await page.evaluate(()=>__goodDogs3DReview.level.view)!==view)await page.locator('#camera').click();
+  await page.evaluate(view=>__goodDogs3DReview.level.setView(view),view);
   const sign=view==='crew'?-1:1;
   for(const [key,direction,axis] of [['KeyW',sign,'x'],['KeyS',-sign,'x'],['ArrowRight',view==='retro'?sign:-sign,view==='retro'?'x':'_gdLane'],['ArrowLeft',view==='retro'?-sign:sign,view==='retro'?'x':'_gdLane']]){
    const before=await page.evaluate(axis=>NM[axis],axis);await page.keyboard.down(key);
@@ -32,7 +32,7 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
   }
   await page.locator('#pause').click({noWaitAfter:true});
  }
- assert.equal(await page.locator('[data-action=jump]').count(),0);assert.equal(await page.evaluate(()=>NM.platforms.length),0);assert.equal(await page.evaluate(()=>NM.y+NM.h),430);
+ assert.equal(await page.locator('#camera').count(),0);assert.equal(await page.locator('[data-action=jump]').count(),0);assert.equal(await page.evaluate(()=>NM.platforms.length),0);assert.equal(await page.evaluate(()=>NM.y+NM.h),430);
  const before=await page.evaluate(()=>JSON.stringify(__goodDogs3DReview.state));await page.locator('#quality').selectOption('low');await page.waitForFunction(()=>__goodDogs3DReview.level.quality==='low');assert.equal(await page.evaluate(()=>JSON.stringify(__goodDogs3DReview.state)),before);
  await capture('05-performance','third','low');await page.addStyleTag({content:'#overlay{visibility:visible}'});await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>__goodDogs3DReview?.ready,null,{timeout:90000});assert.equal(await page.locator('#quality').inputValue(),'low');await page.close();
  await browser.close();browser=await chromium.launch(launch);
@@ -47,6 +47,6 @@ const http=require('http'),fs=require('fs'),path=require('path'),assert=require(
   try{await mobile.waitForFunction(({before,direction,axis})=>(NM[axis]-before)*direction>(axis==='x'?8:.12),{before,direction,axis},{timeout:5000});}finally{await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
   controls.push({view:'third',touch:hold,direction,axis,pass:true});
  }
- await mobile.locator('#pause').tap({noWaitAfter:true});await mobile.addStyleTag({content:'#overlay{visibility:hidden}'});await mobile.evaluate(()=>__captureDraw(NM,innerWidth,innerHeight,performance.now()));await mobile.screenshot({path:out+'/06-mobile-balanced.png',timeout:90000});assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- const report={errors,snapshots,controls,checks:{continuousGround:true,noJumpControl:true,pausedQualityPreservesState:true,qualityPersistence:true,mobileDefaultsBalanced:true,mobileOverflow:false},scope:'Real keyboard and emulated touch input in Chromium software WebGL. Captures pause the simulation and submit one actual WebGL frame; no image edits. Not physical-device FPS certification.'};fs.writeFileSync(out+'/validation.json',JSON.stringify(report,null,2));assert.equal(errors.length,0);console.log(JSON.stringify(report));await browser.close();server.close();
+ assert.equal(await mobile.locator('[data-action=use]').isDisabled(),true);assert.match(await mobile.locator('#objective').innerText(),/1 \/ 4/);assert.match(await mobile.locator('#instruction').innerText(),/STRIKE/);await mobile.locator('#help').tap();assert.equal(await mobile.evaluate(()=>__goodDogs3DReview.session.paused),true);await mobile.locator('#begin').tap();assert.equal(await mobile.evaluate(()=>__goodDogs3DReview.level.view),'third');await mobile.locator('#pause').tap({noWaitAfter:true});await mobile.addStyleTag({content:'#overlay{visibility:hidden}'});await mobile.evaluate(()=>__captureDraw(NM,innerWidth,innerHeight,performance.now()));await mobile.screenshot({path:out+'/06-mobile-balanced.png',timeout:90000});assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ const report={errors,snapshots,controls,checks:{guidedHud:true,helpPauses:true,lockedUseDisabled:true,stablePlayableCamera:true,continuousGround:true,noJumpControl:true,pausedQualityPreservesState:true,qualityPersistence:true,mobileDefaultsBalanced:true,mobileOverflow:false},scope:'Real keyboard and emulated touch input in Chromium software WebGL. Captures pause the simulation and submit one actual WebGL frame; no image edits. Not physical-device FPS certification.'};fs.writeFileSync(out+'/validation.json',JSON.stringify(report,null,2));assert.equal(errors.length,0);console.log(JSON.stringify(report));await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1)});
