@@ -61,6 +61,22 @@ class MediaHandler(http.server.SimpleHTTPRequestHandler):
             remaining -= len(chunk)
 
 
+class RuntimeHTTPServer(http.server.ThreadingHTTPServer):
+    """Threaded CI server sized for parser-burst asset loading.
+
+    socketserver.TCPServer defaults to a listen backlog of 5 on the Python
+    versions used by GitHub's macOS runners. TechOps Hero loads many authored
+    script/atlas chunks concurrently; an exhausted accept queue can surface as
+    a transient ERR_CONNECTION_RESET and then cascade into missing lexical
+    globals in dependent atlas scripts. Keep request handling unchanged, but
+    make the admission queue explicit and large enough for that parser burst.
+    """
+
+    request_queue_size = 256
+    daemon_threads = True
+    block_on_close = False
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=4173)
@@ -68,4 +84,4 @@ if __name__ == '__main__':
     parser.add_argument('--directory', default=os.getcwd())
     args = parser.parse_args()
     handler = functools.partial(MediaHandler, directory=args.directory)
-    http.server.ThreadingHTTPServer((args.bind, args.port), handler).serve_forever()
+    RuntimeHTTPServer((args.bind, args.port), handler).serve_forever()
