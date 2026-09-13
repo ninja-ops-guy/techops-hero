@@ -1,0 +1,19 @@
+"use strict";
+const assert=require("assert"),fs=require("fs"),vm=require("vm");
+const src=fs.readFileSync("gameplay_recording_cohesion.js","utf8"),boot=fs.readFileSync("production_bootstrap.js","utf8");
+assert.doesNotThrow(()=>new Function(src));
+for(const token of ["recording-night","recording-day","SHIFT NOT STARTED","DAY '+d+' · '","#dpad","#touch-buttons","#quest-tracker","#night-campaign"])assert.ok(src.includes(token),`missing recording contract ${token}`);
+assert.ok(src.includes("tuesday_morning_reached")&&src.includes("c.campaign&&c.campaign.day"),"day HUD reconciliation must use canonical campaign day after Tuesday commit");
+assert.ok(src.includes("MutationObserver"),"presentation must react to state/UI changes without a polling timer");
+assert.ok(src.includes("requestAnimationFrame")&&src.includes("function scheduleMode"),"MutationObserver work must be frame-coalesced so DOM writes cannot starve input/click completion");
+assert.ok(src.includes("day.textContent!==label"),"day reconciliation must be idempotent and avoid self-triggering observer mutations");
+const bootVersion=Number((boot.match(/VERSION=(\d+)/)||[])[1]);assert.ok(bootVersion>=36&&boot.includes('\"gameplay_recording_cohesion.js\"'),"production bootstrap must retain or advance the recording cohesion authority");
+// Verify canonical Tuesday reconciliation in isolation and prove a second pass is write-free.
+let text="",writes=0;
+const day={get textContent(){return text;},set textContent(v){writes++;text=v;}},body={classList:{toggle(){}}};
+const storage={};
+const context={console,Date,localStorage:storage,S:{day:1,clock:540,meta:{}},TechOpsCampaign:{load(){return{campaign:{day:2},flags:{tuesday_morning_reached:true}}}},document:{readyState:"loading",body,head:{appendChild(){}},documentElement:{appendChild(){}},getElementById(id){return id==='hud-day'?day:null;},addEventListener(){}},MutationObserver:function(){this.observe=()=>{}},addEventListener(){},matchMedia(){return{matches:true}}};
+context.globalThis=context;vm.createContext(context);vm.runInContext(src,context);context.TechOpsGameplayRecordingCohesion.reconcileDay();
+assert.equal(context.S.day,2);assert.equal(day.textContent,"DAY 2 · TUE");assert.equal(writes,1);
+context.TechOpsGameplayRecordingCohesion.reconcileDay();assert.equal(writes,1,"idempotent reconcile must not rewrite identical HUD text");
+console.log("Gameplay recording cohesion contract: PASS");

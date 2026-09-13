@@ -13,6 +13,7 @@ const tests = [
   "test_art_handoff.js",
   "test_crash_playback_budget.js",
   "test_good_dogs_route_contract.js",
+  "test_good_dogs_handoff_probe.mjs",
   "test_good_dogs_coop.js",
   "test_good_dogs_state_integrity.js",
   "test_campaign_world_visuals.js",
@@ -70,6 +71,9 @@ const tests = [
   "test_production_gameplay_experience.js",
   "test_orbital_scene_staging.js",
   "test_night_lifecycle.js",
+  "test_night_mobile_visual_contract.js",
+  "test_gameplay_recording_cohesion.js",
+  "test_recording_world_cohesion.js",
   "test_ui_coop_contract.js"
 ];
 

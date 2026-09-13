@@ -1,14 +1,13 @@
-/* TechOps Hero — production runtime bootstrap v36.
+/* TechOps Hero — production runtime bootstrap v38.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
- * v35 adds evidence-grounded Night mobile composition cleanup after canonical
- * Night input ownership so the live iPhone HUD remains readable and compact.
+ * v38 adds M5 3D presentation while retaining the physical-iPhone world/render cohesion authority last.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=36,BUILD="20260912-production-v36-post-k-3d-r1",started=false,done=false;
+  var VERSION=38,BUILD="20260913-production-v38-post-k-3d-r2",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -42,7 +41,9 @@
     "production_runtime_safety.js",
     "production_mode_router.js",
     "production_presentation_guard.js",
-    "runtime_night.js"
+    "runtime_night.js",
+    "gameplay_recording_cohesion.js",
+    "recording_world_cohesion.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
@@ -74,6 +75,8 @@
     try{if(root.TechOpsProductionPresentationGuard)root.TechOpsProductionPresentationGuard.clean();}catch(e){}
     try{if(root.TechOpsLiveCrawlVisualCohesion)root.TechOpsLiveCrawlVisualCohesion.tick();}catch(e){root.__productionLiveCrawlVisualError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightMobileVisualCohesion)root.TechOpsNightMobileVisualCohesion.sync();}catch(e){root.__productionNightMobileVisualError=String(e&&e.stack||e);}
+    try{if(root.TechOpsGameplayRecordingCohesion)root.TechOpsGameplayRecordingCohesion.mode();}catch(e){root.__productionRecordingCohesionError=String(e&&e.stack||e);}
+    try{if(root.TechOpsRecordingWorldCohesion)root.TechOpsRecordingWorldCohesion.install();}catch(e){root.__productionRecordingWorldError=String(e&&e.stack||e);}
     done=true;root.__productionBootstrapReady=true;root.__productionBootstrapBuild=BUILD;root.__productionCampaignLoaderSeparated=true;
     try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:production-ready",{detail:{version:VERSION,build:BUILD}}));}catch(e){}
   }
