@@ -71,8 +71,13 @@
           x.fillStyle='#52676c';x.fillRect(sx+1,p.y+10,1,Math.max(0,F-p.y-10));
         }
         x.drawImage(im,...rect,px,p.y,p.w,17);
+      }else if(id==='gooddogs-home'){
+        // Reuse the authored porch's wooden posts and stair fascia. Supports
+        // register every climbable surface to the yard, including tall ledges.
+        const height=Math.max(0,F-p.y-8);
+        if(height)for(const sx of [px+7,px+p.w-17])x.drawImage(im,927,390,17,140,sx,p.y+8,10,height);
+        x.drawImage(im,740,588,145,18,px,p.y,p.w,14);
       }else{
-        // M1 platforms are low stone/wood property surfaces, not steel slabs.
         const sy=Math.round(im.naturalHeight*specs[id].ground);
         x.drawImage(im,420,sy,360,30,px,p.y,p.w,14);
       }
