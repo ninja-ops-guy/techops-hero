@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "file": "a_wide_pixel_art_spritesheet_concept_sheet_in_th.png",
+    "sha256": "3ac96d73843b76eca8ff980ceb800087db219f6fa4e3bbf2ba59aede0709ee03",
+    "approval": "User: This will work. Integrate.",
+    "interpretation": "Three dog sprites are used as unnamed neighborhood dogs, not Katrin or Manchez. Pose crops are source stills, not a certified complete walk cycle."
+  },
+  "actors": {
+    "idle": {
+      "sourceRect": [
+        306,
+        38,
+        64,
+        96
+      ],
+      "rect": [
+        32,
+        52,
+        64,
+        96
+      ],
+      "pivot": "bottom-center"
+    },
+    "walk1": {
+      "sourceRect": [
+        377,
+        40,
+        61,
+        94
+      ],
+      "rect": [
+        161,
+        54,
+        61,
+        94
+      ],
+      "pivot": "bottom-center"
+    },
+    "walk2": {
+      "sourceRect": [
+        447,
+        39,
+        61,
+        95
+      ],
+      "rect": [
+        289,
+        53,
+        61,
+        95
+      ],
+      "pivot": "bottom-center"
+    },
+    "walk3": {
+      "sourceRect": [
+        519,
+        40,
+        63,
+        94
+      ],
+      "rect": [
+        416,
+        54,
+        63,
+        94
+      ],
+      "pivot": "bottom-center"
+    },
+    "sit": {
+      "sourceRect": [
+        585,
+        49,
+        59,
+        84
+      ],
+      "rect": [
+        546,
+        64,
+        59,
+        84
+      ],
+      "pivot": "bottom-center"
+    },
+    "interact": {
+      "sourceRect": [
+        383,
+        170,
+        76,
+        91
+      ],
+      "rect": [
+        666,
+        57,
+        76,
+        91
+      ],
+      "pivot": "bottom-center"
+    },
+    "headphones_off": {
+      "sourceRect": [
+        308,
+        166,
+        78,
+        95
+      ],
+      "rect": [
+        793,
+        53,
+        78,
+        95
+      ],
+      "pivot": "bottom-center"
+    },
+    "knock": {
+      "sourceRect": [
+        738,
+        170,
+        63,
+        91
+      ],
+      "rect": [
+        32,
+        217,
+        63,
+        91
+      ],
+      "pivot": "bottom-center"
+    },
+    "waldo": {
+      "sourceRect": [
+        832,
+        54,
+        47,
+        134
+      ],
+      "rect": [
+        168,
+        174,
+        47,
+        134
+      ],
+      "pivot": "bottom-center"
+    },
+    "waldo_aside": {
+      "sourceRect": [
+        1057,
+        64,
+        50,
+        124
+      ],
+      "rect": [
+        295,
+        184,
+        50,
+        124
+      ],
+      "pivot": "bottom-center"
+    },
+    "dog1": {
+      "sourceRect": [
+        1145,
+        48,
+        83,
+        78
+      ],
+      "rect": [
+        406,
+        230,
+        83,
+        78
+      ],
+      "pivot": "bottom-center"
+    },
+    "dog2": {
+      "sourceRect": [
+        1283,
+        51,
+        86,
+        75
+      ],
+      "rect": [
+        533,
+        233,
+        86,
+        75
+      ],
+      "pivot": "bottom-center"
+    },
+    "dog3": {
+      "sourceRect": [
+        1412,
+        49,
+        87,
+        77
+      ],
+      "rect": [
+        660,
+        231,
+        87,
+        77
+      ],
+      "pivot": "bottom-center"
+    }
+  },
+  "files": {
+    "assets/eastside/east_side_actors.png": {
+      "bytes": 145333,
+      "sha256": "d21e351f0d153d693cafb09839e927564d30dac27802a8adfd4c1b1b62ea294c"
+    },
+    "assets/eastside/east_side_environment.png": {
+      "bytes": 268288,
+      "sha256": "cf443db5dea5e56024008032ab421549bfe04d1404e71e85dd391c3f19cc9065"
+    },
+    "assets/eastside/east_side_porch_sequence.png": {
+      "bytes": 60081,
+      "sha256": "4b890905a63dbeefcc67e63ccce6cadb7daf5c476664f277ea68468085d34587"
+    },
+    "assets/eastside/east_side_props_fx.png": {
+      "bytes": 193438,
+      "sha256": "0923a943d483bf087e4fa4a9289e1fa68e6282d5e474eb073b4ad2fc2d4bcd56"
+    }
+  },
+  "audio": {
+    "assets/audio/eastside/east-side.mp3": {
+      "bytes": 976104,
+      "sha256": "5ecbb19508f48bd8c4934e109ea83e43d82ca7130efa877200b80fcfcecbe6ac",
+      "provenance": "User-supplied EAST SIDE master; no transcoding."
+    }
+  }
+}
