@@ -145,3 +145,10 @@ for(let i=0;i<15000&&!game.complete&&!root.S.gameOver;i++){
 }
 assert.equal(game.complete,true);assert.deepEqual(stages,[1,2,3,4]);assert.ok(game.c.chars.katrin.hp>0);assert.equal(root.S.meta._v736.waldo,false);
 });
+
+
+test('swap transfers control to the partner without teleporting either dog',()=>{
+ const {game}=fixture(),n=game.n,p=game.c.partner;const first={x:n.x,lane:n._gdLane},second={x:p.x,lane:p._gdLane};
+ assert.equal(game.action('swap'),true);assert.equal(game.c.active,'manchez');assert.equal(n.x,second.x);assert.equal(n._gdLane,second.lane);assert.equal(p.x,first.x);assert.equal(p._gdLane,first.lane);
+ game.setCoop(true);assert.equal(game.action('swap'),false);
+});

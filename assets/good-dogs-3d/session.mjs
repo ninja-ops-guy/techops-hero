@@ -27,7 +27,7 @@ export function createSession(root=globalThis,saveData=null){
   event(e?'hit':'swing',{player});return !!e;
  }
  function dash(){if(!canAct()||c.chars[c.active].hp<=0||dashCD>0)return;dashCD=.75;n.dash=.15;n._gdDodgeHeading=n._gdHeading;invulnerable=.2;event('dash');}
- function swap(){if(!canAct()||localCoop||c.chars[identity(2)].hp<=0)return false;c.active=c.active==='katrin'?'manchez':'katrin';event('switch');return true;}
+ function swap(){if(!canAct()||localCoop||c.chars[identity(2)].hp<=0)return false;const p=c.partner;for(const key of ['x','y','vx','vy','face','onGround','_gdLane','_gdHeading','_gdSideSpeed','_gdPreviousX','_gdPreviousLane','_gdAttack']){const value=n[key];n[key]=p[key];p[key]=value;}n.dash=0;p.dash=0;[invulnerable,invulnerable2]=[invulnerable2,invulnerable];[attackCD,p2attackCD]=[p2attackCD,attackCD];c.active=c.active==='katrin'?'manchez':'katrin';n.hp=c.chars[c.active].hp;event('switch');return true;}
  function use(player=1){if(!canAct()||c.chars[identity(player)].hp<=0)return false;const other=identity(player===1?2:1);if(c.chars[other].hp<=0&&distance(n,c.partner)<=1.8){c.chars[other].hp=48;event('revive');return true;}if(player===2)return false;
   if(c._gbAccessNodeSeized&&n.x>=1400&&c.partner.x>=1320){complete=true;facts.cell_1984_route_open=true;event('complete');return true;}
   const ok=root.TechOpsGoodBoysAccessCoreAuthority?.seizeAccessNode()||false;if(ok){facts.cell_1984_route_open=true;event('node');}return ok;
@@ -40,7 +40,7 @@ export function createSession(root=globalThis,saveData=null){
  }
  function damage(amount,player=1){if(player===1?invulnerable>0:invulnerable2>0)return;const ch=c.chars[identity(player)],guarded=player===1&&block;if(ch.hp<=0)return;ch.hp=Math.max(0,ch.hp-(guarded?Math.ceil(amount*.2):amount));if(player===1){n.hp=ch.hp;invulnerable=.8;}else invulnerable2=.8;event(guarded?'block':'hurt',{player});if(c.chars.katrin.hp<=0&&c.chars.manchez.hp<=0){root.S.gameOver=true;event('down');}}
  function tick(dt,input={}){
-  if(!canAct())return;dt=Math.min(.05,Math.max(0,dt));time+=dt;attackCD=Math.max(0,attackCD-dt);p2attackCD=Math.max(0,p2attackCD-dt);dashCD=Math.max(0,dashCD-dt);invulnerable=Math.max(0,invulnerable-dt);invulnerable2=Math.max(0,invulnerable2-dt);attackPose=Math.max(0,attackPose-dt);block=!!input.block;n._gdAttack=Math.max(0,(n._gdAttack||0)-dt);p2attackCD=Math.max(0,p2attackCD);c.partner._gdAttack=Math.max(0,(c.partner._gdAttack||0)-dt);
+  if(!canAct())return;dt=Math.min(.05,Math.max(0,dt));time+=dt;attackCD=Math.max(0,attackCD-dt);p2attackCD=Math.max(0,p2attackCD-dt);dashCD=Math.max(0,dashCD-dt);invulnerable=Math.max(0,invulnerable-dt);invulnerable2=Math.max(0,invulnerable2-dt);attackPose=Math.max(0,attackPose-dt);block=!!input.block;n._gdAttack=Math.max(0,(n._gdAttack||0)-dt);c.partner._gdAttack=Math.max(0,(c.partner._gdAttack||0)-dt);
   if(c.chars[c.active].hp>0)physics(n,block?0:(input.axis||0),block?0:(input.strafe||0),dt);else n.vx=0;
   const p=c.partner;
   if(c.chars[identity(2)].hp<=0)p.vx=0;else if(localCoop)physics(p,input.partnerAxis||0,input.partnerStrafe||0,dt);
