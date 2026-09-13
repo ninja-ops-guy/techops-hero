@@ -1,0 +1,91 @@
+{
+  "errors": [],
+  "snapshots": [
+    {
+      "name": "01-escort-high",
+      "view": "third",
+      "frame": 106,
+      "calls": 130,
+      "triangles": 1745902,
+      "points": 0,
+      "lines": 0,
+      "quality": "high",
+      "hdr": true,
+      "meshes": 58,
+      "textures": 15
+    },
+    {
+      "name": "02-crew-high",
+      "view": "crew",
+      "frame": 110,
+      "calls": 108,
+      "triangles": 1773272,
+      "points": 0,
+      "lines": 0,
+      "quality": "high",
+      "hdr": true,
+      "meshes": 59,
+      "textures": 16
+    },
+    {
+      "name": "03-retro",
+      "view": "retro",
+      "frame": 111,
+      "calls": 67,
+      "triangles": 389308,
+      "points": 0,
+      "lines": 0,
+      "quality": "balanced",
+      "hdr": true,
+      "meshes": 97,
+      "textures": 17
+    },
+    {
+      "name": "04-k-view",
+      "view": "first",
+      "frame": 115,
+      "calls": 111,
+      "triangles": 604646,
+      "points": 0,
+      "lines": 0,
+      "quality": "balanced",
+      "hdr": true,
+      "meshes": 97,
+      "textures": 19
+    },
+    {
+      "name": "05-performance",
+      "view": "third",
+      "frame": 116,
+      "calls": 89,
+      "triangles": 472320,
+      "points": 0,
+      "lines": 0,
+      "quality": "low",
+      "hdr": true,
+      "meshes": 97,
+      "textures": 19
+    },
+    {
+      "name": "06-mobile-balanced",
+      "view": "third",
+      "frame": 120,
+      "calls": 126,
+      "triangles": 634232,
+      "points": 0,
+      "lines": 0,
+      "quality": "balanced",
+      "hdr": true,
+      "meshes": 97,
+      "textures": 19
+    }
+  ],
+  "checks": {
+    "keyboardMovement": true,
+    "pausedQualityPreservesState": true,
+    "allViews": true,
+    "qualityPersistence": true,
+    "mobileOverflow": false
+  },
+  "scope": "Chromium software WebGL; paused scene captures and input checks only; not device FPS certification or a full campaign release gate"
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dog.katrin",
+    "tier": "high",
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": 1,
+        "pointer": "/nodes/17"
+      }
+    ]
+  },
+  {
+    "id": "dog.katrin",
+    "tier": "lite",
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": 1,
+        "pointer": "/nodes/17"
+      }
+    ]
+  },
+  {
+    "id": "dog.manchez",
+    "tier": "high",
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": 1,
+        "pointer": "/nodes/17"
+      }
+    ]
+  },
+  {
+    "id": "dog.manchez",
+    "tier": "lite",
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": 1,
+        "pointer": "/nodes/17"
+      }
+    ]
+  },
+  {
+    "id": "char.k",
+    "tier": "high",
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": 1,
+        "pointer": "/nodes/17"
+      }
+    ]
+  },
+  {
+    "id": "char.k",
+    "tier": "lite",
+    "errors": 0,
+    "warnings": 1,
+    "messages": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": 1,
+        "pointer": "/nodes/17"
+      }
+    ]
+  }
+]

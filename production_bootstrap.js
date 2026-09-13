@@ -1,14 +1,13 @@
-/* TechOps Hero — production runtime bootstrap v38.
+/* TechOps Hero — production runtime bootstrap v40.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
- * v38 adds authored scene/move art and movement combos; the existing world/render
- * cohesion authority remains last.
+ * v40 integrates authored visual/combat updates and M5 3D presentation while retaining the physical-iPhone world/render cohesion authority last.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=38,BUILD="20260913-production-v38-visual-combat-r2",started=false,done=false;
+  var VERSION=40,BUILD="20260913-production-v40-integrated-3d-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -25,6 +24,7 @@
     "orbital_scene_staging.js",
     "good_boys_legacy_hud_filter.js",
     "good_dogs_actor_contract.js",
+    "good_dogs_3d_presentation.js",
     "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",
     "good_boys_visual_polish.js",

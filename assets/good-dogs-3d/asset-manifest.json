@@ -1,0 +1,60 @@
+{
+  "version": "0.3.0-refined-prototype",
+  "mission": "gooddogs.m5",
+  "entry": "after Cell 118 release",
+  "canon": "Story Bible v1.2 production baseline",
+  "source_pack": "techops-hero-coop-3d-prototype.zip",
+  "models": [
+    {
+      "file": "models/char.k.glb",
+      "tier": "high",
+      "triangles": 118664,
+      "sha256": "897dd660edbb3d75c9c7a7208d3a9d1a802416ce5632dcc5d67a93251eb074f7",
+      "bytes": 4052684,
+      "bones": 17
+    },
+    {
+      "file": "models/char.k.lite.glb",
+      "tier": "balanced/performance",
+      "triangles": 29370,
+      "sha256": "ecbc3dd526ec2ed28057a9b9415824033dfe151df873cf225806ec6ef6a88061",
+      "bytes": 1136572,
+      "bones": 17
+    },
+    {
+      "file": "models/dog.katrin.glb",
+      "tier": "high",
+      "triangles": 272812,
+      "sha256": "c1a6c81b85e75b3a403218013b5f7d165beed675b8c741ccef7d9e6e71af5e62",
+      "bytes": 10694428,
+      "bones": 17
+    },
+    {
+      "file": "models/dog.katrin.lite.glb",
+      "tier": "balanced/performance",
+      "triangles": 67352,
+      "sha256": "cba480f72b423d90e665e07264faa31e4c1b4cc2e6b8f8cd1afcf97788b1e068",
+      "bytes": 2796972,
+      "bones": 17
+    },
+    {
+      "file": "models/dog.manchez.glb",
+      "tier": "high",
+      "triangles": 349356,
+      "sha256": "c0474dc6dc7ebbca43da0099ac4cabc0ad59f7b7a0b0fe56010840cfe85004ba",
+      "bytes": 12081284,
+      "bones": 17,
+      "uv_note": "Unused UV data omitted; procedural material coordinates are retained as vertex positions."
+    },
+    {
+      "file": "models/dog.manchez.lite.glb",
+      "tier": "balanced/performance",
+      "triangles": 86252,
+      "sha256": "ecb64add9cfbccb5124ced1210aac03fcfe838e8e8e3063deea67ac71a21e39c",
+      "bytes": 3689116,
+      "bones": 17
+    }
+  ],
+  "geometry": "Catmull-Clark refined source surfaces; existing rig weights interpolated",
+  "materials": "Procedural PBR microdetail, environment reflections, shadows, HDR bloom, depth occlusion"
+}

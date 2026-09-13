@@ -6,6 +6,7 @@ on:
       - "assets/campaign/**"
       - "assets/v736/**"
       - "assets/cinematic/**"
+      - "assets/good-dogs-3d/**"
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_*.js"
@@ -28,6 +29,7 @@ on:
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
       - "test_good_dogs_*.js"
+      - "test_good_dogs_*.mjs"
       - "test_cinematic_*.js"
       - "test_runtime_autofix.mjs"
       - "test_production_*.js"
@@ -44,6 +46,7 @@ on:
       - "assets/campaign/**"
       - "assets/v736/**"
       - "assets/cinematic/**"
+      - "assets/good-dogs-3d/**"
       - "campaign_*.js"
       - "good_boys_*.js"
       - "good_dogs_*.js"
@@ -66,6 +69,7 @@ on:
       - "test_campaign_*.js"
       - "test_good_boys_*.js"
       - "test_good_dogs_*.js"
+      - "test_good_dogs_*.mjs"
       - "test_cinematic_*.js"
       - "test_runtime_autofix.mjs"
       - "test_production_*.js"
@@ -208,6 +212,8 @@ jobs:
         run: node test_production_asset_registry.js
       - name: Verify single Night compositor
         run: node test_production_compositor.js
+      - name: Verify post-K 3D level gates and compositor boundary
+        run: node --test test_good_dogs_3d.mjs
       - name: Verify production runtime lock
         run: node test_production_runtime_lock.js
       - name: Verify production mobile tester
