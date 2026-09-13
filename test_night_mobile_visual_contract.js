@@ -13,3 +13,5 @@ assert.ok(src.includes("MutationObserver"),"Night mobile presentation must follo
 assert.ok(boot.includes('"night_mobile_visual_cohesion.js"'),"Production bootstrap must load Night mobile cohesion after Night input");
 const version=Number((boot.match(/VERSION=(\d+)/)||[])[1]);assert.ok(version>=35,"Production bootstrap must retain or advance the Night mobile cache-bump contract");
 console.log("Night mobile visual contract: PASS");
+const later=fs.readFileSync("gameplay_recording_cohesion.js","utf8");
+assert.ok(later.includes("bottom:max(222px,calc(env(safe-area-inset-bottom) + 222px))!important;pointer-events:none!important"),"Later recording styles must keep passive hints above the movement pad");

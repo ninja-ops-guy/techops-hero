@@ -19,7 +19,7 @@
 body.recording-night #quest-tracker,body.recording-night #chaos-banner{display:none!important}
 body.recording-night #v63-card{display:none!important}
 body.recording-night #night-campaign{max-width:min(540px,calc(100vw - 24px))!important;min-height:48px!important;padding:8px 12px!important;font-size:12px!important;opacity:.94}
-body.recording-night #toast{top:auto!important;bottom:max(116px,calc(env(safe-area-inset-bottom) + 116px))!important;max-width:min(76vw,360px)!important;padding:7px 10px!important;font-size:10px!important;line-height:1.35!important;border-width:1px!important}
+body.recording-night #toast{top:auto!important;bottom:max(222px,calc(env(safe-area-inset-bottom) + 222px))!important;pointer-events:none!important;max-width:min(76vw,360px)!important;padding:7px 10px!important;font-size:10px!important;line-height:1.35!important;border-width:1px!important}
 /* Day mobile: preserve the world as the primary surface. */
 @media(pointer:coarse) and (max-width:640px){
  body.recording-day #hud-top{padding:5px 7px!important;gap:4px!important;background:linear-gradient(#050812e8,#05081266)!important}

@@ -53,7 +53,7 @@ for(const [name,type,touch] of profiles){
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const layout=await page.evaluate(()=>{
      const selectors=['#tb-interact','#night-input-assists','#night-input-kick','#night-input-jump','#dpad .d-left','#dpad .d-right','#dpad .d-up','#dpad .d-down'];
-     return selectors.map(id=>{const el=document.querySelector(id),r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {id,reachable:!!top&&(top===el||el.contains(top)),x:r.x,y:r.y,w:r.width,h:r.height,inViewport:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight};});
+     return selectors.map(id=>{const el=document.querySelector(id),r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {id,hitTarget:top?{id:top.id,tag:top.tagName,className:top.className}:null,reachable:!!top&&(top===el||el.contains(top)),x:r.x,y:r.y,w:r.width,h:r.height,inViewport:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight};});
     });
     for(let i=0;i<layout.length;i++)for(let j=i+1;j<layout.length;j++){const a=layout[i],b=layout[j];if(a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y)throw Error('Overlapping touch controls '+a.id+' '+b.id);}
     if(layout.some(r=>!r.reachable||!r.inViewport||r.w<(r.id.startsWith('#dpad')?52:62)||r.h<(r.id.startsWith('#dpad')?52:62)))throw Error('Touch control layout '+JSON.stringify({viewport,layout}));

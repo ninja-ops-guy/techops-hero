@@ -41,6 +41,8 @@ The local aggregate production gate passes, including the new campaign regressio
 
 The lifecycle browser test also exercises rooftop entry, two real timed interactions, recognition and the retained Duet gate; its prerequisite/security fixtures are explicitly labeled and are not a combat playthrough claim.
 
+The first browser run of this revision caught the later recording stylesheet placing the tutorial toast over Up at 320 px. The fix moves that passive hint above the pad and disables its pointer interception.
+
 The existing browser combat acceptance test now requires action targets at least 62 px, movement targets at least 52 px, no intersecting control rectangles, viewport containment and reachable hit targets at 320 px and 390 px portrait and 844 px landscape. These updated browser assertions have not been run locally: Cloud Browser previously rejected the local preview under its URL policy, and no workaround was used. Ordinary repository CI remains the browser gate. Physical-device testing is not claimed.
 
 This review is not a comprehensive screenshot crawl of every mode or late-game segment. No new concept art, overpaint, animation atlas or screenshot has been invented or included. See `docs/qa-night-travel/README.md` for the prior travel implementation's scope and limits.
