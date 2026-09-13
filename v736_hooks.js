@@ -781,6 +781,7 @@
       const t = { x: NM.x, y: NM.y, vx: NM.vx, vy: NM.vy, face: NM.face, onGround: NM.onGround, jumps: NM.jumps };
       NM.x = p.x; NM.y = p.y; NM.vx = p.vx; NM.vy = p.vy; NM.face = p.face; NM.onGround = p.onGround; NM.jumps = p.jumps;
       p.x = t.x; p.y = t.y; p.vx = t.vx; p.vy = t.vy; p.face = t.face; p.onGround = t.onGround; p.jumps = t.jumps;
+      if(window.TechOpsGoodDogsGrounded&&window.TechOpsGoodDogsGrounded.active(NM)){const lane=NM._gdLane;NM._gdLane=p._gdLane;p._gdLane=lane;const heading=NM._gdHeading;NM._gdHeading=p._gdHeading;p._gdHeading=heading;}
       cs.active = pw;
       NM.hp = ch[pw].hp;
       NM.msg = (pw === "katrin" ? "🧊 KATRIN on point" : "🥊 MANCHEZ on point"); NM.msgT = now736() + 1200;
@@ -850,6 +851,7 @@
     function stepPair736(dt, f) { // partner AI + pair bookkeeping, runs after base stepNM
       const cs = NM._v736, ch = cs.chars, now = now736();
       const pw = partnerWho(cs), p = cs.partner, F = FLOOR736();
+      const ground=window.TechOpsGoodDogsGrounded,grounded=!!(ground&&ground.active(NM));
       if (!ch[cs.active].downed && !ch[cs.active].out) ch[cs.active].hp = NM.hp; // mirror the engine's HP back into the sheet
       // revive countdown
       for (const who of ["katrin", "manchez"]) {
@@ -871,7 +873,7 @@
         s.x += s.vx * f; s.life -= dt;
         for (const e of NM.enemies) {
           if (!e.alive || e.down > 0) continue;
-          if (Math.abs(e.x + e.w / 2 - s.x) < 30 && Math.abs(e.y - s.y) < 46) {
+          if ((!grounded||ground.within(e,s)) && Math.abs(e.x + e.w / 2 - s.x) < 30 && Math.abs(e.y - s.y) < 46) {
             s.life = 0; e.tracked = now + 6000; dealDamage736(e, 13, "katrin");
             NM.msg = "❄ CRYO-TAG — target TRACKED"; NM.msgT = now + 900;
             break;
@@ -884,7 +886,7 @@
         if (t.spent) continue;
         for (const e of NM.enemies) {
           if (!e.alive || e.down > 0 || e.boss) continue;
-          if (Math.abs(e.x + e.w / 2 - t.x) < 26 && Math.abs(e.y - (F - e.h)) < 40) {
+          if ((!grounded||ground.within(e,t)) && Math.abs(e.x + e.w / 2 - t.x) < 26 && Math.abs(e.y - (F - e.h)) < 40) {
             t.spent = true; e.down = 60; e.tracked = now + 6000;
             NM.msg = "🪤 TRIPWIRE — floored & TRACKED"; NM.msgT = now + 1100; try { sfx("block"); } catch (e2) { }
             break;
@@ -911,13 +913,14 @@
         for (const pl of NM.platforms) {
           if (p.vy >= 0 && p.y + p.h >= pl.y && p.y + p.h <= pl.y + 20 && p.x + p.w > pl.x && p.x < pl.x + pl.w) { p.y = pl.y - p.h; p.vy = 0; p.onGround = true; }
         }
+        if(grounded){ground.follow(NM,dt);ground.resolve(NM,p);}
         // barrier (Warden) keeps the pair split
         if (cs.barrier) { if (p.x < cs.barrier + 30) p.x = cs.barrier + 30; }
         p.cd -= dt; if (p.anim > 0) p.anim -= f;
         if (p.cd <= 0) {
           let best = null, bd = 1e9;
           for (const e of NM.enemies) { if (!e.alive || e.down > 0) continue; const d = Math.abs(e.x - p.x); if (d < bd) { bd = d; best = e; } }
-          if (best && bd < 64 && Math.abs(best.y - p.y) < 48) {
+          if (best && (!grounded||ground.within(best,p)) && bd < 64 && Math.abs(best.y - p.y) < 48) {
             p.cd = 0.9; p.anim = 8; p.face = Math.sign(best.x - p.x) || 1;
             dealDamage736(best, pw === "manchez" ? 11 : 9, pw);
           } else p.cd = 0.15;
@@ -928,7 +931,7 @@
         if (cs.ptCD <= 0) {
           for (const e of NM.enemies) {
             if (!e.alive || e.down > 0 || e.launch > 0) continue;
-            if (Math.abs(e.x - p.x) < 38 && Math.abs(e.y - p.y) < 42 && Math.random() < 0.3) {
+            if ((!grounded||ground.within(e,p)) && Math.abs(e.x - p.x) < 38 && Math.abs(e.y - p.y) < 42 && Math.random() < 0.3) {
               ch[pw].hp -= Math.round(e.dmg * (p.block ? 0.25 : 0.7)); cs.ptCD = 1.2; p.anim = 10;
               if (ch[pw].hp <= 0) {
                 ch[pw].hp = 0; ch[pw].downed = true; ch[pw].downT = 8; ch[pw].bodyX = p.x;
@@ -1105,8 +1108,8 @@
         NM.jabAnim = 9;
         if (who === "katrin") {
           const c = cs.chars.katrin; c.tags++;
-          cs.shots.push({ x: NM.x + NM.face * 26, y: NM.y + 10, vx: NM.face * 8.5, life: 1.4 });
-          if (c.tags % 3 === 0) cs.traps.push({ x: NM.x, spent: false }); // every 3rd tag drops a tripwire
+          cs.shots.push({ x: NM.x + NM.face * 26, y: NM.y + 10, vx: NM.face * 8.5, life: 1.4, _gdLane: NM._gdLane });
+          if (c.tags % 3 === 0) cs.traps.push({ x: NM.x, spent: false, _gdLane: NM._gdLane }); // every 3rd tag drops a tripwire
           try { sfx("ping"); } catch (e) { }
           return;
         }
@@ -1121,7 +1124,7 @@
         let hit = false;
         for (const e of NM.enemies) {
           if (!e.alive || e.down > 0) continue;
-          if (e.x + e.w > hx && e.x < hx + hw && Math.abs(e.y - NM.y) < 46) {
+          if ((!window.TechOpsGoodDogsGrounded||!window.TechOpsGoodDogsGrounded.active(NM)||window.TechOpsGoodDogsGrounded.within(e,NM)) && e.x + e.w > hx && e.x < hx + hw && Math.abs(e.y - NM.y) < 46) {
             hit = true;
             if (finisher) { e.kb = NM.face * 11; e.launch = 16; e.down = 36; } // launcher
             else e.kb = NM.face * 4;

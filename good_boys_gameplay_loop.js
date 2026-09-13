@@ -29,7 +29,7 @@
     2:{platforms:[[190,345,150],[405,292,150],[630,238,145],[855,305,160],[1090,250,165],[1340,200,190]],hazards:[[350,55],[575,55],[1015,70],[1280,55]],landmarks:[{x:790,label:"TRANSIT SPINE",kind:"console"}]},
     3:{platforms:[[250,350,235],[560,315,190],[825,350,230],[1140,305,210],[1430,350,180]],hazards:[[500,45],[1070,50]],landmarks:[{x:680,label:"DETENTION ACCESS",kind:"door"},{x:1370,label:"CELL BLOCK",kind:"door"}]},
     4:{platforms:[[260,350,230],[560,300,210],[855,350,250],[1190,305,235],[1490,350,170]],hazards:[[505,45],[1120,55]],landmarks:[{x:1320,label:"CELL 118",kind:"cell118"},{x:970,label:"CONTROL PANEL",kind:"console"}]},
-    5:{platforms:[[250,345,240],[590,345,240],[930,300,230],[1260,345,260]],hazards:[[510,55],[850,55]],landmarks:[{x:1070,label:"K · ACCESS NODE",kind:"k"},{x:1480,label:"ROUTE 1984",kind:"door"}]},
+    5:{platforms:[],hazards:[],landmarks:[{x:1070,label:"K · ACCESS NODE",kind:"k"},{x:1480,label:"ROUTE 1984",kind:"door"}]},
     6:{platforms:[[220,350,260],[565,310,220],[875,350,250],[1200,295,250],[1510,350,170]],hazards:[[495,55],[805,55]],landmarks:[{x:1360,label:"CELL 1984",kind:"cell1984"},{x:1010,label:"WARDEN BARRIER",kind:"warden"}]},
     7:{platforms:[[210,340,180],[465,285,160],[700,235,155],[930,300,180],[1190,245,180],[1450,325,170]],hazards:[[400,55],[640,55],[1115,65],[1380,55]],landmarks:[{x:1580,label:"SHUTTLE · GO!",kind:"shuttle"}]},
     8:{platforms:[[300,340,240],[650,300,220],[1010,335,250],[1370,300,220]],hazards:[],landmarks:[{x:1450,label:"EARTHFALL",kind:"earth"}]}

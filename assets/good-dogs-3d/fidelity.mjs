@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import {groomFur} from './fur.mjs?v=20260913-video-r1';
-import {softenCurls,identityDetails} from './character-detail.mjs?v=20260913-video-r1';
+import {groomFur} from './fur.mjs?v=20260913-grounded-r1';
+import {softenCurls,identityDetails} from './character-detail.mjs?v=20260913-grounded-r1';
 
 // Triplanar reference maps stay in rest-pose metres on skinned actors.
 // Texture loading is owned by each level and every map is released at teardown.

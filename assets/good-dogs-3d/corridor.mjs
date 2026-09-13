@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {surface} from './fidelity.mjs?v=20260913-video-r1';
+import {surface} from './fidelity.mjs?v=20260913-grounded-r1';
 
 export function beveledBox(){
  const g=new THREE.BoxGeometry(1,1,1,4,4,4),p=g.attributes.position,normal=g.attributes.normal;
