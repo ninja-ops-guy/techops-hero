@@ -1,0 +1,187 @@
+{
+  "errors": [],
+  "snapshots": [
+    {
+      "name": "01-escort-high",
+      "view": "third",
+      "frame": 78,
+      "calls": 162,
+      "triangles": 1158758,
+      "points": 0,
+      "lines": 0,
+      "quality": "high",
+      "hdr": true,
+      "meshes": 68,
+      "textures": 19
+    },
+    {
+      "name": "02-crew-high",
+      "view": "crew",
+      "frame": 82,
+      "calls": 134,
+      "triangles": 1178392,
+      "points": 0,
+      "lines": 0,
+      "quality": "high",
+      "hdr": true,
+      "meshes": 69,
+      "textures": 20
+    },
+    {
+      "name": "03-retro",
+      "view": "retro",
+      "frame": 83,
+      "calls": 82,
+      "triangles": 369242,
+      "points": 0,
+      "lines": 0,
+      "quality": "balanced",
+      "hdr": true,
+      "meshes": 117,
+      "textures": 25
+    },
+    {
+      "name": "04-k-view",
+      "view": "first",
+      "frame": 87,
+      "calls": 139,
+      "triangles": 516126,
+      "points": 0,
+      "lines": 0,
+      "quality": "balanced",
+      "hdr": true,
+      "meshes": 117,
+      "textures": 27
+    },
+    {
+      "name": "05-performance",
+      "view": "third",
+      "frame": 88,
+      "calls": 115,
+      "triangles": 449488,
+      "points": 0,
+      "lines": 0,
+      "quality": "low",
+      "hdr": true,
+      "meshes": 117,
+      "textures": 27
+    }
+  ],
+  "controls": [
+    {
+      "view": "third",
+      "key": "KeyW",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "third",
+      "key": "KeyS",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "third",
+      "key": "ArrowRight",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "third",
+      "key": "ArrowLeft",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "retro",
+      "key": "KeyW",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "retro",
+      "key": "KeyS",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "retro",
+      "key": "ArrowRight",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "retro",
+      "key": "ArrowLeft",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "first",
+      "key": "KeyW",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "first",
+      "key": "KeyS",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "first",
+      "key": "ArrowRight",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "first",
+      "key": "ArrowLeft",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "crew",
+      "key": "KeyW",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "crew",
+      "key": "KeyS",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "crew",
+      "key": "ArrowRight",
+      "direction": -1,
+      "pass": true
+    },
+    {
+      "view": "crew",
+      "key": "ArrowLeft",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "third",
+      "touch": "forward",
+      "direction": 1,
+      "pass": true
+    },
+    {
+      "view": "third",
+      "touch": "back",
+      "direction": -1,
+      "pass": true
+    }
+  ],
+  "checks": {
+    "pausedQualityPreservesState": true,
+    "qualityPersistence": true,
+    "mobileDefaultsBalanced": true,
+    "mobileOverflow": false
+  },
+  "scope": "Real keyboard and emulated touch input in Chromium software WebGL. Captures pause the simulation and submit one actual WebGL frame; no image edits. Not physical-device FPS certification."
+}

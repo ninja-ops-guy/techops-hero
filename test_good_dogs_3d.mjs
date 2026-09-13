@@ -47,3 +47,20 @@ test('all six quality-tier models match the shipped manifest and GLB envelope',(
   assert.equal(bytes.readUInt32LE(8),bytes.length);
  }
 });
+
+test('screen directions match keyboard and touch, without orbiting on reversal',async()=>{
+ const THREE=await import('./assets/good-dogs-3d/vendor/three.module.js');
+ const {positionCamera,movementInput}=await import('./assets/good-dogs-3d/camera.mjs');
+ const camera=new THREE.PerspectiveCamera(50,1,.08,80),side=new THREE.OrthographicCamera(-9,9,6,-6,.05,100);
+ const opts={targetZ:5,focusY:.53,aspect:1.5,kPosition:new THREE.Vector3(-.95,0,3.8)};
+ for(const view of ['third','retro','first','crew']){
+  const cam=positionCamera(camera,side,{...opts,view});cam.updateMatrixWorld();
+  const start=new THREE.Vector3(0,.5,5),key=movementInput(new Set(['ArrowRight']),[],view),touch=movementInput(new Set(),['forward'],view);
+  assert.equal(key.axis,touch.axis);assert.equal(movementInput(new Set(['ArrowLeft']),[],view).axis,-key.axis);
+  const forward=start.clone().add(new THREE.Vector3(0,0,key.axis));
+  if(view==='retro'||view==='crew')assert.ok(forward.project(cam).x>start.clone().project(cam).x,view+' right input must move right on screen');
+  else assert.ok(forward.distanceTo(cam.position)>start.distanceTo(cam.position),view+' forward input moves into the scene');
+  const before=cam.position.clone();positionCamera(camera,side,{...opts,view,face:-1});assert.ok(before.equals(cam.position),'reversing the dog must not rotate the camera');
+  assert.equal(movementInput(new Set(['KeyW','KeyS']),[],view).axis,0);
+ }
+});

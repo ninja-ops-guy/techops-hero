@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {surface} from './fidelity.mjs';
+import {surface} from './fidelity.mjs?v=20260913-reference-r2';
 
 export function beveledBox(){
  const g=new THREE.BoxGeometry(1,1,1,4,4,4),p=g.attributes.position,normal=g.attributes.normal;
@@ -55,10 +55,10 @@ export function buildCorridor(scene,geo){
   for(let z=-3;z<28;z+=3.1)part(trim,side,side*(2.78-j*.17),3.36,z,.16,.17,.05);
  }
  for(const {mat,side,transforms} of bins.values()){
-  const batch=new THREE.InstancedMesh(geo,mat,transforms.length);transforms.forEach((m,i)=>batch.setMatrixAt(i,m));batch.receiveShadow=true;batch.castShadow=false;batch.computeBoundingSphere();scene.add(batch);if(side===1)cutaway.push(batch);
+  const batch=new THREE.InstancedMesh(geo,mat,transforms.length);transforms.forEach((m,i)=>batch.setMatrixAt(i,m));batch.receiveShadow=true;batch.castShadow=false;batch.computeBoundingSphere();scene.add(batch);if(side===-1)cutaway.push(batch);
  }
  // Restrained beam haze uses depth testing, so it cannot glow through the wall.
  const beamMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,uniforms:{color:{value:new THREE.Color(0xffb669)}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;uniform vec3 color;void main(){float fade=pow(sin(vUv.y*3.14159),2.)*.009;gl_FragColor=vec4(color,fade);}'});
  const beamGeo=new THREE.ConeGeometry(.92,3.15,24,1,true);for(let z=-1.55;z<28;z+=6.2){const b=new THREE.Mesh(beamGeo,beamMat);b.position.set(0,1.92,z);scene.add(b);}
- return {steel,dark,rust,floor,trim,caution,amber,count,setRetro(value){cutaway.forEach(o=>o.visible=!value);pipes.filter(o=>o.position.x>0).forEach(o=>o.visible=!value);}};
+ return {steel,dark,rust,floor,trim,caution,amber,count,setRetro(value){cutaway.forEach(o=>o.visible=!value);pipes.filter(o=>o.position.x<0).forEach(o=>o.visible=!value);}};
 }
