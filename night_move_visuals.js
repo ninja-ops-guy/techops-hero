@@ -20,9 +20,13 @@
     }else if(n.dashT>0){kind='dash';age=c.dash?time-c.dash.at:(10-n.dashT)*1000/60;frame=Math.min(3,Math.floor(age/45));}
     else if(n.block)kind='block';
     let prior=entries.get(n);
+    // District reloads keep NM but replace its simulation clock. Do not carry
+    // a pose timestamp (or a defeat transition) across those clock lifetimes.
+    if(prior&&(prior.clock!==n._nightCombat||time<prior.lastTime))prior=null;
     if(prior&&prior.kind==='down'&&!kind&&n.hp>0){kind='get-up';}
     if(prior&&prior.kind==='get-up'&&!kind&&time-prior.at<260)kind='get-up';
-    if(kind!==prior?.kind){prior={kind,at:time};entries.set(n,prior);}
+    if(kind!==prior?.kind){prior={kind,at:time,clock:n._nightCombat};entries.set(n,prior);}
+    prior.lastTime=time;
     if(['down','block','get-up'].includes(kind)){age=time-prior.at;frame=kind==='block'?Math.min(2,Math.floor(age/55)):Math.min(3,Math.floor(age/65));}
     const move=atlas()?.moves[kind];return move?{kind,frame,face,age,source:move.frames[Math.max(0,frame)]}:null;
   }
@@ -35,5 +39,5 @@
     ctx.translate(Math.round(cx),Math.round(base));ctx.scale(choice.face<0?-1:1,1);
     ctx.drawImage(im,sx,sy,sw,sh,-f.pivot[0]*s,-f.pivot[1]*s,sw*s,sh*s);ctx.restore();return true;
   }
-  root.TechOpsNightMoves={VERSION:1,warm,sample,draw,phase};warm();
+  root.TechOpsNightMoves={VERSION:2,warm,sample,draw,phase};warm();
 })(typeof globalThis!=='undefined'?globalThis:this);

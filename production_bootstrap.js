@@ -8,7 +8,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=38,BUILD="20260913-production-v38-visual-combat-r1",started=false,done=false;
+  var VERSION=38,BUILD="20260913-production-v38-visual-combat-r2",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",

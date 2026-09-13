@@ -68,6 +68,20 @@ for(const [name,type,touch] of profiles){
    const b=await page.locator('#night-input-grab').boundingBox();
    if(!b||b.width<44||b.height<42)throw Error('Optional grab target is too small');
   }
+  // Exercise real event ordering: aliases share one held direction.
+  await setup(1500);
+  await page.keyboard.down('KeyD');await page.keyboard.down('ArrowRight');
+  try{
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   if(await page.evaluate(()=>NM._nightCombat?.events.some(e=>e.type==='dash')))throw Error('Overlapping D/Right presses created a false dash');
+  }finally{await page.keyboard.up('KeyD');await page.keyboard.up('ArrowRight');}
+  // Hit-stop pauses simulation, but must not extend the human tap interval.
+  await setup(1500);await page.evaluate(()=>{NM.hitStop=100;});
+  await page.keyboard.press('ArrowRight');await page.waitForTimeout(320);await page.keyboard.press('ArrowRight');
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  if(await page.evaluate(()=>NM._nightCombat?.events.some(e=>e.type==='dash')))throw Error('Hit-stop stretched the double-tap window');
+  await page.evaluate(()=>{NM.hitStop=0;});
+  checks.push('direction aliases and hit-stop cannot create accidental dashes');
   await setup(770);
   await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));

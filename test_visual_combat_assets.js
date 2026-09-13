@@ -22,6 +22,19 @@ for(const [kind,move] of Object.entries(r.TechOpsNightCombat.MOVES)){
  n._nightCombat.time=move.recovery-1;assert.equal(r.TechOpsNightMoves.sample(n).frame,3,kind+' recovery');
 }
 let runtimeBytes=bytes.length+fs.statSync('assets/visual-combat/waldo-props.png').size;
+// nmLoadDistrict reuses NM but deletes its combat clock. A pose must not retain
+// an entry timestamp from the old district or the pre-combat render clock.
+for(const reset of ['district','rollback','initialization']){
+ const n={district:'industrial',hp:100,face:1,block:true};
+ if(reset!=='initialization')n._nightCombat={time:10000};
+ r.TechOpsNightMoves.sample(n,10000);
+ if(reset==='rollback')n._nightCombat.time=0;else n._nightCombat={time:0};
+ assert.equal(r.TechOpsNightMoves.sample(n,12000).frame,0,'new clock starts guard anticipation: '+reset);
+ n._nightCombat.time=110;assert.equal(r.TechOpsNightMoves.sample(n,12110).frame,2,'guard progresses on the replacement clock: '+reset);
+}
+const revived={district:'industrial',hp:0,_nightCombat:{time:9000}};
+r.TechOpsNightMoves.sample(revived);revived.hp=100;revived._nightCombat={time:0};
+assert.equal(r.TechOpsNightMoves.sample(revived),null,'a new combat session does not inherit the old down/get-up transition');
 const loaded=[];
 class ImageFixture{
  set src(src){this.source=src;loaded.push(this);const p=Object.values(scene.plates).find(p=>p.src===src);this.naturalWidth=p?p.width:640;this.naturalHeight=p?p.height:144;this.complete=true;}
@@ -47,6 +60,18 @@ for(const width of [320,1048,1440])for(const district of ['industrial','longwhar
 }
 for(const n of [{district:'industrial',_sector04:{}},{district:'gb_m3',_v736:{m:3}},{district:'gb_m8',_v736:{m:8}},{district:'wooster'}])assert.equal(r.TechOpsSceneArt.ready(n),false,'unrelated scenes retain their own art');
 assert.equal(r.TechOpsSceneArt.ready({district:'gb_m1',_v736:{m:1}}),true);
+const props=loaded.find(i=>i.src==='assets/visual-combat/waldo-props.png'),property={district:'waldo',cam:0};
+for(const failure of ['pending','failed']){
+ props.complete=failure==='failed';props.naturalWidth=failure==='failed'?0:640;
+ const ctx=context(1048,720);
+ assert.equal(r.TechOpsSceneArt.ready(property),false,'property waits for its interactive prop art: '+failure);
+ for(const draw of ['drawBackdrop','drawGround','drawPlatforms','drawPropertyProps'])assert.equal(r.TechOpsSceneArt[draw](ctx,property),false,draw+' preserves the complete legacy property while props are unavailable');
+ assert.equal(ctx.calls.length,0,'partial property art must not hide the legacy dish');
+ assert.equal(r.TechOpsSceneArt.ready({district:'industrial'}),true,'prop loading does not block other scenes');
+}
+props.complete=true;props.naturalWidth=640;
+assert.equal(r.TechOpsSceneArt.ready(property),true);
+const propertyContext=context(1048,720);assert.equal(r.TechOpsSceneArt.drawPropertyProps(propertyContext,property),true);assert.equal(propertyContext.calls.length,4,'all property props appear together after decode');
 const im=loaded.find(i=>i.src===scene.plates.home.src);im.complete=false;assert.equal(r.TechOpsSceneArt.drawBackdrop(context(1048,720),{district:'home'}),false,'undecoded art returns to the established fallback');
 assert.ok(!/setInterval|requestAnimationFrame|addEventListener/.test(read('runtime_scene_art.js')+read('night_move_visuals.js')),'presentation must not add another loop or input owner');
 const live=read('visual_cohesion_live_crawl.js');assert.ok(!live.includes('ref.drawReferenceNightWalker=function'),'scale patch may not replace the animation-capable renderer');

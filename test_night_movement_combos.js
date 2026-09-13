@@ -4,10 +4,11 @@ const hooks=fs.readFileSync('night_hooks.js','utf8'),step=hooks.slice(hooks.inde
 const source=['night_combat.js','night_combat_input.js'].map(p=>fs.readFileSync(p,'utf8')).join('\n')+'\n'+step;
 let passed=0;
 function fixture(dt=.016){
- const listeners={},r={console,performance:{now:()=>1000},S:{nightMode:true},keys:{},joy:{x:0,y:0},sfx(){},nmCheckClear(){},addEventListener(type,fn){listeners[type]=fn;},NM_W:1800,NM_FLOOR:430,NM_GRAV:.48,cv:{width:1048,height:720},clamp:(v,a,b)=>Math.max(a,Math.min(b,v))};r.window=r;r.globalThis=r;
+ let wallTime=1000;
+ const listeners={},r={console,performance:{now:()=>wallTime},S:{nightMode:true},keys:{},joy:{x:0,y:0},sfx(){},nmCheckClear(){},addEventListener(type,fn){listeners[type]=fn;},NM_W:1800,NM_FLOOR:430,NM_GRAV:.48,cv:{width:1048,height:720},clamp:(v,a,b)=>Math.max(a,Math.min(b,v))};r.window=r;r.globalThis=r;
  const n=r.NM={district:'industrial',x:400,y:396,w:22,h:34,hp:100,face:1,vx:0,vy:0,onGround:true,dashT:0,dashCD:0,ifr:0,hitStop:0,jumps:0,jHeld:false,flip:0,platforms:[],clear:false};
  const e={x:440,y:396,w:24,h:34,hp:1000,maxHp:1000,alive:true,kind:'thug',spd:0,dmg:0,windup:0,kb:0,cd:999,cash:[0,0]};n.enemies=[e];vm.runInNewContext(source,r);
- const f={r,n,e,listeners,api:r.TechOpsNightCombat,input:r.TechOpsNightInput,frame(){r.TechOpsNightInput.runStep(r.stepNM,dt,r.keys,r.joy);},until(pred,label){for(let i=0;i<400&&!pred();i++)f.frame();assert.ok(pred(),label+' '+JSON.stringify({dt,n:{x:n.x,y:n.y,onGround:n.onGround},e:{x:e.x,y:e.y},events:n._nightCombat?.events}));}};
+ const f={r,n,e,listeners,api:r.TechOpsNightCombat,input:r.TechOpsNightInput,elapse(ms){wallTime+=ms;},frame(){wallTime+=dt*1000;r.TechOpsNightInput.runStep(r.stepNM,dt,r.keys,r.joy);},until(pred,label){for(let i=0;i<400&&!pred();i++)f.frame();assert.ok(pred(),label+' '+JSON.stringify({dt,n:{x:n.x,y:n.y,onGround:n.onGround},e:{x:e.x,y:e.y},events:n._nightCombat?.events}));}};
  f.frame();return f;
 }
 function test(name,fn){fn();passed++;console.log('PASS '+name);}
@@ -20,9 +21,29 @@ test('late taps and alternating directions do not dash',()=>{
  const f=fixture();tap(f,'d');for(let i=0;i<22;i++)f.frame();tap(f,'d');assert.equal(events(f,'dash').length,0);tap(f,'a');tap(f,'d');assert.equal(events(f,'dash').length,0);
 });
 test('keyboard taps shorter than a render frame are retained, repeats are ignored',()=>{
- const f=fixture();f.listeners.keydown({code:'ArrowRight',repeat:false});f.listeners.keydown({code:'ArrowRight',repeat:true});f.frame();assert.equal(events(f,'dash').length,0);
- f.listeners.keydown({code:'ArrowRight',repeat:false});f.frame();assert.equal(events(f,'dash').length,1);
+ const f=fixture();f.listeners.keydown({code:'ArrowRight',repeat:false});f.listeners.keydown({code:'ArrowRight',repeat:true});f.listeners.keyup({code:'ArrowRight'});f.frame();assert.equal(events(f,'dash').length,0);
+ f.listeners.keydown({code:'ArrowRight',repeat:false});f.listeners.keyup({code:'ArrowRight'});f.frame();assert.equal(events(f,'dash').length,1);
  const g=fixture();const target={closest:()=>true};g.listeners.keydown({code:'KeyD',target});g.listeners.keydown({code:'KeyD',target});g.frame();assert.equal(events(g,'dash').length,0,'typing is not movement');
+});
+test('overlapping direction aliases require a complete release before the next tap',()=>{
+ for(const [letter,arrow,key] of [['KeyA','ArrowLeft','a'],['KeyD','ArrowRight','d']]){
+  const f=fixture();f.n.enemies=[];
+  f.listeners.keydown({code:letter});f.r.keys[key]=true;f.frame();
+  f.listeners.keydown({code:arrow});f.frame();assert.equal(events(f,'dash').length,0,'a held alias is not a second tap');
+  f.listeners.keyup({code:letter});f.r.keys[key]=false;f.r.keys[arrow.toLowerCase()]=true;f.frame();
+  f.listeners.keydown({code:letter});f.frame();assert.equal(events(f,'dash').length,0,'releasing only one alias is not neutral');
+  f.listeners.keyup({code:letter});f.listeners.keyup({code:arrow});f.r.keys[arrow.toLowerCase()]=false;f.frame();
+  f.listeners.keydown({code:letter});f.r.keys[key]=true;f.frame();assert.equal(events(f,'dash').length,1,'full release allows the second tap');
+ }
+});
+test('tap expiry uses elapsed input time even during hit-stop or a stalled frame',()=>{
+ for(const stalled of [true,false]){
+  const f=fixture();f.n.enemies=[];
+  f.listeners.keydown({code:'KeyD'});f.listeners.keyup({code:'KeyD'});f.frame();
+  if(stalled)f.elapse(300);else{f.n.hitStop=100;for(let i=0;i<20;i++)f.frame();f.n.hitStop=0;}
+  f.listeners.keydown({code:'KeyD'});f.listeners.keyup({code:'KeyD'});f.frame();
+  assert.equal(events(f,'dash').length,0,'expired presses cannot dash: stalled='+stalled);
+ }
 });
 test('joystick double flicks need neutral; analog jitter cannot retrigger',()=>{
  const f=fixture();for(const x of [1,.4,.8,.35,1]){f.r.joy.x=x;f.frame();}assert.equal(events(f,'dash').length,0);

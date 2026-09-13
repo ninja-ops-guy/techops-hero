@@ -15,7 +15,10 @@
     if(!images[id]&&root.Image){const im=new root.Image();images[id]=im;im.decoding='async';im.src=specs[id]?.src||(id==='props'?'assets/visual-combat/waldo-props.png':'');im.onerror=()=>{root.__sceneArtError=im.src;};}
     const im=images[id];return im&&im.complete&&im.naturalWidth?im:null;
   }
-  function ready(n){const id=key(n);return !!(id&&image(id));}
+  // The property owner suppresses its legacy building and dish together.
+  // Swap only when both authored layers have decoded, preserving visible
+  // interaction targets if the separate prop atlas is slow or fails to load.
+  function ready(n){const id=key(n);return !!(id&&image(id)&&(id!=='waldo'||image('props')));}
   function clip(x,y,h){x.beginPath();x.rect(0,y,x.canvas.width,h);x.clip();}
   function architecture(x,im,sw,sy,cam,F){
     const W=x.canvas.width,travel=Math.max(0,1800-W),scale=Math.max((W+travel*.18)/sw,F/sy),width=sw*scale;
@@ -26,7 +29,7 @@
     return spec.doorSourceX?(root.TechOpsNightRuntime?.HOME_X||1560)*im.naturalWidth/spec.doorSourceX:spec.worldWidth;
   }
   function drawBackdrop(x,n,F=430){
-    const id=key(n),im=id&&image(id);if(!im)return false;
+    if(!ready(n))return false;const id=key(n),im=image(id);
     const sy=Math.round(im.naturalHeight*specs[id].ground),cam=Math.max(0,Number(n.cam)||0),sw=im.naturalWidth;
     x.save();x.imageSmoothingEnabled=false;clip(x,0,F);
     if(id==='home'||id==='waldo'){
@@ -45,7 +48,7 @@
     x.restore();return true;
   }
   function drawGround(x,n,F=430){
-    const id=key(n),im=id&&image(id);if(!im)return false;
+    if(!ready(n))return false;const id=key(n),im=image(id);
     const sy=Math.round(im.naturalHeight*specs[id].ground),sh=im.naturalHeight-sy,H=x.canvas.height;
     x.save();x.imageSmoothingEnabled=false;clip(x,F,H-F);
     if(id==='home'||id==='waldo'){
@@ -97,6 +100,6 @@
   function drawDomesticCinematic(x,pan=0){
     const n={_v736:{m:1},cam:pan};return drawBackdrop(x,n,351)&&drawGround(x,n,351);
   }
-  root.TechOpsSceneArt={VERSION:1,specs,key,image,ready,drawBackdrop,drawGround,drawPlatforms,drawProp,drawPropertyProps,drawDomesticCinematic};
+  root.TechOpsSceneArt={VERSION:2,specs,key,image,ready,drawBackdrop,drawGround,drawPlatforms,drawProp,drawPropertyProps,drawDomesticCinematic};
   Object.keys(specs).forEach(image);image('props');
 })(typeof globalThis!=='undefined'?globalThis:this);

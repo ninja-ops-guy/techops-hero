@@ -35,6 +35,9 @@ hashes, original capture hashes, dimensions and ground registration. Collision
 coordinates, doors and mission progression are unchanged. Art is drawn in the
 existing background/ground/platform slots before live actors. A layer returns
 false until its image has decoded so the existing fallback remains usable.
+Waldo's property waits for both the panorama and prop atlas before replacing the
+legacy property, keeping the interactive dish visible during delayed or failed
+prop delivery.
 
 Home and Waldo use one continuous image on the interaction plane; background and
 ground share horizontal scale and camera offset. They do not assemble facades
@@ -62,7 +65,7 @@ close the audit's remaining coverage gaps or all Day-mode visual findings.
 
 | Intent | Primary input | Rule |
 |---|---|---|
-| Dash left/right | Double-tap A/D or arrows; double-flick the joystick; double-click the direction control | Same direction, distinct input edges, at most 260 ms apart. Held keys and stick threshold jitter do not repeatedly dash. |
+| Dash left/right | Double-tap A/D or arrows; double-flick the joystick; double-click the direction control | Keyboard/stick: same direction, full release/neutral between presses, at most 260 ms of elapsed input time. Overlapping A/Left or D/Right aliases, held keys and stick jitter do not repeatedly dash. Direction-control double-click uses the browser's double-click interval. |
 | Dash into grab | Punch or kick after dash | Within 340 ms, grounded target within 58 units and feet within 18 units. The window is consumed once; a missed grab becomes the normal attack. |
 | High/low attacks after dash | Up/down + punch/kick | Explicit vertical aim takes precedence over contextual grab. |
 | Throw | During a hold, change direction or confirm with punch/kick/grab | Left/right throws, up launches, down slams. Existing 120 ms confirmation buffer and 1.6 s hold timeout remain. |
@@ -119,7 +122,8 @@ represent the runtime's variable timing.
 
 `night_move_visuals.js` consumes `night_combat.js`'s paused simulation clock. Strike
 contact poses start at each move's actual windup threshold; facing is locked to
-the attack. No new damage timer, listener, simulation loop or renderer wrapper is
+the attack. Pose entry timestamps reset when a district replaces the combat clock,
+so held guard and recovery cannot inherit stale ages. No new damage timer, listener, simulation loop or renderer wrapper is
 introduced. Approved handoff idle/run/jump art remains available and the older
 182-frame `MIKE_ACTIONS` candidate stays quarantined.
 
@@ -146,7 +150,7 @@ presentation ownership.
 
 Local September 13 results: all 74 aggregate suites and the existing action-atlas
 quarantine passed; all 31 runtime-triage tests passed; the live-crawl visual
-contract passed. The focused movement suite passed 12 input/scope checks and all
+contract passed. The focused movement suite passed 14 input/scope checks and all
 54 air sequences. Twelve additional launcher sequences cover a 120 ms jump delay
 and 200 ms touch-kick delay after recovery at 16/33/50/100 ms render intervals.
 These reproduce the observed WebKit failure before the lift adjustment and all
@@ -178,3 +182,21 @@ workflows run the full game in Chromium/WebKit and upload screenshots/traces. Th
 combat bot retains its standing-grab/throw/air-combo checks through MORE and adds
 a trusted double-tap → dash → attack-grab sequence. CI results belong to the
 specific tested commit and must be checked before merge.
+
+## PR review follow-up
+
+The review reproduced and fixed overlapping direction aliases causing accidental
+dashes, tap windows stretching during hit-stop/stalled frames, missing Waldo
+props during partial asset loading, and pose ages crossing district clock resets.
+Regression coverage includes real browser key events for aliases and hit-stop,
+VM execution of the actual movement step, failed/pending prop decode, and clock
+replacement/rollback. The production cache revision is `visual-combat-r2`.
+
+The previous `bd7af2f` Merge Gate failed in Chromium's Sector 04 presentation
+fixture before entering that scene, with missing `TO_P2A`/`TO_PANELS` globals;
+the other five presentation fixtures and the independent runtime workflow passed.
+The presentation bot now waits for complete production bootstrap, fails early on
+startup errors, and records script-error stacks, failed request URLs/statuses,
+asset health and the Night launch trace. The old log lacked request diagnostics,
+so it does not establish why that parser-loaded asset was absent. No error is
+ignored and no automatic page retry converts a failed launch into a pass.

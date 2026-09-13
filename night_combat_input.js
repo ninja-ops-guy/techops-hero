@@ -8,7 +8,7 @@
   let frameInput=null,jumpKey=false,jumpQueued=false,lastRuntime=null;
   let keyboardHorizontal=0,stickHorizontal=0,lastTap=null,shiftHeld=false,assistControls=false;
   const jumpPointers=new Set(),bound=new WeakSet();
-  const directionTaps=[];
+  const directionTaps=[],directionHeld=new Set();
   const directionCodes={KeyA:-1,ArrowLeft:-1,KeyD:1,ArrowRight:1};
   const keyMap={KeyE:'punch',Enter:'punch',KeyJ:'kick',KeyG:'grab',Space:'jump',ShiftLeft:'dash',ShiftRight:'dash'};
   function runtime(){const s=game();return s&&s.nightMode&&typeof s.nightMode==='object'?s.nightMode:typeof NM!=='undefined'?NM:root.NM;}
@@ -32,7 +32,8 @@
     return null;
   }
   function snapshot(k){return frameInput||root.TechOpsNightCombat.normalizeInput(k||keyboard(),joystick());}
-  function reset(){jumpKey=false;jumpQueued=false;jumpPointers.clear();directionTaps.length=0;keyboardHorizontal=0;stickHorizontal=0;lastTap=null;shiftHeld=false;const c=runtime()?._nightCombat;if(c)c.dash=null;}
+  function inputTime(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
+  function reset(){jumpKey=false;jumpQueued=false;jumpPointers.clear();directionTaps.length=0;directionHeld.clear();keyboardHorizontal=0;stickHorizontal=0;lastTap=null;shiftHeld=false;const c=runtime()?._nightCombat;if(c)c.dash=null;}
   function dispatch(action,k){
     if(!ready())return false;
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
@@ -43,9 +44,9 @@
   }
   function movementGesture(n,k,j){
     if(!ready()){keyboardHorizontal=0;stickHorizontal=0;lastTap=null;shiftHeld=false;return;}
-    const combat=root.TechOpsNightCombat,c=combat.state(n);
+    const combat=root.TechOpsNightCombat;
     function tap(dir,source,at){
-      if(lastTap&&lastTap.dir===dir&&lastTap.source===source&&at-lastTap.at<=combat.RULES.doubleTap){combat.dash(n,dir);lastTap=null;}
+      if(lastTap&&lastTap.dir===dir&&lastTap.source===source&&at>=lastTap.at&&at-lastTap.at<=combat.RULES.doubleTap){combat.dash(n,dir);lastTap=null;}
       else lastTap={dir,at,source};
     }
     // Preserve keyboard presses that begin and end between two render frames.
@@ -61,7 +62,7 @@
     keyboardHorizontal=kd;stickHorizontal=sd;
     const opposed=left&&right||digital&&v*kd<-.3;
     if(opposed)lastTap=null;
-    else if(dir&&edge&&!(digital&&queued.length))tap(dir,source,c.time);
+    else if(dir&&edge&&!(digital&&queued.length))tap(dir,source,inputTime());
     if(k.shift&&!shiftHeld)combat.dash(n,n.face||1);
     shiftHeld=!!k.shift;
   }
@@ -92,7 +93,12 @@
     if(directionCodes[e.code]&&ready()&&!editable(e.target)&&!e.repeat){
       if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
       const dir=directionCodes[e.code],k=keyboard(),j=joystick();
-      directionTaps.push({dir,at:root.TechOpsNightCombat.state(runtime()).time,opposed:dir<0?!!(k.d||k.arrowright||j.x>.3):!!(k.a||k.arrowleft||j.x<-.3)});
+      // A/Left and D/Right are aliases of one logical direction. Pressing an
+      // alias while its partner is held is not a release-and-press gesture.
+      const held=Array.from(directionHeld).some(code=>directionCodes[code]===dir);
+      const opposed=Array.from(directionHeld).some(code=>directionCodes[code]===-dir)||(dir<0?!!(k.d||k.arrowright||j.x>.3):!!(k.a||k.arrowleft||j.x<-.3));
+      directionHeld.add(e.code);
+      if(!held)directionTaps.push({dir,at:inputTime(),opposed});
       if(directionTaps.length>8)directionTaps.shift();
     }
     const action=keyMap[e.code];if(!action||!ready()||editable(e.target))return;
@@ -100,7 +106,7 @@
     dispatch(action);
     if(action==='jump')jumpKey=true;
   }
-  function keyUp(e){if(e.code==='Space')jumpKey=false;if(keyMap[e.code]&&ready()&&!editable(e.target))stop(e);}
+  function keyUp(e){directionHeld.delete(e.code);if(e.code==='Space')jumpKey=false;if(keyMap[e.code]&&ready()&&!editable(e.target))stop(e);}
   function bindButton(button,action,legacy=false){
     if(!button||bound.has(button))return;bound.add(button);
     const press=e=>{
@@ -161,7 +167,7 @@
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
     if(!enabled)reset();
   }
-  root.TechOpsNightInput={VERSION:3,owns,ready,contextAction,snapshot,dispatch,runStep,sync,reset};
+  root.TechOpsNightInput={VERSION:4,owns,ready,contextAction,snapshot,dispatch,runStep,sync,reset};
   if(root.addEventListener){
     root.addEventListener('keydown',keyDown,true);root.addEventListener('keyup',keyUp,true);
     root.addEventListener('blur',reset);
