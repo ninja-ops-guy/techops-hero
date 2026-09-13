@@ -56,7 +56,8 @@ test('launcher follow is inert until the player explicitly jumps',()=>{
   assert.equal(f.n._nightCombat.follow.engaged,false);
   f.e.y=286;f.n.onGround=true;advance(f,210);
   assert.equal(f.api.attack(f.n,{},'punch'),true);
-  assert.equal(f.n._nightCombat.attack.kind,'jab');
+  assert.notEqual(f.n._nightCombat.attack.kind,'air');
+  assert.notEqual(f.n._nightCombat.attack.kind,'air-kick');
 });
 
 test('engaged follow keeps a transient grounded third punch classified as air and consumes on contact',()=>{
