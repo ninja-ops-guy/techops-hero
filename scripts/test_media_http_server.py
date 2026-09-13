@@ -14,9 +14,14 @@ class MediaDeliveryTest(unittest.TestCase):
         server = RuntimeHTTPServer(('127.0.0.1', 0), functools.partial(MediaHandler, directory=directory))
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
-        self.addCleanup(server.server_close)
-        self.addCleanup(server.shutdown)
-        self.addCleanup(thread.join)
+
+        def cleanup():
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+            self.assertFalse(thread.is_alive(), 'runtime test server did not stop')
+
+        self.addCleanup(cleanup)
         return server
 
     def test_runtime_server_has_explicit_parser_burst_capacity(self):
