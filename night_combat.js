@@ -53,6 +53,23 @@
       return Math.abs(feet)<(move.launch?120:n.onGround?65:92)&&dx*face>-10&&Math.abs(dx)<(move.reach||76);
     }).sort((a,b)=>Math.abs(a.x+a.w/2-cx)-Math.abs(b.x+b.w/2-cx))[0]||null;
   }
+  function targetSnapshot(n,e,move={}){
+    const c=state(n),ec=enemy(e),cx=n.x+n.w/2,face=move.face||n.face||1;
+    const dx=e.x+e.w/2-cx,feet=(e.y+e.h)-(n.y+n.h),verticalTolerance=move.launch?120:n.onGround?65:92,reach=move.reach||76;
+    let reason='eligible';
+    if(ec.held)reason='held';
+    else if(ec.recoverUntil>c.time)reason='recovering';
+    else if(move.low&&(ec.air||e.hover))reason='low-vs-airborne';
+    else if(Math.abs(feet)>=verticalTolerance)reason='vertical';
+    else if(dx*face<=-10)reason='behind';
+    else if(Math.abs(dx)>=reach)reason='horizontal';
+    return {id:ec.id,reason,dx,feet,verticalTolerance,reach,face,
+      player:{x:n.x,y:n.y,vx:n.vx||0,vy:n.vy||0,onGround:!!n.onGround},
+      enemy:{x:e.x,y:e.y,vx:ec.vx||0,vy:ec.vy||0,air:!!ec.air,locked:!!ec.locked,recoverUntil:ec.recoverUntil||0}};
+  }
+  function targetEvidence(n,move={}){
+    return (n.enemies||[]).filter(e=>e.alive&&e.hp>0).map(e=>targetSnapshot(n,e,move));
+  }
   function clearChain(n){const c=state(n);c.hits=0;c.stage=0;c.beat=false;c.lastHit=-10000;n.combo=0;}
   function cancel(n){if(!active(n))return;const c=state(n);if(c.grab){const ec=enemy(c.grab.enemy);ec.held=false;ec.stunUntil=c.time+180;}c.grab=null;c.attack=null;n.jabAnim=0;clearChain(n);}
   function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
@@ -108,22 +125,22 @@
     c.attack=null;n.jabAnim=0;return true;
   }
   function strike(n,a){
-    const c=state(n),move=MOVES[a.kind]||MOVES.jab;
-    const e=target(n,{},false,Object.assign({face:a.face},move));
-    if(!e){clearChain(n);event(n,'whiff');sound('ping');return;}
-    const ec=enemy(e);if(ec.air&&ec.locked){clearChain(n);event(n,'whiff');return;}
+    const c=state(n),move=MOVES[a.kind]||MOVES.jab,probeMove=Object.assign({face:a.face},move);
+    const e=target(n,{},false,probeMove);
+    if(!e){const targeting=targetEvidence(n,probeMove);clearChain(n);event(n,'whiff',null,{reason:'no-target',kind:a.kind,targeting});sound('ping');return;}
+    const ec=enemy(e);if(ec.air&&ec.locked){clearChain(n);event(n,'whiff',e,{reason:'juggle-locked',kind:a.kind,targeting:targetSnapshot(n,e,probeMove)});return;}
     const eq=root.v733&&root.v733.equipped?root.v733.equipped():[];
     let value=move.damage+(a.beat?3:0);
     const shield=e.blocks&&a.kind==='jab'&&!a.beat&&!ec.air&&ec.stunUntil<=c.time;
     if(shield){value=5;clearChain(n);event(n,'guard',e);say(n,'GUARD · GRAB OR AIM LOW');}
     else{c.hits++;c.stage=a.stage;c.beat=a.beat;c.lastHit=c.time;n.combo=c.hits;n.comboT=wallClock()+RULES.chainLife;if(a.beat)n.perfectT=wallClock()+550;}
     if(eq.includes('orbital')&&(ec.air||move.launch)){e.marked=true;value+=4;}
-    a.connected=damage(n,e,value,a.kind,{guarded:!!shield})&&!shield;if(!e.alive)return;
+    a.connected=damage(n,e,value,a.kind,{guarded:!!shield,targeting:targetSnapshot(n,e,probeMove)})&&!shield;if(!e.alive)return;
     // Air reactions come FIRST: a second uppercut must not reset the juggle cap.
     if(ec.air){
       ec.airHits++;ec.vx=a.face*2.2;ec.locked=!!move.slam||ec.airHits>=RULES.maxAirHits;
       ec.vy=ec.locked?10:-5.4;
-      if(!n.onGround&&!ec.locked){n.vy=Math.min(n.vy,-4.5);n.vx=a.face*2.2;}
+      if(!n.onGround&&!ec.locked){n.vy=Math.min(n.vy,ec.vy);n.vx=a.face*2.2;}
       say(n,ec.locked?'AIR FINISH · SLAM':'AIR '+ec.airHits+' / '+RULES.maxAirHits);
     }else if(move.launch&&!shield){
       lift(n,e,a.face*move.vx,move.vy,false);say(n,a.kind==='uppercut'?'UPPERCUT · JUMP TO FOLLOW':a.kind==='rising-kick'?'RISING KICK · JUMP TO FOLLOW':a.kind==='kick'?'KICK LAUNCH · JUMP TO FOLLOW':'RISING FINISH · JUMP TO FOLLOW');
