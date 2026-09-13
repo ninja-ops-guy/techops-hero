@@ -34,7 +34,7 @@
     return {accent:d&&d.accent||'#7ec8ff',steel:'#263248',edge:'#7084a8',dark:'#101725',lamp:'#ffd27a'};
   }
   function dressPlatforms(ctx,n){
-    if(!ctx||!n||!Array.isArray(n.platforms))return false;
+    if(!ctx||!n||n.drive||!Array.isArray(n.platforms))return false;
     if(root.TechOpsSceneArt&&root.TechOpsSceneArt.ready(n))return false; // already drawn behind actors at the canonical layer
     const pal=platformPalette(n),cam=Number(n.cam)||0,floor=typeof root.NM_FLOOR==='number'?root.NM_FLOOR:430,playerX=Number(n.x)||0;
     ctx.save();ctx.imageSmoothingEnabled=false;

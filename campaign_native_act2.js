@@ -101,17 +101,18 @@
   }
 
   function rooftop() {
-    show("rooftop_violin");
     var state = load();
     var snap = act2().snapshot(state);
+    if (snap.violinistRevealed) show("rooftop_violin");
+    else if (visuals()) visuals().hide();
     if (!snap.morningstarSignatureFound) return dlg("ROOFTOP ACCESS", "The rooftop signal is visible, but Mike cannot connect it to MORNINGSTAR without a verified trace. The game does not reward sequence-breaking with a premature reveal.", [{ t: "Return downstairs", f: close }]);
-    if (!snap.rooftopViolinVerified) return dlg("ROOFTOP // SIGNAL", "Night skyline. Layered parallax. Utility cables crossing the frame. Felicia holds the far side of the composition with the violin while Mike enters from the opposite edge.<br><br>The signal blooms around each sustained note instead of turning the scene into a static dialogue box.", [
-      { t: "Observe signal timing", f: function () { var s = load(); act2().recordRooftopViolinEvidence(s, { signalObserved: true, corroborated: true, perspective: "firsthand" }); save(s); notify("Rooftop violin signal corroborated"); rooftop(); } },
-      { t: "Leave before drawing a conclusion", f: close }
+    if (!snap.rooftopViolinVerified) return dlg("ROOFTOP // SIGNAL", "Follow the signal through Night Walker. Walk to the Downtown rooftop stairwell, clear security and inspect both signal points. A journal entry alone cannot corroborate the signal.", [
+      { t: "Follow the signal in Night Walker", f: function () { close(); if (hasFn("enterNight")) root.enterNight(); } },
+      { t: "Return downstairs", f: close }
     ]);
     if (!snap.violinistRevealEligible) return dlg("ROOFTOP // INCOMPLETE", "The signal is real, but Mike is still missing one or more prerequisites. Evidence does not become identity by proximity.", [{ t: "Back", f: close }]);
     if (!snap.violinistRevealed) return dlg("THE VIOLINIST", "The same woman Mike met in daylight now occupies the operational silhouette he has been chasing at night. The reveal lands because the player has already seen both halves separately.", [
-      { t: "Recognize Felicia", f: function () { var s = load(); act2().revealViolinist(s); save(s); notify("PARTS IN MOTION unlocked"); rooftop(); } }
+      { t: "Recognize the violinist", f: function () { var s = load(); act2().revealViolinist(s); save(s); notify("PARTS IN MOTION unlocked"); rooftop(); } }
     ]);
     return dlg("PARTS IN MOTION", "The Violinist reveal is complete. Evidence and Trust remain independent going forward.", [{ t: "Continue", f: close }]);
   }

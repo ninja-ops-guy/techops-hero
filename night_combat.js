@@ -147,6 +147,7 @@
     else{c.hits++;c.stage=a.stage;c.beat=a.beat;c.lastHit=c.time;n.combo=c.hits;n.comboT=wallClock()+RULES.chainLife;if(a.beat)n.perfectT=wallClock()+550;}
     if(eq.includes('orbital')&&(ec.air||move.launch)){e.marked=true;value+=4;}
     a.connected=damage(n,e,value,a.kind,{guarded:!!shield})&&!shield;
+    const engagedFollow=!!(a.connected&&c.follow&&c.follow.enemy===e&&c.follow.engaged);
     if(a.connected&&c.follow&&c.follow.enemy===e)c.follow=null;
     if(!e.alive)return;
     // Air reactions come FIRST: a second uppercut must not reset the juggle cap.
@@ -155,7 +156,12 @@
       // A confirmed contact supplies enough shared lift for a human touch
       // follow-up after recovery, including slower WebKit input frames.
       ec.vy=ec.locked?10:-5.8;
-      if(!n.onGround&&!ec.locked){n.vy=-5.8;n.vx=a.face*1.5;c.follow={enemy:e,engaged:true};}
+      if((!n.onGround||engagedFollow)&&!ec.locked){
+        // A grounded recovery frame must not erase an already-engaged juggle.
+        // Preserve ownership after contact; only airborne players receive lift.
+        if(!n.onGround){n.vy=-5.8;n.vx=a.face*1.5;}
+        c.follow={enemy:e,engaged:true};
+      }
       say(n,ec.locked?'AIR FINISH · SLAM':'AIR '+ec.airHits+' / '+RULES.maxAirHits);
     }else if(move.launch&&!shield){
       lift(n,e,a.face*move.vx,move.vy,false);say(n,a.kind==='uppercut'?'UPPERCUT · JUMP TO FOLLOW':a.kind==='rising-kick'?'RISING KICK · JUMP TO FOLLOW':a.kind==='kick'?'KICK LAUNCH · JUMP TO FOLLOW':'RISING FINISH · JUMP TO FOLLOW');

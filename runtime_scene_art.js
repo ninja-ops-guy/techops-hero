@@ -10,7 +10,7 @@
     waldo:{src:'assets/visual-combat/waldo.webp',ground:500/793,worldWidth:1800,accent:'#ffd395'},
     'gooddogs-home':{src:'assets/visual-combat/gooddogs-home.webp',ground:.61,accent:'#ffd395'}
   });
-  function key(n){if(!n||n._sector04)return null;if(n._v736)return Number(n._v736.m)===1?'gooddogs-home':null;return specs[n.district]?n.district:null;}
+  function key(n){if(!n||n._sector04||root.TechOpsNightTravel?.outside(n))return null;if(n._v736)return Number(n._v736.m)===1?'gooddogs-home':null;return specs[n.district]?n.district:null;}
   function image(id){
     if(!images[id]&&root.Image){const im=new root.Image();images[id]=im;im.decoding='async';im.src=specs[id]?.src||(id==='props'?'assets/visual-combat/waldo-props.png':'');im.onerror=()=>{root.__sceneArtError=im.src;};}
     const im=images[id];return im&&im.complete&&im.naturalWidth?im:null;

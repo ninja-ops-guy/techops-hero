@@ -18,6 +18,35 @@ async function snapshot(page){return page.evaluate(()=>({
  keys:typeof keys!=='undefined'?{right:!!keys.arrowright,d:!!keys.d}:null,
  dialogue:{text:document.querySelector('#dialogue')?.innerText,hidden:document.querySelector('#dialogue')?.classList.contains('hidden')}
 }));}
+// Follow visible traffic with genuine keyboard/touch input. Read-only model
+// observations are test telemetry; no progress, lane or collision state is set.
+async function driveRoute(page,touch,click){
+ const deadline=Date.now()+35000;let observed=false;
+ while(Date.now()<deadline){
+  const d=await page.evaluate(()=>NM?.drive?{lane:NM.drive.lane,failed:NM.drive.failed,traffic:NM.drive.traffic?.map(c=>({x:c.x,lane:c.lane}))||[]}:null);
+  if(!d){assert.ok(observed,'route must enter the driving game');return;}
+  observed=true;assert.equal(d.failed,false,'traffic bot must finish without a wreck');
+  const upcoming=d.traffic.filter(c=>c.x>.12).sort((a,b)=>a.x-b.x);
+  if(upcoming.length){
+   const lead=upcoming[0].x,occupied=new Set(upcoming.filter(c=>c.x<lead+.3).map(c=>c.lane));
+   const free=[0,1,2].filter(l=>!occupied.has(l)).sort((a,b)=>Math.abs(a-d.lane)-Math.abs(b-d.lane))[0];
+   if(free!==undefined&&free!==d.lane){
+    const direction=free<d.lane?-1:1;
+    if(touch)await click(page.locator('#night-drive-controls button[data-action="'+direction+'"]'));
+    else {await page.keyboard.down(direction<0?'ArrowUp':'ArrowDown');await page.waitForTimeout(65);await page.keyboard.up(direction<0?'ArrowUp':'ArrowDown');}
+   }
+  }
+  await page.waitForTimeout(180);
+ }
+ throw new Error('Traffic route did not arrive within 35 seconds');
+}
+async function walkTo(page,target){
+ const x=await page.evaluate(()=>NM.x),key=target<x?'ArrowLeft':'ArrowRight';
+ await page.keyboard.down(key);
+ try{await page.waitForFunction(({target,dir})=>dir<0?NM.x<=target:NM.x>=target,{target,dir:target<x?-1:1},{timeout:10000});}
+ finally{await page.keyboard.up(key);}
+ await page.waitForFunction(()=>NM.onGround&&Math.abs(NM.vx)<.3);
+}
 async function mount(page){await page.goto(URL,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsNightRuntime);}
 async function enterNight(page,touch){
  const button=page.locator('#btn-nightcrawler');
@@ -81,7 +110,13 @@ async function run(name,engine,touch,viewport){
   await page.keyboard.press('e');assert.equal(await page.evaluate(()=>S.inDialog),false);
   await page.evaluate(()=>{S.room=null;S.npcs=S.npcs.filter(n=>n.id!=='test-day-leak');});record.steps.push('day render and stale-office-input isolation');
   await click(page.locator('#night-campaign'));assert.match(await page.locator('#dlg-text').innerText(),/standup|Day 1/);await click(option('Back to Night Walker'));record.steps.push('visible campaign hub does not bypass the opening');
-  await page.evaluate(()=>{NM.x=110;NM.y=396;NM.vx=NM.vy=0;});await page.keyboard.press('e');await click(option('HOME STREET'));
+  await page.evaluate(()=>{NM.x=280;NM.y=396;NM.onGround=true;NM.vx=NM.vy=0;});await page.keyboard.press('e');await click(option('INDUSTRIAL DISTRICT'));
+  await page.waitForFunction(()=>NM?.drive?.traffic);await shot('traffic');await driveRoute(page,touch,click);
+  assert.equal(await page.evaluate(()=>NM.location),'exterior');assert.equal(await page.evaluate(()=>NM.enemies.length),0);await shot('foundry-exterior');
+  await walkTo(page,500);await page.keyboard.press('e');assert.equal(await page.evaluate(()=>NM.location),'interior');assert.equal(await page.evaluate(()=>TechOpsNightTravel.parked(NM)),false);await shot('foundry-interior');
+  await page.keyboard.press('e');assert.equal(await page.evaluate(()=>NM.location),'exterior');await walkTo(page,280);
+  record.steps.push('playable traffic, curbside arrival, walking through Foundry door, and car-free interior');
+  await page.keyboard.press('e');await click(option('HOME STREET'));await driveRoute(page,touch,click);
   await page.waitForFunction(()=>NM?.district==='home'&&!NM.drive);await page.evaluate(()=>{NM.x=1730;NM.y=396;});await page.waitForTimeout(180);assert.equal(await page.evaluate(()=>!!S.nightMode),true);
   await page.evaluate(()=>{NM.x=1489;NM.y=396;NM.vx=NM.vy=0;});await page.locator('#night-home-interact').waitFor({state:'visible'});await shot('home');
   await click(page.locator('#night-home-interact'));await click(option('Stay out tonight'));assert.equal(await page.evaluate(()=>!!S.nightMode),true);
@@ -103,7 +138,30 @@ async function run(name,engine,touch,viewport){
   const evidence=await prepareStory(page);assert.equal((await page.evaluate(()=>TechOpsSector04Runtime.enterBrowser())).pending,true);await page.waitForFunction(()=>window.v722?.active());await page.keyboard.press('Escape');await page.waitForFunction(()=>S.nightMode?._sector04?.active&&!S.inDialog);
   await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});await click(page.locator('#night-campaign'));await click(option('Continue Sector 04 investigation'));
   assert.equal(await page.evaluate(()=>NM._continuityCheck),'same-session');assert.equal(await page.evaluate(()=>JSON.stringify(TechOpsCampaign.load(localStorage).evidence)),evidence);assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).flags.tuesday_morning_reached),false);await shot('sector04');
-  record.steps.push('asynchronous Sector 04 entry and evidence-preserving resume');assert.deepEqual(record.errors,[]);record.status='passed';
+  record.steps.push('asynchronous Sector 04 entry and evidence-preserving resume');
+  await page.evaluate(()=>localStorage.clear());await mount(page);await enterNight(page,touch);
+  await page.evaluate(()=>{
+   // Labeled prerequisites and cleared-security fixtures isolate mission routing;
+   // combat is exercised by the separate Night combat browser suite.
+   const C=TechOpsCampaign,A=TechOpsCampaignAct2,c=C.createInitialState();
+   for(const id of C.TICKETS)C.assignTicket(c,id,'mike');C.completeStandup(c);C.completeWorkstation(c,{redInTheMirrorHeard:true,feliciaVideoSeen:true});
+   c.flags.tuesday_morning_reached=true;A.beginGhostFrequency(c);A.recordBadgeClonerEvidence(c,{physicalArtifact:true,auditContradiction:true});A.firstDaylightFeliciaConversation(c,{});A.recordMorningstarTrace(c,{component:'telemetry',source:'browser fixture',verified:true});C.save(c,localStorage);
+   NM.enemies=[];NM.x=1400;NM.y=396;NM.onGround=true;NM.vx=NM.vy=0;
+  });
+  await walkTo(page,1549);
+  const contextAction=async()=>{if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('e');};
+  await contextAction();await page.waitForFunction(()=>NM?._nightMission?.id==='rooftop');
+  assert.equal(await page.evaluate(()=>TechOpsNightTravel.parked(NM)),false);
+  await page.evaluate(()=>NM.enemies.forEach(e=>{e.alive=false;e.hp=0;}));
+  await walkTo(page,639);await contextAction();await page.waitForFunction(()=>NM._nightMission.observed.source);
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.evidence.rooftopViolinVerified),false);
+  await walkTo(page,1319);await contextAction();await page.waitForFunction(()=>TechOpsCampaign.load(localStorage).p1.evidence.rooftopViolinVerified);
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.reveal.violinistRevealed),false);
+  await click(option('Recognize the violinist'));
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.reveal.violinistRevealed),true);
+  assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).p1.duet.freeplayUnlocked),false);
+  await shot('rooftop-investigation');record.steps.push('spatial rooftop route, two observations, explicit recognition and retained Duet gate (prerequisite/security fixtures)');
+  assert.deepEqual(record.errors,[]);record.status='passed';
  }catch(e){record.status='failed';record.failure=String(e.stack||e);if(page){record.state=await snapshot(page).catch(()=>null);await page.screenshot({path:`${OUT}/${name}-failure.png`,timeout:5000}).catch(()=>{});}}
  finally{if(browser)await browser.close();await writeFile(`${OUT}/report.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(record));}
 }

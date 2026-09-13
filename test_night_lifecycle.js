@@ -44,7 +44,18 @@ test('midnight changes display, not the workday or office state',()=>{
 });
 test('travel counts, while Good Dogs and Waldo retain their own loop',()=>{
   const{c,api}=fixture(),n=c.enter();assert.equal(api.active(true),false);n.drive={};for(let i=0;i<50;i++)api.frame(.1);assert.equal(c.S.clock,1081);
-  n._v736={m:3};assert.equal(api.frame(.1),false);delete n._v736;n.district='waldo';assert.equal(api.frame(.1),false);n.district='home';c.__productionDesiredMode='goodboys';assert.equal(api.frame(.1),false);
+  n._v736={m:3};assert.equal(api.frame(.1),false);delete n._v736;n.district='waldo';assert.equal(api.active(n),true,'Waldo departures use the travel owner');n.drive=null;assert.equal(api.frame(.1),false);n.district='home';c.__productionDesiredMode='goodboys';assert.equal(api.frame(.1),false);
+});
+test('travel dispatcher isolates street simulation, pauses input, and owns Waldo departures',()=>{
+  const {c,api}=fixture(),n=c.enter();n.district='waldo';n.onGround=true;n.x=280;
+  c.TechOpsNightDistricts={home:{name:'HOME'},waldo:{name:'WALDO'}};
+  vm.runInContext(fs.readFileSync('night_travel.js','utf8'),c);
+  const travel=c.TechOpsNightTravel;travel.start(n,'home');
+  c.ctx=new Proxy({canvas:{width:1000,height:600},createLinearGradient(){return {addColorStop(){}};}},{get(o,k){return k in o?o[k]:()=>{};}});
+  c.keys={arrowup:true};c.joy={x:0,y:0};api.frame(.05);
+  assert.equal(n.drive.lane,0);assert.equal(c.steps,0,'outgoing street AI never runs during traffic');assert.equal(c.draws,0,'street overlays do not draw over traffic');
+  const t=n.drive.elapsed;for(const key of ['inDialog','paused','gameOver']){c.S[key]=true;api.frame(.05);c.S[key]=false;assert.equal(n.drive.elapsed,t);}
+  assert.equal(api.openCampaign(),false,'campaign cannot interrupt a trip');
 });
 test('home requires the spatial ground-level door and explicit interaction',()=>{
   const{c,api}=fixture(),n=c.enter();assert.equal(api.atHome(),true);n.x=1770;assert.equal(api.sleep(),false);n.x=1489;n.y=220;assert.equal(api.atHome(),false);n.y=396;n._sector04={};assert.equal(api.atHome(),false);delete n._sector04;n.drive={};assert.equal(api.atHome(),false);n.drive=null;

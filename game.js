@@ -2594,7 +2594,7 @@ function startRun() {
   $("hud").classList.remove("hidden");
   showTouchUI();
   initMusic();
-  dlg("📟 CIO Dispatch", `Welcome to <b>AeroTech Manufacturing</b>, ${rank().name}.<br><br>Users have tickets. Devices have... <i>manifestations</i>. Interview users, diagnose root causes, enter the portals, and keep this factory running.<br><br>Clock out strong. Good luck.`, [{ t: "Clock in ▶", f: closeDlg }]);
+  if (!S.nightMode && globalThis.__productionDesiredMode!=="nightcrawler") dlg("📟 CIO Dispatch", `Welcome to <b>AeroTech Manufacturing</b>, ${rank().name}.<br><br>Users have tickets. Devices have... <i>manifestations</i>. Interview users, diagnose root causes, enter the portals, and keep this factory running.<br><br>Clock out strong. Good luck.`, [{ t: "Clock in ▶", f: closeDlg }]);
 }
 $("btn-continue").addEventListener("click", () => {
   const d = load(); if (!d) return;
