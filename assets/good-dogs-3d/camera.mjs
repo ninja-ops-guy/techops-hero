@@ -7,12 +7,14 @@ export function positionCamera(camera,side,{view,targetZ,focusY,aspect,separatio
   side.position.set(-12,3.0,targetZ);side.lookAt(0,1,targetZ);side.updateProjectionMatrix();return side;
  }
  if(view==='crew'){
-  camera.position.set(.55,1.15,targetZ+2.75);camera.lookAt(0,.68,targetZ-.15);camera.fov=48;
+  const back=aspect<.8?Math.max(2.75,.66/(Math.tan(24*Math.PI/180)*aspect)+Math.min(3,separation*.5)+.5):2.75;
+  camera.position.set(aspect<.8?0:.55,1.15,targetZ+back);camera.lookAt(0,.68,targetZ-.15);camera.fov=48;
  }else if(view==='first'){
   camera.position.copy(kPosition).add(new THREE.Vector3(0,1.67,0));camera.lookAt(0,1.1,targetZ+4);camera.fov=65;
  }else{
-  const back=2.8+Math.min(3,separation*.5)+(aspect<.8?.6:0);
-  camera.position.set(.65,focusY+.64,Math.max(-4,Math.min(open?28:end-.4,targetZ-back)));
+  const spread=Math.min(3,separation*.5);
+  const back=aspect<.8?Math.max(2.8+spread,.66/(Math.tan(25*Math.PI/180)*aspect)+spread+.5):2.8+spread;
+  camera.position.set(aspect<.8?0:.65,focusY+.64,Math.max(-4,Math.min(open?28:end-.4,targetZ-back)));
   camera.lookAt(0,focusY+.12,targetZ+1.9);camera.fov=50;
  }
  camera.aspect=aspect;camera.updateProjectionMatrix();return camera;

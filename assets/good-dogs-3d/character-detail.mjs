@@ -22,7 +22,7 @@ export function identityDetails(actor,id){
  x.clearRect(0,0,768,192);x.font='bold 112px Georgia';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#d8af55';x.fillText(id==='katrin'?'Katrin':'Manchez',384,96,730);
  const map=new THREE.CanvasTexture(c);map.colorSpace=THREE.SRGBColorSpace;
  const tag=new THREE.Mesh(new THREE.PlaneGeometry(.30,.075),new THREE.MeshStandardMaterial({map,transparent:true,alphaTest:.15,roughness:.7,metalness:.5,side:THREE.DoubleSide}));
- tag.name=id+' / embroidered name';tag.position.set(0,actor.userData.videoMatch?.42:.37,actor.userData.videoMatch?.279:.345);tag.rotation.x=-.20;actor.add(tag);
+ tag.name=id+' / embroidered name';tag.position.set(0,actor.userData.videoMatch?.43:.37,actor.userData.videoMatch?.319:.345);tag.rotation.x=-.20;actor.add(tag);
  (actor.userData.detailTextures??=[]).push(map);
  if(actor.userData.videoMatch)return;
  // The reference chain is a prominent collar, with individual interlocked links.

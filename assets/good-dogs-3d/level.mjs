@@ -80,7 +80,7 @@ export async function createLevel({canvas,assetBase=new URL('./',import.meta.url
   const dt=lastTime?Math.min(.05,Math.max(0,(time-lastTime)/1000)):0;lastTime=time;const c=n._v736,p=c.partner||n;
   const active=c.active==='manchez'?'manchez':'katrin',other=active==='katrin'?'manchez':'katrin';
   function place(o,b,lane){o.position.set(lane,Math.max(0,(430-(b.y||0)-(b.h||34))/60),(Number(b.x)||0)/60);o.rotation.y=(b.face||1)<0?Math.PI:0;}
-  place(actors[active],n,-.44);place(actors[other],p,.44);
+  place(actors[active],n,-.33);place(actors[other],p,.33);
   for(const id of ['katrin','manchez'])actors[id].rotation.z=c.chars?.[id]?.hp<=0?Math.PI/2:0;
   const lead=(Number(n.x)||0)/60,partner=(Number(p.x)||0)/60;
   actors.k.position.set(-1.5,0,Math.max(.8,Math.min(lead,partner)-1.15));actors.k.rotation.y=(n.face||1)<0?Math.PI:0;
