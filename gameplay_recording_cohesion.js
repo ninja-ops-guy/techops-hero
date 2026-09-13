@@ -54,7 +54,7 @@ body.recording-day [data-interact],body.recording-day .interact-prompt{border-ra
     if(!doc)return;
     const s=state();
     if(night()){
-      const t=doc.getElementById('toast');if(t&&/G\s*\/\s*GRAB|E punch|J kick|HIGH|LOW|JUMP/i.test(t.textContent||''))t.textContent='E PUNCH · J KICK · G GRAB · SPACE JUMP · ↑/↓ AIM';
+      const t=doc.getElementById('toast'),hint='Double-tap ←/→: DASH · Then ATTACK: GRAB · ↑/↓ AIM · JUMP to follow';if(t&&/G\s*\/\s*GRAB|E punch|J kick|HIGH|LOW|JUMP|Double-tap/i.test(t.textContent||'')&&t.textContent!==hint)t.textContent=hint;
     }else{
       const t=doc.getElementById('toast');if(t&&/SHIFT PAUSED/i.test(t.textContent||''))t.textContent=(s&&Number(s.clock)<=540)?'SHIFT NOT STARTED · CLOCK IN AT THE WORKSTATION':'SHIFT PAUSED';
     }

@@ -27,9 +27,10 @@ body[data-good-dogs-mode="local"] #gb-swap,body[data-good-dogs-mode="local"] #gb
   });}
   function load(src){return new Promise(function(resolve,reject){var im=new root.Image(),timer=root.setTimeout(function(){reject(Error('Home scene asset timed out: '+src));},8000);im.onload=function(){root.clearTimeout(timer);resolve(im);};im.onerror=function(){root.clearTimeout(timer);reject(Error('Home scene asset unavailable: '+src));};im.src=src;});}
   function warm(){if(!loading)loading=Promise.all([load('assets/v742/cutscenes/waldo_house.png'),load('assets/v742/cutscenes/waldo_garage.png'),load('assets/handoff/kat.png'),load('assets/handoff/man.png')]).then(function(images){cachedImages=images;return images;}).catch(function(err){loading=null;throw err;});return loading;}
-  function drawWorldBack(x,n,F){
+  function drawWorldBack(x,n,F,garageOnly=false){
+    if(!garageOnly&&root.TechOpsSceneArt&&root.TechOpsSceneArt.drawBackdrop(x,n,F))return true;
     if(!cachedImages){warm().catch(function(e){root.__goodDogsHomeAssetError=String(e);});return false;}
-    var W=x.canvas.width,cam=n.cam||0,blend=Math.max(0,Math.min(1,(cam-280)/380));x.save();x.imageSmoothingEnabled=false;x.fillStyle='#0b151b';x.fillRect(0,0,W,F);
+    var W=x.canvas.width,cam=n.cam||0,blend=garageOnly?1:Math.max(0,Math.min(1,(cam-280)/380));x.save();x.imageSmoothingEnabled=false;x.fillStyle='#0b151b';x.fillRect(0,0,W,F);
     x.drawImage(cachedImages[0],0,42,384,77,-cam*.08,60,W+130,F-90);
     if(blend){x.globalAlpha=blend;x.drawImage(cachedImages[1],0,42,384,77,-cam*.08,60,W+130,F-90);x.globalAlpha=1;}
     var shade=x.createLinearGradient(0,F-145,0,F);shade.addColorStop(0,'#10202400');shade.addColorStop(1,'#101c1c');x.fillStyle=shade;x.fillRect(0,F-145,W,145);
@@ -44,16 +45,19 @@ body[data-good-dogs-mode="local"] #gb-swap,body[data-good-dogs-mode="local"] #gb
       function render(t){
         var s=shots[index],im=images[s.plate==='house'?0:1],u=calm?0:Math.min(1,(t-start)/8000),pan=s.pan+u*8,W=960,H=420;
         x.imageSmoothingEnabled=false;x.fillStyle='#111823';x.fillRect(0,0,W,H);
+        var painted=root.TechOpsSceneArt&&s.plate==='house'&&root.TechOpsSceneArt.drawDomesticCinematic(x,pan);
+        if(!painted){
         // Crop away the source HUD and embedded reference characters.
         x.drawImage(im,0,42,384,77,-pan,40,W+60,245);
         var sky=x.createLinearGradient(0,0,0,85);sky.addColorStop(0,'#080e16');sky.addColorStop(1,'#080e1600');x.fillStyle=sky;x.fillRect(0,0,W,85);
         var shade=x.createLinearGradient(0,180,0,H);shade.addColorStop(0,'#0a131800');shade.addColorStop(.5,'#102024');shade.addColorStop(1,'#060e15');x.fillStyle=shade;x.fillRect(0,180,W,H-180);
         x.fillStyle='#be8d4d';x.globalAlpha=.2;x.beginPath();x.moveTo(380-pan,114);x.lineTo(240-pan,340);x.lineTo(570-pan,340);x.closePath();x.fill();x.globalAlpha=1;
         x.fillStyle='#071113';for(var i=0;i<55;i++){var px=(i*83)%W;x.fillRect(px,323+(i%7)*5,2,14+(i%5)*6);}
+        }
         // Supplied idle poses only; no rejected walk frames or invented gait.
         [images[2],images[3]].forEach(function(dog,i){var cx=510+i*105-pan*.3;x.globalAlpha=.5;x.fillStyle='#000';x.beginPath();x.ellipse(cx,351,42,8,0,0,Math.PI*2);x.fill();x.globalAlpha=1;x.drawImage(dog,0,0,160,128,cx-80,230,160,128);});
         if(!calm){x.fillStyle='#f5c987';for(var j=0;j<10;j++){x.globalAlpha=.12+(j%3)*.05;x.fillRect((j*127+t*.003)%W,125+(j*29)%180,2,2);}x.globalAlpha=1;}
-        x.fillStyle='#061017';x.fillRect(0,395,W,25);root.__goodDogsHomeScene={shot:index+1,place:s.place,asset:s.plate,generated:false,engineCanvas:true};raf=root.requestAnimationFrame(render);
+        x.fillStyle='#061017';x.fillRect(0,395,W,25);root.__goodDogsHomeScene={shot:index+1,place:s.place,asset:painted?'real-frame-house-overpaint':s.plate,generated:!!painted,engineCanvas:true};raf=root.requestAnimationFrame(render);
       }
       function update(){var s=shots[index];el.querySelector('#gd-home-place').textContent='PROLOGUE · '+s.place;el.querySelector('h1').textContent=s.title;el.querySelector('p').textContent=s.body;el.querySelector('#gd-home-next').textContent=index===2?'Search the property':'Continue';el.querySelectorAll('.gd-dot').forEach(function(d,i){d.classList.toggle('active',i===index);});start=root.performance.now();}
       function finish(skipped){root.cancelAnimationFrame(raf);root.removeEventListener('keydown',key,true);el.remove();root.__goodDogsHomeSceneExit={status:skipped?'USER_SKIPPED':'COMPLETED',shotsViewed:index+1};resolve(true);}
