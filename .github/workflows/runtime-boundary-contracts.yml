@@ -1,0 +1,37 @@
+name: Runtime boundary contracts
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'good_dogs_coop.js'
+      - 'scripts/*coop*.mjs'
+      - 'scripts/*room_bootstrap*.mjs'
+      - 'scripts/night_combat_bot.mjs'
+      - '.github/workflows/runtime-boundary-contracts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'good_dogs_coop.js'
+      - 'scripts/*coop*.mjs'
+      - 'scripts/*room_bootstrap*.mjs'
+      - 'scripts/night_combat_bot.mjs'
+      - '.github/workflows/runtime-boundary-contracts.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and deterministic input/evidence contracts
+        run: |
+          node --check good_dogs_coop.js
+          node --check scripts/good_dogs_coop_bot.mjs
+          node --check scripts/night_combat_bot.mjs
+          node --test scripts/test_coop_world_input.mjs scripts/test_room_bootstrap_snapshot.mjs
