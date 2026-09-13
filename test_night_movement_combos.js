@@ -68,4 +68,21 @@ for(const dt of [.016,.033,.1])for(const direction of ['left','right','up'])for(
  }
  assert.equal(f.e._nightCombat.locked,true);f.until(()=>!f.e._nightCombat.air,'finite juggle landing');assert.ok(f.e._nightCombat.recoverUntil>f.n._nightCombat.time);airSequences++;
 }
-console.log(JSON.stringify({suite:'night-movement-combos',passed,airSequences,maxObservedHorizontalGap:Number(maxGap.toFixed(1)),failed:0}));
+let delayedTouchSequences=0;
+// WebKit's real touch action arrived 200 ms after recovery. Keep that latency
+// in the physics regression: an air kick must still leave a third hit reachable.
+for(const dt of [.016,.033,.05,.1])for(const kind of ['uppercut','rising-kick','kick']){
+ const f=fixture(dt);f.e.x=450;
+ if(kind!=='kick')f.r.joy.y=-1;
+ f.input.dispatch(kind==='uppercut'?'punch':'kick');f.until(()=>f.e._nightCombat?.air,'touch launch');f.r.joy.y=0;
+ const launchAt=f.n._nightCombat.time;f.until(()=>f.n._nightCombat.time-launchAt>=120,'touch jump latency');
+ f.input.dispatch('jump');f.until(()=>!f.n.onGround,'delayed explicit jump');
+ for(let i=0;i<3;i++){
+  f.until(()=>!f.n._nightCombat.attack,'touch recovery');
+  if(i===1){const at=f.n._nightCombat.time;f.until(()=>f.n._nightCombat.time-at>=200,'touch kick latency');}
+  assert.equal(f.n.onGround,false,'touch sequence stays airborne: '+kind+' '+dt+' hit '+i);
+  f.input.dispatch(i===1?'kick':'punch');f.until(()=>f.e._nightCombat.airHits>=i+1,'delayed touch '+kind+' contact '+i);
+ }
+ assert.equal(f.e._nightCombat.locked,true);f.until(()=>!f.e._nightCombat.air&&f.n.onGround,'delayed combo still lands');delayedTouchSequences++;
+}
+console.log(JSON.stringify({suite:'night-movement-combos',passed,airSequences,delayedTouchSequences,maxObservedHorizontalGap:Number(maxGap.toFixed(1)),failed:0}));

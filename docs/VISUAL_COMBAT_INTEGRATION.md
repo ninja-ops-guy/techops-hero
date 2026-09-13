@@ -76,6 +76,9 @@ limited to 800 ms, 160 horizontal / 155 vertical units and speed 3.4; input owns
 movement. A held body is placed on the selected release side, then normal physics
 takes over. Free enemies are never pulled into a grab or teleported into range.
 Three air contacts force descent and landing recovery prevents immediate loops.
+Confirmed air hits apply shared upward speed 5.8 to keep the next touch input
+reachable after recovery. This fixes the WebKit case where a delayed kick hit as
+Mike touched down; the hit cap, floor collision and explicit jump requirement remain.
 
 The movement adapter applies to ordinary Night street combat. Good Dogs, Sector
 04 and Waldo's social property retain their established input/combat owners.
@@ -144,7 +147,10 @@ presentation ownership.
 Local September 13 results: all 74 aggregate suites and the existing action-atlas
 quarantine passed; all 31 runtime-triage tests passed; the live-crawl visual
 contract passed. The focused movement suite passed 12 input/scope checks and all
-54 air sequences. The five plates and two runtime atlases total 2,909,227 encoded
+54 air sequences. Twelve additional launcher sequences cover a 120 ms jump delay
+and 200 ms touch-kick delay after recovery at 16/33/50/100 ms render intervals.
+These reproduce the observed WebKit failure before the lift adjustment and all
+connect three air hits and land after it. The five plates and two runtime atlases total 2,909,227 encoded
 bytes; checked-in authoring sources are excluded from preload.
 
 Offline composition review used the actual scene-layer functions and approved
