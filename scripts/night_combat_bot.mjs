@@ -40,13 +40,15 @@ for(const [name,type,touch] of profiles){
    await page.waitForTimeout(100);
   }
   await page.waitForFunction(()=>window.TechOpsNightInput.ready());checks.push('canonical fresh-save Night launch');
+  await page.waitForFunction(()=>window.TechOpsNightMoves?.warm());checks.push('generated move atlas decoded on full production page');
+  if(await page.locator('#night-input-grab').isVisible())throw Error('Optional GRAB leaked into the default movement-combo controls');
   if(touch){
    const original=page.viewportSize();
    for(const viewport of [{width:320,height:640},{width:390,height:844},{width:844,height:390}]){
     await page.setViewportSize(viewport);
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const layout=await page.evaluate(()=>{
-     const ids=['tb-interact','night-input-grab','night-input-kick','night-input-jump'];
+     const ids=['tb-interact','night-input-assists','night-input-kick','night-input-jump'];
      return ids.map(id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {id,reachable:!!top&&(top===el||el.contains(top)),x:r.x,y:r.y,w:r.width,h:r.height,inViewport:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight};});
     });
     if(layout.some(r=>!r.reachable||!r.inViewport))throw Error('Touch control layout '+JSON.stringify({viewport,layout}));
@@ -59,6 +61,21 @@ for(const [name,type,touch] of profiles){
   if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('KeyE');
   await page.getByText('THE CHARGER',{exact:false}).first().waitFor({state:'visible'});
   await click(page.locator('#dlg-options button').filter({hasText:'Back to the street.'}));checks.push('Charger interaction preserved');
+  // Preserve the existing touch grab/throw checks through the optional controls.
+  await click(page.locator('#night-input-assists'));
+  await page.locator('#night-input-grab').waitFor({state:'visible'});
+  if(touch){
+   const b=await page.locator('#night-input-grab').boundingBox();
+   if(!b||b.width<44||b.height<42)throw Error('Optional grab target is too small');
+  }
+  await setup(770);
+  await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
+  await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));
+  await page.keyboard.down('ArrowRight');
+  try{await page.waitForFunction(()=>NM.enemies[0].x-NM.x<45);await page.keyboard.press('KeyE');}
+  finally{await page.keyboard.up('ArrowRight');}
+  await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));
+  await shot('movement-dash-grab');checks.push('trusted double-tap -> dash -> attack grabs through full input stack');
   for(const direction of ['left','right','up','down']){
    await setup(690);
    if(touch)await click(page.locator('#night-input-grab'));else await page.keyboard.press('KeyG');

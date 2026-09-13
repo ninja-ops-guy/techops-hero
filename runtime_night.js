@@ -151,7 +151,7 @@
     x.fillStyle='rgba(255,215,143,.12)';x.beginPath();x.moveTo(2,-105);x.lineTo(-58,7);x.lineTo(64,7);x.fill();
     x.fillStyle='#9dacb7';x.fillRect(-32,-4,68,4);x.restore();
   }
-  function drawHome(x,n){if(!x||!active(n)||n.district!=='home')return;house(x,HOME_X-(n.cam||0),FLOOR,1,false);x.save();x.textAlign='center';x.font='bold 13px monospace';x.fillStyle='#ffe6b7';x.fillText("MIKE'S HOUSE",HOME_X-(n.cam||0),FLOOR-272);if(atHome()){x.font='12px monospace';x.fillText('E / A — ENTER',HOME_X-(n.cam||0),FLOOR-135);}x.restore();}
+  function drawHome(x,n){if(!x||!active(n)||n.district!=='home')return;const painted=root.TechOpsSceneArt&&root.TechOpsSceneArt.ready(n);if(!painted)house(x,HOME_X-(n.cam||0),FLOOR,1,false);x.save();x.textAlign='center';x.font='bold 13px monospace';x.fillStyle='#ffe6b7';if(!painted)x.fillText("MIKE'S HOUSE",HOME_X-(n.cam||0),FLOOR-272);if(atHome()){x.font='12px monospace';x.fillText('E / A — ENTER',HOME_X-(n.cam||0),FLOOR-135);}x.restore();}
   function registerScenes(){
     const cine=root.v725;if(!cine||!cine.register||!cine.h)return false;
     const h=cine.h,small=reduced(),duration=small?1100:2200;
