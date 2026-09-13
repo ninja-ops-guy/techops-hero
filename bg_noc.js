@@ -4,13 +4,8 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   root.__productionCompositorPlanned=true;
   root.__goodBoysDirectorPlanned=true;
   root.__goodBoysEarthfallPlanned=true;
-  var BUILD="20260913-production-v39-east-side-r2";
-  function snapshotParserChain(){
-    try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}
-    try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}
-    root.__techopsFinalParserChainReady=!!(root.__techopsFinalParserDrawNM&&root.__techopsFinalParserStepNM);
-    return root.__techopsFinalParserChainReady;
-  }
+  var BUILD="20260913-production-v39-east-side-r3";
+  function snapshotParserChain(){try{root.__techopsFinalParserDrawNM=(typeof drawNM==="function"?drawNM:null);}catch(e){root.__techopsFinalParserDrawNM=null;}try{root.__techopsFinalParserStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){root.__techopsFinalParserStepNM=null;}root.__techopsFinalParserChainReady=!!(root.__techopsFinalParserDrawNM&&root.__techopsFinalParserStepNM);return root.__techopsFinalParserChainReady;}
   function appendScript(attr,src,onload,onerror){try{var old=document.querySelector('script['+attr+']');if(old&&old.parentNode)old.parentNode.removeChild(old);var s=document.createElement('script');s.src=src+'?v='+BUILD;s.async=false;s.setAttribute(attr,'1');s.onload=onload||null;s.onerror=onerror||null;(document.head||document.documentElement).appendChild(s);return true;}catch(e){return false;}}
   function loadHudLite(){if(!appendScript('data-good-boys-hud-lite','good_boys_hud_lite.js',null,function(){root.__goodBoysHudLiteWireError='good_boys_hud_lite.js';}))root.__goodBoysHudLiteWireError='append_failed';}
   function loadDepthLite(){if(!appendScript('data-good-boys-depth-lite','good_boys_depth_lite.js',loadHudLite,function(){root.__goodBoysDepthLiteWireError='good_boys_depth-lite.js';loadHudLite();}))loadHudLite();}
@@ -18,7 +13,8 @@ window.TO_BG_NOC = (function(){ try { return window.__GK_BG_NOC || undefined; } 
   function loadEastSideIntegration(){if(!appendScript('data-techops-east-side-integration','east_side_integration.js',loadProgressionCore,function(){root.__eastSideIntegrationWireError='east_side_integration.js';loadProgressionCore();}))loadProgressionCore();}
   function loadEastSide(){if(!appendScript('data-techops-east-side','east_side.js',loadEastSideIntegration,function(){root.__eastSideWireError='east_side.js';loadEastSideIntegration();}))loadEastSideIntegration();}
   function loadEastSideVisuals(){if(!appendScript('data-techops-east-side-visuals','east_side_visual_assets.js',function(){try{if(root.TechOpsEastSideVisualAssets)root.TechOpsEastSideVisualAssets.preload();}catch(e){}loadEastSide();},function(){root.__eastSideVisualWireError='east_side_visual_assets.js';loadEastSide();}))loadEastSide();}
-  function loadCampaignState(){if(!appendScript('data-good-dogs-campaign-state','good_dogs_campaign_state.js',loadEastSideVisuals,function(){root.__goodDogsCampaignStateWireError='good_dogs_campaign_state.js';loadEastSideVisuals();}))loadEastSideVisuals();}
+  function loadProgression(){loadEastSideVisuals();}
+  function loadCampaignState(){if(!appendScript('data-good-dogs-campaign-state','good_dogs_campaign_state.js',loadProgression,function(){root.__goodDogsCampaignStateWireError='good_dogs_campaign_state.js';loadProgression();}))loadProgression();}
   function loadEarthfall(){if(!appendScript('data-good-boys-earthfall-ending','good_boys_earthfall_ending.js',loadCampaignState,function(){root.__goodBoysEarthfallWireError='good_boys_earthfall_ending.js';loadCampaignState();}))loadCampaignState();}
   function loadAccessCore(){if(!appendScript('data-good-boys-access-core-authority','good_boys_access_core_authority.js',loadEarthfall,function(){root.__goodBoysAccessCoreWireError='good_boys_access_core_authority.js';loadEarthfall();}))loadEarthfall();}
   function loadBibleWorld(){if(!appendScript('data-good-boys-bible-world','good_boys_bible_world.js',loadAccessCore,function(){root.__goodBoysBibleWorldWireError='good_boys_bible_world.js';loadAccessCore();}))loadAccessCore();}
