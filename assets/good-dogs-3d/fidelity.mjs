@@ -61,15 +61,16 @@ export function dressActors(object,id,maps={}){
    if(!videoMatch&&id!=='k'&&name.includes('eye')){const g=o.geometry,ps=g.attributes.position;g.computeBoundingBox();const mid=(g.boundingBox.min.x+g.boundingBox.max.x)/2;const centers=[new THREE.Vector3(),new THREE.Vector3()],counts=[0,0];for(let i=0;i<ps.count;i++){const k=ps.getX(i)>mid?1:0;centers[k].add(new THREE.Vector3().fromBufferAttribute(ps,i));counts[k]++;}centers.forEach((c,i)=>c.divideScalar(counts[i]||1));for(let i=0;i<ps.count;i++){const k=ps.getX(i)>mid?1:0,v=new THREE.Vector3().fromBufferAttribute(ps,i).sub(centers[k]).multiplyScalar(.78).add(centers[k]);ps.setXYZ(i,v.x,v.y,v.z);}ps.needsUpdate=true;g.computeBoundingSphere();}
    if(name.includes('knit')){kind='knit';p.sheen=.5;p.sheenColor.set(0x35383c);p.sheenRoughness=.92;}
    else if(name.includes('cloth')||name.includes('camouflage')){kind='camo';p.sheen=.4;p.sheenColor.set(0x77714e);p.sheenRoughness=.95;}
-   else if((id!=='k'&&name.includes('fur'))||name.includes('undercoat')||name.includes('shearling')){kind='fur';p.color.setRGB(.83,.82,.78);p.roughness=1;p.sheen=.6;p.sheenColor.set(0xf0f0e9);p.sheenRoughness=1;if(name.includes('oat'))p.color.setRGB(.65,.64,.59);}
+   else if((id!=='k'&&name.includes('fur'))||name.includes('undercoat')||name.includes('shearling')){kind='fur';p.color.setRGB(.83,.82,.78);p.roughness=1;p.sheen=.6;p.sheenColor.set(0xf0f0e9);p.sheenRoughness=1;if(!videoMatch&&name.includes('oat'))p.color.setRGB(.65,.64,.59);}
    else if(name.includes('leather')){kind='leather';p.clearcoat=.22;p.clearcoatRoughness=.55;p.roughness=.49;}
    else if(name.includes('gold')||name.includes('silver')){p.metalness=1;p.roughness=.24;}
    else if(name.includes('eye')||name.includes('cornea')||name.includes('nose')){p.clearcoat=1;p.roughness=.22;}
-   if(id==='manchez'&&(name.includes('oat')||name.includes('shearling'))){p.color.setRGB(.045,.055,.043);p.sheenColor.set(0x656653);}
+   if(id==='manchez'&&((!videoMatch&&name.includes('oat'))||name.includes('shearling'))){p.color.setRGB(.045,.055,.043);p.sheenColor.set(0x656653);}
    if(kind)surface(p,kind,{headwear:!videoMatch&&id==='manchez'&&name.includes('cloth'),texture:kind==='fur'?maps.fur:null});p.envMapIntensity=.8;cache.set(m,p);return p;
   };
   const fur=(!Array.isArray(o.material)&&o.material.name.includes('Fur'));if(fur&&!videoMatch){softenCurls(o.geometry);o.receiveShadow=false;}
   o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);
+  if((Array.isArray(o.material)?o.material:[o.material]).some(m=>m.userData.detailKind==='fur'))o.receiveShadow=false;
  });
  // The authored assets share level-owned reference surface maps.
  for(const old of cache.keys())old.dispose();

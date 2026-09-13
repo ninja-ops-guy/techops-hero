@@ -58,7 +58,7 @@ export function buildCorridor(scene,geo,maps={}){
   const batch=new THREE.InstancedMesh(geo,mat,transforms.length);transforms.forEach((m,i)=>batch.setMatrixAt(i,m));batch.receiveShadow=true;batch.castShadow=false;batch.computeBoundingSphere();scene.add(batch);if(side===-1)cutaway.push(batch);
  }
  // Restrained beam haze uses depth testing, so it cannot glow through the wall.
- const beamMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,uniforms:{color:{value:new THREE.Color(0xffb669)}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;uniform vec3 color;void main(){float fade=pow(sin(vUv.y*3.14159),2.)*.018;gl_FragColor=vec4(color,fade);}'});
+ const beamMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,uniforms:{color:{value:new THREE.Color(0xffb669)}},vertexShader:'varying vec2 vUv;varying vec3 vn;varying vec3 vp;void main(){vUv=uv;vn=normalMatrix*normal;vec4 p=modelViewMatrix*vec4(position,1.);vp=p.xyz;gl_Position=projectionMatrix*p;}',fragmentShader:'varying vec2 vUv;varying vec3 vn;varying vec3 vp;uniform vec3 color;void main(){float soft=pow(abs(dot(normalize(vn),normalize(vp))),2.);float fade=pow(sin(vUv.y*3.14159),2.)*.007*soft;gl_FragColor=vec4(color,fade);}'});
  const beamGeo=new THREE.ConeGeometry(.92,3.15,24,1,true);for(let z=-1.55;z<28;z+=6.2){const b=new THREE.Mesh(beamGeo,beamMat);b.position.set(0,1.92,z);scene.add(b);}
  return {steel,dark,rust,floor,trim,caution,amber,count,setRetro(value){cutaway.forEach(o=>o.visible=!value);pipes.filter(o=>o.position.x<0).forEach(o=>o.visible=!value);}};
 }
