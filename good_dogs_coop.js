@@ -62,20 +62,22 @@
     var c=n._v736,p=c.partner,who=partnerWho(c);if(blocked()){clear();return;}
     if(!live(c,who)){pressed={};p.vx=0;return;}
     p.hp=c.chars[who].hp;p.cd=Math.max(0,(p.cd||0)-dt);p.anim=Math.max(0,(p.anim||0)-f);p.dashCD=Math.max(0,(p.dashCD||0)-dt);
-    var dx=(held.KeyD?1:0)-(held.KeyA?1:0);p.block=!!held.KeyS&&p.onGround;
+    var ground=root.TechOpsGoodDogsGrounded,grounded=!!(ground&&ground.active(n));
+    var dx=grounded?ground.steer(p,((held.KeyW?1:0)-(held.KeyS?1:0))*ground.screenSign(),((held.KeyA?1:0)-(held.KeyD?1:0))*ground.screenSign(),dt):(held.KeyD?1:0)-(held.KeyA?1:0);p.block=!grounded&&!!held.KeyS&&p.onGround;
     if(dx&&!p.block){p.face=dx;p.vx=dx*3.4;}else p.vx*=Math.pow(.65,f);
-    if(pressed.KeyW&&!p.block&&(p.onGround||(p.jumps||0)<3)){p.vy=-10.5;p.onGround=false;p.jumps=(p.jumps||0)+1;}
-    if(pressed.KeyV&&!p.block&&!p.dashCD){p.dash=.13;p.dashCD=.7;}
-    if(p.dash>0){p.dash-=dt;p.vx=p.face*9.5;}
+    if(!grounded&&pressed.KeyW&&!p.block&&(p.onGround||(p.jumps||0)<3)){p.vy=-10.5;p.onGround=false;p.jumps=(p.jumps||0)+1;}
+    if(pressed.KeyV&&!p.block&&!p.dashCD){p.dash=.13;p.dashCD=.7;p._gdDodgeHeading=p._gdHeading;}
+    if(p.dash>0){p.dash-=dt;if(grounded)ground.dodgeMove(p,dt);else p.vx=p.face*9.5;}
     var oldFeet=p.y+p.h;p.vy=Math.min((p.vy||0)+.48*f,13.5);p.x=Math.max(0,Math.min((worldWidth||1800)-p.w,p.x+p.vx*f));p.y+=p.vy*f;p.onGround=false;
     var landing=floor();for(var pl of n.platforms||[])if(p.vy>=0&&oldFeet<=pl.y+2&&p.y+p.h>=pl.y&&p.x+p.w>pl.x&&p.x<pl.x+pl.w)landing=Math.min(landing,pl.y);
     if(p.y+p.h>=landing&&p.vy>=0){p.y=landing-p.h;p.vy=0;p.onGround=true;p.jumps=0;}
+    if(grounded){ground.plant(p,floor());ground.resolve(n,p);}
     p.hazardCD=Math.max(0,(p.hazardCD||0)-dt);
     if(p.onGround&&!p.hazardCD&&(n._goodBoysHazards||[]).some(function(h){return p.x+p.w/2>h.x&&p.x+p.w/2<h.x+h.w;})){c.chars[who].hp=Math.max(1,c.chars[who].hp-8);p.hp=c.chars[who].hp;p.vy=-8.5;p.vx=-p.face*4.5;p.onGround=false;p.hazardCD=.92;}
     if(pressed.KeyF&&!p.cd&&!p.block){
       p.cd=.27;p.anim=10;
-      if(who==='katrin')c.shots.push({x:p.x+p.face*26,y:p.y+10,vx:p.face*8.5,life:1.4});
-      else for(var e of n.enemies||[]){var front=(e.x+(e.w||24)/2)-(p.x+p.w/2);if(e.alive&&e.hp>0&&Math.abs(front)<76&&front*p.face>-10&&Math.abs(e.y-p.y)<48){e.kb=p.face*4;damage(e,11,who);}}
+      if(who==='katrin')c.shots.push({x:p.x+p.face*26,y:p.y+10,vx:p.face*8.5,life:1.4,_gdLane:p._gdLane});
+      else for(var e of n.enemies||[]){var front=(e.x+(e.w||24)/2)-(p.x+p.w/2);if((!grounded||ground.within(e,p))&&e.alive&&e.hp>0&&Math.abs(front)<76&&front*p.face>-10&&Math.abs(e.y-p.y)<48){e.kb=p.face*4;damage(e,11,who);}}
     }
     if(pressed.KeyR)interact(2);
     pressed={};

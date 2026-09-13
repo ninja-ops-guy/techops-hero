@@ -84,7 +84,7 @@
         objective:"BREAK THE MIKE INDEX · ESCORT K · SEIZE THE ROUTE CONTROLS · OPEN THE PATH TO 1984",
         zone:"BLACKSITE MERIDIAN — ORPHEUS ACCESS CORE",target:1480,gameplayVerb:"control",
         environment:{district:"goodboys_core",background:"goodboys_core",fallback:null,light:"hack_green",accent:"#22c55e",palette:"access_green",assetClass:"runtime_generated_fallback"},
-        stage:{platforms:[[250,345,240],[590,345,240],[930,310,230],[1260,345,260]],hazards:[[845,45]],landmarks:[{x:760,label:"K — ROUTE KEY",kind:"k"},{x:980,label:"THE MIKE INDEX",kind:"boss"},{x:1070,label:"ACCESS NODE",kind:"console"},{x:1480,label:"ROUTE 1984",kind:"door"}]},
+        stage:{platforms:[],hazards:[],landmarks:[{x:760,label:"K — ROUTE KEY",kind:"k"},{x:980,label:"THE MIKE INDEX",kind:"boss"},{x:1070,label:"ACCESS NODE",kind:"console"},{x:1480,label:"ROUTE 1984",kind:"door"}]},
         encounter:{boss:"mikeindex",adds:[["droneop","thug"]]},
         districtConfig:{streets:1,danger:2,sky:"#05080e",far:"#09101a",mid:"#0b1118",signs:["ORPHEUS","CORE ACCESS"],roster:["guard","hunter"]},
         cameraProfile:"gooddogs.sideview",presentationProfile:"systems_control",animationProfile:"gooddogs.pair_with_k",musicProfile:"access_core",cinematicEntry:"GD_CUT_06",cinematicExit:"route-1984",saveCheckpoint:"gooddogs.m5.core",acceptanceTest:"m5-k-route-control",nextMission:"gooddogs.m6",completionContract:"access-node-seized"

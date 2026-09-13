@@ -1,60 +1,72 @@
 {
-  "version": "0.3.0-refined-prototype",
+  "version": "0.4.0-video-reference",
   "mission": "gooddogs.m5",
   "entry": "after Cell 118 release",
   "canon": "Story Bible v1.2 production baseline",
-  "source_pack": "techops-hero-coop-3d-prototype.zip",
+  "source_pack": "Editable scene revision 10 / authored from supplied film references",
   "models": [
-    {
-      "file": "models/char.k.glb",
-      "tier": "high",
-      "triangles": 118664,
-      "sha256": "897dd660edbb3d75c9c7a7208d3a9d1a802416ce5632dcc5d67a93251eb074f7",
-      "bytes": 4052684,
-      "bones": 17
-    },
-    {
-      "file": "models/char.k.lite.glb",
-      "tier": "balanced/performance",
-      "triangles": 29370,
-      "sha256": "ecbc3dd526ec2ed28057a9b9415824033dfe151df873cf225806ec6ef6a88061",
-      "bytes": 1136572,
-      "bones": 17
-    },
     {
       "file": "models/dog.katrin.glb",
       "tier": "high",
-      "triangles": 272812,
-      "sha256": "c1a6c81b85e75b3a403218013b5f7d165beed675b8c741ccef7d9e6e71af5e62",
-      "bytes": 10694428,
+      "triangles": 223180,
+      "sha256": "b103a204209266b107202df32ac20a693214a7e95ef06fd5ab48bbea6037cc39",
+      "bytes": 8132584,
       "bones": 17
     },
     {
       "file": "models/dog.katrin.lite.glb",
       "tier": "balanced/performance",
-      "triangles": 67352,
-      "sha256": "cba480f72b423d90e665e07264faa31e4c1b4cc2e6b8f8cd1afcf97788b1e068",
-      "bytes": 2796972,
+      "triangles": 60158,
+      "sha256": "e1a7246db55b646d2dbc35891e9225f678c3f20d1c7b33ac9646bde2733f0011",
+      "bytes": 2263860,
       "bones": 17
     },
     {
       "file": "models/dog.manchez.glb",
       "tier": "high",
-      "triangles": 349356,
-      "sha256": "c0474dc6dc7ebbca43da0099ac4cabc0ad59f7b7a0b0fe56010840cfe85004ba",
-      "bytes": 12081284,
-      "bones": 17,
-      "uv_note": "Unused UV data omitted; procedural material coordinates are retained as vertex positions."
+      "triangles": 253962,
+      "sha256": "a4275ce3dd3108a2479fbb02a1545e600f05218517ba15805d47201b6596279e",
+      "bytes": 9243368,
+      "bones": 17
     },
     {
       "file": "models/dog.manchez.lite.glb",
       "tier": "balanced/performance",
-      "triangles": 86252,
-      "sha256": "ecb64add9cfbccb5124ced1210aac03fcfe838e8e8e3063deea67ac71a21e39c",
-      "bytes": 3689116,
+      "triangles": 68366,
+      "sha256": "3e8b8216b6f84aff17cd5741cb89dcbe862845845e4083fb33bf49cfdf2313f5",
+      "bytes": 2561004,
+      "bones": 17
+    },
+    {
+      "file": "models/char.k.glb",
+      "tier": "high",
+      "triangles": 81528,
+      "sha256": "f486b64ca1b2138303dfc28eb6accd9c1820b08831bc9c9f5a448a0b9754df6e",
+      "bytes": 3154580,
+      "bones": 17
+    },
+    {
+      "file": "models/char.k.lite.glb",
+      "tier": "balanced/performance",
+      "triangles": 26226,
+      "sha256": "1d3caf38f8f423e2e085db14b0f3e38eaed3bc407de266887826bc35f7277e3e",
+      "bytes": 1164064,
       "bones": 17
     }
   ],
-  "geometry": "Catmull-Clark refined source surfaces; existing rig weights interpolated",
-  "materials": "Procedural PBR microdetail, environment reflections, shadows, HDR bloom, depth occlusion"
+  "geometry": "Continuous voxel-welded anatomy; lofted garments; 17-bone blended skins; material-preserving quality tiers",
+  "materials": "Reference steel and ivory fur maps, triplanar PBR, skinned fur cards, amber practicals, HDR bloom and depth occlusion",
+  "photoreal_reconstruction_completed": false,
+  "textures": [
+    {
+      "file": "textures/prison-steel.jpg",
+      "bytes": 599596,
+      "sha256": "f705c37e545c92b475c54c9c96d8f610417c91672592f1fd05880db16d958142"
+    },
+    {
+      "file": "textures/ivory-fur.jpg",
+      "bytes": 202734,
+      "sha256": "b1e508336f169c2309ede4ef2b4c206f2b7d12a191360710d05f2e861cfb88a2"
+    }
+  ]
 }

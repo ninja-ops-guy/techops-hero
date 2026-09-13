@@ -1,13 +1,13 @@
-/* TechOps Hero — production runtime bootstrap v41.
+/* TechOps Hero — production runtime bootstrap v42.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
- * v41 corrects M5 camera direction and refines the reference materials while retaining the physical-iPhone world/render cohesion authority last.
+ * v42 adds reference models and grounded M5 corridor movement; physical-iPhone world/render cohesion remains last.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=41,BUILD="20260913-production-v41-reference-r2",started=false,done=false;
+  var VERSION=42,BUILD="20260913-production-v42-grounded-r1",started=false,done=false;
   var FILES=[
     "production_asset_registry.js",
     "night_production_assets.js",
@@ -24,6 +24,7 @@
     "orbital_scene_staging.js",
     "good_boys_legacy_hud_filter.js",
     "good_dogs_actor_contract.js",
+    "good_dogs_grounded.js",
     "good_dogs_3d_presentation.js",
     "production_wrapper_guard.js",
     "good_dogs_production_runtime.js",

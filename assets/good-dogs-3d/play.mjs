@@ -1,6 +1,6 @@
-import {createLevel,objective} from './level.mjs?v=20260913-reference-r2';
-import {movementInput} from './camera.mjs?v=20260913-reference-r2';
-import {createSession} from './session.mjs';
+import {createLevel,objective} from './level.mjs?v=20260913-grounded-r1';
+import {movementInput} from './camera.mjs?v=20260913-grounded-r1';
+import {createSession} from './session.mjs?v=20260913-grounded-r1';
 const $=id=>document.getElementById(id),STORE='techops.gooddogs.m5.review.v1';
 let session=createSession(),level,held=new Set(),pointers=new Map(),ready=false,started=false,saved=null,last=0,saveAt=0,captionUntil=0,soundOn=true,audio;
 try{saved=JSON.parse(localStorage.getItem(STORE)||'null');}catch{}
@@ -14,14 +14,15 @@ function restart(){clear();session=createSession();TechOpsGoodBoysAccessCoreAuth
 function pause(){if(!started||session.complete||S.gameOver)return;session.setPause(true);save();overlay('ESCORT PAUSED','K and the dogs will wait here.','RESUME ESCORT');}
 function act(name,player=1){if(!ready||!started||session.paused)return;if(name==='use'&&!session.action('use',player)){say(Math.abs(NM.x-1070)>120?'Reach the Access Node after breaking the Index and clearing security.':'The Access Node is locked until the Index and security are cleared.');return;}else if(name!=='use')session.action(name,player);}
 $('begin').onclick=resume;$('restart').onclick=restart;$('pause').onclick=pause;
-$('coop').onclick=()=>{session.setCoop(!session.localCoop);$('coop').textContent=session.localCoop?'LOCAL CO-OP · P1 / P2':'SOLO + PARTNER AI';say(session.localCoop?'P2: I/K move · T jump · R strike':'Partner AI is following.');save();};
+$('coop').onclick=()=>{session.setCoop(!session.localCoop);$('coop').textContent=session.localCoop?'LOCAL CO-OP · P1 / P2':'SOLO + PARTNER AI';say(session.localCoop?'P2: I/K move · J/L strafe · R strike':'Partner AI is following.');save();};
 let mode=0;$('camera').onclick=()=>{$('caption').textContent='';captionUntil=0;mode=(mode+1)%4;const view=['third','retro','first','crew'][mode];clear();level?.setView(view);document.querySelector('[data-hold=back]').textContent=view==='retro'?'◀':'▼';document.querySelector('[data-hold=forward]').textContent=view==='retro'?'▶':'▲';$('camera').textContent=['DOG CAMERA','RETRO SIDE VIEW','K OBSERVATION VIEW','CREW CLOSE-UP'][mode];document.body.classList.toggle('retro',view==='retro');if(view==='first')say('K’s observation camera. You still control the dogs.');};
 $('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'SOUND ON':'SOUND OFF';$('sound').setAttribute('aria-pressed',String(soundOn));};
-const keys={KeyF:'attack',Space:'jump',ShiftLeft:'dash',ShiftRight:'dash',KeyQ:'swap',KeyE:'use'};
-const movement=['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyA','KeyD','KeyB','KeyI','KeyK'];
-addEventListener('keydown',e=>{if(e.target.matches('button,input,textarea')&&['Space','Enter'].includes(e.code))return;if(e.code==='Escape'){e.preventDefault();if(session.paused&&started)resume();else pause();return;}if(!started||session.paused)return;if(movement.includes(e.code)){e.preventDefault();held.add(e.code);}if(!e.repeat&&keys[e.code]){e.preventDefault();act(keys[e.code]);}if(session.localCoop&&!e.repeat&&['KeyR','KeyT','KeyU'].includes(e.code)){e.preventDefault();act(e.code==='KeyR'?'attack':e.code==='KeyT'?'jump':'use',2);}});
+const keys={KeyF:'attack',Space:'dash',ShiftLeft:'dash',ShiftRight:'dash',KeyQ:'swap',KeyE:'use'};
+const movement=['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyA','KeyD','KeyB','KeyI','KeyK','KeyJ','KeyL'];
+addEventListener('keydown',e=>{if(e.target.matches('button,input,textarea')&&['Space','Enter'].includes(e.code))return;if(e.code==='Escape'){e.preventDefault();if(session.paused&&started)resume();else pause();return;}if(!started||session.paused)return;if(movement.includes(e.code)){e.preventDefault();held.add(e.code);}if(!e.repeat&&keys[e.code]){e.preventDefault();act(keys[e.code]);}if(session.localCoop&&!e.repeat&&['KeyR','KeyU'].includes(e.code)){e.preventDefault();act(e.code==='KeyR'?'attack':'use',2);}});
 addEventListener('keyup',e=>held.delete(e.code));
 for(const button of document.querySelectorAll('[data-hold],[data-action]')){
+ button.addEventListener('contextmenu',e=>e.preventDefault());
  button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);button.classList.add('held');if(button.dataset.hold)pointers.set(e.pointerId,button.dataset.hold);else act(button.dataset.action);});
  button.addEventListener('click',e=>{if(e.detail===0&&button.dataset.action)act(button.dataset.action);});
  const release=e=>{pointers.delete(e.pointerId);button.classList.remove('held');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);

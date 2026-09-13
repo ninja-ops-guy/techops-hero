@@ -48,19 +48,64 @@ test('all six quality-tier models match the shipped manifest and GLB envelope',(
  }
 });
 
-test('screen directions match keyboard and touch, without orbiting on reversal',async()=>{
+test('four-way keyboard and touch controls match the camera without orbiting on reversal',async()=>{
  const THREE=await import('./assets/good-dogs-3d/vendor/three.module.js');
  const {positionCamera,movementInput}=await import('./assets/good-dogs-3d/camera.mjs');
- const camera=new THREE.PerspectiveCamera(50,1,.08,80),side=new THREE.OrthographicCamera(-9,9,6,-6,.05,100);
+ const camera=new THREE.PerspectiveCamera(50,1,.08,80),side=new THREE.OrthographicCamera();
  const opts={targetZ:5,focusY:.53,aspect:1.5,kPosition:new THREE.Vector3(-.95,0,3.8)};
  for(const view of ['third','retro','first','crew']){
   const cam=positionCamera(camera,side,{...opts,view});cam.updateMatrixWorld();
-  const start=new THREE.Vector3(0,.5,5),key=movementInput(new Set(['ArrowRight']),[],view),touch=movementInput(new Set(),['forward'],view);
-  assert.equal(key.axis,touch.axis);assert.equal(movementInput(new Set(['ArrowLeft']),[],view).axis,-key.axis);
-  const forward=start.clone().add(new THREE.Vector3(0,0,key.axis));
-  if(view==='retro'||view==='crew')assert.ok(forward.project(cam).x>start.clone().project(cam).x,view+' right input must move right on screen');
-  else assert.ok(forward.distanceTo(cam.position)>start.distanceTo(cam.position),view+' forward input moves into the scene');
-  const before=cam.position.clone();positionCamera(camera,side,{...opts,view,face:-1});assert.ok(before.equals(cam.position),'reversing the dog must not rotate the camera');
+  for(const [key,hold] of [['ArrowUp','forward'],['ArrowDown','back'],['ArrowLeft','left'],['ArrowRight','right']]){
+   const input=movementInput(new Set([key]),[],view),touch=movementInput(new Set(),[hold],view);
+   assert.equal(input.axis,touch.axis);assert.equal(input.strafe,touch.strafe);
+   const start=new THREE.Vector3(0,.5,5),next=start.clone().add(new THREE.Vector3(input.strafe,0,input.axis));
+   if(hold==='right')assert.ok(next.project(cam).x>start.project(cam).x,view+' right must move screen-right');
+   if(hold==='left')assert.ok(next.project(cam).x<start.project(cam).x,view+' left must move screen-left');
+  }
+  const before=cam.position.clone();positionCamera(camera,side,{...opts,view,face:-1});assert.ok(before.equals(cam.position));
   assert.equal(movementInput(new Set(['KeyW','KeyS']),[],view).axis,0);
  }
+});
+
+test('grounded corridor has no platform collision, normalized movement, or jump action',()=>{
+ const a=fixture().game,b=fixture().game;
+ const x=a.n.x,lane=a.n._gdLane;a.tick(.05,{axis:1});b.tick(.05,{axis:1,strafe:1});
+ assert.ok(b.n.x-x<a.n.x-x,'diagonal speed is normalized');assert.ok(b.n._gdLane>lane);
+ assert.equal(a.n.platforms.length,0);assert.equal(a.action('jump'),false);
+ for(let i=0;i<100;i++)a.tick(.05,{strafe:1});assert.ok(a.n._gdLane<=2.15);assert.equal(a.n.y+a.n.h,430);
+ a.action('dash');a.tick(.05,{axis:1});assert.equal(a.n.y+a.n.h,430);assert.equal(a.n.onGround,true);
+ const saved=b.snapshot(),restored=fixture().game;restored.restore(saved);assert.equal(restored.n._gdLane,b.n._gdLane);assert.equal(restored.n.y+restored.n.h,430);
+});
+
+test('corridor attacks and Access Node use respect lateral distance',()=>{
+ const {game,api}=fixture(),e=game.n.enemies[0];e.x=game.n.x+20;e._gdLane=2.1;game.n._gdLane=-2.1;
+ assert.equal(game.action('attack'),false);const hp=e.hp;assert.equal(e.hp,hp);
+ e.alive=false;e.hp=0;api.tick();game.n.enemies.forEach(e=>{e.hp=0;e.alive=false;});game.n.x=1070;
+ game.n._gdLane=2.1;assert.equal(game.action('use'),false);game.n._gdLane=-1.5;assert.equal(game.action('use'),true);
+});
+
+test('portrait cameras keep both complete dogs inside the horizontal frame',async()=>{
+ const THREE=await import('./assets/good-dogs-3d/vendor/three.module.js');
+ const {positionCamera}=await import('./assets/good-dogs-3d/camera.mjs');
+ const camera=new THREE.PerspectiveCamera(),side=new THREE.OrthographicCamera();
+ for(const view of ['third','crew'])for(const width of [320,390])for(const separation of [.67,2]){
+  positionCamera(camera,side,{view,targetZ:5,focusY:.53,aspect:width/844,separation});camera.updateMatrixWorld();
+  for(const heading of [0,Math.PI/2,Math.PI])for(const sign of [-1,1])for(const x of [-.28,.28])for(const z of [-.55,.55])for(const y of [0,.94]){
+   const point=new THREE.Vector3(x,y,z).applyAxisAngle(new THREE.Vector3(0,1,0),heading).add(new THREE.Vector3(sign*.33,0,5+sign*separation*.5)).project(camera);
+   assert.ok(Math.abs(point.x)<1,`${view} at ${width}px clips a dog (${point.x})`);
+  }
+ }
+});
+
+
+test('actual native M5 simulation walks four directions on the floor and isolates other missions',()=>{
+ const r={console,Date,Math,performance:{now:()=>1000},S:{nightMode:true,inDialog:false},keys:{},NM_W:1800,NM_FLOOR:430,NM_GRAV:.48,cv:{width:960,height:540},sfx(){},clamp:(v,a,b)=>Math.max(a,Math.min(b,v))};r.window=r;r.globalThis=r;
+ const n=r.NM={x:200,y:396,w:22,h:34,hp:100,vx:0,vy:0,onGround:true,face:1,jHeld:false,jumps:0,flip:0,dashT:0,dashCD:0,ifr:0,hitStop:0,clear:false,platforms:[{x:100,y:345,w:400}],enemies:[],_v736:{m:5,active:'katrin',chars:{katrin:{}},partner:{x:130,h:34}}};
+ const hooks=fs.readFileSync('night_hooks.js','utf8');vm.runInNewContext(fs.readFileSync('good_dogs_grounded.js','utf8')+'\n'+hooks.slice(hooks.indexOf('function stepNM(dt)'),hooks.indexOf('// ---------- night rendering')),r);
+ r.keys.arrowup=true;r.stepNM(.05);assert.ok(n.x>200);assert.equal(n.y+n.h,430);assert.equal(n.platforms.length,0);
+ const x=n.x,lane=n._gdLane;r.keys={arrowright:true};r.stepNM(.05);assert.equal(n.x,x);assert.ok(n._gdLane<lane,'right moves across the floor');
+ r.keys={arrowdown:true};r.stepNM(.05);assert.ok(n.x<x);assert.equal(n.y+n.h,430);
+ const frozen=n.x;r.S.inDialog=true;r.stepNM(.05);assert.equal(n.x,frozen);r.S.inDialog=false;
+ r.TechOpsGoodDogs3D={status:()=>({view:'crew'})};r.keys={arrowup:true};const prior=n.x;r.stepNM(.05);assert.ok(n.x<prior,'crew view reverses forward into the view');
+ n._v736.m=4;n.jHeld=false;r.keys={arrowup:true};r.stepNM(.05);assert.ok(n.y+n.h<430,'the earlier authored retro mission retains its jump');
 });

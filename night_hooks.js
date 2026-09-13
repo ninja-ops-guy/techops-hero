@@ -435,10 +435,14 @@ function stepNM(dt) {
   const streetCombat=window.TechOpsNightCombat,streetControl=streetCombat&&streetCombat.active(NM)?streetCombat.tick(NM,dt,keys):{locked:false};
   const pairDown = streetControl.locked || NM._v736 && (NM._v736.chars[NM._v736.active].downed || NM._v736.chars[NM._v736.active].out);
   const localPair=window.TechOpsGoodDogsCoop&&window.TechOpsGoodDogsCoop.active();
-  const L = !pairDown && ((!localPair&&keys.a) || keys.arrowleft), R = !pairDown && ((!localPair&&keys.d) || keys.arrowright), J = !pairDown && ((!localPair&&keys.w) || keys.arrowup);
-  NM.block = false; // re-evaluated after ground collision resolves
+  const ground=window.TechOpsGoodDogsGrounded,grounded=!!(ground&&ground.active(NM));
+  const corridorAxis=grounded?ground.input(NM,pairDown||keys.k||NM._gdGuardUntil>Date.now()?{}:keys,dt,localPair):0;
+  const L = !pairDown && (grounded?corridorAxis<0:((!localPair&&keys.a) || keys.arrowleft)), R = !pairDown && (grounded?corridorAxis>0:((!localPair&&keys.d) || keys.arrowright)), J = !grounded && !pairDown && ((!localPair&&keys.w) || keys.arrowup);
+  NM.block = grounded&&(keys.k||NM._gdGuardUntil>Date.now()); // re-evaluated after ground collision resolves
+  // Grounded M5 uses a normalized horizontal plane; the same loop owns combat.
+  if(grounded)NM.vx=corridorAxis*3.4;
   // run
-  if (!NM.block) {
+  if (!NM.block && !grounded) {
     const acc = NM.onGround ? .62 : .4;
     if (L) { NM.vx -= acc * f; NM.face = -1; }
     if (R) { NM.vx += acc * f; NM.face = 1; }
@@ -455,16 +459,19 @@ function stepNM(dt) {
   // dash
   if (!pairDown && keys.shift && NM.dashCD <= 0 && !NM.block) {
     if(streetCombat&&streetCombat.active(NM))streetCombat.dash(NM,NM.face);
+    else if(grounded)ground.dodge(NM);
     else { NM.dashT = 10; NM.dashCD = 42; NM.ifr = Math.max(NM.ifr, 12); NM.vx = NM.face * 9.5; sfx("dash"); }
   }
   if (NM.dashCD > 0) NM.dashCD -= f;
   if (NM.dashT > 0) NM.dashT -= f;
+  if(grounded&&NM.dashT>0&&!NM.block)ground.dodgeMove(NM,dt);
   // gravity (tighter than the old float)
   NM.vy = Math.min(NM.vy + NM_GRAV * f, 13.5);
   // integrate
   const prevBottom = NM.y + NM.h;
   NM.x = clamp(NM.x + NM.vx * f, 0, NM_W - NM.w);
   NM.y += NM.vy * f;
+  if(grounded)ground.resolve(NM);
   // floor
   NM.onGround = false;
   if (NM.y + NM.h >= NM_FLOOR) { NM.y = NM_FLOOR - NM.h; NM.vy = 0; NM.onGround = true; NM.jumps = 0; }
@@ -492,6 +499,7 @@ function stepNM(dt) {
     if (e.kb) { e.x += e.kb * f; e.kb *= Math.pow(.7, f); if (Math.abs(e.kb) < .3) e.kb = 0; }
     if (e.hitT > 0) e.hitT -= f;
     if (e.cd > 0) e.cd -= f;
+    const sameLane=!grounded||ground.enemy(NM,e,dt);
     const dx = (NM.x + NM.w / 2) - (e.x + e.w / 2);
     const adx = Math.abs(dx);
     e.y = e.hover ? NM_FLOOR - e.h - 34 - Math.sin(now / 300 + e.x) * 6 : NM_FLOOR - e.h;
@@ -502,7 +510,7 @@ function stepNM(dt) {
     if (e.dashes && e.cd <= 0 && adx > 90 && adx < 300) { e.cd = 130; e.x += Math.sign(dx) * 90; sfx("dash"); } // skimmer blink-step
     if (e.lunges && e.cd <= 0 && adx > 120 && adx < 320) { e.cd = 150; e.kb = Math.sign(dx) * 11; } // hunter lunge
     // attack
-    if (adx <= 36 && Math.abs(e.y - NM.y) < 40 && NM.ifr <= 0) {
+    if (sameLane && adx <= 36 && Math.abs(e.y - NM.y) < 40 && NM.ifr <= 0) {
       e.windup += f;
       if (e.windup > 26) {
         e.windup = 0;
@@ -517,7 +525,7 @@ function stepNM(dt) {
       }
     } else e.windup = 0;
     // drone operator: ranged zap at mid distance
-    if (e.hover && e.cd <= 0 && adx >= 130 && adx < 280) {
+    if (sameLane && e.hover && e.cd <= 0 && adx >= 130 && adx < 280) {
       e.windup += f * 1.2;
       if (e.windup > 30) {
         e.windup = 0; e.cd = 150;
