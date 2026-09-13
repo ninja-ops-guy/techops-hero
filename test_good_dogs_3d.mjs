@@ -90,8 +90,8 @@ test('portrait cameras keep both complete dogs inside the horizontal frame',asyn
  const camera=new THREE.PerspectiveCamera(),side=new THREE.OrthographicCamera();
  for(const view of ['third','crew'])for(const width of [320,390])for(const separation of [.67,2]){
   positionCamera(camera,side,{view,targetZ:5,focusY:.53,aspect:width/844,separation});camera.updateMatrixWorld();
-  for(const sign of [-1,1])for(const x of [-.28,.28])for(const z of [-.55,.55])for(const y of [0,.94]){
-   const point=new THREE.Vector3(sign*.33+x,y,5+sign*separation*.5+z).project(camera);
+  for(const heading of [0,Math.PI/2,Math.PI])for(const sign of [-1,1])for(const x of [-.28,.28])for(const z of [-.55,.55])for(const y of [0,.94]){
+   const point=new THREE.Vector3(x,y,z).applyAxisAngle(new THREE.Vector3(0,1,0),heading).add(new THREE.Vector3(sign*.33,0,5+sign*separation*.5)).project(camera);
    assert.ok(Math.abs(point.x)<1,`${view} at ${width}px clips a dog (${point.x})`);
   }
  }
