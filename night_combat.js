@@ -155,7 +155,10 @@
       // A confirmed contact supplies enough shared lift for a human touch
       // follow-up after recovery, including slower WebKit input frames.
       ec.vy=ec.locked?10:-5.8;
-      if(!n.onGround&&!ec.locked){n.vy=-5.8;n.vx=a.face*1.5;c.follow={enemy:e,engaged:true};}
+      if(!ec.locked){
+        c.follow={enemy:e,engaged:true};
+        if(!n.onGround){n.vy=-5.8;n.vx=a.face*1.5;}
+      }
       say(n,ec.locked?'AIR FINISH · SLAM':'AIR '+ec.airHits+' / '+RULES.maxAirHits);
     }else if(move.launch&&!shield){
       lift(n,e,a.face*move.vx,move.vy,false);say(n,a.kind==='uppercut'?'UPPERCUT · JUMP TO FOLLOW':a.kind==='rising-kick'?'RISING KICK · JUMP TO FOLLOW':a.kind==='kick'?'KICK LAUNCH · JUMP TO FOLLOW':'RISING FINISH · JUMP TO FOLLOW');

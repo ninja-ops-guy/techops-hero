@@ -60,7 +60,7 @@ test('launcher follow is inert until the player explicitly jumps',()=>{
   assert.notEqual(f.n._nightCombat.attack.kind,'air-kick');
 });
 
-test('engaged follow keeps a transient grounded third punch classified as air and consumes on contact',()=>{
+test('engaged follow keeps transient-grounded juggle contacts owned until landing or lock',()=>{
   const f=fixture();engageLauncherFollow(f);
   f.n.onGround=true;f.n.y=396;f.e.y=286;f.e.x=150;
   const hp=f.e.hp;
@@ -68,9 +68,13 @@ test('engaged follow keeps a transient grounded third punch classified as air an
   assert.equal(f.n._nightCombat.attack.kind,'air');
   advance(f,80);
   assert.ok(f.e.hp<hp);
-  assert.equal(f.n._nightCombat.follow,null);
+  assert.equal(f.n._nightCombat.follow.enemy,f.e);
+  assert.equal(f.n._nightCombat.follow.engaged,true);
   assert.ok(f.n._nightCombat.events.some(e=>e.type==='air'));
   assert.equal(f.n._nightCombat.events.some(e=>e.type==='jab'&&e.damage),false);
+  advance(f,160);
+  assert.equal(f.api.attack(f.n,{},'punch'),true);
+  assert.equal(f.n._nightCombat.attack.kind,'air');
 });
 
 test('a whiff preserves follow ownership so a still-airborne juggle remains recoverable',()=>{
