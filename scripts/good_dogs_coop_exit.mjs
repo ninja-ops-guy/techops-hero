@@ -39,10 +39,11 @@ export async function enterLocalHiddenBay(page, moveDogTo) {
   let before = null;
   try {
     const initial = await page.evaluate(localHiddenBayExitSnapshot);
-    // Regroup P2 first. Leave P1 safely inside the exit, not at the old
-    // driver's 15 px tolerance boundary (1440 - 15 == 1425).
+    // Regroup P2 first. Runtime #888 showed that pair settling can pull P1
+    // ~16 px back after moveDogTo returns, so finish near the authored target
+    // instead of only 15 px inside the production exit threshold.
     await moveDogTo(page, initial.target - 50, {player: 2, tolerance: 5});
-    await moveDogTo(page, initial.target - 20, {player: 1, tolerance: 5});
+    await moveDogTo(page, initial.target - 5, {player: 1, tolerance: 5});
     const ready = await page.waitForFunction(localHiddenBayExitSnapshot, true, {timeout: 5000});
     try { before = await ready.jsonValue(); } finally { await ready.dispose(); }
     // Exactly one real interaction. Do not retry USE or synthesize progression.
