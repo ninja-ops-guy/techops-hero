@@ -34,7 +34,8 @@ function driver(options={}) {
   const move=async(received,target,config)=>{
     assert.equal(received,page);events.push('move-'+config.player);
     assert.equal(config.tolerance,5);
-    if(config.player===2)h.root.NM._v736.partner.x=target;else h.root.NM.x=target;
+    if(config.player===2)h.root.NM._v736.partner.x=target;
+    else h.root.NM.x=target-(options.p1SettleBack||0);
   };
   return {...h,page,move,events,waits,pressed,disposed};
 }
@@ -100,9 +101,17 @@ test('P2 moves first, P1 last, predicate precedes exactly one real USE',async()=
   const h=driver();const result=await enterLocalHiddenBay(h.page,h.move);
   assert.deepEqual(h.events,['move-2','move-1','ready','use','advanced']);
   assert.deepEqual(h.pressed,['KeyE']);assert.equal(result.before.ready,true);
-  assert.equal(result.before.x,1440);assert.equal(result.before.partnerX,1410);
+  assert.equal(result.before.x,1455);assert.equal(result.before.partnerX,1410);
   assert.equal(result.after.metaMission,2);assert.equal(h.disposed.length,2);
   assert.deepEqual(h.waits,[{arg:true,config:{timeout:5000}},{arg:null,config:{timeout:5000}}]);
+});
+test('#888 settlement pullback remains safely inside the exit threshold',async()=>{
+  const h=driver({p1SettleBack:17});
+  const result=await enterLocalHiddenBay(h.page,h.move);
+  assert.equal(result.before.x,1438);
+  assert.equal(result.before.exitX,1425);
+  assert.equal(result.before.ready,true);
+  assert.deepEqual(h.pressed,['KeyE']);
 });
 test('drift below threshold before the gate never sends USE or retries',async()=>{
   const h=driver({beforeGate:r=>{r.NM.x=1418.63;r.NM._v736.partner.x=1400.56;}});
@@ -121,5 +130,5 @@ test('failed M2 confirmation preserves evidence and does not repeat the interact
 test('movement targets also track a changed registry target',async()=>{
   const h=driver();h.root.TechOpsLevelRegistry.goodDogsMission=()=>({target:1560});
   const result=await enterLocalHiddenBay(h.page,h.move);
-  assert.equal(result.before.x,1540);assert.equal(result.before.partnerX,1510);assert.equal(result.before.exitX,1525);
+  assert.equal(result.before.x,1555);assert.equal(result.before.partnerX,1510);assert.equal(result.before.exitX,1525);
 });
