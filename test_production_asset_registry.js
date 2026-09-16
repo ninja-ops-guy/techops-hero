@@ -68,5 +68,39 @@ assert.ok(bootstrapVersion>=8,`production bootstrap contract is stale: v${bootst
 assert.ok(registry.includes("failedImages"),"registry must track image failures");
 assert.ok(registry.includes("failedJSON"),"registry must track JSON failures");
 assert.ok(registry.includes("failureCount"),"registry status must expose aggregate failure count");
+assert.ok(api.ASSET_RETRY_ATTEMPTS>=2,"production assets must retry a transient image load");
+assert.ok(api.IMAGE_PRELOAD_CONCURRENCY>0&&api.IMAGE_PRELOAD_CONCURRENCY<=8,"image preload fan-out must remain bounded");
 
-console.log(`Production asset integration: PASS (${api.PNG_ASSETS.length} PNGs, ${api.JPG_ASSETS.length} JPGs, ${api.JSON_ASSETS.length} JSON manifests, ${api.SOURCE_PARTS.length} payload parts, ${api.SCRIPT_ASSETS.length} asset authorities; ${physical.length} physical assets covered)`);
+async function verifyTransientImageRecovery(){
+  const retryTarget="assets/campaign/sector04.access_guard.attack.png",attempts={};
+  let activeImages=0,maxActiveImages=0;
+  function RetryImage(){
+    Object.defineProperty(this,"src",{set(src){
+      attempts[src]=(attempts[src]||0)+1;
+      activeImages++;maxActiveImages=Math.max(maxActiveImages,activeImages);
+      setTimeout(()=>{
+        activeImages--;
+        if(src===retryTarget&&attempts[src]===1){if(this.onerror)this.onerror();return;}
+        if(this.onload)this.onload();
+      },0);
+    }});
+  }
+  const document={scripts:[],head:{appendChild(node){if(node.onload)node.onload();}},documentElement:{appendChild(node){if(node.onload)node.onload();}},createElement(){return{dataset:{},getAttribute(){return"";}};}};
+  const retryContext={console,Promise,setTimeout,Image:RetryImage,fetch:async()=>({ok:true,json:async()=>({})}),document};
+  retryContext.globalThis=retryContext;vm.createContext(retryContext);vm.runInContext(registry,retryContext,{filename:"production_asset_registry.retry.js"});
+  const retryApi=retryContext.TechOpsProductionAssets;
+  assert.strictEqual(await retryApi.install(),true,"transient image failure must recover before the registry publishes readiness");
+  assert.strictEqual(attempts[retryTarget],2,"transient image failure must receive exactly one retry");
+  assert.ok(maxActiveImages<=retryApi.IMAGE_PRELOAD_CONCURRENCY,`image preload concurrency exceeded cap: ${maxActiveImages}`);
+  const status=retryApi.status();
+  assert.strictEqual(status.integrated,true,"recovered image load must not leave production assets degraded");
+  assert.strictEqual(status.failureCount,0,"recovered image load must clear failure accounting");
+  assert.ok(!status.failures.images.includes(retryTarget),"recovered image must not remain in failedImages");
+}
+
+verifyTransientImageRecovery().then(()=>{
+  console.log(`Production asset integration: PASS (${api.PNG_ASSETS.length} PNGs, ${api.JPG_ASSETS.length} JPGs, ${api.JSON_ASSETS.length} JSON manifests, ${api.SOURCE_PARTS.length} payload parts, ${api.SCRIPT_ASSETS.length} asset authorities; ${physical.length} physical assets covered; transient retry + bounded preload verified)`);
+}).catch(error=>{
+  console.error(error&&error.stack||error);
+  process.exitCode=1;
+});
