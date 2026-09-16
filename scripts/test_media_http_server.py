@@ -1,18 +1,20 @@
 import functools
 import http.client
-import http.server
 import pathlib
 import tempfile
 import threading
 import unittest
-from media_http_server import MediaHandler
+from media_http_server import MediaHandler, RuntimeHTTPServer
 
 
 class MediaDeliveryTest(unittest.TestCase):
+    def test_runtime_server_has_browser_burst_backlog(self):
+        self.assertGreaterEqual(RuntimeHTTPServer.request_queue_size, 64)
+
     def test_exact_bytes_for_full_partial_suffix_and_head(self):
         with tempfile.TemporaryDirectory() as directory:
             pathlib.Path(directory, 'clip.mp4').write_bytes(b'0123456789')
-            server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(MediaHandler, directory=directory))
+            server = RuntimeHTTPServer(('127.0.0.1', 0), functools.partial(MediaHandler, directory=directory))
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             try:
