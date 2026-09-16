@@ -1,12 +1,15 @@
-/* TechOps Hero — complete production asset registry v13.
+/* TechOps Hero — complete production asset registry v14.
  * Makes every shipped production visual asset discoverable by runtime, preloads
  * physical PNG/JPG assets, loads source payloads before atlas/reference manifests,
  * and fails closed when any required script/image/JSON asset cannot be loaded.
+ * v14 bounds image preload fan-out and retries a transient image load once so the
+ * production bootstrap does not turn a one-off local connection reset into a
+ * permanently missing first-party asset.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionAssets)return;
-  var VERSION=13;
+  var VERSION=14,ASSET_RETRY_ATTEMPTS=2,IMAGE_PRELOAD_CONCURRENCY=8;
   var SCRIPT_ASSETS=[
     "campaign_bg.js","campaign_asset_pipeline.js","campaign_native_act1_visuals.js",
     "charger_reference_v1.js","duo_kw.atlas.js","env_objects.atlas.js","env_overlays.atlas.js","env_struct.atlas.js","env_terrain.atlas.js",
@@ -49,13 +52,15 @@
   var images={},loadedScripts={},failedScripts={},failedImages={},failedJSON={},json={};
   function scriptAlready(src){try{return Array.prototype.some.call(root.document.scripts||[],function(s){return (s.getAttribute("src")||"").split("?")[0]===src;});}catch(e){return false;}}
   function loadScript(src){return new Promise(function(resolve){try{if(scriptAlready(src)){loadedScripts[src]=true;delete failedScripts[src];resolve(true);return;}var s=root.document.createElement("script");s.src=src+"?v="+(root.TechOpsProductionBootstrap?root.TechOpsProductionBootstrap.BUILD:"20260913-visual-combat-r2");s.async=false;s.dataset.productionAsset=src;s.onload=function(){loadedScripts[src]=true;delete failedScripts[src];resolve(true);};s.onerror=function(){failedScripts[src]=true;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){failedScripts[src]=true;resolve(false);}});}
-  function preloadImage(src){return new Promise(function(resolve){try{var im=new Image();images[src]=im;im.onload=function(){delete failedImages[src];resolve(true);};im.onerror=function(){failedImages[src]=true;resolve(false);};im.src=src;}catch(e){failedImages[src]=true;resolve(false);}});}
+  function delay(ms){return new Promise(function(resolve){(root.setTimeout||setTimeout)(resolve,ms);});}
+  function preloadImage(src,attempt){attempt=attempt||1;return new Promise(function(resolve){try{var im=new Image();images[src]=im;im.onload=function(){delete failedImages[src];resolve(true);};im.onerror=function(){if(attempt<ASSET_RETRY_ATTEMPTS){delay(40*attempt).then(function(){preloadImage(src,attempt+1).then(resolve);});return;}failedImages[src]=true;resolve(false);};im.src=src;}catch(e){if(attempt<ASSET_RETRY_ATTEMPTS){delay(40*attempt).then(function(){preloadImage(src,attempt+1).then(resolve);});return;}failedImages[src]=true;resolve(false);}});}
+  async function preloadImagesBounded(list){var next=0,workers=[],count=Math.min(IMAGE_PRELOAD_CONCURRENCY,list.length);async function worker(){while(next<list.length){var index=next++;await preloadImage(list[index]);}}for(var i=0;i<count;i++)workers.push(worker());await Promise.all(workers);return true;}
   function loadJSON(src){if(!root.fetch){failedJSON[src]=true;return Promise.resolve(false);}return root.fetch(src).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(v){json[src]=v;delete failedJSON[src];return true;}).catch(function(){failedJSON[src]=true;return false;});}
   function failures(){return{scripts:Object.keys(failedScripts),images:Object.keys(failedImages),json:Object.keys(failedJSON)};}
   function flatFailures(){var f=failures();return f.scripts.concat(f.images,f.json);}
   function allImageAssets(){return PNG_ASSETS.concat(JPG_ASSETS,WEBP_ASSETS);}
   function publish(){root.__productionAssetImages=images;root.__productionAssetJSON=json;root.__productionAssetInventory={scripts:SCRIPT_ASSETS.slice(),sourceParts:SOURCE_PARTS.slice(),png:PNG_ASSETS.slice(),jpg:JPG_ASSETS.slice(),webp:WEBP_ASSETS.slice(),json:JSON_ASSETS.slice()};root.__productionAssetFailures=failures();root.__allProductionAssetsIntegrated=flatFailures().length===0;return root.__allProductionAssetsIntegrated;}
-  async function install(){if(root.__allProductionAssetsIntegrated)return true;for(var i=0;i<SOURCE_PARTS.length;i++)await loadScript(SOURCE_PARTS[i]);for(var j=0;j<SCRIPT_ASSETS.length;j++)await loadScript(SCRIPT_ASSETS[j]);await Promise.all(allImageAssets().filter(function(src){return src.indexOf("assets/handoff/")!==0;}).map(preloadImage));await Promise.all(JSON_ASSETS.map(loadJSON));return publish();}
-  function status(){var f=failures();return{version:VERSION,integrated:!!root.__allProductionAssetsIntegrated,scripts:SCRIPT_ASSETS.length,sourceParts:SOURCE_PARTS.length,png:PNG_ASSETS.length,jpg:JPG_ASSETS.length,webp:WEBP_ASSETS.length,json:JSON_ASSETS.length,failures:f,failureCount:f.scripts.length+f.images.length+f.json.length};}
-  root.TechOpsProductionAssets={VERSION:VERSION,SCRIPT_ASSETS:SCRIPT_ASSETS,SOURCE_PARTS:SOURCE_PARTS,PNG_ASSETS:PNG_ASSETS,JPG_ASSETS:JPG_ASSETS,WEBP_ASSETS:WEBP_ASSETS,JSON_ASSETS:JSON_ASSETS,install:install,status:status,images:images,json:json};
+  async function install(){if(root.__allProductionAssetsIntegrated)return true;for(var i=0;i<SOURCE_PARTS.length;i++)await loadScript(SOURCE_PARTS[i]);for(var j=0;j<SCRIPT_ASSETS.length;j++)await loadScript(SCRIPT_ASSETS[j]);await preloadImagesBounded(allImageAssets().filter(function(src){return src.indexOf("assets/handoff/")!==0;}));await Promise.all(JSON_ASSETS.map(loadJSON));return publish();}
+  function status(){var f=failures();return{version:VERSION,integrated:!!root.__allProductionAssetsIntegrated,scripts:SCRIPT_ASSETS.length,sourceParts:SOURCE_PARTS.length,png:PNG_ASSETS.length,jpg:JPG_ASSETS.length,webp:WEBP_ASSETS.length,json:JSON_ASSETS.length,imagePreloadConcurrency:IMAGE_PRELOAD_CONCURRENCY,assetRetryAttempts:ASSET_RETRY_ATTEMPTS,failures:f,failureCount:f.scripts.length+f.images.length+f.json.length};}
+  root.TechOpsProductionAssets={VERSION:VERSION,ASSET_RETRY_ATTEMPTS:ASSET_RETRY_ATTEMPTS,IMAGE_PRELOAD_CONCURRENCY:IMAGE_PRELOAD_CONCURRENCY,SCRIPT_ASSETS:SCRIPT_ASSETS,SOURCE_PARTS:SOURCE_PARTS,PNG_ASSETS:PNG_ASSETS,JPG_ASSETS:JPG_ASSETS,WEBP_ASSETS:WEBP_ASSETS,JSON_ASSETS:JSON_ASSETS,install:install,status:status,images:images,json:json};
 })(typeof globalThis!=="undefined"?globalThis:this);
