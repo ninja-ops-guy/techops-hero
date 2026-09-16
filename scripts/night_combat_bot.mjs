@@ -10,6 +10,8 @@ const out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{rec
 const results=[];
 const profiles=[['chromium',chromium,false],['chromium-touch',chromium,true],['webkit',webkit,true]];
 const selected=process.env.NIGHT_COMBAT_BROWSERS?.split(',');
+const DASH_GRAB_PROBE_REACH=57;
+const DASH_GRAB_MIN_REMAINING=20;
 for(const [name,type,touch] of profiles){
  if(selected&&!selected.includes(name))continue;
  let browser,context,page,capture=null;
@@ -86,14 +88,25 @@ for(const [name,type,touch] of profiles){
   if(await page.evaluate(()=>NM._nightCombat?.events.some(e=>e.type==='dash')))throw Error('Hit-stop stretched the double-tap window');
   await page.evaluate(()=>{NM.hitStop=0;});
   checks.push('direction aliases and hit-stop cannot create accidental dashes');
-  await setup(770);
+  // Keep the fixture close enough that browser scheduling cannot consume the
+  // production 340 ms dash-grab window before the real attack input arrives.
+  await setup(750);
   await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));
   await page.keyboard.down('ArrowRight');
-  try{await page.waitForFunction(()=>NM.enemies[0].x-NM.x<45);await page.keyboard.press('KeyE');}
-  finally{await page.keyboard.up('ArrowRight');}
+  let dashTrigger;
+  try{
+   const trigger=await page.waitForFunction(({reach,minRemaining})=>{
+    const n=NM,c=n?._nightCombat,d=c?.dash,e=n?.enemies?.[0];
+    if(!n||!c||!d||d.spent||!e||!n.onGround)return false;
+    const dx=e.x+e.w/2-(n.x+n.w/2),remaining=d.until-c.time;
+    return remaining>=minRemaining&&Math.abs(dx)<reach&&dx*(d.face||n.face||1)>-12?{dx,remaining}:false;
+   },{reach:DASH_GRAB_PROBE_REACH,minRemaining:DASH_GRAB_MIN_REMAINING});
+   dashTrigger=await trigger.jsonValue();
+   await page.keyboard.press('KeyE');
+  }finally{await page.keyboard.up('ArrowRight');}
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));
-  await shot('movement-dash-grab');checks.push('trusted double-tap -> dash -> attack grabs through full input stack');
+  await shot('movement-dash-grab');checks.push(`trusted double-tap -> dash -> attack grabs through full input stack with ${Math.round(dashTrigger.remaining)} ms window remaining`);
   for(const direction of ['left','right','up','down']){
    await setup(690);
    if(touch)await click(page.locator('#night-input-grab'));else await page.keyboard.press('KeyG');
