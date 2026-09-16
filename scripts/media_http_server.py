@@ -61,6 +61,11 @@ class MediaHandler(http.server.SimpleHTTPRequestHandler):
             remaining -= len(chunk)
 
 
+class RuntimeHTTPServer(http.server.ThreadingHTTPServer):
+    """Threaded local server with enough accept backlog for browser asset bursts."""
+    request_queue_size = 128
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=4173)
@@ -68,4 +73,4 @@ if __name__ == '__main__':
     parser.add_argument('--directory', default=os.getcwd())
     args = parser.parse_args()
     handler = functools.partial(MediaHandler, directory=args.directory)
-    http.server.ThreadingHTTPServer((args.bind, args.port), handler).serve_forever()
+    RuntimeHTTPServer((args.bind, args.port), handler).serve_forever()
