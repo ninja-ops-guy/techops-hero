@@ -90,10 +90,15 @@ for(const [name,type,touch] of profiles){
   await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));
   await page.keyboard.down('ArrowRight');
-  try{await page.waitForFunction(()=>NM.enemies[0].x-NM.x<45);await page.keyboard.press('KeyE');}
-  finally{await page.keyboard.up('ArrowRight');}
+  try{
+   await page.waitForFunction(()=>{
+    const c=NM._nightCombat,e=NM.enemies[0];
+    return !!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20&&e.x-NM.x<54);
+   });
+   await page.keyboard.press('KeyE');
+  }finally{await page.keyboard.up('ArrowRight');}
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));
-  await shot('movement-dash-grab');checks.push('trusted double-tap -> dash -> attack grabs through full input stack');
+  await shot('movement-dash-grab');checks.push('trusted double-tap -> dash -> attack grabs inside the live dash window');
   for(const direction of ['left','right','up','down']){
    await setup(690);
    if(touch)await click(page.locator('#night-input-grab'));else await page.keyboard.press('KeyG');
