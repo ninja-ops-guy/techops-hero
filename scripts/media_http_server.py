@@ -6,6 +6,14 @@ import os
 import re
 
 
+class RuntimeHTTPServer(http.server.ThreadingHTTPServer):
+    # Browser suites open many short-lived connections while loading the large
+    # static asset graph. TCPServer's default listen backlog is only 5, which
+    # is small enough for a burst of same-origin requests to be reset before
+    # the handler thread accepts them.
+    request_queue_size = 128
+
+
 class MediaHandler(http.server.SimpleHTTPRequestHandler):
     def send_head(self):
         self.byte_range = None
@@ -68,4 +76,4 @@ if __name__ == '__main__':
     parser.add_argument('--directory', default=os.getcwd())
     args = parser.parse_args()
     handler = functools.partial(MediaHandler, directory=args.directory)
-    http.server.ThreadingHTTPServer((args.bind, args.port), handler).serve_forever()
+    RuntimeHTTPServer((args.bind, args.port), handler).serve_forever()
