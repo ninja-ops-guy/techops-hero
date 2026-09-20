@@ -31,12 +31,21 @@ export async function assertLandscapeControlBounds(page) {
       viewport: { width: innerWidth, height: innerHeight },
       presentation: {
         bodyClass: document.body.className,
+        inputCapabilities: {
+          pointerCoarse: matchMedia('(pointer:coarse)').matches,
+          pointerFine: matchMedia('(pointer:fine)').matches,
+          pointerNone: matchMedia('(pointer:none)').matches,
+          hover: matchMedia('(hover:hover)').matches,
+          anyPointerCoarse: matchMedia('(any-pointer:coarse)').matches,
+          maxTouchPoints: navigator.maxTouchPoints
+        },
         inputOwner: document.getElementById('v55-nmbtns')?.getAttribute('data-night-combat-input'),
         expanded: document.getElementById('night-input-assists')?.getAttribute('aria-expanded'),
         narrowLandscape: matchMedia('(orientation:landscape) and (max-height:500px) and (min-width:560px) and (max-width:640px)').matches,
-        controls: ['dpad', 'v55-nmbtns', 'touch-buttons'].map(id => {
+        controls: ['touch-ui', 'dpad', 'v55-nmbtns', 'touch-buttons'].map(id => {
           const element = document.getElementById(id), style = element && getComputedStyle(element);
-          return style && { id, width: style.width, gap: style.gap, right: style.right, display: style.display, direction: style.flexDirection, columns: style.gridTemplateColumns };
+          return style && { id, className: element.className, inlineStyle: element.getAttribute('style'), parent: element.parentElement?.id || element.parentElement?.tagName,
+            bounds: element.getBoundingClientRect().toJSON(), width: style.width, gap: style.gap, right: style.right, display: style.display, visibility: style.visibility, pointerEvents: style.pointerEvents, direction: style.flexDirection, columns: style.gridTemplateColumns };
         })
       },
       mode: world._v736 ? 'gooddogs' : 'night',
@@ -95,7 +104,6 @@ export async function assertControlFeedbackBounds(page, baseline) {
       states.push({ state, controls: current });
       assert.deepEqual(geometry(current), geometry(baseline), `${state} feedback must preserve gameplay target position and size`);
     }
-    return states;
   } catch (error) {
     error.controlSnapshot ||= current;
     error.feedbackStates = states;
@@ -105,6 +113,19 @@ export async function assertControlFeedbackBounds(page, baseline) {
     await page.locator('[data-presentation-fixture-held]').evaluateAll(elements => elements.forEach(element => {
       element.classList.remove('held'); delete element.dataset.presentationFixtureHeld;
     })).catch(() => {});
-    await client.detach();
+    // The context owns this session until close. Detaching a secondary Chromium
+    // session resets touch emulation (including pointer media and maxTouchPoints)
+    // even when it only enabled DOM/CSS, invalidating the remaining mobile run.
+  }
+  current = await assertLandscapeControlBounds(page);
+  states.push({ state: 'restored', controls: current });
+  try {
+    assert.deepEqual(current.presentation.inputCapabilities, baseline.presentation.inputCapabilities, 'feedback cleanup must preserve the browser input profile');
+    assert.deepEqual(geometry(current), geometry(baseline), 'feedback cleanup must preserve the complete gameplay control layout');
+    return states;
+  } catch (error) {
+    error.controlSnapshot = current;
+    error.feedbackStates = states;
+    throw error;
   }
 }

@@ -159,7 +159,9 @@ async function dogs(p){
       try{
         await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});
         await page.waitForFunction(x=>NM.x>x+20,before,{timeout:4000});
-      }finally{await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await session.detach();}
+      // Context disposal releases the session. Early detach resets Chromium's
+      // touch profile and would invalidate the following gameplay screenshot.
+      }finally{await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
     }else{
       await page.keyboard.down('ArrowRight');
       try{await page.waitForFunction(x=>NM.x>x+20,before,{timeout:4000});}finally{await page.keyboard.up('ArrowRight');}
