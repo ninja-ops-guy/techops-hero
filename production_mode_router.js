@@ -1,4 +1,4 @@
-/* TechOps Hero — production mode router v10.
+/* TechOps Hero — production mode router v11.
  * Owns alternate-mode convergence and clears legacy dialogue state before
  * handing input to the Night engine. Production wrapper installation is a
  * one-shot bootstrap concern; this router only refreshes mode state/UI and
@@ -13,7 +13,7 @@
   "use strict";
   if(!root)return;
   try{if(root.TechOpsProductionModeRouter&&root.TechOpsProductionModeRouter.timer)root.clearInterval(root.TechOpsProductionModeRouter.timer);}catch(e){}
-  var VERSION=10,desired=null,timer=null,introAutomationAt=0,
+  var VERSION=11,desired=null,timer=null,introAutomationAt=0,
       nightLaunchPhase="idle",nightLaunchIssued=false,nightPollActive=false,
       nightCallbacks=[],nightTraceSeq=0,nightTitleStartIssued=false;
 
@@ -109,7 +109,12 @@
       if(!state())issueCanonicalTitleStart();
       if(!cine&&!nightRuntimeMounted()&&!nightLaunchIssued)issueNightEnter();
       if(nightRuntimeMounted()&&!cine){clearBlockingDialog();if(nightWorldReady()){nightPollActive=false;finishNightLaunch();return;}}
-      if(++tries>=max){failNightLaunch("night_runtime_timeout",{tries:tries});return;}
+      // This budget measures engine convergence, not the player's reading time.
+      // Keep canonical difficulty and authored cinema under their existing owners;
+      // an absent/hidden chooser still consumes the bounded runtime deadline.
+      var waitingForChoice=nightTitleStartIssued&&!runInitialized()&&state()&&state().inDialog&&visibleId("dialogue");
+      var suspended=!!(root.document&&root.document.hidden);
+      if(!waitingForChoice&&!cine&&!suspended&&++tries>=max){failNightLaunch("night_runtime_timeout",{tries:tries});return;}
       (root.setTimeout||setTimeout)(poll,25);
     }
     (root.setTimeout||setTimeout)(poll,25);return true;

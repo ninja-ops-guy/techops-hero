@@ -98,6 +98,18 @@ async function night(page,p){
   await page.reload({waitUntil:'domcontentloaded'});await title(page);
   const campaignSave=await page.evaluate(()=>localStorage.getItem('techops_save'));
   await click(page,page.locator('#btn-nightcrawler'),p.hasTouch);
+  // Actual player reading time, longer than the former 600 × 25ms engine
+  // deadline. This must not pick a difficulty or open recovery over the choice.
+  let difficultyWait=null;
+  if(p.id==='chromium-desktop'){
+    await option(page,/Standard/).waitFor({state:'visible'});
+    await page.waitForTimeout(16000);
+    difficultyWait=await page.evaluate(()=>({desired:window.__productionDesiredMode,error:window.__productionModeRouterError,initialized:!!window.S?.map?.length,inDialog:!!window.S?.inDialog,titleVisible:!document.getElementById('title-screen').classList.contains('hidden')}));
+    assert.equal(difficultyWait.desired,'nightcrawler','reading difficulty cannot cancel the launch');
+    assert.notEqual(difficultyWait.error,'night_runtime_timeout');
+    assert.equal(difficultyWait.initialized,false,'waiting cannot choose on behalf of the player');
+    assert.equal(difficultyWait.inDialog,true);assert.equal(difficultyWait.titleVisible,false);
+  }
   const deadline=Date.now()+30000;
   while(Date.now()<deadline){
     if(await page.evaluate(()=>!!window.S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode))break;
@@ -120,7 +132,7 @@ async function night(page,p){
   assert.equal(resumed.daySave,campaignSave);assert.equal(resumed.inDialog,false);assert.equal(resumed.savedAt,saved.savedAt);
   assert.deepEqual(saved.state.nightMode.enemies.map(e=>({x:e.x,y:e.y,hp:e.hp,alive:e.alive})),snapshot.enemies,'Interrupted checkpoint must preserve enemy world');
   const controlBounds=await assertLandscapeControlBounds(page);
-  record('night_resume',p,{before:snapshot,after:resumed,checkpoint_saved_at:saved.savedAt,campaign_isolation:true,control_bounds:controlBounds});
+  record('night_resume',p,{before:snapshot,after:resumed,checkpoint_saved_at:saved.savedAt,campaign_isolation:true,difficulty_wait:difficultyWait,control_bounds:controlBounds});
   await screenshot(page,`${p.id}-night-resumed`);
   const performance=await page.evaluate(()=>new Promise(resolve=>{const times=[],started=performance.now();let previous=started;function frame(now){times.push(now-previous);previous=now;if(times.length<120&&now-started<5000)return requestAnimationFrame(frame);times.sort((a,b)=>a-b);resolve({frames:times.length,duration_ms:now-started,p50_ms:times[Math.floor(times.length*.5)],p95_ms:times[Math.floor(times.length*.95)],max_ms:times.at(-1),long_frames:times.filter(t=>t>50).length,heap_bytes:performance.memory?.usedJSHeapSize??null});}requestAnimationFrame(frame);}));
   return performance;

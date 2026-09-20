@@ -34,6 +34,12 @@ assert.strictEqual(context.__productionTitleInternalStart,null,"nested title byp
 assert.strictEqual(context.S.map,undefined,"Night entry must wait for the canonical difficulty selection to initialize the run");
 assert.strictEqual(enterCalls,0,"Night entry cannot bypass the canonical difficulty selection");
 assert.notStrictEqual(elements.dialogue.style.display,"none","router must keep the difficulty dialogue visible until startRun initializes S.map");
+// A player may read difficulty choices for longer than the 15-second engine
+// deadline. Advance 30 seconds of router polling without selecting for them.
+for(let i=0;i<1200;i++){assert.ok(q.length,"choice must retain its waiting poll");q.shift()();}
+assert.strictEqual(context.__productionDesiredMode,"nightcrawler","reading difficulty cannot time out the launch");
+assert.notStrictEqual(context.__productionModeRouterError,"night_runtime_timeout");
+assert.strictEqual(enterCalls,0,"waiting must not auto-select difficulty");
 context.startRun();flush();
 assert.ok(context.S.nightMode,"Night Crawler launch must end in night mode");assert.ok(context.NM,"Night Crawler launch must create Night world");assert.strictEqual(context.S.inDialog,false,"Night launch must clear the CIO/dialogue input lock before stepNM");assert.strictEqual(context.S.meta._char,"nightcrawler");assert.strictEqual(context.localStorage.getItem("techops_char"),"nightcrawler");assert.ok(enterCalls>=1);assert.strictEqual(context.__productionModeRouterError,null,"successful Night launch clears stale errors");
 assert.strictEqual(context.S.meta._standaloneMode,"nightcrawler","title Night Crawler must be tagged as an isolated standalone session");
@@ -45,6 +51,41 @@ assert.strictEqual(startCalls,1,"difficulty selection must initialize the canoni
 elements.dialogue.classList.remove("hidden");
 context.S={nightMode:false,meta:{_v736:{m:6}},inDialog:true};context.NM=null;context.__productionModeRouterError="good_boys_pair_timeout";api.launchGoodBoys();flush();
 assert.ok(context.S.nightMode,"Good Boys resume must enter Night engine");assert.ok(api.pairReady(),"Good Boys resume must attach Katrin and Manchez");assert.strictEqual(context.S.inDialog,false,"Good Boys handoff must not leave a hidden dialog blocking pair input");assert.ok(v736Calls>=1);assert.strictEqual(context.localStorage.getItem("techops_char"),null,"Good Boys cannot inherit Night Crawler character selection");assert.strictEqual(context.__productionModeRouterError,null,"successful pair attach clears stale timeout telemetry");
+
+// Authored film length and background time are not engine failures either.
+// Each fresh fixture retains a genuinely stalled-engine negative control.
+function launchFixture(){
+  const pending=[],nodes={dialogue:el(true),'title-screen':el(),'btn-start':el()};
+  const r={console,isFinite,S:null,NM:null,drawNM(){},stepNM(){},
+    setInterval(){return 1;},clearInterval(){},setTimeout(fn){pending.push(fn);},
+    document:{hidden:false,getElementById:id=>nodes[id]||null,addEventListener(){}},
+    getComputedStyle:n=>({display:n.style.display||'block',visibility:'visible',opacity:'1'}),
+    enterNight(){},v722:{active:()=>false}};
+  nodes['btn-start'].click=()=>{r.S={meta:{},inDialog:true};nodes.dialogue.classList.remove('hidden');};
+  r.globalThis=r;vm.createContext(r);vm.runInContext(src,r);
+  r.TechOpsProductionModeRouter.launchNightCrawler();
+  return {r,nodes,pending,ticks(n){for(let i=0;i<n&&pending.length;i++)pending.shift()();},choose(){r.S.map=[[0]];r.S.inDialog=false;nodes.dialogue.classList.add('hidden');}};
+}
+{
+ const f=launchFixture();let film=false,enters=0;
+ f.r.enterNight=()=>{enters++;film=true;};f.r.v722.active=()=>film;
+ f.choose();f.ticks(1200);
+ assert.equal(enters,1,'long cinema cannot reissue Night entry');
+ assert.equal(f.r.__productionDesiredMode,'nightcrawler','cinema may outlast engine deadline');
+ film=false;f.r.S.nightMode=true;f.r.NM={x:100,y:220};f.ticks(2);
+ assert.equal(f.r.__productionNightLaunchOk,true,'film completion converges normally');
+}
+{
+ const f=launchFixture();f.choose();f.r.document.hidden=true;f.ticks(1200);
+ assert.equal(f.r.__productionDesiredMode,'nightcrawler','hidden tab must not spend engine budget');
+ f.r.document.hidden=false;f.ticks(600);
+ assert.equal(f.r.__productionModeRouterError,'night_runtime_timeout','visible stalled engine still fails');
+ assert.equal(f.pending.length,0,'failed convergence stops polling');
+}
+{
+ const f=launchFixture();f.nodes.dialogue.classList.add('hidden');f.ticks(600);
+ assert.equal(f.r.__productionModeRouterError,'night_runtime_timeout','missing visible choice is not an indefinite waiting exemption');
+}
 
 const raw=src.toUpperCase();assert.ok(raw.includes("NIGHT CRAWLER"));assert.ok(raw.includes("118/1984"));assert.ok(raw.includes("GOOD BOYS"));assert.ok(raw.includes("GOOD DOGS"),"the router must recognize the shipped label as well as its legacy name");assert.ok(raw.includes("GOOD_BOYS_PAIR_TIMEOUT"));assert.ok(raw.includes("CLEARBLOCKINGDIALOG"));assert.ok(src.includes('typeof S!=="undefined"'));assert.ok(src.includes('typeof NM!=="undefined"'));assert.ok(src.includes("never calls feature tick()"),"v7+ router must not re-enter feature wrapper installers");assert.ok(src.includes("defers authored Good Boys title-button launches to the campaign director"),"v7+ router must preserve single-authority title launch routing");assert.ok(!src.includes('root.NM&&'));
 console.log(`Production mode router v${api.VERSION} input/coop regression: PASS`);
