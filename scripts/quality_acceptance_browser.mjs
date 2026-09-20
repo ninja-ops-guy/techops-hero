@@ -7,6 +7,7 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {chromium} from 'playwright';
 import {sourceIdentity,digest} from './quality_release_receipt.mjs';
+import {assertLandscapeControlBounds} from './responsive_control_contract.mjs';
 
 const port=Number(process.env.QUALITY_PORT||4197),base=process.env.QUALITY_BASE_URL||`http://127.0.0.1:${port}/`;
 const out=path.resolve(process.env.QUALITY_OUT_DIR||'/tmp/techops-quality-acceptance');
@@ -117,7 +118,8 @@ async function night(page,p){
   for(const key of ['x','hp','district','street','cash','kills'])assert.equal(resumed[key],snapshot[key],`Night resume ${key}`);
   assert.equal(resumed.daySave,campaignSave);assert.equal(resumed.inDialog,false);assert.equal(resumed.savedAt,saved.savedAt);
   assert.deepEqual(saved.state.nightMode.enemies.map(e=>({x:e.x,y:e.y,hp:e.hp,alive:e.alive})),snapshot.enemies,'Interrupted checkpoint must preserve enemy world');
-  record('night_resume',p,{before:snapshot,after:resumed,checkpoint_saved_at:saved.savedAt,campaign_isolation:true});
+  const controlBounds=await assertLandscapeControlBounds(page);
+  record('night_resume',p,{before:snapshot,after:resumed,checkpoint_saved_at:saved.savedAt,campaign_isolation:true,control_bounds:controlBounds});
   await screenshot(page,`${p.id}-night-resumed`);
   const performance=await page.evaluate(()=>new Promise(resolve=>{const times=[],started=performance.now();let previous=started;function frame(now){times.push(now-previous);previous=now;if(times.length<120&&now-started<5000)return requestAnimationFrame(frame);times.sort((a,b)=>a-b);resolve({frames:times.length,duration_ms:now-started,p50_ms:times[Math.floor(times.length*.5)],p95_ms:times[Math.floor(times.length*.95)],max_ms:times.at(-1),long_frames:times.filter(t=>t>50).length,heap_bytes:performance.memory?.usedJSHeapSize??null});}requestAnimationFrame(frame);}));
   return performance;
@@ -141,7 +143,8 @@ async function dogs(p){
     }
     await page.waitForFunction(()=>window.NM?._v736?.m===1&&!window.S?.inDialog);
     const mode=await page.evaluate(()=>TechOpsGoodDogsCoop.mode());assert.equal(mode,p.hasTouch?'solo':'local');assert.deepEqual(errors,[]);
-    record('good_dogs_selector',p,{mode,touch_only_local_disabled:p.hasTouch,cancellation_recovered:true,prologue_shots:3,note});
+    const controlBounds=await assertLandscapeControlBounds(page);
+    record('good_dogs_selector',p,{mode,touch_only_local_disabled:p.hasTouch,cancellation_recovered:true,prologue_shots:3,note,control_bounds:controlBounds});
     await screenshot(page,`${p.id}-dogs-property`);
   }finally{await context.close();}
 }
