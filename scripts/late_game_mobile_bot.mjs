@@ -18,21 +18,29 @@ async function waitForLateGame(page){
 }
 
 async function activateBaseRun(page,preferContinue=false){
-  const activated=await page.evaluate(prefer=>{
+  const route=await page.evaluate(prefer=>{
     const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
-    const option=re=>[...document.querySelectorAll('#dlg-options button')].find(b=>re.test(b.textContent||''));
-    const hasLexicalS=()=>{try{return !!window.eval(`(typeof S!=='undefined'&&S)`);}catch{return false;}};
     let route='';
     const cont=document.getElementById('btn-continue');
     if(prefer&&visible(cont)){cont.click();route='continue';}
     else{
       const start=document.getElementById('btn-start');if(!start)throw new Error('CLOCK IN unavailable');start.click();route='clock-in';
-      const standard=option(/Standard/i);if(!standard)throw new Error('Standard difficulty unavailable');standard.click();
     }
-    const clockIn=option(/Clock in/i);if(clockIn)clockIn.click();
+    return route;
+  },preferContinue);
+  if(route==='clock-in'){
+    const standard=page.locator('#dlg-options button').filter({hasText:/Standard/i}).first();
+    await standard.waitFor({state:'visible',timeout:5000});
+    await standard.click();
+  }
+  const clockIn=page.locator('#dlg-options button').filter({hasText:/Clock in/i}).first();
+  if(await clockIn.isVisible().catch(()=>false))await clockIn.click();
+  const activated=await page.evaluate(route=>{
+    const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
+    const hasLexicalS=()=>{try{return !!window.eval(`(typeof S!=='undefined'&&S)`);}catch{return false;}};
     if(window.TechOpsMORNINGSTARRuntime&&typeof window.TechOpsMORNINGSTARRuntime.install==='function')window.TechOpsMORNINGSTARRuntime.install();
     return {route,hud:visible(document.getElementById('hud')),dialog:visible(document.getElementById('dialogue')),hasS:hasLexicalS()};
-  },preferContinue);
+  },route);
   log('base-run-activation',activated);
   await page.waitForFunction(()=>{const h=document.getElementById('hud');let s=false;try{s=!!window.eval(`(typeof S!=='undefined'&&S)`);}catch{}return !!(s&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:3000});
   return activated;

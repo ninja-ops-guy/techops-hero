@@ -406,7 +406,10 @@ async function runMode(browserType,profileName,contextOptions,mode){
 
   try{
     await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForTimeout(1800);
+    await page.waitForFunction(want=>{
+      const id=want==='nightcrawler'?'btn-nightcrawler':'btn-v736',button=document.getElementById(id),ready=window.__productionTitleReadiness;
+      return !!(ready&&ready.ready===true&&button&&!button.disabled&&button.getClientRects().length);
+    },mode,{timeout:20000});
     const clicked=mode==='nightcrawler'?await clickByRegex(page,/NIGHT\s*CRAWLER/i):await clickGoodDogsLaunch(page);
     if(!clicked){const s=await snapshot(page);fail(mode,'launch button not found',{profileName,bodyText:s.bodyText});return;}
     repl(`${profileName} clicked`,clicked);

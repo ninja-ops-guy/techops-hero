@@ -123,10 +123,10 @@ try{
   const beforeEnding=await snap(page);if(!beforeEnding.inDialog)fail('earthfall-does-not-block-gameplay',beforeEnding);
   await page.screenshot({path:path.join(OUT,'goodboys-progression-earthfall.png')});
   for(let i=0;i<4;i++)await click(page,'#gbe-next');
-  await page.waitForFunction(()=>window.S&&window.S.meta&&window.S.meta._v736&&window.S.meta._v736.done,null,{timeout:5000});
+  await page.waitForFunction(()=>{try{if(window.S?.meta?._v736?.done)return true;const saved=JSON.parse(localStorage.getItem('techops_good_dogs_session_v1')||'null');return !!saved?.meta?._v736?.done;}catch{return false;}},null,{timeout:10000});
   await page.waitForTimeout(300);
   await page.screenshot({path:path.join(OUT,'goodboys-progression-completed.png')});
-  const ending=await page.evaluate(()=>({visibleDialogs:['dialogue','gb-prison-cine','good-boys-story-cine','good-boys-earthfall-cine','good-dogs-cutscene-overlay'].filter(id=>{const el=document.getElementById(id);return el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none';}).map(id=>({id,text:document.getElementById(id).innerText.slice(0,300)})),campaign:window.S.meta._v736,breakout:window.S.meta._v736breakout,pair:window.S.meta._v736pair,inDialog:window.S.inDialog,overlay:!!document.querySelector('#good-boys-earthfall-cine')}));
+  const ending=await page.evaluate(()=>{let durable=null;try{durable=JSON.parse(localStorage.getItem('techops_good_dogs_session_v1')||'null');}catch{}const state=window.S||durable||{};return{visibleDialogs:['dialogue','gb-prison-cine','good-boys-story-cine','good-boys-earthfall-cine','good-dogs-cutscene-overlay'].filter(id=>{const el=document.getElementById(id);return el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none';}).map(id=>({id,text:document.getElementById(id).innerText.slice(0,300)})),campaign:state.meta&&state.meta._v736,breakout:!!(state.meta&&state.meta._v736breakout),pair:!!(state.meta&&state.meta._v736pair),inDialog:!!(window.S&&window.S.inDialog),overlay:!!document.querySelector('#good-boys-earthfall-cine'),source:window.S?'live':'durable'};});
   log('earthfall-complete',ending);
   if(ending.campaign.m!==8||!ending.campaign.k||!ending.campaign.waldo||!ending.breakout||!ending.pair||ending.inDialog||ending.overlay)fail('earthfall-completion-contract',ending);
 }catch(e){

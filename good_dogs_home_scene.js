@@ -5,7 +5,7 @@
   'use strict';
   if(!root.document||root.TechOpsGoodDogsHomeScene)return;
   var cachedImages=null,loading=null,keyboardObserved=!!root.__techopsPhysicalKeyboardObserved;
-  function touchPrimary(){try{return !!(root.matchMedia&&root.matchMedia('(hover: none) and (pointer: coarse)').matches&&root.navigator&&Number(root.navigator.maxTouchPoints||0)>0);}catch(_){return false;}}
+  function touchPrimary(){try{var points=root.navigator&&Number(root.navigator.maxTouchPoints||0),coarse=!!(root.matchMedia&&root.matchMedia('(hover: none) and (pointer: coarse)').matches),touchApi=('ontouchstart' in root)||!!(root.DocumentTouch&&root.document instanceof root.DocumentTouch);return !!(points>0&&(coarse||touchApi));}catch(_){return false;}}
   function localAvailable(){return !touchPrimary()||keyboardObserved;}
   function localReason(){return localAvailable()?'Physical keyboard detected. Local two-player is available.':'Local two-player needs a physical keyboard on this touch device. Use Single player, or connect a keyboard and press any key.';}
   function refreshLocalChoice(scope){try{var el=scope||root.document.getElementById('good-dogs-mode-select'),button=el&&el.querySelector('#gd-mode-local'),note=el&&el.querySelector('#gd-local-device-note'),ok=localAvailable();if(button){button.disabled=!ok;button.setAttribute('aria-disabled',ok?'false':'true');button.setAttribute('aria-describedby','gd-local-device-note');}if(note){note.hidden=ok;note.textContent=localReason();}return ok;}catch(_){return false;}}
