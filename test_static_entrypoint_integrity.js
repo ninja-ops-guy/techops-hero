@@ -18,9 +18,8 @@ for(const src of ["good_boys_bible_world.js","good_boys_access_core_authority.js
 for(const src of ["night_hooks.js","v64_hooks.js","v70_hooks.js","v73_hooks.js","v74_hooks.js","v725_hooks.js","v726_hooks.js","v727_hooks.js","v729_hooks.js","v730_hooks.js","v736_hooks.js","campaign_story.js","campaign_act1.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-revision-r1");}
 for(const src of ["good_boys_progression_authority.js","katrin_manchez.atlas.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
 for(const src of ["campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
-for(const src of ["campaign_native_act1.js"])assert.strictEqual(refFor(src),src+"?v=20260912-integrated-r1");
 const bootstrapBuild=fs.readFileSync("production_bootstrap.js","utf8").match(/BUILD="([A-Za-z0-9._-]+)"/);
-for(const src of ["game.js","production_title_experience.js","campaign_act2.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","cinematic_systems.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}
+for(const src of ["game.js","production_title_experience.js","campaign_act2.js","campaign_native_act1.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","cinematic_systems.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}
 assert.ok(bootstrapBuild,"production bootstrap must declare its cache build");
 const bgNocRef=refFor("bg_noc.js");assert.strictEqual(bgNocRef,"bg_noc.js?v="+bootstrapBuild[1],"production bootstrap entrypoint must bypass stale mobile caches");
 [

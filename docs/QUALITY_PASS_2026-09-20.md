@@ -21,12 +21,12 @@ remains a historical assessment; this document records its implementation follow
 | Dialogue continuity | An old typewriter click handler replaced a later conversation's text | Each conversation clears the previous handler before its own typewriter is installed |
 | Act IV | Choosing an approach immediately produced a verified investigation | Persisted observations → hypothesis → bounded response → technical verification → requester confirmation → shared report, with three distinct operational consequences |
 | Campaign tone | Development notes appeared as character dialogue; legacy racks film assigned an enemy/toolkit prematurely | In-world dialogue and actionable objectives; native console presentation owns canonical Act IV, with historical racks content retained outside that route |
-| Cinematics | Hidden playback, stale inputs and save failures lacked consistent recovery | Visible pause/resume, focus trapping/restoration, idempotent settlement, reduced-motion handling and Earthfall save retry |
+| Cinematics | Hidden playback, stale inputs and save failures lacked consistent recovery; the crash fallback advanced automatically | Visible pause/resume, focus trapping/restoration, idempotent settlement, reduced-motion handling and Earthfall save retry; crash recovery waits for deliberate player input |
 | Co-op entry | Rapid cancel/reopen was swallowed by two independent launch guards | Selector cancellation releases debounce and title ownership synchronously |
 | Good Dogs HUD | Mobile and cinematic timers alternately hid the same HUD | Cinematic guard owns visibility; mobile styling is passive; duplicate objective strips retire without removing unique narrative/combat messages |
 | Orbital readability | Repeated flat staging and a misleading Cell 118 target | Approved atlas depth, pressure bays and mission lighting; registry/art/HUD align with the unchanged cell interaction coordinate |
 | Short landscape | Fixed-floor characters rendered below a 390px canvas | Uniform minimum logical height preserves aspect ratio and physics while fitting the full character in view |
-| Release evidence | A passing fixture could be overstated as release certification | Machine-readable requirements and a receipt validator bind observations, source identity and artifact hashes; missing evidence blocks release |
+| Release evidence | A passing fixture or a successful protection lookup could be overstated as release certification | Machine-readable requirements and a receipt validator bind observations, source identity and artifact hashes; protection must be enabled/enforced with all declared checks passing |
 
 Night autosaves normally run every five seconds and at major changes/suspension.
 An abrupt process death may lose movement since the latest checkpoint. Held input,
@@ -42,7 +42,8 @@ changes, failure invariants and retirement guards to executable tests.
   Night movement/checkpoint/Resume, Good Dogs selector/prologue, and a separately
   labelled unsupported-codec fault case at desktop, portrait and landscape sizes.
 - `npm run test:browser:presentation`: five responsive profiles, actual hit targets,
-  correct conversation text, scene/dialogue separation and touch-control clearance.
+  correct conversation text, scene/dialogue separation and touch-control clearance,
+  plus a 568×320 Night run with the extra combat controls expanded and collapsed.
 - `npm run test:browser:act4`: prerequisite-assisted entry, real investigation choices,
   wrong-hypothesis recovery, mid-route reload and separate Evidence/Trust gates.
 - Existing Night lifecycle/combat, Good Dogs co-op/progression, licensed-browser media,
@@ -56,9 +57,12 @@ physical-device, unassisted-playthrough or device-soak requirements.
 The exact check names declared by `.github/workflows/merge-gate.yml` are
 `Static and release contracts`, `Browser acceptance`, and `required` under the
 `Merge Gate` workflow. These names are not proof of enforced branch protection.
-The connected integration returned HTTP 403 for the main branch-protection read;
-the repository rulesets endpoint returned an empty list. Required contexts remain
-**unverified**, not absent. Record remote results against the final PR head.
+The dedicated branch-protection endpoint returned HTTP 403, and the repository
+rulesets endpoint returned an empty list. A subsequent authorized branch metadata
+read confirmed `main` has `protected: false`, `protection.enabled: false`, and no
+required status-check contexts. Protection is **disabled**. All triggered remote
+workflows must still pass on the exact PR head before this revision is merged;
+repository administration must enforce the check names above before release.
 
 ## Remaining production and AAA gaps
 
@@ -79,3 +83,28 @@ the repository rulesets endpoint returned an empty list. Required contexts remai
 The product is moving toward a stronger playable beta. A percentage would hide
 the different sizes of these remaining tasks. Engineering gate passage, complete
 content, art approval, player testing and release certification are separate milestones.
+
+## Next production milestones
+
+1. **Certify the opening vertical slice.** Follow the baseline's P0 priority: play
+   New Game through Tuesday without seeded state on the exact deployed candidate.
+   Finish the Day room/standup art and audio/subtitle pass, then repeat the same
+   route on physical iPhone and Android. Advance only after recovery, comprehension
+   and presentation meet the baseline's first 30–45 minute release definition.
+2. **Prove the connected systems.** Complete Acts II–III, standalone and campaign
+   Night, and Good Dogs solo/local co-op with independent player inputs. Include
+   interrupted saves, all active cinematic handoffs, and 30-minute device runs.
+   Keep automated transition evidence separate from unassisted player evidence.
+3. **Raise authored production quality.** Approve dog locomotion and Mike poses,
+   replace the remaining provisional environment/scene art, and review shot rhythm,
+   sound, subtitles, contrast and keyboard/screen-reader behavior as complete scenes.
+   Art approval must precede unquarantining assets.
+4. **Deepen the later campaign.** Extend the Act IV investigation standard to
+   Acts V–X only after the opening and Acts II–III satisfy their gates. Each mission
+   needs a human need, competing hypotheses, a playable environmental objective,
+   verification and a durable consequence; preserve canonical reveal timing and
+   the ordinary-printer epilogue.
+5. **Qualify the shipping candidate.** Enable branch protection, retain successful
+   named checks, attach real-device/media/playthrough/soak evidence, verify deployed
+   asset identity, rehearse rollback and pass the release receipt validator.
+   Any candidate code or asset change invalidates evidence tied to the older source.

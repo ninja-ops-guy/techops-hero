@@ -21,6 +21,15 @@ function observationMatches(check,requirement){
   return true;
 }
 
+function protectedChecksMatch(observations,requirement,head){
+  const expected=requirement.required_contexts,contexts=observations.required_contexts,checks=observations.required_checks;
+  if(observations.protection_verified!==true||observations.protection_enabled!==true||observations.protection_enforced!==true||observations.head!==head)return false;
+  if(!Array.isArray(expected)||!expected.length||expected.some(name=>typeof name!=='string'||!name)||new Set(expected).size!==expected.length)return false;
+  if(!Array.isArray(contexts)||contexts.length!==expected.length||new Set(contexts).size!==contexts.length||expected.some(name=>!contexts.includes(name)))return false;
+  if(!Array.isArray(checks)||checks.length!==expected.length||new Set(checks.map(check=>check?.name)).size!==checks.length)return false;
+  return expected.every(name=>checks.some(check=>check?.name===name&&check.conclusion==='success'));
+}
+
 export function sourceIdentity(cwd = process.cwd()) {
   const git = args => execFileSync('git',args,{cwd,encoding:'utf8',maxBuffer:32*1024*1024}).trim();
   const head=git(['rev-parse','HEAD']),tree=git(['rev-parse','HEAD^{tree}']);
@@ -61,7 +70,7 @@ export function assessEvidence(inventory,reports,{source,root='.',requireClean=t
           if(!Array.isArray(expected)||!expected.length||!Array.isArray(clips)||clips.length!==expected.length||new Set(clips.map(c=>c.file)).size!==clips.length||expected.some(e=>!clips.some(c=>c.file===e.pixel_file&&c.sha256===e.sha256&&c.decoded_frames>2&&c.current_time>0&&(c.file==='03_orbital_approach_pixel.mp4'||c.pause_resume_verified===true&&c.skip_verified===true)))){problems.push(`${label}: ${check.id} lacks the complete distinct manifest assets with matching digests, decoded frames and active-route controls`);continue;}
         }
       }
-      if(check.evidence_type==='remote-ci'&&(!check.observations.protection_verified||check.observations.head!==source.head||!Array.isArray(check.observations.required_checks)||!check.observations.required_checks.length||check.observations.required_checks.some(c=>!c.name||c.conclusion!=='success'))){problems.push(`${label}: remote checks/protection are unverified`);continue;}
+      if(check.evidence_type==='remote-ci'&&!protectedChecksMatch(check.observations,requirement,source.head)){problems.push(`${label}: enabled/enforced protection and the complete declared required checks are unverified`);continue;}
       accepted.push({id:check.id,profile:check.profile,report:label,evidence_type:check.evidence_type});
     }
   }

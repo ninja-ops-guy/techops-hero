@@ -49,7 +49,7 @@ async function sceneContract(page, profile, scene) {
   assert.equal(state.sameContext, true, 'scene cannot visually cover dialogue through a sibling stacking context');
   if (scene === 'workstation') {
     assert.equal(state.stage, null, 'retired workstation concept plate stays retired');
-    assert.match(state.copy, /monitor fills Mike/, 'clicking current HTML-rich dialogue cannot resurrect preceding typewriter copy');
+    assert.match(state.copy, /The shift is waiting on the other side of the screen/, 'clicking current HTML-rich dialogue cannot resurrect preceding typewriter copy');
   } else assert.ok(state.stage.bottom <= state.dialog.top + 1 || state.stage.right <= state.dialog.left + 1, 'art and conversation reserve separate areas');
   assert.ok(state.dialog.top >= 0 && state.dialog.bottom <= state.viewport.height, 'dialogue must remain on screen');
   assert.ok(state.scrollWidth <= state.viewport.width, 'no horizontal overflow');
@@ -150,20 +150,29 @@ try {
     await nightPage.waitForFunction(() => window.S?.nightMode && !S.inDialog && !window.__productionDesiredMode, null, { timeout: 1000 });
     const collapsed = await assertLandscapeControlBounds(nightPage);
     const more = nightPage.locator('#night-input-assists');
-    await more.tap();
-    await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'true');
-    const expanded = await assertLandscapeControlBounds(nightPage);
-    assert.equal(expanded.controls.length, 12, 'expanded Night exposes all twelve movement/combat/menu targets');
-    await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more.png` });
-    await more.tap();
-    await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'false');
-    const restored = await assertLandscapeControlBounds(nightPage);
-    assert.equal(restored.controls.length, collapsed.controls.length, 'collapsing MORE restores the original control set');
+    const cycles = [];
+    const stableTargets = snapshot => snapshot.controls
+      .filter(control => control.id.startsWith('dbtn ') || ['tb-interact', 'tb-menu', 'night-input-assists'].includes(control.id))
+      .map(({ id, left, top, width, height }) => ({ id, left, top, width, height }));
+    for (let cycle = 0; cycle < 6; cycle++) {
+      await more.tap();
+      await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'true');
+      const expanded = await assertLandscapeControlBounds(nightPage);
+      assert.equal(expanded.controls.length, 12, 'expanded Night exposes all twelve movement/combat/menu targets');
+      assert.deepEqual(stableTargets(expanded), stableTargets(collapsed), 'opening MORE cannot resize or relocate movement, MORE, A, or menu targets');
+      if (cycle === 0) await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more.png` });
+      await more.tap();
+      await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'false');
+      const restored = await assertLandscapeControlBounds(nightPage);
+      assert.equal(restored.controls.length, collapsed.controls.length, 'collapsing MORE restores the original control set');
+      assert.deepEqual(stableTargets(restored), stableTargets(collapsed), 'closing MORE cannot resize or relocate movement, MORE, A, or menu targets');
+      cycles.push({ expanded, restored });
+    }
     assert.deepEqual(nightErrors, []);
-    report.narrowNight = { pass: true, collapsed, expanded, restored };
+    report.narrowNight = { pass: true, collapsed, expanded: cycles[0].expanded, restored: cycles[0].restored, cycles };
     console.log(JSON.stringify({ profile: 'narrow-landscape-night-more', status: 'passed' }));
   } catch (error) {
-    report.narrowNight = { pass: false, failure: String(error.stack || error), errors: nightErrors };
+    report.narrowNight = { pass: false, failure: String(error.stack || error), errors: nightErrors, controls: error.controlSnapshot || null };
     await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more-failure.png` }).catch(() => {});
   } finally { await nightContext.close(); }
   report.status = report.profiles.length && report.profiles.every(p => p.pass) && report.narrowNight.pass ? 'passed' : 'failed';

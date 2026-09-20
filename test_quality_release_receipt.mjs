@@ -30,6 +30,32 @@ try{
   const titleRequirement=JSON.parse(fs.readFileSync('release_certification.json','utf8')).requirements.find(r=>r.id==='title_routes');
   const forged=structuredClone(report);forged.checks=[{id:'title_routes',profile:'chromium-desktop',status:'passed',evidence_type:'browser-input',observations:{claimed_pass:true}}];
   assert.equal(assessEvidence({schema_version:1,requirements:[{...titleRequirement,profiles:['chromium-desktop']}]},[forged],{source,root}).status,'blocked','nonempty arbitrary observations cannot certify a title');
+  const ciRequirement=JSON.parse(fs.readFileSync('release_certification.json','utf8')).requirements.find(r=>r.id==='protected_ci');
+  assert.deepEqual(ciRequirement.required_contexts,['Static and release contracts','Browser acceptance','required'],'protection contract must retain exact check names');
+  const ciInventory={schema_version:1,requirements:[ciRequirement]},ciReport=structuredClone(report);
+  ciReport.checks=[{id:'protected_ci',profile:'github',status:'passed',evidence_type:'remote-ci',observations:{protection_verified:true,protection_enabled:true,protection_enforced:true,head:source.head,required_contexts:[...ciRequirement.required_contexts],required_checks:ciRequirement.required_contexts.map(name=>({name,conclusion:'success'}))}}];
+  const assessCI=r=>assessEvidence(ciInventory,[r],{source,root});
+  assert.equal(assessCI(ciReport).status,'ready','enabled and enforced protection with every exact required check succeeds');
+  const reproduced=structuredClone(ciReport);
+  reproduced.checks[0].observations={protection_verified:true,protection_enabled:false,required_contexts:[],head:source.head,required_checks:[{name:'Static and release contracts',conclusion:'success'}]};
+  assert.equal(assessCI(reproduced).status,'blocked','verified absence/disabled protection plus one green check cannot certify');
+  for(const [reason,mutate]of [
+    ['unverified protection',o=>delete o.protection_verified],
+    ['absent protection',o=>delete o.protection_enabled],
+    ['disabled protection',o=>o.protection_enabled=false],
+    ['unenforced protection',o=>o.protection_enforced=false],
+    ['missing enforcement evidence',o=>delete o.protection_enforced],
+    ['no required contexts',o=>o.required_contexts=[]],
+    ['missing required context',o=>o.required_contexts.pop()],
+    ['renamed required context',o=>o.required_contexts[1]='Browser acceptance renamed'],
+    ['duplicate required context',o=>o.required_contexts[1]=o.required_contexts[0]],
+    ['missing expected check',o=>o.required_checks.pop()],
+    ['failed expected check',o=>o.required_checks[1].conclusion='failure'],
+    ['pending expected check',o=>o.required_checks[1].conclusion=null],
+    ['renamed expected check',o=>o.required_checks[1].name='Browser acceptance renamed'],
+    ['duplicate expected check',o=>o.required_checks[1]=o.required_checks[0]],
+    ['stale candidate head',o=>o.head='f'.repeat(40)]
+  ]){const copy=structuredClone(ciReport);mutate(copy.checks[0].observations);assert.equal(assessCI(copy).status,'blocked',reason);}
   fs.writeFileSync(path.join(root,'capture.txt'),'changed capture');
   assert.equal(assess([report]).status,'blocked','artifact bytes are reverified');
   const actual=JSON.parse(fs.readFileSync('release_certification.json','utf8'));

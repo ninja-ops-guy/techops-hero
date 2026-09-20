@@ -46,12 +46,14 @@
       "name": "Cinematic interruption and co-op entry",
       "files": [
         "good_dogs_cutscenes_v2_2.js",
+        "good_boys_crash_scene.js",
         "good_dogs_home_scene.js",
         "good_boys_earthfall_ending.js",
         "good_boys_button_hard_fix.js"
       ],
       "tests": [
         "test_cinematic_presentation.js",
+        "test_crash_playback_budget.js",
         "test_good_boys_intro_repair.js",
         "test_good_dogs_coop.js",
         "scripts/quality_acceptance_browser.mjs"
@@ -94,9 +96,9 @@
     {
       "id": "GD_CODEC_CAPABILITY",
       "failure_mode": "An environment without an H.264 decoder attempts the authored movie and enters a retry or autoplay loop.",
-      "invariant": "Playback eligibility is decided from MediaSource.isTypeSupported and HTMLMediaElement.canPlayType, never a user-agent string; unsupported environments remain at a visible PLAY/SKIP recovery surface.",
+      "invariant": "Playback eligibility is decided from MediaSource.isTypeSupported and HTMLMediaElement.canPlayType, never a user-agent string; unsupported environments explain that video is unavailable and retain an explicit Skip control.",
       "test_ref": "test_review_contracts.js#GD_CODEC_CAPABILITY",
-      "spot_check": "Stub both capability probes as unsupported; confirm no media source is loaded, VIDEO UNSUPPORTED \u2014 SKIP is visible, and campaign state is unchanged."
+      "spot_check": "Stub both capability probes as unsupported; confirm no media source is loaded, VIDEO UNAVAILABLE and the recovery explanation are visible, Skip is reachable, and campaign state is unchanged."
     },
     {
       "id": "GD_NO_INVISIBLE_ADVANCE",
@@ -150,9 +152,16 @@
     {
       "id": "VISIBLE_CINEMATIC_SETTLEMENT",
       "failure_mode": "Background playback, stale input or a failed save settles an ending invisibly or twice.",
-      "invariant": "Hidden media cannot settle progression; focus stays in the active modal. Earthfall keeps a visible save retry without repeating semantic completion.",
+      "invariant": "The Good Dogs movie, home prologue and Earthfall owners prevent hidden progression and keep focus in the active modal. Earthfall retains visible save retry without repeating semantic completion; the crash movie has its separate executable contract below.",
       "test_ref": "test_cinematic_presentation.js",
       "spot_check": "Background the film, deliver ended, return and Resume. Double Skip and retry a failed Earthfall save; verify one terminal narrative transition."
+    },
+    {
+      "id": "CRASH_CINEMATIC_RECOVERY",
+      "failure_mode": "A crash-movie error, stall watchdog or background fallback advances M2 without visible completion or deliberate Skip.",
+      "invariant": "The playback watchdog allows the full remaining duration plus three seconds; healthy playback settles on ended. Capability failure and watchdogs expose recovery without settling; hidden completion waits for visible Resume or Skip, and terminal input is idempotent.",
+      "test_ref": "test_crash_playback_budget.js",
+      "spot_check": "Run the healthy 9.433-second movie to its end, then inject unsupported capability, stalled playback and hidden ended separately. Confirm visible recovery, trapped/restored focus and one completion only after deliberate Skip or visible Resume."
     },
     {
       "id": "DAY_SCENE_REACHABILITY",
@@ -184,6 +193,12 @@
     }
   ],
   "deletion_ledger": [
+    {
+      "id": "RETIRED_CRASH_PLATE_AUTO_COMPLETION",
+      "removed": "The crash fallback plate's 2.2-second automatic completion timer.",
+      "reason": "A loaded image or elapsed hidden-tab time cannot stand in for visible movie completion or deliberate Skip. The approved plate remains as passive recovery artwork.",
+      "resurrection_check": "test_crash_playback_budget.js"
+    },
     {
       "id": "RETIRED_FELICIA_VILLAIN_ROUTES",
       "removed": "Early Felicia confrontation, secret-boss unlock, premature playable selection, and historical ending schedules in canonical mode.",
