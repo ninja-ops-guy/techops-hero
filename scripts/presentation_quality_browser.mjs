@@ -128,7 +128,22 @@ try {
   // with four directions and A/menu on the smallest supported landscape row.
   const nightContext = await browser.newContext({ viewport: { width: 568, height: 320 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
   await nightContext.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
+  // Reproduce a late visual-owner update deterministically. Only this optional
+  // decorator class is held; production startup, input, and MORE remain real.
+  await nightContext.addInitScript(() => {
+    const nativeToggle = DOMTokenList.prototype.toggle;
+    const delayedToggle = function(token, ...args) {
+      if (token === 'night-mobile-cohesion' && this === document.body?.classList) return false;
+      return nativeToggle.call(this, token, ...args);
+    };
+    DOMTokenList.prototype.toggle = delayedToggle;
+    window.__releaseNightPresentationFixture = () => {
+      DOMTokenList.prototype.toggle = nativeToggle;
+      window.TechOpsNightMobileVisualCohesion.sync();
+    };
+  });
   const nightPage = await nightContext.newPage(), nightErrors = [];
+  const narrowEvidence = { phase: 'startup', cycles: [] };
   nightPage.on('pageerror', error => nightErrors.push(String(error)));
   try {
     await nightPage.goto(base, { waitUntil: 'domcontentloaded' });
@@ -148,31 +163,50 @@ try {
       await nightPage.waitForTimeout(100);
     }
     await nightPage.waitForFunction(() => window.S?.nightMode && !S.inDialog && !window.__productionDesiredMode, null, { timeout: 1000 });
-    const collapsed = await assertLandscapeControlBounds(nightPage);
+    narrowEvidence.phase = 'cold-start-with-delayed-decoration';
+    const collapsed = narrowEvidence.collapsed = await assertLandscapeControlBounds(nightPage);
+    assert.ok(!collapsed.presentation.bodyClass.includes('night-mobile-cohesion'), 'cold-start fixture must hold the optional visual class');
+    assert.equal(collapsed.presentation.inputOwner, 'active', 'production Night input must already own the visible controls');
     const more = nightPage.locator('#night-input-assists');
-    const cycles = [];
+    const cycles = narrowEvidence.cycles;
     const stableTargets = snapshot => snapshot.controls
       .filter(control => control.id.startsWith('dbtn ') || ['tb-interact', 'tb-menu', 'night-input-assists'].includes(control.id))
       .map(({ id, left, top, width, height }) => ({ id, left, top, width, height }));
+    narrowEvidence.phase = 'expanded-with-delayed-decoration';
+    await more.tap();
+    await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'true');
+    const delayedExpanded = narrowEvidence.delayedExpanded = await assertLandscapeControlBounds(nightPage);
+    assert.equal(delayedExpanded.controls.length, 12, 'all twelve controls must be reachable before the decorator arrives');
+    assert.deepEqual(stableTargets(delayedExpanded), stableTargets(collapsed), 'MORE cannot move targets while Night decoration is delayed');
+    await nightPage.evaluate(() => window.__releaseNightPresentationFixture());
+    narrowEvidence.phase = 'decoration-arrived';
+    const decorated = narrowEvidence.decorated = await assertLandscapeControlBounds(nightPage);
+    assert.ok(decorated.presentation.bodyClass.includes('night-mobile-cohesion'), 'fixture must release the real visual owner');
+    assert.equal(decorated.controls.length, 12, 'late decoration must preserve the expanded control set');
+    assert.deepEqual(stableTargets(decorated), stableTargets(collapsed), 'late Night decoration cannot resize or relocate movement, MORE, A, or menu targets');
+    await more.tap();
+    await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'false');
     for (let cycle = 0; cycle < 6; cycle++) {
+      narrowEvidence.phase = `cycle-${cycle + 1}-expanded`;
       await more.tap();
       await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'true');
-      const expanded = await assertLandscapeControlBounds(nightPage);
+      const expanded = narrowEvidence.expanded = await assertLandscapeControlBounds(nightPage);
       assert.equal(expanded.controls.length, 12, 'expanded Night exposes all twelve movement/combat/menu targets');
       assert.deepEqual(stableTargets(expanded), stableTargets(collapsed), 'opening MORE cannot resize or relocate movement, MORE, A, or menu targets');
       if (cycle === 0) await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more.png` });
+      narrowEvidence.phase = `cycle-${cycle + 1}-collapsed`;
       await more.tap();
       await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'false');
-      const restored = await assertLandscapeControlBounds(nightPage);
+      const restored = narrowEvidence.restored = await assertLandscapeControlBounds(nightPage);
       assert.equal(restored.controls.length, collapsed.controls.length, 'collapsing MORE restores the original control set');
       assert.deepEqual(stableTargets(restored), stableTargets(collapsed), 'closing MORE cannot resize or relocate movement, MORE, A, or menu targets');
       cycles.push({ expanded, restored });
     }
     assert.deepEqual(nightErrors, []);
-    report.narrowNight = { pass: true, collapsed, expanded: cycles[0].expanded, restored: cycles[0].restored, cycles };
+    report.narrowNight = { pass: true, ...narrowEvidence, phase: 'complete', expanded: cycles[0].expanded, restored: cycles[0].restored };
     console.log(JSON.stringify({ profile: 'narrow-landscape-night-more', status: 'passed' }));
   } catch (error) {
-    report.narrowNight = { pass: false, failure: String(error.stack || error), errors: nightErrors, controls: error.controlSnapshot || null };
+    report.narrowNight = { pass: false, ...narrowEvidence, failure: String(error.stack || error), errors: nightErrors, controls: error.controlSnapshot || narrowEvidence.restored || narrowEvidence.expanded || narrowEvidence.decorated || narrowEvidence.delayedExpanded || narrowEvidence.collapsed || null };
     await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more-failure.png` }).catch(() => {});
   } finally { await nightContext.close(); }
   report.status = report.profiles.length && report.profiles.every(p => p.pass) && report.narrowNight.pass ? 'passed' : 'failed';

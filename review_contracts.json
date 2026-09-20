@@ -31,9 +31,10 @@
       ]
     },
     {
-      "name": "Responsive Day presentation",
+      "name": "Responsive Day and Night presentation",
       "files": [
         "style.css",
+        "campaign_native_act1.js",
         "campaign_native_act1_visuals_impl.js",
         "production_presentation_guard.js"
       ],
@@ -169,6 +170,13 @@
       "invariant": "Authored art shares the dialogue stacking context, reserves a separate region, and every visible choice is a reachable 44px target; each conversation owns its text.",
       "test_ref": "scripts/presentation_quality_browser.mjs",
       "spot_check": "Open standup and workstation at320px portrait and844px landscape. Use each real choice, scroll if needed, and verify the correct scene copy persists."
+    },
+    {
+      "id": "NIGHT_CONTROL_STARTUP",
+      "failure_mode": "Night controls appear in the wrong layout or shift beneath the player when visual decoration arrives after input becomes active.",
+      "invariant": "Viewport and active input ownership determine control geometry from startup. Delayed decoration and MORE cannot relocate persistent targets, obscure actors, overlap controls or reduce the 44px targets.",
+      "test_ref": "scripts/presentation_quality_browser.mjs",
+      "spot_check": "At 568 by 320, delay only the Night decoration class, launch through real controls, expand MORE, then release decoration while expanded. Repeat six toggles and compare hit targets, actor clearance and persistent control bounds."
     },
     {
       "id": "GOOD_DOGS_HUD_SINGLE_OWNER",

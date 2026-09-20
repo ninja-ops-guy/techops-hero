@@ -31,6 +31,7 @@ export async function assertLandscapeControlBounds(page) {
       viewport: { width: innerWidth, height: innerHeight },
       presentation: {
         bodyClass: document.body.className,
+        inputOwner: document.getElementById('v55-nmbtns')?.getAttribute('data-night-combat-input'),
         expanded: document.getElementById('night-input-assists')?.getAttribute('aria-expanded'),
         narrowLandscape: matchMedia('(orientation:landscape) and (max-height:500px) and (min-width:560px) and (max-width:640px)').matches,
         controls: ['dpad', 'v55-nmbtns', 'touch-buttons'].map(id => {
