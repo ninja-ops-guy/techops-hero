@@ -112,3 +112,26 @@ content, art approval, player testing and release certification are separate mil
    named checks, attach real-device/media/playthrough/soak evidence, verify deployed
    asset identity, rehearse rollback and pass the release receipt validator.
    Any candidate code or asset change invalidates evidence tied to the older source.
+
+## Follow-up: live launch waiting boundary
+
+The PR #60 merged tree deployed successfully in Pages run `35544173405`.
+A direct cloud-browser interaction reached ALL MODES READY, opened Night's
+canonical difficulty chooser, and then exposed `night_runtime_timeout` after
+leaving that choice unanswered beyond the 15-second engine budget. This is a
+live startup defect, not a completed live gameplay qualification. The local
+runner could not reach Pages (`ERR_EMPTY_RESPONSE`); it is not evidence that
+the public site was unavailable.
+
+The router now pauses budget consumption for the visible canonical difficulty
+choice, authored Night cinema, and a hidden document. Missing/hidden choices
+and a visibly stalled engine retain the original bounded failure. No choice,
+skip, campaign state, or gameplay coordinates are fabricated. Regression tests
+cover 30 seconds of choice/cinema/background polling and both negative cases;
+the real browser acceptance leaves difficulty unanswered for 16 seconds before
+continuing through movement, save and Resume.
+
+This narrowly addresses the observed live softlock. Small-landscape HUD sizing
+remains open; it was deferred when the live launch defect was found. Physical
+phones, unassisted complete journeys, authored production art and enforced
+branch protection remain release requirements.

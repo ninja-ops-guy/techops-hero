@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v46.
+/* TechOps Hero — production runtime bootstrap v47.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=46,BUILD="20260920-quality-r3",started=false,done=false;
+  var VERSION=47,BUILD="20260920-launch-wait-r1",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",

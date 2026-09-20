@@ -217,6 +217,13 @@
       "invariant": "Release assessment requires matching candidate identity, intact artifact hashes and requirement-specific evidence. Missing physical, decoded-media, unassisted, soak or protection evidence blocks release.",
       "test_ref": "test_quality_release_receipt.mjs",
       "spot_check": "Run npm run release:assess with missing, stale, altered or incomplete reports. Each case must remain blocked; one clip cannot satisfy the full media manifest."
+    },
+    {
+      "id": "NIGHT_LAUNCH_PLAYER_WAIT",
+      "failure_mode": "Reading the difficulty chooser or watching the Night cinematic exhausts the engine timeout and overlays recovery on the unfinished player choice.",
+      "invariant": "Only visible engine-convergence polling spends the launch timeout; a visible canonical difficulty chooser, active authored cinematic, or hidden document pauses the budget without selecting, skipping, or reissuing entry. A missing chooser or stalled visible engine still fails within the original budget.",
+      "test_ref": "test_production_mode_router.js",
+      "spot_check": "Start fresh Night, leave difficulty unanswered for at least 16 seconds, then choose Standard and finish the intro. Verify one launch and working movement/Resume. Repeat with long cinema and backgrounding; hide a missing chooser or stall the engine to verify bounded failure."
     }
   ],
   "deletion_ledger": [
