@@ -618,3 +618,11 @@ body.act1-scene-open #toast{top:max(54px,calc(env(safe-area-inset-top) + 42px));
   }
   html body.good-boys-controls #good-dogs-touch button#gb-use{grid-area:auto!important;width:100%!important;height:44px!important;min-height:44px!important}
 }
+/* Expanded Night assists add two targets. At small landscape widths retain
+   every 44px target by tightening spacing, rather than growing into movement. */
+@media(orientation:landscape) and (max-height:500px) and (min-width:560px) and (max-width:640px){
+  html body.night-mobile-cohesion:has(#night-input-assists[aria-expanded="true"]) #game-wrap #dpad{width:176px!important;gap:0!important}
+  html body.night-mobile-cohesion:has(#night-input-assists[aria-expanded="true"]) #game-wrap #touch-buttons{gap:2px!important}
+  html body.night-mobile-cohesion:has(#night-input-assists[aria-expanded="true"]) #v55-nmbtns[data-night-combat-input="active"]{right:max(102px,calc(env(safe-area-inset-right) + 102px))!important;gap:1px!important}
+  html body.night-mobile-cohesion:has(#night-input-assists[aria-expanded="true"]) #v55-nmbtns[data-night-combat-input="active"]>.v55-nbtn{width:44px!important;min-width:44px!important}
+}

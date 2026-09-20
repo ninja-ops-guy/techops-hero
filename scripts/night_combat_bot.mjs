@@ -155,7 +155,7 @@ for(const [name,type,touch] of profiles){
   await setup();await click(page.locator('#night-campaign'));const hp=await page.evaluate(()=>NM.enemies[0].hp);
   await page.keyboard.press('KeyJ');await page.keyboard.press('KeyG');
   if(await page.evaluate(()=>NM.enemies[0].hp)!==hp)throw Error('Combat leaked into campaign dialog');
-  await click(page.locator('#dlg-options button').filter({hasText:'Back to Night Walker'}));checks.push('campaign-dialog combat isolation');
+  await click(page.locator('#dlg-options button').filter({hasText:'Back to the street'}));checks.push('standalone run-menu combat isolation');
   if(errors.length)throw Error(errors.join('\n'));
   record.pass=true;
  }catch(e){record.error=String(e.stack||e);if(page){record.state=await page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:typeof NM!=='undefined'&&NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:typeof S!=='undefined'&&S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null);await page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000}).catch(()=>{});}}

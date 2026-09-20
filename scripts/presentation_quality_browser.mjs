@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
+import { assertLandscapeControlBounds } from './responsive_control_contract.mjs';
 
 const port = Number(process.env.PRESENTATION_PORT || 4196);
 const base = process.env.PRESENTATION_BASE_URL || `http://127.0.0.1:${port}/`;
@@ -123,7 +124,49 @@ try {
       report.profiles.push({ name, pass: false, failure: String(error.stack || error), errors });
     } finally { await context.close(); }
   }
-  report.status = report.profiles.length && report.profiles.every(p => p.pass) ? 'passed' : 'failed';
+  // MORE is a distinct responsive state: six combat controls must coexist
+  // with four directions and A/menu on the smallest supported landscape row.
+  const nightContext = await browser.newContext({ viewport: { width: 568, height: 320 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  await nightContext.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
+  const nightPage = await nightContext.newPage(), nightErrors = [];
+  nightPage.on('pageerror', error => nightErrors.push(String(error)));
+  try {
+    await nightPage.goto(base, { waitUntil: 'domcontentloaded' });
+    await nightPage.waitForFunction(() => window.TechOpsProductionTitleExperience?.state().ready, null, { timeout: 25000 });
+    await nightPage.locator('#btn-nightcrawler').tap();
+    const deadline = Date.now() + 20000;
+    while (Date.now() < deadline) {
+      if (await nightPage.evaluate(() => !!window.S?.nightMode && !S.inDialog && !window.v722?.active() && !window.__productionDesiredMode)) break;
+      if (await nightPage.evaluate(() => !!window.v722?.active())) await nightPage.keyboard.press('Escape');
+      else {
+        const choices = nightPage.locator('#dlg-options button');
+        if (await choices.first().isVisible().catch(() => false)) {
+          const standard = choices.filter({ hasText: /Standard/ }).first();
+          await (await standard.isVisible() ? standard : choices.first()).tap();
+        }
+      }
+      await nightPage.waitForTimeout(100);
+    }
+    await nightPage.waitForFunction(() => window.S?.nightMode && !S.inDialog && !window.__productionDesiredMode, null, { timeout: 1000 });
+    const collapsed = await assertLandscapeControlBounds(nightPage);
+    const more = nightPage.locator('#night-input-assists');
+    await more.tap();
+    await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'true');
+    const expanded = await assertLandscapeControlBounds(nightPage);
+    assert.equal(expanded.controls.length, 12, 'expanded Night exposes all twelve movement/combat/menu targets');
+    await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more.png` });
+    await more.tap();
+    await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'false');
+    const restored = await assertLandscapeControlBounds(nightPage);
+    assert.equal(restored.controls.length, collapsed.controls.length, 'collapsing MORE restores the original control set');
+    assert.deepEqual(nightErrors, []);
+    report.narrowNight = { pass: true, collapsed, expanded, restored };
+    console.log(JSON.stringify({ profile: 'narrow-landscape-night-more', status: 'passed' }));
+  } catch (error) {
+    report.narrowNight = { pass: false, failure: String(error.stack || error), errors: nightErrors };
+    await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more-failure.png` }).catch(() => {});
+  } finally { await nightContext.close(); }
+  report.status = report.profiles.length && report.profiles.every(p => p.pass) && report.narrowNight.pass ? 'passed' : 'failed';
   if (report.status === 'failed') process.exitCode = 1;
 } finally {
   if (browser) await browser.close();
