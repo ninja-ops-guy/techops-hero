@@ -12,7 +12,11 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
  if(!names.has(name))continue;
  const browser=await type.launch({headless:true,...(name==='chromium'&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
  try{for(const mode of ['local','solo']){
-  const context=await browser.newContext(mode==='solo'?{...devices['iPhone 13']}:{viewport:{width:1280,height:800}}),page=await context.newPage(),errors=[];
+  const context=await browser.newContext(mode==='solo'?{...devices['iPhone 13']}:{viewport:{width:1280,height:800}}),errors=[];
+  // WebKit's desktop device emulation can omit maxTouchPoints. Declare the
+  // capability explicitly so this fixture tests the product boundary, not UA.
+  if(mode==='solo')await context.addInitScript(()=>{try{Object.defineProperty(Navigator.prototype,'maxTouchPoints',{configurable:true,get:()=>5});}catch{}});
+  const page=await context.newPage();
   let releaseBootstrap=()=>{};
   if(mode==='local'){const gate=new Promise(resolve=>{releaseBootstrap=resolve;});await page.route('**/production_wrapper_guard.js?*',async route=>{await gate;await route.continue();});}
   const snap=async label=>page.screenshot({path:path.join(out,`coop-${name}-${mode}-${label}.png`)});
