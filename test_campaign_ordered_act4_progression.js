@@ -88,6 +88,11 @@ for (const approach of Act2.TRUST_APPROACHES) {
   const branch = Campaign.clone(state);
   Act2.beginTrustInvestigation(branch);
   Act2.recordTrustInvestigation(branch, { approach });
+  Act2.TRUST_EVIDENCE.forEach(item => Act2.observeTrustEvidence(branch, item.id));
+  Act2.evaluateTrustHypothesis(branch, "stale_mirror");
+  Act2.applyTrustResponse(branch);
+  Act2.verifyTrustResponse(branch, "technical");
+  Act2.verifyTrustResponse(branch, "requester");
   Act2.completeTrustReport(branch, { reported: true, sharedOwnership: true });
   assert.ok(branch.story.completedActs.includes("act_4"), "Act IV remains completable through the authored " + approach + " response");
   assert.equal(branch.story.facts.felicia_alliance, true);
@@ -95,6 +100,11 @@ for (const approach of Act2.TRUST_APPROACHES) {
 
 Act2.beginTrustInvestigation(state);
 Act2.recordTrustInvestigation(state, { approach: "trace" });
+Act2.TRUST_EVIDENCE.forEach(item => Act2.observeTrustEvidence(state, item.id));
+Act2.evaluateTrustHypothesis(state, "stale_mirror");
+Act2.applyTrustResponse(state);
+Act2.verifyTrustResponse(state, "technical");
+Act2.verifyTrustResponse(state, "requester");
 assert.equal(state.story.facts.felicia_alliance, undefined, "investigation alone is not the alliance reward");
 Campaign.save(state, storage);
 state = Campaign.load(storage);

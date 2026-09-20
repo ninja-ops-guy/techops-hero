@@ -14,6 +14,21 @@
   var COMPONENTS = Object.freeze(["telemetry", "antenna", "compute", "power", "flight_control", "sensor"]);
   var COMPANION_BOUNDS = Object.freeze({ followDistance: 5, assistRadius: 4, hardLeash: 9, actionCooldownMs: 1200 });
   var TRUST_APPROACHES = Object.freeze(["trace", "contain", "confront"]);
+  var TRUST_EVIDENCE = Object.freeze([
+    { id: "requester", label: "Ask Inspection what is blocked", source: "inspection_operator", text: "Inspection can enter a result, but the acknowledgement never arrives. The next part cannot be released. The operator needs a confirmed result, not a green network icon." },
+    { id: "comparison", label: "Compare traffic with the last good shift", source: "preserved_shift_comparison", text: "The inspection service still answers normally. Repeated copies return through an internal telemetry mirror after its maintenance window. The comparison shows a loop; it does not identify who left it active." },
+    { id: "ledger", label: "Review the maintenance handoff with Felicia", source: "maintenance_handoff", text: "The mirror was approved for a short diagnostic window, which has ended. The handoff contains no verified removal. Felicia confirms the live inspection route must remain available while Mike addresses the stale mirror." }
+  ]);
+  var TRUST_HYPOTHESES = Object.freeze([
+    { id: "external_actor", label: "An outside actor controls Inspection", supported: false, feedback: "An internal loop does not establish an outside actor or their intent. Preserve that uncertainty; the comparison and handoff support a narrower conclusion." },
+    { id: "normal_load", label: "This is ordinary inspection load", supported: false, feedback: "The last good shift has no repeated copies, and the diagnostic window has ended. Ordinary production demand does not explain the stale mirror." },
+    { id: "stale_mirror", label: "The diagnostic mirror was never retired", supported: true, feedback: "The comparison locates the repeated copies; the handoff explains why the extra route existed. Correct the stale mirror without interrupting the live inspection service." }
+  ]);
+  var TRUST_RESPONSES = Object.freeze({
+    trace: { label: "Preserve the comparison and retire the stale mirror", text: "Mike retains the before-state, then removes the expired mirror. The live inspection route stays available. Felicia holds the comparison for the recheck.", consequence: "The route comparison is retained for the next shift; Inspection stays online." },
+    contain: { label: "Isolate the mirror while keeping Inspection online", text: "Mike isolates only the expired mirror. The repeat traffic stops without isolating Inspection. Felicia records the diagnostic feed as unavailable pending its next approved window.", consequence: "Inspection stays online; the diagnostic mirror remains isolated until an approved review." },
+    confront: { label: "Reconcile the handoff and retire the mirror together", text: "Mike asks Felicia to reconcile the expired maintenance window with him. They preserve the incomplete handoff and remove the stale mirror, without assigning intent that the records cannot prove.", consequence: "The incomplete handoff is acknowledged and its removal recorded; Inspection stays online." }
+  });
 
   function assert(condition, message) { if (!condition) throw new Error(message); }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -78,6 +93,25 @@
     p1.duet = p1.duet || { protocolCompleted: false, freeplayUnlocked: false };
     p1.trustEarned = p1.trustEarned || { stage: "locked", investigation: null, report: null, completed: false, history: [] };
     p1.trustEarned.history = p1.trustEarned.history || [];
+    var trust = p1.trustEarned;
+    if (trust.schemaVersion !== 1) {
+      trust.schemaVersion = 1;
+      trust.observations = [];
+      trust.ruledOut = [];
+      trust.hypothesis = null;
+      trust.response = null;
+      trust.technicalVerified = false;
+      trust.requesterVerified = false;
+      trust.responseOwner = "mike";
+      trust.verificationPartner = "felicia";
+      // Preserve completed history. An old approach-only record never proves
+      // observations or a restored human outcome for an unfinished investigation.
+      if (!actCompleted(state, "act_4") && trust.investigation) {
+        trust.investigation.verified = false;
+        trust.stage = "observe";
+        trust.history.push({ type: "trust_verification_required" });
+      }
+    }
     if (actCompleted(state, "act_4")) { p1.trustEarned.stage = "complete"; p1.trustEarned.completed = true; }
     return p1;
   }
@@ -265,17 +299,101 @@
     var p1 = ensure(state), trust = p1.trustEarned;
     input = input || {};
     assert(trustIsEarnedEligible(state), "Trust Is Earned requires completed Parts in Motion / Act III");
-    assert(trust.stage === "investigate" || trust.stage === "report", "Begin the Trust Is Earned investigation first");
     assert(TRUST_APPROACHES.indexOf(input.approach) >= 0, "Unknown Trust Is Earned investigation approach");
     if (trust.investigation) {
       assert(trust.investigation.approach === input.approach, "Trust Is Earned investigation approach is already committed");
       return clone(trust);
     }
-    trust.investigation = { approach: input.approach, verified: true, source: "unauthorized_internal_traffic" };
-    trust.stage = "report";
-    trust.history.push({ type: "trust_investigation_verified", approach: input.approach });
-    record(state, "trust_investigation_verified", input.approach);
+    assert(trust.stage === "investigate", "Begin the Trust Is Earned investigation first");
+    trust.investigation = { approach: input.approach, verified: false, source: "unauthorized_internal_traffic" };
+    trust.stage = "observe";
+    trust.history.push({ type: "trust_response_planned", approach: input.approach });
+    record(state, "trust_response_planned", input.approach);
     return clone(trust);
+  }
+
+  function activeTrust(state) {
+    requireTuesday(state);
+    assert(trustIsEarnedEligible(state), "Trust Is Earned requires completed Parts in Motion / Act III");
+    var trust = ensure(state).trustEarned;
+    assert(trust.investigation, "Choose a Trust Is Earned investigation approach first");
+    return trust;
+  }
+
+  function observeTrustEvidence(state, id) {
+    var trust = activeTrust(state), item = TRUST_EVIDENCE.find(function (entry) { return entry.id === id; });
+    assert(item, "Unknown Trust Is Earned observation");
+    if (trust.observations.some(function (entry) { return entry.id === id; })) return clone(trust);
+    assert(trust.stage === "observe", "Trust observations must precede the hypothesis");
+    trust.observations.push({ id: id, source: item.source, observedBy: "mike", perspective: "firsthand" });
+    trust.history.push({ type: "trust_observation_recorded", id: id });
+    if (TRUST_EVIDENCE.every(function (entry) { return trust.observations.some(function (seen) { return seen.id === entry.id; }); })) trust.stage = "hypothesize";
+    return clone(trust);
+  }
+
+  function evaluateTrustHypothesis(state, id) {
+    var trust = activeTrust(state), hypothesis = TRUST_HYPOTHESES.find(function (entry) { return entry.id === id; });
+    assert(hypothesis, "Unknown Trust Is Earned hypothesis");
+    if (trust.hypothesis === id || trust.ruledOut.indexOf(id) >= 0) return clone(trust);
+    assert(trust.stage === "hypothesize", "Review the requester, comparison, and handoff before drawing a conclusion");
+    if (!hypothesis.supported) {
+      trust.ruledOut.push(id);
+      trust.history.push({ type: "trust_hypothesis_not_supported", id: id });
+      return clone(trust);
+    }
+    trust.hypothesis = id;
+    trust.stage = "respond";
+    trust.history.push({ type: "trust_hypothesis_supported", id: id });
+    return clone(trust);
+  }
+
+  function applyTrustResponse(state) {
+    var trust = activeTrust(state);
+    if (trust.response) return clone(trust);
+    assert(trust.stage === "respond" && trust.hypothesis === "stale_mirror", "A supported hypothesis must precede the response");
+    trust.response = { approach: trust.investigation.approach, owner: trust.responseOwner, liveServicePreserved: true, consequence: TRUST_RESPONSES[trust.investigation.approach].consequence };
+    trust.stage = "technical_verify";
+    trust.history.push({ type: "trust_response_applied", approach: trust.response.approach });
+    return clone(trust);
+  }
+
+  function verifyTrustResponse(state, kind) {
+    var trust = activeTrust(state), p1 = ensure(state);
+    assert(kind === "technical" || kind === "requester", "Unknown Trust Is Earned verification");
+    if (kind === "technical") {
+      if (trust.technicalVerified) return clone(trust);
+      assert(trust.stage === "technical_verify" && trust.response, "Apply the bounded response before a technical recheck");
+      trust.technicalVerified = true;
+      trust.stage = "requester_verify";
+    } else {
+      if (trust.requesterVerified) return clone(trust);
+      assert(trust.stage === "requester_verify" && trust.technicalVerified, "Technical verification must precede requester confirmation");
+      trust.requesterVerified = true;
+      trust.investigation.verified = true;
+      trust.stage = "report";
+      if (!p1.evidence.records.some(function (entry) { return entry.id === "trust_internal_mirror"; })) {
+        p1.evidence.records.push({ id: "trust_internal_mirror", perspective: "firsthand", reliability: "high", sources: trust.observations.map(function (entry) { return entry.source; }), conclusion: "stale_mirror", identityAttribution: "unproven" });
+        p1.evidence.score += 2;
+      }
+    }
+    trust.history.push({ type: "trust_" + kind + "_verified" });
+    return clone(trust);
+  }
+
+  function trustObjective(state) {
+    var trust = ensure(state).trustEarned;
+    var objectives = {
+      locked: "Talk with Felicia about the unauthorized traffic.",
+      investigate: "Agree how to approach the traffic investigation.",
+      observe: "Hear Inspection's need, compare traffic, and review the maintenance handoff.",
+      hypothesize: "Choose the explanation supported by all three observations.",
+      respond: "Apply the bounded response while preserving Inspection's live service.",
+      technical_verify: "Compare the result: repeated copies stop and Inspection remains reachable.",
+      requester_verify: "Ask Inspection to submit a result and confirm its acknowledgement.",
+      report: "Report the verified result with Felicia and name the response owner.",
+      complete: "The alliance is recorded. Review the MORNINGSTAR hangar ledger."
+    };
+    return objectives[trust.stage] || "Review the investigation with Felicia.";
   }
 
   function completeTrustReport(state, input) {
@@ -284,7 +402,7 @@
     input = input || {};
     if (trust.completed && actCompleted(state, "act_4")) return clone(trust);
     assert(api, "TechOpsStory is required to complete Trust Is Earned");
-    assert(trust.stage === "report" && trust.investigation && trust.investigation.verified, "A verified Trust Is Earned investigation must precede the report");
+    assert(trust.stage === "report" && trust.investigation && trust.investigation.verified && trust.technicalVerified && trust.requesterVerified, "A verified Trust Is Earned investigation must precede the report");
     assert(input.reported === true, "Trust Is Earned requires an explicit report");
     assert(input.sharedOwnership === true, "Trust Is Earned requires shared ownership of the response");
     var alreadyReported = f.trust_investigation_reported === true;
@@ -295,7 +413,7 @@
       if (!alreadyReported) delete f.trust_investigation_reported;
       throw error;
     }
-    trust.report = { reported: true, sharedOwnership: true, approach: trust.investigation.approach };
+    trust.report = { reported: true, sharedOwnership: true, approach: trust.investigation.approach, responseOwner: trust.responseOwner, verificationPartner: trust.verificationPartner, humanOutcome: "inspection_acknowledgement_restored", identityAttribution: "unproven" };
     trust.stage = "complete";
     trust.completed = true;
     trust.history.push({ type: "trust_report_shared", approach: trust.investigation.approach });
@@ -319,6 +437,7 @@
       violinistRevealed: p1.reveal.violinistRevealed,
       trustIsEarnedEligible: trustIsEarnedEligible(state),
       trustIsEarned: clone(p1.trustEarned),
+      trustObjective: trustObjective(state),
       companion: companionPolicy(state),
       duetProtocolCompleted: !!p1.duet.protocolCompleted,
       feliciaFreeplayUnlocked: feliciaFreeplayEligible(state)
@@ -330,6 +449,9 @@
     COMPONENTS: COMPONENTS,
     COMPANION_BOUNDS: COMPANION_BOUNDS,
     TRUST_APPROACHES: TRUST_APPROACHES,
+    TRUST_EVIDENCE: TRUST_EVIDENCE,
+    TRUST_HYPOTHESES: TRUST_HYPOTHESES,
+    TRUST_RESPONSES: TRUST_RESPONSES,
     ensure: ensure,
     beginGhostFrequency: beginGhostFrequency,
     recordBadgeClonerEvidence: recordBadgeClonerEvidence,
@@ -341,6 +463,11 @@
     trustIsEarnedEligible: trustIsEarnedEligible,
     beginTrustInvestigation: beginTrustInvestigation,
     recordTrustInvestigation: recordTrustInvestigation,
+    observeTrustEvidence: observeTrustEvidence,
+    evaluateTrustHypothesis: evaluateTrustHypothesis,
+    applyTrustResponse: applyTrustResponse,
+    verifyTrustResponse: verifyTrustResponse,
+    trustObjective: trustObjective,
     completeTrustReport: completeTrustReport,
     companionPolicy: companionPolicy,
     setCompanionMode: setCompanionMode,

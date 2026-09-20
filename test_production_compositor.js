@@ -48,3 +48,18 @@ context.document={getElementById(id){return id==='dialogue'?{classList:{contains
 context.S.inDialog=true;
 assert.strictEqual(guard.repairStaleDialog(),false,'fade-in dialogue remains a real modal at opacity zero');
 assert.strictEqual(context.S.inDialog,true);
+
+// A dialogue button losing focus must not cancel an already-held movement key.
+// Losing focus of the browser window must still release it to prevent drift.
+context.keys={};
+context.addEventListener=function(){};
+context.removeEventListener=function(){};
+assert.strictEqual(guard.installNightKeyBridge(),true);
+vm.runInContext(`
+  __productionNightKeyBridgeHandlers.down({key:'ArrowRight'});
+  __productionNightKeyBridgeHandlers.blur({target:{tagName:'BUTTON'}});
+`,context);
+assert.strictEqual(context.keys.arrowright,true,'descendant blur preserves acknowledged input');
+vm.runInContext('__productionNightKeyBridgeHandlers.blur({target:globalThis});',context);
+assert.strictEqual(context.keys.arrowright,false,'window blur cancels held movement');
+console.log('Movement focus handoff: PASS');

@@ -59,6 +59,26 @@ assert.ok(Object.isFrozen(registry.goodDogsMission(1)) && Object.isFrozen(regist
 const stage = registry.mutableStage("gooddogs.m3");
 stage.platforms[0][0] = -1;
 assert.strictEqual(registry.goodDogsMission(3).stage.platforms[0][0], 280, "runtime stage clones may not mutate canon");
+// Presentation follows the unchanged gameplay interaction: three clues, then
+// cross width-260 toward the entrance at width-200. Drift in the actual owner
+// must fail this contract rather than leave an attractive nonfunctional door.
+const nightSource=fs.readFileSync("night_hooks.js","utf8"),dogSource=fs.readFileSync("v736_hooks.js","utf8");
+assert.match(nightSource,/const NM_W\s*=\s*1800/);
+assert.match(dogSource,/const NMW736 = \(\) => \(typeof NM_W !== "undefined"\) \? NM_W : 1800/);
+assert.match(dogSource,/found >= 3 && NM\.x > NMW736\(\) - 260/);
+assert.match(dogSource,/strokeRect\(NMW736\(\) - 200 - NM\.cam/);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(registry.goodDogsCell118())),{worldWidth:1800,triggerX:1540,entranceX:1600,labelX:1645});
+for(const worldWidth of [1800,2200]){
+  context.NM_W=worldWidth;const entrance=worldWidth-200,row=registry.goodDogsMission(4);
+  assert.strictEqual(row.target,entrance);assert.strictEqual(row.stage.landmarks.find(l=>l.kind==="cell118").x,entrance);
+  assert.strictEqual(registry.get("gooddogs.m4").target,entrance);assert.strictEqual(registry.goodBoysRoute()[4].target,entrance);
+  assert.strictEqual(registry.goodBoysStages()[4].landmarks.find(l=>l.kind==="cell118").x,entrance);
+  assert.ok(Object.isFrozen(row)&&Object.isFrozen(row.stage));assert.strictEqual(entrance-registry.goodDogsCell118().triggerX,60);
+}
+delete context.NM_W;
+const lexicalWidthContext=vm.createContext({});vm.runInContext(fs.readFileSync("cinematic_systems.js","utf8"),lexicalWidthContext);vm.runInContext("const NM_W=2400",lexicalWidthContext);
+assert.strictEqual(lexicalWidthContext.NM_W,undefined,"browser world width is lexical, not a window property");
+assert.strictEqual(lexicalWidthContext.TechOpsLevelRegistry.goodDogsMission(4).target,2200,"registry must resolve the width installed after parser-time initialization");
 assert.strictEqual(registry.resolveRuntimeContext({ nightMode: true }, { _v736: { m: 6 }, district: "downtown" }).levelId, "gooddogs.m6", "Good Dogs must outrank inherited Night context");
 assert.strictEqual(registry.resolveRuntimeContext({ nightMode: true }, { _sector04: true, district: "downtown" }).levelId, "day.sector04", "Sector 04 must outrank ordinary Night context");
 assert.strictEqual(registry.resolveRuntimeContext({ nightMode: true }, { district: "wooster", street: 2 }).levelId, "nightcrawler.wooster.2");

@@ -406,6 +406,20 @@ function newState() {
     map: null, inDialog: false, inBattle: false, gameOver: false, won: false,
   };
 }
+// Only the Night lifecycle can restore its isolated, validated world snapshot.
+// Keep lexical S assignment here, beside the canonical state constructor.
+window.TechOpsRestoreNightState = function(snapshot) {
+  if (!snapshot || !snapshot.meta || snapshot.meta._standaloneMode !== "nightcrawler" || !snapshot.nightMode) return false;
+  const previous = S;
+  try {
+    S = Object.assign(newState(), snapshot);
+    S.inDialog = false; S.inBattle = false; S.paused = false; S.moving = false;
+    $("title-screen").classList.add("hidden");
+    ["dialogue", "panel", "battle", "eod"].forEach(id => $(id).classList.add("hidden"));
+    showTouchUI(); initMusic(); updateHUD();
+    return S;
+  } catch (error) { S = previous; throw error; }
+};
 const save = () => {
   if (!S) return false;
   try {
@@ -420,6 +434,11 @@ const save = () => {
     const standaloneMode = S.meta && S.meta._standaloneMode;
     const standaloneNight = standaloneMode === "nightcrawler";
     const standaloneGoodDogs = standaloneMode === "gooddogs";
+    if (standaloneNight && window.TechOpsNightRuntime && window.TechOpsNightRuntime.saveCheckpoint) {
+      const saved = window.TechOpsNightRuntime.saveCheckpoint(S);
+      window.__techopsSaveError = saved ? null : "Night checkpoint was not saved";
+      return saved;
+    }
     localStorage.setItem(standaloneNight ? NIGHT_CRAWLER_SAVE_KEY : standaloneGoodDogs ? GOOD_DOGS_SAVE_KEY : "techops_save", payload);
     // The profile save remains backwards-compatible while a separate, plain-
     // data checkpoint makes CONTINUE resume the actual workday scene.
@@ -751,8 +770,7 @@ function setupDay() {
       { t: "Nightly backup failed at 04:05 AM", type: "backup" },
       { t: "Certificate expiry warning at 01:52 AM", type: "cert" },
     ]);
-    setTimeout(() => {
-      if (s.inBattle || eodOpen) return;
+    scheduleDayNotice(() => {
       const prepared = s.lab.includes("autosrv") || s.lab.includes("ai");
       const opts = [
         { t: "📱 Respond now — drive in, handle it (+8 stress, +1 rep, +5 XP)", f: () => {
@@ -790,7 +808,11 @@ function viewportSize() {
 }
 function resize() {
   const vp = viewportSize(), ar = vp.w / vp.h;
-  const renderH = Math.min(720, vp.h);
+  // Night/Good Dogs share a 430-unit floor. Keep a complete virtual scene on
+  // short landscape viewports, then project it uniformly through the CSS fit.
+  // Collision/world coordinates stay unchanged; Day's height/14 grid retains
+  // the same physical scale because both buffer dimensions share this ratio.
+  const renderH = Math.max(540, Math.min(720, vp.h));
   cv.height = Math.max(1, Math.round(renderH));
   cv.width = Math.max(1, Math.round(cv.height * ar));
   // CSS size owns the physical viewport. The intrinsic buffer stays capped for
@@ -1287,6 +1309,23 @@ function dayNotice(callback) {
     if (!state || S !== state || S.day !== day || (S._modeEpoch || 0) !== epoch || S.nightMode || window.__productionDesiredMode) return;
     return callback.apply(this, arguments);
   };
+}
+
+// Urgent day notices wait for the current scene to release its input. They
+// expire with their originating run/day/mode instead of replacing another
+// scene, disappearing during a short modal, or following a player into Night.
+function scheduleDayNotice(callback, delay) {
+  const state = S, day = state && state.day, epoch = state && state._modeEpoch || 0;
+  function attempt() {
+    if (!state || S !== state || S.day !== day || (S._modeEpoch || 0) !== epoch || S.nightMode || window.__productionDesiredMode || S.meta && S.meta._standaloneMode || S.gameOver) return;
+    const director = window.TechOpsPresentationDirector;
+    if (S.inDialog || S.inBattle || S.paused || typeof panelOpen !== "undefined" && panelOpen || typeof eodOpen !== "undefined" && eodOpen || window.document && window.document.hidden || director && director.isBlocking && director.isBlocking()) {
+      setTimeout(attempt, 250);
+      return;
+    }
+    callback();
+  }
+  setTimeout(attempt, delay);
 }
 
 // ---------- game loop ----------
@@ -2268,25 +2307,25 @@ function updateHUD() {
   const s = S; if (!s) return;
   $("hud-day").textContent = `DAY ${s.day}`;
   $("hud-title").textContent = rank().name;
-  $("hud-clock").textContent = fmtClock(s.clock) + (s.chaos ? " · " + s.chaos.name : "");
+  $("hud-clock").textContent = fmtClock(s.clock) + (s.chaos ? " · " + s.chaos.name.replace(/^[^\p{L}\p{N}]+/u, "") : "");
   const cur = rank(), ni = RANKS.indexOf(cur);
   const next = RANKS[ni + 1];
   $("bar-xp").style.width = next ? clamp((s.xp - cur.xp) / (next.xp - cur.xp) * 100, 0, 100) + "%" : "100%";
   $("bar-stress").style.width = s.stress + "%";
   $("hud-budget").textContent = "$" + s.budget;
-  $("hud-tickets").textContent = `🎫 ${s.ticketsDone}/${s.ticketsTotal}`;
+  $("hud-tickets").textContent = `Tickets ${s.ticketsDone}/${s.ticketsTotal}`;
   // digital twin: plant production rate dips while a line is down
   const lineDown = s.npcs && s.npcs.some(nn => nn.type && nn.type.id === "plc" && !nn.done);
   const prodEl = $("hud-prod");
   if (prodEl) {
-    prodEl.textContent = lineDown ? "🏭 $6,800/min ⚠️" : "🏭 $14,200/min";
+    prodEl.textContent = lineDown ? "Output $6,800/min !" : "Output $14,200/min";
     prodEl.style.color = lineDown ? "#ff6b6b" : "#7dd87d";
   }
   $("chaos-banner").classList.add("hidden"); // chaos now lives on the clock line
   const open = s.tickets.filter(t => !t.done);
   $("quest-tracker").innerHTML =
-    s.tickets.filter(t => t.done).map(t => `<div class="done">✅ ${t.type.label} (${t.dept})</div>`).join("") +
-    open.map(t => `<div>${t.critical ? "🚨" : "🎫"} ${t.type.label}${t.codename ? ` <span style="color:#ff9d4a">«${t.codename}»</span>` : ""} — ${t.name}, ${t.dept}${t.diagnosed ? " · find 🌀" : ""}${t.mishandled ? " ⚠️ botched" : (t.age || 0) >= 120 ? " 🔥" : (t.age || 0) >= 60 ? " ⏳" : ""}</div>`).join("");
+    s.tickets.filter(t => t.done).map(t => `<div class="done">Done · ${t.type.label} (${t.dept})</div>`).join("") +
+    open.map(t => `<div>${t.critical ? "! Critical ·" : "Ticket ·"} ${t.type.label}${t.codename ? ` <span style="color:#ff9d4a">«${t.codename}»</span>` : ""} — ${t.name}, ${t.dept}${t.diagnosed ? " · find portal" : ""}${t.mishandled ? " · botched" : (t.age || 0) >= 120 ? " · overdue" : (t.age || 0) >= 60 ? " · waiting" : ""}</div>`).join("");
   updateSweep();
 }
 

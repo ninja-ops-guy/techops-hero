@@ -21,20 +21,13 @@
   function visuals() { return root && root.TechOpsCampaignVisuals ? root.TechOpsCampaignVisuals : null; }
   function storage() { return root && root.localStorage ? root.localStorage : null; }
   function load() { return act1().load(storage()); }
-  function save(state) { act1().save(state, storage()); return state; }
+  function save(state) { if (act1().save(state, storage()) !== true) throw new Error("Campaign state was not saved"); return state; }
   function gs() { return root && root.S ? root.S : null; }
   function hasFn(name) { return root && typeof root[name] === "function"; }
   function close() { if (visuals()) visuals().hide(); if (hasFn("closeDlg")) root.closeDlg(); }
   function dlg(name, body, options) { if (!hasFn("dlg")) return false; root.dlg(name, body, options || []); return true; }
   function notify(message) { if (hasFn("toast")) root.toast(message, 3400); }
   function show(sceneId) { if (visuals()) visuals().show(sceneId); }
-  function trustApproach() {
-    try {
-      var value = gs() && gs().meta && gs().meta._v726racks;
-      return act2().TRUST_APPROACHES.indexOf(value) >= 0 ? value : null;
-    } catch (e) { return null; }
-  }
-
   function openTile(map, p) { return !!(map && map[p.y] && map[p.y][p.x] === 0); }
   function findSpot(map, fallback, used) {
     var p = { x: fallback.x, y: fallback.y };
@@ -73,7 +66,7 @@
     var state = load();
     var snap = act2().snapshot(state);
     if (snap.badgeClonerVerified) return dlg("BADGE CLONER // VERIFIED", "The cloned credential and the access audit disagree in a way they should not. The contradiction is preserved as evidence instead of being explained away.", [{ t: "Close", f: close }]);
-    return dlg("SECURITY LAB // BADGE CLONER", "A physical clone sits beside the reader. Same badge identity. Different history. The audit says Mike used Sector 04 at 02:13.<br><br>This scene is staged as a real investigation: artifact on the bench, controller history on the wall display, Mike and Security Ops facing the same evidence.", [
+    return dlg("SECURITY LAB // BADGE CLONER", "A physical clone sits beside the reader. Same badge identity. Different history. The audit says Mike used Sector 04 at 02:13.<br><br>Security Ops: “I can prove the reader accepted this identity. I can't prove you were the person holding it.”<br><br>Compare the artifact with the controller's record before drawing a conclusion.", [
       { t: "Compare physical badge to audit", f: function () { var s = load(); act2().recordBadgeClonerEvidence(s, { physicalArtifact: true, auditContradiction: true, perspective: "firsthand", reliability: "high" }); save(s); notify("Evidence +2 // ghost identity established"); badgeCloner(); } },
       { t: "Leave evidence untouched", f: close }
     ]);
@@ -85,8 +78,8 @@
     var snap = act2().snapshot(state);
     if (snap.violinistRevealed) return trustIsEarned();
     if (!snap.badgeClonerVerified) return dlg("CONNECTOR HALL", "Felicia is here in daylight, but Mike does not yet have enough context to turn this into an interrogation. The encounter stays social until the badge contradiction is established.", [{ t: "Keep it professional", f: close }]);
-    if (snap.feliciaDaylightConversation) return dlg("FELICIA", "The first conversation is already in the record. Trust and evidence remain separate systems.", [{ t: "Continue", f: close }]);
-    return dlg("FELICIA // DAYLIGHT", "The references frame this as a grounded first meeting, not a boss reveal: bright industrial glass, aircraft structure behind her, normal workday posture, and no Night Walker title card.<br><br>Felicia: “You look like you found something that doesn't fit.”", [
+    if (snap.feliciaDaylightConversation) return dlg("FELICIA", "Felicia glances toward the trace bay.<br><br>“A good question deserves a good record. Start with what those systems are actually sending.”<br><br>Next: review the telemetry at the Trace Console.", [{ t: "Continue", f: close }]);
+    return dlg("FELICIA // DAYLIGHT", "Felicia pauses beside the glass overlooking the aircraft floor. Mike recognizes her from the company video.<br><br>Felicia: “You look like you found something that doesn't fit.”", [
       { t: "Professional — ask about systems integration", f: function () { var s = load(); act2().firstDaylightFeliciaConversation(s, { approach: "professional" }); save(s); notify("Trust +2"); close(); } },
       { t: "Curious — ask what she works on", f: function () { var s = load(); act2().firstDaylightFeliciaConversation(s, { approach: "curious" }); save(s); notify("Trust +1"); close(); } },
       { t: "Accuse her of knowing more", f: function () { var s = load(); act2().firstDaylightFeliciaConversation(s, { approach: "accusatory" }); save(s); notify("Trust -1"); close(); } }
@@ -94,67 +87,90 @@
   }
 
   function commitTrustApproach(approach) {
-    var state = load();
-    act2().recordTrustInvestigation(state, { approach: approach });
-    save(state);
-    return trustIsEarned();
+    return trustAction(function (state) { act2().recordTrustInvestigation(state, { approach: approach }); });
+  }
+
+  function trustAction(action, feedback) {
+    try {
+      var state = load();
+      action(state);
+      save(state);
+      if (feedback) return dlg("TRUST IS EARNED // FINDING", feedback, [{ t: "Continue investigation", f: trustIsEarned }, { t: "Return to the floor", f: close }]);
+      return trustIsEarned();
+    } catch (error) {
+      return trustRecovery();
+    }
+  }
+
+  function trustRecovery() {
+    return dlg("TRUST IS EARNED // REVIEW CURRENT STEP", "This action could not be recorded. Your last saved investigation is still available. Review it before continuing.", [{ t: "Review saved investigation", f: trustIsEarned }, { t: "Return to the floor", f: close }]);
   }
 
   function beginTrustIsEarned() {
-    var state = load();
-    act2().beginTrustInvestigation(state);
-    save(state);
-    close();
-    var cinematic = root && root.v725;
-    if (cinematic && typeof cinematic.play === "function" && cinematic.cines && cinematic.cines.indexOf("racks") >= 0) {
-      var played = cinematic.play("racks", function () {
-        var approach = trustApproach();
-        if (approach) {
-          var fresh = load();
-          act2().recordTrustInvestigation(fresh, { approach: approach });
-          save(fresh);
-        }
-        trustIsEarned();
-      });
-      if (played) return true;
-    }
-    return trustIsEarned();
+    // The historical racks movie assigns an enemy and toolkit before evidence.
+    // This canonical scene keeps the response decision in the investigation.
+    return trustAction(function (state) { act2().beginTrustInvestigation(state); });
   }
 
   function completeTrustIsEarned() {
-    var state = load();
-    act2().completeTrustReport(state, { reported: true, sharedOwnership: true });
-    save(state);
-    notify("TRUST IS EARNED // Felicia alliance established");
-    return trustIsEarned();
+    return trustAction(function (state) { act2().completeTrustReport(state, { reported: true, sharedOwnership: true }); });
+  }
+
+  function reviewTrustEvidence() {
+    var state = load(), trust = act2().ensure(state).trustEarned;
+    var body = act2().TRUST_EVIDENCE.filter(function (item) { return trust.observations.some(function (seen) { return seen.id === item.id; }); }).map(function (item) { return "<b>" + item.label + "</b><br>" + item.text; }).join("<br><br>");
+    return dlg("TRUST IS EARNED // FIELD NOTES", (body || "No observations have been recorded yet.") + "<br><br><b>Next:</b> " + act2().trustObjective(state), [{ t: "Resume current step", f: trustIsEarned }, { t: "Return to the floor", f: close }]);
   }
 
   function trustIsEarned() {
     show("morningstar_trace");
     var state = load(), snap = act2().snapshot(state), trust = snap.trustIsEarned;
     if (trust.completed || state.story && state.story.completedActs && state.story.completedActs.indexOf("act_4") >= 0) {
-      return dlg("TRUST IS EARNED // ALLIANCE", "The unauthorized traffic finding, the report, and shared ownership are in the record. Felicia opens the MORNINGSTAR hangar ledger. The alliance is earned; it is not a combat reward.", [{ t: "Continue", f: close }]);
+      var outcome = trust.requesterVerified && trust.response ? "Felicia: “You kept the line running. You kept the evidence. And you told me what you still couldn't prove.”<br><br>The report names Mike as response owner and Felicia as verification partner. Inspection has its acknowledgement. " + trust.response.consequence : "The previously recorded alliance and hangar access remain available. This older report has no separate Inspection verification record.";
+      return dlg("TRUST IS EARNED // ALLIANCE", outcome + "<br><br>Felicia opens the MORNINGSTAR hangar ledger.", [{ t: "Review the field notes", f: reviewTrustEvidence }, { t: "Continue", f: close }]);
     }
     if (!snap.trustIsEarnedEligible && trust.stage === "locked") {
       return dlg("TRUST IS EARNED // LOCKED", "Parts in Motion must be resolved before Mike can ask Felicia for the whole story.", [{ t: "Back", f: close }]);
     }
     if (trust.stage === "locked") {
-      return dlg("TRUST IS EARNED", "A sealed rack panel is carrying unauthorized internal traffic.<br><br>Felicia: “Trust is earned. And you haven't earned the whole story.”<br><br>Mike can investigate the traffic with her, preserve what they verify, and report the result before either of them claims an alliance.", [
+      return dlg("TRUST IS EARNED", "Inspection cannot release its next part: results are submitted, but acknowledgement never arrives. A sealed rack is carrying unauthorized internal traffic.<br><br>Felicia: “Trust is earned. And you haven't earned the whole story.”<br><br>Mike: “Then let's start with the person waiting on us.”", [
         { t: "Investigate the unauthorized traffic together", f: beginTrustIsEarned },
         { t: "Back", f: close }
       ]);
     }
     if (trust.stage === "investigate") {
-      return dlg("TRUST IS EARNED // INVESTIGATE", "UNAUTHORIZED TRAFFIC DETECTED — SOURCE: INTERNAL.<br><br>The choice changes the response, but no choice becomes an alliance until Mike and Felicia report the verified finding together.", [
+      return dlg("TRUST IS EARNED // INVESTIGATE", "Felicia: “Trace it, contain it, or ask the people who touched it. But keep Inspection online.”<br><br>Choose a response plan. Each plan still needs observations, a supported conclusion, and confirmation from Inspection.<br><br>Response owner: Mike. Verification partner: Felicia.", [
         { t: "Trace the source", f: function () { commitTrustApproach("trace"); } },
         { t: "Contain the breach", f: function () { commitTrustApproach("contain"); } },
-        { t: "Confront the source", f: function () { commitTrustApproach("confront"); } }
+        { t: "Confront the source", f: function () { commitTrustApproach("confront"); } },
+        { t: "Return to the floor", f: close }
       ]);
     }
-    return dlg("TRUST IS EARNED // REPORT", "The internal traffic path is verified. Evidence and trust remain separate: the next step is to put the finding in the record and agree who owns the response.", [
-      { t: "Report the finding and share ownership", f: completeTrustIsEarned },
-      { t: "Review the evidence again", f: close }
-    ]);
+    var body = "<b>Next:</b> " + snap.trustObjective + "<br><br>Response owner: Mike. Verification partner: Felicia.<br>Observations: " + trust.observations.length + "/3. Technical check: " + (trust.technicalVerified ? "confirmed" : "pending") + ". Inspection confirmation: " + (trust.requesterVerified ? "confirmed" : "pending") + ".";
+    var options = [], title = trust.stage.replace(/_/g, " ").toUpperCase();
+    if (trust.stage === "observe") {
+      act2().TRUST_EVIDENCE.filter(function (item) { return !trust.observations.some(function (seen) { return seen.id === item.id; }); }).forEach(function (item) {
+        options.push({ t: item.label, f: function () { trustAction(function (fresh) { act2().observeTrustEvidence(fresh, item.id); }, item.text); } });
+      });
+    } else if (trust.stage === "hypothesize") {
+      body += "<br><br>Felicia: “Say what the records support. Leave the rest open.”";
+      act2().TRUST_HYPOTHESES.filter(function (item) { return trust.ruledOut.indexOf(item.id) < 0; }).forEach(function (item) {
+        options.push({ t: item.label, f: function () { trustAction(function (fresh) { act2().evaluateTrustHypothesis(fresh, item.id); }, item.feedback); } });
+      });
+    } else if (trust.stage === "respond") {
+      var response = act2().TRUST_RESPONSES[trust.investigation.approach];
+      body += "<br><br>" + response.text;
+      options.push({ t: response.label, f: function () { trustAction(function (fresh) { act2().applyTrustResponse(fresh); }); } });
+    } else if (trust.stage === "technical_verify") {
+      options.push({ t: "Recheck the traffic and live service", f: function () { trustAction(function (fresh) { act2().verifyTrustResponse(fresh, "technical"); }, "The repeated copies have stopped. Inspection still answers over its live route.<br><br>Felicia: “That's the system. Now ask the person.”"); } });
+    } else if (trust.stage === "requester_verify") {
+      options.push({ t: "Have Inspection submit and confirm a real result", f: function () { trustAction(function (fresh) { act2().verifyTrustResponse(fresh, "requester"); }, "The operator submits the waiting inspection result, receives the acknowledgement, and releases the part.<br><br>Inspection: “That's the one I needed. Thank you.”<br><br>The service outcome is confirmed. The records still do not prove who left the mirror active or why."); } });
+    } else if (trust.stage === "report") {
+      body += "<br><br>The report records the expired mirror, the preserved observations, the verified inspection task, and the unanswered question of intent. Mike owns the response; Felicia corroborates the result.";
+      options.push({ t: "Report the finding and share ownership", f: completeTrustIsEarned });
+    }
+    options.push({ t: "Review the field notes", f: reviewTrustEvidence }, { t: "Return to the floor", f: close });
+    return dlg("TRUST IS EARNED // " + title, body, options);
   }
 
   function morningstarTrace() {
@@ -164,7 +180,7 @@
     if (!snap.feliciaDaylightConversation) return dlg("TRACE BAY // LOCKED CONTEXT", "Mike has traces, but not the human context to interpret them yet. Talk to Felicia in daylight first.", [{ t: "Back", f: close }]);
     var p1 = act2().ensure(state);
     if (p1.morningstar.signatureFound) return dlg("MORNINGSTAR // COMPONENT LEDGER", "A verified systems signature now exists. It is not an aircraft unlock. It is a component-level trace with provenance.<br><br>Verified components: " + Object.keys(p1.morningstar.components).filter(function (k) { return p1.morningstar.components[k].verified; }).join(", ").toUpperCase(), [{ t: "Back", f: close }]);
-    return dlg("TRACE BAY // MORNINGSTAR", "Telemetry fragments repeat across systems that should not share a control plane. The visual presentation uses the same layered industrial look as the references: rack silhouettes, green telemetry grid, Mike physically standing in front of the trace instead of reading a detached lore menu.", [
+    return dlg("TRACE BAY // MORNINGSTAR", "Telemetry fragments repeat across systems that should not share a control plane. Mike compares their timing against the rack's local record.<br><br>A name recurs in the component metadata: MORNINGSTAR.<br><br>A repeated name is a lead. A matching record can establish a signature.", [
       { t: "Verify telemetry signature", f: function () { var s = load(); act2().recordMorningstarTrace(s, { component: "telemetry", source: "trace_bay_telemetry_bus", verified: true }); save(s); notify("MORNINGSTAR telemetry trace verified"); morningstarTrace(); } },
       { t: "Log unverified compute trace", f: function () { var s = load(); act2().recordMorningstarTrace(s, { component: "compute", source: "trace_bay_compute_bus", verified: false }); save(s); notify("Trace logged — not yet verified"); morningstarTrace(); } },
       { t: "Back", f: close }
@@ -175,16 +191,16 @@
     show("rooftop_violin");
     var state = load();
     var snap = act2().snapshot(state);
-    if (!snap.morningstarSignatureFound) return dlg("ROOFTOP ACCESS", "The rooftop signal is visible, but Mike cannot connect it to MORNINGSTAR without a verified trace. The game does not reward sequence-breaking with a premature reveal.", [{ t: "Return downstairs", f: close }]);
-    if (!snap.rooftopViolinVerified) return dlg("ROOFTOP // SIGNAL", "Night skyline. Layered parallax. Utility cables crossing the frame. Felicia holds the far side of the composition with the violin while Mike enters from the opposite edge.<br><br>The signal blooms around each sustained note instead of turning the scene into a static dialogue box.", [
+    if (!snap.morningstarSignatureFound) return dlg("ROOFTOP ACCESS", "A signal flickers above the rooftop, but Mike has nothing reliable to compare it with.<br><br>Next: verify the MORNINGSTAR telemetry signature at the Trace Console.", [{ t: "Return downstairs", f: close }]);
+    if (!snap.rooftopViolinVerified) return dlg("ROOFTOP // SIGNAL", "A violin note carries across the roof. The signal rises with it, then falls into the silence.<br><br>Mike watches the next note against the verified telemetry timing. One coincidence would not be enough.", [
       { t: "Observe signal timing", f: function () { var s = load(); act2().recordRooftopViolinEvidence(s, { signalObserved: true, corroborated: true, perspective: "firsthand" }); save(s); notify("Rooftop violin signal corroborated"); rooftop(); } },
       { t: "Leave before drawing a conclusion", f: close }
     ]);
     if (!snap.violinistRevealEligible) return dlg("ROOFTOP // INCOMPLETE", "The signal is real, but Mike is still missing one or more prerequisites. Evidence does not become identity by proximity.", [{ t: "Back", f: close }]);
-    if (!snap.violinistRevealed) return dlg("THE VIOLINIST", "The same woman Mike met in daylight now occupies the operational silhouette he has been chasing at night. The reveal lands because the player has already seen both halves separately.", [
+    if (!snap.violinistRevealed) return dlg("THE VIOLINIST", "The final note fades. She lowers the violin and turns.<br><br>Mike: “Felicia?”<br><br>Felicia: “You followed the signal.”<br><br>The woman from the connector hall. The silhouette from Sector 04. For the first time, Mike can place them together.", [
       { t: "Recognize Felicia", f: function () { var s = load(); act2().revealViolinist(s); save(s); notify("PARTS IN MOTION unlocked"); rooftop(); } }
     ]);
-    return dlg("PARTS IN MOTION", "The Violinist reveal is complete. Evidence and Trust remain independent going forward.", [{ t: "Continue", f: close }]);
+    return dlg("PARTS IN MOTION", "Felicia puts the violin away.<br><br>“You know who I am. That doesn't mean you know what I'm doing.”<br><br>Next: talk with Felicia in the connector hall about the unauthorized traffic.", [{ t: "Continue", f: close }]);
   }
 
   function interactionFor(npc) {

@@ -1,13 +1,15 @@
-/* TechOps Hero — Good Boys legacy HUD filter v2.
+/* TechOps Hero — Good Boys legacy HUD filter v3.
  * Loaded before the production compositor captures the parser Night draw chain.
  * Preserves all v7.36 world/combat rendering while suppressing only its old
  * duplicate duo HUD and the shared Night Crawler status bars once the final
- * single-HUD authority is active. The center objective message is preserved.
+ * single-HUD authority is active. Unique center messages remain visible;
+ * only exact repeated briefing/objective strings lose the competing strip.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysLegacyHudFilter)return;
-  var VERSION=2,base=null,installed=false,suppressed=0;
+  var VERSION=3,base=null,installed=false,suppressed=0;
+  var REPEATED_BRIEFING=Object.freeze({4:"VERIFY THE PRISONER IN CELL 118",6:"WALDO IS IN CELL 1984",7:"REACH THE MAINTENANCE SHUTTLE"});
   function active(){try{return !!(root.__goodBoysHudLiteInstalled&&root.NM&&root.NM._v736&&root.ctx);}catch(e){return false;}}
   function near(a,b,t){return Math.abs(Number(a)-Number(b))<=(t==null?.75:t);}
   function install(){
@@ -20,8 +22,22 @@
         if(!active())return base.apply(this,arguments);
         var x=root.ctx;if(!x)return base.apply(this,arguments);
         var W=x.canvas&&x.canvas.width||0;
+        var n=root.NM,c=n._v736,guide=null,messageLines=null,messageY=0,msgFont=W<620?10:13;
+        try{guide=root.TechOpsGameplayExperience&&root.TechOpsGameplayExperience.objective(n);}catch(_){}
+        var sameMission=guide&&Number(guide.mission)===Number(c.m),duplicateMessage=!!(sameMission&&(n.msg===guide.text||n.msg===REPEATED_BRIEFING[c.m]));
+        var duplicateDecrypt=!!(sameMission&&Number(c.m)===6&&guide.phase==="decrypt"&&Number(c.decrypt)>0);
+        var cell=null;try{var staging=root.TechOpsOrbitalStaging,art=root.TechOpsArtHandoff,registry=root.TechOpsLevelRegistry;if(Number(c.m)===4&&c.evidence&&!c.cellOpened&&staging&&staging.profile(n)&&art&&art.image('prison')&&registry&&registry.goodDogsCell118)cell=registry.goodDogsCell118();}catch(_){}
         var oFillRect=x.fillRect,oStrokeRect=x.strokeRect,oFillText=x.fillText,oDrawImage=x.drawImage;
+        function blockObjectiveRect(a,b,w,h){
+          if(!duplicateMessage||typeof x.measureText!=="function"||!near(w,Math.min(520,W-16))||!near(a,(W-w)/2)||![96,142,170].some(function(y){return near(b,y);}))return false;
+          var lines=[];String(n.msg||"").split(/\s+/).forEach(function(word){var last=lines.length-1,trial=last<0?word:lines[last]+" "+word;if(last<0||x.measureText(trial).width>w-18)lines.push(word);else lines[last]=trial;});
+          if(lines.length>3){lines.length=3;lines[2]=lines[2].replace(/[.…]*$/,"…");}
+          if(!near(h,12+lines.length*(msgFont+4)))return false;messageLines=lines;messageY=b;return true;
+        }
         function blockRect(a,b,w,h){
+          if(blockObjectiveRect(a,b,w,h))return true;
+          if(duplicateDecrypt&&((near(a,W/2-150)&&near(b,136)&&near(w,300)&&near(h,20))||(near(a,W/2-146)&&near(b,140)&&near(w,292*(1-c.decrypt/60))&&near(h,12))))return true;
+          if(cell&&near(a,cell.entranceX-(n.cam||0))&&near(b,(root.NM_FLOOR||430)-160)&&near(w,90)&&near(h,160))return true;
           /* responsive shared HUD cards used below 620px */
           if(b<=10&&h>=60&&w>=130)return true;
           if(b>=12&&b<=46&&h<=11&&w<=170)return true;
@@ -44,6 +60,9 @@
         }
         function blockText(text,a,b){
           var s=String(text||"");
+          if(messageLines&&near(a,W/2)&&messageLines.some(function(line,i){return s===line&&near(b,messageY+10+(i+1)*(msgFont+3));}))return true;
+          if(duplicateDecrypt&&s==="K DECRYPTING CELL 1984 — "+Math.ceil(c.decrypt)+"s"&&near(a,W/2)&&near(b,150))return true;
+          if(cell&&s==="CELL 118"&&near(a,cell.labelX-(n.cam||0))&&near(b,(root.NM_FLOOR||430)-172))return true;
           if(b<90&&(s==="HP"||s==="FOCUS"||s==="DANGER"||/^\$/.test(s)||/^COMBO\s×/.test(s)||/^×\d+/.test(s)))return true;
           if(W&&a>=W*.48&&b<90)return true;
           if(a<=220&&b>=98&&b<=136&&(/^(?:▶\s*)?(?:KATRIN|MANCHEZ)$/.test(s)||/^DOWN\s/.test(s)||s==="OUT"))return true;

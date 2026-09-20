@@ -60,7 +60,7 @@ jobs:
   browser:
     name: Browser acceptance
     runs-on: macos-14
-    timeout-minutes: 24
+    timeout-minutes: 30
     env:
       BOT_CHROMIUM_CHANNEL: chrome
       BOT_BASE_URL: http://127.0.0.1:4173/
@@ -103,6 +103,27 @@ jobs:
         run: |
           set -euo pipefail
           timeout 180s npm run test:browser:revision
+      - name: Input and interrupted-run acceptance
+        env:
+          QUALITY_BASE_URL: http://127.0.0.1:4173/
+          QUALITY_OUT_DIR: runtime-bot-artifacts/quality
+        run: |
+          set -euo pipefail
+          timeout 240s npm run test:browser:quality
+      - name: Responsive presentation acceptance
+        env:
+          PRESENTATION_BASE_URL: http://127.0.0.1:4173/
+          PRESENTATION_OUT_DIR: runtime-bot-artifacts/presentation-quality
+        run: |
+          set -euo pipefail
+          timeout 180s npm run test:browser:presentation
+      - name: Act IV investigation acceptance
+        env:
+          ACT4_BASE_URL: http://127.0.0.1:4173/
+          ACT4_OUT_DIR: runtime-bot-artifacts/act4-quality
+        run: |
+          set -euo pipefail
+          timeout 180s npm run test:browser:act4
       - name: Night lifecycle acceptance
         run: |
           set -euo pipefail

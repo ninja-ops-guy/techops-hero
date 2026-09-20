@@ -5,10 +5,10 @@
   'use strict';
   if(!root||root.TechOpsOrbitalStaging)return;
   var PROFILES=Object.freeze({
-    4:Object.freeze({id:'detention',accent:'#55dfff',shadow:'#071321',pipe:6}),
-    5:Object.freeze({id:'access-core',accent:'#22c55e',shadow:'#071811',pipe:6}),
-    6:Object.freeze({id:'surveillance',accent:'#ff475d',shadow:'#1a080f',pipe:6}),
-    7:Object.freeze({id:'shuttle-bay',accent:'#f5b544',shadow:'#1a1022',pipe:7})
+    4:Object.freeze({id:'detention',accent:'#55dfff',shadow:'#071321',pipe:6,section:'DETENTION / 118'}),
+    5:Object.freeze({id:'access-core',accent:'#22c55e',shadow:'#071811',pipe:6,section:'ORPHEUS / CORE'}),
+    6:Object.freeze({id:'surveillance',accent:'#ff475d',shadow:'#1a080f',pipe:6,section:'SURVEILLANCE / 1984'}),
+    7:Object.freeze({id:'shuttle-bay',accent:'#f5b544',shadow:'#1a1022',pipe:7,section:'SERVICE / SHUTTLE'})
   });
   function profile(n){
     var c=n&&n._v736,m=c&&Number(c.m),s=root.S;
@@ -25,6 +25,9 @@
     function add(frame,x,height,depth,y,alpha){if(Number.isFinite(x))items.push({frame:frame,x:x,height:height,depth:depth,y:y||0,alpha:alpha==null?1:alpha});}
     // Subtle far/mid service runs connect the same architecture across scenes.
     add(p.pipe,360,90,.28,-185,.28);add(p.pipe,980,108,.55,-175,.48);add(p.pipe,1580,88,.55,-195,.40);
+    // Approved service-balcony and cargo silhouettes sit well behind the
+    // traversable plane. Their subdued treatment does not advertise new ledges.
+    add(4,320,46,.28,-204,.28);add(10,1160,54,.55,-16,.32);
     if(c.m===4){
       var clues=Array.isArray(c.evidence)?c.evidence:null;
       if(clues)clues.slice(0,4).forEach(function(e){if(e)add(8,e.x,72,1,0,e.found?.45:1);});
@@ -48,19 +51,41 @@
     var p=profile(n),art=root.TechOpsArtHandoff;
     // Keep the original generated fallback until the real source has decoded.
     if(!p||!ctx||!ctx.canvas||!art||!art.image||!art.image('prison'))return false;
-    var W=ctx.canvas.width,H=ctx.canvas.height,F=430,cam=Number(n.cam)||0;
+    var W=ctx.canvas.width,H=ctx.canvas.height,F=Number.isFinite(root.NM_FLOOR)?root.NM_FLOOR:430,cam=Number(n.cam)||0;
     ctx.save();try{
-      ctx.globalAlpha=1;ctx.fillStyle=p.shadow;ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='#030810';ctx.fillRect(0,80,W,64);
-      var drift=((cam*.28)%216+216)%216;
-      for(var x=-drift;x<W+216;x+=216){
-        ctx.fillStyle='#13212d';ctx.fillRect(Math.round(x)+6,145,204,F-145);
-        ctx.fillStyle=p.shadow;ctx.fillRect(Math.round(x)+10,149,196,F-153);
-        ctx.fillStyle='#213645';ctx.fillRect(Math.round(x)+8,147,2,F-151);
-        ctx.globalAlpha=.30;ctx.fillStyle=p.accent;ctx.fillRect(Math.round(x)+28,159,52,2);ctx.globalAlpha=1;
-        ctx.fillStyle='#070c13';ctx.fillRect(Math.round(x)+26,194,162,99);
-        ctx.fillStyle=p.id==='shuttle-bay'?'#02040b':'#0b151f';ctx.fillRect(Math.round(x)+30,198,154,91);
+      ctx.globalAlpha=1;ctx.fillStyle='#040b13';ctx.fillRect(0,0,W,H);
+      if(ctx.createLinearGradient){var wash=ctx.createLinearGradient(0,96,0,F);wash.addColorStop(0,'#14242e');wash.addColorStop(.50,p.shadow);wash.addColorStop(1,'#111b24');ctx.fillStyle=wash;ctx.fillRect(0,96,W,Math.max(0,F-96));}
+      // Deep recessed bays, beveled pressure ribs and a continuous ceiling
+      // cable tray replace the repeated flat boxes. Parallax stays decorative.
+      var bay=320,drift=((cam*.28)%bay+bay)%bay,top=Math.max(104,F-314),base=F-24;
+      for(var x=-drift;x<W;x+=bay){
+        x=Math.round(x);var left=x+26,right=x+bay-26;
+        ctx.globalAlpha=1;ctx.fillStyle='#09121c';ctx.fillRect(left,top+32,right-left,base-top-32);
+        ctx.fillStyle='#17232d';ctx.fillRect(left+8,top+40,right-left-16,8);
+        ctx.fillStyle='#030913';ctx.fillRect(left+12,top+54,right-left-24,126);
+        // M7 reads as an exterior service aperture; the other blocks retain
+        // opaque detention glass and vertical containment fins.
+        if(p.id==='shuttle-bay'){
+          ctx.fillStyle='#8392a9';ctx.globalAlpha=.34;
+          for(var s=0;s<7;s++)ctx.fillRect(left+20+(s*53%222),top+64+(s*29%106),s%3===0?2:1,1);
+          ctx.fillStyle='#1b2b40';ctx.globalAlpha=.8;ctx.fillRect(left+12,top+151,right-left-24,29);
+          ctx.fillStyle='#3b5365';ctx.globalAlpha=.32;ctx.fillRect(left+12,top+151,right-left-24,2);
+        }else{
+          ctx.fillStyle=p.accent;ctx.globalAlpha=.055;ctx.fillRect(left+12,top+54,right-left-24,126);
+          ctx.fillStyle='#263342';ctx.globalAlpha=.85;
+          for(var sl=left+30;sl<right-12;sl+=46)ctx.fillRect(sl,top+54,p.id==='detention'?4:9,126);
+        }
+        ctx.globalAlpha=.35;ctx.fillStyle=p.accent;ctx.fillRect(left+18,top+29,62,2);
+        ctx.globalAlpha=.75;ctx.fillStyle='#283a46';ctx.beginPath();ctx.moveTo(x+3,base);ctx.lineTo(x+3,top+32);ctx.lineTo(x+27,top+8);ctx.lineTo(x+bay-27,top+8);ctx.lineTo(x+bay-3,top+32);ctx.lineTo(x+bay-3,base);ctx.lineTo(x+bay-14,base);ctx.lineTo(x+bay-14,top+38);ctx.lineTo(x+bay-34,top+20);ctx.lineTo(x+34,top+20);ctx.lineTo(x+14,top+38);ctx.lineTo(x+14,base);ctx.closePath();ctx.fill();
+        ctx.fillStyle='#547080';ctx.globalAlpha=.35;ctx.fillRect(x+4,top+40,2,Math.max(0,base-top-40));
+        ctx.globalAlpha=.6;ctx.fillStyle='#0a111b';ctx.fillRect(left,base-39,right-left,34);
+        ctx.globalAlpha=.22;ctx.fillStyle='#67818e';ctx.fillRect(left+8,base-33,right-left-16,1);
+        // Practical light pools are static: no flashing or time-based camera
+        // motion, and the clear actor plane retains its strongest contrast.
+        ctx.globalAlpha=.045;ctx.fillStyle=p.accent;ctx.beginPath();ctx.moveTo(left+22,top+32);ctx.lineTo(left+80,top+32);ctx.lineTo(left+120,base);ctx.lineTo(left-14,base);ctx.closePath();ctx.fill();
       }
+      ctx.globalAlpha=1;ctx.fillStyle='#040a11';ctx.fillRect(0,88,W,18);ctx.fillStyle='#263844';ctx.fillRect(0,105,W,2);
+      ctx.fillStyle='#718b98';ctx.globalAlpha=.50;ctx.font='bold 9px monospace';ctx.textAlign='left';ctx.fillText(p.section,16,122);
       ctx.fillStyle='#02070c';ctx.fillRect(0,F-18,W,18);
       ctx.globalAlpha=.45;ctx.fillStyle=p.accent;ctx.fillRect(0,F-18,W,2);
     }finally{ctx.restore();}
@@ -74,14 +99,20 @@
     ctx.save();
     try{
       if(pass==='back'){
-        // Long structural ribs establish depth; all render behind the actor pass.
-        var drift=((cam*.28)%240+240)%240;
-        ctx.fillStyle=p.shadow;ctx.globalAlpha=.62;
-        for(var x=-drift;x<W+240;x+=240){ctx.fillRect(Math.round(x),F-246,9,232);ctx.fillRect(Math.round(x+9),F-246,118,6);}
         scene.items.forEach(function(item){
           var sx=item.x-cam*item.depth;if(sx<-240||sx>W+240)return;
           ctx.globalAlpha=1;requested++;
           if(drawFrame(ctx,'prison',item.frame,Math.round(sx),F+item.y,item.height,false,item.alpha))ready++;
+        });
+        // Structural supports share the existing platform coordinates. Nothing
+        // here creates a platform, alters collisions or moves an interaction.
+        ctx.globalAlpha=.45;
+        (n.platforms||[]).slice(0,16).forEach(function(platform){
+          var px=Number(platform.x)-cam,py=Number(platform.y),pw=Number(platform.w);
+          if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(pw)||pw<24||py>=F-12||px+pw<0||px>W)return;
+          var height=F-py-12;ctx.fillStyle='#0c1721';ctx.fillRect(px+8,py+12,10,height);ctx.fillRect(px+pw-18,py+12,10,height);
+          ctx.fillStyle='#46606d';ctx.fillRect(px+8,py+12,1,height);ctx.fillRect(px+pw-18,py+12,1,height);
+          ctx.fillStyle='#21323d';ctx.fillRect(px+8,py+26,Math.max(0,pw-26),4);
         });
         ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.globalAlpha=.26;
         ctx.beginPath();ctx.moveTo(0,F-8);ctx.lineTo(W,F-8);ctx.stroke();
@@ -96,13 +127,15 @@
         for(var lx=-((cam*1.18)%112);lx<W;lx+=112)ctx.fillRect(Math.round(lx),F+5,32,2);
       }
     }finally{ctx.restore();}
-    root.__orbitalStagingEvidence={version:1,level:scene.id,mission:scene.mission,profile:p.id,pass:pass,opened:opened,requested:requested,decodedDraws:ready,source:'approved-prison-atlas',collisionOwned:false,finalArt:false};
+    root.__orbitalStagingEvidence={version:2,level:scene.id,mission:scene.mission,profile:p.id,pass:pass,opened:opened,requested:requested,decodedDraws:ready,source:'approved-prison-atlas',collisionOwned:false,finalArt:false};
     return true;
   }
   function drawLandmark(ctx,n,l){
     var p=profile(n);if(!p||!l||!Number.isFinite(l.x)||!ctx||!ctx.canvas)return false;
     var W=ctx.canvas.width,cam=Number(n.cam)||0,x=l.x-cam,F=Number.isFinite(root.NM_FLOOR)?root.NM_FLOOR:430;
-    if(x<-100||x>W+100)return true;
+    // Offscreen labels must not be clamped onto the edge as though the target
+    // were inside the viewport. The objective HUD owns offscreen guidance.
+    if(x<12||x>W-12)return true;
     // Do not re-cover the approved source with the old generic opaque rectangles.
     var text=String(l.label||''),c=n._v736,s=root.S.meta&&root.S.meta._v736;
     if(l.kind==='k'&&!(s&&s.k))text='PRISONER';
@@ -118,5 +151,5 @@
       ctx.globalAlpha=.6;ctx.fillRect(Math.round(x)-6,F-183,12,2);
     }finally{ctx.restore();}return true;
   }
-  root.TechOpsOrbitalStaging={VERSION:1,PROFILES:PROFILES,profile:profile,layout:layout,drawBackdrop:drawBackdrop,draw:draw,drawLandmark:drawLandmark};
+  root.TechOpsOrbitalStaging={VERSION:2,PROFILES:PROFILES,profile:profile,layout:layout,drawBackdrop:drawBackdrop,draw:draw,drawLandmark:drawLandmark};
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -1,18 +1,19 @@
-/* TechOps Hero — Good Boys mobile launch guard v7.
+/* TechOps Hero — Good Boys mobile launch guard v8.
  * Production authority for iOS/Safari Good Boys launch sequencing.
  * Wrapper installation is one-shot. The watchdog refreshes only state/UI helpers
  * and never invokes feature tick() methods that can recursively re-wrap drawNM.
  * v7 treats every authored Good Boys cinematic as a hard handoff blocker so
  * Night cannot be primed underneath the campaign director's story sequence.
+ * v8 restores the touch owners before a synchronous playable start returns.
  */
 (function(root){
   "use strict";
   if(!root)return;
   var PRIOR=root.TechOpsGoodBoysMobileLaunchGuard;
-  if(PRIOR&&Number(PRIOR.VERSION||0)>=7)return;
+  if(PRIOR&&Number(PRIOR.VERSION||0)>=8)return;
   try{if(PRIOR&&PRIOR.timer&&root.clearInterval)root.clearInterval(PRIOR.timer);}catch(e){}
 
-  var VERSION=7,timer=null,launchToken=0;
+  var VERSION=8,timer=null,launchToken=0;
   var pending={id:null,cb:null},launchIntent=null;
 
   function state(){try{return (typeof S!=="undefined"&&S)?S:(root.S||null);}catch(e){return root.S||null;}}
@@ -42,13 +43,21 @@
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
   }
   function clearRecovery(){try{var o=root.document&&root.document.getElementById("good-boys-mobile-recovery");if(o)o.remove();}catch(e){}}
-  function markSuccess(id,recovered){launchIntent=null;setGenericShellHidden(false);clearRecovery();root.__goodBoysCoreBroken=null;root.__goodBoysMobileLaunchState={id:id||("b736m"+(missionFromState()||"?")),night:true,pair:true,recovered:!!recovered,version:VERSION};}
+  function markSuccess(id,recovered){
+    var ui=root.TechOpsGoodBoysCinematicUiGuard,layout=root.TechOpsGoodBoysMobileControlsLayout;
+    if(!nightReady()||!pairReady()||introVisible()||(ui&&ui.blocked&&ui.blocked()))return false;
+    /* A playable world and its inputs are one handoff. Do not publish success
+       while the launch shell or previous cinematic still owns hidden controls. */
+    if(ui&&typeof ui.apply==="function")ui.apply();
+    if(layout&&typeof layout.apply==="function")layout.apply();
+    setGenericShellHidden(false);clearRecovery();launchIntent=null;root.__goodBoysCoreBroken=null;root.__goodBoysMobileLaunchState={id:id||("b736m"+(missionFromState()||"?")),night:true,pair:true,recovered:!!recovered,version:VERSION};return true;
+  }
   function retryPending(){clearRecovery();root.__goodBoysCoreBroken=null;var id=pending.id||(launchIntent&&launchIntent.id)||("b736m"+(missionFromState()||1));if(typeof pending.cb==="function"){waitForNight(id,pending.cb,true);return true;}try{if(root.TechOpsProductionModeRouter&&typeof root.TechOpsProductionModeRouter.launchGoodBoys==="function"){root.TechOpsProductionModeRouter.launchGoodBoys();return true;}if(root.v736&&typeof root.v736.start==="function"){root.v736.start();return true;}}catch(e){}return false;}
   function showFailure(reason){try{root.__goodBoysCoreBroken=reason||"mobile_night_handoff_timeout";setGenericShellHidden(true);if(!root.document)return;clearRecovery();var o=root.document.createElement("div");o.id="good-boys-mobile-recovery";o.style.cssText="position:fixed;inset:0;z-index:100001;background:#02060bf2;color:#eef8ff;display:flex;align-items:center;justify-content:center;padding:20px;font-family:monospace";o.innerHTML='<div style="max-width:520px;border:2px solid #38bdf8;border-radius:14px;background:#07111d;padding:18px;text-align:center"><div style="font-weight:800;font-size:18px;color:#7dd3fc">GOOD DOGS — RUNTIME RECOVERY</div><p style="line-height:1.5">The co-op engine did not finish attaching Katrin and Manchez. The generic Night shell was blocked instead of becoming playable.</p><div style="font-size:11px;color:#94a3b8;margin:10px 0">'+String(reason||"handoff_timeout")+'</div><button id="gb-mobile-retry" style="width:100%;min-height:52px;border:2px solid #38bdf8;border-radius:10px;background:#0a1726;color:#eef8ff;font-weight:800">RETRY CO-OP HANDOFF</button></div>';root.document.body.appendChild(o);var b=root.document.getElementById("gb-mobile-retry");if(b)b.onclick=retryPending;}catch(e){}}
   function verifyPair(id,cb,reattach){var checks=0,maxChecks=40;function check(){repairAuthorities();if(pairReady()){markSuccess(id,reattach);return;}if(++checks<maxChecks){(root.setTimeout||setTimeout)(check,25);return;}if(!reattach&&typeof cb==="function"){try{cb();}catch(e){root.__goodBoysMobileCallbackError=String(e&&e.stack||e);}verifyPair(id,cb,true);return;}showFailure("pair_attach_failed");}check();}
   function waitForNight(id,cb,isRetry){pending={id:id,cb:cb};launchIntent=launchIntent||{id:id,at:Date.now?Date.now():0};setGenericShellHidden(true);var token=++launchToken,tries=0,maxTries=320;function poll(){if(token!==launchToken)return;if(introVisible()){tries=0;(root.setTimeout||setTimeout)(poll,50);return;}primeNight();if(nightReady()){root.__goodBoysCoreBroken=null;try{cb&&cb();}catch(e){root.__goodBoysMobileCallbackError=String(e&&e.stack||e);showFailure("combat_callback_failed");return;}verifyPair(id,cb,!!isRetry);return;}if(++tries>=maxTries){showFailure("mobile_night_handoff_timeout");return;}(root.setTimeout||setTimeout)(poll,25);}poll();}
   function installPlayGuard(){try{if(!root.v725||typeof root.v725.play!=="function")return false;var current=root.v725.play;if(current.__goodBoysMobileGuardV6||current.__goodBoysMobileGuardV7)return true;var guarded=function(id,cb){if(!isGoodBoysCombat(id))return current.apply(this,arguments);launchIntent={id:String(id),at:Date.now?Date.now():0};setGenericShellHidden(true);var wrapped=typeof cb==="function"?function(){waitForNight(id,cb,false);}:cb;return current.call(this,id,wrapped);};guarded.__goodBoysMobileGuard=true;guarded.__goodBoysMobileGuardV7=true;guarded.__goodBoysMobileGuardBase=current;root.v725.play=guarded;return true;}catch(e){root.__goodBoysMobileGuardError=String(e&&e.stack||e);return false;}}
-  function installStartGuard(){try{if(!root.v736||typeof root.v736.start!=="function")return false;var current=root.v736.start;if(current.__goodBoysStartGuardV6||current.__goodBoysStartGuardV7)return true;var guarded=function(){var m=missionFromState()||1;launchIntent={id:"b736m"+m,at:Date.now?Date.now():0};setGenericShellHidden(true);return current.apply(this,arguments);};guarded.__goodBoysStartGuardV7=true;guarded.__goodBoysStartGuardBase=current;root.v736.start=guarded;return true;}catch(e){return false;}}
+  function installStartGuard(){try{if(!root.v736||typeof root.v736.start!=="function")return false;var current=root.v736.start;if(current.__goodBoysStartGuardV6||current.__goodBoysStartGuardV7||current.__goodBoysStartGuardV8)return true;var guarded=function(){var m=missionFromState()||1;launchIntent={id:"b736m"+m,at:Date.now?Date.now():0};setGenericShellHidden(true);var result=current.apply(this,arguments);if(result!==false)markSuccess("b736m"+(missionFromState()||m),false);return result;};guarded.__goodBoysStartGuardV8=true;guarded.__goodBoysStartGuardBase=current;root.v736.start=guarded;return true;}catch(e){return false;}}
   function watchdog(){try{installPlayGuard();installStartGuard();repairAuthorities();if(pairReady()){if(launchIntent)markSuccess(launchIntent.id,false);return;}if(!launchIntent||titleVisible())return;if(introVisible()){root.__goodBoysCoreBroken=null;setGenericShellHidden(true);launchIntent.at=Date.now?Date.now():launchIntent.at;return;}setGenericShellHidden(true);var age=(Date.now?Date.now():0)-Number(launchIntent.at||0);if(nightReady()&&age>2500&&!root.__goodBoysCoreBroken)showFailure("resume_pair_missing");else if(age>10000&&!root.__goodBoysCoreBroken)showFailure("resume_night_missing");}catch(e){root.__goodBoysMobileWatchdogError=String(e&&e.stack||e);}}
   watchdog();try{timer=root.setInterval(watchdog,80);}catch(e){}
   root.TechOpsGoodBoysMobileLaunchGuard={VERSION:VERSION,state:state,world:world,isGoodBoysCombat:isGoodBoysCombat,missionFromState:missionFromState,nightReady:nightReady,pairReady:pairReady,introVisible:introVisible,primeNight:primeNight,repairAuthorities:repairAuthorities,retryPending:retryPending,waitForNight:waitForNight,verifyPair:verifyPair,install:installPlayGuard,installStartGuard:installStartGuard,watchdog:watchdog,timer:timer};

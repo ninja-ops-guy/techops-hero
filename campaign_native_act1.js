@@ -392,7 +392,7 @@
     var state = loadState();
     if (!state.flags.ticket_assignments_confirmed) return openStandup();
     state = ensureWorkstationChecked(state);
-    return callDialog("MIKE // WORKSTATION", "The monitor fills Mike's field of view. No quest marker, no shortcut—just the systems the shift actually runs through.<br><br><b>" + workstationStatus(state) + "</b>", workstationOptions());
+    return callDialog("MIKE // WORKSTATION", "The shift is waiting on the other side of the screen: tickets in the queue, messages from the team, and alerts that need a closer look.<br><br><b>" + workstationStatus(state) + "</b>", workstationOptions());
   }
 
   function openWorkstationTab(tab) {

@@ -10,7 +10,7 @@ const guidePath = path.join(root, "REVIEW_GUIDE.md");
 
 function render(data) {
   const lines = [
-    "# PR #" + data.pull_request + " review guide",
+    "# " + (data.review_title || "PR #" + data.pull_request + " review guide"),
     "",
     "> Generated from `review_contracts.json`. Edit the inventory, then run `node scripts/generate_review_guide.js`.",
     "",

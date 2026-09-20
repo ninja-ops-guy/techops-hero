@@ -141,9 +141,10 @@ function boot(options = {}) {
   return { context, document, screen, start, continuation, dogs, night, storage, counts: () => ({ dogLaunches, nightLaunches }) };
 }
 
-function event(target) {
+function event(target, type = "click") {
   return {
     target,
+    type,
     defaultPrevented: false,
     propagationStopped: false,
     immediateStopped: false,
@@ -155,11 +156,11 @@ function event(target) {
 
 assert.match(
   INDEX,
-  /v737_hooks\.js"><\/script><script src="production_title_experience\.js\?v=20260920-title-readiness-r1"><\/script><script src="v742_hooks\.js/,
+  /v737_hooks\.js"><\/script><script src="production_title_experience\.js\?v=20260920-quality-r2"><\/script><script src="v742_hooks\.js/,
   "title authority must load immediately after v737 and before later wrappers"
 );
-assert.match(INDEX, /style\.css\?v=20260920-title-readiness-r1/, "title CSS must use the matching cache build");
-assert.match(SOURCE, /BUILD = "20260920-title-readiness-r1"/, "runtime build marker must match the entrypoint");
+assert.match(INDEX, /style\.css\?v=20260920-quality-r2/, "shared control CSS must bypass stale interaction styles");
+assert.match(SOURCE, /BUILD = "20260920-quality-r2"/, "runtime build marker must match the entrypoint");
 assert.doesNotMatch(INDEX, /<script src="good_boys_mobile_launch_guard\.js/, "readiness gating must retire the duplicate parser-time mobile launch guard");
 assert.match(BOOTSTRAP, /"good_boys_mobile_launch_guard\.js"/, "the mobile launch guard must remain in the production bootstrap before readiness");
 assert.match(STYLE, /#title-mode-grid \.title-mode-card:focus-visible/, "mode cards need a visible keyboard focus treatment");
@@ -185,19 +186,28 @@ assert.match(STYLE, /prefers-reduced-motion:reduce/, "title motion must honor re
   assert.equal(api.capture(dayEvent), true, "ready Day route must propagate to its canonical handler");
   assert.equal(dayEvent.defaultPrevented, false);
 
-  const first = event(b.dogs);
+  const first = event(b.dogs, "pointerup");
   api.capture(first);
+  assert.deepEqual(b.counts(), { dogLaunches: 0, nightLaunches: 0 }, "pointer release cannot mount a selector beneath its trailing compatibility click");
+  assert.equal(api.state().ready, true, "pointer release keeps the original title surface ready for its click");
   const syntheticClick = event(b.dogs);
   api.capture(syntheticClick);
   assert.deepEqual(b.counts(), { dogLaunches: 1, nightLaunches: 0 }, "pointer/click pair must delegate Good Dogs exactly once");
   assert.equal(first.immediateStopped, true, "legacy Good Dogs capture and onclick routes must be blocked");
+  b.context.__goodBoysOpeningPhase = {phase:"title"};
+  assert.equal(api.routeCancelled("gooddogs"),true);
+  assert.equal(api.state().ready,true,'cancellation releases the title synchronously');
+  api.capture(event(b.dogs));
+  assert.equal(b.counts().dogLaunches,2,'an immediate valid reopen cannot wait for a polling interval');
 }
 
 {
   const b = boot();
   const api = b.context.TechOpsProductionTitleExperience;
-  const first = event(b.night);
+  const first = event(b.night, "pointerup");
   api.capture(first);
+  assert.equal(b.counts().nightLaunches, 0, "Night also waits for the completed activation click");
+  api.capture(event(b.night));
   assert.equal(b.start.disabled, true, "launching state may lock visible title input");
   b.context.__productionTitleInternalStart = "nightcrawler";
   const canonicalStart = event(b.start);
@@ -207,6 +217,26 @@ assert.match(STYLE, /prefers-reduced-motion:reduce/, "title motion must honor re
   api.capture(event(b.night));
   assert.deepEqual(b.counts(), { dogLaunches: 0, nightLaunches: 1 }, "pointer/click pair must delegate Night Crawler exactly once");
   assert.equal(first.immediateStopped, true, "legacy Night Crawler onclick must be blocked");
+}
+
+{
+  const b = boot(), api = b.context.TechOpsProductionTitleExperience;
+  const freshNight = add(b.document, b.screen, "button", "title-night-new", "Start new Night");
+  api.capture(event(freshNight, "pointerup"));
+  assert.equal(b.counts().nightLaunches, 0, "fresh Night cannot create difficulty choices during pointer release");
+  api.capture(event(freshNight));
+  assert.equal(b.counts().nightLaunches, 1);
+}
+
+{
+  const b = boot(), api = b.context.TechOpsProductionTitleExperience;
+  const keyboardClick = Object.assign(event(b.dogs), { detail: 0 });
+  api.capture(keyboardClick);
+  assert.equal(b.counts().dogLaunches, 1, "keyboard activation needs no preceding pointer event");
+  const deliberateChoice = event(add(b.document, b.document.body, "button", "gd-mode-solo", "Single player"));
+  assert.equal(api.capture(deliberateChoice), true);
+  assert.equal(deliberateChoice.defaultPrevented, false, "the immediately following deliberate choice must not be consumed by a gesture timeout");
+  assert.equal(deliberateChoice.immediateStopped, false);
 }
 
 {

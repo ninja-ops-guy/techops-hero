@@ -36,7 +36,7 @@ const campaignAssets = scriptIndex("campaign_assets.js");
 const campaignRuntime = scriptIndex("campaign_runtime.js");
 const sector04 = scriptIndex("campaign_sector04.js");
 const sector04Runtime = scriptIndex("campaign_sector04_runtime.js");
-const nativeAct1 = scriptIndex("campaign_native_act1.js?v=20260912-integrated-r1");
+const nativeAct1 = scriptIndex("campaign_native_act1.js?v=20260920-quality-r1");
 
 assert.ok(lastHistoricalHook < campaignAct1, "canonical campaign authority must load after the historical version-hook stack");
 assert.ok(campaignAct1 < campaignRuntime, "campaign runtime must load after campaign state contract");

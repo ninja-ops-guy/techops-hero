@@ -10,7 +10,7 @@
   if (!root || !root.document || root.TechOpsProductionTitleExperience) return;
 
   var VERSION = 1;
-  var BUILD = "20260920-title-readiness-r1";
+  var BUILD = "20260920-quality-r2";
   var RESULT_KEY = "techops_nightcrawler_last_result_v1";
   var READY_TIMEOUT = Math.max(4000, Number(root.TECHOPS_TITLE_READY_TIMEOUT) || 20000);
   var POLL_MS = 100;
@@ -71,11 +71,11 @@
   function closestAction(target) {
     try {
       if (target && typeof target.closest === "function") {
-        return target.closest("#btn-start,#btn-continue,#btn-v736,#btn-nightcrawler");
+        return target.closest("#btn-start,#btn-continue,#btn-v736,#btn-nightcrawler,#title-night-new");
       }
     } catch (_) {}
     while (target) {
-      if (CARDS[target.id]) return target;
+      if (CARDS[target.id] || target.id === "title-night-new") return target;
       target = target.parentNode;
     }
     return null;
@@ -117,6 +117,8 @@
 
   function decorateButton(button, config) {
     if (!button || !config) return false;
+    var night = config.mode === "nightcrawler" && root.TechOpsNightRuntime && root.TechOpsNightRuntime.checkpointStatus ? root.TechOpsNightRuntime.checkpointStatus() : null;
+    var checkpointCopy = night ? night.status + ":" + (night.savedAt || "") : "";
     var children = button.children || [];
     var hasCopy = false;
     for (var index = 0; index < children.length; index++) {
@@ -125,19 +127,22 @@
     // Launch authorities temporarily replace button text with loading/retry copy.
     // Rebuild the card when control returns to the title instead of trusting a
     // stale build marker on an element whose structured children were removed.
-    if (button.getAttribute && button.getAttribute("data-production-title-card") === BUILD && hasCopy) return true;
+    if (button.getAttribute && button.getAttribute("data-production-title-card") === BUILD && button.getAttribute("data-night-checkpoint") === checkpointCopy && hasCopy) return true;
     var original = String(button.textContent || "");
     var resume = original.match(/RESUME\s+M(\d+)/i);
     var detail = resume ? "Resume Good Dogs mission " + resume[1] + "." : config.detail;
+    if (night && night.status === "ready") detail = "Continue " + night.state.nightMode.district.replace(/\b\w/g, function(c) { return c.toUpperCase(); }) + " · Street " + night.state.nightMode.street + ". Your route and rewards are saved.";
+    else if (night && (night.status === "invalid" || night.status === "unavailable")) detail = night.message;
     button.textContent = "";
     button.type = "button";
     button.classList.add("title-mode-card", "title-mode-card--" + config.mode);
     button.setAttribute("data-production-title-card", BUILD);
+    button.setAttribute("data-night-checkpoint", checkpointCopy);
     button.setAttribute("data-title-mode", config.mode);
-    button.setAttribute("aria-label", config.label);
+    button.setAttribute("aria-label", night && night.status === "ready" ? "Resume the saved standalone Night run" : config.label);
     var copy = make("span", null, "title-mode-copy");
     copy.appendChild(make("span", null, "title-mode-kicker", config.kicker));
-    copy.appendChild(make("span", null, "title-mode-name", config.name));
+    copy.appendChild(make("span", null, "title-mode-name", night && night.status === "ready" ? "RESUME NIGHT" : config.name));
     copy.appendChild(make("span", null, "title-mode-detail", detail));
     button.appendChild(copy);
     var arrow = make("span", null, "title-mode-arrow", "›");
@@ -186,6 +191,14 @@
     ui.readinessLabel = byId("title-readiness-label");
     ui.readinessDetail = byId("title-readiness-detail");
     ui.retry = byId("title-readiness-retry");
+    var freshNight = byId("title-night-new");
+    if (!freshNight) {
+      freshNight = make("button", "title-night-new", "title-readiness-retry", "Start a new Night run instead");
+      freshNight.type = "button";
+      freshNight.setAttribute("aria-label", "Replace the saved Night checkpoint with a new run");
+      panel.appendChild(freshNight);
+    }
+    ui.freshNight = freshNight;
   }
 
   function mount() {
@@ -269,6 +282,9 @@
     ui.readinessDetail.textContent = gate.detail;
     ui.retry.hidden = gate.phase !== "failed";
     setButtonsEnabled(gate.ready && !launchMode);
+    var night = root.TechOpsNightRuntime && root.TechOpsNightRuntime.checkpointStatus ? root.TechOpsNightRuntime.checkpointStatus() : null;
+    ui.freshNight.hidden = !night || (night.status !== "ready" && night.status !== "invalid");
+    ui.freshNight.disabled = !!launchMode || !dependencySnapshot().ready;
     if (lastResult && ui.result) {
       ui.result.hidden = false;
       ui.resultSummary.textContent = lastResult.summary;
@@ -332,31 +348,39 @@
     var screen = byId("title-screen");
     return !!(screen && !screen.classList.contains("hidden"));
   }
+  function routeCancelled(mode) {
+    var authority = root.TechOpsGoodBoysButtonHardFix;
+    if (mode !== "gooddogs" || launchMode !== mode || !titleVisible() || !authority || authority.launching !== false || !root.__goodBoysOpeningPhase || root.__goodBoysOpeningPhase.phase !== "title") return false;
+    launchMode = null;
+    gate.phase = "ready";
+    gate.ready = true;
+    gate.detail = "Good Dogs opening cancelled. Choose any ready mode.";
+    render();
+    return true;
+  }
   function watchGoodDogsReturn() {
     var checks = 0;
     function check() {
       if (launchMode !== "gooddogs" || !titleVisible()) return;
-      var authority = root.TechOpsGoodBoysButtonHardFix;
-      var phase = root.__goodBoysOpeningPhase && root.__goodBoysOpeningPhase.phase;
-      if (authority && authority.launching === false && phase === "title") {
-        launchMode = null;
-        gate.phase = "ready";
-        gate.ready = true;
-        gate.detail = "Good Dogs opening cancelled. Choose any ready mode.";
-        render();
-        return;
-      }
+      if (routeCancelled("gooddogs")) return;
       if (++checks < 600 && root.setTimeout) root.setTimeout(check, 100);
     }
     if (root.setTimeout) root.setTimeout(check, 100);
   }
 
-  function launchAlternate(mode) {
+  function launchAlternate(mode, options) {
     if (launchMode) return true;
     var snapshot = dependencySnapshot();
     if (!gate.ready || !snapshot.ready) {
       gate.snapshot = snapshot;
       gate.detail = "Still " + waitingDetail(snapshot).replace(/^Loading\s+/, "loading ") + " No mode was started.";
+      render();
+      return false;
+    }
+    var recovery = mode === "nightcrawler" && root.TechOpsNightRuntime && root.TechOpsNightRuntime.checkpointStatus ? root.TechOpsNightRuntime.checkpointStatus() : null;
+    if (recovery && recovery.status === "invalid" && !(options && options.fresh)) {
+      // A damaged isolated Night save must not disable the other title routes.
+      gate.detail = recovery.message;
       render();
       return false;
     }
@@ -375,9 +399,9 @@
       } else {
         var router = root.TechOpsProductionModeRouter;
         if (!router || typeof router.launchNightCrawler !== "function") throw new Error("Night Crawler production authority is unavailable");
-        result = router.launchNightCrawler(true);
+        result = router.launchNightCrawler(true, options);
       }
-      if (result === false) throw new Error("The production route declined the launch");
+      if (result === false) return fail(root.__productionModeRouterError || "The production route declined the launch");
       root.__productionTitleLaunch = { mode: mode, issued: true, at: now(), version: VERSION };
       return true;
     } catch (error) {
@@ -389,13 +413,25 @@
   function routeFailed(mode, message) {
     if (launchMode && mode && launchMode !== mode) return false;
     root.__productionTitleLaunchError = safeString(message || "alternate-route-failed", 260);
-    return fail((mode === "nightcrawler" ? "Night Crawler" : "That mode") + " stopped safely before launch. Retry when production systems are ready.");
+    return fail(message || (mode === "nightcrawler" ? "Night Crawler" : "That mode") + " stopped safely before launch. Retry when production systems are ready.");
   }
 
   function capture(ev) {
     var action = closestAction(ev && ev.target);
     if (!action) return true;
     var mode = CARDS[action.id] && CARDS[action.id].mode;
+    // Keep legacy pointer handlers out, but wait for the completed click before
+    // mounting another surface. A touch's compatibility click can otherwise
+    // hit a newly opened mode choice at the title button's old coordinates.
+    if (ev && ev.type === "pointerup" && (mode === "gooddogs" || mode === "nightcrawler" || action.id === "title-night-new")) {
+      stop(ev);
+      return true;
+    }
+    if (action.id === "title-night-new") {
+      stop(ev);
+      if (gate.phase === "failed") retryGate();
+      return launchAlternate("nightcrawler", {fresh:true});
+    }
     if (mode === "day" || mode === "continue") {
       // The Night router must pass through the real canonical New Game
       // listener to create lexical S and show difficulty selection. This
@@ -434,6 +470,7 @@
     dependencySnapshot: dependencySnapshot,
     consumeNightResult: consumeNightResult,
     routeFailed: routeFailed,
+    routeCancelled: routeCancelled,
     state: function () { return { phase: gate.phase, ready: gate.ready, detail: gate.detail, launchMode: launchMode, lastResult: lastResult }; }
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);

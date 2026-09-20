@@ -1,11 +1,11 @@
-/* TechOps Hero — Good Dogs mobile presentation cleanup v1.
- * Removes production/debug chrome and duplicate reference HUD ownership on
- * physical mobile devices. Does not alter campaign mechanics.
+/* TechOps Hero — Good Dogs mobile presentation cleanup v2.
+ * Owns responsive styles and the active body class. Cinematic UI guard owns
+ * modal HUD visibility; viewport width must never suppress the canonical HUD.
  */
 (function(root){
   "use strict";
   if(!root||!root.document||root.TechOpsGoodDogsMobileVisualPolish)return;
-  var VERSION=1,style=root.document.createElement("style");
+  var VERSION=2,style=root.document.createElement("style");
   style.id="good-dogs-mobile-visual-polish";
   style.textContent=`
     body.good-dogs-active #game-wrap:after{content:none!important;display:none!important}
@@ -21,9 +21,8 @@
   function apply(){
     var on=active();
     try{root.document.body.classList.toggle("good-dogs-active",on);}catch(_){}
-    /* good_dogs_production_runtime.js uses this flag to suppress its second,
-       reference-only canvas HUD. v736 remains the canonical gameplay HUD. */
-    root.__goodBoysHideHud=!!(on&&root.innerWidth<=700);
+    /* Single-HUD authority replaced the old reference-only HUD. Its visibility
+       now follows actual modal state in good_boys_cinematic_ui_guard.js. */
     if(on)root.__goodDogsMobileVisualPolish={active:true,version:VERSION,at:Date.now()};
   }
   var timer=root.setInterval(apply,100);apply();

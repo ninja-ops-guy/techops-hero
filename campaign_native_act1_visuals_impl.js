@@ -9,7 +9,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 4;
+  var VERSION = 5;
   var BASE = "assets/campaign/";
   var ENTER_MS = 240;
   var EXIT_MS = 180;
@@ -27,6 +27,20 @@
   function contextId() { var c = root && root.__techopsCampaignNativeAct1Assets; return c && c.id ? c.id : null; }
   function canDom() { return !!(root && root.document && root.document.body); }
   function reducedMotion() { try { return !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { return false; } }
+  var layoutObserver = null;
+  function syncLayout() {
+    if (!canDom()) return false;
+    var dialog = root.document.getElementById("dialogue");
+    if (!dialog || typeof dialog.getBoundingClientRect !== "function") return false;
+    var height = Math.ceil(dialog.getBoundingClientRect().height + 24);
+    var style = root.document.documentElement && root.document.documentElement.style;
+    if (style && height > 24) style.setProperty("--techops-dialog-height", height + "px");
+    if (!layoutObserver && typeof root.ResizeObserver === "function") {
+      layoutObserver = new root.ResizeObserver(syncLayout);
+      layoutObserver.observe(dialog);
+    }
+    return true;
+  }
   function loadCampaign() {
     try { return root && root.TechOpsCampaign && typeof root.TechOpsCampaign.load === "function" ? root.TechOpsCampaign.load(root.localStorage) : null; }
     catch (e) { return null; }
@@ -206,6 +220,7 @@
     if (!canDom()) return false;
     var el = root.document.getElementById("act1-reference");
     if (!el) return false;
+    if (root.document.body.classList) root.document.body.classList.remove("act1-scene-open");
     root.__techopsAct1ReferenceScene = null;
     var snapshot = root.__techopsAct1WorldSnapshot || null;
     restoreWorld(snapshot);
@@ -238,7 +253,12 @@
     if (!reducedMotion()) el.appendChild(motionNode("a1-world-anchor"));
     var label = root.document.createElement("div"); label.className = "a1-label"; label.textContent = spec.label; el.appendChild(label);
     if (profile.statusText) { var status = root.document.createElement("div"); status.className = "a1-status"; status.textContent = profile.statusText; el.appendChild(status); }
-    root.document.body.appendChild(el); root.__techopsAct1ReferenceScene = sceneId;
+    // The fixed game wrapper is a stacking context. Keep scene and dialogue in
+    // that same context so authored art cannot cover the choices that advance it.
+    (root.document.getElementById("game-wrap") || root.document.body).appendChild(el);
+    if (root.document.body.classList) root.document.body.classList.add("act1-scene-open");
+    root.__techopsAct1ReferenceScene = sceneId;
+    syncLayout();
     return { id: sceneId, active: true, mode: spec.mode, background: url(spec.background), presentation: profile, worldSnapshot: snapshot, focus: focus };
   }
 
@@ -246,11 +266,20 @@
     if (!root || root.__techopsAct1ReferenceInstalled || typeof root.dlg !== "function") return false;
     root.__techopsAct1ReferenceInstalled = true;
     var baseDlg = root.dlg;
-    root.dlg = function (name) { try { var scene = sceneForDialog(name); if (scene) show(scene, name); else hide(false); } catch (e) {} return baseDlg.apply(this, arguments); };
+    root.dlg = function (name) {
+      try { var scene = sceneForDialog(name); if (scene) show(scene, name); else hide(false); } catch (e) {}
+      // The typewriter installs a click-to-complete handler only on plain text.
+      // Retiring it before the next dialog prevents an HTML-rich conversation
+      // from restoring the previous speaker's copy when touched.
+      try { var copy=root.document&&root.document.getElementById("dlg-text");if(copy)copy.onclick=null; } catch(e) {}
+      var result = baseDlg.apply(this, arguments);
+      try { syncLayout(); } catch (e) {}
+      return result;
+    };
     if (typeof root.closeDlg === "function") { var baseClose = root.closeDlg; root.closeDlg = function () { try { hide(false); } catch (e) {} return baseClose.apply(this, arguments); }; }
     return true;
   }
 
   install();
-  return { VERSION: VERSION, BASE: BASE, ENTER_MS: ENTER_MS, EXIT_MS: EXIT_MS, SCENES: SCENES, filename: filename, url: url, sceneForDialog: sceneForDialog, presentationFor: presentationFor, motionFor: motionFor, snapshotWorld: snapshotWorld, restoreWorld: restoreWorld, worldFocus: worldFocus, show: show, hide: hide, install: install };
+  return { VERSION: VERSION, BASE: BASE, ENTER_MS: ENTER_MS, EXIT_MS: EXIT_MS, SCENES: SCENES, filename: filename, url: url, sceneForDialog: sceneForDialog, presentationFor: presentationFor, motionFor: motionFor, snapshotWorld: snapshotWorld, restoreWorld: restoreWorld, worldFocus: worldFocus, syncLayout: syncLayout, show: show, hide: hide, install: install };
 });

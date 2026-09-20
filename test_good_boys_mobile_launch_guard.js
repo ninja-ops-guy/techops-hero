@@ -24,7 +24,7 @@ globalThis.__setState=(v)=>{S=v};globalThis.__getState=()=>S;globalThis.__setWor
 context.v736={start(){resumeStarts++;const S=context.__getState();const m=S.meta._v736.m;context.v725.play("b736m"+m,()=>{combatCbCalls++;const NM=context.__getWorld();NM._v736={m,active:"katrin",chars:{katrin:{hp:120},manchez:{hp:120}},partner:{x:40,y:200}};});}};
 vm.runInContext(src,context,{filename:"good_boys_mobile_launch_guard.js"});
 const api=context.TechOpsGoodBoysMobileLaunchGuard;
-assert.ok(api);assert.strictEqual(api.VERSION,7);
+assert.ok(api);assert.strictEqual(api.VERSION,8);
 assert.ok(/Wrapper installation is one-shot/.test(src),"v7 must retain one-shot wrapper installation authority");
 assert.ok(/never invokes feature tick\(\) methods that can recursively re-wrap drawNM/.test(src),"watchdog must not restore recursive feature ticks");
 assert.ok(!src.includes("root.S&&root.S.nightMode"),"guard must not read lexical S through window/root");
@@ -54,6 +54,40 @@ S={nightMode:false,meta:{_v736:{m:6}}};context.__setState(S);context.__setWorld(
 context.v736.start();flush();
 assert.strictEqual(resumeStarts,1);assert.strictEqual(context.__getState().meta._v736.m,6);assert.strictEqual(api.pairReady(),true,"Cell 1984 resume must attach Katrin + Manchez");
 assert.strictEqual(context.__getWorld()._v736.m,6);assert.ok(context.__goodBoysMobileLaunchState&&context.__goodBoysMobileLaunchState.id==="b736m6");
+
+// Direct gameplay attaches synchronously. Its touch shell and canonical action
+// owner must be ready on return, before any watchdog, timeout, or rendered frame.
+let uiRestores=0,padMounts=0;
+context.TechOpsGoodBoysCinematicUiGuard={blocked(){return false;},apply(){uiRestores++;}};
+context.TechOpsGoodBoysMobileControlsLayout={apply(){padMounts++;}};
+context.v736.start=function(options){
+  const s=context.__getState();s.nightMode=true;s.inDialog=false;
+  context.__setWorld({x:100,y:200,_v736:{m:options.mission,active:"katrin",chars:{katrin:{hp:120},manchez:{hp:120}},partner:{x:40,y:200}}});
+  return true;
+};
+api.installStartGuard();
+elements["touch-ui"].style.display="";
+context.__setState({nightMode:false,inDialog:false,meta:{_v736:{m:1}}});context.__setWorld(null);
+assert.strictEqual(context.v736.start({mission:1,directGameplay:true}),true);
+assert.strictEqual(elements["touch-ui"].style.display,"","synchronous pair handoff must restore movement before returning");
+assert.strictEqual(uiRestores,1,"handoff must release stale cinematic control hiding synchronously");
+assert.strictEqual(padMounts,1,"handoff must mount canonical actions synchronously");
+assert.strictEqual(context.__goodBoysMobileLaunchState.id,"b736m1");
+
+// A pair alone cannot publish playable controls underneath an authored scene.
+elements["good-boys-story-cine"].classList.remove("hidden");
+context.v736.start({mission:1,directGameplay:true});
+assert.strictEqual(elements["touch-ui"].style.display,"none","active cinematic must retain the shell blocker");
+assert.strictEqual(uiRestores,1);assert.strictEqual(padMounts,1);
+elements["good-boys-story-cine"].classList.add("hidden");
+context.TechOpsGoodBoysCinematicUiGuard.blocked=()=>true;
+api.watchdog();
+assert.strictEqual(elements["touch-ui"].style.display,"none","modal guard must retain the shell blocker even with a ready pair");
+assert.strictEqual(uiRestores,1);assert.strictEqual(padMounts,1);
+context.TechOpsGoodBoysCinematicUiGuard.blocked=()=>false;
+api.watchdog();
+assert.strictEqual(elements["touch-ui"].style.display,"");
+assert.strictEqual(uiRestores,2);assert.strictEqual(padMounts,2);
 
 NM={x:100,y:200};context.__setWorld(NM);S=context.__getState();S.nightMode=NM;combatCbCalls=0;
 context.v725.play("b736m3",()=>{combatCbCalls++;});flush();

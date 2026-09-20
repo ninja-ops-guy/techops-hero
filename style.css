@@ -337,7 +337,8 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
   transform:translateY(-2px);
 }
 #title-mode-grid .title-mode-card:focus-visible,
-#title-readiness-retry:focus-visible{
+#title-readiness-retry:focus-visible,
+#title-night-new:focus-visible{
   outline:3px solid #f8e49b;
   outline-offset:3px;
 }
@@ -402,7 +403,8 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
 #title-readiness-label,
 .title-night-result-kicker{color:#d9eaff;font:700 8px/1.25 "Press Start 2P","Courier New",monospace;letter-spacing:.07em}
 #title-readiness-detail{color:#91a9ba;font:11px/1.35 "Courier New",monospace}
-#title-readiness-retry{
+#title-readiness-retry,
+#title-night-new{
   flex:0 0 auto;
   min-height:44px;
   padding:8px 12px;
@@ -413,6 +415,7 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
   font:700 9px "Press Start 2P","Courier New",monospace;
   cursor:pointer;
 }
+#title-night-new{justify-self:start;border-color:#8872ae;background:#171323;color:#dacbef;font:700 12px/1.5 "Courier New",monospace}
 #title-night-result{
   display:grid;
   grid-template-columns:auto 1fr;
@@ -447,4 +450,187 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   #title-readiness-dot{animation:none}
   #title-mode-grid .title-mode-card{transition:none}
+}
+
+/* Production composition: readable chrome, one reserved conversation surface. */
+:root{
+  --ops-ink:#09121c;
+  --ops-panel:#0b1724f5;
+  --ops-line:#44647b;
+  --ops-paper:#e5eff6;
+  --ops-muted:#a6bdcd;
+  --ops-accent:#79c9f3;
+  --ops-gold:#e6c27b;
+  --ops-safe-left:max(12px,env(safe-area-inset-left));
+  --ops-safe-right:max(12px,env(safe-area-inset-right));
+  --ops-safe-bottom:max(12px,env(safe-area-inset-bottom));
+}
+body #game-wrap::before{z-index:8;background:radial-gradient(ellipse at center,transparent 52%,#050a1245 100%)}
+body #game-wrap::after{z-index:9;opacity:.22}
+body #dialogue{
+  left:max(var(--ops-safe-left),calc((100% - 1040px)/2));
+  right:max(var(--ops-safe-right),calc((100% - 1040px)/2));
+  bottom:var(--ops-safe-bottom);
+  max-height:52vh;max-height:52dvh;
+  padding:18px 22px;overflow-y:auto;overscroll-behavior:contain;
+  border:1px solid var(--ops-line);border-top:2px solid var(--ops-accent);
+  border-radius:12px;background:var(--ops-panel);
+  box-shadow:0 12px 48px #0009,inset 0 1px #d9f0ff12;
+  scrollbar-color:#567c95 #0a1520;scrollbar-width:thin;
+}
+body #dlg-name{font:700 12px/1.6 "Courier New",monospace;letter-spacing:.1em;color:var(--ops-gold);margin-bottom:8px;overflow-wrap:anywhere}
+body #dlg-text{font:14px/1.65 "Courier New",monospace;color:var(--ops-paper);text-wrap:pretty;overflow-wrap:anywhere}
+body #dlg-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px;margin-top:14px}
+body #dlg-options button{
+  min-height:44px;padding:11px 14px;font:700 12px/1.45 "Courier New",monospace;
+  color:#daecf7;background:#14283a;border:1px solid #42647b;border-radius:7px;
+  overflow-wrap:anywhere;cursor:pointer;transition:background 120ms ease,border-color 120ms ease;
+}
+body #dlg-options button:hover{background:#203b50;border-color:#8ac7e9}
+body #dlg-options button:focus-visible,body .hud-btn:focus-visible,body #panel button:focus-visible{outline:3px solid #f4d58d;outline-offset:3px}
+body #panel{inset:max(12px,env(safe-area-inset-top)) var(--ops-safe-right) var(--ops-safe-bottom) var(--ops-safe-left);max-width:1000px;margin-inline:auto;border:1px solid var(--ops-line);background:var(--ops-panel)}
+body #panel-close,body #panel-tabs button{min-height:44px;min-width:44px}
+body #panel-body{font-size:14px}
+body #toast{font:13px/1.5 "Courier New",monospace;border:1px solid #d7b571;background:#101d2bf5;border-radius:8px;box-shadow:0 8px 24px #0007;max-width:min(620px,84vw)}
+@keyframes v66-pop{from{transform:translateX(-50%) translateY(5px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+
+/* The previous vertical toolbar pushed the objective list into the actor's feet. */
+body.recording-day #game-wrap #hud-top{
+  display:grid;grid-template-columns:minmax(180px,1fr) minmax(100px,180px) auto;
+  gap:18px;padding:max(14px,env(safe-area-inset-top)) var(--ops-safe-right) 12px var(--ops-safe-left);
+  background:linear-gradient(#06111ced,#081421cf 75%,#08142100);
+}
+body.recording-day #game-wrap #hud-right{
+  display:grid;grid-template-columns:repeat(7,44px);grid-auto-rows:auto;
+  gap:5px!important;align-items:center;text-align:right;font:11px/1.4 "Courier New",monospace;
+}
+body.recording-day #hud-right #hud-budget{grid-area:1/1/2/3}
+body.recording-day #hud-right #hud-tickets{grid-area:1/3/2/5}
+body.recording-day #hud-right #hud-prod{grid-area:1/5/2/8}
+body.recording-day #hud-right button{grid-row:2;min-width:44px;min-height:44px;margin:0}
+body.recording-day #game-wrap #hud-bars{max-width:none;padding-top:4px;gap:8px}
+body.recording-day #game-wrap #hud-title{font:11px/1.5 "Courier New",monospace;color:#bdd1e0}
+body.recording-day #game-wrap #hud-day{font:700 13px/1.6 "Courier New",monospace;letter-spacing:.05em;color:var(--ops-gold)}
+body.recording-day #game-wrap #hud-clock{font:11px/1.5 "Courier New",monospace;color:#a6d8c4}
+body.recording-day #game-wrap #quest-tracker{
+  margin:0 var(--ops-safe-left);max-width:min(390px,40vw);font:11px/1.45 "Courier New",monospace;
+  border:1px solid #637e924d;border-radius:8px;padding:9px 11px;background:#07121cdb;
+  box-shadow:0 6px 24px #0003;max-height:min(280px,26dvh);overflow:auto;pointer-events:auto;overscroll-behavior:contain;
+}
+body.recording-day #quest-tracker .v75-qh{font:700 10px/1.5 "Courier New",monospace;color:#b9d2e1;letter-spacing:.07em}
+body.recording-day #quest-tracker .v75-qt{font-size:0}
+body.recording-day #quest-tracker .v75-qt::after{content:"OBJECTIVES";font:700 10px/1.5 "Courier New",monospace}
+body.recording-day #quest-tracker .v75-qb{min-width:28px;min-height:28px}
+body #hud-right [data-control-label]{position:relative;color:transparent!important;font-size:0!important;background:#0d1b28e8;border:1px solid #486779;border-radius:8px}
+body #hud-right [data-control-label]::after{content:attr(data-control-label);position:absolute;inset:0;display:grid;place-items:center;color:#d7e7f1;font:700 9px/1 "Courier New",monospace;letter-spacing:.015em;pointer-events:none}
+body.recording-day #hud-right #v54-phone{position:relative;inset:auto;grid-row:2;min-width:44px;min-height:44px}
+body #hud-right #v54-badge{font:700 9px/1 "Courier New",monospace;z-index:1}
+
+/* Existing authored plates occupy the scene above dialogue at every aspect ratio. */
+body.act1-scene-open #act1-reference{
+  position:absolute;inset:0 0 var(--techops-dialog-height,250px);z-index:13;
+  background:#07111a;min-height:110px;
+}
+body.act1-scene-open #act1-reference .a1-bg{inset:0;background-size:cover;background-position:center 38%;filter:brightness(.85) saturate(.85);animation:none}
+body.act1-scene-open #act1-reference.a1-board .a1-bg{background-size:cover;background-position:center 25%}
+body.act1-scene-open #act1-reference .a1-grade{background:linear-gradient(180deg,#061019bb,transparent 24%,transparent 62%,#061019e8),linear-gradient(90deg,#06101955,transparent 30%,transparent 75%,#06101955)}
+body.act1-scene-open #act1-reference .a1-label{left:var(--ops-safe-left);right:var(--ops-safe-right);top:max(18px,env(safe-area-inset-top));font:700 12px/1.5 "Courier New",monospace;letter-spacing:.14em;color:#e3eef5}
+body.act1-scene-open #act1-reference .a1-status{left:var(--ops-safe-left);right:var(--ops-safe-right);bottom:14px;font:700 11px/1.5 "Courier New",monospace;padding:10px 14px;border:1px solid #53768c66;border-left:3px solid var(--ops-accent);background:#07121ce8;text-align:left}
+body.act1-scene-open #act1-reference .a1-props{bottom:17%;height:28%;left:10%;right:10%;justify-content:center}
+body.act1-scene-open #act1-reference .a1-actor{height:64%;max-width:37%;bottom:13%;right:8%}
+body.act1-scene-open #act1-reference.a1-side_view .a1-props{right:43%;height:32%;justify-content:flex-start}
+body.act1-scene-open #act1-reference.a1-first_person .a1-props{left:12%;right:12%;height:56%;bottom:17%}
+body.act1-scene-open #act1-reference.a1-first_person .a1-prop{max-width:45%}
+/* Dialogue owns interaction; movement controls return as soon as it closes. */
+body.act1-scene-open #touch-ui{visibility:hidden;pointer-events:none}
+body.act1-scene-open #toast{top:max(54px,calc(env(safe-area-inset-top) + 42px));left:var(--ops-safe-left);right:var(--ops-safe-right);transform:none;max-width:500px;animation:none}
+
+@media(max-width:640px){
+  body #dialogue{padding:13px 14px;max-height:49vh;max-height:49dvh}
+  body:not(.act1-scene-open) #dialogue{max-height:72vh;max-height:72dvh}
+  body #dlg-name{font-size:11px;margin-bottom:6px}
+  body #dlg-text{font-size:13px;line-height:1.6}
+  body #dlg-options{grid-template-columns:1fr;gap:7px;margin-top:10px}
+  body #dlg-options button{font-size:12px;padding:11px 12px}
+  body #dialogue.v77-hasbig{padding-left:14px;padding-top:86px}
+  body #dialogue .v77-portrait{top:10px;left:14px;width:64px;height:64px;transform:none}
+  body.recording-day #game-wrap #hud-top{grid-template-columns:1fr 125px;gap:7px!important;padding:max(10px,env(safe-area-inset-top)) var(--ops-safe-right) 8px var(--ops-safe-left)!important}
+  body.recording-day #game-wrap #hud-right{grid-column:1/-1;grid-template-columns:repeat(7,minmax(0,1fr));font-size:10px!important;gap:4px!important}
+  body.recording-day #game-wrap #hud-right button{width:100%;min-width:0;height:44px}
+  body.recording-day #game-wrap #hud-bars{max-width:none!important}
+  body.recording-day #game-wrap #quest-tracker{max-width:min(66vw,290px)!important;margin:2px var(--ops-safe-left)!important;font-size:10px!important;line-height:1.4!important;padding:7px 9px!important}
+  body.recording-day #game-wrap #touch-buttons .tbtn.small{width:44px!important;height:44px!important}
+  body.act1-scene-open #act1-reference .a1-label{font-size:11px;letter-spacing:.07em}
+  body.act1-scene-open #act1-reference .a1-status{font-size:10px;bottom:10px;padding:9px 10px}
+  body.act1-scene-open #act1-reference.a1-board .a1-bg{background-position:43% 30%}
+  body.act1-scene-open #act1-reference .a1-props{height:24%;bottom:19%;left:5%;right:5%}
+  body.act1-scene-open #act1-reference .a1-prop{max-width:40%}
+  body.act1-scene-open #act1-reference.a1-first_person .a1-props{left:5%;right:5%;height:47%;bottom:23%}
+}
+@media(max-height:500px) and (min-width:641px){
+  body #dialogue{max-height:82vh;max-height:82dvh;padding:12px 16px}
+  body.act1-scene-open #dialogue{left:46%;right:var(--ops-safe-right);top:max(10px,env(safe-area-inset-top));bottom:var(--ops-safe-bottom);max-height:none}
+  body.act1-scene-open #dlg-options{grid-template-columns:1fr}
+  body.act1-scene-open #act1-reference{inset:0 55% 0 0}
+  body.act1-scene-open #toast{right:56%;font-size:11px}
+  body.recording-day #game-wrap #hud-top{padding-top:max(8px,env(safe-area-inset-top));gap:10px;grid-template-columns:minmax(140px,1fr) minmax(95px,135px) auto}
+  body.recording-day #game-wrap #quest-tracker{max-width:31vw;max-height:max(52px,calc(100dvh - 280px));overflow:auto;pointer-events:auto;overscroll-behavior:contain;font-size:10px}
+  body.recording-day #quest-tracker .v75-qh{position:sticky;top:0;background:#0a1723;z-index:1}
+}
+@media(max-width:360px){
+  body.recording-day #game-wrap #hud-right{grid-template-columns:repeat(6,minmax(0,1fr))}
+  body.recording-day #hud-right #hud-budget{grid-column:1/3}
+  body.recording-day #hud-right #hud-tickets{grid-column:3/5}
+  body.recording-day #hud-right #hud-prod{grid-column:5/7}
+  body.recording-day #game-wrap #hud-right button,body.recording-day #hud-right #v54-phone{grid-row:auto;min-width:44px}
+  body.recording-day #game-wrap #quest-tracker{max-height:18dvh}
+}
+
+/* Gameplay targets stay fixed under hover, press, and held feedback. Keep the
+   existing color/brightness feedback without translating or shrinking hit areas. */
+html body #game-wrap #dpad .dbtn,
+html body #game-wrap #touch-buttons .tbtn,
+html body #game-wrap #v55-nmbtns .v55-nbtn,
+html body.good-boys-controls #good-dogs-touch button[data-utility]{transform:none!important}
+
+/* A short landscape viewport has one control strip below the projected floor.
+   Existing directional buttons and input handlers remain the same elements. */
+@media(orientation:landscape) and (max-height:500px){
+  html body #game-wrap #dpad{
+    left:max(8px,env(safe-area-inset-left))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;
+    grid-template-columns:repeat(4,44px)!important;grid-template-rows:44px!important;gap:6px!important;
+    width:194px!important;height:44px!important;transform:none!important;
+  }
+  html body #game-wrap #dpad .dbtn{grid-row:1!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:9px!important;font-size:18px!important}
+  html body #game-wrap #dpad .d-left{grid-column:1!important}
+  html body #game-wrap #dpad .d-up{grid-column:2!important}
+  html body #game-wrap #dpad .d-down{grid-column:3!important}
+  html body #game-wrap #dpad .d-right{grid-column:4!important}
+  html body #game-wrap #touch-buttons{right:max(8px,env(safe-area-inset-right))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;flex-direction:row!important;gap:6px!important}
+  html body #game-wrap #touch-buttons #tb-interact,html body #game-wrap #touch-buttons #tb-menu{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;font-size:16px!important}
+  html body #game-wrap #v55-nmbtns[data-night-combat-input="active"]{
+    right:max(114px,calc(env(safe-area-inset-right) + 114px))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;
+    display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:6px!important;width:auto!important;
+  }
+  html body #game-wrap #v55-nmbtns[data-night-combat-input="active"]>.v55-nbtn{width:50px!important;height:44px!important;min-width:50px!important;min-height:44px!important}
+}
+@media(orientation:landscape) and (max-height:500px) and (min-width:560px){
+  html body.good-boys-controls #good-dogs-touch{
+    right:max(8px,env(safe-area-inset-right))!important;bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:min(490px,calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)) - 208px))!important;
+    grid-template-columns:repeat(7,minmax(44px,1fr))!important;grid-template-rows:44px!important;gap:4px!important;padding:0!important;
+  }
+  html body.good-boys-controls #good-dogs-touch button,html body.good-boys-controls #good-dogs-touch button[data-utility='1']{
+    grid-area:auto!important;width:100%!important;min-width:44px!important;height:44px!important;min-height:44px!important;font-size:8px!important;padding:4px 2px!important;
+  }
+  html body.good-boys-controls #good-dogs-touch button#gb-use{grid-area:auto!important;width:100%!important;height:44px!important;min-height:44px!important}
+}
+/* Reserve narrow movement/menu spacing from the first frame in every mode.
+   Night action geometry follows input ownership, without waiting for the optional
+   visual decorator class or resizing targets when MORE opens. */
+@media(orientation:landscape) and (max-height:500px) and (min-width:560px) and (max-width:640px){
+  html body #game-wrap #dpad{width:176px!important;gap:0!important}
+  html body #game-wrap #touch-buttons{gap:2px!important}
+  html body #game-wrap #v55-nmbtns[data-night-combat-input="active"]{right:max(102px,calc(env(safe-area-inset-right) + 102px))!important;gap:1px!important}
+  html body #game-wrap #v55-nmbtns[data-night-combat-input="active"]>.v55-nbtn{width:44px!important;min-width:44px!important}
 }
