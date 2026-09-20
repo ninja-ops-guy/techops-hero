@@ -6,6 +6,7 @@ const fs = require("fs");
 const tests = [
   "test_review_contracts.js",
   "test_quality_release_receipt.mjs",
+  "test_browser_geometry.mjs",
   "test_campaign_act1.js",
   "test_game_resume_checkpoint.js",
   "test_day_notice_queue.js",

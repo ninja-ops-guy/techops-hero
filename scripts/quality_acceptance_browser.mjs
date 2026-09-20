@@ -7,7 +7,7 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {chromium} from 'playwright';
 import {sourceIdentity,digest} from './quality_release_receipt.mjs';
-import {assertLandscapeControlBounds} from './responsive_control_contract.mjs';
+import {assertLandscapeControlBounds,assertTouchTarget} from './responsive_control_contract.mjs';
 
 const port=Number(process.env.QUALITY_PORT||4197),base=process.env.QUALITY_BASE_URL||`http://127.0.0.1:${port}/`;
 const out=path.resolve(process.env.QUALITY_OUT_DIR||'/tmp/techops-quality-acceptance');
@@ -25,7 +25,7 @@ async function click(page,locator,touch=false){
   const hit=await locator.evaluate(el=>{const r=el.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,top=document.elementFromPoint(x,y);return {reachable:!!top&&(top===el||el.contains(top)),width:r.width,height:r.height,top:top?.id||top?.tagName,label:el.getAttribute('aria-label')||el.textContent};});
   assert.ok(hit.reachable,`Occluded action ${hit.label}: hit ${hit.top}`);
   assert.ok(hit.width>0&&hit.height>0,'Action must have nonempty rendered bounds');
-  if(touch)assert.ok(hit.width>=44&&hit.height>=44,`Touch action is smaller than 44px: ${hit.label} (${hit.width} × ${hit.height})`);
+  if(touch)assertTouchTarget(hit,hit.label);
   if(touch)await locator.tap();else await locator.click();
   return hit;
 }

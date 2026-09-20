@@ -1,5 +1,15 @@
 import assert from 'node:assert/strict';
 
+// Chromium can report a CSS 44px edge as 43.999969482421875 after transforming
+// layout coordinates. Allow only 0.0001 CSS pixel of measurement roundoff;
+// the required target remains 44px, and genuine deficits such as 43.99 fail.
+const TOUCH_TARGET_PX = 44, RECT_ROUNDOFF_PX = 0.0001;
+export function assertTouchTarget(box, label = 'touch target') {
+  assert.ok(box && Number.isFinite(box.width) && Number.isFinite(box.height), `${label} must have finite numeric width and height`);
+  assert.ok(box.width + RECT_ROUNDOFF_PX >= TOUCH_TARGET_PX && box.height + RECT_ROUNDOFF_PX >= TOUCH_TARGET_PX,
+    `${label} retains a 44px touch target (${box.width} × ${box.height}; measurement tolerance ${RECT_ROUNDOFF_PX}px)`);
+}
+
 // Read the live production projection and rendered controls. No state injection,
 // input replacement, camera mutation, or unprojected canvas-coordinate checks.
 export async function assertLandscapeControlBounds(page) {
@@ -38,7 +48,7 @@ export async function assertLandscapeControlBounds(page) {
     assert.ok(snapshot.controls.length >= 4, 'landscape gameplay exposes movement controls');
     assert.ok(Number.isFinite(snapshot.projectedFoot), 'actor must have a finite projected foot position');
     for (const control of snapshot.controls) {
-      assert.ok(control.width >= 44 && control.height >= 44, `${control.id} retains a 44px touch target`);
+      assertTouchTarget(control, control.id);
       assert.ok(control.left >= 0 && control.right <= snapshot.viewport.width + 1 && control.bottom <= snapshot.viewport.height + 1, `${control.id} stays inside the viewport`);
       assert.ok(control.top >= snapshot.projectedFoot + 4, `${control.id} must stay below the grounded actor (${control.top} vs ${snapshot.projectedFoot})`);
       assert.ok(control.reachable, `${control.id} center is intercepted by ${control.hit}`);

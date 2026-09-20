@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { assertLandscapeControlBounds } from './responsive_control_contract.mjs';
+import { assertLandscapeControlBounds, assertTouchTarget } from './responsive_control_contract.mjs';
 
 const port = Number(process.env.PRESENTATION_PORT || 4196);
 const base = process.env.PRESENTATION_BASE_URL || `http://127.0.0.1:${port}/`;
@@ -61,7 +61,7 @@ async function sceneContract(page, profile, scene) {
     const button = buttons.nth(i);
     await button.scrollIntoViewIfNeeded();
     const box = await button.boundingBox();
-    assert.ok(box && box.height >= 44, 'dialogue choices retain touch target size');
+    assertTouchTarget(box, 'dialogue choice');
     assert.ok(await button.evaluate(el => {
       const b = el.getBoundingClientRect();
       const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
@@ -108,7 +108,7 @@ try {
       });
       assert.equal(field.phoneRole, 'button');
       assert.equal(field.phoneTab, 0);
-      assert.ok(field.toolbar.every(b => b.width >= 44 && b.height >= 44), 'visible toolbar controls retain 44px targets');
+      for (const control of field.toolbar) assertTouchTarget(control, control.id);
       if (name === 'landscape') assert.ok(field.objectives.bottom <= field.controls.top, 'landscape objectives must not overlap movement controls');
       await page.screenshot({ path: `${out}/${name}-day.png` });
       await page.evaluate(() => TechOpsCampaignNativeAct1.openStandup());
