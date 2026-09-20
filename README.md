@@ -1,7 +1,13 @@
-# TechOps Hero v7.37 — AeroTech Division
+# TechOps Hero — Production Story Mode v1.2
 
 A roguelite IT help-desk RPG. Every ticket is a dungeon. Every day is a run.
 You start answering calls alone — you end up running an IT organization.
+
+> **Current story authority:** Production Story Mode follows the v1.2 Story Bible.
+> The numbered v6/v7 sections below preserve engine history, not current canon.
+> Legacy early Felicia confrontations and premature ending routes are retired in
+> production: Felicia's canonical arc builds toward an earned alliance before
+> MORNINGSTAR and Duet.
 
 ## Play
 Open `index.html` in any browser, or host the folder anywhere static (GitHub Pages, Netlify, S3...).
@@ -22,7 +28,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 1. **📞 The Call** — every ticket starts as a communication battle. Fill the caller's Ticket Gauge without draining their Patience. Executives have none; HR talks forever; Manufacturing shouts over line noise. Push too hard and they call your manager.
 2. **Interview & Troubleshoot** — question the user, then work the process: gather information (*"When did this start?" "Can you reproduce it?" "What changed recently?"*), rule out wrong causes one by one, and only then form a conclusion. Skipping straight to a conclusion is a blind guess — no bonus, and the ticket remembers.
 3. **🌀 Portal battle** — turn-based combat where **Uncertainty is the real enemy**: gather weighted evidence (testimony, logs, network, config), prune the root-cause tree, and only hypothesize at 60%+ Confidence. Blind fixes backfire and build tech debt.
-4. **Close & grow** — XP, budget, department reputation, knowledge mastery. Coffee restores you (and the mug is sacred).
+4. **Stabilize, verify, document** — a technical win stops the incident, user/system verification proves the outcome, and documentation closes the ticket. Only then do XP, budget, reputation, and knowledge mastery pay out. Coffee restores you (and the mug is sacred).
 5. **🌃 Night Crawl** — at 16:00 the South Exit opens. Outside, the game becomes a floaty platformer: dash, double-jump (with flip), and clear three New Haven streets of glitch creatures in rhythm-based beat-'em-up combat — then head home and end the day.
 
 ## Systems
@@ -73,7 +79,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 - **NPC flag-downs** — ticket holders wave you down in the halls: engage the troubleshooting battle now or ask them to hold (being acknowledged costs them nothing — good communication)
 - **Daily standup** — 09:30 reminder; report to Mike's desk with the team. Mike references the hottest ticket on the board; your report style matters: crisp status (XP, -stress, +rep), flagging blockers (+confidence head start in that battle), offering to pair, or staying silent (+stress)
 - **Pixel-baroque sprites** — every sprite atlas rebuilt pristine: true transparency (no more white borders), cross-cell bleed removed, frames centered and isolated; plus an AI-generated golden server-rack crest on the title screen and command center
-- **Troubleshooting-session battles (v6.2 rework)** — portal battles follow a real session now: a 4-phase guide (▶ GATHER → HYPOTHESIZE → RESOLVE → VERIFY) sits above the fight and tells you what to do next; enemies scale fairly (HP ~60% of before), uncertainty starts at 52%, and corruption damage is mitigated — methodical play wins
+- **Troubleshooting-session battles (v6.2 rework)** — portal battles follow a real session now: a 5-phase guide (▶ GATHER → HYPOTHESIZE → RESOLVE → VERIFY → DOCUMENT) sits above the fight and tells you what to do next; enemies scale fairly (HP ~60% of before), uncertainty starts at 52%, and corruption damage is mitigated — methodical play wins
 - **South Exit map marker** — the 16:00 exit glows with a sign and countdown (gold when closed, green and OPEN at 16:00)
 - **Modern clean look** — AI-generated night skyline behind the title crest, frosted-glass dialogs
 - **Scene transitions** — day cards each morning, NIGHT CRAWL title card, glitch-flash on incident entry, soft wipes on battle end / night exit / EOD
@@ -104,7 +110,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `v62_hooks.js` | v6.2: battle rework + session guide, exit marker, title skyline |
 | `skyline.js` + `skyline_p1–p3.js` | v6.2: AI-generated night skyline title backdrop (split payload) |
 | `v63_hooks.js` | v6.3: transitional scenes, smooth walking, 40 scenic map props |
-| `v64_hooks.js` | v6.4: Felicia secret boss, Watchdog Protocol mode, Impreza & war-driving |
+| `v64_hooks.js` | Historical v6.4 gameplay package; the v1.2 story firewall retires its early Felicia confrontation and premature ending paths |
 | `v65_hooks.js` | v6.5: deep interviews (type-specific Q&A), reasoning outcomes, NPC sprite cast |
 | `v66_hooks.js` | v6.6: AAA polish — battle juice, extended SFX, typewriter dialogue, win confetti |
 | `v67_hooks.js` | v6.7: cinematic combat — settings, ambient audio, adaptive music, boss cinematics, combos, gallery, bug fixes |
@@ -117,7 +123,7 @@ Mobile-friendly: virtual joystick + touch buttons on coarse-pointer devices — 
 | `emote.js` + `emote_p1.js` | v7.2: AI-generated emote icon atlas (split payload) |
 | `v72_hooks.js` | v7.2: arena sprites by ticket type, hit-stop on crits, NPC idle emotes |
 | `panels.js` + `panel_p1a–p6d.js` | v7.3: generated story-panel art for the days 5–10 arc (split payload) |
-| `v73_hooks.js` | v7.3: animated comic cutscenes, Orpheus backstory, Crown Jewel intel, day-10 endings |
+| `v73_hooks.js` | Historical v7.3 comic/campaign package; canonical cutscenes remain available while legacy early endings are fenced by Story Bible v1.2 |
 | `v74_hooks.js` | v7.4: story gallery replays, ending epilogues, post-arc Felicia |
 | `v75_hooks.js` | v7.5: minimizable objectives tracker, scripted scene director, animation pack |
 | `v76_hooks.js` | v7.6: time-of-day grading, real-time light map, camera lag, living title, floor texture |
@@ -164,6 +170,12 @@ v5.1 also fixed the overlay camera transform so room dressing renders in world s
 Saves to localStorage (Continue Run on the title screen).
 
 ## Roadmap
+This is the historical feature ledger, not a claim that every listed route remains
+canonical or release-certified. The v1.2 Story Bible retires the early Felicia boss,
+defeat-to-unlock, and premature ending paths while retaining their reusable engine
+and presentation systems. The current production critique and forward plan live in
+[`docs/REVISION_AUDIT_2026-09-20.md`](docs/REVISION_AUDIT_2026-09-20.md).
+
 **Shipped:** evidence-based combat · communication battles · troubleshooting process · night crawl mode · ramps & rides · workforce & tech debt · vendor shop & infrastructure retirement · major incidents & PIRs · legacy monsters & verdicts · change management · knowledge mastery · hidden root causes · follow-up chains · users-learn · career report paths · NG+ legends · character sprite system · Digital Twin overlay · IT dept home base & interns · remote ticket resolution · terminal drills · marketing swag & cosmetics · educational tech notes · promotion-track powers · incident dependency trees · home upgrades · AV & plant-floor tickets · hardware lifecycle decisions · VIP support · cinematic incidents · ops monitor · phone/Teams interface · living helpdesk · week cycles & weather · mobile night controls · collectible achievements & trophy case · rank gear visuals · night maintenance windows · certification study · packet-routing & AD drills · procurement refresh project · detective evidence board · command-center endgame · final QA & polish pass (v6.0.1) · symptom-first ticket presentation · NPC-initiated troubleshooting · daily standup · pixel-baroque sprites · rebalanced troubleshooting-session battles · exit map marker · modern skyline title · scene transitions · smooth walk animation · 40 scenic map props · Felicia hidden APT boss & clue investigation · playable Felicia (max stats, legendary gear) · modded black Impreza & war-driving · Watchdog Protocol intelligence mode · type-specific interview answers with red herrings · varied reasoning outcomes · cohesive NPC sprite cast · AAA polish pass: battle juice & hit feedback · extended synthesized SFX · typewriter dialogue · win celebrations & hurt vignette · cinematic combat: boss intros & combo finishers · layered ambient audio & adaptive music · dialogue portraits · accessibility settings · cutscene gallery · living-world ambience · path guides (toggleable) · enforced 16:00 clock-out & drive home · side-view department interiors · perspective-switch gameplay · ghost-scheduled Felicia appearances & durable unlock · toggleable objectives & UI animation pack · generated arena sprites, hit-stop & idle emotes · animated comic cutscenes & the days 5–10 Orpheus arc (v7.3) · Crown Jewel intel tickets & gated endings · story gallery replays & ending epilogues (v7.4) · minimizable objectives tracker, condition-triggered cutscenes & the cinematic animation pack (v7.5) · certification polish: grading, lighting & camera (v7.6) · visual-novel portraits (v7.7) · combat feel & environmental storytelling (v7.8) · hotfix: battle-entry freeze & tracker minimize (v7.9) · True North: map-matched side-view rooms & battle consistency (v7.10) · Infra Truth: remaining tactics/diagnosis contradictions removed (v7.11) · Cast Truth: NPC names always match their sprites (v7.12) · objective waypoints, onward doors & cast variety (v7.13) · diagnostic decision trees (v7.14) · tile-true movement (v7.15) · variety pack (v7.16) · NOC wire: overnight reports & EOD cross-links (v7.17) · ask-don't-answer interviews (v7.18) · true transparency sprite fix (v7.19) · field polish: lobby spawn, HUD dock, prop inspection & department voices (v7.20) · runtime alpha-bleed for every PNG sprite source (v7.21) · the Night Drive cinematic (v7.22) · the Line Goes Dark critical-incident cinematic (v7.23) · the Ghost in the Boot Drive major-incident resolution cinematic (v7.24) · the interactive cinematic pack (v7.25) · story pack II: racks / city life / promotion day (v7.26) · ride along: the Charger & K's night run (v7.27) · performance pass: cached tile layer, minimap & light map (v7.28) · story pack III: signals from the dark (v7.29) · second movement: gamepad support, badge-cloner & K origin boards (v7.30) · night shift: beat-'em-up rework, districts & the Charger hub (v7.31) · opening theme: menu music, save backups & scene validator (v7.32) · friends in high places: Waldo, stress & car care, threat-intel skills (v7.33) · ghost fork: K's side story, NULL SHEPHERD & painted districts (v7.34) · good dogs: the questline completes, portraits & interiors (v7.35) · full wiring: every asset has a job (v7.36) · third shift: Ghost Shift missions begin & the EOD style pose (v7.37)
 
 ## v6.4 — Felicia: Watchdog Protocol
@@ -218,7 +230,7 @@ Saves to localStorage (Continue Run on the title screen).
 - **IT Department backdrop**: regenerated in the reference cubicle style — IT DEPARTMENT wall sign, KEEP CALM AND REBOOT poster, server rack, TICKETS whiteboard, water cooler, printer, trophy shelf.
 - **Fix**: Felicia's side-room station called a private function and would throw; it now steps back into the world and talks there.
 
-**The roadmap is complete** — every planned feature has shipped. See `QA_REVIEW.md` for the final review and P2/P3 polish ideas.
+**The historical v6–v7 ledger is complete; Production Story Mode is not.** See the revision audit above for the current certification boundary and prioritized work.
 
 ## v7.1 — Interface Polish
 - **Toggleable objectives** — the HUD quest tracker can now be hidden from ⚙️ Settings (persisted); it also pulses when tickets arrive or close.

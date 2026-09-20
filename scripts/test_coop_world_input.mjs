@@ -12,8 +12,10 @@ function world(m = 1) {
 }
 function harness() {
   const listeners = new Map();
+  const nodes = new Map();
   const root = {NM:world(),S:{nightMode:true,inDialog:false,meta:{_v736:{m:1,playMode:'local'}}},
-    document:{body:{dataset:{}},querySelector:()=>null,addEventListener:(k,f)=>listeners.set(k,f)},
+    document:{body:{dataset:{}},hidden:false,querySelector:()=>null,getElementById:id=>nodes.get(id)||null,addEventListener:(k,f)=>listeners.set(k,f)},
+    getComputedStyle:node=>node.style||{},
     addEventListener:(k,f)=>listeners.set(k,f),performance:{now:()=>0}};
   vm.createContext(root);vm.runInContext(source,root,{filename:'good_dogs_coop.js'});
   const api=root.TechOpsGoodDogsCoop;
@@ -22,7 +24,7 @@ function harness() {
   // Production order: beginStep -> pair/partner -> puzzle.
   function frame(){api.beginStep(root.NM);partnerStep();api.stepPuzzle(root.NM,1/60);}
   function next(){root.NM=world(2);root.S.meta._v736.m=2;return root.NM._v736.partner;}
-  return {root,api,key,partnerStep,frame,next,listeners};
+  return {root,api,key,partnerStep,frame,next,listeners,nodes};
 }
 
 test('fresh held movement survives the first M2 puzzle update',()=>{
@@ -50,12 +52,43 @@ test('a blocked transition discards input rather than replaying it',()=>{
   const h=harness();const p=h.next();h.root.NM._v736.resolving=true;h.key('KeyW');h.frame();
   h.root.NM._v736.resolving=false;h.frame();assert.equal(p.jumps,0);assert.equal(p.onGround,true);
 });
+test('modal, lifecycle and presentation transitions release held movement',()=>{
+  const visible=()=>({hidden:false,classList:{contains:()=>false},style:{display:'block',visibility:'visible',opacity:'1'}});
+  for(const mode of ['panel','eod','settings','gameOver','paused','hidden','presentation','cinematic']){
+    const h=harness(),p=h.next();h.key('KeyD');
+    if(mode==='panel')h.nodes.set('panel',visible());
+    if(mode==='eod')h.nodes.set('eod',visible());
+    if(mode==='settings')h.nodes.set('v67-settings',visible());
+    if(mode==='gameOver')h.root.S.gameOver=true;
+    if(mode==='paused')h.root.S.paused=true;
+    if(mode==='hidden')h.root.document.hidden=true;
+    if(mode==='presentation')h.root.TechOpsPresentationDirector={isBlocking:()=>true};
+    if(mode==='cinematic')h.nodes.set('good-boys-ship-interlude',visible());
+    h.partnerStep();const x=p.x;
+    h.nodes.clear();h.root.S.gameOver=false;h.root.S.paused=false;h.root.document.hidden=false;h.root.TechOpsPresentationDirector=null;
+    h.partnerStep();assert.equal(p.x,x,mode+' must not replay a held movement after unblock');assert.equal(p.vx,0);
+    h.key('KeyD',false);
+  }
+});
 test('dialog and home overlays reject keys',()=>{
   for(const overlay of ['dialog','home']){
     const h=harness();h.frame();
     if(overlay==='dialog')h.root.S.inDialog=true;else h.root.document.querySelector=()=>({});
     h.key('KeyW');h.key('KeyW',false);h.root.S.inDialog=false;h.root.document.querySelector=()=>null;
     h.frame();assert.equal(h.root.NM._v736.partner.jumps,0);
+  }
+});
+test('beginStep clears queued input when partner scheduling is skipped by a blocker',()=>{
+  for(const mode of ['dialog','resolving','ending','opening']){
+    const h=harness(),p=h.next();h.key('KeyD');h.key('KeyW');
+    if(mode==='dialog')h.root.S.inDialog=true;
+    if(mode==='resolving')h.root.NM._v736.resolving=true;
+    if(mode==='ending')h.root.NM._v736.ending=true;
+    if(mode==='opening')h.root.document.querySelector=()=>({});
+    h.api.beginStep(h.root.NM);
+    h.root.S.inDialog=false;h.root.NM._v736.resolving=false;h.root.NM._v736.ending=false;h.root.document.querySelector=()=>null;
+    h.partnerStep();assert.equal(p.x,650,mode);assert.equal(p.vx,0,mode);assert.equal(p.jumps,0,mode);assert.equal(p.onGround,true,mode);
+    h.key('KeyD',false);h.key('KeyW',false);h.key('KeyD');h.partnerStep();assert.ok(p.x>650,mode+' cleanup must not latch input permanently');h.key('KeyD',false);
   }
 });
 test('blur and visibility change discard queued jumps',()=>{

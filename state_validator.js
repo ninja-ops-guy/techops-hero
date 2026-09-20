@@ -1,11 +1,11 @@
-/* TechOps Hero — production state validator v3.
+/* TechOps Hero — production state validator v4.
  * Keeps Good Boys mission invariants isolated while validating canonical Good
  * Dogs semantic writeback plus main-campaign MORNINGSTAR, Watchdog and endings.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsStateValidator)return;
-  var VERSION=3,ENDINGS=["shutdown","control","open_network"];
+  var VERSION=4,ENDINGS=["shutdown","control","open_network"];
   function validateCampaign(meta,runtime){
     var errors=[];meta=meta||null;runtime=runtime||null;
     if(!meta)return{valid:true,errors:errors,version:VERSION,skipped:true};
@@ -30,12 +30,19 @@
     return{valid:errors.length===0,errors:errors,version:VERSION,at:Date.now()};
   }
   function validateStory(state){
-    var errors=[],late=state&&state.lateGame||{},ms=late.morningstar||null,ch=late.chapters||null,story=state&&state.story||{},facts=story.facts||{};
-    if(ms){var phase=Number(ms.phase);if(!Number.isFinite(phase)||phase<0||phase>5)errors.push("Invalid MORNINGSTAR phase: "+ms.phase);if(ms.completedDayTickets&&!Array.isArray(ms.completedDayTickets))errors.push("MORNINGSTAR completedDayTickets must be an array");if(ms.nightRecoveredItems&&!Array.isArray(ms.nightRecoveredItems))errors.push("MORNINGSTAR nightRecoveredItems must be an array");}
+    var errors=[],late=state&&state.lateGame||{},ms=late.morningstar||null,ch=late.chapters||null,story=state&&state.story||{},facts=story.facts||{},acts=Array.isArray(story.completedActs)?story.completedActs:[];
+    function completed(id){return acts.indexOf(id)>=0;}
+    [["act_3","act_2"],["act_4","act_3"],["act_5","act_4"],["act_6","act_5"]].forEach(function(pair){if(completed(pair[0])&&!completed(pair[1]))errors.push("Story order: "+pair[0]+" requires completed "+pair[1]);else if(completed(pair[0])&&acts.indexOf(pair[1])>acts.indexOf(pair[0]))errors.push("Story order: "+pair[1]+" must precede "+pair[0]);});
+    if(facts.violinist_revealed&&!completed("act_3"))errors.push("Story facts: violinist_revealed requires completed act_3");
+    if((facts.felicia_alliance||facts.morningstar_hangar_revealed)&&!completed("act_4"))errors.push("Story facts: Act IV alliance rewards require completed act_4");
+    if((facts.morningstar_airborne||facts.mike_model_discovered)&&!completed("act_5"))errors.push("Story facts: MORNINGSTAR completion rewards require completed act_5");
+    if((facts.duet_protocol_complete||facts.felicia_playable||facts.orbital_signal_found)&&!completed("act_6"))errors.push("Story facts: Duet Protocol rewards require completed act_6");
+    if(ms){var phase=Number(ms.phase);if(!Number.isFinite(phase)||phase<0||phase>5)errors.push("Invalid MORNINGSTAR phase: "+ms.phase);if(phase>0&&(!completed("act_4")||!facts.felicia_alliance||!facts.morningstar_hangar_revealed))errors.push("MORNINGSTAR progress requires completed Act IV alliance and hangar access");if(phase>=4&&!completed("act_5"))errors.push("MORNINGSTAR integrated phase requires completed act_5");if(ms.completedDayTickets&&!Array.isArray(ms.completedDayTickets))errors.push("MORNINGSTAR completedDayTickets must be an array");if(ms.nightRecoveredItems&&!Array.isArray(ms.nightRecoveredItems))errors.push("MORNINGSTAR nightRecoveredItems must be an array");}
     if(ch){
       if(ch.ending&&ENDINGS.indexOf(ch.ending)<0)errors.push("Unknown late-game ending: "+ch.ending);
       if(ch.watchdogDefeated&&!facts.k_personhood_affirmed)errors.push("Watchdog completion requires K personhood affirmation");
       if(ch.watchdogDefeated&&!facts.duet_protocol_complete)errors.push("Watchdog completion requires Duet Protocol");
+      if(ch.duetComplete&&!completed("act_6"))errors.push("Late-game Duet completion requires completed act_6");
       if(ch.ending==="open_network"){
         if(!ms||Number(ms.phase)<5)errors.push("Open Network requires MORNINGSTAR phase 5");
         if(!facts.k_personhood_affirmed)errors.push("Open Network requires Ghost Fork recognition");

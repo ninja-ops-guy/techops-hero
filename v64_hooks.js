@@ -2,6 +2,7 @@
 // max stats + legendary gear, modded black Impreza (super fast + war-driving), Watchdog intel mode.
 (function () {
   const FEL_VER = "6.4.0";
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
 
   // ---------- state ----------
   function fel() {
@@ -14,7 +15,7 @@
     return s.meta._fel;
   }
   const isFel = () => !!(S && S.meta && S.meta._char === "felicia");
-  const felUnlocked = () => { try { const d = load(); return !!(d && d.meta && d.meta._fel && d.meta._fel.unlocked); } catch (e) { return false; } };
+  const felUnlocked = () => { try { if (canonicalStory()) return !!(window.TechOpsStoryAuthority.canPlayFelicia && window.TechOpsStoryAuthority.canPlayFelicia(load())); const d = load(); return !!(d && d.meta && d.meta._fel && d.meta._fel.unlocked); } catch (e) { return false; } };
 
   // ---------- sprites ----------
   const felImg = new Image();
@@ -105,6 +106,7 @@
   }
 
   function confrontFelicia() {
+    if (canonicalStory()) return false;
     const f = fel();
     const ev = Math.min(10, Math.round(f.clues.length / FEL_CLUES.length * 10));
     const bar = (n) => "█".repeat(n) + "░".repeat(10 - n);
@@ -117,6 +119,7 @@
   // ---------- boss battle: THE HUNT ----------
   const FEL_TYPE = { id: "apt", label: "UNKNOWN PERSISTENCE", icon: "🕶️", enemy: "APT-17 MORNINGSTAR", eicon: "🕶️", world: "The Identity Graph", wbg: "#0b0f1a", stat: "security", diag: { best: "Correlate badge, camera & beacon evidence into one timeline", okay: "Isolate Rack 04 and revoke contractor certs", wrong: ["Wipe the café router", "Reimage her laptop immediately", "Disable every contractor account", "Ignore the 03:00 beacon"] } };
   function feliciaBattle() {
+    if (canonicalStory()) return false;
     const s = S, f = fel();
     if (!TICKET_TYPES.some(t => t.id === "apt")) TICKET_TYPES.push(FEL_TYPE);
     const pos = f.pos || { x: s.px, y: s.py };
@@ -163,7 +166,7 @@
   const __origNewState64 = newState;
   newState = function () {
     const s = __origNewState64();
-    try { if (localStorage.getItem("techops_char") === "felicia") s.meta._char = "felicia"; } catch (e) { }
+    try { if (localStorage.getItem("techops_char") === "felicia" && felUnlocked()) s.meta._char = "felicia"; else if (canonicalStory() && localStorage.getItem("techops_char") === "felicia") localStorage.removeItem("techops_char"); } catch (e) { }
     return s;
   };
 
@@ -184,6 +187,7 @@
   const __origSetupDay64 = setupDay;
   setupDay = function () {
     __origSetupDay64();
+    if (canonicalStory()) return;
     const s = S, f = fel();
     f.spots = FEL_CLUES.map(c => { const p = freeSpot(s.map, c.x, c.y); return Object.assign({}, c, { x: p.x, y: p.y }); });
     f.scanned = []; f.zones = []; f.wdTiles = 0;
@@ -457,6 +461,7 @@
   interact = function () {
     const s = S;
     if (s && s.nightMode) return __origInteract64.apply(this, arguments);
+    if (canonicalStory()) return __origInteract64.apply(this, arguments);
     if (s && !s.inBattle && !s.inDialog) {
       const f = fel();
       const p = { x: s.px, y: s.py };

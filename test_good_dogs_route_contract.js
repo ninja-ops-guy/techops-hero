@@ -140,7 +140,9 @@ const chronologyWatchdog=setTimeout(()=>{console.error("Chronology test stalled 
     NM:{_v736:{m:2,_gbBoardRequested:true}},
     GoodDogsCutscenes:{VERSION:'3.5',play:async id=>{order.push(id);return {status:'USER_SKIPPED'};}},
     TechOpsGoodBoysOpeningV4:{showDeckInteraction(){order.push('pilot');return new Promise(()=>{});}},
-    save(){saved.push(JSON.parse(JSON.stringify(root.S.meta._v736)));}
+    localStorage:{_data:{},getItem(key){return this._data[key]||null;},setItem(key,value){this._data[key]=String(value);},removeItem(key){delete this._data[key];}},
+    newState(){return{meta:{}};},
+    save(){saved.push(JSON.parse(JSON.stringify(root.S.meta._v736)));return true;}
   };root.globalThis=root;vm.createContext(root);vm.runInContext(flight,root);
   const ship=root.TechOpsGoodBoysShipFlight;
   root.NM._v736.m=1;
@@ -190,7 +192,7 @@ const chronologyWatchdog=setTimeout(()=>{console.error("Chronology test stalled 
   assert.strictEqual(root.NM._v736.m,1);
   assert.strictEqual(order.length,moviesBefore,'fresh title launch must not play any movie');
   assert.deepStrictEqual(homeEvents,["choose","mode:local","house","mode:local"]);
-  root.S.meta._v736={m:2,ship_establishing_seen:true,pairPuzzles:{garage_latches:true,hangar_power:true},playMode:"local"};
+  root.S.meta._v736={m:2,ship_establishing_seen:true,pairPuzzles:{garage_latches:true,hangar_power:true},playMode:"local",campaignOrigin:"standalone"};
   await title.opening('resume-test',title.launchConfig());
   assert.strictEqual(root.S.meta._v736.ship_establishing_seen,true,'title state recreation must retain the chronology checkpoint');
   assert.strictEqual(order.length,moviesBefore,'M2 resume may not replay opening footage at title');

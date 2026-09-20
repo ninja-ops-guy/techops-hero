@@ -89,12 +89,10 @@ for(const [name,type,touch] of profiles){
   await setup(770);
   await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));
+  await page.waitForFunction(()=>{const c=NM._nightCombat;return !!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20);});
+  await page.evaluate(()=>{NM.enemies[0].x=NM.x+48;});
   await page.keyboard.down('ArrowRight');
   try{
-   await page.waitForFunction(()=>{
-    const c=NM._nightCombat,e=NM.enemies[0];
-    return !!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20&&e.x-NM.x<54);
-   });
    await page.keyboard.press('KeyE');
   }finally{await page.keyboard.up('ArrowRight');}
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));

@@ -34,9 +34,9 @@
   function nightCinematicVisible(){try{return visibleId("v722-cine")||!!(root.v722&&typeof root.v722.active==="function"&&root.v722.active());}catch(e){return false;}}
   function nightRuntimeMounted(){try{var s=state(),n=world();return !!(s&&s.nightMode&&n&&typeof stepNM==="function"&&typeof drawNM==="function"&&isFinite(n.x)&&isFinite(n.y));}catch(e){return false;}}
   function nightWorldReady(){try{var s=state();return !!(nightRuntimeMounted()&&s&&!s.inDialog&&!nightCinematicVisible());}catch(e){return false;}}
-  function clearBlockingDialog(){try{var s=state(),d=root.document&&root.document.getElementById("dialogue");if(s&&(!d||!visible(d))&&!goodBoysCinematicVisible()&&!nightCinematicVisible())s.inDialog=false;if(d){d.classList.add("hidden");if(d.style)d.style.removeProperty("display");}return true;}catch(e){return false;}}
-  function forceNightIdentity(){try{root.localStorage&&root.localStorage.setItem("techops_char","nightcrawler");}catch(e){}try{var s=state();if(s){s.meta=s.meta||{};s.meta._char="nightcrawler";s.clock=Math.max(Number(s.clock||0),960);}}catch(e){}}
-  function clearNightIdentity(){try{root.localStorage&&root.localStorage.removeItem("techops_char");}catch(e){}try{var s=state();if(s&&s.meta&&s.meta._char==="nightcrawler")delete s.meta._char;}catch(e){}}
+  function clearBlockingDialog(){try{var s=state(),d=root.document&&root.document.getElementById("dialogue"),foreign=!goodBoysCinematicVisible()&&!nightCinematicVisible();if(s&&foreign)s.inDialog=false;if(d&&foreign){d.classList.add("hidden");if(d.style)d.style.removeProperty("display");}return true;}catch(e){return false;}}
+  function forceNightIdentity(){try{root.localStorage&&root.localStorage.setItem("techops_char","nightcrawler");}catch(e){}try{var s=state();if(s){s.meta=s.meta||{};s.meta._char="nightcrawler";if(root.__techopsAlternateStartMode==="nightcrawler")s.meta._standaloneMode="nightcrawler";s.clock=Math.max(Number(s.clock||0),960);}}catch(e){}}
+  function clearNightIdentity(){try{if(root.localStorage&&root.localStorage.getItem("techops_char")==="nightcrawler")root.localStorage.removeItem("techops_char");}catch(e){}try{var s=state();if(s&&s.meta&&s.meta._char==="nightcrawler")delete s.meta._char;}catch(e){}}
   function hideLegacyShell(preserveDialogue){try{var d=root.document;if(!d)return;["hud","dialogue","panel","battle","eod"].forEach(function(id){var el=d.getElementById(id);if(!el||!el.style)return;if(id==="dialogue"&&preserveDialogue){el.style.removeProperty("display");return;}el.style.setProperty("display","none","important");});}catch(e){}}
   function showTouch(){try{var t=root.document&&root.document.getElementById("touch-ui");if(t){t.classList.remove("hidden");t.style.removeProperty("display");}}catch(e){}}
 
@@ -46,7 +46,7 @@
   function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
   function runNightCallbacks(){var cbs=nightCallbacks.splice(0);for(var i=0;i<cbs.length;i++)try{cbs[i]();}catch(e){}}
   function finishNightLaunch(){clearBlockingDialog();forceNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionNightLaunchOk=true;root.__productionActiveMode="nightcrawler";setNightPhase("ready","router.ready");runNightCallbacks();}
-  function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];}
+  function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];try{var title=root.TechOpsProductionTitleExperience;if(title&&typeof title.routeFailed==="function")title.routeFailed("nightcrawler",root.__productionModeRouterError);}catch(e){}}
 
   function restoreRuntimeUi(){
     showTouch();
@@ -64,11 +64,18 @@
   function issueCanonicalTitleStart(){
     if(state()||nightTitleStartIssued)return !!state();
     nightTitleStartIssued=true;
+    root.__techopsAlternateStartMode="nightcrawler";
     var b=null;try{b=root.document&&root.document.getElementById("btn-start");}catch(e){}
     if(b&&typeof b.click==="function"){
       setNightPhase("start-run","startRun.request",{route:"btn-start"});
-      try{b.click();forceNightIdentity();nightTrace("startRun.state-created",{route:"btn-start"});return !!state();}
+      var wasDisabled=!!b.disabled;
+      try{
+        root.__productionTitleInternalStart="nightcrawler";
+        if(wasDisabled)b.disabled=false;
+        b.click();forceNightIdentity();nightTrace("startRun.state-created",{route:"btn-start"});return !!state();
+      }
       catch(e){root.__productionModeRouterNightStartError=String(e&&e.stack||e);nightTrace("startRun.error",{route:"btn-start",error:root.__productionModeRouterNightStartError});return false;}
+      finally{root.__productionTitleInternalStart=null;if(wasDisabled&&!state())b.disabled=true;}
     }
     var start=startRunFn();
     if(start){
@@ -126,7 +133,7 @@
 
   function launchNightCrawler(fromCapture){
     if((nightLaunchPhase==="launch"||nightLaunchPhase==="start-run"||nightLaunchPhase==="enter-requested"||nightLaunchPhase==="cinematic"||nightLaunchPhase==="mounting")&&desired==="nightcrawler"){nightTrace("launch.coalesced");enterNightCrawlerReliably();return true;}
-    setDesired("nightcrawler");beginNightLaunch(!!fromCapture);clearGoodBoysState();forceNightIdentity();hideLegacyShell(true);
+    root.__techopsAlternateStartMode="nightcrawler";setDesired("nightcrawler");beginNightLaunch(!!fromCapture);clearGoodBoysState();forceNightIdentity();hideLegacyShell(true);
     try{
       var s=state();
       if(!s){issueCanonicalTitleStart();s=state();}
@@ -158,11 +165,12 @@
   }
 
   function captureIntent(ev){
-    var target=ev&&ev.target,nightButton=null;
+    var target=ev&&ev.target,nightButton=null,goodButton=null;
     try{nightButton=target&&typeof target.closest==="function"?target.closest("#btn-nightcrawler"):null;}catch(e){}
+    try{goodButton=target&&typeof target.closest==="function"?target.closest("#btn-v736"):null;}catch(e){}
     var t=textOf(target);
     if(nightButton||t.indexOf("NIGHT CRAWLER")>=0){try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();ev&&ev.stopImmediatePropagation&&ev.stopImmediatePropagation();}catch(e){}setDesired("nightcrawler");forceNightIdentity();launchNightCrawler(true);return;}
-    if(t.indexOf("118/1984")>=0||t.indexOf("BREAKOUT")>=0||t.indexOf("GOOD BOYS")>=0){setDesired("goodboys");clearNightIdentity();var director=root.TechOpsGoodBoysCampaignDirector;if(director&&typeof director.showOpening==="function"){root.__productionGoodBoysLaunchOwner="campaign_director";return;}(root.setTimeout||setTimeout)(launchGoodBoys,0);}
+    if(goodButton||t.indexOf("118/1984")>=0||t.indexOf("BREAKOUT")>=0||t.indexOf("GOOD BOYS")>=0||t.indexOf("GOOD DOGS")>=0){root.__techopsAlternateStartMode=null;setDesired("goodboys");clearNightIdentity();var director=root.TechOpsGoodBoysCampaignDirector;if(director&&typeof director.showOpening==="function"){root.__productionGoodBoysLaunchOwner="campaign_director";return;}(root.setTimeout||setTimeout)(launchGoodBoys,0);}
   }
   function healthTick(){
     if(desired==="nightcrawler"){forceNightIdentity();hideLegacyShell(!runInitialized());if(nightWorldReady()){if(nightLaunchPhase!=="ready")finishNightLaunch();}else{if(!state())issueCanonicalTitleStart();enterNightCrawlerReliably();}}

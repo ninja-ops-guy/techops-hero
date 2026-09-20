@@ -17,9 +17,10 @@ function requiredElement(id) {
 
 assert.ok(
   html.includes('name="viewport"') &&
-    html.includes("maximum-scale=1.0") &&
+    html.includes("initial-scale=1.0") &&
+    !html.includes("user-scalable=no") &&
     html.includes("viewport-fit=cover"),
-  "index.html must keep the mobile viewport contract"
+  "index.html must keep the mobile viewport contract without blocking browser zoom"
 );
 
 requiredElement("game");
@@ -30,7 +31,7 @@ requiredElement("tb-menu");
 requiredElement("dialogue");
 
 const lastHistoricalHook = scriptIndex("v737_hooks.js");
-const campaignAct1 = scriptIndex("campaign_act1.js?v=20260912-integrated-r1");
+const campaignAct1 = scriptIndex("campaign_act1.js?v=20260920-revision-r1");
 const campaignAssets = scriptIndex("campaign_assets.js");
 const campaignRuntime = scriptIndex("campaign_runtime.js");
 const sector04 = scriptIndex("campaign_sector04.js");

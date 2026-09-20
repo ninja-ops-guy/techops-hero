@@ -4,7 +4,13 @@
 (function(root){
   'use strict';
   if(!root.document||root.TechOpsGoodDogsHomeScene)return;
-  var cachedImages=null,loading=null;
+  var cachedImages=null,loading=null,keyboardObserved=!!root.__techopsPhysicalKeyboardObserved;
+  function touchPrimary(){try{return !!(root.navigator&&Number(root.navigator.maxTouchPoints||0)>0);}catch(_){return false;}}
+  function localAvailable(){return !touchPrimary()||keyboardObserved;}
+  function localReason(){return localAvailable()?'Physical keyboard detected. Local two-player is available.':'Local two-player needs a physical keyboard on this touch device. Use Single player, or connect a keyboard and press any key.';}
+  function refreshLocalChoice(scope){try{var el=scope||root.document.getElementById('good-dogs-mode-select'),button=el&&el.querySelector('#gd-mode-local'),note=el&&el.querySelector('#gd-local-device-note'),ok=localAvailable();if(button){button.disabled=!ok;button.setAttribute('aria-disabled',ok?'false':'true');button.setAttribute('aria-describedby','gd-local-device-note');}if(note){note.hidden=ok;note.textContent=localReason();}return ok;}catch(_){return false;}}
+  function observeKeyboard(e){try{if(e&&e.isTrusted===false)return false;var key=String(e&&e.key||e&&e.code||'');if(!key||/^(Shift|Control|Alt|Meta|CapsLock|NumLock|ScrollLock)$/i.test(key))return false;keyboardObserved=true;root.__techopsPhysicalKeyboardObserved=true;refreshLocalChoice();return true;}catch(_){return false;}}
+  if(root.addEventListener)root.addEventListener('keydown',observeKeyboard,true);
   var shots=[
     {place:"WALDO'S HOUSE",title:'The porch light is still on.',body:'Waldo is missing. Katrin and Manchez return to his house to find his trail.',plate:'house',pan:0},
     {place:'THE YARD',title:'Something leads toward the garage.',body:'Follow the traces across the property. Whatever happened here, the dogs will find it together.',plate:'house',pan:28},
@@ -20,9 +26,9 @@ body[data-good-dogs-mode="local"] #gb-swap,body[data-good-dogs-mode="local"] #gb
   function shell(id){style();var el=root.document.createElement('section');el.id=id;el.className='gd-opening';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');root.document.body.appendChild(el);return el;}
   function choose(){return new Promise(function(resolve){
     var el=shell('good-dogs-mode-select'),focus=root.document.activeElement;
-    el.setAttribute('aria-labelledby','gd-mode-title');el.innerHTML='<div style="width:min(720px,100%)"><div class="gd-kicker">GOOD DOGS PROTOCOL · STORY CAMPAIGN</div><h1 id="gd-mode-title">Two dogs. One way home.</h1><p>Choose how you will play Katrin and Manchez.</p><div class="gd-choices"><button id="gd-mode-solo" class="gd-choice"><strong>Single player</strong><span>Control one dog. Your AI partner follows, fights and holds puzzle pads on command.<br>Arrows / touch · USE to interact · C to swap</span></button><button id="gd-mode-local" class="gd-choice"><strong>Local two-player</strong><span>Two people, one keyboard, one shared camera.<br>P1: arrows · E use/attack · Shift dash<br>P2: A/D · W jump · F attack · R use<br>P2: S guard · V dash</span></button></div><button class="gd-cancel" id="gd-mode-cancel">Back to title</button></div>';
+    el.setAttribute('aria-labelledby','gd-mode-title');el.innerHTML='<div style="width:min(720px,100%)"><div class="gd-kicker">GOOD DOGS PROTOCOL · STORY CAMPAIGN</div><h1 id="gd-mode-title">Two dogs. One way home.</h1><p>Choose how you will play Katrin and Manchez.</p><div class="gd-choices"><button id="gd-mode-solo" class="gd-choice"><strong>Single player</strong><span>Control one dog. Your AI partner follows, fights and holds puzzle pads on command.<br>Arrows / touch · USE to interact · C to swap</span></button><button id="gd-mode-local" class="gd-choice" aria-describedby="gd-local-device-note"><strong>Local two-player</strong><span>Two people, one keyboard, one shared camera.<br>P1: arrows · E use/attack · Shift dash<br>P2: A/D · W jump · F attack · R use<br>P2: S guard · V dash</span></button></div><p id="gd-local-device-note" role="status" aria-live="polite" style="color:#ffd18b;line-height:1.5" hidden></p><button class="gd-cancel" id="gd-mode-cancel">Back to title</button></div>';refreshLocalChoice(el);
     function finish(value){root.removeEventListener('keydown',key,true);el.remove();if(focus&&focus.focus)focus.focus();resolve(value);}
-    function key(e){if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();finish(null);}else if(e.key==='Tab'){var bs=Array.from(el.querySelectorAll('button')),i=bs.indexOf(root.document.activeElement);e.preventDefault();e.stopImmediatePropagation();bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus();}}
+    function key(e){if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();finish(null);}else if(e.key==='Tab'){var bs=Array.from(el.querySelectorAll('button')).filter(function(b){return !b.disabled;}),i=bs.indexOf(root.document.activeElement);e.preventDefault();e.stopImmediatePropagation();bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus();}}
     root.addEventListener('keydown',key,true);el.querySelector('#gd-mode-solo').onclick=function(){finish('solo');};el.querySelector('#gd-mode-local').onclick=function(){finish('local');};el.querySelector('#gd-mode-cancel').onclick=function(){finish(null);};el.querySelector('button').focus();
   });}
   function load(src){return new Promise(function(resolve,reject){var im=new root.Image(),timer=root.setTimeout(function(){reject(Error('Home scene asset timed out: '+src));},8000);im.onload=function(){root.clearTimeout(timer);resolve(im);};im.onerror=function(){root.clearTimeout(timer);reject(Error('Home scene asset unavailable: '+src));};im.src=src;});}
@@ -66,5 +72,5 @@ body[data-good-dogs-mode="local"] #gb-swap,body[data-good-dogs-mode="local"] #gb
       root.addEventListener('keydown',key,true);el.querySelector('#gd-home-next').onclick=next;el.querySelector('#gd-home-skip').onclick=function(){finish(true);};update();el.querySelector('#gd-home-next').focus();raf=root.requestAnimationFrame(render);
     });
   }
-  root.TechOpsGoodDogsHomeScene={VERSION:1,choose:choose,play:play,shots:shots,drawWorldBack:drawWorldBack};
+  root.TechOpsGoodDogsHomeScene={VERSION:1,choose:choose,play:play,shots:shots,drawWorldBack:drawWorldBack,touchPrimary:touchPrimary,localAvailable:localAvailable,localReason:localReason,observeKeyboard:observeKeyboard,refreshLocalChoice:refreshLocalChoice};
 })(typeof globalThis!=='undefined'?globalThis:this);

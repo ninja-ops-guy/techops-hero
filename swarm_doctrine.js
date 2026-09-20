@@ -23,7 +23,7 @@
     st.consequences=Array.isArray(st.consequences)?st.consequences:[];
     return st;
   }
-  function unlocked(s){try{return !!(root.TechOpsMORNINGSTARBuild&&root.TechOpsMORNINGSTARBuild.getCurrentPhase()>=3);}catch(e){return !!(s&&s.lateGame&&s.lateGame.morningstar&&s.lateGame.morningstar.phase>=3);}}
+  function unlocked(s){try{return !!(root.TechOpsMORNINGSTARBuild&&typeof root.TechOpsMORNINGSTARBuild.capabilityUnlocked==="function"&&root.TechOpsMORNINGSTARBuild.capabilityUnlocked(3,s));}catch(e){return false;}}
   function checkBounds(cmd,p){p=p||{};if(Number(p.range||0)>cmd.bounds.maxRange)return{valid:false,reason:"range_exceeds_maximum:"+cmd.bounds.maxRange};if(Number(p.duration||0)>cmd.bounds.maxDuration)return{valid:false,reason:"duration_exceeds_maximum:"+cmd.bounds.maxDuration};return{valid:true};}
   function append(s,e){var st=store(s);e.id=e.id||("swarm-"+Date.now()+"-"+Math.floor(Math.random()*1e6));st.log.push(e);if(st.log.length>100)st.log=st.log.slice(-100);save(s);return e;}
   function issueCommand(type,params,issuer){

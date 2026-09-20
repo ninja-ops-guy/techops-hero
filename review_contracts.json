@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "pull_request": 59,
+  "domains": [
+    {
+      "name": "Cinematic and mode ownership",
+      "files": ["production_title_experience.js", "production_mode_router.js", "runtime_mode_shell.js", "production_runtime_safety.js", "runtime_night.js"],
+      "tests": ["test_production_title_experience.js", "test_runtime_mode_shell.js", "test_production_runtime_safety.js", "test_night_lifecycle.js"]
+    },
+    {
+      "name": "Day persistence and operations loop",
+      "files": ["game.js"],
+      "tests": ["test_game_resume_checkpoint.js", "test_difficulty_contract.js", "test_ticket_lifecycle_contract.js"]
+    },
+    {
+      "name": "Canonical campaign continuity",
+      "files": ["campaign_story.js", "campaign_act1.js", "campaign_act2.js", "morningstar_build.js", "morningstar_swarm_runtime.js", "swarm_doctrine.js"],
+      "tests": ["test_story_authority_firewall.js", "test_campaign_ordered_act4_progression.js", "test_campaign_save_reload.js"]
+    },
+    {
+      "name": "Good Dogs co-op and authored media",
+      "files": ["good_dogs_cutscenes_v2_2.js", "good_dogs_coop.js", "good_boys_progression_authority.js", "good_boys_earthfall_ending.js", "good_boys_button_hard_fix.js"],
+      "tests": ["test_review_contracts.js", "test_good_dogs_coop.js", "test_good_dogs_state_integrity.js", "test_good_dogs_route_contract.js"]
+    }
+  ],
+  "contracts": [
+    {
+      "id": "GD_CODEC_CAPABILITY",
+      "failure_mode": "An environment without an H.264 decoder attempts the authored movie and enters a retry or autoplay loop.",
+      "invariant": "Playback eligibility is decided from MediaSource.isTypeSupported and HTMLMediaElement.canPlayType, never a user-agent string; unsupported environments remain at a visible PLAY/SKIP recovery surface.",
+      "test_ref": "test_review_contracts.js#GD_CODEC_CAPABILITY",
+      "spot_check": "Stub both capability probes as unsupported; confirm no media source is loaded, VIDEO UNSUPPORTED — SKIP is visible, and campaign state is unchanged."
+    },
+    {
+      "id": "GD_NO_INVISIBLE_ADVANCE",
+      "failure_mode": "Media failure or missing decode advances the campaign without a completed movie or deliberate skip.",
+      "invariant": "Only COMPLETED or USER_SKIPPED may settle a cutscene; capability failure is non-terminal and cannot write watched state.",
+      "test_ref": "test_review_contracts.js#GD_NO_INVISIBLE_ADVANCE",
+      "spot_check": "Open a cutscene with both probes unsupported and verify its promise remains pending until the explicit SKIP control is used."
+    },
+    {
+      "id": "GD_SKIP_IDEMPOTENT",
+      "failure_mode": "A double tap, keyboard event, or late ended event applies cutscene completion more than once.",
+      "invariant": "The first terminal event owns settlement; every later skip or completion event is a no-op and produces no second state write.",
+      "test_ref": "test_review_contracts.js#GD_SKIP_IDEMPOTENT",
+      "spot_check": "Trigger skip twice and then emit ended; verify one result, one state write, and the same narrative state as a single skip."
+    },
+    {
+      "id": "CANONICAL_STORY_NON_BYPASS",
+      "failure_mode": "A historical Felicia confrontation, boss, unlock, or day-ending route re-enters canonical Story Bible mode.",
+      "invariant": "Canonical story mode fails closed across every historical route and Felicia becomes playable only after the ordered Act VI Duet reward.",
+      "test_ref": "test_story_authority_firewall.js#canonical-firewall",
+      "spot_check": "Load canonical mode with legacy Felicia save keys and call public legacy scene APIs; no retired scene, reward, or durable unlock may fire."
+    },
+    {
+      "id": "MODE_SHELL_SINGLE_OWNER",
+      "failure_mode": "Day, Night, and Good Dogs retain duplicate presentation or input ownership after a handoff.",
+      "invariant": "The production bootstrap installs one runtime mode shell and repeated enter/exit calls restore the exact owned surface and input snapshot once.",
+      "test_ref": "test_runtime_mode_shell.js#single-owner",
+      "spot_check": "Enter and exit Night twice from both title and Day; confirm one shell install, no held input, no duplicate blockers, and exact Day restoration."
+    }
+  ],
+  "deletion_ledger": [
+    {
+      "id": "RETIRED_FELICIA_VILLAIN_ROUTES",
+      "removed": "Early Felicia confrontation, secret-boss unlock, premature playable selection, and historical ending schedules in canonical mode.",
+      "reason": "They conflict with the Story Bible v1.2 trust-to-alliance arc and ordered Act VI Duet reward.",
+      "resurrection_check": "test_story_authority_firewall.js#canonical-firewall"
+    },
+    {
+      "id": "RETIRED_LEGACY_EARTHFALL_REPLAY",
+      "removed": "Automatic b736m8 canvas finale replay from completed standalone Good Dogs resumes.",
+      "reason": "The authored Earthfall authority owns completion, persistence, replay, and return-to-title semantics.",
+      "resurrection_check": "test_review_contracts.js#RETIRED_LEGACY_EARTHFALL_REPLAY"
+    },
+    {
+      "id": "RETIRED_DUPLICATE_MODE_OWNERSHIP",
+      "removed": "Independent mode handoff writes that left Day UI, held input, or ARIA blockers active beneath Night or Good Dogs.",
+      "reason": "One reversible mode shell must own presentation and input boundaries.",
+      "resurrection_check": "test_review_contracts.js#RETIRED_DUPLICATE_MODE_OWNERSHIP"
+    }
+  ]
+}

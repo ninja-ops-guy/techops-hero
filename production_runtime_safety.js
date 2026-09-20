@@ -55,8 +55,10 @@
         var dt=dtMs/1000;
         /* Only provide an independent update when the main loop appears stalled. */
         var now=Date.now?Date.now():0;
-        if(!root.__nightRuntimeLastOk || now-root.__nightRuntimeLastOk>250){safeStep(dt);}
-        safeDraw();
+        if(!root.__nightRuntimeLastOk || now-root.__nightRuntimeLastOk>250){
+          safeStep(dt);
+          safeDraw();
+        }
       }else prev=ts;
     }catch(e){root.__nightRuntimeSafetyError=String(e&&e.stack||e);}
     raf=(root.requestAnimationFrame||function(fn){return setTimeout(function(){fn(Date.now());},16);})(frame);

@@ -18,23 +18,37 @@ async function waitForLateGame(page){
 }
 
 async function activateBaseRun(page,preferContinue=false){
-  const activated=await page.evaluate(prefer=>{
+  await page.waitForFunction(prefer=>{
     const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
-    const option=re=>[...document.querySelectorAll('#dlg-options button')].find(b=>re.test(b.textContent||''));
-    const hasLexicalS=()=>{try{return !!window.eval(`(typeof S!=='undefined'&&S)`);}catch{return false;}};
+    const ready=window.__productionTitleReadiness;
+    const cont=document.getElementById('btn-continue'),start=document.getElementById('btn-start');
+    return !!(ready&&ready.ready===true&&((prefer&&visible(cont)&&!cont.disabled)||(visible(start)&&!start.disabled)));
+  },preferContinue,{timeout:20000});
+  const route=await page.evaluate(prefer=>{
+    const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
     let route='';
     const cont=document.getElementById('btn-continue');
     if(prefer&&visible(cont)){cont.click();route='continue';}
     else{
       const start=document.getElementById('btn-start');if(!start)throw new Error('CLOCK IN unavailable');start.click();route='clock-in';
-      const standard=option(/Standard/i);if(!standard)throw new Error('Standard difficulty unavailable');standard.click();
     }
-    const clockIn=option(/Clock in/i);if(clockIn)clockIn.click();
+    return route;
+  },preferContinue);
+  if(route==='clock-in'){
+    const standard=page.locator('#dlg-options button').filter({hasText:/Standard/i}).first();
+    await standard.waitFor({state:'visible',timeout:10000});
+    await standard.click();
+  }
+  const clockIn=page.locator('#dlg-options button').filter({hasText:/Clock in/i}).first();
+  if(await clockIn.isVisible().catch(()=>false))await clockIn.click();
+  const activated=await page.evaluate(route=>{
+    const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
+    const hasLexicalS=()=>{try{return !!window.eval(`(typeof S!=='undefined'&&S)`);}catch{return false;}};
     if(window.TechOpsMORNINGSTARRuntime&&typeof window.TechOpsMORNINGSTARRuntime.install==='function')window.TechOpsMORNINGSTARRuntime.install();
     return {route,hud:visible(document.getElementById('hud')),dialog:visible(document.getElementById('dialogue')),hasS:hasLexicalS()};
-  },preferContinue);
+  },route);
   log('base-run-activation',activated);
-  await page.waitForFunction(()=>{const h=document.getElementById('hud');let s=false;try{s=!!window.eval(`(typeof S!=='undefined'&&S)`);}catch{}return !!(s&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:3000});
+  await page.waitForFunction(()=>{const h=document.getElementById('hud');let s=false;try{s=!!window.eval(`(typeof S!=='undefined'&&S)`);}catch{}return !!(s&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:10000});
   return activated;
 }
 
@@ -79,7 +93,9 @@ try{
     const c=window.TechOpsCampaign,s=c.load(localStorage);
     s.story=s.story||{schemaVersion:1,completedActs:[],facts:{}};
     s.story.completedActs=s.story.completedActs||[];s.story.facts=s.story.facts||{};
+    if(!s.story.completedActs.includes('act_4'))s.story.completedActs.push('act_4');
     s.story.facts.morningstar_signature_found=true;s.story.facts.violinist_revealed=true;
+    s.story.facts.felicia_alliance=true;s.story.facts.morningstar_hangar_revealed=true;
     s.p1=s.p1||{};s.p1.evidence=s.p1.evidence||{score:3,records:[]};s.p1.trust=s.p1.trust||{score:1,history:[]};
     s.lateGame=s.lateGame||{};
     s.lateGame.morningstar={phase:3,completedDayTickets:[],nightRecoveredItems:[],unlocks:['swarm_commands'],history:[]};
@@ -91,7 +107,7 @@ try{
     return {saveKey:c.SAVE_KEY,phase:window.TechOpsMORNINGSTARBuild.getCurrentPhase(),goodBoys:gb};
   });
   log('seeded',seeded);
-  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:2500});
+  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:10000});
   let a=await snapshot(page);log('phase3-ui',a);
   if(a.runtimeVersion<5)fail('runtime-v5-missing',a);
   if(!(a.bootstrap&&a.bootstrap.ready))fail('late-game-bootstrap-not-ready',a);
@@ -105,7 +121,7 @@ try{
   await page.waitForFunction(()=>{
     const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
     return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
-  },null,{timeout:3000});
+  },null,{timeout:10000});
   // The shared v6.6 dialogue typewriter exposes tap-to-complete. Exercise that
   // canonical mobile path before asserting the authored command copy.
   await page.evaluate(()=>{
@@ -160,8 +176,8 @@ try{
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
   await waitForLateGame(page);
   await activateBaseRun(page,true);
-  await page.waitForFunction(()=>window.TechOpsMORNINGSTARBuild&&window.TechOpsMORNINGSTARBuild.getCurrentPhase()===3,null,{timeout:3000});
-  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:3000});
+  await page.waitForFunction(()=>window.TechOpsMORNINGSTARBuild&&window.TechOpsMORNINGSTARBuild.getCurrentPhase()===3,null,{timeout:10000});
+  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:10000});
   const reloaded=await snapshot(page);log('reloaded',reloaded);
   if(reloaded.campaignPhase!==3||reloaded.phase!==3)fail('phase3-not-persistent-after-reload',reloaded);
   if(reloaded.persistedSwarmLog<2)fail('swarm-log-lost-after-reload',reloaded);

@@ -3,7 +3,7 @@
 (function(root){
   'use strict';
   if(root.TechOpsGoodDogsCoop)return;
-  var selected='solo',held={},pressed={},lastWorld=null,holdX=null;
+  var selected='solo',held={},pressed={},lastWorld=null,holdX=null,blockedLast=false;
   var bindings=['KeyA','KeyD','KeyW','KeyF','KeyR','KeyS','KeyV'];
   function state(){return root.NM&&root.NM._v736;}
   function meta(){return root.S&&root.S.meta&&root.S.meta._v736;}
@@ -12,9 +12,18 @@
   function clear(){held={};pressed={};}
   // Own keys per mission object before accepting or consuming an edge.
   // A late puzzle reset must not erase fresh input or replay the prior world.
-  function syncWorld(c){if(lastWorld!==c){lastWorld=c;holdX=null;clear();}}
-  function blocked(){var c=state();return !c||c.ending||c.resolving||root.S&&root.S.inDialog||root.document&&root.document.querySelector('#good-dogs-mode-select, #good-dogs-home-scene');}
-  function configure(value){selected=value==='local'?'local':'solo';holdX=null;clear();if(meta())meta().playMode=selected;if(root.document&&root.document.body)root.document.body.dataset.goodDogsMode=selected;return selected;}
+  function syncWorld(c){if(lastWorld!==c){lastWorld=c;holdX=null;blockedLast=false;clear();}}
+  function visible(id,activeClass){try{var d=root.document,e=d&&d.getElementById&&d.getElementById(id);if(!e||e.hidden||e.classList&&e.classList.contains('hidden'))return false;if(activeClass&&!(e.classList&&e.classList.contains(activeClass)))return false;var s=root.getComputedStyle?root.getComputedStyle(e):e.style;return !s||s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity==null?1:s.opacity)!==0;}catch(_){return false;}}
+  function blockingNow(){
+    var c=state(),s=root.S,d=root.document,director=root.TechOpsPresentationDirector;
+    if(!c||c.ending||c.resolving||s&&(s.inDialog||s.inBattle||s.paused||s.gameOver)||d&&d.hidden)return true;
+    if(d&&d.querySelector&&d.querySelector('#good-dogs-mode-select, #good-dogs-home-scene'))return true;
+    if(director&&typeof director.isBlocking==='function'&&director.isBlocking('gooddogs'))return true;
+    if(visible('good-dogs-cutscene-overlay','active'))return true;
+    return ['dialogue','battle','panel','eod','v67-settings','v725-cine','good-boys-story-cine','gb-prison-cine','good-boys-earthfall-cine','good-boys-campaign-intro','good-boys-ship-interlude','good-boys-ship-flight','good-boys-crash-canonical','good-boys-mobile-recovery'].some(function(id){return visible(id);});
+  }
+  function blocked(){var on=blockingNow();if(on&&!blockedLast)clear();blockedLast=on;return on;}
+  function configure(value){selected=value==='local'?'local':'solo';holdX=null;blockedLast=false;clear();if(meta())meta().playMode=selected;if(root.document&&root.document.body)root.document.body.dataset.goodDogsMode=selected;return selected;}
   function floor(){return typeof root.NM_FLOOR==='number'?root.NM_FLOOR:430;}
   function definition(n){var r=root.TechOpsLevelRegistry,row=r&&r.goodDogsMission(n._v736.m);return row&&row.pairPuzzle;}
   function progress(n){var c=n._v736;if(!c.pairPuzzle)c.pairPuzzle={charge:0,engaged:false,solved:false};return c.pairPuzzle;}
@@ -82,7 +91,7 @@
     if(pressed.KeyR)interact(2);
     pressed={};
   }
-  function beginStep(n){syncWorld(n._v736);if(active())n._v736.coopPrevious={a:n.x,b:n._v736.partner.x};}
+  function beginStep(n){syncWorld(n._v736);if(blocked())return false;if(active())n._v736.coopPrevious={a:n.x,b:n._v736.partner.x};return true;}
   function constrain(n,width){
     if(!active())return;var c=n._v736,p=c.partner,old=c.coopPrevious||{a:n.x,b:p.x},span=Math.max(270,Math.min(680,width-180)),delta=n.x-p.x,over=Math.abs(delta)-span;
     if(over<=0)return;var dir=Math.sign(delta),a=Math.max(0,(n.x-old.a)*dir),b=Math.max(0,(p.x-old.b)*-dir),total=a+b;

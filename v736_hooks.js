@@ -675,7 +675,7 @@
           if (Array.isArray(campaign.evidence)) mt.evidence = campaign.evidence.slice();
         }
         if (options.mission != null) mt.m = Number(options.mission) || mt.m || 1;
-        if (mt.done) { playCine736("b736m8", null); return true; }
+        if (mt.done) { if (options.suppressDoneReplay) return true; playCine736("b736m8", null); return true; }
         if (options.directGameplay) {
           const mission = mt.m || 1;
           startCombat736(mission);
@@ -1407,12 +1407,12 @@
     (function title736() {
       try {
         const ts = document.getElementById("title-screen"); if (!ts) return;
-        const saved = (function () { try { const d = localStorage.getItem("techops_save"); return d ? JSON.parse(d) : null; } catch (e) { return null; } })();
+        const saved = (function () { try { const key = window.TechOpsSaveKeys && window.TechOpsSaveKeys.goodDogs || "techops_good_dogs_session_v1"; const d = localStorage.getItem(key); if (d) return JSON.parse(d); const legacy = localStorage.getItem("techops_save"), parsed = legacy && JSON.parse(legacy); return parsed && parsed.meta && parsed.meta._v736 ? parsed : null; } catch (e) { return null; } })();
         const pr = saved && saved.meta && saved.meta._v736;
         const b = document.createElement("button");
         b.id = "btn-v736";
         b.textContent = "🛰 GOOD DOGS PROTOCOL — CO-OP SIDE STORY" + (pr && pr.done ? " · ✅ REPLAY FINALE" : pr && pr.m > 1 ? " · RESUME M" + pr.m : "");
-        b.onclick = () => start736();
+        b.onclick = () => { const authority = window.TechOpsGoodBoysButtonHardFix; return authority && typeof authority.launch === "function" ? authority.launch("v736-title-button") : start736(); };
         ts.appendChild(b);
         if (pr && pr.done) {
           const n = document.createElement("div");

@@ -14,9 +14,11 @@ function has(s){assert.ok(html.includes(s),`missing mobile production marker: ${
 const scriptPaths=[...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>/g)].map(m=>m[1].split(/[?#]/,1)[0]);
 function script(src){return scriptPaths.indexOf(src);}
 
-['width=device-width','maximum-scale=1.0','user-scalable=no','viewport-fit=cover','apple-mobile-web-app-capable','mobile-web-app-capable'].forEach(has);
+['width=device-width','initial-scale=1.0','viewport-fit=cover','apple-mobile-web-app-capable','mobile-web-app-capable'].forEach(has);
+assert.ok(!html.includes('maximum-scale=1.0')&&!html.includes('user-scalable=no'),'production viewport must preserve browser zoom accessibility');
+['aria-label="Toggle Digital Twin overlay"','aria-label="Toggle music"','aria-label="Open management console"','aria-label="Move up"','aria-label="Interact"'].forEach(has);
 has('<title>TechOps Hero — Production v1.2</title>');
-has('PRODUCTION v1.2 // GHOST FREQUENCY');
+has('PRODUCTION v1.2 // AEROTECH INCIDENT RESPONSE');
 assert.ok(!html.includes('<title>TechOps Hero v7.37</title>'),'stale v7.37 page title returned');
 ['game','hud','hud-clock','dialogue','dlg-options','touch-ui','dpad','tb-interact','tb-menu'].forEach(id=>has(`id="${id}"`));
 has('WASD / ARROWS OR JOYSTICK TO MOVE · E / Ⓐ TO INTERACT');

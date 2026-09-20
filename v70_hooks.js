@@ -6,22 +6,26 @@
 (function () {
   const V70_VER = "7.0.0";
   const DEV = /[?&]dev=1\b/.test(location.search);
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
   window.TOH_DEV = DEV;
 
   // ---------- durable unlock flag (run saves are wiped on new games) ----------
   const UNLOCK_KEY = "techops_felicia_unlock";
   const unlocked70 = () => {
+    if (canonicalStory()) {
+      try { return !!(window.TechOpsStoryAuthority.canPlayFelicia && window.TechOpsStoryAuthority.canPlayFelicia()); } catch (e) { return false; }
+    }
     try { if (localStorage.getItem(UNLOCK_KEY) === "1") return true; } catch (e) { }
     try { const d = load(); return !!(d && d.meta && d.meta._fel && d.meta._fel.unlocked); } catch (e) { return false; }
   };
   // migrate a save-based unlock to the durable flag
-  try { const d = load(); if (d && d.meta && d.meta._fel && d.meta._fel.unlocked) localStorage.setItem(UNLOCK_KEY, "1"); } catch (e) { }
+  if (!canonicalStory()) try { const d = load(); if (d && d.meta && d.meta._fel && d.meta._fel.unlocked) localStorage.setItem(UNLOCK_KEY, "1"); } catch (e) { }
   // stamp the flag when the boss is beaten (v6.4's handler runs in the same chain)
   const __origWinBattle70 = winBattle;
   winBattle = function () {
     const wasFel = !!(typeof B !== "undefined" && B && B.felicia);
     const r = __origWinBattle70.apply(this, arguments);
-    if (wasFel) try { localStorage.setItem(UNLOCK_KEY, "1"); } catch (e) { }
+    if (!canonicalStory() && wasFel) try { localStorage.setItem(UNLOCK_KEY, "1"); } catch (e) { }
     return r;
   };
   // v6.4 injected the title button at its load time from the (now wiped) save —
@@ -68,6 +72,7 @@
   const __origSetupDay70 = setupDay;
   setupDay = function () {
     __origSetupDay70();
+    if (canonicalStory()) return;
     const s = S;
     if (!s || typeof fel !== "function" || (typeof isFel === "function" && isFel())) return;
     const f = fel();
@@ -84,6 +89,7 @@
   // ---------- interaction: room-station fix + encounter detection ----------
   const __origInteract70 = interact;
   interact = function () {
+    if (canonicalStory()) return __origInteract70.apply(this, arguments);
     const s = S;
     if (s && s.nightMode) return __origInteract70.apply(this, arguments);
     const f = (typeof fel === "function") ? fel() : null;
@@ -110,6 +116,7 @@
   const __origStep70 = step;
   step = function (dt) {
     const r = __origStep70(dt);
+    if (canonicalStory()) return r;
     const s = S;
     if (!s || !s.map || typeof fel !== "function" || (typeof isFel === "function" && isFel())) return r;
     const f = fel();

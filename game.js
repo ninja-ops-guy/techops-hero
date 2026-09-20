@@ -350,6 +350,44 @@ const LORE = ["📀 Old floppy: 'backup_final_v2_REAL.bak — do not delete'", "
 
 // ---------- state ----------
 let S = null;
+const DAY_CHECKPOINT_KEY = "techops_day_checkpoint_v1";
+const NIGHT_CRAWLER_SAVE_KEY = "techops_nightcrawler_session_v1";
+const GOOD_DOGS_SAVE_KEY = "techops_good_dogs_session_v1";
+window.TechOpsSaveKeys = Object.freeze({ day: "techops_save", dayCheckpoint: DAY_CHECKPOINT_KEY, nightCrawler: NIGHT_CRAWLER_SAVE_KEY, goodDogs: GOOD_DOGS_SAVE_KEY });
+const DIFFICULTY_PROFILES = Object.freeze({
+  intern: Object.freeze({ id: "intern", value: .7, enemyHp: .7, damage: .7, bossHp: 1.8, extraTickets: 0 }),
+  standard: Object.freeze({ id: "standard", value: 1, enemyHp: 1, damage: 1, bossHp: 1.8, extraTickets: 0 }),
+  oncall: Object.freeze({ id: "oncall", value: 1.3, enemyHp: 1, damage: 1.3, bossHp: 2, extraTickets: 1 }),
+});
+function difficultyProfile(value) {
+  value = Number(value);
+  return value < 1 ? DIFFICULTY_PROFILES.intern : value > 1 ? DIFFICULTY_PROFILES.oncall : DIFFICULTY_PROFILES.standard;
+}
+window.TechOpsDifficulty = Object.freeze({ VERSION: 1, profiles: DIFFICULTY_PROFILES, profile: difficultyProfile });
+// Story Bible v1.2 is the only production timeline. Historical hooks remain
+// mechanics/art providers, but may not fire their retired Felicia boss or
+// premature ending routes while this authority is active.
+const CANONICAL_CAMPAIGN_SAVE_KEY = "techops_hero_campaign_v1";
+function canonicalCampaignMilestone(actId, requiredFacts) {
+  try {
+    const storage = window.localStorage;
+    if (!storage || typeof storage.getItem !== "function") return false;
+    const raw = storage.getItem(CANONICAL_CAMPAIGN_SAVE_KEY);
+    if (!raw) return false;
+    const campaign = JSON.parse(raw);
+    const story = campaign && campaign.story;
+    if (!story || !Array.isArray(story.completedActs) || !story.completedActs.includes(actId)) return false;
+    const facts = story.facts || {};
+    return requiredFacts.every(fact => facts[fact] === true);
+  } catch (e) {
+    return false;
+  }
+}
+window.TechOpsStoryAuthority = Object.freeze({
+  VERSION: "1.2",
+  canonical: true,
+  canPlayFelicia: () => canonicalCampaignMilestone("act_6", ["duet_protocol_complete", "felicia_playable"])
+});
 function newState() {
   return {
     day: 1, clock: 9 * 60, xp: 0, budget: 80, stress: 10,
@@ -376,7 +414,25 @@ const save = () => {
       window.__techopsSaveError = "state validation rejected save";
       return false;
     }
-    localStorage.setItem("techops_save", JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra }));
+    const saveRevision = Math.max(Date.now(), Number(S._saveRevision || 0) + 1);
+    S._saveRevision = saveRevision;
+    const payload = JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
+    const standaloneMode = S.meta && S.meta._standaloneMode;
+    const standaloneNight = standaloneMode === "nightcrawler";
+    const standaloneGoodDogs = standaloneMode === "gooddogs";
+    localStorage.setItem(standaloneNight ? NIGHT_CRAWLER_SAVE_KEY : standaloneGoodDogs ? GOOD_DOGS_SAVE_KEY : "techops_save", payload);
+    // The profile save remains backwards-compatible while a separate, plain-
+    // data checkpoint makes CONTINUE resume the actual workday scene.
+    if (!standaloneNight && !standaloneGoodDogs && S.map && !S.nightMode && !S.inBattle && !S.gameOver) {
+      try {
+        const snapshot = JSON.parse(JSON.stringify(S));
+        snapshot.inDialog = false; snapshot.inBattle = false; snapshot.moving = false;
+        localStorage.setItem(DAY_CHECKPOINT_KEY, JSON.stringify({ version: 2, day: S.day, savedAt: saveRevision, state: snapshot }));
+        window.__techopsCheckpointError = null;
+      } catch (checkpointError) {
+        window.__techopsCheckpointError = String(checkpointError && checkpointError.stack || checkpointError);
+      }
+    }
     window.__techopsSaveError = null;
     return true;
   } catch (e) {
@@ -385,6 +441,30 @@ const save = () => {
   }
 };
 const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; d.meta.incidents = d.meta.incidents || 0; d.meta.mttr = d.meta.mttr || []; d.meta.hires = d.meta.hires || 0; } return d; } catch (e) { return null; } };
+function loadDayCheckpoint(profile) {
+  try {
+    const raw = localStorage.getItem(DAY_CHECKPOINT_KEY), envelope = raw && JSON.parse(raw);
+    const state = envelope && (envelope.version === 1 || envelope.version === 2) && envelope.state;
+    if (!state || !state.map || !Array.isArray(state.npcs) || !Array.isArray(state.tickets) || Number(state.day) !== Number(profile && profile.day)) return null;
+    if (state.nightMode || state.inBattle || state.gameOver) return null;
+    const checkpointRevision = Number(envelope.savedAt || state._saveRevision || 0);
+    const profileRevision = Number(profile && profile._saveRevision || 0);
+    if (profileRevision && checkpointRevision < profileRevision) return null;
+    // setupDay deliberately stores the same ticket objects in both arrays.
+    // JSON cannot preserve that alias, so re-link it before gameplay resumes.
+    state.tickets = state.tickets.map(ticket => {
+      const npc = state.npcs.find(candidate => candidate && ticket && candidate.id === ticket.id);
+      if (!npc) return ticket;
+      Object.assign(npc, ticket);
+      return npc;
+    });
+    state.inDialog = false; state.inBattle = false; state.moving = false;
+    return state;
+  } catch (e) {
+    window.__techopsCheckpointLoadError = String(e && e.stack || e);
+    return null;
+  }
+}
 const rank = () => { let r = RANKS[0]; for (const k of RANKS) if (S.xp >= k.xp) r = k; return r; };
 const statBonus = st => S.stats[st] * 2 + S.inv.reduce((a, l) => a + (l.stat === st ? l.val : 0), 0);
 const coffeeMug = () => S.inv.some(l => l.stat === "stress");
@@ -570,7 +650,7 @@ function setupDay() {
   let n = R(4, 6);
   if (s.chaos?.id === "patch") n += 2;
   if (s.chaos?.id === "calm") n -= 2;
-  if (s.diff > 1) n += 1; // On-Call: more tickets
+  n += difficultyProfile(s.diff).extraTickets;
   n = clamp(n, 2, 8);
   s.ticketsTotal = n;
 
@@ -1216,7 +1296,9 @@ function loop(t) {
   // Dispatch Night before the historical day wrappers can produce weather,
   // office events or time-of-day modals. Good Dogs retains its existing loop.
   const nightRuntime = window.TechOpsNightRuntime;
-  if (!nightRuntime || !nightRuntime.frame(dt)) { step(dt); draw(); }
+  const nightFrame = !!(nightRuntime && nightRuntime.frame(dt));
+  if (nightFrame) window.__nightRuntimeLastOk = Date.now();
+  else { step(dt); draw(); }
   requestAnimationFrame(loop);
 }
 
@@ -1383,8 +1465,12 @@ function startBattle(portal) {
   let hp = 22 + lv * 10;
   if (portal.weak) hp = Math.round(hp * .7);
   if (s.chaos?.id === "outage" && t.stat === "networking") hp = Math.round(hp * 1.3);
+  // The selector promises Intern enemies at 70% HP. On-Call deliberately
+  // keeps ordinary HP readable and reserves its 2x health rule for bosses.
+  const difficulty = difficultyProfile(s.diff);
+  hp = Math.round(hp * difficulty.enemyHp);
   const boss = !!npc.critical;
-  if (boss) hp = Math.round(hp * (t.id === "shadow" ? 1.9 : s.diff > 1 ? 2.0 : 1.8));
+  if (boss) hp = Math.round(hp * (t.id === "shadow" ? Math.max(1.9, difficulty.bossHp) : difficulty.bossHp));
   hp = Math.round(hp * (s.ngPlus ? 1.25 : 1));
   // neglected problems harden: aged tickets make tougher enemies
   const ageMin = npc.age || 0;
@@ -1471,11 +1557,13 @@ function renderBattle() {
     let cost = locked ? `🔐 encrypted ${B.locks[a.id]}t` : a.stress > 0 ? "+" + a.stress + " stress" : a.stress < 0 ? a.stress + " stress" : "free";
     // telegraph risk: blind executes are weak
     if (a.cat === "execute" && a.dmg[1] > 0 && B.uncertainty > 60) cost += " ⚠️ blind";
-    if (a.cat === "verify" && B.hp > B.maxHp * .4) cost = "🔒 fix first";
+    if (a.cat === "verify" && !B.stabilized) cost = "🔒 stabilize first";
+    if (a.cat === "document" && !B.verified) cost = "🔒 verify first";
     b.innerHTML = `${a.icon} ${a.name}<span class="cost">${cost}</span>`;
-    b.disabled = locked || s.stress + a.stress > 100 ||
-      (a.cat === "verify" && B.hp > B.maxHp * .4) ||
-      (a.cat === "document" && B.documented) ||
+    b.disabled = locked || (s.stress + a.stress > 100 && a.cat !== "verify" && a.cat !== "document") ||
+      (B.stabilized && ["execute", "ask", "inspect", "hyp", "chaos"].includes(a.cat)) ||
+      (a.cat === "verify" && !B.stabilized) ||
+      (a.cat === "document" && (!B.verified || B.documented)) ||
       (a.cat === "verify" && B.verified);
     b.onclick = () => doAbility(a);
     box.appendChild(b);
@@ -1484,6 +1572,7 @@ function renderBattle() {
 function doAbility(a) {
   const s = S;
   if (!B || B.over) return;
+  if (B.stabilized && (!a.cat || ["execute", "ask", "inspect", "hyp", "chaos"].includes(a.cat))) return;
   if (a.cat && a.cat !== "execute") return workflowAction(a);
   B.seq.push("execute");
   addStress(a.stress);
@@ -1531,7 +1620,7 @@ function doAbility(a) {
   if (a.counter) { B.counter = true; blog(`<span class="sys">🛡️ Zero Trust active — half of the next hit reflects back.</span>`); }
   if (B.dmgBuff > 0 && a.dmg[1] > 0) B.dmgBuff--;
   if (a.usable === "calm") blog(`<span class="heal">☕ You feel human again.</span>`);
-  if (B.hp <= 0) return winBattle();
+  if (B.hp <= 0) return stabilizeBattle();
   // boss phase change at 50%
   if (B.boss && !B.enraged && B.hp <= B.maxHp / 2) {
     B.enraged = true;
@@ -1552,6 +1641,7 @@ function doAbility(a) {
 }
 function enemyPhase() {
   const s = S;
+  const scaleDamage = amount => Math.max(1, Math.round(amount * difficultyProfile(s.diff).damage));
   // enemy turn
   B.turns++;
   if (B.stunned) { B.stunned = false; }
@@ -1561,17 +1651,17 @@ function enemyPhase() {
       // palan0 DELETES your strongest remaining move (temporary, never below 2 tools)
       const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]).sort((x, y) => y.dmg[1] - x.dmg[1]);
       if (pool.length > 2) { const victim = pool[0]; B.locks[victim.id] = 4; blog(`🗑️ <b>palan0 DELETES your ${victim.name}!</b> Gone for 4 turns — improvise!`); }
-      else { const ed = R(14, 20); s.hp -= ed; blog(`🌑 Root overflow — you take ${ed}.`); }
+      else { const ed = scaleDamage(R(14, 20)); s.hp -= ed; blog(`🌑 Root overflow — you take ${ed}.`); }
     }
     else if (B.sig === "enclock") {
       const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]);
       if (pool.length) { const victim = pick(pool); B.locks[victim.id] = 2; blog(`🔐 <b>ENCRYPTION LOCK!</b> Your ${victim.name} is encrypted for 2 turns!`); }
-      else { const ed = R(10, 16); s.hp -= ed; blog(`🔐 Encryption blast — you take ${ed}.`); }
+      else { const ed = scaleDamage(R(10, 16)); s.hp -= ed; blog(`🔐 Encryption blast — you take ${ed}.`); }
     }
     else if (B.sig === "ransom") {
       const fee = Math.min(s.budget, 30);
       s.budget -= fee;
-      let ed = fee >= 30 ? 4 : 12; if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
+      let ed = scaleDamage(fee >= 30 ? 4 : 12); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
       s.hp -= ed; addStress(6);
       blog(`💰 <b>RANSOM DEMAND!</b> You pay $${fee} to decrypt — you take ${ed}.`);
     }
@@ -1584,7 +1674,7 @@ function enemyPhase() {
       blog(`☠️ <b>CACHE POISON!</b> Corrupted records burn you for 3 turns!`);
     }
     else if (B.sig === "crash") {
-      let ed = R(12, 18); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
+      let ed = scaleDamage(R(12, 18)); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
       s.hp -= ed; addStress(8);
       blog(`💙 <b>CRASH WAVE!</b> A wall of blue slams you for ${ed} — logs scatter everywhere!`);
     }
@@ -1595,10 +1685,10 @@ function enemyPhase() {
     else if (B.sig === "wipe") {
       const pool = battleAbilities().filter(a => a.dmg[1] > 0 && !B.locks[a.id]).sort((x, y) => x.dmg[1] - y.dmg[1]);
       if (pool.length) { const victim = pool[0]; B.locks[victim.id] = 2; blog(`🗑️ <b>CORRUPTION WIPE!</b> Your weakest tool, ${victim.name}, is corrupted for 2 turns!`); }
-      else { const ed = R(9, 15); s.hp -= ed; blog(`👹 Corruption surge — you take ${ed}.`); }
+      else { const ed = scaleDamage(R(9, 15)); s.hp -= ed; blog(`👹 Corruption surge — you take ${ed}.`); }
     }
     else {
-      let ed = R(9, 15); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
+      let ed = scaleDamage(R(9, 15)); if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
       s.hp -= ed; addStress(6);
       blog(`👹 <b>CRITICAL OVERLOAD!</b> Raw corruption hits you for ${ed}!`);
     }
@@ -1609,7 +1699,7 @@ function enemyPhase() {
   }
   else {
     const atk = pick(ENEMY_TACTICS[B.t.id]?.attacks || ["Packet Flood", "Corruption Wave"]);
-    let ed = Math.round((R(5, 10) + Math.floor(s.day * .75) + (B.enraged ? 2 : 0)) * (s.diff || 1));
+    let ed = scaleDamage(R(5, 10) + Math.floor(s.day * .75) + (B.enraged ? 2 : 0));
     if (B.shield) { ed = Math.ceil(ed / 2); B.shield = false; }
     s.hp -= ed; addStress(4);
     blog(`💥 ${B.t.enemy} uses <b>${atk}</b> — you take ${ed}.`);
@@ -1628,15 +1718,30 @@ function enemyPhase() {
   }
   // tick down encryption locks
   for (const k of Object.keys(B.locks)) if (--B.locks[k] <= 0) { delete B.locks[k]; blog(`<span class="sys">🔓 Decryption complete — ability restored.</span>`); }
+  // A reflected knockout does not override the player's own defeat.
+  if (s.hp <= 0) return loseBattle();
+  if (B.hp <= 0) return stabilizeBattle();
   if (B.regen) s.hp = clamp(s.hp + 3, 0, s.maxHp);
   if (B.poison > 0) { B.poison--; s.hp -= 4; blog(`☠️ Cache poison burns you for 4.`); }
   if (B.forkBomb) { B.hp = Math.min(B.maxHp, B.hp + 8); blog(`☠️ palan0 replicates... <b>+8 HP</b>`); }
   if (s.hp <= 0) return loseBattle();
 }
 
+function stabilizeBattle() {
+  if (!B || B.over || B.stabilized) return false;
+  B.hp = 0; B.stabilized = true; B.stunned = true;
+  B.comboT = 0;
+  blog(`<span class="heal">🧰 <b>STABILIZED:</b> the manifestation is contained. Verify the technical state and the user’s real task before you close it.</span>`);
+  renderBattle(); updateHUD();
+  return true;
+}
+
 // ---------- troubleshooting workflow actions (ask / inspect / hypothesize / verify / document) ----------
 function workflowAction(a) {
   const s = S;
+  if (B.stabilized && ["ask", "inspect", "hyp", "chaos"].includes(a.cat)) return;
+  if (a.cat === "verify" && !B.stabilized) return;
+  if (a.cat === "document" && (!B.stabilized || !B.verified)) return;
   addStress(a.stress);
   const tac = ENEMY_TACTICS[B.t.id];
   if (a.cat === "ask") {
@@ -1694,21 +1799,23 @@ function workflowAction(a) {
   } else if (a.cat === "verify") {
     B.seq.push("verify");
     B.verified = true;
-    blog(`<span class="heal">✔️ <b>Verified:</b> user confirms the fix holds, logs are clean, monitoring shows green. This one won't bounce back.</span>`);
+    blog(`<span class="heal">✔️ <b>Verified:</b> the technical check passes and the user confirms their real task works. Document the outcome to close.</span>`);
   } else if (a.cat === "document") {
+    B.seq.push("document");
     B.documented = true;
     s.meta.kb = s.meta.kb || {};
     s.meta.kb[B.t.id] = true; // knowledge graph: your org learns this failure mode
     addXP(s.lab.includes("mechkb") ? 10 : 5); addStress(-5);
-    s.journal.push({ day: s.day, title: `${B.t.label} — field notes`, body: `Symptoms observed, hypothesis formed, tests run. Root cause: ${B.hyp ? B.t.diag.best : "(still under investigation)"}. Good documentation trains the whole team.` });
-    blog(`<span class="heal">📝 Documented: +5 XP, -5 stress. Future techs thank you — including your hires.</span>`);
+    s.journal.push({ day: s.day, title: `${B.t.label} — verified field notes`, body: `Symptoms observed, hypothesis formed, remediation stabilized, technical state checked, and the requester’s real task verified. Root cause: ${B.hyp ? B.t.diag.best : "not conclusively isolated"}.` });
+    blog(`<span class="heal">📝 Verified outcome documented: +5 XP, -5 stress. Closing the ticket with evidence.</span>`);
+    return winBattle();
   } else if (a.cat === "chaos") {
     B.seq.push("chaos");
     if (Math.random() < .3) {
       const dmg = R(15, 25);
       B.hp -= dmg;
       blog(`<span class="dmg">🎲 Random fix... <b>it worked?!</b> ${dmg} complexity removed. Nobody will ever know why. (Least of all you.)</span>`);
-      if (B.hp <= 0) return winBattle();
+      if (B.hp <= 0) return stabilizeBattle();
     } else {
       s.meta.debt++;
       B.uncertainty = clamp(B.uncertainty + 10, 0, 100);
@@ -1717,7 +1824,7 @@ function workflowAction(a) {
       blog(`<span class="sys">🎲 Random fix failed — you knocked something else loose. <b>+1 tech debt</b>, uncertainty +10%.</span>`);
     }
   }
-  enemyPhase();
+  if (!B.stabilized) enemyPhase();
   if (!B || B.over) return;
   renderBattle(); updateHUD();
 }
@@ -1844,6 +1951,7 @@ function winBattle() {
     if (dev) { dev.fixed = true; }
     resolveTicket(n);
     B = null;
+    save(); // closure rewards and ticket identity must survive an immediate reload
     updateHUD();
     flushPromo();
     if (isShadow) { setTimeout(() => showEnding(true), 800); return; }
@@ -1956,14 +2064,12 @@ function loseBattle() {
     return;
   }
   addStress(20); s.hp = Math.round(s.maxHp / 2);
-  s.portals = s.portals.filter(p => p !== B.portal);
-  const dev = s.devices.find(d => d.npc === B.npc.id); if (dev) dev.fixed = true;
   s.rep[B.npc.dept] = Math.max(0, s.rep[B.npc.dept] - 1);
-  const n = B.npc; n.done = true; s.ticketsDone++;
-  toast("💀 The manifestation overwhelmed you. The ticket got escalated... (-1 rep, +20 stress)");
-  s.journal.push({ day: s.day, title: `${n.type.label} — FAILED`, body: `Lesson: ${n.type.diag.best}. You won't make that mistake twice.` });
+  const n = B.npc; n.escalated = true; n.failedAttempts = (n.failedAttempts || 0) + 1; n.age = (n.age || 0) + 30; n.critical = true;
+  toast("💀 The manifestation overwhelmed you. The ticket remains open and has escalated. (-1 rep, +20 stress)");
+  s.journal.push({ day: s.day, title: `${n.type.label} — ESCALATED`, body: `The attempt failed. The service is not restored and the ticket remains open. New working hypothesis: ${n.type.diag.best}.` });
   $("battle").classList.add("hidden"); s.inBattle = false; B = null;
-  updateHUD(); flushPromo(); checkDayEnd();
+  updateHUD(); save(); flushPromo(); checkDayEnd();
 }
 function rollLoot(minRarity) {
   const order = ["common", "rare", "epic", "legendary"];
@@ -2366,7 +2472,7 @@ function endOfDay() {
   if (missed === 0 && s.ticketsTotal > 0) unlock("backlog0");
   $("eod-title").textContent = `DAY ${s.day} COMPLETE`;
   $("eod-summary").innerHTML =
-    `🎫 Tickets: ${s.ticketsDone}/${s.ticketsTotal}${missed ? ` <span style="color:#f88">(${missed} rolled over, -rep)</span>` : " — <b>ZERO BACKLOG!</b> 👑"}<br>` +
+    `🎫 Tickets: ${s.ticketsDone}/${s.ticketsTotal}${missed ? ` <span style="color:#f88">(${missed} unresolved · handed off, -rep)</span>` : " — <b>ZERO BACKLOG!</b> 👑"}<br>` +
     `✨ Total XP: ${s.xp} · 💰 Budget: $${s.budget}<br>` +
     `😌 Stress recovered: -${stressRec} · Rank: <b>${rank().name}</b>` +
     (staffReport.length ? `<br><br><b>🧑‍🔧 Team report:</b><br><small>${staffReport.join("<br>")}</small>` : "") +
@@ -2385,7 +2491,7 @@ function endOfDay() {
   for (const r of shown) {
     const b = document.createElement("button");
     b.innerHTML = `<span class="rw-icon">${r.icon}</span><b>${r.t}</b><br>${r.d}`;
-    b.onclick = () => { r.f(); $("eod").classList.add("hidden"); eodOpen = false; s.day++; setupDay(); };
+    b.onclick = () => { r.f(); $("eod").classList.add("hidden"); eodOpen = false; s.day++; setupDay(); save(); };
     box.appendChild(b);
   }
   $("eod").classList.remove("hidden");
@@ -2575,8 +2681,21 @@ function showTouchUI() {
   if (matchMedia("(pointer:coarse)").matches) $("touch-ui").classList.remove("hidden");
 }
 $("btn-start").addEventListener("click", () => {
-  localStorage.removeItem("techops_save");
+  const alternateMode = window.__techopsAlternateStartMode || window.__productionDesiredMode || null;
+  if (!alternateMode) {
+    localStorage.removeItem("techops_save");
+    localStorage.removeItem("techops_save_bak");
+    localStorage.removeItem(DAY_CHECKPOINT_KEY);
+    try {
+      if (window.TechOpsCampaign && typeof window.TechOpsCampaign.reset === "function") window.TechOpsCampaign.reset(localStorage);
+      else localStorage.removeItem("techops_hero_campaign_v1");
+    } catch (e) {
+      window.__techopsNewRunResetError = String(e && e.stack || e);
+      localStorage.removeItem("techops_hero_campaign_v1");
+    }
+  }
   S = newState();
+  if (alternateMode === "nightcrawler") S.meta._standaloneMode = "nightcrawler";
   // difficulty select first
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
@@ -2594,18 +2713,24 @@ function startRun() {
   $("hud").classList.remove("hidden");
   showTouchUI();
   initMusic();
+  save(); // establish a safe shift checkpoint before the opening dispatch
   dlg("📟 CIO Dispatch", `Welcome to <b>AeroTech Manufacturing</b>, ${rank().name}.<br><br>Users have tickets. Devices have... <i>manifestations</i>. Interview users, diagnose root causes, enter the portals, and keep this factory running.<br><br>Clock out strong. Good luck.`, [{ t: "Clock in ▶", f: closeDlg }]);
 }
 $("btn-continue").addEventListener("click", () => {
   const d = load(); if (!d) return;
-  S = newState(); Object.assign(S, d);
-  setupDay(); S.day = d.day; // setupDay regenerates the run for the day
+  const checkpoint = loadDayCheckpoint(d);
+  S = newState(); Object.assign(S, checkpoint || d);
+  if (!checkpoint) { setupDay(); S.day = d.day; }
+  else {
+    try { if (window.TechOpsCampaignNativeAct1) window.TechOpsCampaignNativeAct1.ensureWorld(); } catch (e) { }
+    try { if (window.TechOpsCampaignNativeAct2) window.TechOpsCampaignNativeAct2.ensureWorld(); } catch (e) { }
+  }
   updateHUD();
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");
   showTouchUI();
   initMusic();
-  toast(`↻ Welcome back, ${rank().name}. Day ${S.day} begins.`);
+  toast(checkpoint ? `↻ Shift resumed at ${fmtClock(S.clock)}.` : `↻ Welcome back, ${rank().name}. Day ${S.day} begins.`);
 });
 if (load()) $("btn-continue").classList.remove("hidden");
 requestAnimationFrame(loop);

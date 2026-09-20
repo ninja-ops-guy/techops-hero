@@ -27,7 +27,7 @@
           var n=0,t=(root.setInterval||setInterval)(function(){if(root[def.global]||n++>100){(root.clearInterval||clearInterval)(t);resolve(!!root[def.global]);}},25);return;
         }
         var s=root.document.createElement("script");
-        s.src=def.src+"?v=20260912-night-isolation-v4";
+        s.src=def.src+"?v=20260920-revision-r1";
         s.async=false;s.dataset.techopsLateGame=def.src;
         s.onload=function(){resolve(!!root[def.global]);};
         s.onerror=function(){root.__lateGameBootstrapError="load-failed:"+def.src;resolve(false);};

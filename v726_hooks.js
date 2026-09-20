@@ -31,6 +31,7 @@
   const VER = "7.26";
   if (window.v726) return;
   if (!window.v725 || !v725.register) { window.__err726 = "v725 engine missing"; return; }
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
   const H = v725.h;
   const LW = H.LW, LH = H.LH, BAR = H.BAR;
   const CYAN = H.CYAN, GREEN = H.GREEN, RED = H.RED, AMBER = H.AMBER, PUR = H.PUR,
@@ -496,17 +497,20 @@
   v725.register("racks", {
     title: "DAY 8 — SHADOWS BETWEEN THE RACKS",
     shots: RACKS_SHOTS,
-    cues: { 7: "alarm", 10: "chime" }
+    cues: { 7: "alarm", 10: "chime" },
+    retiredStory: true
   });
   v725.register("citylife", {
     title: "CITY LIFE — FOUR HOURS TO YOURSELF",
     shots: CITYLIFE_SHOTS,
-    cues: { 6: "chime" }
+    cues: { 6: "chime" },
+    retiredStory: true
   });
   v725.register("promotion", {
     title: "PROMOTION DAY — RUNNING THE DEPARTMENT",
     shots: PROMO_SHOTS,
-    cues: { 2: "alarm", 7: "chime", 8: "chime" }
+    cues: { 2: "alarm", 7: "chime", 8: "chime" },
+    retiredStory: true
   });
 
   // ---------- exactly-once rewards ----------
@@ -545,6 +549,7 @@
     return null;
   }
   window.checkDayEnd = function (force) {
+    if (canonicalStory()) return _checkDayEnd726(force);
     const s = (typeof S !== "undefined") ? S : null;
     try {
       if (s && s.meta && window.v725 && !v725.active() && !s.nightMode && !s.battle &&

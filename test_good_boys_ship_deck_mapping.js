@@ -56,7 +56,7 @@ for (const source of [atlas, opening]) {
 }
 assert.ok(entry.includes("katrin_manchez.atlas.js?v=20260912-local-coop-r3"), "entrypoint must bypass stale board-action and animation metadata");
 assert.ok(flight.includes("20260903-good-ship-gameplay-assets-r2"), "canonical flight authority must pull the corrected gameplay atlas cache chain");
-assert.ok(entry.includes("campaign_story.js?v=20260912-integrated-r1"), "entrypoint must bypass the stale campaign story bootstrap");
+assert.ok(entry.includes("campaign_story.js?v=20260920-revision-r1"), "entrypoint must bypass the stale campaign story bootstrap");
 assert.ok(entry.includes("20260903-picked-pilot-crash-r1"), "entrypoint must pull the picked pilot/crash cache chain");
 
 console.log("Good Boys ship-deck mapping contract: PASS");
