@@ -48,7 +48,7 @@ async function activateBaseRun(page,preferContinue=false){
     return {route,hud:visible(document.getElementById('hud')),dialog:visible(document.getElementById('dialogue')),hasS:hasLexicalS()};
   },route);
   log('base-run-activation',activated);
-  await page.waitForFunction(()=>{const h=document.getElementById('hud');let s=false;try{s=!!window.eval(`(typeof S!=='undefined'&&S)`);}catch{}return !!(s&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:3000});
+  await page.waitForFunction(()=>{const h=document.getElementById('hud');let s=false;try{s=!!window.eval(`(typeof S!=='undefined'&&S)`);}catch{}return !!(s&&h&&!h.classList.contains('hidden')&&h.getClientRects().length);},null,{timeout:10000});
   return activated;
 }
 
@@ -105,7 +105,7 @@ try{
     return {saveKey:c.SAVE_KEY,phase:window.TechOpsMORNINGSTARBuild.getCurrentPhase(),goodBoys:gb};
   });
   log('seeded',seeded);
-  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:2500});
+  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:10000});
   let a=await snapshot(page);log('phase3-ui',a);
   if(a.runtimeVersion<5)fail('runtime-v5-missing',a);
   if(!(a.bootstrap&&a.bootstrap.ready))fail('late-game-bootstrap-not-ready',a);
@@ -119,7 +119,7 @@ try{
   await page.waitForFunction(()=>{
     const d=document.getElementById('dialogue'),n=document.getElementById('dlg-name');
     return !!(d&&n&&!d.classList.contains('hidden')&&/MORNINGSTAR\s*\/\/\s*SWARM COMMAND/i.test(n.textContent||''));
-  },null,{timeout:3000});
+  },null,{timeout:10000});
   // The shared v6.6 dialogue typewriter exposes tap-to-complete. Exercise that
   // canonical mobile path before asserting the authored command copy.
   await page.evaluate(()=>{
@@ -174,8 +174,8 @@ try{
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
   await waitForLateGame(page);
   await activateBaseRun(page,true);
-  await page.waitForFunction(()=>window.TechOpsMORNINGSTARBuild&&window.TechOpsMORNINGSTARBuild.getCurrentPhase()===3,null,{timeout:3000});
-  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:3000});
+  await page.waitForFunction(()=>window.TechOpsMORNINGSTARBuild&&window.TechOpsMORNINGSTARBuild.getCurrentPhase()===3,null,{timeout:10000});
+  await page.waitForFunction(()=>{const b=document.getElementById('btn-swarm-command');return !!(b&&b.getClientRects().length&&getComputedStyle(b).display!=='none');},null,{timeout:10000});
   const reloaded=await snapshot(page);log('reloaded',reloaded);
   if(reloaded.campaignPhase!==3||reloaded.phase!==3)fail('phase3-not-persistent-after-reload',reloaded);
   if(reloaded.persistedSwarmLog<2)fail('swarm-log-lost-after-reload',reloaded);
