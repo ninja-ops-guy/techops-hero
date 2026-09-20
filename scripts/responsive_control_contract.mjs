@@ -23,7 +23,7 @@ export async function assertLandscapeControlBounds(page) {
         const rect = el.getBoundingClientRect(), style = getComputedStyle(el);
         const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
         return { id: el.id || el.className, width: rect.width, height: rect.height, top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom,
-          computed: { width: style.width, minWidth: style.minWidth, flexBasis: style.flexBasis, flexShrink: style.flexShrink, boxSizing: style.boxSizing, padding: style.padding },
+          computed: { width: style.width, minWidth: style.minWidth, flexBasis: style.flexBasis, flexShrink: style.flexShrink, boxSizing: style.boxSizing, padding: style.padding, transform: style.transform },
           reachable: !!hit && (hit === el || el.contains(hit)), hit: hit && (hit.id || hit.className || hit.tagName),
           visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && style.opacity !== '0' };
       }).filter(control => control.visible);
@@ -66,5 +66,45 @@ export async function assertLandscapeControlBounds(page) {
   } catch (error) {
     error.controlSnapshot = snapshot;
     throw error;
+  }
+}
+
+// Renderer-state fixture: exercise hover/press feedback without firing combat or
+// menu actions. Geometry is measured against the live production control layout.
+export async function assertControlFeedbackBounds(page, baseline) {
+  const selector = '#dpad .dbtn, #touch-buttons .tbtn, #v55-nmbtns .v55-nbtn, #good-dogs-touch button';
+  const client = await page.context().newCDPSession(page), states = [];
+  let nodeIds = [], current;
+  const geometry = snapshot => snapshot.controls.map(({ left, top, width, height }) => ({ left, top, width, height }));
+  try {
+    await client.send('DOM.enable');
+    await client.send('CSS.enable');
+    const { root } = await client.send('DOM.getDocument');
+    ({ nodeIds } = await client.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector }));
+    for (const state of ['hover', 'active', 'held']) {
+      for (const nodeId of nodeIds) await client.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: state === 'held' ? [] : [state] });
+      if (state === 'held') await page.locator(selector).evaluateAll(elements => elements.forEach(element => {
+        if (!element.classList.contains('held')) { element.dataset.presentationFixtureHeld = 'true'; element.classList.add('held'); }
+      }));
+      // Finish the CSS feedback transition, not an arbitrary browser delay.
+      await page.locator(selector).evaluateAll(elements => elements.forEach(element => {
+        getComputedStyle(element).transform;
+        for (const animation of element.getAnimations()) if (animation instanceof CSSTransition) animation.finish();
+      }));
+      current = await assertLandscapeControlBounds(page);
+      states.push({ state, controls: current });
+      assert.deepEqual(geometry(current), geometry(baseline), `${state} feedback must preserve gameplay target position and size`);
+    }
+    return states;
+  } catch (error) {
+    error.controlSnapshot ||= current;
+    error.feedbackStates = states;
+    throw error;
+  } finally {
+    for (const nodeId of nodeIds) await client.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] }).catch(() => {});
+    await page.locator('[data-presentation-fixture-held]').evaluateAll(elements => elements.forEach(element => {
+      element.classList.remove('held'); delete element.dataset.presentationFixtureHeld;
+    })).catch(() => {});
+    await client.detach();
   }
 }

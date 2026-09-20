@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { assertLandscapeControlBounds, assertTouchTarget } from './responsive_control_contract.mjs';
+import { assertLandscapeControlBounds, assertTouchTarget, assertControlFeedbackBounds } from './responsive_control_contract.mjs';
 
 const port = Number(process.env.PRESENTATION_PORT || 4196);
 const base = process.env.PRESENTATION_BASE_URL || `http://127.0.0.1:${port}/`;
@@ -184,6 +184,8 @@ try {
     assert.ok(decorated.presentation.bodyClass.includes('night-mobile-cohesion'), 'fixture must release the real visual owner');
     assert.equal(decorated.controls.length, 12, 'late decoration must preserve the expanded control set');
     assert.deepEqual(stableTargets(decorated), stableTargets(collapsed), 'late Night decoration cannot resize or relocate movement, MORE, A, or menu targets');
+    narrowEvidence.phase = 'control-feedback';
+    narrowEvidence.feedback = await assertControlFeedbackBounds(nightPage, decorated);
     await more.tap();
     await nightPage.waitForFunction(() => document.getElementById('night-input-assists')?.getAttribute('aria-expanded') === 'false');
     for (let cycle = 0; cycle < 6; cycle++) {
@@ -206,10 +208,39 @@ try {
     report.narrowNight = { pass: true, ...narrowEvidence, phase: 'complete', expanded: cycles[0].expanded, restored: cycles[0].restored };
     console.log(JSON.stringify({ profile: 'narrow-landscape-night-more', status: 'passed' }));
   } catch (error) {
-    report.narrowNight = { pass: false, ...narrowEvidence, failure: String(error.stack || error), errors: nightErrors, controls: error.controlSnapshot || narrowEvidence.restored || narrowEvidence.expanded || narrowEvidence.decorated || narrowEvidence.delayedExpanded || narrowEvidence.collapsed || null };
+    report.narrowNight = { pass: false, ...narrowEvidence, failure: String(error.stack || error), errors: nightErrors, feedback: error.feedbackStates || narrowEvidence.feedback, controls: error.controlSnapshot || narrowEvidence.restored || narrowEvidence.expanded || narrowEvidence.decorated || narrowEvidence.delayedExpanded || narrowEvidence.collapsed || null };
     await nightPage.screenshot({ path: `${out}/narrow-landscape-night-more-failure.png` }).catch(() => {});
   } finally { await nightContext.close(); }
-  report.status = report.profiles.length && report.profiles.every(p => p.pass) && report.narrowNight.pass ? 'passed' : 'failed';
+  // The same gameplay feedback policy covers the canonical Good Dogs action pad,
+  // including its legacy reference active style. Enter through the real prologue.
+  const dogsContext = await browser.newContext({ viewport: { width: 568, height: 320 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  await dogsContext.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
+  const dogsPage = await dogsContext.newPage(), dogsErrors = [];
+  dogsPage.on('pageerror', error => dogsErrors.push(String(error)));
+  try {
+    await dogsPage.goto(base, { waitUntil: 'domcontentloaded' });
+    await dogsPage.waitForFunction(() => window.TechOpsProductionTitleExperience?.state().ready, null, { timeout: 25000 });
+    await dogsPage.locator('#btn-v736').tap();
+    await dogsPage.locator('#good-dogs-mode-select').waitFor({ state: 'visible' });
+    assert.equal(await dogsPage.evaluate(() => !!window.__goodDogsHomeScene), false, 'opening tap cannot choose a mode or start the prologue');
+    await dogsPage.locator('#gd-mode-solo').tap();
+    for (let shot = 1; shot <= 3; shot++) {
+      await dogsPage.waitForFunction(n => window.__goodDogsHomeScene?.shot === n, shot);
+      await dogsPage.locator('#gd-home-next').tap();
+    }
+    await dogsPage.waitForFunction(() => window.__goodBoysHardButtonLaunch?.status === 'campaign-gameplay' && !window.TechOpsGoodBoysButtonHardFix?.launching);
+    const baseline = await assertLandscapeControlBounds(dogsPage);
+    assert.equal(baseline.controls.length, 11, 'Good Dogs exposes four directions and seven canonical actions');
+    const feedback = await assertControlFeedbackBounds(dogsPage, baseline);
+    assert.deepEqual(dogsErrors, []);
+    report.narrowGoodDogs = { pass: true, explicitModeChoice: true, baseline, feedback };
+    await dogsPage.screenshot({ path: `${out}/narrow-landscape-good-dogs-controls.png` });
+    console.log(JSON.stringify({ profile: 'narrow-landscape-good-dogs-feedback', status: 'passed' }));
+  } catch (error) {
+    report.narrowGoodDogs = { pass: false, failure: String(error.stack || error), errors: dogsErrors, controls: error.controlSnapshot || null, feedback: error.feedbackStates || null };
+    await dogsPage.screenshot({ path: `${out}/narrow-landscape-good-dogs-feedback-failure.png` }).catch(() => {});
+  } finally { await dogsContext.close(); }
+  report.status = report.profiles.length && report.profiles.every(p => p.pass) && report.narrowNight.pass && report.narrowGoodDogs.pass ? 'passed' : 'failed';
   if (report.status === 'failed') process.exitCode = 1;
 } finally {
   if (browser) await browser.close();

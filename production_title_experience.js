@@ -10,7 +10,7 @@
   if (!root || !root.document || root.TechOpsProductionTitleExperience) return;
 
   var VERSION = 1;
-  var BUILD = "20260920-quality-r1";
+  var BUILD = "20260920-quality-r2";
   var RESULT_KEY = "techops_nightcrawler_last_result_v1";
   var READY_TIMEOUT = Math.max(4000, Number(root.TECHOPS_TITLE_READY_TIMEOUT) || 20000);
   var POLL_MS = 100;
@@ -419,12 +419,19 @@
   function capture(ev) {
     var action = closestAction(ev && ev.target);
     if (!action) return true;
+    var mode = CARDS[action.id] && CARDS[action.id].mode;
+    // Keep legacy pointer handlers out, but wait for the completed click before
+    // mounting another surface. A touch's compatibility click can otherwise
+    // hit a newly opened mode choice at the title button's old coordinates.
+    if (ev && ev.type === "pointerup" && (mode === "gooddogs" || mode === "nightcrawler" || action.id === "title-night-new")) {
+      stop(ev);
+      return true;
+    }
     if (action.id === "title-night-new") {
       stop(ev);
       if (gate.phase === "failed") retryGate();
       return launchAlternate("nightcrawler", {fresh:true});
     }
-    var mode = CARDS[action.id] && CARDS[action.id].mode;
     if (mode === "day" || mode === "continue") {
       // The Night router must pass through the real canonical New Game
       // listener to create lexical S and show difficulty selection. This

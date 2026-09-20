@@ -103,7 +103,9 @@
     setButton(cfg.fresh?"OPENING GOOD DOGS PROTOCOL…":"RESUMING GOOD DOGS M"+cfg.mission+"…",true);
     opening(source,cfg).catch(function(err){launching=false;lastLaunch=0;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY GOOD DOGS PROTOCOL",false);showOpeningError(err);});return true;
   }
-  function own(e){if(!target(e&&e.target))return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}launch(e&&e.type||"event");}
+  // Intercept legacy pointer handlers without inserting the selector before
+  // this gesture's compatibility click. Keyboard activation also arrives as click.
+  function own(e){if(!target(e&&e.target))return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}if(e&&e.type==="pointerup")return;launch(e&&e.type||"event");}
   root.document.addEventListener("pointerup",own,true);root.document.addEventListener("click",own,true);
   root.TechOpsGoodBoysButtonHardFix={VERSION:VERSION,GOOD_DOGS_SAVE_KEY:GOOD_DOGS_SAVE_KEY,launch:launch,freshConfig:freshConfig,durableState:durableState,launchConfig:launchConfig,persistModeChoice:persistModeChoice,tagStandalone:tagStandalone,clearForeignIdentity:clearForeignIdentity,opening:opening,mount:mount,clearForeignUi:clearForeignUi,depsReady:depsReady,dependencySnapshot:dependencySnapshot,get launching(){return launching;}};
 })(typeof globalThis!=="undefined"?globalThis:this);

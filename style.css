@@ -586,6 +586,13 @@ body.act1-scene-open #toast{top:max(54px,calc(env(safe-area-inset-top) + 42px));
   body.recording-day #game-wrap #quest-tracker{max-height:18dvh}
 }
 
+/* Gameplay targets stay fixed under hover, press, and held feedback. Keep the
+   existing color/brightness feedback without translating or shrinking hit areas. */
+html body #game-wrap #dpad .dbtn,
+html body #game-wrap #touch-buttons .tbtn,
+html body #game-wrap #v55-nmbtns .v55-nbtn,
+html body.good-boys-controls #good-dogs-touch button[data-utility]{transform:none!important}
+
 /* A short landscape viewport has one control strip below the projected floor.
    Existing directional buttons and input handlers remain the same elements. */
 @media(orientation:landscape) and (max-height:500px){

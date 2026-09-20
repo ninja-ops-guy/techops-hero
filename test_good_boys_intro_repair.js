@@ -50,8 +50,9 @@ console.log("Good Dogs canonical M1-first opening and M2-owned flight handoff: P
 
 (async function cancelledSelectorCanReopenImmediately() {
   let choices=0;
+  const handlers={};
   const context={Date:{now:()=>1000},console,
-    document:{addEventListener(){},getElementById(){return null;}},
+    document:{addEventListener(type,handler){handlers[type]=handler;},getElementById(){return null;}},
     localStorage:{getItem(){return null;}},
     __productionBootstrapReady:true,__techopsWrapperGuardInstalled:true,__goodBoysShipFlightInstalled:true,
     TechOpsGoodDogsHomeScene:{choose:async()=>{choices++;return null;}},TechOpsGoodDogsCoop:{},
@@ -60,10 +61,15 @@ console.log("Good Dogs canonical M1-first opening and M2-owned flight handoff: P
   };
   require('vm').runInNewContext(source,context);
   const owner=context.TechOpsGoodBoysButtonHardFix;
-  owner.launch('first');
+  const button={closest(){return button;}},event=type=>({type,target:button,preventDefault(){this.prevented=true;},stopPropagation(){},stopImmediatePropagation(){this.stopped=true;}});
+  const release=event('pointerup');handlers.pointerup(release);
+  await new Promise(setImmediate);
+  assert.equal(choices,0,'fallback pointer release cannot expose a selector to the same touch compatibility click');
+  assert.equal(owner.launching,false);assert.equal(release.prevented,true);assert.equal(release.stopped,true,'legacy pointer handlers remain intercepted');
+  handlers.click(event('click'));
   await new Promise(setImmediate);
   assert.equal(choices,1);assert.equal(owner.launching,false);
-  owner.launch('immediate-reopen');
+  handlers.click(event('click'));
   await new Promise(setImmediate);
   assert.equal(choices,2,'completed cancellation releases the old click debounce immediately');
   assert.equal(owner.launching,false);
