@@ -5,6 +5,8 @@
   "scripts": {
     "test": "node scripts/production_release_gate.js",
     "lint": "node scripts/check_js_syntax.js",
+    "review:guide": "node scripts/generate_review_guide.js",
+    "review:check": "node scripts/generate_review_guide.js --check && node test_review_contracts.js",
     "test:browser:revision": "node scripts/revision_acceptance_browser.mjs",
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs"
   },
