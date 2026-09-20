@@ -93,7 +93,9 @@ try{
     const c=window.TechOpsCampaign,s=c.load(localStorage);
     s.story=s.story||{schemaVersion:1,completedActs:[],facts:{}};
     s.story.completedActs=s.story.completedActs||[];s.story.facts=s.story.facts||{};
+    if(!s.story.completedActs.includes('act_4'))s.story.completedActs.push('act_4');
     s.story.facts.morningstar_signature_found=true;s.story.facts.violinist_revealed=true;
+    s.story.facts.felicia_alliance=true;s.story.facts.morningstar_hangar_revealed=true;
     s.p1=s.p1||{};s.p1.evidence=s.p1.evidence||{score:3,records:[]};s.p1.trust=s.p1.trust||{score:1,history:[]};
     s.lateGame=s.lateGame||{};
     s.lateGame.morningstar={phase:3,completedDayTickets:[],nightRecoveredItems:[],unlocks:['swarm_commands'],history:[]};
