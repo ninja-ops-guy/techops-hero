@@ -23,6 +23,7 @@ remains a historical assessment; this document records its implementation follow
 | Campaign tone | Development notes appeared as character dialogue; legacy racks film assigned an enemy/toolkit prematurely | In-world dialogue and actionable objectives; native console presentation owns canonical Act IV, with historical racks content retained outside that route |
 | Cinematics | Hidden playback, stale inputs and save failures lacked consistent recovery; the crash fallback advanced automatically | Visible pause/resume, focus trapping/restoration, idempotent settlement, reduced-motion handling and Earthfall save retry; crash recovery waits for deliberate player input |
 | Co-op entry | Rapid cancel/reopen was swallowed by two independent launch guards | Selector cancellation releases debounce and title ownership synchronously |
+| Good Dogs entry | Gameplay readiness preceded the watchdog restoring hidden movement controls | Verified gameplay handoff restores the shell and canonical pad synchronously; browser acceptance checks the first ready frame and then actual movement |
 | Good Dogs HUD | Mobile and cinematic timers alternately hid the same HUD | Cinematic guard owns visibility; mobile styling is passive; duplicate objective strips retire without removing unique narrative/combat messages |
 | Orbital readability | Repeated flat staging and a misleading Cell 118 target | Approved atlas depth, pressure bays and mission lighting; registry/art/HUD align with the unchanged cell interaction coordinate |
 | Short landscape | Fixed-floor characters rendered below a 390px canvas | Uniform minimum logical height preserves aspect ratio and physics while fitting the full character in view |
@@ -76,6 +77,7 @@ repository administration must enforce the check names above before release.
 | Content | Later campaign depth | Apply the human-first investigation standard to Acts V–X; add environmental objectives, character interactions and consequences, then playtest comprehension |
 | Art | Authored animation | Reviewed start/run/stop/landing/dash animation for dogs and approved cinematic Mike poses; keep unclassified atlases quarantined |
 | Art | Consistent scene quality | Text-free standup board base with live ticket typography, improved Day rooms, authored orbital layers and replacement of the low-fidelity trace-scene actor silhouette |
+| UX | Small landscape HUD typography | Decouple status/objective text size from the scaled world canvas and verify readable labels on the smallest supported physical screen |
 | Cinematic | Full editorial/audio pass | Consistent shot timing, audio mix/ducking, subtitles, transitions and player-visible interruption behavior across every route |
 | Accessibility | Real assistive technology | Keyboard-only and screen-reader runs, contrast checks, non-audio cues and reduced-motion review on supported devices |
 | Engineering | Runtime ownership debt | Incrementally retire historical wrappers with measured parity, listener/timer counts, startup cost and no new competing authorities |

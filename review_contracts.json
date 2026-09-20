@@ -50,12 +50,14 @@
         "good_boys_crash_scene.js",
         "good_dogs_home_scene.js",
         "good_boys_earthfall_ending.js",
-        "good_boys_button_hard_fix.js"
+        "good_boys_button_hard_fix.js",
+        "good_boys_mobile_launch_guard.js"
       ],
       "tests": [
         "test_cinematic_presentation.js",
         "test_crash_playback_budget.js",
         "test_good_boys_intro_repair.js",
+        "test_good_boys_mobile_launch_guard.js",
         "test_good_dogs_coop.js",
         "scripts/quality_acceptance_browser.mjs"
       ]
@@ -184,6 +186,13 @@
       "invariant": "Only the cinematic guard controls the shared hide flag; viewport styling cannot suppress ordinary gameplay. Duplicate objective strips are filtered without removing combat or narrative messages.",
       "test_ref": "test_production_presentation_guard.js",
       "spot_check": "Observe portrait gameplay across repeated mobile/cinematic timer ticks, open and close a modal, and verify one stable HUD."
+    },
+    {
+      "id": "GOOD_DOGS_CONTROL_HANDOFF",
+      "failure_mode": "Good Dogs announces playable Mission 1 while its touch shell remains hidden until a later watchdog tick.",
+      "invariant": "A verified synchronous gameplay handoff restores the control shell and canonical pad before publishing gameplay readiness, while authored cinematics remain blocking.",
+      "test_ref": "test_good_boys_mobile_launch_guard.js",
+      "spot_check": "Finish the three home scenes and inspect controls at the first gameplay observation without waiting for a watchdog. Move with the real D-pad in portrait and landscape; verify reachable targets, actor clearance and no overlap."
     },
     {
       "id": "GOOD_DOGS_CANCEL_REOPEN",

@@ -19,6 +19,7 @@ const profiles=[{id:'chromium-desktop',viewport:{width:1280,height:800},hasTouch
 const selected=process.env.QUALITY_PROFILES?.split(',');
 const record=(id,p,observations,evidence_type='browser-input')=>report.checks.push({id,profile:p.id,status:'passed',evidence_type,fixture:evidence_type==='fault-injection',observations});
 const screenshot=async(page,name)=>{const file=`${name}.png`;await page.screenshot({path:path.join(out,file)});report.artifacts.push({path:file,sha256:digest(fs.readFileSync(path.join(out,file)))});};
+const jsonArtifact=(name,value)=>{const file=`${name}.json`,bytes=JSON.stringify(value,null,2)+'\n';fs.writeFileSync(path.join(out,file),bytes);report.artifacts.push({path:file,sha256:digest(bytes)});return file;};
 async function title(page){await page.waitForFunction(()=>window.__productionTitleReadiness?.ready===true&&!document.querySelector('#btn-start')?.disabled,null,{timeout:30000});}
 async function click(page,locator,touch=false){
   await locator.waitFor({state:'visible'});await locator.scrollIntoViewIfNeeded();
@@ -126,6 +127,7 @@ async function night(page,p){
 }
 async function dogs(p){
   const {context,page,errors}=await freshPage(p);
+  let controlBounds=null;
   try{
     await click(page,page.locator('#btn-v736'),p.hasTouch);
     await page.locator('#gd-mode-solo').waitFor({state:'visible'});
@@ -141,11 +143,39 @@ async function dogs(p){
       if(shot===1)await screenshot(page,`${p.id}-dogs-prologue`);
       await click(page,page.locator('#gd-home-next'),p.hasTouch);
     }
-    await page.waitForFunction(()=>window.NM?._v736?.m===1&&!window.S?.inDialog);
+    // The launch owner must publish a completed handoff, not only mount NM.
+    // Check geometry immediately after that signal: waiting for controls to
+    // become visible here would conceal a broken first gameplay frame.
+    await page.waitForFunction(()=>window.NM?._v736?.m===1&&!window.S?.inDialog&&window.__goodBoysOpeningPhase?.phase==='campaign-gameplay'&&window.__goodBoysHardButtonLaunch?.status==='campaign-gameplay'&&window.TechOpsGoodBoysButtonHardFix?.launching===false,null,{timeout:5000});
+    controlBounds=await assertLandscapeControlBounds(page);
     const mode=await page.evaluate(()=>TechOpsGoodDogsCoop.mode());assert.equal(mode,p.hasTouch?'solo':'local');assert.deepEqual(errors,[]);
-    const controlBounds=await assertLandscapeControlBounds(page);
-    record('good_dogs_selector',p,{mode,touch_only_local_disabled:p.hasTouch,cancellation_recovered:true,prologue_shots:3,note,control_bounds:controlBounds});
+    const before=await page.evaluate(()=>NM.x);
+    if(p.hasTouch){
+      const target=await page.locator('#dpad .d-right').evaluate(el=>{const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);return{x,y,width:r.width,height:r.height,reachable:!!hit&&(hit===el||el.contains(hit))};});
+      assertTouchTarget(target,'GoodDogs right D-pad');assert.ok(target.reachable,'GoodDogs right D-pad is reachable at gameplay handoff');
+      // A trusted browser touch stays down until movement is acknowledged;
+      // no timer, synthetic DOM event, or direct gameplay-state write drives it.
+      const session=await context.newCDPSession(page);
+      try{
+        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:target.x,y:target.y}]});
+        await page.waitForFunction(x=>NM.x>x+20,before,{timeout:4000});
+      }finally{await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await session.detach();}
+    }else{
+      await page.keyboard.down('ArrowRight');
+      try{await page.waitForFunction(x=>NM.x>x+20,before,{timeout:4000});}finally{await page.keyboard.up('ArrowRight');}
+    }
+    const movement={input:p.hasTouch?'browser-touch-hold':'browser-keyboard-hold',before,after:await page.evaluate(()=>NM.x)};
+    assert.deepEqual(errors,[]);
+    record('good_dogs_selector',p,{mode,touch_only_local_disabled:p.hasTouch,cancellation_recovered:true,prologue_shots:3,note,control_bounds:controlBounds,movement});
     await screenshot(page,`${p.id}-dogs-property`);
+  }catch(error){
+    // Keep evidence from this context before finally closes it. The outer
+    // profile page is the Night route and cannot explain a GoodDogs failure.
+    const state=await page.evaluate(()=>({captured_at:new Date().toISOString(),body_class:document.body.className,phase:window.__goodBoysOpeningPhase,launch:window.__goodBoysHardButtonLaunch,launching:window.TechOpsGoodBoysButtonHardFix?.launching,physical_launch_active:window.__goodBoysPhysicalLaunchActive,hide_hud:window.__goodBoysHideHud,mission:window.NM?._v736?.m,x:window.NM?.x,in_dialog:window.S?.inDialog,active_element:document.activeElement?.id,controls:[...document.querySelectorAll('#touch-ui,#dpad,#dpad .dbtn,#good-dogs-touch,#good-dogs-touch button,#v55-nmbtns,#touch-buttons')].map(el=>{const r=el.getBoundingClientRect(),css=getComputedStyle(el),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return{id:el.id||el.className,inline:el.getAttribute('style'),display:css.display,visibility:css.visibility,opacity:css.opacity,inert:el.inert,aria_hidden:el.getAttribute('aria-hidden'),rect:{x:r.x,y:r.y,width:r.width,height:r.height},reachable:!!hit&&(hit===el||el.contains(hit)),hit:hit&&(hit.id||hit.className||hit.tagName)};})})).catch(snapshotError=>({snapshot_error:String(snapshotError)}));
+    const diagnostic={route:'gooddogs',failure:String(error.stack||error),controlSnapshot:error.controlSnapshot??controlBounds,state,pageerrors:errors};
+    error.acceptanceContext={route:'gooddogs',diagnostic:jsonArtifact(`${p.id}-dogs-failure`,diagnostic),pageerrors:[...errors]};
+    await screenshot(page,`${p.id}-dogs-failure`).catch(()=>{});
+    throw error;
   }finally{await context.close();}
 }
 async function codec(p){
@@ -176,7 +206,7 @@ try{
       await screenshot(page,`${p.id}-title`);record('title_routes',p,{cards,viewport:p.viewport});
       await day(page,p);entry.performance=await night(page,p);assert.deepEqual(errors,[]);
       await dogs(p);await codec(p);entry.status='passed';
-    }catch(error){entry.status='failed';entry.failure=String(error.stack||error);entry.errors=errors;await screenshot(page,`${p.id}-failure`).catch(()=>{});}
+    }catch(error){entry.status='failed';entry.failure=String(error.stack||error);entry.errors=[...errors,...(error.acceptanceContext?.pageerrors||[])];if(error.acceptanceContext)entry.failure_context=error.acceptanceContext;if(error.controlSnapshot)entry.control_snapshot=error.controlSnapshot;await screenshot(page,`${p.id}-failure`).catch(()=>{});}
     finally{await context.close();console.log(JSON.stringify(entry));}
   }
   assert.ok(report.profiles.length,'No selected quality profiles');
