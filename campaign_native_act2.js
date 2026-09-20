@@ -28,6 +28,12 @@
   function dlg(name, body, options) { if (!hasFn("dlg")) return false; root.dlg(name, body, options || []); return true; }
   function notify(message) { if (hasFn("toast")) root.toast(message, 3400); }
   function show(sceneId) { if (visuals()) visuals().show(sceneId); }
+  function trustApproach() {
+    try {
+      var value = gs() && gs().meta && gs().meta._v726racks;
+      return act2().TRUST_APPROACHES.indexOf(value) >= 0 ? value : null;
+    } catch (e) { return null; }
+  }
 
   function openTile(map, p) { return !!(map && map[p.y] && map[p.y][p.x] === 0); }
   function findSpot(map, fallback, used) {
@@ -77,12 +83,77 @@
     show("felicia_day");
     var state = load();
     var snap = act2().snapshot(state);
+    if (snap.violinistRevealed) return trustIsEarned();
     if (!snap.badgeClonerVerified) return dlg("CONNECTOR HALL", "Felicia is here in daylight, but Mike does not yet have enough context to turn this into an interrogation. The encounter stays social until the badge contradiction is established.", [{ t: "Keep it professional", f: close }]);
     if (snap.feliciaDaylightConversation) return dlg("FELICIA", "The first conversation is already in the record. Trust and evidence remain separate systems.", [{ t: "Continue", f: close }]);
     return dlg("FELICIA // DAYLIGHT", "The references frame this as a grounded first meeting, not a boss reveal: bright industrial glass, aircraft structure behind her, normal workday posture, and no Night Walker title card.<br><br>Felicia: “You look like you found something that doesn't fit.”", [
       { t: "Professional — ask about systems integration", f: function () { var s = load(); act2().firstDaylightFeliciaConversation(s, { approach: "professional" }); save(s); notify("Trust +2"); close(); } },
       { t: "Curious — ask what she works on", f: function () { var s = load(); act2().firstDaylightFeliciaConversation(s, { approach: "curious" }); save(s); notify("Trust +1"); close(); } },
       { t: "Accuse her of knowing more", f: function () { var s = load(); act2().firstDaylightFeliciaConversation(s, { approach: "accusatory" }); save(s); notify("Trust -1"); close(); } }
+    ]);
+  }
+
+  function commitTrustApproach(approach) {
+    var state = load();
+    act2().recordTrustInvestigation(state, { approach: approach });
+    save(state);
+    return trustIsEarned();
+  }
+
+  function beginTrustIsEarned() {
+    var state = load();
+    act2().beginTrustInvestigation(state);
+    save(state);
+    close();
+    var cinematic = root && root.v725;
+    if (cinematic && typeof cinematic.play === "function" && cinematic.cines && cinematic.cines.indexOf("racks") >= 0) {
+      var played = cinematic.play("racks", function () {
+        var approach = trustApproach();
+        if (approach) {
+          var fresh = load();
+          act2().recordTrustInvestigation(fresh, { approach: approach });
+          save(fresh);
+        }
+        trustIsEarned();
+      });
+      if (played) return true;
+    }
+    return trustIsEarned();
+  }
+
+  function completeTrustIsEarned() {
+    var state = load();
+    act2().completeTrustReport(state, { reported: true, sharedOwnership: true });
+    save(state);
+    notify("TRUST IS EARNED // Felicia alliance established");
+    return trustIsEarned();
+  }
+
+  function trustIsEarned() {
+    show("morningstar_trace");
+    var state = load(), snap = act2().snapshot(state), trust = snap.trustIsEarned;
+    if (trust.completed || state.story && state.story.completedActs && state.story.completedActs.indexOf("act_4") >= 0) {
+      return dlg("TRUST IS EARNED // ALLIANCE", "The unauthorized traffic finding, the report, and shared ownership are in the record. Felicia opens the MORNINGSTAR hangar ledger. The alliance is earned; it is not a combat reward.", [{ t: "Continue", f: close }]);
+    }
+    if (!snap.trustIsEarnedEligible && trust.stage === "locked") {
+      return dlg("TRUST IS EARNED // LOCKED", "Parts in Motion must be resolved before Mike can ask Felicia for the whole story.", [{ t: "Back", f: close }]);
+    }
+    if (trust.stage === "locked") {
+      return dlg("TRUST IS EARNED", "A sealed rack panel is carrying unauthorized internal traffic.<br><br>Felicia: “Trust is earned. And you haven't earned the whole story.”<br><br>Mike can investigate the traffic with her, preserve what they verify, and report the result before either of them claims an alliance.", [
+        { t: "Investigate the unauthorized traffic together", f: beginTrustIsEarned },
+        { t: "Back", f: close }
+      ]);
+    }
+    if (trust.stage === "investigate") {
+      return dlg("TRUST IS EARNED // INVESTIGATE", "UNAUTHORIZED TRAFFIC DETECTED — SOURCE: INTERNAL.<br><br>The choice changes the response, but no choice becomes an alliance until Mike and Felicia report the verified finding together.", [
+        { t: "Trace the source", f: function () { commitTrustApproach("trace"); } },
+        { t: "Contain the breach", f: function () { commitTrustApproach("contain"); } },
+        { t: "Confront the source", f: function () { commitTrustApproach("confront"); } }
+      ]);
+    }
+    return dlg("TRUST IS EARNED // REPORT", "The internal traffic path is verified. Evidence and trust remain separate: the next step is to put the finding in the record and agree who owns the response.", [
+      { t: "Report the finding and share ownership", f: completeTrustIsEarned },
+      { t: "Review the evidence again", f: close }
     ]);
   }
 
@@ -157,5 +228,5 @@
   installDayWrapper();
   try { ensureWorld(); } catch (e) {}
 
-  return { CONTACTS: CONTACTS, ensureWorld: ensureWorld, badgeCloner: badgeCloner, feliciaDaylight: feliciaDaylight, morningstarTrace: morningstarTrace, rooftop: rooftop, interactionFor: interactionFor, installInteractionWrapper: installInteractionWrapper, installDayWrapper: installDayWrapper };
+  return { CONTACTS: CONTACTS, ensureWorld: ensureWorld, badgeCloner: badgeCloner, feliciaDaylight: feliciaDaylight, trustIsEarned: trustIsEarned, beginTrustIsEarned: beginTrustIsEarned, completeTrustIsEarned: completeTrustIsEarned, morningstarTrace: morningstarTrace, rooftop: rooftop, interactionFor: interactionFor, installInteractionWrapper: installInteractionWrapper, installDayWrapper: installDayWrapper };
 });

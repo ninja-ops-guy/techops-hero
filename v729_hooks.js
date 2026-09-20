@@ -29,6 +29,7 @@
   if (window.v729) return;
   const v725 = window.v725;
   if (!v725 || !v725.register || !v725.h) return; // needs the v7.25 engine
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
   const H = v725.h;
   const LW = H.LW, LH = H.LH, BAR = H.BAR;
   const GREEN = H.GREEN, PUR = H.PUR, CYAN = H.CYAN, RED = H.RED,
@@ -281,9 +282,9 @@
     }
   ];
 
-  v725.register("wires", { title: "DAY 9 — THE ENEMY IN THE WIRES", shots: WIRES_SHOTS, cues: { 1: "beep520", 3: "chime" } });
-  v725.register("signal", { title: "ROOFTOP — THE SIGNAL", shots: SIGNAL_SHOTS, cues: { 1: "chime", 3: "beep620" } });
-  v725.register("orpheus", { title: "EPILOGUE — ORPHEUS WAKES", shots: ORPHEUS_SHOTS, cues: { 1: "beep620", 2: "beep520", 4: "chime" } });
+  v725.register("wires", { title: "DAY 9 — THE ENEMY IN THE WIRES", shots: WIRES_SHOTS, cues: { 1: "beep520", 3: "chime" }, retiredStory: true });
+  v725.register("signal", { title: "ROOFTOP — THE SIGNAL", shots: SIGNAL_SHOTS, cues: { 1: "chime", 3: "beep620" }, retiredStory: true });
+  v725.register("orpheus", { title: "EPILOGUE — ORPHEUS WAKES", shots: ORPHEUS_SHOTS, cues: { 1: "beep620", 2: "beep520", 4: "chime" }, retiredStory: true });
 
   // ---------- exactly-once rewards ----------
   function applyRewards729(id) {
@@ -309,6 +310,7 @@
     return null;
   }
   window.checkDayEnd = function (force) {
+    if (canonicalStory()) return _checkDayEnd729(force);
     const s = (typeof S !== "undefined") ? S : null;
     try {
       if (s && s.meta && !v725.active() && !s.nightMode && !s.battle &&

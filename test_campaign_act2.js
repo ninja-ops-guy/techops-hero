@@ -1,5 +1,7 @@
 "use strict";
 const assert = require("assert");
+const Story = require("./campaign_story.js");
+global.TechOpsStory = Story;
 const P1 = require("./campaign_act2.js");
 
 function base() {
@@ -98,6 +100,16 @@ assert.strictEqual(policy.mode, "follow");
 assert.strictEqual(policy.freeplayUnlocked, false);
 
 // Duet Protocol is the sole free-play gate.
+assert.throws(() => P1.completeDuetProtocol(state), /requires completed MORNINGSTAR \/ Act V/);
+const duetBeforeMissingStory = JSON.stringify({ duet: state.p1.duet, facts: state.story.facts });
+delete global.TechOpsStory;
+assert.throws(() => P1.completeDuetProtocol(state), /TechOpsStory is required/);
+assert.strictEqual(JSON.stringify({ duet: state.p1.duet, facts: state.story.facts }), duetBeforeMissingStory, "missing Story authority cannot leak Duet rewards");
+global.TechOpsStory = Story;
+P1.beginTrustInvestigation(state);
+P1.recordTrustInvestigation(state, { approach: "trace" });
+P1.completeTrustReport(state, { reported: true, sharedOwnership: true });
+Story.completeAct(state, "act_5");
 const duet = P1.completeDuetProtocol(state);
 assert.strictEqual(duet.protocolCompleted, true);
 assert.strictEqual(duet.freeplayUnlocked, true);

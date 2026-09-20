@@ -8,7 +8,7 @@
   var VERSION=2,baseCard=null,timer=null;
   function world(){try{return (typeof NM!=="undefined"&&NM)?NM:(root.NM||null);}catch(e){return root.NM||null;}}
   function state(){try{return (typeof S!=="undefined"&&S)?S:(root.S||null);}catch(e){return root.S||null;}}
-  function goodBoys(){var n=world();return root.__productionDesiredMode==="goodboys"||root.__productionActiveMode==="goodboys"||!!(n&&n._v736)||!!root.__TECHOPS_GOOD_BOYS_CANON_CHAIN;}
+  function goodBoys(){var n=world(),s=state();return root.__productionDesiredMode==="goodboys"||root.__productionActiveMode==="goodboys"||!!(s&&s.meta&&s.meta._standaloneMode==="gooddogs")||!!(n&&n._v736)||!!root.__TECHOPS_GOOD_BOYS_CANON_CHAIN;}
   function nightCrawler(){var s=state();return !goodBoys()&&(root.__productionDesiredMode==="nightcrawler"||root.__productionActiveMode==="nightcrawler"||!!(s&&s.meta&&s.meta._char==="nightcrawler"));}
   function install(){
     try{
@@ -33,7 +33,7 @@
       var c=root.document.getElementById("v63-card");
       if(c){c.style.opacity="0";c.innerHTML="";}
       var t=root.document.getElementById("toast");
-      if(t&&/NIGHT CRAWL|NEW HAVEN STREETS|NEW HAVEN AFTER DARK/i.test(t.textContent||"")){t.classList.add("hidden");t.textContent="";}
+      if(t&&/NIGHT CRAWL|NEW HAVEN STREETS|NEW HAVEN AFTER DARK|Double-tap[^\n]*(?:DASH|GRAB)|ATTACK after dash|JUMP to follow/i.test(t.textContent||"")){t.classList.add("hidden");t.textContent="";}
     }catch(e){}
   }
   clean();try{timer=root.setInterval(clean,100);}catch(e){}

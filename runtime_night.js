@@ -79,7 +79,9 @@
     if(!n._nightSettled){s.budget=(s.budget||0)+(n.cash||0);n._nightSettled=true;}
     if(el('quest-tracker')&&!n._qtHidden)el('quest-tracker').classList.remove('hidden');
     s.nightMode=null;try{if(typeof NM!=='undefined')NM=null;}catch(_){}try{root.NM=null;}catch(_){}
-    s.inDialog=false;endVisit(s);return true;
+    s.inDialog=false;endVisit(s);
+    if(root.TechOpsModeShell&&root.TechOpsModeShell.exitNight)root.TechOpsModeShell.exitNight(s);
+    return true;
   }
   function campaignState(){try{return root.TechOpsCampaign&&root.TechOpsCampaign.load(root.localStorage);}catch(e){root.__nightCampaignError=String(e);return null;}}
   function resumeDay(){
@@ -204,7 +206,13 @@
     // The older dispatch paused before the guard could perform this repair.
     const guard=root.TechOpsProductionWrapperGuard;if(guard&&guard.repairStaleDialog)guard.repairStaleDialog();
     if(tick(dt)&&root.stepNM)root.stepNM(dt);
-    if(active(world())){if(root.drawNM)root.drawNM();presentation(dt);}else{if(ui)ui.host.hidden=true;if(root.draw)root.draw();}
+    if(active(world())){
+      if(root.drawNM)root.drawNM();
+      presentation(dt);
+      // The recovery compositor may step only when this authoritative frame
+      // heartbeat is stale. Stamp after a successful Night render.
+      root.__nightRuntimeLastOk=Date.now?Date.now():0;
+    }else{if(ui)ui.host.hidden=true;if(root.draw)root.draw();}
     return true;
   }
   function install(){

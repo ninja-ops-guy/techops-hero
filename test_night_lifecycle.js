@@ -28,6 +28,7 @@ function fixture(){
 test('one frame-owned clock advances once without aging work tickets',()=>{
   const{c,api}=fixture();c.enter();for(let i=0;i<100;i++)api.frame(.05);
   assert.equal(c.S.clock,1081);assert.equal(c.steps,100);assert.equal(c.oldClockCalls,0);assert.equal(c.S.tickets[0].age,8);
+  assert.ok(Number.isFinite(c.__nightRuntimeLastOk),'authoritative Night frames must stamp the recovery heartbeat');
   assert.equal(c.advanceClock(20),true);assert.equal(c.S.clock,1101);assert.equal(c.oldClockCalls,0);
 });
 test('dialogue, pause, game-over and hidden tabs stop time',()=>{
@@ -71,7 +72,7 @@ test('campaign discovery cannot invent prerequisites or evidence',()=>{
   const original=JSON.stringify(story);api.openCampaign();assert.match(c.dialog.body,/standup/);assert.equal(c.dialog.opts.some(o=>/Enter Sector/.test(o.t)),false);assert.equal(JSON.stringify(story),original);story.flags.day_work_unlocked=true;api.openCampaign();assert.match(c.dialog.body,/Identity evidence missing/);assert.equal(c.dialog.opts.some(o=>/Enter Sector/.test(o.t)),true);
 });
 test('same-day return preserves evidence, original clock, weather and cash',()=>{
-  const{c,api}=fixture();c.enter();const story={campaign:{day:1},flags:{},evidence:{preserved:true}};c.TechOpsCampaign={load:()=>story};api.resumeDay();c.scene.done();assert.equal(c.S.clock,900);assert.equal(c.S.day,1);assert.equal(c.S.weather,'storm');assert.equal(c.S.budget,137);assert.equal(story.evidence.preserved,true);
+  const{c,api}=fixture();c.enter();let shellExits=0;c.TechOpsModeShell={exitNight(state){shellExits++;assert.equal(state,c.S);return true;}};const story={campaign:{day:1},flags:{},evidence:{preserved:true}};c.TechOpsCampaign={load:()=>story};api.resumeDay();c.scene.done();assert.equal(c.S.clock,900);assert.equal(c.S.day,1);assert.equal(c.S.weather,'storm');assert.equal(c.S.budget,137);assert.equal(story.evidence.preserved,true);assert.equal(shellExits,1,'campaign Return to Day must release the Night shell');
 });
 test('delayed day notices are scoped to state, day and mode generation',()=>{
   const src=fs.readFileSync('game.js','utf8'),body=src.slice(src.indexOf('function dayNotice('),src.indexOf('// ---------- game loop ----------'));const c={S:{day:1},hit:0};c.window=c;vm.createContext(c);vm.runInContext(body,c);const f=c.dayNotice(()=>c.hit++);f();c.S.nightMode={};f();c.S.nightMode=null;c.S._modeEpoch=1;f();assert.equal(c.hit,1);const g=c.dayNotice(()=>c.hit++);c.S.day++;g();assert.equal(c.hit,1);
@@ -86,6 +87,6 @@ test('pending Sector 04 attachment cannot enter a different run',()=>{
   const{c,rt}=sectorFixture();rt.enterBrowser();c.S={day:1,clock:900,meta:{},nightMode:null};c.enter();assert.equal(c.S.nightMode.district,'home');
 });
 test('one dispatch, no competing heartbeat or automatic edge sleep',()=>{
-  const src=fs.readFileSync('runtime_night.js','utf8');assert.doesNotMatch(src,/setInterval\s*\(/);assert.match(fs.readFileSync('game.js','utf8'),/!nightRuntime\.frame\(dt\)/);assert.doesNotMatch(fs.readFileSync('night_hooks.js','utf8'),/NM\.district === "home" && NM\.x[^\n]*exitNight/);assert.match(src,/overflow-y:auto/);
+  const src=fs.readFileSync('runtime_night.js','utf8'),game=fs.readFileSync('game.js','utf8'),hooks=fs.readFileSync('night_hooks.js','utf8');assert.doesNotMatch(src,/setInterval\s*\(/);assert.match(game,/nightRuntime && nightRuntime\.frame\(dt\)/);assert.match(game,/__nightRuntimeLastOk = Date\.now\(\)/);assert.doesNotMatch(hooks,/NM\.district === "home" && NM\.x[^\n]*exitNight/);assert.match(hooks,/"EARLY RETURN"/);assert.match(hooks,/"EXTRACTION REQUIRED"/);assert.match(src,/overflow-y:auto/);
 });
 console.log(`Night lifecycle: ${passed} regression groups passed`);

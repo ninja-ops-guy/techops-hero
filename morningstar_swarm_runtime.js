@@ -8,6 +8,7 @@
   if(!root||!root.document||root.TechOpsMORNINGSTARRuntime)return;
   var VERSION=5,nightWrapped=false;
   function phase(){try{return root.TechOpsMORNINGSTARBuild?root.TechOpsMORNINGSTARBuild.getCurrentPhase():0;}catch(e){return 0;}}
+  function capability(minPhase){try{return !!(root.TechOpsMORNINGSTARBuild&&typeof root.TechOpsMORNINGSTARBuild.capabilityUnlocked==="function"&&root.TechOpsMORNINGSTARBuild.capabilityUnlocked(minPhase));}catch(e){return false;}}
   function isFelicia(){try{return typeof root.isFel==="function"?!!root.isFel():!!(root.S&&root.S.meta&&root.S.meta._char==="felicia");}catch(e){return false;}}
   function notify(t){try{if(typeof root.toast==="function")root.toast(t,3200);}catch(_){} }
   function close(){try{if(typeof root.closeDlg==="function")root.closeDlg();}catch(_){} }
@@ -19,7 +20,7 @@
     return r;
   }
   function openSwarm(){
-    if(!root.TechOpsSwarmDoctrine||phase()<3||typeof root.dlg!=="function")return false;
+    if(!root.TechOpsSwarmDoctrine||!capability(3)||typeof root.dlg!=="function")return false;
     var fel=isFelicia(),opts=[
       {t:"RECON · 300m / 120s",f:function(){issue("RECON",{range:300,duration:120,drones:2,intent:"map threat surface"});}},
       {t:"RELAY · 600m / 240s",f:function(){issue("RELAY",{range:600,duration:240,drones:2,intent:"extend team signal"});}},
@@ -36,21 +37,21 @@
     var host=root.document.getElementById("hud-right"),build=root.TechOpsMORNINGSTARBuild;if(!host||!build)return false;
     var b=root.document.getElementById("btn-morningstar");
     if(!b){b=root.document.createElement("button");b.id="btn-morningstar";b.className="hud-btn";b.textContent="✦";b.title="MORNINGSTAR build";b.setAttribute("aria-label","Open MORNINGSTAR build");b.addEventListener("click",function(e){e.preventDefault();if(root.TechOpsMORNINGSTARBuild&&typeof root.TechOpsMORNINGSTARBuild.openHub==="function")root.TechOpsMORNINGSTARBuild.openHub();});host.appendChild(b);}
-    var snap=build.snapshot&&build.snapshot();b.style.display=phase()>0||(snap&&snap.requirements)?"":"none";
+    var snap=build.snapshot&&build.snapshot();b.style.display=snap&&snap.eligible?"":"none";
     var swarm=root.document.getElementById("btn-swarm-command");
     if(!swarm){swarm=root.document.createElement("button");swarm.id="btn-swarm-command";swarm.className="hud-btn";swarm.textContent="⌁";swarm.title="Swarm commands";swarm.setAttribute("aria-label","Open swarm commands");swarm.addEventListener("click",function(e){e.preventDefault();openSwarm();});host.appendChild(swarm);}
-    swarm.style.display=phase()>=3?"":"none";
+    swarm.style.display=snap&&snap.eligible&&phase()>=3?"":"none";
     return true;
   }
   function ensureWatchdogButton(){
-    var panel=root.document.getElementById("v64-panel");if(!panel||phase()<3||!isFelicia())return false;
+    var panel=root.document.getElementById("v64-panel"),snap=root.TechOpsMORNINGSTARBuild&&root.TechOpsMORNINGSTARBuild.snapshot?root.TechOpsMORNINGSTARBuild.snapshot():null;if(!panel||!snap||!snap.eligible||phase()<3||!isFelicia())return false;
     var b=panel.querySelector("#v64-swarm");
     if(!b){b=root.document.createElement("button");b.id="v64-swarm";b.type="button";b.textContent="SWARM";b.style.cssText="width:100%;margin-top:6px;padding:7px;border:1px solid #39d3ff;background:#07131c;color:#39d3ff;font:10px 'Press Start 2P',monospace;cursor:pointer";b.addEventListener("click",function(e){e.preventDefault();openSwarm();});panel.appendChild(b);}
     return true;
   }
   function seedIntegrityIncident(){
     try{
-      if(phase()<4||!root.TechOpsSwarmDoctrine||typeof root.TechOpsSwarmDoctrine.snapshot!=="function"||typeof root.TechOpsSwarmDoctrine.recordExternalActivation!=="function")return false;
+      if(!capability(4)||!root.TechOpsSwarmDoctrine||typeof root.TechOpsSwarmDoctrine.snapshot!=="function"||typeof root.TechOpsSwarmDoctrine.recordExternalActivation!=="function")return false;
       var s=root.TechOpsSwarmDoctrine.snapshot(),seen=s&&s.questioningMomentsTriggered||[];
       if(seen.indexOf("swarm_q2")>=0)return false;
       root.TechOpsSwarmDoctrine.recordExternalActivation("orpheus-matched-felicia-authorization-pattern");

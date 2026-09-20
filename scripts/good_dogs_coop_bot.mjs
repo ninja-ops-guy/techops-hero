@@ -22,20 +22,27 @@ for(const [name,type] of [['chromium',chromium],['webkit',webkit]]){
    capture=await beginRuntimeEvidence(context,page,{out,prefix:`coop-${name}-${mode}`});
    await page.goto(base,{waitUntil:'domcontentloaded'});
    if(mode==='local'){
-    // Hold one production dependency while clicking the real title button.
-    // An early launch must remain pending until the boarding adapter is installed.
+    // Hold one production dependency and prove the title fails closed. Release
+    // it before using Playwright's trusted click; waiting on a disabled button
+    // would make the readiness test circular.
     await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.VERSION>=16&&document.querySelector('script[data-production-bootstrap="production_wrapper_guard.js"]'),null,{timeout:20000});
-    await clickGoodDogsLaunch(page);
-    await page.waitForFunction(()=>window.__goodBoysOpeningPhase?.phase==='opening-dependencies');
+    await page.waitForFunction(()=>document.querySelector('#btn-v736')?.disabled===true&&window.__productionTitleReadiness?.ready===false);
+    await page.evaluate(()=>document.querySelector('#btn-v736')?.click());
+    await page.waitForTimeout(150);
     if(await page.evaluate(()=>!!document.querySelector('#gd-mode-solo')||!!window.NM?._v736))throw Error('Early title input entered campaign before production readiness');
     releaseBootstrap();
+    await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.depsReady()&&window.__productionTitleReadiness?.ready===true&&!document.querySelector('#btn-v736')?.disabled,null,{timeout:20000});
+    await clickGoodDogsLaunch(page);
    }else{
     await page.waitForFunction(()=>window.TechOpsGoodBoysButtonHardFix?.depsReady(),null,{timeout:20000});
     await clickGoodDogsLaunch(page);
    }
-   await page.locator('#gd-mode-solo').waitFor();
-   if(!await page.evaluate(()=>window.__productionBootstrapReady&&window.__techopsWrapperGuardInstalled&&window.__goodBoysShipFlightInstalled))throw Error('Selector appeared before required runtime dependencies');
-   await snap('selector');
+	   await page.locator('#gd-mode-solo').waitFor();
+	   if(!await page.evaluate(()=>window.__productionBootstrapReady&&window.__techopsWrapperGuardInstalled&&window.__goodBoysShipFlightInstalled))throw Error('Selector appeared before required runtime dependencies');
+	   const localCapability=await page.evaluate(()=>({disabled:!!document.querySelector('#gd-mode-local')?.disabled,note:document.querySelector('#gd-local-device-note')?.textContent||'',available:window.TechOpsGoodDogsHomeScene?.localAvailable()}));
+	   if(mode==='local'&&(localCapability.disabled||localCapability.available===false))throw Error('Desktop local mode was disabled: '+JSON.stringify(localCapability));
+	   if(mode==='solo'&&(!localCapability.disabled||localCapability.available!==false||!/physical keyboard/i.test(localCapability.note)))throw Error('Touch-only local mode did not fail closed with an accessible explanation: '+JSON.stringify(localCapability));
+	   await snap('selector');
    // Cancellation must leave title and launch authority usable.
    await page.locator('#gd-mode-cancel').click();await page.waitForTimeout(750);await clickGoodDogsLaunch(page);
    if(mode==='solo'){

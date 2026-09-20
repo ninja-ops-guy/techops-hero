@@ -254,14 +254,15 @@ function nmStagePlatforms(st, dist) {
 function nmSpawnEnemies(st, dist) {
   const D = NM_DISTRICTS[dist || "downtown"];
   if (!D.roster.length) return [];
+  const profile = window.TechOpsDifficulty && window.TechOpsDifficulty.profile ? window.TechOpsDifficulty.profile(S && S.diff) : { enemyHp: 1, damage: 1 };
   const n = 2 + st + (D.danger >= 1.45 ? 1 : 0), out = [];
   for (let i = 0; i < n; i++) {
     const kind = D.roster[Math.min(i, D.roster.length - 1)];
     const k = NM_KINDS[kind];
     out.push({
       ...k, kind, x: 520 + i * (980 / n) + Math.random() * 80, y: NM_FLOOR - k.h, w: k.w, h: k.h,
-      hp: Math.round((k.hp + (st - 1) * 12) * D.danger), maxHp: Math.round((k.hp + (st - 1) * 12) * D.danger),
-      dmg: Math.round(k.dmg * D.danger), vx: 0, windup: 0, hitT: 0, kb: 0, launch: 0, down: 0, alive: true,
+      hp: Math.round((k.hp + (st - 1) * 12) * D.danger * profile.enemyHp), maxHp: Math.round((k.hp + (st - 1) * 12) * D.danger * profile.enemyHp),
+      dmg: Math.round(k.dmg * D.danger * profile.damage), vx: 0, windup: 0, hitT: 0, kb: 0, launch: 0, down: 0, alive: true,
       cd: 0, // per-enemy special cooldown (dash / zap / lunge)
     });
   }
@@ -296,6 +297,7 @@ function enterNight() {
     msg: `DOWNTOWN — STREET 1/2 · clear every enemy · ← the Charger waits`, msgT: performance.now() + 3600,
   };
   s.nightMode = NM;
+  if (window.TechOpsModeShell) window.TechOpsModeShell.enterNight(s);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.onEntered(s, NM);
   try { if (window.TechOpsCameraDirector) window.TechOpsCameraDirector.reset("nightcrawler"); } catch (e) { }
   sfx("portal");
@@ -352,14 +354,31 @@ function nmNextStage() {
 function exitNight(homeSafe) {
   if (!S || !NM) return; // duplicate scene/after-hours callbacks cannot pay twice
   const s = S, cash = NM.cash, kills = NM.kills, districts = Object.keys(NM.done).length;
+  const standalone = !!(s.meta && s.meta._standaloneMode === "nightcrawler");
   const qt = document.getElementById("quest-tracker");
   if (qt && !NM._qtHidden) qt.classList.remove("hidden"); // day HUD returns in the morning
   s.nightMode = null; NM = null;
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.endVisit(s);
+  if (window.TechOpsModeShell) window.TechOpsModeShell.exitNight(s);
   s.budget += cash;
   if (homeSafe) toast(`🏠 Home safe. Night crawl: ${kills} enemies cleared, ${districts} district${districts === 1 ? "" : "s"}, +$${cash} earned.`, 4600);
   else { addStress(20); toast(`🤕 You limp home battered. +20 stress. (+$${cash} salvage)`, 4200); }
   updateHUD(); save();
+  if (standalone) {
+    const summary = homeSafe ? (kills || districts || cash ? "NIGHT RUN COMPLETE" : "EARLY RETURN") : "EXTRACTION REQUIRED";
+    const result = `${kills} enemies · ${districts} district${districts === 1 ? "" : "s"} · $${cash}${homeSafe ? " · home safe" : " · returned injured"}`;
+    try {
+      localStorage.setItem("techops_nightcrawler_last_result_v1", JSON.stringify({ summary, message: result, homeSafe: !!homeSafe, kills, districts, cash, at: Date.now() }));
+      localStorage.removeItem("techops_char");
+    } catch (e) { }
+    window.__techopsAlternateStartMode = null;
+    window.__productionDesiredMode = null;
+    window.__productionActiveMode = null;
+    if (window.location && typeof window.location.reload === "function") {
+      setTimeout(() => window.location.reload(), 120);
+    }
+    return;
+  }
   __origCheckDayEndV50(true); // the day finally ends
 }
 

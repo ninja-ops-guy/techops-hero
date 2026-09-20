@@ -132,6 +132,21 @@ reloadCheckpoint("tuesday morning", state => {
   assert.strictEqual(state.campaign.chapter, "ghost_frequency");
 });
 
+// A canonical new run discards stale Tuesday progress without touching other localStorage data.
+global.localStorage.setItem("techops_accessibility", "reduced-motion");
+const freshAfterReset = Campaign.reset(global.localStorage);
+assert.strictEqual(global.localStorage.getItem(Campaign.SAVE_KEY), null);
+assert.strictEqual(global.localStorage.getItem("techops_accessibility"), "reduced-motion");
+assert.strictEqual(freshAfterReset.campaign.day, 1);
+assert.strictEqual(freshAfterReset.campaign.chapter, "the_queue");
+assert.strictEqual(freshAfterReset.flags.standup_started, true);
+assert.strictEqual(freshAfterReset.flags.ticket_assignments_confirmed, false);
+assert.strictEqual(freshAfterReset.flags.workstation_checked, false);
+assert.strictEqual(freshAfterReset.flags.day_work_unlocked, false);
+assert.strictEqual(freshAfterReset.flags.sector04_completed, false);
+assert.strictEqual(freshAfterReset.flags.tuesday_morning_reached, false);
+assert.strictEqual(global.localStorage.getItem(Campaign.SAVE_KEY), null, "reset must not persist the returned initial state");
+
 // Delegated compatibility route remains valid and keeps diagnosis unavailable until evidence arrives.
 global.localStorage.removeItem(Campaign.SAVE_KEY);
 bootGame();

@@ -35,6 +35,14 @@ const assert=require("assert"),fs=require("fs"),vm=require("vm");
   const context={console,NM:{_v736:{}},v63Card(){baseCards++;},document:{getElementById(id){return id==="v63-card"?card:id==="toast"?toast:null;}},setInterval(){return 1;}};
   context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("production_presentation_guard.js","utf8"),context,{filename:"production_presentation_guard.js"});context.v63Card("DAY 1","MONDAY SHIFT 09:00");
   assert.strictEqual(baseCards,0,"generic day card cannot render during Good Boys");assert.strictEqual(card.innerHTML,"","an already-mounted generic card must be cleared");assert.strictEqual(toast.textContent,"","Night Crawler tutorial toast must be cleared");assert.strictEqual(toast.classList.added,true);
+  toast.classList.added=false;toast.textContent="Double-tap ← / → to dash · Attack after dash to grab · Jump to follow launches";context.TechOpsProductionPresentationGuard.clean();assert.strictEqual(toast.textContent,"","Night combat control hints cannot cover Good Dogs gameplay");assert.strictEqual(toast.classList.added,true);
+}
+
+{
+  const toast={textContent:"Double-tap ← / → to dash · Attack after dash to grab",classList:{added:false,add(){this.added=true;}}};
+  const context={console,S:{meta:{_standaloneMode:"gooddogs"}},v63Card(){},document:{getElementById(id){return id==="toast"?toast:null;}},setInterval(){return 1;}};
+  context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("production_presentation_guard.js","utf8"),context,{filename:"production_presentation_guard.js"});
+  assert.strictEqual(context.TechOpsProductionPresentationGuard.goodBoys(),true,"standalone provenance must make Good Dogs presentation ownership immediate");assert.strictEqual(toast.textContent,"","standalone Good Dogs clears inherited Night hints without waiting for runtime aliases");
 }
 
 const layout=fs.readFileSync("good_boys_mobile_controls_layout.js","utf8"),html=fs.readFileSync("index.html","utf8"),game=fs.readFileSync("game.js","utf8");

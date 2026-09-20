@@ -91,7 +91,7 @@
   function initialState() {
     var state = {
       schemaVersion: VERSION,
-      campaign: { day: 1, act: 1, chapter: "the_queue", phase: "standup" },
+      campaign: { day: 1, act: 1, chapter: "the_queue", phase: "standup", storyModeVersion: "1.2" },
       flags: canonicalFlags(), assignments: {}, tickets: {},
       evidence: { ghostIdentityEvidence: emptyFact() },
       trust: { felicia: { state: "suspicious", history: [] } },
@@ -137,6 +137,8 @@
 
     state.flags = Object.assign(old, fresh);
     state.schemaVersion = VERSION;
+    state.campaign = state.campaign || { day: 1, act: 1, chapter: "the_queue", phase: "standup" };
+    state.campaign.storyModeVersion = "1.2";
     if (!state.history) state.history = [];
     if (!state.evidence) state.evidence = { ghostIdentityEvidence: emptyFact() };
     if (!state.evidence.ghostIdentityEvidence) state.evidence.ghostIdentityEvidence = emptyFact();
@@ -423,6 +425,12 @@
     var raw = storage.getItem(SAVE_KEY); if (!raw) return initialState();
     var state = migrate(JSON.parse(raw)); validate(state); return state;
   }
+  function reset(storage) {
+    storage = storage || (typeof localStorage !== "undefined" ? localStorage : null);
+    assert(storage && typeof storage.removeItem === "function", "A storage adapter with removeItem is required");
+    storage.removeItem(SAVE_KEY);
+    return initialState();
+  }
 
   var api = {
     VERSION: VERSION, SAVE_KEY: SAVE_KEY, TICKETS: TICKETS.slice(), TICKET_TEMPLATES: clone(TICKET_TEMPLATES), TUESDAY_MORNING_CONTRACT: clone(TUESDAY_MORNING_CONTRACT),
@@ -433,7 +441,7 @@
     recordGhostEvidence: recordGhostEvidence, resolveTicket: resolveTicket, enterSector04: enterSector04,
     insightAccessGuard: insightAccessGuard, suppressAccessGuard: suppressAccessGuard, severAccessController: severAccessController, transitionToTuesday: transitionToTuesday,
     workdayHandoff: workdayHandoff, followupDefinition: followupDefinition, performWorkdayFollowup: performWorkdayFollowup,
-    save: save, load: load
+    save: save, load: load, reset: reset
   };
   if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:campaign-ready", { detail: { version: VERSION, api: api } }));
   return api;

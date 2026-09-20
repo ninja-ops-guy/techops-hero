@@ -24,6 +24,7 @@
   if (window.v727) return;
   const v725 = window.v725;
   if (!v725 || !v725.register || !v725.h) return; // needs the v7.25 engine
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
   const H = v725.h;
   const LW = H.LW, LH = H.LH, BAR = H.BAR;
   const GREEN = H.GREEN, PUR = H.PUR, CYAN = H.CYAN, RED = H.RED,
@@ -213,7 +214,8 @@
   v725.register("krun", {
     title: "K — THE NIGHT RUN",
     shots: KRUN_SHOTS,
-    cues: { 1: "beep620", 3: "chime", 5: "beep520", 7: "chime" }
+    cues: { 1: "beep620", 3: "chime", 5: "beep520", 7: "chime" },
+    retiredStory: true
   });
 
   // ---------- exactly-once reward ----------
@@ -231,6 +233,7 @@
     return null;
   }
   window.checkDayEnd = function (force) {
+    if (canonicalStory()) return _checkDayEnd727(force);
     const s = (typeof S !== "undefined") ? S : null;
     try {
       if (s && s.meta && !v725.active() && !s.nightMode && !s.battle &&

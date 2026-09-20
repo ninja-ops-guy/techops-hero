@@ -3,6 +3,8 @@ const assert = require("assert");
 const fs = require("fs");
 const Story = require("./campaign_story.js");
 const Campaign = require("./campaign_act1.js");
+global.TechOpsStory = Story;
+const CampaignAct2 = require("./campaign_act2.js");
 
 assert.equal(Story.validateCanon(), true);
 assert.deepEqual(Story.ORPHEUS_SIGNATURES, [
@@ -18,13 +20,27 @@ const state = {};
 assert.deepEqual(Story.eligibleActs(state), ["prologue"]);
 Story.completeAct(state, "prologue");
 assert(Story.eligibleActs(state).includes("act_1"));
-assert.throws(() => Story.completeAct({}, "act_2"), /prerequisites/);
+assert.throws(() => Story.completeAct({}, "act_2"), /predecessor/);
 assert.throws(() => Story.chooseEnding(state, "shutdown"), /not been reached/);
 
 [
-  "act_1", "act_2", "act_3", "act_4", "act_5", "act_6",
-  "interlude", "act_7", "act_8"
+  "act_1", "act_2", "act_3"
 ].forEach(id => Story.completeAct(state, id));
+assert.equal(Story.transitionStatus(state, "act_4").unlocked, true);
+assert.equal(Story.transitionStatus(state, "act_4").eligible, false);
+assert.throws(() => Story.completeAct(state, "act_4"), /completion requirements/);
+state.flags = { tuesday_morning_reached: true };
+CampaignAct2.beginTrustInvestigation(state);
+CampaignAct2.recordTrustInvestigation(state, { approach: "trace" });
+CampaignAct2.completeTrustReport(state, { reported: true, sharedOwnership: true });
+assert.equal(state.story.facts.felicia_alliance, true);
+
+[
+  "act_5", "act_6", "interlude", "act_7", "act_8"
+].forEach(id => Story.completeAct(state, id));
+
+const forged = { story: { completedActs: ["prologue"], facts: { felicia_alliance: true, morningstar_hangar_revealed: true } } };
+assert.throws(() => Story.completeAct(forged, "act_5"), /predecessor/, "downstream facts cannot bypass ordered act completion");
 
 const ending = Story.chooseEnding(state, "open_network");
 assert.equal(ending.command, "REVOKE ROOT");
@@ -66,8 +82,8 @@ const storySource = fs.readFileSync("campaign_story.js", "utf8");
 const visualBootstrap = fs.readFileSync("campaign_native_act1_visuals.js", "utf8");
 assert.doesNotThrow(() => new Function(gapSource), "Bible gap runtime must parse as browser JavaScript");
 assert.match(visualBootstrap, /good_boys_ship_deck_scene\.js\?v=20260903-good-ship-gameplay-assets-r2/, "visual bootstrap must request the centered cockpit interaction scene");
-assert.match(storySource, /campaign_native_act1_visuals\.js\?v=20260912-gameplay-feedback-r1/, "campaign story must bypass stale mobile visual bootstrap cache");
-assert.match(visualBootstrap, /good_boys_button_hard_fix\.js\?v=20260912-local-coop-r3/, "visual bootstrap must request the canonical M1-first Good Dogs handoff owner");
+assert.match(storySource, /campaign_native_act1_visuals\.js\?v=20260920-revision-r1/, "campaign story must bypass stale mobile visual bootstrap cache");
+assert.match(visualBootstrap, /good_boys_button_hard_fix\.js\?v=20260920-revision-r1/, "visual bootstrap must request the canonical M1-first Good Dogs handoff owner");
 for (const id of Campaign.TICKETS) assert(gapSource.includes(id), `Bible gap pass must guarantee ${id}`);
 assert(gapSource.includes("campaign_shipping") && gapSource.includes("campaign_plating") && gapSource.includes("campaign_access"), "Day 1 guarantee must use authored world contacts");
 assert(!/\.tickets\.push\s*\(/.test(gapSource), "Bible pass must not duplicate canonical contacts into the procedural ticket queue");

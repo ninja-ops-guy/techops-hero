@@ -6,6 +6,7 @@
 //   all 3 Crown Jewel intel pieces      -> you can side with her (Ending B)
 //   both + every optional talk          -> true ending
 (function () {
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
   const PANELS = (typeof TO_PANELS !== "undefined") ? TO_PANELS : [];
   const imgs = PANELS.map(src => { const i = new Image(); i.src = src; return i; });
 
@@ -195,6 +196,7 @@
 
   // ================= day-10 finale =================
   function finale() {
+    if (canonicalStory()) return false;
     const a = arc(); if (a.choice) return;
     v73Cine([
       { img: 5, cap: "DAY 10 — RAIN. The roof again. Her laptop is open on the ledge: “Copying data. Again.”", zoom: "in" },
@@ -238,6 +240,7 @@
   const __origSetupDay73 = setupDay;
   setupDay = function () {
     const r = __origSetupDay73.apply(this, arguments);
+    if (canonicalStory()) return r;
     const s = S, a = arc(), d = s.day;
     if (d >= 5 && d <= 10 && !a.seen["d" + d]) {
       a.seen["d" + d] = true;
@@ -256,6 +259,7 @@
   const __origHUD73 = updateHUD;
   updateHUD = function () {
     const r = __origHUD73.apply(this, arguments);
+    if (canonicalStory()) return r;
     try {
       const s = S, a = arc();
       if (cineOpen || s.inBattle || s.inDialog || s.room) return r;

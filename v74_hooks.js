@@ -6,6 +6,7 @@
 //  - Post-arc Felicia: her presence (or absence) in the world reflects the
 //    choice you made on the roof.
 (function () {
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
   function arc() { try { return window.v73 ? v73.arc() : null; } catch (e) { return null; } }
   function cine(slides, onDone) { try { if (window.v73) v73.cine(slides, onDone); else if (onDone) onDone(); } catch (e) { if (onDone) onDone(); } }
 
@@ -167,6 +168,7 @@
   const __origSetupDay74 = setupDay;
   setupDay = function () {
     const r = __origSetupDay74.apply(this, arguments);
+    if (canonicalStory()) return r;
     try {
       const a = arc(), d = S.day;
       if (a && a.choice && d >= 11 && !a.seen.epilogue) {
@@ -179,6 +181,7 @@
   const __origHUD74b = updateHUD;
   updateHUD = function () {
     const r = __origHUD74b.apply(this, arguments);
+    if (canonicalStory()) return r;
     try {
       const a = arc();
       if (!a || !a.choice) return r;

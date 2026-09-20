@@ -8,7 +8,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  var VERSION = 1;
+  var VERSION = 2;
   var K_MEMORY_RULE = "K's uncertainty concerns provenance, never the validity of his present experience.";
   var DESIGN_LAWS = Object.freeze({
     ownership: "Every active problem has exactly one owner before work begins.",
@@ -24,7 +24,7 @@
     { id: "act_1", title: "The Queue", requires: ["queue_owned", "felicia_video_seen"], produces: ["sector_04_verified", "purple_damage_seen", "violin_note_heard", "tuesday_morning"], mechanics: ["observe_investigate_hypothesize_execute_verify", "night_walker", "insight"] },
     { id: "act_2", title: "Ghost Frequency", requires: ["tuesday_morning"], produces: ["ghost_identity_established", "morningstar_signature_found", "felicia_contact"], mechanics: ["evidence_provenance", "identity_investigation"] },
     { id: "act_3", title: "Parts in Motion", requires: ["ghost_identity_established", "morningstar_signature_found"], produces: ["morningstar_reconstructed", "violinist_revealed", "orpheus_learns_known"], mechanics: ["evidence_board", "cooperative_combat"] },
-    { id: "act_4", title: "Trust Is Earned", requires: ["violinist_revealed"], produces: ["felicia_alliance", "morningstar_hangar_revealed"], mechanics: ["trust_investigate_report", "relationship_consequences"] },
+    { id: "act_4", title: "Trust Is Earned", requires: ["violinist_revealed"], completionRequires: ["trust_investigation_reported"], produces: ["felicia_alliance", "morningstar_hangar_revealed"], mechanics: ["trust_investigate_report", "relationship_consequences"] },
     { id: "act_5", title: "MORNINGSTAR", requires: ["felicia_alliance", "morningstar_hangar_revealed"], produces: ["morningstar_airborne", "mike_model_discovered"], mechanics: ["mobile_hub", "distributed_topology", "behavior_history"] },
     { id: "act_6", title: "Duet Protocol", requires: ["mike_model_discovered"], produces: ["duet_protocol_complete", "felicia_playable", "orbital_signal_found"], mechanics: ["character_switching", "delegated_authority", "prediction_breaking"] },
     { id: "interlude", title: "Good Dogs Protocol", requires: ["orbital_signal_found"], produces: ["k_freed", "waldo_freed", "warden_null_defeated", "crew_returned_to_earth"], mechanics: ["paired_platforming", "assisted_jumps", "partner_combat"] },
@@ -52,6 +52,9 @@
   function ensureStoryState(state) {
     assert(state && typeof state === "object", "Campaign state is required");
     if (!state.story) state.story = { schemaVersion: VERSION, completedActs: [], facts: {}, ending: null };
+    state.story.schemaVersion = VERSION;
+    state.story.completedActs = Array.isArray(state.story.completedActs) ? state.story.completedActs : [];
+    state.story.facts = state.story.facts || {};
     return state.story;
   }
   function flag(flags, canonical, legacy) {
@@ -67,27 +70,46 @@
       flag(flags, "felicia_video_watched", "feliciaVideoSeen") &&
       (typeof flags.day_work_unlocked === "boolean" ? flags.day_work_unlocked : flag(flags, "workstation_checked", "workstationOpened"));
     if (openingComplete && story.completedActs.indexOf("prologue") < 0) {
-      story.completedActs.push("prologue");
-      actById("prologue").produces.forEach(function (fact) { story.facts[fact] = true; });
+      completeAct(state, "prologue");
     }
     var tuesday = flag(flags, "tuesday_morning_reached", "tuesdayMorningReached");
     var sector = flag(flags, "sector04_completed", "sector04Completed");
     if (tuesday && sector && story.completedActs.indexOf("act_1") < 0) {
       assert(story.completedActs.indexOf("prologue") >= 0, "Tuesday state cannot import without a completed prologue");
-      story.completedActs.push("act_1");
-      actById("act_1").produces.forEach(function (fact) { story.facts[fact] = true; });
+      completeAct(state, "act_1");
     }
     return story;
   }
   function hasFact(state, fact) { var story = ensureStoryState(state); return story.facts[fact] === true || (state.flags && state.flags[fact] === true); }
-  function eligibleActs(state) {
-    return ACTS.filter(function (act) { var story = ensureStoryState(state); return story.completedActs.indexOf(act.id) < 0 && act.requires.every(function (fact) { return hasFact(state, fact); }); }).map(function (act) { return act.id; });
-  }
-  function completeAct(state, actId) {
+  function transitionStatus(state, actId) {
     var story = ensureStoryState(state), act = actById(actId);
     assert(act, "Unknown campaign act: " + actId);
-    assert(story.completedActs.indexOf(actId) < 0, "Campaign act already completed: " + actId);
-    assert(act.requires.every(function (fact) { return hasFact(state, fact); }), "Campaign act prerequisites not met: " + actId);
+    var index = ACTS.indexOf(act), predecessor = index > 0 ? ACTS[index - 1] : null;
+    var missingFacts = act.requires.filter(function (fact) { return !hasFact(state, fact); });
+    var missingCompletion = (act.completionRequires || []).filter(function (fact) { return !hasFact(state, fact); });
+    var predecessorComplete = !predecessor || story.completedActs.indexOf(predecessor.id) >= 0;
+    var completed = story.completedActs.indexOf(actId) >= 0;
+    var unlocked = !completed && predecessorComplete && missingFacts.length === 0;
+    return {
+      actId: actId,
+      predecessor: predecessor ? predecessor.id : null,
+      predecessorComplete: predecessorComplete,
+      completed: completed,
+      missingFacts: missingFacts,
+      missingCompletion: missingCompletion,
+      unlocked: unlocked,
+      eligible: unlocked && missingCompletion.length === 0
+    };
+  }
+  function eligibleActs(state) {
+    return ACTS.filter(function (act) { return transitionStatus(state, act.id).eligible; }).map(function (act) { return act.id; });
+  }
+  function completeAct(state, actId) {
+    var story = ensureStoryState(state), act = actById(actId), status = transitionStatus(state, actId);
+    assert(!status.completed, "Campaign act already completed: " + actId);
+    assert(status.predecessorComplete, "Campaign act predecessor not completed: " + status.predecessor + " -> " + actId);
+    assert(status.missingFacts.length === 0, "Campaign act prerequisites not met: " + actId + " (" + status.missingFacts.join(", ") + ")");
+    assert(status.missingCompletion.length === 0, "Campaign act completion requirements not met: " + actId + " (" + status.missingCompletion.join(", ") + ")");
     story.completedActs.push(actId); act.produces.forEach(function (fact) { story.facts[fact] = true; }); return clone(act);
   }
   function chooseEnding(state, endingId) {
@@ -100,6 +122,7 @@
     ACTS.forEach(function (act, index) {
       assert(!seen[act.id], "Duplicate act id: " + act.id); seen[act.id] = true;
       act.requires.forEach(function (fact) { assert(produced[fact], "Unproducible prerequisite in " + act.id + ": " + fact); });
+      (act.completionRequires || []).forEach(function (fact) { assert(typeof fact === "string" && fact, "Invalid completion requirement in " + act.id); });
       act.produces.forEach(function (fact) { produced[fact] = true; }); if (index) assert(ACTS[index - 1].id !== act.id, "Act order is invalid");
     });
     assert(ORPHEUS_SIGNATURES.length === 4, "ORPHEUS requires exactly four recurring signatures");
@@ -110,14 +133,14 @@
     if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
     window.__techopsAct1VisualLoader = true;
     var script = window.document.createElement("script");
-    script.src = "campaign_native_act1_visuals.js?v=20260912-gameplay-feedback-r1";
+    script.src = "campaign_native_act1_visuals.js?v=20260920-revision-r1";
     script.async = false;
     window.document.head.appendChild(script);
     return true;
   }
   validateCanon();
   loadPresentationModule();
-  var api = { VERSION: VERSION, ACTS: ACTS, ENDINGS: ENDINGS, DESIGN_LAWS: DESIGN_LAWS, ORPHEUS_SIGNATURES: ORPHEUS_SIGNATURES, K_MEMORY_RULE: K_MEMORY_RULE, CANON_LINES: CANON_LINES, ensureStoryState: ensureStoryState, syncAct1State: syncAct1State, eligibleActs: eligibleActs, completeAct: completeAct, chooseEnding: chooseEnding, validateCanon: validateCanon, loadPresentationModule: loadPresentationModule };
+  var api = { VERSION: VERSION, ACTS: ACTS, ENDINGS: ENDINGS, DESIGN_LAWS: DESIGN_LAWS, ORPHEUS_SIGNATURES: ORPHEUS_SIGNATURES, K_MEMORY_RULE: K_MEMORY_RULE, CANON_LINES: CANON_LINES, ensureStoryState: ensureStoryState, syncAct1State: syncAct1State, transitionStatus: transitionStatus, eligibleActs: eligibleActs, completeAct: completeAct, chooseEnding: chooseEnding, validateCanon: validateCanon, loadPresentationModule: loadPresentationModule };
   if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:story-ready", { detail: { version: VERSION, api: api } }));
   return api;
 });

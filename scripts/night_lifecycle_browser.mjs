@@ -63,7 +63,7 @@ async function run(name,engine,touch,viewport){
   };
   const option=text=>page.locator('#dlg-options button').filter({hasText:text});
   const shot=label=>page.screenshot({path:`${OUT}/${name}-${label}.png`});
-  await mount(page);await enterNight(page,touch);record.steps.push('reachable title/difficulty/Night Drive launch');
+  await mount(page);const storyMarker=JSON.stringify({day:7,clock:700,meta:{marker:'standalone-night-isolation'}});await page.evaluate(value=>localStorage.setItem('techops_save',value),storyMarker);await enterNight(page,touch);record.steps.push('reachable title/difficulty/Night Drive launch');
   // Observe both acknowledged input and actual simulation advancement. Do not
   // accept mere elapsed wall time as proof of movement, or write gameplay keys.
   const before=await snapshot(page);await page.keyboard.down('ArrowRight');
@@ -85,20 +85,12 @@ async function run(name,engine,touch,viewport){
   await page.waitForFunction(()=>NM?.district==='home'&&!NM.drive);await page.evaluate(()=>{NM.x=1730;NM.y=396;});await page.waitForTimeout(180);assert.equal(await page.evaluate(()=>!!S.nightMode),true);
   await page.evaluate(()=>{NM.x=1489;NM.y=396;NM.vx=NM.vy=0;});await page.locator('#night-home-interact').waitFor({state:'visible'});await shot('home');
   await click(page.locator('#night-home-interact'));await click(option('Stay out tonight'));assert.equal(await page.evaluate(()=>!!S.nightMode),true);
-  await click(page.locator('#night-home-interact'));const clock=await page.evaluate(()=>S.clock);await click(option('Sleep — return to day mode'));await page.locator('#night-home-skip').waitFor({state:'visible'});
-  const transitionState=()=>page.evaluate(()=>({runtime:window.NM?{x:NM.x,hp:NM.hp}:null,steps:TechOpsProductionWrapperGuard.health().baseStepCount}));
-  const position=await transitionState();
-  await page.keyboard.down('ArrowRight');await page.waitForTimeout(350);await page.keyboard.up('ArrowRight');
-  const afterInput=await transitionState();
-  assert.equal(await page.evaluate(()=>S.clock),clock);assert.ok(afterInput.steps-position.steps<=1,`Transition may settle at most one already-scheduled production step; observed ${afterInput.steps-position.steps}`);
-  if(position.runtime&&afterInput.runtime)assert.deepEqual(afterInput.runtime,position.runtime);else assert.equal(afterInput.runtime,null,'Night runtime may only change here by completing its teardown');
-  await shot('transition');
-  if(name!=='chromium'&&await page.evaluate(()=>!!window.v725?.active()))await click(page.locator('#night-home-skip'));await page.waitForFunction(()=>!window.v725?.active());
-  if(await option('Straight to bed').isVisible())await click(option('Straight to bed'));
-  await page.waitForFunction(()=>!S.nightMode);await page.locator('#eod-rewards button').first().waitFor({state:'visible'});await click(page.locator('#eod-rewards button').first());
-  await page.waitForFunction(()=>!S.nightMode&&S.clock<1020&&!S.inDialog);await page.waitForTimeout(1000);
-  assert.equal(await page.evaluate(()=>S.nightMode||null),null);assert.equal(await page.evaluate(()=>localStorage.getItem('techops_char')),null);assert.equal(await page.evaluate(()=>S.meta.nightVisit.active),false);await shot('morning');
-  record.steps.push('home/stay/sleep blocks movement and returns to day without re-entry');
+  await click(page.locator('#night-home-interact'));await click(option('Sleep — return to day mode'));await page.locator('#night-home-skip').waitFor({state:'visible'});
+  assert.equal(await page.evaluate(()=>TechOpsPresentationDirector.isBlocking()),true,'home transition must own input before standalone exit');await shot('transition');
+  const standaloneReload=page.waitForNavigation({waitUntil:'domcontentloaded'});await click(page.locator('#night-home-skip'));await standaloneReload;await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsProductionTitleExperience?.state().ready);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('techops_save')),storyMarker,'standalone Night cannot overwrite the campaign profile');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('techops_char')),null);assert.equal(await page.locator('#title-night-result').isVisible(),true);await shot('morning');
+  record.steps.push('home/stay/sleep returns to title with isolated campaign save and visible debrief');
   await page.evaluate(()=>localStorage.clear());await mount(page);await enterNight(page,touch);await click(page.locator('#night-campaign'));await click(option('Resume the daytime opening'));await returnScene(page);
   const evidence=await prepareStory(page);assert.equal((await page.evaluate(()=>TechOpsSector04Runtime.enterBrowser())).pending,true);await page.waitForFunction(()=>window.v722?.active());await page.keyboard.press('Escape');await page.waitForFunction(()=>S.nightMode?._sector04?.active&&!S.inDialog);
   await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});await click(page.locator('#night-campaign'));await click(option('Continue Sector 04 investigation'));

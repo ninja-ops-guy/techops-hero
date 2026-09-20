@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 "use strict";
 const { spawnSync } = require("child_process");
+const fs = require("fs");
 
 const tests = [
   "test_campaign_act1.js",
+  "test_game_resume_checkpoint.js",
+  "test_difficulty_contract.js",
+  "test_ticket_lifecycle_contract.js",
+  "test_story_authority_firewall.js",
   "test_campaign_act2.js",
   "test_campaign_act2_reload_gates.js",
+  "test_campaign_ordered_act4_progression.js",
   "test_campaign_native_act2.js",
   "test_campaign_native_act1_visuals.js",
   "test_workstation_concept_retirement.js",
@@ -18,11 +24,16 @@ const tests = [
   "test_good_dogs_state_integrity.js",
   "test_campaign_world_visuals.js",
   "test_campaign_late_game_contracts.js",
+  "test_campaign_swarm_migration.js",
   "test_good_boys_canon_runtime.js",
   "test_good_boys_combat_contract.js",
   "test_good_boys_world_isolation.js",
   "test_good_boys_completion_authority.js",
+  "test_good_boys_intro_repair.js",
+  "test_good_boys_pages_visual_contract.js",
+  "test_good_boys_reference_ui_v2.js",
   "test_runtime_autofix.mjs",
+  "test_runtime_triage.mjs",
   "test_good_boys_compositor_ownership.js",
   "test_good_boys_ui_ownership.js",
   "test_good_boys_mobile_launch_guard.js",
@@ -32,6 +43,8 @@ const tests = [
   "test_good_boys_access_core_sequence.js",
   "test_good_boys_ship_deck_mapping.js",
   "test_production_mode_router.js",
+  "test_production_title_experience.js",
+  "test_runtime_mode_shell.js",
   "test_production_runtime_safety.js",
   "test_production_compositor.js",
   "test_production_runtime_lock.js",
@@ -73,14 +86,29 @@ const tests = [
   "test_night_combat.js",
   "test_runtime_combat_audio.js",
   "test_quality_integration.js",
+  "test_live_crawl_visual_cohesion.js",
   "test_production_gameplay_experience.js",
   "test_orbital_scene_staging.js",
   "test_night_lifecycle.js",
+  "test_runtime_night.js",
   "test_night_mobile_visual_contract.js",
   "test_gameplay_recording_cohesion.js",
   "test_recording_world_cohesion.js",
   "test_ui_coop_contract.js"
 ];
+
+// Keep the release gate honest as the layered runtime evolves: every root
+// contract suite must be named exactly once, and every named suite must exist.
+const inventory = fs.readdirSync(process.cwd()).filter(file => /^test_.*\.(?:js|mjs)$/.test(file)).sort();
+const duplicates = tests.filter((file, index) => tests.indexOf(file) !== index);
+const omitted = inventory.filter(file => !tests.includes(file));
+const missing = tests.filter(file => !inventory.includes(file));
+if (duplicates.length || omitted.length || missing.length) {
+  if (duplicates.length) console.error("Duplicate release suites:", duplicates.join(", "));
+  if (omitted.length) console.error("Unregistered release suites:", omitted.join(", "));
+  if (missing.length) console.error("Missing release suites:", missing.join(", "));
+  process.exit(1);
+}
 
 let failed = 0;
 console.log(`TechOps Hero production gate: ${tests.length} suites`);
@@ -90,6 +118,12 @@ for (const file of tests) {
     failed++;
     console.error(`\nFAIL: ${file}`);
   }
+}
+
+const syntax = spawnSync(process.execPath, ["scripts/check_js_syntax.js"], { stdio: "inherit", cwd: process.cwd() });
+if (syntax.status !== 0) {
+  failed++;
+  console.error("\nFAIL: repository JavaScript syntax gate");
 }
 
 const quarantine = spawnSync(process.execPath, ["-e", `

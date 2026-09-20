@@ -36,6 +36,7 @@
 (function () {
   const VER = "7.30";
   if (window.v730) return;
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
 
   const DEAD = .28;
   let prev = [];                 // previous button states (edge detection)
@@ -387,8 +388,8 @@
       }
     ];
 
-    v725.register("badge", { title: "BADGE-CLONER INVESTIGATION — ACCESS GRANTED", shots: BADGE_SHOTS, cues: { 2: "beep520", 4: "chime" } });
-    v725.register("emerald", { title: "K ORIGIN TEASER — THE EMRLD", shots: EMERALD_SHOTS, cues: { 3: "chime", 4: "beep620", 5: "beep520" } });
+    v725.register("badge", { title: "BADGE-CLONER INVESTIGATION — ACCESS GRANTED", shots: BADGE_SHOTS, cues: { 2: "beep520", 4: "chime" }, retiredStory: true });
+    v725.register("emerald", { title: "K ORIGIN TEASER — THE EMRLD", shots: EMERALD_SHOTS, cues: { 3: "chime", 4: "beep620", 5: "beep520" }, retiredStory: true });
 
     // ---------- exactly-once rewards ----------
     function applyRewards730(id) {
@@ -413,6 +414,7 @@
       return null;
     }
     window.checkDayEnd = function (force) {
+      if (canonicalStory()) return _checkDayEnd730(force);
       const s = (typeof S !== "undefined") ? S : null;
       try {
         if (s && s.meta && !v725.active() && !s.nightMode && !s.battle &&

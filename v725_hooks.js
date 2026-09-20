@@ -32,6 +32,7 @@
 (function () {
   const VER = "7.25";
   if (window.v725) return;
+  const canonicalStory = () => !!(window.TechOpsStoryAuthority && window.TechOpsStoryAuthority.canonical);
 
   // ---------- audio ----------
   let AC725 = null, live725 = [];
@@ -676,10 +677,10 @@
   // SHARED ENGINE
   // ==========================================================================
   const CINES = {
-    coffee: { title: "SIDE QUEST — THE COFFEE MACHINE INCIDENT", shots: CINE_A_SHOTS },
-    mentor: { title: "MENTOR QUEST — SHOW THEM HOW TO THINK", shots: CINE_B_SHOTS },
-    betrayal: { title: "DAY 14 — THE BETRAYAL PROTOCOL", shots: CINE_C_SHOTS },
-    city: { title: "PROJECT ORPHEUS — THE CITY BENEATH THE CITY", shots: CINE_D_SHOTS }
+    coffee: { title: "SIDE QUEST — THE COFFEE MACHINE INCIDENT", shots: CINE_A_SHOTS, retiredStory: true },
+    mentor: { title: "MENTOR QUEST — SHOW THEM HOW TO THINK", shots: CINE_B_SHOTS, retiredStory: true },
+    betrayal: { title: "DAY 14 — THE BETRAYAL PROTOCOL", shots: CINE_C_SHOTS, retiredStory: true },
+    city: { title: "PROJECT ORPHEUS — THE CITY BENEATH THE CITY", shots: CINE_D_SHOTS, retiredStory: true }
   };
   const st725 = { plays: 0, skips: 0, completes: 0, choices: 0 };
   let ov725 = null, cx725 = null, raf725 = 0, t0725 = 0, cine725 = null, done725 = null,
@@ -830,6 +831,7 @@
 
   function play725(id, onDone) {
     if (ov725) return false;
+    if (canonicalStory() && CINES[id] && CINES[id].retiredStory) return false;
     cine725 = id; done725 = onDone || null;
     shotIdx = -1; waitingChoice = null; resolved725 = null; fired725 = []; lastShotAt = -1;
     ov725 = buildOverlay725();
@@ -854,6 +856,7 @@
     return null;
   }
   window.checkDayEnd = function (force) {
+    if (canonicalStory()) return _checkDayEnd725(force);
     const s = (typeof S !== "undefined") ? S : null;
     try {
       if (s && s.meta && !ov725 && !s.nightMode && !s.battle &&
@@ -891,6 +894,7 @@
     choose: (i) => pickChoice725(i),
     get cines() { return Object.keys(CINES); },
     defs: () => CINES, // v7.32: read-only registry access for the scene validator
+    storyAllowed: (id) => !(canonicalStory() && CINES[id] && CINES[id].retiredStory),
     // v7.26+: data-driven scene registration — one engine, many boards
     register: (id, def) => { if (id && def && def.shots && !CINES[id]) { CINES[id] = def; return true; } return false; },
     // shared helpers for registered scenes (no parallel drawing kits)

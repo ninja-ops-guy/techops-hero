@@ -14,6 +14,20 @@
     "warden_null_active","shuttle_bay_reached","warden_null_defeated","orbital_custody_broken","waldo_returned","good_dogs_returned",
     "good_dogs_protocol_complete","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available","crew_returned_to_earth"
   ];
+  function campaignOrigin(){
+    try{var meta=root.S&&root.S.meta||{},m=meta._v736||{};if(meta._standaloneMode==="gooddogs"||m.campaignOrigin==="standalone")return"standalone";return m.campaignOrigin||null;}catch(e){return null;}
+  }
+  function canonicalInterludeEligible(){
+    try{
+      if(campaignOrigin()==="standalone")return false;
+      var s=root.S,story=s&&s.story,facts=story&&story.facts||{},acts=story&&story.completedActs||[];
+      if(!s||facts.orbital_signal_found!==true)return false;
+      if(acts.indexOf("interlude")>=0)return true;
+      var authority=root.TechOpsStory;
+      if(authority&&typeof authority.eligibleActs==="function")return authority.eligibleActs(s).indexOf("interlude")>=0;
+      return acts.indexOf("act_6")>=0;
+    }catch(e){root.__goodDogsCanonEligibilityError=String(e&&e.stack||e);return false;}
+  }
   function ensure(){
     if(!root.S)return null;root.S.meta=root.S.meta||{};var g=root.S.meta.goodDogs||(root.S.meta.goodDogs={schemaVersion:VERSION});g.schemaVersion=VERSION;
     if(!root.S.story)root.S.story={schemaVersion:1,completedActs:[],facts:{},ending:null};
@@ -23,7 +37,6 @@
   function persist(){try{if(typeof root.save==="function"){return root.save()!==false;}if(typeof root.saveGame==="function"){return root.saveGame()!==false;}return false;}catch(e){root.__goodDogsSemanticSaveError=String(e&&e.stack||e);return false;}}
   function write(name,value){
     var g=ensure();if(!g)return false;value=value===undefined?true:value;g[name]=value;root.S.meta[name]=value;
-    if(typeof value==="boolean"&&value)root.S.story.facts[name]=true;else if(name==="k_identity_status"||name==="waldo_relationship_k")root.S.story.facts[name]=value;
     g.updatedAt=Date.now();return true;
   }
   function writeMany(obj){for(var k in obj)if(Object.prototype.hasOwnProperty.call(obj,k))write(k,obj[k]);return snapshot();}
@@ -50,19 +63,30 @@
     if(Number(m.m)>=5&&m.k)writeMany({cell_118_reached:true,k_seen:true,k_freed:true,k_identity_status:Number(m.m)>=6?"K":"K_pending"});
     if(Number(m.m)>=7&&m.k&&m.waldo)writeMany({waldo_seen:true,waldo_freed:true,waldo_relationship_k:"accepted"});
   }
+  function stampCanonicalInterlude(){
+    if(!canonicalInterludeEligible())return false;
+    var s=root.S,story=s&&s.story;if(!story)return false;story.facts=story.facts||{};story.completedActs=story.completedActs||[];
+    if(story.completedActs.indexOf("interlude")<0){
+      var authority=root.TechOpsStory;
+      if(authority&&typeof authority.eligibleActs==="function"&&typeof authority.completeAct==="function"){
+        if(authority.eligibleActs(s).indexOf("interlude")<0)return false;
+        authority.completeAct(s,"interlude");
+      }else if(story.completedActs.indexOf("act_6")>=0)story.completedActs.push("interlude");
+    }
+    if(story.completedActs.indexOf("interlude")<0)return false;
+    ["k_freed","waldo_freed","warden_null_defeated","crew_returned_to_earth","good_dogs_protocol_complete","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available"].forEach(function(f){story.facts[f]=true;});
+    return true;
+  }
   function completeReturn(){
     restoreLegacyRescues();
-    var g=ensure();if(!g)return null;if(g.good_dogs_protocol_complete&&g.watchdog_k_available&&g.watchdog_waldo_available&&g.watchdog_good_dogs_available)return snapshot();
-    writeMany({
+    var g=ensure();if(!g)return null;
+    if(!(g.good_dogs_protocol_complete&&g.watchdog_k_available&&g.watchdog_waldo_available&&g.watchdog_good_dogs_available))writeMany({
       k_freed:true,k_identity_status:"K",waldo_freed:true,waldo_returned:true,good_dogs_returned:true,good_dogs_protocol_complete:true,
       warden_null_defeated:true,orbital_custody_broken:true,crew_returned_to_earth:true,
       watchdog_k_available:true,watchdog_waldo_available:true,watchdog_good_dogs_available:true
     });
-    var story=root.S&&root.S.story;if(story){
-      ["k_freed","waldo_freed","warden_null_defeated","crew_returned_to_earth","good_dogs_protocol_complete","watchdog_k_available","watchdog_waldo_available","watchdog_good_dogs_available"].forEach(function(f){story.facts[f]=true;});
-      if(story.completedActs.indexOf("interlude")<0)story.completedActs.push("interlude");
-    }
-    g.completedAt=Date.now();root.__goodDogsMainCampaignBridge={complete:true,at:g.completedAt,facts:story&&story.facts||{}};persist();return snapshot();
+    var canonicalImported=stampCanonicalInterlude(),story=root.S&&root.S.story;
+    g.completedAt=g.completedAt||Date.now();root.__goodDogsMainCampaignBridge={complete:true,canonicalImported:canonicalImported,origin:campaignOrigin(),at:g.completedAt,facts:story&&story.facts||{}};persist();return snapshot();
   }
   function snapshot(){var g=ensure()||{},out={schemaVersion:VERSION};ALL_FLAGS.forEach(function(k){out[k]=g[k]!==undefined?g[k]:root.S&&root.S.meta&&root.S.meta[k];});out.k_identity_status=g.k_identity_status;out.waldo_relationship_k=g.waldo_relationship_k;return out;}
   function validate(){
@@ -78,7 +102,7 @@
     if(bridgeInstalled)return true;var c=root.TechOpsGoodBoysCampaignState;if(!c||typeof c.transition!=="function")return false;if(c.transition.__goodDogsSemanticBridge){bridgeInstalled=true;return true;}
     var base=c.transition;var wrapped=function(from,to,reason,patch){var ok=base.apply(this,arguments);if(ok!==false)markTransition(from,to);return ok;};wrapped.__goodDogsSemanticBridge=true;wrapped.__baseTransition=base;c.transition=wrapped;bridgeInstalled=true;root.__goodDogsSemanticBridgeInstalled=true;return true;
   }
-  var API=root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,persist:persist,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate,installTransitionBridge:installTransitionBridge,watchReturn:watchReturn};
+  var API=root.TechOpsGoodDogsCampaignState={VERSION:VERSION,ALL_FLAGS:ALL_FLAGS.slice(),ensure:ensure,persist:persist,write:write,writeMany:writeMany,markTransition:markTransition,completeReturn:completeReturn,snapshot:snapshot,validate:validate,campaignOrigin:campaignOrigin,canonicalInterludeEligible:canonicalInterludeEligible,installTransitionBridge:installTransitionBridge,watchReturn:watchReturn};
   ensure();restoreLegacyRescues();
   try{var initial=root.S&&root.S.meta&&root.S.meta._v736;if(initial&&initial.done)completeReturn();else if(initial&&Number(initial.m)===8)watchReturn();}catch(_){}
   if(!installTransitionBridge()&&root.setInterval){bridgeTimer=root.setInterval(function(){if(installTransitionBridge()){root.clearInterval(bridgeTimer);bridgeTimer=null;}},50);root.setTimeout(function(){if(bridgeTimer){root.clearInterval(bridgeTimer);bridgeTimer=null;root.__goodDogsSemanticBridgeError="progression authority not found within bridge window";}},5000);}

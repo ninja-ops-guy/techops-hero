@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "test": "node scripts/production_release_gate.js",
+    "lint": "node scripts/check_js_syntax.js",
+    "test:browser:revision": "node scripts/revision_acceptance_browser.mjs",
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs"
   },
   "devDependencies": {

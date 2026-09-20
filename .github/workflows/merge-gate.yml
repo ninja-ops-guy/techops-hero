@@ -99,6 +99,10 @@ jobs:
         run: |
           set -euo pipefail
           timeout 60s node scripts/media_decode_probe.mjs
+      - name: Title and Day continuity acceptance
+        run: |
+          set -euo pipefail
+          timeout 180s npm run test:browser:revision
       - name: Night lifecycle acceptance
         run: |
           set -euo pipefail

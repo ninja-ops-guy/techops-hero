@@ -9,6 +9,7 @@ global.localStorage = {
 };
 
 global.TechOpsCampaign = require("./campaign_act1.js");
+global.TechOpsStory = require("./campaign_story.js");
 global.TechOpsCampaignAct2 = require("./campaign_act2.js");
 global.TechOpsCampaignVisuals = require("./campaign_visual_direction.js");
 let lastDialog = null;
@@ -24,9 +25,15 @@ function choose(text) { const option = lastDialog.options.find(o=>o.t===text); a
 function load() { return global.TechOpsCampaign.load(global.localStorage); }
 
 let campaign = global.TechOpsCampaign.freshState ? global.TechOpsCampaign.freshState() : global.TechOpsCampaign.load(global.localStorage);
-campaign.flags = campaign.flags || {};
-campaign.flags.tuesday_morning_reached = true;
-campaign.flags.felicia_video_watched = true;
+for (const [ticket, owner] of [["shipping_cannot_print", "mike"], ["plating_workstation_down", "amit"], ["impossible_access_event", "mike"]]) global.TechOpsCampaign.assignTicket(campaign, ticket, owner);
+global.TechOpsCampaign.completeStandup(campaign);
+global.TechOpsCampaign.completeWorkstation(campaign, { redInTheMirrorHeard:true, feliciaVideoSeen:true });
+global.TechOpsCampaign.recordGhostEvidence(campaign, { id:"badge_impossible_access", perspective:"firsthand", discoveredBy:"mike" });
+global.TechOpsCampaign.enterSector04(campaign);
+global.TechOpsCampaign.insightAccessGuard(campaign);
+global.TechOpsCampaign.severAccessController(campaign);
+global.TechOpsCampaign.transitionToTuesday(campaign);
+global.TechOpsStory.syncAct1State(campaign);
 global.TechOpsCampaign.save(campaign, global.localStorage);
 
 global.S = { day:2, map:makeMap(), npcs:[], meta:{}, px:0, py:0, inDialog:false };
@@ -59,6 +66,21 @@ assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).rooftopViolinVeri
 assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).violinistRevealEligible, true);
 choose("Recognize Felicia");
 assert.strictEqual(global.TechOpsCampaignAct2.snapshot(load()).violinistRevealed, true);
+assert.ok(load().story.completedActs.includes("act_3"));
+
+native.feliciaDaylight();
+assert.strictEqual(lastDialog.name, "TRUST IS EARNED");
+global.S.meta._v726racks = "trace";
+choose("Investigate the unauthorized traffic together");
+assert.strictEqual(lastDialog.name, "TRUST IS EARNED // INVESTIGATE", "a stale legacy racks choice cannot skip the playable investigation");
+delete global.S.meta._v726racks;
+choose("Trace the source");
+assert.strictEqual(lastDialog.name, "TRUST IS EARNED // REPORT");
+assert.strictEqual(load().story.facts.felicia_alliance, undefined, "investigation alone cannot produce the alliance");
+choose("Report the finding and share ownership");
+assert.strictEqual(lastDialog.name, "TRUST IS EARNED // ALLIANCE");
+assert.strictEqual(load().story.facts.felicia_alliance, true);
+assert.ok(load().story.completedActs.includes("act_4"));
 
 const visual = global.TechOpsCampaignVisuals.show("rooftop_violin");
 assert.strictEqual(visual.id, "rooftop_violin");

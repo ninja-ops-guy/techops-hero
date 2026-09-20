@@ -3,8 +3,8 @@
    Loads AFTER v61_hooks.js. Adds:
    • Portal battle rework — rebalanced to a real troubleshooting
      session: softer enemy scaling, lower starting uncertainty,
-     damage mitigation, and a 4-phase session guide (GATHER →
-     HYPOTHESIZE → RESOLVE → VERIFY) shown in the battle UI
+     damage mitigation, and a 5-phase session guide (GATHER →
+     HYPOTHESIZE → RESOLVE → VERIFY → DOCUMENT) shown in the battle UI
    • South Exit marked clearly on the map (glow, sign, countdown)
    • Modern-clean title backdrop + dialog polish
    ============================================================ */
@@ -19,7 +19,7 @@ startBattle = function (portal) {
   if (!B) return;
   B.hp = B.maxHp = Math.max(18, Math.round(B.maxHp * 0.6));
   B.uncertainty = B.boss ? 72 : 52;
-  blog(`<span class="sys">📋 <b>Troubleshooting session opened.</b> Work the process: gather evidence → form a hypothesis → resolve → verify.</span>`);
+  blog(`<span class="sys">📋 <b>Troubleshooting session opened.</b> Work the process: gather evidence → form a hypothesis → resolve → verify → document.</span>`);
   renderBattle();
 };
 // mitigation: corruption is dangerous, not lethal — refund 30% of HP lost
@@ -45,7 +45,8 @@ workflowAction = function (a) {
 // ---------- 2. troubleshooting session guide (phase banner) ----------
 function v62Phase() {
   if (!B) return null;
-  if (B.verified || B.hp <= 0) return { n: 4, name: "VERIFY & CLOSE", hint: "confirm the fix holds with the user" };
+  if (B.verified) return { n: 5, name: "DOCUMENT & CLOSE", hint: "record the verified outcome before closing" };
+  if (B.stabilized || B.hp <= 0) return { n: 4, name: "VERIFY", hint: "confirm the technical state and the user’s real task" };
   if (B.hyp) return { n: 3, name: "RESOLVE", hint: "execute the fix — hypothesis locked, damage +50%" };
   if (B.uncertainty > 50) return { n: 1, name: "GATHER EVIDENCE", hint: "ask & inspect until uncertainty ≤ 50%" };
   return { n: 2, name: "HYPOTHESIZE", hint: "name the root cause from the surviving branches" };
@@ -64,7 +65,7 @@ renderBattle = function () {
     scene.insertBefore(el, scene.firstChild);
   }
   const p = v62Phase();
-  const steps = ["GATHER", "HYPOTHESIZE", "RESOLVE", "VERIFY"];
+  const steps = ["GATHER", "HYPOTHESIZE", "RESOLVE", "VERIFY", "DOCUMENT"];
   el.innerHTML = steps.map((s2, i) =>
     `<span style="color:${i + 1 === p.n ? "#ffd24a" : i + 1 < p.n ? "#4ade80" : "#4a5a6a"}">${i + 1 < p.n ? "✓" : i + 1 === p.n ? "▶" : "·"} ${s2}</span>`
   ).join(' <span style="color:#2a4a6a">→</span> ') +

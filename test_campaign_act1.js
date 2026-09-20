@@ -146,8 +146,25 @@ assert.throws(() => C.unlockDayWork(partialReloaded), /music/);
 
 // Persistence contract.
 const memory = new Map();
-const storage = { setItem: (k, v) => memory.set(k, v), getItem: k => memory.get(k) || null };
+const storage = { setItem: (k, v) => memory.set(k, v), getItem: k => memory.get(k) || null, removeItem: k => memory.delete(k) };
 C.save(direct, storage);
 assert.deepEqual(C.load(storage), direct);
+
+// Canonical new-run reset removes only campaign state and returns an unwritten Day 1 state.
+memory.set("unrelated_preference", "keep-me");
+assert.equal(C.load(storage).flags.tuesday_morning_reached, true, "fixture must begin from stale Tuesday progress");
+const resetState = C.reset(storage);
+assert.equal(memory.has(C.SAVE_KEY), false, "reset removes the stale campaign save synchronously");
+assert.equal(memory.get("unrelated_preference"), "keep-me", "reset preserves unrelated storage keys");
+assert.equal(resetState.campaign.day, 1);
+assert.equal(resetState.campaign.chapter, "the_queue");
+assert.equal(resetState.campaign.phase, "standup");
+assert.equal(resetState.flags.standup_started, true);
+assert.equal(resetState.flags.ticket_assignments_confirmed, false);
+assert.equal(resetState.flags.day_work_unlocked, false);
+assert.equal(resetState.flags.sector04_completed, false);
+assert.equal(resetState.flags.tuesday_morning_reached, false);
+assert.equal(memory.has(C.SAVE_KEY), false, "reset returns fresh state without writing it");
+assert.throws(() => C.reset({}), /removeItem/, "reset requires a synchronous removal adapter");
 
 console.log("Campaign Director v2 / Story Bible v1.2: Act I contract PASS");
