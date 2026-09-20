@@ -18,6 +18,12 @@ async function waitForLateGame(page){
 }
 
 async function activateBaseRun(page,preferContinue=false){
+  await page.waitForFunction(prefer=>{
+    const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
+    const ready=window.__productionTitleReadiness;
+    const cont=document.getElementById('btn-continue'),start=document.getElementById('btn-start');
+    return !!(ready&&ready.ready===true&&((prefer&&visible(cont)&&!cont.disabled)||(visible(start)&&!start.disabled)));
+  },preferContinue,{timeout:20000});
   const route=await page.evaluate(prefer=>{
     const visible=el=>!!(el&&el.getClientRects().length&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');
     let route='';
@@ -30,7 +36,7 @@ async function activateBaseRun(page,preferContinue=false){
   },preferContinue);
   if(route==='clock-in'){
     const standard=page.locator('#dlg-options button').filter({hasText:/Standard/i}).first();
-    await standard.waitFor({state:'visible',timeout:5000});
+    await standard.waitFor({state:'visible',timeout:10000});
     await standard.click();
   }
   const clockIn=page.locator('#dlg-options button').filter({hasText:/Clock in/i}).first();
