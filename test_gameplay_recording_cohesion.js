@@ -2,6 +2,7 @@
 const assert=require("assert"),fs=require("fs"),vm=require("vm");
 const src=fs.readFileSync("gameplay_recording_cohesion.js","utf8"),boot=fs.readFileSync("production_bootstrap.js","utf8");
 assert.doesNotThrow(()=>new Function(src));
+assert.match(src, /#night-campaign\{[^}]*min-height:44px!important/, "passive HUD styling must preserve the canonical 44px Night menu touch target");
 for(const token of ["recording-night","recording-day","SHIFT NOT STARTED","DAY '+d+' · '","#dpad","#touch-buttons","#quest-tracker","#night-campaign"])assert.ok(src.includes(token),`missing recording contract ${token}`);
 assert.ok(src.includes("tuesday_morning_reached")&&src.includes("c.campaign&&c.campaign.day"),"day HUD reconciliation must use canonical campaign day after Tuesday commit");
 assert.ok(src.includes("MutationObserver"),"presentation must react to state/UI changes without a polling timer");
