@@ -1,26 +1,93 @@
 {
   "schema_version": 1,
-  "pull_request": 59,
   "domains": [
     {
-      "name": "Cinematic and mode ownership",
-      "files": ["production_title_experience.js", "production_mode_router.js", "runtime_mode_shell.js", "production_runtime_safety.js", "runtime_night.js"],
-      "tests": ["test_production_title_experience.js", "test_runtime_mode_shell.js", "test_production_runtime_safety.js", "test_night_lifecycle.js"]
+      "name": "Night recovery and delayed Day notices",
+      "files": [
+        "game.js",
+        "runtime_night.js",
+        "production_mode_router.js",
+        "production_title_experience.js",
+        "production_wrapper_guard.js"
+      ],
+      "tests": [
+        "test_night_recovery.js",
+        "test_day_notice_queue.js",
+        "test_production_compositor.js",
+        "scripts/quality_acceptance_browser.mjs"
+      ]
     },
     {
-      "name": "Day persistence and operations loop",
-      "files": ["game.js"],
-      "tests": ["test_game_resume_checkpoint.js", "test_difficulty_contract.js", "test_ticket_lifecycle_contract.js"]
+      "name": "Act IV investigation and canonical continuity",
+      "files": [
+        "campaign_act2.js",
+        "campaign_native_act2.js",
+        "campaign_visual_direction.js"
+      ],
+      "tests": [
+        "test_campaign_act4_investigation.js",
+        "test_campaign_native_act2.js",
+        "scripts/act4_acceptance_browser.mjs"
+      ]
     },
     {
-      "name": "Canonical campaign continuity",
-      "files": ["campaign_story.js", "campaign_act1.js", "campaign_act2.js", "morningstar_build.js", "morningstar_swarm_runtime.js", "swarm_doctrine.js"],
-      "tests": ["test_story_authority_firewall.js", "test_campaign_ordered_act4_progression.js", "test_campaign_save_reload.js"]
+      "name": "Responsive Day presentation",
+      "files": [
+        "style.css",
+        "campaign_native_act1_visuals_impl.js",
+        "production_presentation_guard.js"
+      ],
+      "tests": [
+        "test_production_presentation_guard.js",
+        "scripts/presentation_quality_browser.mjs"
+      ]
     },
     {
-      "name": "Good Dogs co-op and authored media",
-      "files": ["good_dogs_cutscenes_v2_2.js", "good_dogs_coop.js", "good_boys_progression_authority.js", "good_boys_earthfall_ending.js", "good_boys_button_hard_fix.js"],
-      "tests": ["test_review_contracts.js", "test_good_dogs_coop.js", "test_good_dogs_state_integrity.js", "test_good_dogs_route_contract.js"]
+      "name": "Cinematic interruption and co-op entry",
+      "files": [
+        "good_dogs_cutscenes_v2_2.js",
+        "good_dogs_home_scene.js",
+        "good_boys_earthfall_ending.js",
+        "good_boys_button_hard_fix.js"
+      ],
+      "tests": [
+        "test_cinematic_presentation.js",
+        "test_good_boys_intro_repair.js",
+        "test_good_dogs_coop.js",
+        "scripts/quality_acceptance_browser.mjs"
+      ]
+    },
+    {
+      "name": "Orbital staging and shared HUD ownership",
+      "files": [
+        "cinematic_systems.js",
+        "orbital_scene_staging.js",
+        "good_boys_legacy_hud_filter.js",
+        "good_dogs_mobile_visual_polish.js"
+      ],
+      "tests": [
+        "test_cinematic_systems.js",
+        "test_orbital_scene_staging.js",
+        "test_good_boys_ui_ownership.js",
+        "test_production_presentation_guard.js"
+      ]
+    },
+    {
+      "name": "Build integration and release evidence",
+      "files": [
+        "index.html",
+        "bg_noc.js",
+        "production_bootstrap.js",
+        "campaign_native_act1_visuals.js",
+        "release_certification.json",
+        "scripts/quality_release_receipt.mjs",
+        ".github/workflows/merge-gate.yml"
+      ],
+      "tests": [
+        "test_static_entrypoint_integrity.js",
+        "test_quality_release_receipt.mjs",
+        "scripts/production_release_gate.js"
+      ]
     }
   ],
   "contracts": [
@@ -29,7 +96,7 @@
       "failure_mode": "An environment without an H.264 decoder attempts the authored movie and enters a retry or autoplay loop.",
       "invariant": "Playback eligibility is decided from MediaSource.isTypeSupported and HTMLMediaElement.canPlayType, never a user-agent string; unsupported environments remain at a visible PLAY/SKIP recovery surface.",
       "test_ref": "test_review_contracts.js#GD_CODEC_CAPABILITY",
-      "spot_check": "Stub both capability probes as unsupported; confirm no media source is loaded, VIDEO UNSUPPORTED — SKIP is visible, and campaign state is unchanged."
+      "spot_check": "Stub both capability probes as unsupported; confirm no media source is loaded, VIDEO UNSUPPORTED \u2014 SKIP is visible, and campaign state is unchanged."
     },
     {
       "id": "GD_NO_INVISIBLE_ADVANCE",
@@ -58,6 +125,62 @@
       "invariant": "The production bootstrap installs one runtime mode shell and repeated enter/exit calls restore the exact owned surface and input snapshot once.",
       "test_ref": "test_runtime_mode_shell.js#single-owner",
       "spot_check": "Enter and exit Night twice from both title and Day; confirm one shell install, no held input, no duplicate blockers, and exact Day restoration."
+    },
+    {
+      "id": "NIGHT_CHECKPOINT_RECOVERY",
+      "failure_mode": "An interrupted run loses its world, duplicates rewards, or silently starts fresh when restoration fails.",
+      "invariant": "Validated standalone checkpoints restore the most recent world without changing campaign saves; failed restore stops at the title until an explicit action. Completion tombstones precede settlement.",
+      "test_ref": "test_night_recovery.js",
+      "spot_check": "Move, damage an enemy, travel, reload and Resume Night; compare saved route, health, rewards, enemies and clock. Inject storage failure and confirm visible retry without a fresh run."
+    },
+    {
+      "id": "DAY_NOTICE_MODAL_OWNERSHIP",
+      "failure_mode": "A delayed procedural pager replaces an authored conversation or appears in a different run.",
+      "invariant": "Day notices wait for the current modal to release and expire across changed run, day or standalone mode.",
+      "test_ref": "test_day_notice_queue.js",
+      "spot_check": "Keep an investigation open beyond the pager delay. Close it and receive the notice once; starting a different mode must cancel the stale notice."
+    },
+    {
+      "id": "ACT4_HUMAN_VERIFICATION",
+      "failure_mode": "Selecting an approach immediately awards alliance, or technical recovery is mistaken for requester success.",
+      "invariant": "Observations, supported hypothesis, bounded response, technical verification, requester confirmation and shared report occur in order. Evidence and Trust are awarded once at distinct boundaries.",
+      "test_ref": "test_campaign_act4_investigation.js",
+      "spot_check": "Try a wrong hypothesis, reload mid-investigation, then verify the service. Alliance must remain locked until Inspection confirms its task and the joint report is saved."
+    },
+    {
+      "id": "VISIBLE_CINEMATIC_SETTLEMENT",
+      "failure_mode": "Background playback, stale input or a failed save settles an ending invisibly or twice.",
+      "invariant": "Hidden media cannot settle progression; focus stays in the active modal. Earthfall keeps a visible save retry without repeating semantic completion.",
+      "test_ref": "test_cinematic_presentation.js",
+      "spot_check": "Background the film, deliver ended, return and Resume. Double Skip and retry a failed Earthfall save; verify one terminal narrative transition."
+    },
+    {
+      "id": "DAY_SCENE_REACHABILITY",
+      "failure_mode": "Artwork or touch movement controls cover choices; stale typewriter handlers restore previous dialogue.",
+      "invariant": "Authored art shares the dialogue stacking context, reserves a separate region, and every visible choice is a reachable 44px target; each conversation owns its text.",
+      "test_ref": "scripts/presentation_quality_browser.mjs",
+      "spot_check": "Open standup and workstation at320px portrait and844px landscape. Use each real choice, scroll if needed, and verify the correct scene copy persists."
+    },
+    {
+      "id": "GOOD_DOGS_HUD_SINGLE_OWNER",
+      "failure_mode": "A viewport timer alternately hides and reveals the authoritative Good Dogs HUD.",
+      "invariant": "Only the cinematic guard controls the shared hide flag; viewport styling cannot suppress ordinary gameplay. Duplicate objective strips are filtered without removing combat or narrative messages.",
+      "test_ref": "test_production_presentation_guard.js",
+      "spot_check": "Observe portrait gameplay across repeated mobile/cinematic timer ticks, open and close a modal, and verify one stable HUD."
+    },
+    {
+      "id": "GOOD_DOGS_CANCEL_REOPEN",
+      "failure_mode": "An enabled Good Dogs card swallows a rapid reopen after cancelling its selector.",
+      "invariant": "Cancellation releases launch debounce and title ownership synchronously while duplicate events during a live launch still coalesce.",
+      "test_ref": "test_good_boys_intro_repair.js",
+      "spot_check": "Open the selector, cancel, immediately reopen, and choose Solo or Local. No artificial delay or second tap is needed."
+    },
+    {
+      "id": "RELEASE_EVIDENCE_BOUNDARY",
+      "failure_mode": "Green fixtures are presented as physical-device, complete-route or licensed-decoder certification.",
+      "invariant": "Release assessment requires matching candidate identity, intact artifact hashes and requirement-specific evidence. Missing physical, decoded-media, unassisted, soak or protection evidence blocks release.",
+      "test_ref": "test_quality_release_receipt.mjs",
+      "spot_check": "Run npm run release:assess with missing, stale, altered or incomplete reports. Each case must remain blocked; one clip cannot satisfy the full media manifest."
     }
   ],
   "deletion_ledger": [
@@ -78,6 +201,20 @@
       "removed": "Independent mode handoff writes that left Day UI, held input, or ARIA blockers active beneath Night or Good Dogs.",
       "reason": "One reversible mode shell must own presentation and input boundaries.",
       "resurrection_check": "test_review_contracts.js#RETIRED_DUPLICATE_MODE_OWNERSHIP"
+    },
+    {
+      "id": "RETIRED_CANONICAL_RACKS_SHORTCUT",
+      "removed": "Canonical Act IV invocation of the legacy racks movie and inherited legacy-choice bridge; historical noncanonical code and assets remain.",
+      "reason": "The legacy movie assigned an enemy and toolkit before observations. The authored native console now owns plan, evidence and human verification.",
+      "resurrection_check": "test_campaign_native_act2.js"
+    },
+    {
+      "id": "RETIRED_MOBILE_HUD_FLAG_WRITER",
+      "removed": "Mobile visual timer writes to the shared Good Dogs hide-HUD flag.",
+      "reason": "They raced the cinematic guard and caused intermittent missing HUDs. Responsive style remains passive.",
+      "resurrection_check": "test_production_presentation_guard.js"
     }
-  ]
+  ],
+  "review_title": "Production quality pass review guide",
+  "originating_pull_request": 59
 }

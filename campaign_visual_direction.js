@@ -155,7 +155,7 @@
     if (sceneId === "rooftop_violin") ["", "s2", "s3"].forEach(function (extra) { var ring = root.document.createElement("div"); ring.className = "cv-signal " + extra; el.appendChild(ring); });
     var vignette = root.document.createElement("div"); vignette.className = "cv-vignette"; el.appendChild(vignette);
     var label = root.document.createElement("div"); label.className = "cv-label"; label.textContent = scene.label; el.appendChild(label);
-    root.document.body.appendChild(el); root.__techopsCampaignVisualScene = sceneId;
+    (root.document.getElementById("game-wrap") || root.document.body).appendChild(el); root.__techopsCampaignVisualScene = sceneId;
     return { id: sceneId, active: true, className: scene.className, layers: scene.layers.slice(), atlasDriven: true, paintedBackground: !!bg };
   }
 

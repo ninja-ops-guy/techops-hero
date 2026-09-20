@@ -47,3 +47,25 @@ for (let i = 1; i < ordered.length; i++) assert.ok(ordered[i] > ordered[i - 1], 
 assert.ok(flight.includes("resetBoard()") && flight.includes("boarding-error"), "M2 media/asset failure must remain retryable without advancing state");
 
 console.log("Good Dogs canonical M1-first opening and M2-owned flight handoff: PASS");
+
+(async function cancelledSelectorCanReopenImmediately() {
+  let choices=0;
+  const context={Date:{now:()=>1000},console,
+    document:{addEventListener(){},getElementById(){return null;}},
+    localStorage:{getItem(){return null;}},
+    __productionBootstrapReady:true,__techopsWrapperGuardInstalled:true,__goodBoysShipFlightInstalled:true,
+    TechOpsGoodDogsHomeScene:{choose:async()=>{choices++;return null;}},TechOpsGoodDogsCoop:{},
+    GoodDogsCutscenes:{VERSION:3.4,play(){}},TechOpsGoodDogsSingleAtlasAuthority:{VERSION:2},
+    TechOpsGoodBoysProgressionAuthority:{VERSION:14},v736:{start(){throw Error('cancel cannot start gameplay');}}
+  };
+  require('vm').runInNewContext(source,context);
+  const owner=context.TechOpsGoodBoysButtonHardFix;
+  owner.launch('first');
+  await new Promise(setImmediate);
+  assert.equal(choices,1);assert.equal(owner.launching,false);
+  owner.launch('immediate-reopen');
+  await new Promise(setImmediate);
+  assert.equal(choices,2,'completed cancellation releases the old click debounce immediately');
+  assert.equal(owner.launching,false);
+  console.log('Good Dogs immediate selector reopen: PASS');
+})().catch(error=>{console.error(error);process.exitCode=1;});

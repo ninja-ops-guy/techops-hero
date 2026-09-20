@@ -155,11 +155,11 @@ function event(target) {
 
 assert.match(
   INDEX,
-  /v737_hooks\.js"><\/script><script src="production_title_experience\.js\?v=20260920-title-readiness-r1"><\/script><script src="v742_hooks\.js/,
+  /v737_hooks\.js"><\/script><script src="production_title_experience\.js\?v=20260920-quality-r1"><\/script><script src="v742_hooks\.js/,
   "title authority must load immediately after v737 and before later wrappers"
 );
-assert.match(INDEX, /style\.css\?v=20260920-title-readiness-r1/, "title CSS must use the matching cache build");
-assert.match(SOURCE, /BUILD = "20260920-title-readiness-r1"/, "runtime build marker must match the entrypoint");
+assert.match(INDEX, /style\.css\?v=20260920-quality-r1/, "title CSS must use the matching cache build");
+assert.match(SOURCE, /BUILD = "20260920-quality-r1"/, "runtime build marker must match the entrypoint");
 assert.doesNotMatch(INDEX, /<script src="good_boys_mobile_launch_guard\.js/, "readiness gating must retire the duplicate parser-time mobile launch guard");
 assert.match(BOOTSTRAP, /"good_boys_mobile_launch_guard\.js"/, "the mobile launch guard must remain in the production bootstrap before readiness");
 assert.match(STYLE, /#title-mode-grid \.title-mode-card:focus-visible/, "mode cards need a visible keyboard focus treatment");
@@ -191,6 +191,11 @@ assert.match(STYLE, /prefers-reduced-motion:reduce/, "title motion must honor re
   api.capture(syntheticClick);
   assert.deepEqual(b.counts(), { dogLaunches: 1, nightLaunches: 0 }, "pointer/click pair must delegate Good Dogs exactly once");
   assert.equal(first.immediateStopped, true, "legacy Good Dogs capture and onclick routes must be blocked");
+  b.context.__goodBoysOpeningPhase = {phase:"title"};
+  assert.equal(api.routeCancelled("gooddogs"),true);
+  assert.equal(api.state().ready,true,'cancellation releases the title synchronously');
+  api.capture(event(b.dogs));
+  assert.equal(b.counts().dogLaunches,2,'an immediate valid reopen cannot wait for a polling interval');
 }
 
 {

@@ -8,6 +8,10 @@
     "review:guide": "node scripts/generate_review_guide.js",
     "review:check": "node scripts/generate_review_guide.js --check && node test_review_contracts.js",
     "test:browser:revision": "node scripts/revision_acceptance_browser.mjs",
+    "test:browser:quality": "node scripts/quality_acceptance_browser.mjs",
+    "test:browser:presentation": "node scripts/presentation_quality_browser.mjs",
+    "test:browser:act4": "node scripts/act4_acceptance_browser.mjs",
+    "release:assess": "node scripts/quality_release_receipt.mjs",
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs"
   },
   "devDependencies": {

@@ -46,7 +46,7 @@
   function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
   function runNightCallbacks(){var cbs=nightCallbacks.splice(0);for(var i=0;i<cbs.length;i++)try{cbs[i]();}catch(e){}}
   function finishNightLaunch(){clearBlockingDialog();forceNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionNightLaunchOk=true;root.__productionActiveMode="nightcrawler";setNightPhase("ready","router.ready");runNightCallbacks();}
-  function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];try{var title=root.TechOpsProductionTitleExperience;if(title&&typeof title.routeFailed==="function")title.routeFailed("nightcrawler",root.__productionModeRouterError);}catch(e){}}
+  function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];setDesired(null);root.__techopsAlternateStartMode=null;root.__productionActiveMode=null;clearNightIdentity();try{var screen=root.document&&root.document.getElementById("title-screen");if(screen)screen.classList.remove("hidden");var title=root.TechOpsProductionTitleExperience;if(title&&typeof title.routeFailed==="function")title.routeFailed("nightcrawler",root.__productionModeRouterError);}catch(e){}}
 
   function restoreRuntimeUi(){
     showTouch();
@@ -131,9 +131,18 @@
   }
   function enterNightReliably(done){return desired==="nightcrawler"?enterNightCrawlerReliably(done):primeNightRuntime(done);}
 
-  function launchNightCrawler(fromCapture){
+  function launchNightCrawler(fromCapture,options){
     if((nightLaunchPhase==="launch"||nightLaunchPhase==="start-run"||nightLaunchPhase==="enter-requested"||nightLaunchPhase==="cinematic"||nightLaunchPhase==="mounting")&&desired==="nightcrawler"){nightTrace("launch.coalesced");enterNightCrawlerReliably();return true;}
+    var recovery=root.TechOpsNightRuntime,record=recovery&&recovery.checkpointStatus?recovery.checkpointStatus():{status:"empty"};
+    if(!(options&&options.fresh)&&!state()&&record.status==="invalid"){
+      failNightLaunch(record.message);
+      return false;
+    }
     root.__techopsAlternateStartMode="nightcrawler";setDesired("nightcrawler");beginNightLaunch(!!fromCapture);clearGoodBoysState();forceNightIdentity();hideLegacyShell(true);
+    if(!(options&&options.fresh)&&!state()&&record.status==="ready"){
+      try{if(recovery.resumeCheckpoint()){setNightPhase("mounting","checkpoint.restored",{savedAt:record.savedAt});finishNightLaunch();return true;}}catch(e){root.__productionModeRouterNightStartError=String(e&&e.message||e);}
+      failNightLaunch("Night checkpoint could not be restored. The saved run has been kept.");return false;
+    }
     try{
       var s=state();
       if(!s){issueCanonicalTitleStart();s=state();}

@@ -108,6 +108,11 @@ assert.strictEqual(JSON.stringify({ duet: state.p1.duet, facts: state.story.fact
 global.TechOpsStory = Story;
 P1.beginTrustInvestigation(state);
 P1.recordTrustInvestigation(state, { approach: "trace" });
+P1.TRUST_EVIDENCE.forEach(item => P1.observeTrustEvidence(state, item.id));
+P1.evaluateTrustHypothesis(state, "stale_mirror");
+P1.applyTrustResponse(state);
+P1.verifyTrustResponse(state, "technical");
+P1.verifyTrustResponse(state, "requester");
 P1.completeTrustReport(state, { reported: true, sharedOwnership: true });
 Story.completeAct(state, "act_5");
 const duet = P1.completeDuetProtocol(state);

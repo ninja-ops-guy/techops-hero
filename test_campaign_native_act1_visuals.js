@@ -11,7 +11,7 @@ require("./campaign_act1.js");
 const native = require("./campaign_native_act1.js");
 const visuals = require("./campaign_native_act1_visuals.js");
 
-assert.strictEqual(visuals.VERSION, 4);
+assert.strictEqual(visuals.VERSION, 5);
 assert.strictEqual(visuals.ENTER_MS, 240);
 assert.strictEqual(visuals.EXIT_MS, 180);
 assert.strictEqual(visuals.url("shipping.dock_background"), "assets/campaign/shipping.dock_background.png");

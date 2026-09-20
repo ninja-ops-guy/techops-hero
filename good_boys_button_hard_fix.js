@@ -92,7 +92,7 @@
     clearForeignIdentity(cfg&&cfg.state);phase("opening-dependencies");setButton("LOADING GOOD DOGS…",true);await waitForDeps(9000);
     phase("campaign-mode-choice");var director=root.TechOpsPresentationDirector;if(director)presentationToken=director.begin({id:"waldo-home-opening",owner:"good-dogs-title",mode:"gooddogs",blocking:true});
     var mode=await root.TechOpsGoodDogsHomeScene.choose();
-    if(!mode){endPresentation("cancelled");launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("GOOD DOGS PROTOCOL",false);phase("title");return false;}
+    if(!mode){endPresentation("cancelled");launching=false;lastLaunch=0;root.__goodBoysPhysicalLaunchActive=false;setButton("GOOD DOGS PROTOCOL",false);phase("title");if(root.TechOpsProductionTitleExperience&&root.TechOpsProductionTitleExperience.routeCancelled)root.TechOpsProductionTitleExperience.routeCancelled("gooddogs");return false;}
     cfg.playMode=mode;if(!persistModeChoice(cfg,mode))throw new Error("Good Dogs mode choice could not be saved");root.TechOpsGoodDogsCoop.configure(mode);
     if(cfg.fresh){phase("waldo-house-prologue");await root.TechOpsGoodDogsHomeScene.play();}
     return mount(cfg,source);
@@ -101,7 +101,7 @@
     var now=Date.now();if(launching||now-lastLaunch<700)return true;lastLaunch=now;launching=true;root.__goodBoysPhysicalLaunchActive=true;clearForeignIdentity(root.S);clearForeignUi();var cfg=launchConfig();
     root.__goodBoysHardButtonLaunch={ok:null,status:cfg.fresh?"opening":"resuming",source:source||"unknown",mission:cfg.mission,freshStoryStart:cfg.fresh,resume:!cfg.fresh,openingAuthority:"TechOpsGoodBoysButtonHardFix",openingContract:"M1 -> M2 -> board -> GD_CUT_01 -> cockpit -> GD_CUT_02 -> flight -> crash -> M3",at:now,version:VERSION};
     setButton(cfg.fresh?"OPENING GOOD DOGS PROTOCOL…":"RESUMING GOOD DOGS M"+cfg.mission+"…",true);
-    opening(source,cfg).catch(function(err){launching=false;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY GOOD DOGS PROTOCOL",false);showOpeningError(err);});return true;
+    opening(source,cfg).catch(function(err){launching=false;lastLaunch=0;root.__goodBoysPhysicalLaunchActive=false;setButton("RETRY GOOD DOGS PROTOCOL",false);showOpeningError(err);});return true;
   }
   function own(e){if(!target(e&&e.target))return;try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){}launch(e&&e.type||"event");}
   root.document.addEventListener("pointerup",own,true);root.document.addEventListener("click",own,true);

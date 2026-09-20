@@ -32,6 +32,11 @@ assert.throws(() => Story.completeAct(state, "act_4"), /completion requirements/
 state.flags = { tuesday_morning_reached: true };
 CampaignAct2.beginTrustInvestigation(state);
 CampaignAct2.recordTrustInvestigation(state, { approach: "trace" });
+CampaignAct2.TRUST_EVIDENCE.forEach(item => CampaignAct2.observeTrustEvidence(state, item.id));
+CampaignAct2.evaluateTrustHypothesis(state, "stale_mirror");
+CampaignAct2.applyTrustResponse(state);
+CampaignAct2.verifyTrustResponse(state, "technical");
+CampaignAct2.verifyTrustResponse(state, "requester");
 CampaignAct2.completeTrustReport(state, { reported: true, sharedOwnership: true });
 assert.equal(state.story.facts.felicia_alliance, true);
 
@@ -83,7 +88,7 @@ const visualBootstrap = fs.readFileSync("campaign_native_act1_visuals.js", "utf8
 assert.doesNotThrow(() => new Function(gapSource), "Bible gap runtime must parse as browser JavaScript");
 assert.match(visualBootstrap, /good_boys_ship_deck_scene\.js\?v=20260903-good-ship-gameplay-assets-r2/, "visual bootstrap must request the centered cockpit interaction scene");
 assert.match(storySource, /campaign_native_act1_visuals\.js\?v=20260920-revision-r1/, "campaign story must bypass stale mobile visual bootstrap cache");
-assert.match(visualBootstrap, /good_boys_button_hard_fix\.js\?v=20260920-revision-r1/, "visual bootstrap must request the canonical M1-first Good Dogs handoff owner");
+assert.match(visualBootstrap, /good_boys_button_hard_fix\.js\?v=20260920-quality-r1/, "visual bootstrap must request the canonical M1-first Good Dogs handoff owner");
 for (const id of Campaign.TICKETS) assert(gapSource.includes(id), `Bible gap pass must guarantee ${id}`);
 assert(gapSource.includes("campaign_shipping") && gapSource.includes("campaign_plating") && gapSource.includes("campaign_access"), "Day 1 guarantee must use authored world contacts");
 assert(!/\.tickets\.push\s*\(/.test(gapSource), "Bible pass must not duplicate canonical contacts into the procedural ticket queue");

@@ -7,11 +7,86 @@
   if(!root||root.TechOpsNightRuntime)return;
   const MINUTE_SECONDS=5,HOME_X=1500,FLOOR=430;
   let installed=false,transition=null,observed=null,chapterAge=0,chapterKey='',ui=null,tokenSerial=0;
+  const CHECKPOINT_KEY='techops_nightcrawler_session_v1',CHECKPOINT_VERSION=2;
+  let checkpointAge=5,checkpointMark='',checkpointError=null;
   const state=()=>{try{return typeof S!=='undefined'?S:root.S;}catch(_){return root.S;}};
   const world=()=>{const s=state();return s&&s.nightMode||null;};
   const active=n=>!!(n&&typeof n==='object'&&typeof n.district==='string'&&!n._v736&&n.district!=='waldo'&&root.__productionDesiredMode!=='goodboys');
   const el=id=>root.document&&root.document.getElementById(id);
   const reduced=()=>!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const standalone=s=>!!(s&&s.meta&&s.meta._standaloneMode==='nightcrawler');
+  const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
+  const districts=['downtown','longwharf','industrial','wooster','airport','suburbs','home'];
+  function validCheckpoint(s){
+    const n=s&&s.nightMode;
+    if(!standalone(s)||!n||n._v736||n._sector04||n._nightSettled||!districts.includes(n.district)||!finite(n.street,1,n.district==='home'?1:2)||!Number.isInteger(n.street))return false;
+    if(!finite(s.day,1,100000)||!finite(s.clock,1080,10000000)||![.7,1,1.3].includes(s.diff)||!Array.isArray(s.map)||!s.map.length||s.gameOver||s.inBattle)return false;
+    if(!finite(n.x,-100,1900)||!finite(n.y,-2000,900)||!finite(n.w,1,200)||!finite(n.h,1,200)||!finite(n.hp,.001,10000)||!finite(n.cash,0,100000000)||!Number.isInteger(n.kills)||n.kills<0)return false;
+    if(!finite(n.vx,-1000,1000)||!finite(n.vy,-1000,1000)||![-1,1].includes(n.face)||!finite(n.cam,-100,1900))return false;
+    if(!n.done||typeof n.done!=='object'||Array.isArray(n.done)||Object.entries(n.done).some(([id,done])=>!districts.includes(id)||done!==true))return false;
+    if(!Array.isArray(n.platforms)||n.platforms.length>100||n.platforms.some(p=>!p||!finite(p.x,-100,1900)||!finite(p.y,-2000,900)||!finite(p.w,1,1900)||!finite(p.h,1,200)))return false;
+    if(!Array.isArray(n.enemies)||n.enemies.length>100||n.enemies.some(e=>!e||!finite(e.x,-300,2100)||!finite(e.y,-2000,900)||!finite(e.w,1,200)||!finite(e.h,1,200)||!finite(e.hp,-100000,100000)||!finite(e.maxHp,1,100000)||e.hp>e.maxHp||typeof e.alive!=='boolean'||e.alive!==(e.hp>0)||!finite(e.dmg,0,10000)||!finite(e.spd,0,100)||!Array.isArray(e.cash)||e.cash.length!==2||!e.cash.every(v=>finite(v,0,100000))))return false;
+    if(n._nightCombat&&!finite(n._nightCombat.time,0,1000000000))return false;
+    if(n._nightLifecycle&&!finite(n._nightLifecycle.seconds,0,MINUTE_SECONDS))return false;
+    if(n.drive&&(!districts.includes(n.drive.to)||!finite(n.drive.t,0,10000)||!finite(n.drive.dur,1,10000)||n.drive.t>n.drive.dur))return false;
+    return ['certs','inv','journal','ach','books','lab','staff','infra'].every(key=>Array.isArray(s[key]))&&['stats','soft','rep'].every(key=>s[key]&&typeof s[key]==='object');
+  }
+  function checkpointStatus(){
+    try{
+      const raw=root.localStorage&&root.localStorage.getItem(CHECKPOINT_KEY);
+      if(!root.localStorage)return {status:'unavailable',message:'Storage is unavailable. This Night cannot survive a reload.'};
+      if(!raw)return {status:'empty'};
+      if(raw.length>2000000)return {status:'invalid',message:'The saved Night is too large to restore safely.'};
+      const record=JSON.parse(raw);
+      if(record&&record.version===CHECKPOINT_VERSION&&record.mode==='nightcrawler'&&record.status==='complete')return {status:'empty'};
+      if(!record||record.version!==CHECKPOINT_VERSION||record.mode!=='nightcrawler'||!finite(record.savedAt,1,Number.MAX_SAFE_INTEGER)||!validCheckpoint(record.state))return {status:'invalid',message:'The saved Night has no valid world checkpoint. Start a new Night explicitly to replace it.'};
+      return {status:'ready',state:record.state,savedAt:record.savedAt};
+    }catch(e){return {status:'invalid',message:'The saved Night could not be read. Your other campaigns are unchanged.'};}
+  }
+  function normalizedSnapshot(s){
+    // Combat targets are object references. Persist the world once, clear queued
+    // player actions, and retain enemy reaction timers/damage without replaying a hit.
+    const snapshot=JSON.parse(JSON.stringify(s,(key,value)=>key==='_nightCombat'&&value&&Array.isArray(value.events)?Object.assign({},value,{attack:null,grab:null,dash:null,follow:null,events:[],fx:[],hits:0,stage:0,beat:false}):value));
+    const n=snapshot.nightMode;
+    snapshot.inDialog=false;snapshot.inBattle=false;snapshot.paused=false;snapshot.moving=false;
+    n.block=false;n.jHeld=false;n._737sHeld=false;n.dashT=0;n.vx=0;n.jabAnim=0;n.combo=0;n.hitStop=0;
+    n.msg='NIGHT RESUMED — your route and rewards are preserved';n.msgT=0;
+    if(n._nightLifecycle)n._nightLifecycle.exitCommitted=false;
+    for(const e of n.enemies){if(e._nightCombat)e._nightCombat.held=false;}
+    return snapshot;
+  }
+  function writeCheckpoint(record){
+    try{if(!root.localStorage)throw new Error('Storage unavailable');root.localStorage.setItem(CHECKPOINT_KEY,JSON.stringify(record));checkpointError=null;root.__nightCheckpointError=null;return true;}
+    catch(e){checkpointError='Night progress is not saved. Storage is full or unavailable; keep this tab open and retry.';root.__nightCheckpointError=String(e&&e.message||e);return false;}
+  }
+  function completeCheckpoint(s){return writeCheckpoint({version:CHECKPOINT_VERSION,mode:'nightcrawler',status:'complete',savedAt:Date.now(),profile:{day:s.day,clock:s.clock,budget:s.budget,diff:s.diff}});}
+  function saveCheckpoint(s){
+    s=s||state();if(!standalone(s))return false;
+    if(!s.nightMode){if(s.meta.nightVisit&&s.meta.nightVisit.active===false)return completeCheckpoint(s);return false;}
+    if(!validCheckpoint(s)){checkpointError='Night progress could not be checkpointed safely. Keep this tab open.';root.__nightCheckpointError='invalid-night-world';return false;}
+    try{return writeCheckpoint({version:CHECKPOINT_VERSION,mode:'nightcrawler',status:'active',savedAt:Date.now(),state:normalizedSnapshot(s)});}
+    catch(e){checkpointError='Night progress could not be checkpointed safely. Keep this tab open.';root.__nightCheckpointError=String(e&&e.message||e);return false;}
+  }
+  function resumeCheckpoint(){
+    const record=checkpointStatus();if(record.status!=='ready'||!root.TechOpsRestoreNightState)return false;
+    const restored=normalizedSnapshot(record.state),s=root.TechOpsRestoreNightState(restored);if(!s)return false;
+    const n=s.nightMode;try{if(typeof NM!=='undefined')NM=n;}catch(_){}try{root.NM=n;}catch(_){}
+    if(root.TechOpsModeShell)root.TechOpsModeShell.enterNight(s);
+    n.msgT=(root.performance?root.performance.now():0)+3600;observed=n;chapterKey='';checkpointAge=0;checkpointMark='';resetInput();
+    if(root.TechOpsCameraDirector)root.TechOpsCameraDirector.reset('nightcrawler');
+    root.__nightCheckpointResumed={savedAt:record.savedAt,district:n.district,street:n.street};return true;
+  }
+  function checkpointFrame(dt){
+    const s=state(),n=world();if(!standalone(s)||!active(n)||n._sector04||blocked())return;
+    checkpointAge+=Math.min(.1,Math.max(0,Number(dt)||0));
+    const mark=[n.district,n.street,n.cash,n.kills,Object.keys(n.done||{}).join(','),n.drive&&n.drive.to||''].join('|');
+    if(checkpointAge>=5||mark!==checkpointMark){saveCheckpoint(s);checkpointAge=0;checkpointMark=mark;}
+  }
+  function saveAndReturn(){
+    if(!saveCheckpoint())return dialog('NIGHT NOT SAVED',checkpointError,[{t:'Retry saving and return',f:saveAndReturn},{t:'Keep playing',f:root.closeDlg}]);
+    if(root.closeDlg)root.closeDlg();clearNightSelection();root.__techopsAlternateStartMode=null;
+    if(root.location&&root.location.reload)root.location.reload();return true;
+  }
   function saveGame(){try{if(typeof save==='function')return save();if(root.save)return root.save();}catch(e){root.__nightSaveError=String(e);}return false;}
   function clockLabel(minutes){const m=((Math.floor(Number(minutes)||0)%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
   function resetInput(){
@@ -52,7 +127,7 @@
     if(!n._nightLifecycle)onEntered(s,n);
     const raw=Number(dt),delta=Number.isFinite(raw)?Math.min(.1,Math.max(0,raw)):0,rt=n._nightLifecycle;
     rt.seconds+=delta;
-    while(rt.seconds+1e-9>=MINUTE_SECONDS){rt.seconds-=MINUTE_SECONDS;advance(1);if(Math.floor(s.clock)%12===0)saveGame();}
+    while(rt.seconds+1e-9>=MINUTE_SECONDS){rt.seconds=Math.max(0,rt.seconds-MINUTE_SECONDS);advance(1);if(Math.floor(s.clock)%12===0)saveGame();}
     return true;
   }
   function atHome(){const n=world();return !!(active(n)&&!n._sector04&&n.district==='home'&&!n.drive&&Math.abs(n.x+n.w/2-HOME_X)<=86&&Math.abs(n.y+n.h-FLOOR)<=22);}
@@ -85,7 +160,7 @@
   }
   function campaignState(){try{return root.TechOpsCampaign&&root.TechOpsCampaign.load(root.localStorage);}catch(e){root.__nightCampaignError=String(e);return null;}}
   function resumeDay(){
-    const s=state(),n=world();if(!s||!active(n))return false;
+    const s=state(),n=world();if(!s||!active(n)||standalone(s))return false;
     const c=campaignState(),visit=s.meta&&s.meta.nightVisit;if(!c)return false;
     if(n._sector04&&root.TechOpsSector04Runtime){root.TechOpsSector04Runtime.retreatToDayInvestigation(c,n);root.TechOpsCampaign.save(c,root.localStorage);}
     const tuesday=!!c.flags.tuesday_morning_reached;
@@ -102,6 +177,7 @@
   function dialog(title,text,options){if(!root.dlg)return false;const box=el('dialogue');if(box){box.style.removeProperty('display');box.style.removeProperty('visibility');}root.dlg(title,text,options);return true;}
   function openCampaign(){
     if(!active(world())||transition)return false;
+    if(standalone(state()))return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. Return to the title to continue the Day campaign; this free roam run cannot change its story objectives.',[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}]);
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
     const f=c.flags,options=[],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
     if(f.tuesday_morning_reached){text='<b>AFTER HOURS — COMPLETE</b><br>The next campaign beat continues in the day shift. Your evidence and choices are preserved.';options.push({t:'Return to the day campaign',f:resumeDay});}
@@ -115,8 +191,9 @@
   }
   function openHome(){
     const n=world();if(!atHome()||transition||n._nightLifecycle&&n._nightLifecycle.exitCommitted)return false;
-    return dialog("MIKE'S HOUSE",'The porch light is still on. The city can wait.<br><br>Sleep ends this night through the normal day review. Campaign progress is kept; sleeping does not complete story objectives.',[
-      {t:'Sleep — return to day mode',f:sleep},{t:'Read the campaign journal',f:openCampaign},{t:'Stay out tonight',f:root.closeDlg}
+    const solo=standalone(state());
+    return dialog("MIKE'S HOUSE",'The porch light is still on. The city can wait.<br><br>'+(solo?'Sleep finishes this standalone Night and returns to the title with your debrief. Your Day campaign stays separate.':'Sleep ends this night through the normal day review. Campaign progress is kept; sleeping does not complete story objectives.'),[
+      {t:solo?'Sleep — finish this Night run':'Sleep — return to day mode',f:sleep},{t:solo?'Open the run menu':'Read the campaign journal',f:openCampaign},{t:'Stay out tonight',f:root.closeDlg}
     ]);
   }
   function sleep(){if(!atHome())return false;return playTransition('night_home_return',()=>root.exitNight(true));}
@@ -172,6 +249,7 @@
 #night-campaign{position:absolute;right:max(12px,env(safe-area-inset-right));top:70px}
 #night-home-interact{position:absolute;bottom:max(165px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
 #night-home-skip{position:fixed;right:16px;top:max(62px,env(safe-area-inset-top));z-index:2147483647}
+#night-checkpoint-status{position:absolute;left:12px;right:12px;bottom:max(112px,env(safe-area-inset-bottom));color:#ffe0a2;background:#251b15ed;padding:8px;font:12px/1.4 monospace;text-align:center}
 #night-chapter{position:absolute;top:140px;left:50%;transform:translateX(-50%);width:min(70%,570px);text-align:center;background:linear-gradient(90deg,transparent,#081020de,transparent);color:#e9e9de;padding:14px;font:18px/1.5 monospace;letter-spacing:2px;transition:opacity .6s}
 /* The short landscape title must scroll rather than clip its mode buttons. */
 #title-screen{overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;justify-content:flex-start;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
@@ -185,11 +263,15 @@
     const host=root.document.createElement('div');host.id='night-runtime-ui';host.hidden=true;
     const campaign=root.document.createElement('button');campaign.id='night-campaign';campaign.textContent='CAMPAIGN [C]';campaign.onclick=openCampaign;
     const home=root.document.createElement('button');home.id='night-home-interact';home.textContent="Enter Mike's house";home.onclick=openHome;
-    const chapter=root.document.createElement('div');chapter.id='night-chapter';chapter.setAttribute('aria-live','polite');host.append(campaign,home,chapter);(el('game-wrap')||root.document.body).appendChild(host);ui={host,campaign,home,chapter};return ui;
+    const chapter=root.document.createElement('div');chapter.id='night-chapter';chapter.setAttribute('aria-live','polite');
+    const checkpoint=root.document.createElement('div');checkpoint.id='night-checkpoint-status';checkpoint.setAttribute('role','status');checkpoint.hidden=true;
+    host.append(campaign,home,chapter,checkpoint);(el('game-wrap')||root.document.body).appendChild(host);ui={host,campaign,home,chapter,checkpoint};return ui;
   }
   function presentation(dt){
     const n=world(),view=ensureUI();if(!view)return;
     const shown=active(n)&&!blocked();view.host.hidden=!shown;view.home.hidden=!atHome();
+    view.campaign.textContent=standalone(state())?'RUN MENU [C]':'CAMPAIGN [C]';
+    view.checkpoint.hidden=!checkpointError||!standalone(state());view.checkpoint.textContent=checkpointError||'';
     if(!active(n))return;
     const key=n.district+':'+n.street;if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+' / STREET '+n.street;}
     if(shown)chapterAge+=Math.min(.1,Math.max(0,Number(dt)||0));view.chapter.style.opacity=chapterAge<2.6?'1':'0';
@@ -208,6 +290,7 @@
     if(tick(dt)&&root.stepNM)root.stepNM(dt);
     if(active(world())){
       if(root.drawNM)root.drawNM();
+      checkpointFrame(dt);
       presentation(dt);
       // The recovery compositor may step only when this authoritative frame
       // heartbeat is stale. Stamp after a successful Night render.
@@ -220,12 +303,21 @@
     const oldClock=root.advanceClock;if(oldClock)root.advanceClock=function(minutes){if(active(world()))return advance(minutes);return oldClock.apply(this,arguments);};
     if(root.fmtClock)root.fmtClock=clockLabel;
     const oldInteract=root.interact;if(oldInteract)root.interact=function(){if(atHome()&&!blocked())return openHome();return oldInteract.apply(this,arguments);};
-    const oldExit=root.exitNight;if(oldExit)root.exitNight=function(){const n=world();if(!active(n))return n?oldExit.apply(this,arguments):false;n._nightLifecycle=n._nightLifecycle||{};if(n._nightLifecycle.exitCommitted)return false;n._nightLifecycle.exitCommitted=true;clearNightSelection();return oldExit.apply(this,arguments);};
+    const oldExit=root.exitNight;if(oldExit)root.exitNight=function(){
+      const n=world();if(!active(n))return n?oldExit.apply(this,arguments):false;
+      n._nightLifecycle=n._nightLifecycle||{};if(n._nightLifecycle.exitCommitted)return false;
+      // Retire the recovery snapshot before reward settlement. If storage fails,
+      // no completed-run claim is made and a reload cannot pay the same run twice.
+      if(standalone(state())&&!completeCheckpoint(state())){const homeSafe=arguments[0];dialog('NIGHT RESULT NOT SAVED',checkpointError,[{t:'Retry saving this result',f:()=>{if(root.closeDlg)root.closeDlg();root.exitNight(homeSafe);}}]);return false;}
+      n._nightLifecycle.exitCommitted=true;clearNightSelection();return oldExit.apply(this,arguments);
+    };
     const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
     if(root.document)root.document.addEventListener('keydown',e=>{if(!active(world()))return;if(transition&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(root.v725)root.v725.skip();return;}if(blocked())return;if(e.key.toLowerCase()==='c'){e.preventDefault();e.stopImmediatePropagation();openCampaign();}else if(atHome()&&e.key.toLowerCase()==='e'){e.preventDefault();e.stopImmediatePropagation();openHome();}},true);
+    if(root.addEventListener)root.addEventListener('pagehide',()=>{if(standalone(state())&&active(world()))saveCheckpoint();});
+    if(root.document)root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden&&standalone(state())&&active(world()))saveCheckpoint();});
     registerScenes();ensureUI();
   }
-  root.TechOpsNightRuntime={VERSION:2,MINUTE_SECONDS,HOME_X,active,state,world,beforeEnter,onEntered,advance,clockLabel,tick,frame,blocked,atHome,openHome,sleep,openCampaign,resumeDay,restoreDayShell,endVisit,drawHome,registerScenes,install,health:()=>({active:active(world()),transitioning:!!transition,clock:state()&&state().clock,returnDay:state()&&state().meta&&state().meta.nightVisit&&state().meta.nightVisit.day})};
+  root.TechOpsNightRuntime={VERSION:3,MINUTE_SECONDS,HOME_X,CHECKPOINT_KEY,CHECKPOINT_VERSION,checkpointStatus,saveCheckpoint,resumeCheckpoint,saveAndReturn,active,state,world,beforeEnter,onEntered,advance,clockLabel,tick,frame,blocked,atHome,openHome,sleep,openCampaign,resumeDay,restoreDayShell,endVisit,drawHome,registerScenes,install,health:()=>({active:active(world()),transitioning:!!transition,clock:state()&&state().clock,returnDay:state()&&state().meta&&state().meta.nightVisit&&state().meta.nightVisit.day,checkpointError})};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.TechOpsNightRuntime;
   if(root.document&&root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })(typeof globalThis!=='undefined'?globalThis:this);

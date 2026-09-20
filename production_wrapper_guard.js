@@ -1,4 +1,4 @@
-/* TechOps Hero — production compositor authority v9.
+/* TechOps Hero — production compositor authority v10.
  * Owns the one authoritative Night draw/step function. Feature runtimes are
  * composed through exported callbacks instead of mutable drawNM/stepNM chains.
  * Late Good Boys authorities and a capture-phase Night key bridge are owned by
@@ -8,7 +8,7 @@
   "use strict";
   if(!root)return;
   try{var prior=root.TechOpsProductionWrapperGuard;if(prior&&prior.timer&&root.clearInterval)root.clearInterval(prior.timer);}catch(e){}
-  var VERSION=9,timer=null,baseDraw=null,baseStep=null,stableDraw=null,stableStep=null,installed=false,drawing=false,stepping=false,baseSource="none";
+  var VERSION=10,timer=null,baseDraw=null,baseStep=null,stableDraw=null,stableStep=null,installed=false,drawing=false,stepping=false,baseSource="none";
   var authorityLast={},authorityStepCount=0,authorityTimersParked=0,stableStepCount=0,baseStepCount=0,keyEvents=0,keyWrites=0,lastKey="",lastKeyDown=false,keyState={};
   function state(){try{return (typeof S!=="undefined"&&S)?S:(root.S||null);}catch(e){return root.S||null;}}
   function world(){try{return (typeof NM!=="undefined"&&NM)?NM:(root.NM||null);}catch(e){return root.NM||null;}}
@@ -29,7 +29,7 @@
       var old=root.__productionNightKeyBridgeHandlers;
       if(old&&root.removeEventListener){try{root.removeEventListener("keydown",old.down,true);root.removeEventListener("keyup",old.up,true);root.removeEventListener("blur",old.blur,true);}catch(_){} }
       if(!root.addEventListener)return false;
-      var down=function(e){onNightKey(e,true);},up=function(e){onNightKey(e,false);},blur=function(){Object.keys(keyState).forEach(function(k){if(keyState[k])writeLexicalKey(k,false);});};
+      var down=function(e){onNightKey(e,true);},up=function(e){onNightKey(e,false);},blur=function(e){if(e&&e.target&&e.target!==root)return;Object.keys(keyState).forEach(function(k){if(keyState[k])writeLexicalKey(k,false);});};
       root.addEventListener("keydown",down,true);root.addEventListener("keyup",up,true);root.addEventListener("blur",blur,true);root.__productionNightKeyBridgeHandlers={down:down,up:up,blur:blur};root.__productionNightKeyBridgeVersion=1;root.__productionNightKeyBridgeError=null;return true;
     }catch(e){root.__productionNightKeyBridgeError=String(e&&e.stack||e);return false;}
   }

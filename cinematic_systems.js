@@ -71,9 +71,9 @@
         id:"gooddogs.m4",mode:"gooddogs",kind:"mission",ordinal:4,
         displayName:"GOOD DOGS",name:"CELL 118",phaseId:"cell118",
         objective:"INVESTIGATE THE PRISONER · VERIFY K · BREAK THE CELL LOCK",
-        zone:"BLACKSITE MERIDIAN — BLOCK 118",target:1320,gameplayVerb:"rescue",
+        zone:"BLACKSITE MERIDIAN — BLOCK 118",target:1600,gameplayVerb:"rescue",
         environment:{district:"goodboys_cell118",background:"goodboys_cell118",fallback:null,light:"cell118_blue",accent:"#55dfff",palette:"detention_cyan",assetClass:"runtime_generated_fallback"},
-        stage:{platforms:[[260,350,230],[560,315,210],[860,350,250],[1190,318,235],[1490,350,170]],hazards:[],landmarks:[{x:500,label:"EVIDENCE",kind:"console"},{x:800,label:"RESTRAINT CIPHER",kind:"console"},{x:1100,label:"REFLECTION",kind:"console"},{x:1320,label:"CELL 118",kind:"cell118"}]},
+        stage:{platforms:[[260,350,230],[560,315,210],[860,350,250],[1190,318,235],[1490,350,170]],hazards:[],landmarks:[{x:500,label:"EVIDENCE",kind:"console"},{x:800,label:"RESTRAINT CIPHER",kind:"console"},{x:1100,label:"REFLECTION",kind:"console"},{x:1600,label:"CELL 118",kind:"cell118"}]},
         encounter:{evidence:true,waves:[["guard","skimmer","guard"]]},
         districtConfig:{streets:1,danger:1.8,sky:"#05080e",far:"#09101a",mid:"#0b1118",signs:["CELL 118","VERIFY K"],roster:["guard","skimmer"]},
         cameraProfile:"gooddogs.sideview",presentationProfile:"intimate_rescue",animationProfile:"gooddogs.pair",musicProfile:"cell_118",cinematicEntry:"GD_CUT_04",cinematicExit:"GD_CUT_05",saveCheckpoint:"gooddogs.m4.cell118",acceptanceTest:"m4-k-reveal",nextMission:"gooddogs.m5",completionContract:"cell118-k-reveal-and-ambush-clear"
@@ -140,15 +140,28 @@
       {id:"day.sector04",mode:"sector04",kind:"set_piece",ordinal:5,name:"SECTOR 04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",animationProfile:"mike.day",environment:{light:"sector04",palette:"sector04",assetClass:"props_without_backplate"},districtConfig:{name:"SECTOR 04",streets:1,danger:1.5,accent:"#a855f7",sky:"#090611",far:"#171022",mid:"#22162f",signs:["SECTOR 04","IDENTITY CONTROL"],roster:[]}}
     ]);
     var BY_ID={};GOOD_DOGS.concat(DAY_SPACES).forEach(function(row){BY_ID[row.id]=row;});
+    var cell118Coordinates=null,cell118Record=null;
+    // Read the same lexical world width as v736's existing rescue interaction.
+    // This projects its coordinates; it never moves the trigger or collision.
+    function goodDogsCell118(){
+      var width=1800;try{if(typeof NM_W!=="undefined"&&Number.isFinite(Number(NM_W)))width=Number(NM_W);else if(Number.isFinite(Number(root.NM_W)))width=Number(root.NM_W);}catch(_){}
+      if(!cell118Coordinates||cell118Coordinates.worldWidth!==width)cell118Coordinates=freeze({worldWidth:width,triggerX:width-260,entranceX:width-200,labelX:width-155});
+      return cell118Coordinates;
+    }
+    function resolvedRecord(row){
+      if(!row||row.id!=="gooddogs.m4")return row;
+      var position=goodDogsCell118();if(cell118Record&&cell118Record.target===position.entranceX)return cell118Record;
+      var resolved=clone(row);resolved.target=position.entranceX;resolved.stage.landmarks.forEach(function(l){if(l.kind==="cell118")l.x=position.entranceX;});cell118Record=freeze(resolved);return cell118Record;
+    }
     function dynamic(){return nightRecords().concat(ticketRecords());}
-    function get(id){if(BY_ID[id])return BY_ID[id];var rows=dynamic();for(var i=0;i<rows.length;i++)if(rows[i].id===id)return rows[i];return null;}
-    function list(mode,kind){var rows=GOOD_DOGS.concat(DAY_SPACES,dynamic()).filter(function(row){return(!mode||row.mode===mode)&&(!kind||row.kind===kind);});return freeze(rows.slice());}
+    function get(id){if(BY_ID[id])return resolvedRecord(BY_ID[id]);var rows=dynamic();for(var i=0;i<rows.length;i++)if(rows[i].id===id)return rows[i];return null;}
+    function list(mode,kind){var rows=GOOD_DOGS.concat(DAY_SPACES,dynamic()).filter(function(row){return(!mode||row.mode===mode)&&(!kind||row.kind===kind);}).map(resolvedRecord);return freeze(rows.slice());}
     function find(mode,ordinal){var rows=list(mode);for(var i=0;i<rows.length;i++)if(Number(rows[i].ordinal)===Number(ordinal))return rows[i];return null;}
     function mutableStage(id){var row=get(id);return row&&row.stage?clone(row.stage):null;}
     function goodDogsMission(m){return find("gooddogs",m);}
     function goodDogsEncounter(m){var row=goodDogsMission(m);return row&&row.encounter?clone(row.encounter):null;}
-    function goodBoysRoute(){var out={};GOOD_DOGS.forEach(function(row){out[row.ordinal]={name:row.name,objective:row.objective,zone:row.zone,target:row.target,color:row.environment.accent};});return out;}
-    function goodBoysStages(){var out={};GOOD_DOGS.forEach(function(row){out[row.ordinal]=clone(row.stage);});return out;}
+    function goodBoysRoute(){var out={};GOOD_DOGS.map(resolvedRecord).forEach(function(row){out[row.ordinal]={name:row.name,objective:row.objective,zone:row.zone,target:row.target,color:row.environment.accent};});return out;}
+    function goodBoysStages(){var out={};GOOD_DOGS.map(resolvedRecord).forEach(function(row){out[row.ordinal]=clone(row.stage);});return out;}
     function goodBoysBackgroundMap(){var out={};GOOD_DOGS.forEach(function(row){out[row.ordinal]={key:row.environment.background,district:row.environment.district,scene:row.zone,fallback:row.environment.fallback};});return out;}
     function goodBoysSequence(){var out={};GOOD_DOGS.forEach(function(row){out[row.ordinal]={name:row.name,objective:row.objective,zone:row.zone,bg:row.environment.background,district:row.environment.district,light:row.environment.light};});return out;}
     function goodBoysPhases(){var out={};GOOD_DOGS.forEach(function(row){out[row.ordinal]={id:row.phaseId,label:row.name,objective:row.objective,accent:row.environment.accent,hazard:row.gameplayVerb,bg:row.environment.background};});return out;}
@@ -160,7 +173,7 @@
       return{mode:"day",levelId:"day."+((state&&state.room)||"factory"),stageId:String(state&&state.day||1),cameraProfile:"day.grid",presentationProfile:"workday",paletteProfile:"day_default",assetProfile:"procedural"};
     }
     function validate(){var errors=[],seen={};GOOD_DOGS.forEach(function(row,index){if(row.ordinal!==index+1)errors.push(row.id+": ordinal");if(seen[row.id])errors.push(row.id+": duplicate");seen[row.id]=true;["cameraProfile","presentationProfile","animationProfile","saveCheckpoint","acceptanceTest","completionContract"].forEach(function(k){if(!row[k])errors.push(row.id+": missing "+k);});if(!row.environment||!row.environment.background||!row.stage)errors.push(row.id+": incomplete environment/stage");if(index<GOOD_DOGS.length-1&&row.nextMission!==GOOD_DOGS[index+1].id)errors.push(row.id+": invalid next mission");});return{valid:errors.length===0,errors:errors,goodDogs:GOOD_DOGS.length,nightCrawler:nightRecords().length,ticketWorlds:ticketRecords().length,daySpaces:DAY_SPACES.length,total:GOOD_DOGS.length+nightRecords().length+ticketRecords().length+DAY_SPACES.length};}
-    var registry={VERSION:1,CAMPAIGN_DISPLAY_NAME:"GOOD DOGS",get:get,list:list,find:find,mutableStage:mutableStage,goodDogsMission:goodDogsMission,goodDogsEncounter:goodDogsEncounter,goodBoysRoute:goodBoysRoute,goodBoysStages:goodBoysStages,goodBoysBackgroundMap:goodBoysBackgroundMap,goodBoysSequence:goodBoysSequence,goodBoysPhases:goodBoysPhases,goodBoysDistricts:goodBoysDistricts,resolveRuntimeContext:resolveRuntimeContext,validate:validate,health:validate};
+    var registry={VERSION:1,CAMPAIGN_DISPLAY_NAME:"GOOD DOGS",get:get,list:list,find:find,mutableStage:mutableStage,goodDogsMission:goodDogsMission,goodDogsEncounter:goodDogsEncounter,goodDogsCell118:goodDogsCell118,goodBoysRoute:goodBoysRoute,goodBoysStages:goodBoysStages,goodBoysBackgroundMap:goodBoysBackgroundMap,goodBoysSequence:goodBoysSequence,goodBoysPhases:goodBoysPhases,goodBoysDistricts:goodBoysDistricts,resolveRuntimeContext:resolveRuntimeContext,validate:validate,health:validate};
     root.TechOpsLevelRegistry=freeze(registry);
   }
 
@@ -305,7 +318,7 @@
   // Source props decorate existing geometry. They never create collision surfaces.
   var layers={
     'gooddogs.m3':[{frame:2,x:330,height:182,role:'back',parallax:1},{frame:6,x:730,height:95,role:'mid',parallax:.55,y:-170},{frame:3,x:900,height:155,role:'back',parallax:1},{frame:9,x:1440,height:86,role:'back',parallax:1}],
-    'gooddogs.m4':[{frame:0,x:1320,height:182,role:'back',parallax:1},{frame:8,x:500,height:80,role:'back',parallax:1},{frame:6,x:890,height:86,role:'mid',parallax:.55,y:-150}],
+    'gooddogs.m4':[{frame:0,x:1600,height:182,role:'back',parallax:1},{frame:8,x:500,height:80,role:'back',parallax:1},{frame:6,x:890,height:86,role:'mid',parallax:.55,y:-150}],
     'gooddogs.m5':[{frame:8,x:1070,height:100,role:'back',parallax:1},{frame:3,x:1480,height:180,role:'back',parallax:1},{frame:6,x:430,height:96,role:'mid',parallax:.55,y:-155}],
     'gooddogs.m6':[{frame:0,x:1360,height:180,role:'back',parallax:1},{frame:8,x:420,height:95,role:'back',parallax:1},{frame:11,x:1010,height:70,role:'back',parallax:1,y:-155}],
     'gooddogs.m7':[{frame:3,x:1580,height:176,role:'back',parallax:1},{frame:7,x:470,height:96,role:'mid',parallax:.55,y:-185},{frame:11,x:980,height:80,role:'back',parallax:1,y:-175}],
@@ -318,9 +331,9 @@
     ctx.save();ctx.beginPath();ctx.rect(0,115,W,Math.max(0,ctx.canvas.height-155));ctx.clip();
     var staged=false;try{if(root.TechOpsOrbitalStaging)staged=root.TechOpsOrbitalStaging.draw(ctx,n,pass,at,drawFrame);}catch(e){root.__orbitalStagingError=String(e);}
     if(pass==='back'){
-      if(!staged)spec.forEach(function(l){var sx=l.x-(n.cam||0)*l.parallax;if(sx<-230||sx>W+230)return;drawFrame(ctx,'prison',l.frame,sx,floor+(l.y||0),l.height,false,l.role==='mid'?.62:1);});
+      if(!staged)spec.forEach(function(l){var worldX=id==='gooddogs.m4'&&l.frame===0&&root.TechOpsLevelRegistry&&root.TechOpsLevelRegistry.goodDogsCell118?root.TechOpsLevelRegistry.goodDogsCell118().entranceX:l.x,sx=worldX-(n.cam||0)*l.parallax;if(sx<-230||sx>W+230)return;drawFrame(ctx,'prison',l.frame,sx,floor+(l.y||0),l.height,false,l.role==='mid'?.62:1);});
       if(n._v736&&n._v736.m===6){var beam=surveillance(n,at);ctx.globalAlpha=.09;ctx.fillStyle='#ff475d';ctx.beginPath();ctx.moveTo(1010-(n.cam||0),floor-250);ctx.lineTo(beam.center-(n.cam||0)-beam.radius,floor);ctx.lineTo(beam.center-(n.cam||0)+beam.radius,floor);ctx.closePath();ctx.fill();}
-      if(n._v736&&n._v736.m===4){ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#b5edff';ctx.fillText('118',1320-(n.cam||0),floor-165);}
+      if(n._v736&&n._v736.m===4){var cellX=root.TechOpsLevelRegistry&&root.TechOpsLevelRegistry.goodDogsCell118?root.TechOpsLevelRegistry.goodDogsCell118().entranceX:1600;ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#b5edff';ctx.fillText('118',cellX-(n.cam||0),floor-165);}
       if(n._v736&&n._v736.m===6){ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle='#ffadb4';ctx.fillText('1984',1360-(n.cam||0),floor-165);}
     }else{
       // Foreground atmosphere is bounded and never hides actor silhouettes.
