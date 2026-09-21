@@ -420,6 +420,7 @@ window.TechOpsRestoreNightState = function(snapshot) {
     return S;
   } catch (error) { S = previous; throw error; }
 };
+const PROFILE_SAVE_SCHEMA_VERSION = 1;
 const save = () => {
   if (!S) return false;
   try {
@@ -430,7 +431,7 @@ const save = () => {
     }
     const saveRevision = Math.max(Date.now(), Number(S._saveRevision || 0) + 1);
     S._saveRevision = saveRevision;
-    const payload = JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
+    const payload = JSON.stringify({ _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
     const standaloneMode = S.meta && S.meta._standaloneMode;
     const standaloneNight = standaloneMode === "nightcrawler";
     const standaloneGoodDogs = standaloneMode === "gooddogs";
@@ -489,15 +490,27 @@ const save = () => {
   }
 };
 const normalizeLoadedProfile = d => {
-  if (d && d.meta) {
-    d.meta.debt = d.meta.debt || 0;
-    d.meta.wrongDiag = d.meta.wrongDiag || 0;
-    d.meta.recentTypes = d.meta.recentTypes || [];
-    d.meta.kb = d.meta.kb || {};
-    d.meta.incidents = d.meta.incidents || 0;
-    d.meta.mttr = d.meta.mttr || [];
-    d.meta.hires = d.meta.hires || 0;
+  if (!d || typeof d !== "object" || Array.isArray(d)) throw new Error("invalid profile save envelope");
+  const fromVersion = Number.isInteger(d._profileSchemaVersion) ? d._profileSchemaVersion : 0;
+  if (fromVersion < 0 || fromVersion > PROFILE_SAVE_SCHEMA_VERSION) {
+    throw new Error(`unsupported profile save schema ${fromVersion}`);
   }
+
+  // v0 is every profile written before the explicit schema marker. Keep its
+  // established flat shape and add only the defaults current code already
+  // expects; this makes migration deterministic without rewriting player state.
+  d.meta = d.meta && typeof d.meta === "object" && !Array.isArray(d.meta) ? d.meta : {};
+  d.meta.debt = Number.isFinite(d.meta.debt) ? d.meta.debt : 0;
+  d.meta.wrongDiag = Number.isFinite(d.meta.wrongDiag) ? d.meta.wrongDiag : 0;
+  d.meta.recentTypes = Array.isArray(d.meta.recentTypes) ? d.meta.recentTypes : [];
+  d.meta.kb = d.meta.kb && typeof d.meta.kb === "object" && !Array.isArray(d.meta.kb) ? d.meta.kb : {};
+  d.meta.incidents = Number.isFinite(d.meta.incidents) ? d.meta.incidents : 0;
+  d.meta.mttr = Array.isArray(d.meta.mttr) ? d.meta.mttr : [];
+  d.meta.hires = Number.isFinite(d.meta.hires) ? d.meta.hires : 0;
+  for (const key of ["certs","inv","journal","ach","books","lab","staff","infra"]) if (!Array.isArray(d[key])) d[key] = [];
+  for (const key of ["stats","soft","rep"]) if (!d[key] || typeof d[key] !== "object" || Array.isArray(d[key])) d[key] = {};
+  d._profileSchemaVersion = PROFILE_SAVE_SCHEMA_VERSION;
+  window.__techopsSaveMigration = { from: fromVersion, to: PROFILE_SAVE_SCHEMA_VERSION, migrated: fromVersion !== PROFILE_SAVE_SCHEMA_VERSION };
   return d;
 };
 const load = () => {
@@ -511,9 +524,9 @@ const load = () => {
   if (!primaryRaw) return null;
   try {
     const d = JSON.parse(primaryRaw);
-    if (!d || typeof d !== "object" || Array.isArray(d)) throw new Error("invalid profile save envelope");
+    const normalized = normalizeLoadedProfile(d);
     window.__techopsSaveLoadError = null;
-    return normalizeLoadedProfile(d);
+    return normalized;
   } catch (primaryError) {
     window.__techopsSaveLoadError = String(primaryError && primaryError.stack || primaryError);
   }
@@ -522,8 +535,7 @@ const load = () => {
   try {
     backupRaw = localStorage.getItem("techops_save_bak");
     if (!backupRaw) return null;
-    backup = JSON.parse(backupRaw);
-    if (!backup || typeof backup !== "object" || Array.isArray(backup)) throw new Error("invalid backup save envelope");
+    backup = normalizeLoadedProfile(JSON.parse(backupRaw));
   } catch (backupError) {
     window.__techopsSaveBackupError = String(backupError && backupError.stack || backupError);
     return null;
