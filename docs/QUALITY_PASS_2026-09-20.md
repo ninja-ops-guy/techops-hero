@@ -202,3 +202,17 @@ The opening vertical slice remains the next certification target. These changes
 improve readability, input reliability and narrative consistency; they do not
 replace the authored art, editorial work and independent playtesting needed for
 the requested AAA quality bar.
+
+## Follow-up: Night campaign held-press stability
+
+Night lifecycle run `35553053222` on baseline `c253850` demonstrated a desktop
+WebKit failure with a native 100 ms campaign-button press: the label node changed
+from identity 2 at pointerdown to 3 at pointerup, and no click arrived. State and
+world identity, 100 HP, target hit ownership and the absence of a modal stayed
+stable. The correction preserves unchanged control DOM between frames;
+`test_night_lifecycle.js` guards against reintroducing redundant writes while
+still requiring real label, resize and HUD-handoff updates. The same held-press
+browser gesture must validate native click delivery on the corrected source.
+Fixed-source WebKit validation is a merge requirement recorded in the PR #63
+receipt; the baseline trace does not by itself certify the correction or
+physical-device behavior.

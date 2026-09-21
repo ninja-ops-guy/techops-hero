@@ -152,6 +152,10 @@ async function run(name,engine,touch,viewport){
   record.sectorMenuPressDelayMs=touch?0:100;
   try{if(touch)await click(page.locator('#night-campaign'));else await page.locator('#night-campaign').click({delay:100});}
   finally{record.sectorMenu=await page.evaluate(()=>window.__nightLifecycleMenuProbe?.finish());}
+  const down=record.sectorMenu.find(event=>event.phase==='pointerdown'),up=record.sectorMenu.find(event=>event.phase==='pointerup'),activation=record.sectorMenu.find(event=>event.phase==='click');
+  assert.ok(down&&up&&activation,'one native campaign gesture must deliver down, up and click: '+JSON.stringify(record.sectorMenu));
+  assert.equal(down.control.labelNodeId,up.control.labelNodeId,'the campaign label must survive a held pointer gesture');
+  assert.equal(up.control.labelNodeId,activation.control.labelNodeId,'click must target the same campaign label node');
   const opened=record.sectorMenu.at(-1);
   assert.ok(opened.night&&opened.sector&&opened.inDialog&&!opened.dialogue.hidden&&opened.dialogue.options.some(text=>text.includes('Continue Sector 04 investigation')),
     'Sector 04 menu must open from one visible activation before gameplay can mask the failure: '+JSON.stringify(record.sectorMenu));

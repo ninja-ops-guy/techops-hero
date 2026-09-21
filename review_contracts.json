@@ -23,7 +23,7 @@
       ]
     },
     {
-      "name": "Night recovery and delayed Day notices",
+      "name": "Night lifecycle, recovery and delayed Day notices",
       "files": [
         "game.js",
         "runtime_night.js",
@@ -32,6 +32,8 @@
         "production_wrapper_guard.js"
       ],
       "tests": [
+        "test_night_lifecycle.js",
+        "scripts/night_lifecycle_browser.mjs",
         "test_night_recovery.js",
         "test_day_notice_queue.js",
         "test_production_compositor.js",
@@ -161,6 +163,13 @@
       "invariant": "The production bootstrap installs one runtime mode shell and repeated enter/exit calls restore the exact owned surface and input snapshot once.",
       "test_ref": "test_runtime_mode_shell.js#single-owner",
       "spot_check": "Enter and exit Night twice from both title and Day; confirm one shell install, no held input, no duplicate blockers, and exact Day restoration."
+    },
+    {
+      "id": "NIGHT_MENU_GESTURE_STABILITY",
+      "failure_mode": "Unchanged frame updates replace the campaign button's text child during a held pointer press, and native WebKit fails to deliver the terminal click despite a stable world and unobstructed target.",
+      "invariant": "Unchanged frames retain the campaign control, label node, click owner, attributes and inline geometry without redundant writes. Actual label changes, resize and specialized-HUD handoffs update only changed presentation. The lifecycle regression must fail if unconditional writes return; one native held gesture must still open the campaign menu without retry, forced click or narrative mutation.",
+      "test_ref": "test_night_lifecycle.js",
+      "spot_check": "Run scripts/night_lifecycle_browser.mjs in actual desktop WebKit on the exact candidate: hold the native campaign press for 100 ms across render frames, verify stable label identity through pointerdown/pointerup/click and an immediately visible Sector 04 menu, then resume the same world with evidence unchanged. Keep the real mobile tap check; unit DOM mutation checks alone do not establish native click delivery."
     },
     {
       "id": "NIGHT_CHECKPOINT_RECOVERY",

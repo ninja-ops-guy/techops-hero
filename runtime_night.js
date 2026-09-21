@@ -292,18 +292,23 @@
   function presentation(dt){
     const n=world(),view=ensureUI();if(!view)return;
     const shown=active(n)&&!blocked();view.host.hidden=!shown;view.home.hidden=!atHome();
-    view.campaign.textContent=standalone(state())?'RUN MENU [C]':'CAMPAIGN [C]';
+    const campaignLabel=standalone(state())?'RUN MENU [C]':'CAMPAIGN [C]';
+    // Preserve the native pointer target between down/up on different frames.
+    if(view.campaign.textContent!==campaignLabel)view.campaign.textContent=campaignLabel;
     // The canvas HUD reserves this DOM control's exact CSS rectangle. Compute
     // directly from the shared passive layout so startup/rotation cannot use a
     // stale prior-frame receipt, and retain the original campaign click owner.
     const hud=root.TechOpsRuntimeHud,canvas=typeof cv!=='undefined'?cv:root.cv||el('game');
     if(hud&&canvas&&hud.handles(n)){
       const menu=hud.layout(hud.viewport(canvas)).menu,rect=canvas.getBoundingClientRect&&canvas.getBoundingClientRect(),host=view.host.getBoundingClientRect&&view.host.getBoundingClientRect();
-      view.campaign.setAttribute('data-readable-hud','true');
-      view.campaign.style.left=(menu.x+(rect&&host?rect.left-host.left:0))+'px';view.campaign.style.top=(menu.y+(rect&&host?rect.top-host.top:0))+'px';view.campaign.style.right='auto';
+      if(view.campaign.getAttribute('data-readable-hud')!=='true')view.campaign.setAttribute('data-readable-hud','true');
+      const left=(menu.x+(rect&&host?rect.left-host.left:0))+'px',top=(menu.y+(rect&&host?rect.top-host.top:0))+'px';
+      if(view.campaign.style.left!==left)view.campaign.style.left=left;
+      if(view.campaign.style.top!==top)view.campaign.style.top=top;
+      if(view.campaign.style.right!=='auto')view.campaign.style.right='auto';
     }else{
-      view.campaign.setAttribute('data-readable-hud','false');
-      ['left','top','right'].forEach(key=>view.campaign.style.removeProperty(key));
+      if(view.campaign.getAttribute('data-readable-hud')!=='false')view.campaign.setAttribute('data-readable-hud','false');
+      ['left','top','right'].forEach(key=>{if(view.campaign.style[key])view.campaign.style.removeProperty(key);});
     }
     view.checkpoint.hidden=!checkpointError||!standalone(state());view.checkpoint.textContent=checkpointError||'';
     if(!active(n))return;

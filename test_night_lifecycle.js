@@ -143,4 +143,49 @@ test('existing presentation places the readable menu in the current HUD reservat
   }
   const source=fs.readFileSync('runtime_night.js','utf8');assert.match(source,/#night-runtime-ui #night-campaign\[data-readable-hud="true"\][^\n]*height:44px[^\n]*font:13px\/1\.15 monospace!important/,'readable menu overrides retired10px recording styling');
 });
+test('campaign control retains its label node across stable frames and updates only changed presentation',()=>{
+  const{c,api}=fixture(),n=c.enter(),dom=transitionDOM(c);
+  vm.runInContext(fs.readFileSync('runtime_hud.js','utf8'),c);
+  let rect={width:844,height:390,left:10,top:8};
+  c.cv={width:1169,height:540,getBoundingClientRect:()=>rect};api.frame(.016);
+  const button=dom.nodes.get('night-campaign'),owner=button.onclick,writes=[];
+  let label=button.textContent,labelNode={nodeType:3,data:label};
+  // Like a real element, assigning textContent replaces its text child even
+  // when the string is unchanged. This fixture checks mutation, not native
+  // browser click synthesis, which belongs to the held-press browser route.
+  Object.defineProperties(button,{
+    textContent:{get:()=>label,set(value){label=String(value);labelNode={nodeType:3,data:label};writes.push('text='+label);}},
+    firstChild:{get:()=>labelNode}
+  });
+  const setAttribute=button.setAttribute;
+  button.setAttribute=function(key,value){writes.push('attribute.'+key+'='+value);return setAttribute.call(this,key,value);};
+  const style={...button.style};
+  style.removeProperty=key=>{writes.push('remove.'+key);delete style[key];};
+  button.style=new Proxy(style,{set(target,key,value){writes.push('style.'+key+'='+value);target[key]=value;return true;}});
+  function frames(count=1){
+    writes.length=0;for(let i=0;i<count;i++)api.frame(.016);
+    return {node:button.firstChild,label:button.textContent,writes:writes.slice().sort(),left:style.left,top:style.top,right:style.right,readable:button.getAttribute('data-readable-hud'),button:dom.nodes.get('night-campaign'),owner:button.onclick};
+  }
+  const originalNode=button.firstChild,stable=frames(8);
+  rect={width:320,height:568,left:12,top:16};
+  const menu=c.TechOpsRuntimeHud.layout(c.TechOpsRuntimeHud.viewport(c.cv)).menu;
+  const resized=frames(),stableResized=frames(8);
+  n._sector04={};const handedOff=frames(),stableSector=frames(8);
+  delete n._sector04;const restored=frames(),stableRestored=frames(8);
+  c.S.meta._standaloneMode='nightcrawler';const renamed=frames(),stableRenamed=frames(8);
+
+  assert.equal(stable.node,originalNode,'an unchanged frame must not replace the campaign label between native pointer down/up');
+  for(const [name,snapshot] of Object.entries({stable,stableResized,stableSector,stableRestored,stableRenamed})){
+    assert.deepEqual(snapshot.writes,[],name+' must not rewrite unchanged label, attributes or inline geometry');
+  }
+  assert.equal(resized.left,(menu.x+12)+'px');assert.equal(resized.top,(menu.y+16)+'px');
+  assert.deepEqual(resized.writes,['style.left='+resized.left,'style.top='+resized.top].sort(),'resize updates only changed geometry');
+  assert.equal(handedOff.readable,'false');assert.equal(handedOff.left,undefined);assert.equal(handedOff.top,undefined);assert.equal(handedOff.right,undefined);
+  assert.deepEqual(handedOff.writes,['attribute.data-readable-hud=false','remove.left','remove.right','remove.top'],'Sector 04 releases reserved geometry once');
+  assert.equal(restored.readable,'true');assert.equal(restored.left,resized.left);assert.equal(restored.top,resized.top);assert.equal(restored.right,'auto');
+  assert.deepEqual(restored.writes,['attribute.data-readable-hud=true','style.left='+restored.left,'style.right=auto','style.top='+restored.top].sort(),'returning to the shared HUD restores its current geometry');
+  for(const snapshot of [stable,resized,stableResized,handedOff,stableSector,restored,stableRestored])assert.equal(snapshot.node,originalNode,'geometry and presentation ownership do not replace the label');
+  assert.equal(renamed.label,'RUN MENU [C]');assert.notEqual(renamed.node,originalNode);assert.deepEqual(renamed.writes,['text=RUN MENU [C]']);assert.equal(stableRenamed.node,renamed.node,'a real label change settles after one write');
+  for(const snapshot of [stable,resized,stableResized,handedOff,stableSector,restored,stableRestored,renamed,stableRenamed]){assert.equal(snapshot.button,button);assert.equal(snapshot.owner,owner,'presentation must retain the existing campaign click owner');}
+});
 console.log(`Night lifecycle: ${passed} regression groups passed`);
