@@ -147,7 +147,10 @@ async function run(name,engine,touch,viewport){
   const evidence=await prepareStory(page);assert.equal((await page.evaluate(()=>TechOpsSector04Runtime.enterBrowser())).pending,true);await page.waitForFunction(()=>window.v722?.active());await page.keyboard.press('Escape');await page.waitForFunction(()=>S.nightMode?._sector04?.active&&!S.inDialog);
   await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});
   await sectorMenuProbe(page);
-  try{await click(page.locator('#night-campaign'));}
+  // A native human press spans render frames. Hold once on desktop so frame
+  // mutations cannot hide behind an instantaneous down/up; touch keeps its tap.
+  record.sectorMenuPressDelayMs=touch?0:100;
+  try{if(touch)await click(page.locator('#night-campaign'));else await page.locator('#night-campaign').click({delay:100});}
   finally{record.sectorMenu=await page.evaluate(()=>window.__nightLifecycleMenuProbe?.finish());}
   const opened=record.sectorMenu.at(-1);
   assert.ok(opened.night&&opened.sector&&opened.inDialog&&!opened.dialogue.hidden&&opened.dialogue.options.some(text=>text.includes('Continue Sector 04 investigation')),
