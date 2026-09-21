@@ -22,7 +22,7 @@ function fixture(){
   vm.runInContext(runtime,c);
   const restore=game.match(/window\.TechOpsRestoreNightState = function\(snapshot\) \{[\s\S]*?\n\};/);
   assert.ok(restore);vm.runInContext(restore[0],c);
-  const saves=game.match(/const save = \(\) => \{[\s\S]*?\nfunction loadDayCheckpoint\(profile\) \{[\s\S]*?\n\}/);
+  const saves=game.match(/const PROFILE_SAVE_SCHEMA_VERSION = \d+;\nconst save = \(\) => \{[\s\S]*?\nfunction loadDayCheckpoint\(profile\) \{[\s\S]*?\n\}/);
   vm.runInContext(saves[0]+'\nthis.saveFromGame=save;',c);
   c.save=c.saveFromGame;
   function start(){

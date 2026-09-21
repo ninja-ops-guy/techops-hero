@@ -20,12 +20,16 @@ assert.ok(v736Source.includes("resumeState = JSON.parse(JSON.stringify(options.s
 assert.ok(v736Source.includes("Object.assign(mt, campaign)"), "v736 must restore the complete Good Dogs campaign snapshot");
 
 {
-  const match = gameSource.match(/const save = \(\) => \{[\s\S]*?\n\};\nconst load/);
+  const match = gameSource.match(/const PROFILE_SAVE_SCHEMA_VERSION = \d+;\nconst save = \(\) => \{[\s\S]*?\n\};\nconst load/);
   assert.ok(match, "canonical save implementation must remain directly testable");
   let writes = 0, reject = false, throwWrite = false;
+  const storage = new Map();
   const context = {
     S: { day: 1, meta: {}, certs: [], inv: [], journal: [], stats: {}, soft: {}, rep: {}, ach: [], books: [], lab: [], staff: [], infra: [] },
-    localStorage: { setItem() { if (throwWrite) throw new Error("quota"); writes++; } },
+    localStorage: {
+      getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+      setItem(key, value) { if (throwWrite) throw new Error("quota"); writes++; storage.set(key, String(value)); }
+    },
     TechOpsStateValidator: { assertBeforeSave() { return !reject; } }
   };
   context.window = context;

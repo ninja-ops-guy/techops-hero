@@ -420,6 +420,7 @@ window.TechOpsRestoreNightState = function(snapshot) {
     return S;
   } catch (error) { S = previous; throw error; }
 };
+const PROFILE_SAVE_SCHEMA_VERSION = 1;
 const save = () => {
   if (!S) return false;
   try {
@@ -430,7 +431,7 @@ const save = () => {
     }
     const saveRevision = Math.max(Date.now(), Number(S._saveRevision || 0) + 1);
     S._saveRevision = saveRevision;
-    const payload = JSON.stringify({ day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
+    const payload = JSON.stringify({ _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
     const standaloneMode = S.meta && S.meta._standaloneMode;
     const standaloneNight = standaloneMode === "nightcrawler";
     const standaloneGoodDogs = standaloneMode === "gooddogs";
@@ -439,27 +440,148 @@ const save = () => {
       window.__techopsSaveError = saved ? null : "Night checkpoint was not saved";
       return saved;
     }
-    localStorage.setItem(standaloneNight ? NIGHT_CRAWLER_SAVE_KEY : standaloneGoodDogs ? GOOD_DOGS_SAVE_KEY : "techops_save", payload);
+
+    const targetKey = standaloneNight ? NIGHT_CRAWLER_SAVE_KEY : standaloneGoodDogs ? GOOD_DOGS_SAVE_KEY : "techops_save";
+    const writeVerified = (key, value) => {
+      localStorage.setItem(key, value);
+      if (localStorage.getItem(key) !== value) throw new Error(`storage verification failed for ${key}`);
+    };
+
+    // Story Continue gets a one-generation rollback slot. Never overwrite a
+    // readable primary until its prior bytes are either backed up or, if they
+    // are malformed, retained in the bounded quarantine slot.
+    if (targetKey === "techops_save") {
+      const previousRaw = localStorage.getItem("techops_save");
+      if (previousRaw && previousRaw !== payload) {
+        let previousValid = false;
+        try {
+          const previous = JSON.parse(previousRaw);
+          previousValid = !!previous && typeof previous === "object" && !Array.isArray(previous);
+        } catch (e) { }
+        writeVerified(previousValid ? "techops_save_bak" : "techops_save_corrupt_v1", previousRaw);
+      }
+    }
+
+    writeVerified(targetKey, payload);
+
     // The profile save remains backwards-compatible while a separate, plain-
     // data checkpoint makes CONTINUE resume the actual workday scene.
     if (!standaloneNight && !standaloneGoodDogs && S.map && !S.nightMode && !S.inBattle && !S.gameOver) {
       try {
         const snapshot = JSON.parse(JSON.stringify(S));
         snapshot.inDialog = false; snapshot.inBattle = false; snapshot.moving = false;
-        localStorage.setItem(DAY_CHECKPOINT_KEY, JSON.stringify({ version: 2, day: S.day, savedAt: saveRevision, state: snapshot }));
+        const checkpointPayload = JSON.stringify({ version: 2, day: S.day, savedAt: saveRevision, state: snapshot });
+        writeVerified(DAY_CHECKPOINT_KEY, checkpointPayload);
         window.__techopsCheckpointError = null;
       } catch (checkpointError) {
         window.__techopsCheckpointError = String(checkpointError && checkpointError.stack || checkpointError);
       }
     }
     window.__techopsSaveError = null;
+    window.__techopsSaveFailureNotified = false;
     return true;
   } catch (e) {
     window.__techopsSaveError = String(e && e.stack || e);
+    if (!window.__techopsSaveFailureNotified && typeof toast === "function") {
+      window.__techopsSaveFailureNotified = true;
+      toast("⚠️ Save unavailable — progress is still in memory. Check browser storage before closing the game.");
+    }
     return false;
   }
 };
-const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; d.meta.incidents = d.meta.incidents || 0; d.meta.mttr = d.meta.mttr || []; d.meta.hires = d.meta.hires || 0; } return d; } catch (e) { return null; } };
+const normalizeLoadedProfile = d => {
+  if (!d || typeof d !== "object" || Array.isArray(d)) throw new Error("invalid profile save envelope");
+  const fromVersion = Number.isInteger(d._profileSchemaVersion) ? d._profileSchemaVersion : 0;
+  if (fromVersion < 0 || fromVersion > PROFILE_SAVE_SCHEMA_VERSION) {
+    throw new Error(`unsupported profile save schema ${fromVersion}`);
+  }
+
+  // v0 is every profile written before the explicit schema marker. Keep its
+  // established flat shape and add only the defaults current code already
+  // expects; this makes migration deterministic without rewriting player state.
+  d.meta = d.meta && typeof d.meta === "object" && !Array.isArray(d.meta) ? d.meta : {};
+  d.meta.debt = Number.isFinite(d.meta.debt) ? d.meta.debt : 0;
+  d.meta.wrongDiag = Number.isFinite(d.meta.wrongDiag) ? d.meta.wrongDiag : 0;
+  d.meta.recentTypes = Array.isArray(d.meta.recentTypes) ? d.meta.recentTypes : [];
+  d.meta.kb = d.meta.kb && typeof d.meta.kb === "object" && !Array.isArray(d.meta.kb) ? d.meta.kb : {};
+  d.meta.incidents = Number.isFinite(d.meta.incidents) ? d.meta.incidents : 0;
+  d.meta.mttr = Array.isArray(d.meta.mttr) ? d.meta.mttr : [];
+  d.meta.hires = Number.isFinite(d.meta.hires) ? d.meta.hires : 0;
+  for (const key of ["certs","inv","journal","ach","books","lab","staff","infra"]) if (!Array.isArray(d[key])) d[key] = [];
+  for (const key of ["stats","soft","rep"]) if (!d[key] || typeof d[key] !== "object" || Array.isArray(d[key])) d[key] = {};
+  d._profileSchemaVersion = PROFILE_SAVE_SCHEMA_VERSION;
+  window.__techopsSaveMigration = { from: fromVersion, to: PROFILE_SAVE_SCHEMA_VERSION, migrated: fromVersion !== PROFILE_SAVE_SCHEMA_VERSION };
+  return d;
+};
+const notifySaveLoadIssue = message => {
+  window.__techopsSaveLoadNotice = message;
+  if (!window.__techopsSaveLoadFailureNotified && typeof toast === "function") {
+    window.__techopsSaveLoadFailureNotified = true;
+    toast(`⚠️ ${message}`, 5200);
+  }
+};
+const load = () => {
+  let primaryRaw = null;
+  try {
+    primaryRaw = localStorage.getItem("techops_save");
+  } catch (e) {
+    window.__techopsSaveLoadError = String(e && e.stack || e);
+    notifySaveLoadIssue("Browser storage is unavailable. Continue cannot read saved progress in this session.");
+    return null;
+  }
+  if (!primaryRaw) return null;
+  try {
+    const d = JSON.parse(primaryRaw);
+    const normalized = normalizeLoadedProfile(d);
+    window.__techopsSaveLoadError = null;
+    window.__techopsSaveLoadNotice = null;
+    window.__techopsSaveLoadFailureNotified = false;
+    return normalized;
+  } catch (primaryError) {
+    window.__techopsSaveLoadError = String(primaryError && primaryError.stack || primaryError);
+  }
+
+  let backupRaw = null, backup = null;
+  try {
+    backupRaw = localStorage.getItem("techops_save_bak");
+    if (!backupRaw) {
+      notifySaveLoadIssue("The saved profile is unreadable and no compatible backup is available. The original bytes were left untouched.");
+      return null;
+    }
+    backup = normalizeLoadedProfile(JSON.parse(backupRaw));
+  } catch (backupError) {
+    window.__techopsSaveBackupError = String(backupError && backupError.stack || backupError);
+    notifySaveLoadIssue("The saved profile and its backup are unreadable. No save data was overwritten.");
+    return null;
+  }
+
+  // Preserve the corrupt bytes before repairing the primary. If storage is so
+  // constrained that quarantine cannot be retained, leave the corrupt primary
+  // untouched and recover the backup only in memory for this session.
+  let quarantined = false;
+  try {
+    localStorage.setItem("techops_save_corrupt_v1", primaryRaw);
+    if (localStorage.getItem("techops_save_corrupt_v1") !== primaryRaw) throw new Error("corrupt-save quarantine verification failed");
+    quarantined = true;
+    window.__techopsSaveQuarantineError = null;
+  } catch (quarantineError) {
+    window.__techopsSaveQuarantineError = String(quarantineError && quarantineError.stack || quarantineError);
+  }
+  if (quarantined) {
+    try {
+      localStorage.setItem("techops_save", backupRaw);
+      if (localStorage.getItem("techops_save") !== backupRaw) throw new Error("backup restore verification failed");
+      window.__techopsSaveRecovery = "backup-restored";
+    } catch (restoreError) {
+      window.__techopsSaveRecovery = "backup-memory-only";
+      window.__techopsSaveRestoreError = String(restoreError && restoreError.stack || restoreError);
+    }
+  } else {
+    window.__techopsSaveRecovery = "backup-memory-only";
+  }
+  if (typeof toast === "function") toast("⚠️ Recovered the last valid save backup; corrupt save data was isolated where storage allowed.");
+  return normalizeLoadedProfile(backup);
+};
 function loadDayCheckpoint(profile) {
   try {
     const raw = localStorage.getItem(DAY_CHECKPOINT_KEY), envelope = raw && JSON.parse(raw);
