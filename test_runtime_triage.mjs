@@ -144,6 +144,8 @@ test('runtime Night combat timeout matches the authoritative integration budget'
   assert.ok(integrationMatch, 'Night Combat Integration must retain an explicit timeout');
   assert.equal(Number(runtimeMatch[1]), Number(integrationMatch[1]), 'Runtime bot cannot kill Night combat earlier than its authoritative integration gate');
   assert.ok(Number(runtimeMatch[1]) >= 300, 'three-profile Night combat needs the qualified 300-second budget');
+  const runtimeNightBlock = workflow.slice(workflow.indexOf('name: Verify contextual Night Crawler combat'), workflow.indexOf('name: Verify local co-op, solo puzzles and home presentation'));
+  assert.equal(runtimeNightBlock.includes('\\n          #'), false, 'Runtime Night combat shell block must use real newlines, never literal \\n text inside a comment');
 });
 test('co-op instrumentation does not relax original movement or isolation assertions', () => {
   const source = fs.readFileSync(new URL('./scripts/good_dogs_coop_bot.mjs', import.meta.url), 'utf8');
