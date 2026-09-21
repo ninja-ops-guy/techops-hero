@@ -71,6 +71,9 @@ for (const token of [
   assert.ok(profiler.includes(token), `performance collector lost required R1 evidence field: ${token}`);
 }
 assert.ok(profiler.includes("Desktop Chromium evidence only; not physical mobile evidence."), "desktop profiler must not imply phone certification");
+const perfWorkflow = fs.readFileSync(".github/workflows/performance-evidence.yml", "utf8");
+assert.ok(perfWorkflow.includes("github.event.pull_request.head.sha || github.sha"), "performance evidence workflow must checkout the exact PR head instead of a synthetic merge commit");
+assert.ok(perfWorkflow.includes("persist-credentials: false"), "performance evidence workflow checkout must remain read-only");
 
 const report = {
   localStartupScripts: local.length,
