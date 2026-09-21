@@ -115,7 +115,17 @@ const originalGetItem = localStorage.getItem;
 localStorage.getItem = function() { throw new Error("SecurityError: storage denied"); };
 assert.strictEqual(context.loadProfile(), null);
 assert.match(context.window.__techopsSaveLoadError, /SecurityError/);
+assert.match(context.window.__techopsSaveLoadNotice, /Browser storage is unavailable/);
 localStorage.getItem = originalGetItem;
+
+// An unreadable primary with no backup remains untouched and surfaces a clear notice.
+data.set("techops_save", "{unrecoverable");
+data.delete("techops_save_bak");
+assert.strictEqual(context.loadProfile(), null);
+assert.strictEqual(data.get("techops_save"), "{unrecoverable");
+assert.match(context.window.__techopsSaveLoadNotice, /no compatible backup/);
+data.set("techops_save", stablePrimary);
+data.set("techops_save_bak", stablePrimary);
 
 // Legacy unversioned profiles migrate in memory to the current explicit schema.
 const legacyProfile = { day: 3, budget: 55, meta: { marker: "legacy" }, certs: ["ccna"] };
