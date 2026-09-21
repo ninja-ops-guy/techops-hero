@@ -84,7 +84,7 @@ try{
   ]){const copy=structuredClone(ciReport);mutate(copy.checks[0].observations);assert.equal(assessCI(copy).status,'blocked',reason);}
 
   const freeze=req('candidate_freeze');
-  const freezeCheck={id:freeze.id,profile:'candidate',status:'passed',evidence_type:'freeze-record',observations:{head:source.head,tree:source.tree,fingerprint:source.fingerprint,frozen_at:'2026-09-21T04:30:00Z',change_policy:'invalidate-all-evidence'}};
+  const freezeCheck={id:freeze.id,profile:'candidate',status:'passed',evidence_type:'freeze-record',observations:{head:source.head,tree:source.tree,fingerprint:source.fingerprint,frozen_at:'2026-09-21T04:30:00Z',change_policy:'invalidate-all-evidence',freeze_record:{artifact_path:'capture.txt',sha256:captureSha}}};
   assert.equal(assessSingle(freeze,freezeCheck).status,'ready','explicit candidate freeze should pass');
   const staleFreeze=structuredClone(freezeCheck);staleFreeze.observations.fingerprint='f'.repeat(64);
   assert.equal(assessSingle(freeze,staleFreeze).status,'blocked','stale freeze cannot certify');
@@ -96,25 +96,34 @@ try{
   assert.equal(assessSingle(deployment,staleDeployment).status,'blocked','deployment must match candidate HEAD');
 
   const vertical=req('vertical_slice_checkpoints');
-  const checkpointCheck={id:vertical.id,profile:'desktop',status:'passed',evidence_type:'visual-checkpoint',fixture:false,operator:'Visual reviewer',device:'Desktop reference',browser:'Chromium',observations:{checkpoints:vertical.required_cases.map(id=>({id,passed:true,reviewed:true,blocker:false,artifact_path:'capture.txt',sha256:captureSha}))}};
-  assert.equal(assessEvidence({schema_version:1,requirements:[{...vertical,profiles:['desktop']}]},[{...structuredClone(baseReport),checks:[checkpointCheck]}],{source,root}).status,'ready','reviewed vertical-slice checkpoints should pass');
-  const missingCheckpoint=structuredClone(checkpointCheck);missingCheckpoint.observations.checkpoints.pop();
-  assert.equal(assessEvidence({schema_version:1,requirements:[{...vertical,profiles:['desktop']}]},[{...structuredClone(baseReport),checks:[missingCheckpoint]}],{source,root}).status,'blocked');
+  const verticalArtifacts=vertical.required_cases.map(id=>{
+    const artifactPath=`checkpoints/${id}.txt`,bytes=`checkpoint ${id}`;
+    fs.mkdirSync(path.dirname(path.join(root,artifactPath)),{recursive:true});
+    fs.writeFileSync(path.join(root,artifactPath),bytes);
+    return {path:artifactPath,sha256:digest(bytes)};
+  });
+  const checkpointCheck={id:vertical.id,profile:'desktop',status:'passed',evidence_type:'visual-checkpoint',fixture:false,operator:'Visual reviewer',device:'Desktop reference',browser:'Chromium',observations:{checkpoints:vertical.required_cases.map((id,index)=>({id,passed:true,reviewed:true,blocker:false,artifact_path:verticalArtifacts[index].path,sha256:verticalArtifacts[index].sha256}))}};
+  const verticalReport={...structuredClone(baseReport),artifacts:[...structuredClone(baseReport.artifacts),...verticalArtifacts],checks:[checkpointCheck]};
+  assert.equal(assessEvidence({schema_version:1,requirements:[{...vertical,profiles:['desktop']}]},[verticalReport],{source,root}).status,'ready','reviewed vertical-slice checkpoints should pass');
+  const missingCheckpoint=structuredClone(verticalReport);missingCheckpoint.checks[0].observations.checkpoints.pop();
+  assert.equal(assessEvidence({schema_version:1,requirements:[{...vertical,profiles:['desktop']}]},[missingCheckpoint],{source,root}).status,'blocked');
+  const duplicateCapture=structuredClone(verticalReport);duplicateCapture.checks[0].observations.checkpoints[1].artifact_path=duplicateCapture.checks[0].observations.checkpoints[0].artifact_path;duplicateCapture.checks[0].observations.checkpoints[1].sha256=duplicateCapture.checks[0].observations.checkpoints[0].sha256;
+  assert.equal(assessEvidence({schema_version:1,requirements:[{...vertical,profiles:['desktop']}]},[duplicateCapture],{source,root}).status,'blocked','each vertical checkpoint needs a distinct retained capture');
 
   const input=req('device_input_matrix');
-  const inputCheck={id:input.id,profile:'candidate',status:'passed',evidence_type:'device-input-matrix',observations:{cases:input.required_cases.map(id=>({id,passed:true,progression_reachable:true,prompt_action_match:true,lost_input:false,duplicate_input:false}))}};
+  const inputCheck={id:input.id,profile:'candidate',status:'passed',evidence_type:'device-input-matrix',observations:{matrix_artifact:{artifact_path:'capture.txt',sha256:captureSha},cases:input.required_cases.map(id=>({id,passed:true,progression_reachable:true,prompt_action_match:true,lost_input:false,duplicate_input:false}))}};
   assert.equal(assessSingle(input,inputCheck).status,'ready');
   const badInput=structuredClone(inputCheck);badInput.observations.cases[0].prompt_action_match=false;
   assert.equal(assessSingle(input,badInput).status,'blocked');
 
   const persistence=req('persistence_matrix');
-  const persistenceCheck={id:persistence.id,profile:'candidate',status:'passed',evidence_type:'persistence-matrix',observations:{cases:persistence.required_cases.map(id=>({id,passed:true,equivalent_state:true,data_loss:false,duplicate_events:0,duplicate_rewards:0}))}};
+  const persistenceCheck={id:persistence.id,profile:'candidate',status:'passed',evidence_type:'persistence-matrix',observations:{matrix_artifact:{artifact_path:'capture.txt',sha256:captureSha},cases:persistence.required_cases.map(id=>({id,passed:true,equivalent_state:true,data_loss:false,duplicate_events:0,duplicate_rewards:0}))}};
   assert.equal(assessSingle(persistence,persistenceCheck).status,'ready');
   const badPersistence=structuredClone(persistenceCheck);badPersistence.observations.cases[2].duplicate_events=1;
   assert.equal(assessSingle(persistence,badPersistence).status,'blocked');
 
   const performance=req('performance_budget');
-  const desktopPerformance={id:performance.id,profile:'desktop-chromium',status:'passed',evidence_type:'performance-profile',fixture:false,operator:'Perf tester',device:'Desktop reference',browser:'Chromium',physical_device:false,observations:{first_playable_ms:2500,core_input_p95_ms:70,duration_seconds:1800,asset_decode_failures:0,softlocks:0,blocking_stalls:0}};
+  const desktopPerformance={id:performance.id,profile:'desktop-chromium',status:'passed',evidence_type:'performance-profile',fixture:false,operator:'Perf tester',device:'Desktop reference',browser:'Chromium',physical_device:false,observations:{first_playable_ms:2500,core_input_p95_ms:70,duration_seconds:1800,asset_decode_failures:0,softlocks:0,blocking_stalls:0,measurement_artifact:{artifact_path:'capture.txt',sha256:captureSha}}};
   assert.equal(assessEvidence({schema_version:1,requirements:[{...performance,profiles:['desktop-chromium']}]},[{...structuredClone(baseReport),checks:[desktopPerformance]}],{source,root}).status,'ready');
   const slow=structuredClone(desktopPerformance);slow.observations.first_playable_ms=3500;
   assert.equal(assessEvidence({schema_version:1,requirements:[{...performance,profiles:['desktop-chromium']}]},[{...structuredClone(baseReport),checks:[slow]}],{source,root}).status,'blocked','budget regression must block');
@@ -124,13 +133,13 @@ try{
   assert.equal(assessEvidence({schema_version:1,requirements:[{...performance,profiles:['iphone-safari']}]},[{...structuredClone(baseReport),checks:[mobilePerf]}],{source,root}).status,'ready');
 
   const playtest=req('fresh_context_playtest');
-  const playtestCheck={id:playtest.id,profile:'r1-vertical-slice',status:'passed',evidence_type:'human-playtest',fixture:false,operator:'Fresh-context tester',device:'Desktop',browser:'Chromium',observations:{route_completed:true,developer_intervention:false,assistance:[],confusion_points:['Workstation prompt learned from desk proximity'],blocking_confusion:0,terminal_state:'returned',duration_seconds:1200,checkpoints_seen:[...playtest.required_cases]}};
+  const playtestCheck={id:playtest.id,profile:'r1-vertical-slice',status:'passed',evidence_type:'human-playtest',fixture:false,operator:'Fresh-context tester',device:'Desktop',browser:'Chromium',observations:{route_completed:true,developer_intervention:false,assistance:[],confusion_points:['Workstation prompt learned from desk proximity'],blocking_confusion:0,terminal_state:'returned',duration_seconds:1200,checkpoints_seen:[...playtest.required_cases],playtest_record:{artifact_path:'capture.txt',sha256:captureSha}}};
   assert.equal(assessSingle(playtest,playtestCheck).status,'ready');
   const coached=structuredClone(playtestCheck);coached.observations.developer_intervention=true;
   assert.equal(assessSingle(playtest,coached).status,'blocked','developer intervention invalidates fresh-context comprehension');
 
   const known=req('known_issue_gate');
-  const knownCheck={id:known.id,profile:'candidate',status:'passed',evidence_type:'release-governance',observations:{unclassified_count:0,issues:[{id:'#4-device-evidence',severity:'P2',status:'open',disposition:'Must close before final public release evidence is signed'},{id:'#old-p0',severity:'P0',status:'closed'}]}};
+  const knownCheck={id:known.id,profile:'candidate',status:'passed',evidence_type:'release-governance',observations:{unclassified_count:0,issue_inventory:{artifact_path:'capture.txt',sha256:captureSha},issues:[{id:'#4-device-evidence',severity:'P2',status:'open',disposition:'Accepted for this candidate with explicit owner disposition'},{id:'#old-p0',severity:'P0',status:'closed'}]}};
   assert.equal(assessSingle(known,knownCheck).status,'ready');
   const openP1=structuredClone(knownCheck);openP1.observations.issues.push({id:'#blocker',severity:'P1',status:'open',disposition:'pending'});
   assert.equal(assessSingle(known,openP1).status,'blocked','open P0/P1 must block certification');
