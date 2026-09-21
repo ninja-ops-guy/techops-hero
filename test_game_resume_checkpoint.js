@@ -117,6 +117,25 @@ assert.strictEqual(context.loadProfile(), null);
 assert.match(context.window.__techopsSaveLoadError, /SecurityError/);
 localStorage.getItem = originalGetItem;
 
+// Legacy unversioned profiles migrate in memory to the current explicit schema.
+const legacyProfile = { day: 3, budget: 55, meta: { marker: "legacy" }, certs: ["ccna"] };
+data.set("techops_save", JSON.stringify(legacyProfile));
+const migratedLegacy = context.loadProfile();
+assert.strictEqual(migratedLegacy._profileSchemaVersion, 1, "legacy profile is promoted to the explicit current schema");
+assert.deepStrictEqual(context.window.__techopsSaveMigration, { from: 0, to: 1, migrated: true });
+assert.strictEqual(migratedLegacy.meta.marker, "legacy", "migration preserves unknown/canonical player metadata");
+assert.deepStrictEqual(migratedLegacy.certs, ["ccna"], "migration preserves existing player collections");
+
+// A future schema cannot be silently interpreted by older code; a valid backup
+// remains the only permitted recovery path.
+data.set("techops_save_bak", stablePrimary);
+data.set("techops_save", JSON.stringify({ _profileSchemaVersion: 99, day: 99, meta: { future: true } }));
+const futureRecovered = context.loadProfile();
+assert.ok(futureRecovered && futureRecovered.meta, "unsupported future schema falls back to the prior compatible backup");
+assert.match(context.window.__techopsSaveLoadError, /unsupported profile save schema 99/);
+assert.strictEqual(context.window.__techopsSaveRecovery, "backup-restored");
+data.set("techops_save", stablePrimary);
+
 const storyBeforeNight = data.get("techops_save");
 const checkpointBeforeNight = data.get(context.DAY_CHECKPOINT_KEY);
 context.S.meta._standaloneMode = "nightcrawler";
