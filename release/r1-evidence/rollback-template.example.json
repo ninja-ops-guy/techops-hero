@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "rollback_target_sha": "<40-character previously qualified commit>",
+  "rollback_tested": true,
+  "forward_restore_tested": true,
+  "save_compatibility_checked": true,
+  "environment": "production-like deployment",
+  "notes": "Describe rollback, forward restore, and save compatibility observations."
+}
