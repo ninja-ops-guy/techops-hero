@@ -81,7 +81,7 @@ const native = require("./campaign_native_act1.js");
 assert.strictEqual(native.ensureWorld(), true);
 
 native.openStandup();
-assert.strictEqual(lastDialog.name, "CAMPAIGN STANDUP");
+assert.strictEqual(lastDialog.name, "MORNING STANDUP");
 choose("Assign queue: Mike investigates access");
 assert.strictEqual(state().flags.day_work_unlocked, false);
 

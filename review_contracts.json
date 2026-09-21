@@ -2,7 +2,28 @@
   "schema_version": 1,
   "domains": [
     {
-      "name": "Night recovery and delayed Day notices",
+      "name": "Readable gameplay and canonical standup",
+      "files": [
+        "runtime_hud.js",
+        "night_hooks.js",
+        "night_combat.js",
+        "good_boys_hud_lite.js",
+        "good_boys_legacy_hud_filter.js",
+        "campaign_native_act1_visuals_impl.js",
+        "v725_hooks.js",
+        "day_cinematic_mobile_guard.js"
+      ],
+      "tests": [
+        "test_runtime_hud.js",
+        "test_good_dogs_hud_readability.js",
+        "test_good_boys_ui_ownership.js",
+        "test_campaign_native_act1_visuals.js",
+        "test_cinematic_presentation.js",
+        "scripts/presentation_quality_browser.mjs"
+      ]
+    },
+    {
+      "name": "Night lifecycle, recovery and delayed Day notices",
       "files": [
         "game.js",
         "runtime_night.js",
@@ -11,6 +32,8 @@
         "production_wrapper_guard.js"
       ],
       "tests": [
+        "test_night_lifecycle.js",
+        "scripts/night_lifecycle_browser.mjs",
         "test_night_recovery.js",
         "test_day_notice_queue.js",
         "test_production_compositor.js",
@@ -142,6 +165,13 @@
       "spot_check": "Enter and exit Night twice from both title and Day; confirm one shell install, no held input, no duplicate blockers, and exact Day restoration."
     },
     {
+      "id": "NIGHT_MENU_GESTURE_STABILITY",
+      "failure_mode": "Unchanged frame updates replace the campaign button's text child during a held pointer press, and native WebKit fails to deliver the terminal click despite a stable world and unobstructed target.",
+      "invariant": "Unchanged frames retain the campaign control, label node, click owner, attributes and inline geometry without redundant writes. Actual label changes, resize and specialized-HUD handoffs update only changed presentation. The lifecycle regression must fail if unconditional writes return; one native held gesture must still open the campaign menu without retry, forced click or narrative mutation.",
+      "test_ref": "test_night_lifecycle.js",
+      "spot_check": "Run scripts/night_lifecycle_browser.mjs in actual desktop WebKit on the exact candidate: hold the native campaign press for 100 ms across render frames, verify stable label identity through pointerdown/pointerup/click and an immediately visible Sector 04 menu, then resume the same world with evidence unchanged. Keep the real mobile tap check; unit DOM mutation checks alone do not establish native click delivery."
+    },
+    {
       "id": "NIGHT_CHECKPOINT_RECOVERY",
       "failure_mode": "An interrupted run loses its world, duplicates rewards, or silently starts fresh when restoration fails.",
       "invariant": "Validated standalone checkpoints restore the most recent world without changing campaign saves; failed restore stops at the title until an explicit action. Completion tombstones precede settlement.",
@@ -231,6 +261,34 @@
       "invariant": "Only visible engine-convergence polling spends the launch timeout; a visible canonical difficulty chooser, active authored cinematic, or hidden document pauses the budget without selecting, skipping, or reissuing entry. A missing chooser or stalled visible engine still fails within the original budget.",
       "test_ref": "test_production_mode_router.js",
       "spot_check": "Start fresh Night, leave difficulty unanswered for at least 16 seconds, then choose Standard and finish the intro. Verify one launch and working movement/Resume. Repeat with long cinema and backgrounding; hide a missing chooser or stall the engine to verify bounded failure."
+    },
+    {
+      "id": "SCREEN_SPACE_GAMEPLAY_HUD",
+      "failure_mode": "World scaling shrinks health, objectives, combat instructions and captions below legible screen size.",
+      "invariant": "Street Night and Good Dogs essential HUD text stays at least 13 CSS pixels with full wrapped objectives, distinct cards, reserved Night run-menu space and balanced transforms. The original render owners retain world, combat, input and narrative authority.",
+      "test_ref": "test_runtime_hud.js",
+      "spot_check": "At 568×320 and 320×568, inspect actual Night and Good Dogs HUDs, then resize. Verify health, threat, location, objective and caption copy without moving world coordinates."
+    },
+    {
+      "id": "GOOD_DOGS_READABLE_MESSAGE_OWNER",
+      "failure_mode": "A readable replacement hides unique combat or narrative feedback, duplicates the legacy strip, or mislabels co-op ownership.",
+      "invariant": "The CSS-space HUD wraps objectives and unique messages, labels solo YOU/AI or local P1/P2 according to the active actor, and suppresses legacy feedback only while it owns the replacement.",
+      "test_ref": "test_good_dogs_hud_readability.js",
+      "spot_check": "Switch the active dog, enter local co-op, trigger unique feedback and down a partner; compare labels and health. Remove replacement ownership and verify the legacy unique message returns."
+    },
+    {
+      "id": "STANDUP_CANONICAL_BOARD",
+      "failure_mode": "Baked artwork claims all tickets are assigned to unrelated people before the actual standup choices.",
+      "invariant": "The read-only board derives all three tickets, owners and confirmation status from canonical records, never mutates assignments, and cannot present stale baked ownership artwork.",
+      "test_ref": "test_campaign_native_act1_visuals.js",
+      "spot_check": "Read the first board, assign one ticket to Amit, then confirm the meeting and reopen it. Compare board and dialogue; scroll the small-screen board to see all three real tickets."
+    },
+    {
+      "id": "SHARED_CINEMATIC_VISIBLE_INPUT",
+      "failure_mode": "Tab skips a cutscene, hidden time advances its story, or canvas-only choices exclude keyboard input.",
+      "invariant": "Shared v725 scenes use explicit skip/pause keys and semantic captions/choice controls; hidden time freezes until visible Resume, unresolved choices cannot be skipped, focus returns on exit, and repeated settlement commits once.",
+      "test_ref": "test_cinematic_presentation.js",
+      "spot_check": "Tab through Pause/Resume/Skip and actual choice labels. Background a scene, return, Resume, and double Skip; verify correct saved state once and restored focus."
     }
   ],
   "deletion_ledger": [
@@ -269,6 +327,18 @@
       "removed": "Mobile visual timer writes to the shared Good Dogs hide-HUD flag.",
       "reason": "They raced the cinematic guard and caused intermittent missing HUDs. Responsive style remains passive.",
       "resurrection_check": "test_production_presentation_guard.js"
+    },
+    {
+      "id": "RETIRED_BAKED_STANDUP_OWNERSHIP",
+      "removed": "Standup image tiles containing fabricated ticket IDs, unrelated owners and premature 12/12 owned assertions; source images remain available for historical inspection.",
+      "reason": "Presentation now reads the same canonical ticket records as the conversation.",
+      "resurrection_check": "test_campaign_native_act1_visuals.js"
+    },
+    {
+      "id": "RETIRED_ANY_KEY_CINEMATIC_SKIP",
+      "removed": "Shared cinematic any-key skip and pointerdown-only semantic control activation.",
+      "reason": "Navigation keys must preserve focus and story state; native buttons support keyboard and assistive activation.",
+      "resurrection_check": "test_cinematic_presentation.js"
     }
   ],
   "review_title": "Production quality pass review guide",

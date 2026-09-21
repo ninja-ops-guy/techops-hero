@@ -2,13 +2,13 @@
  * Loaded before the production compositor captures the parser Night draw chain.
  * Preserves all v7.36 world/combat rendering while suppressing only its old
  * duplicate duo HUD and the shared Night Crawler status bars once the final
- * single-HUD authority is active. Unique center messages remain visible;
- * only exact repeated briefing/objective strings lose the competing strip.
+ * single-HUD authority is active. Unique messages move to its readable strip
+ * only while that renderer owns them; the legacy strip remains the fallback.
  */
 (function(root){
   "use strict";
   if(!root||root.TechOpsGoodBoysLegacyHudFilter)return;
-  var VERSION=3,base=null,installed=false,suppressed=0;
+  var VERSION=4,base=null,installed=false,suppressed=0;
   var REPEATED_BRIEFING=Object.freeze({4:"VERIFY THE PRISONER IN CELL 118",6:"WALDO IS IN CELL 1984",7:"REACH THE MAINTENANCE SHUTTLE"});
   function active(){try{return !!(root.__goodBoysHudLiteInstalled&&root.NM&&root.NM._v736&&root.ctx);}catch(e){return false;}}
   function near(a,b,t){return Math.abs(Number(a)-Number(b))<=(t==null?.75:t);}
@@ -25,6 +25,7 @@
         var n=root.NM,c=n._v736,guide=null,messageLines=null,messageY=0,msgFont=W<620?10:13;
         try{guide=root.TechOpsGameplayExperience&&root.TechOpsGameplayExperience.objective(n);}catch(_){}
         var sameMission=guide&&Number(guide.mission)===Number(c.m),duplicateMessage=!!(sameMission&&(n.msg===guide.text||n.msg===REPEATED_BRIEFING[c.m]));
+        try{var hud=root.TechOpsGoodBoysHudLite;if(hud&&hud.ownsMessage&&hud.ownsMessage(n))duplicateMessage=true;}catch(_){}
         var duplicateDecrypt=!!(sameMission&&Number(c.m)===6&&guide.phase==="decrypt"&&Number(c.decrypt)>0);
         var cell=null;try{var staging=root.TechOpsOrbitalStaging,art=root.TechOpsArtHandoff,registry=root.TechOpsLevelRegistry;if(Number(c.m)===4&&c.evidence&&!c.cellOpened&&staging&&staging.profile(n)&&art&&art.image('prison')&&registry&&registry.goodDogsCell118)cell=registry.goodDogsCell118();}catch(_){}
         var oFillRect=x.fillRect,oStrokeRect=x.strokeRect,oFillText=x.fillText,oDrawImage=x.drawImage;

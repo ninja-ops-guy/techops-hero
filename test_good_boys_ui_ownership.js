@@ -35,6 +35,17 @@ for(const width of [320,640])for(const message of ["VERIFY THE PRISONER IN CELL 
   calls.length=0;context.TechOpsGameplayExperience.objective=()=>null;context.__techopsFinalParserDrawNM();assert.ok(calls.some(c=>c[1]===message),"without a visible replacement HUD the center message survives");
 }
 
+// A unique center message is retired only while the readable HUD owns it.
+{
+  const calls=[],ctx={canvas:{width:640,height:720},measureText:s=>({width:String(s).length*7}),fillRect(...a){calls.push(["rect",...a]);},strokeRect(){},fillText(...a){calls.push(["text",...a]);},drawImage(){}};
+  let owns=true;
+  const context={console,ctx,NM:{_v736:{m:4},msg:"PERFECT TIMING"},__goodBoysHudLiteInstalled:true,TechOpsGoodBoysHudLite:{ownsMessage:n=>owns&&n===context.NM}};
+  context.__techopsFinalParserDrawNM=()=>{ctx.fillRect(60,96,520,29);ctx.fillText("PERFECT TIMING",320,122);ctx.fillText("WORLD LABEL",320,220);};
+  context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("good_boys_legacy_hud_filter.js","utf8"),context);
+  context.__techopsFinalParserDrawNM();assert.deepStrictEqual(calls,[["text","WORLD LABEL",320,220]]);
+  owns=false;calls.length=0;context.__techopsFinalParserDrawNM();assert.equal(calls.length,3,"legacy fallback returns immediately when replacement releases ownership");
+}
+
 {
   const calls=[],ctx={canvas:{width:640,height:720},fillRect(...a){calls.push(["rect",...a]);},strokeRect(...a){calls.push(["stroke",...a]);},fillText(...a){calls.push(["text",...a]);},drawImage(){}},context={console,ctx,NM:{_v736:{m:6,decrypt:35}},__goodBoysHudLiteInstalled:true,TechOpsGameplayExperience:{objective:()=>({mission:6,phase:"decrypt",text:"DEFEND THE UPLINK"})}};
   context.__techopsFinalParserDrawNM=()=>{ctx.fillRect(170,136,300,20);ctx.fillRect(174,140,292*(1-35/60),12);ctx.fillText("K DECRYPTING CELL 1984 — 35s",320,150);ctx.fillRect(400,308,48,6);};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync("good_boys_legacy_hud_filter.js","utf8"),context);context.__techopsFinalParserDrawNM();assert.deepStrictEqual(calls,[["rect",400,308,48,6]],"native HUD countdown replaces only its duplicate strip; world uplink health stays visible");

@@ -154,3 +154,65 @@ This narrowly addresses the observed live softlock. Small-landscape HUD sizing
 remains open; it was deferred when the live launch defect was found. Physical
 phones, unassisted complete journeys, authored production art and enforced
 branch protection remain release requirements.
+
+## Follow-up: readable gameplay and truthful presentation
+
+The September 21 presentation pass moves Street Night and Good Dogs status
+cards into CSS coordinates. Essential HUD text is at least 13 screen pixels;
+full objectives and unique feedback wrap instead of shrinking or truncating.
+Night combat captions now reach the existing render owner. Good Dogs labels
+distinguish YOU/AI from local P1/P2 and track the active actor. World coordinates,
+combat, collision, story progression and the rendering schedule remain owned
+by the existing runtime. Specialized Waldo/Sector 04 HUDs and world signage
+remain outside this typography pass.
+
+Shared v725 scenes now expose actual captions and choice labels through native
+HTML controls. Tab navigates, Enter activates a focused control, Escape pauses,
+and explicit Skip cannot bypass an unresolved choice. Hidden time freezes until
+visible Resume; scene-bound callbacks prevent a stale skip/frame from settling
+a replacement scene. Focus returns after completion. These protections extend
+the existing idempotent narrative-settlement contracts.
+
+The standup board now reads the three canonical ticket records and confirmation
+flags. It no longer displays unrelated staff, fabricated ticket IDs or a baked
+12/12 ownership claim. Small boards scroll at readable type size; dialogue stays
+the sole assignment authority. Workstation copy now speaks about Mike's shift
+instead of internal flags, authored-state requirements or future reveal rules.
+Historical image files are retained; only their misleading live binding retires.
+
+Validation includes five viewport matrices for HUD geometry and real browser
+Day boards, narrow-landscape Night and Good Dogs through their entry controls,
+actual canvas font projection and actor clearance, cinematic native keyboard
+activation, modal/focus restoration and complete aggregate contracts. The PR
+receipt records final candidate identity and remote results. Emulation and scene
+fixtures do not count as physical-device or unassisted campaign qualification.
+
+The updated production gap analysis prioritizes these concrete remaining items:
+
+| Priority | Gap | Required revision and acceptance |
+| --- | --- | --- |
+| P0 editorial | Company film is currently described in dialogue by `playFeliciaVideo()` | Author visible aircraft/Felicia shots, the brief corruption and return to the corporate edit; synchronize captions and preserve canonical completion/skip state |
+| P0 art/state | Plating background bakes in LINE STOPPED and ASSEMBLED EXAMPLE even after restoration | Supply neutral or state-specific approved layers; verified restoration must display a recovered workstation with no contradictory baked text |
+| P0 character art | Cinematic Mike uses a provisional silhouette; action atlas has no approved states | Review an appropriate pose and decoded source, exercise decode failure and preserve the atlas quarantine until semantic approval |
+| P1 animation | Dog gait remains unapproved | Approve alternating limb contacts, anchored body, clean alpha, start/stop/landing/dash transitions and native-speed world playback |
+| P0 qualification | No physical-phone, complete-route, soak or assistive-technology receipt | Named iPhone/Android touch/rotation/background/audio/storage runs, unassisted campaign and solo/local co-op, 30-minute sessions, screen reader and keyboard review |
+| Release | Branch protection is not enforced | Repository administrator enables the exact named checks; attach deployment identity and rehearse rollback before release certification |
+
+The opening vertical slice remains the next certification target. These changes
+improve readability, input reliability and narrative consistency; they do not
+replace the authored art, editorial work and independent playtesting needed for
+the requested AAA quality bar.
+
+## Follow-up: Night campaign held-press stability
+
+Night lifecycle run `35553053222` on baseline `c253850` demonstrated a desktop
+WebKit failure with a native 100 ms campaign-button press: the label node changed
+from identity 2 at pointerdown to 3 at pointerup, and no click arrived. State and
+world identity, 100 HP, target hit ownership and the absence of a modal stayed
+stable. The correction preserves unchanged control DOM between frames;
+`test_night_lifecycle.js` guards against reintroducing redundant writes while
+still requiring real label, resize and HUD-handoff updates. The same held-press
+browser gesture must validate native click delivery on the corrected source.
+Fixed-source WebKit validation is a merge requirement recorded in the PR #63
+receipt; the baseline trace does not by itself certify the correction or
+physical-device behavior.

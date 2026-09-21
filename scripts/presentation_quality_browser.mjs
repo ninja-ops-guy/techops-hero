@@ -19,6 +19,58 @@ const profiles = [
 const report = { status: 'running', fixture: true, profiles: [] };
 let browser;
 
+// Observe actual canvas calls for two frames; no gameplay state or render owner
+// is replaced. The transform and DOM projection determine the visible font.
+async function hudContract(page, mode) {
+  const evidence = await page.evaluate(async mode => {
+    const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+    const bounds = canvas.getBoundingClientRect(), calls = [], native = ctx.fillText;
+    ctx.fillText = function(value, x, y, ...rest) {
+      const matrix = this.getTransform(), size = Number(this.font.match(/([\d.]+)px/)?.[1]);
+      const width=this.measureText(value).width*Math.hypot(matrix.a,matrix.b)*bounds.width/canvas.width;
+      const anchor=(matrix.a*x+matrix.c*y+matrix.e)*bounds.width/canvas.width;
+      calls.push({ text:String(value), size:size * Math.hypot(matrix.c,matrix.d) * bounds.height / canvas.height,
+        x:anchor-(this.textAlign==='center'?width/2:this.textAlign==='right'?width:0),width,
+        y:(matrix.b*x+matrix.d*y+matrix.f)*bounds.height/canvas.height });
+      return native.call(this,value,x,y,...rest);
+    };
+    try { await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
+    finally { ctx.fillText = native; }
+    const hud = mode === 'night' ? window.__techOpsNightHudEvidence : window.TechOpsGoodBoysHudLite.layout();
+    const menu=document.getElementById('night-campaign'),rect=mode==='night'&&menu?.getBoundingClientRect();
+    const menuEvidence=rect?{x:rect.left-bounds.left,y:rect.top-bounds.top,width:rect.width,height:rect.height,font:parseFloat(getComputedStyle(menu).fontSize),hit:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)===menu}:null;
+    const probe=document.getElementById('night-hud-safe-area'),host=document.getElementById('night-runtime-ui');
+    const safeArea=probe&&host?Object.fromEntries(['top','right','bottom','left'].map(side=>[side,{padding:getComputedStyle(probe).getPropertyValue('padding-'+side),variable:getComputedStyle(host).getPropertyValue('--night-hud-safe-'+side),inline:host.style.getPropertyValue('--night-hud-safe-'+side)}])):null;
+    return { hud, calls, menu:menuEvidence,safeArea,canvas:{width:bounds.width,height:bounds.height}, actorTop:NM.y*bounds.height/canvas.height };
+  }, mode);
+  const hud = evidence.hud;
+  assert.ok(hud && !hud.blocked, mode+' readable HUD must render');
+  const panels = mode === 'night' ? hud.panels : [...hud.cards,hud.objective,...(hud.message?[hud.message]:[])];
+  for (const panel of panels) {
+    assert.ok(panel.x >= 0 && panel.y >= 0 && panel.x+panel.width <= evidence.canvas.width+1 && panel.y+panel.height <= evidence.canvas.height+1, mode+' HUD panel stays in canvas');
+  }
+  const bottom = Math.max(...panels.map(p=>p.y+p.height));
+  assert.ok(bottom <= evidence.actorTop-4, mode+' HUD leaves the grounded actor unobscured: '+bottom+' vs '+evidence.actorTop);
+  if(mode==='night'){
+    const menu=evidence.menu;assertTouchTarget(menu,'Night run menu');assert.ok(menu.font>=13&&menu.hit,'Night menu is readable and reachable');
+    assert.ok(hud.menu,'HUD reserves the real menu rectangle');
+    for(const key of ['x','y','width','height'])assert.ok(Math.abs(menu[key]-hud.menu[key])<1,'menu follows reserved '+key);
+    for(const call of evidence.calls.filter(c=>c.y<=bottom)){
+      const overlapX=Math.min(call.x+call.width,menu.x+menu.width)-Math.max(call.x,menu.x);
+      const overlapY=Math.min(call.y,menu.y+menu.height)-Math.max(call.y-call.size,menu.y);
+      assert.ok(overlapX<=0||overlapY<=0,'Night run menu cannot cover '+call.text);
+    }
+  }
+  const labels = mode === 'night' ? [/^HP \d+$/, /^FOCUS$/, /^\$/] : [/^KATRIN$/, /^MANCHEZ$/, /^SYNC /, /^MISSION /, /^YOU$/, /^AI$/];
+  for (const label of labels) {
+    // World-attached character labels can repeat a HUD name below the cards.
+    const painted = evidence.calls.filter(call=>label.test(call.text) && call.y <= bottom);
+    assert.ok(painted.length, mode+' paints '+label);
+    assert.ok(painted.every(call=>call.size>=12.999), mode+' actual rendered text is at least 13 CSS pixels: '+JSON.stringify(painted));
+  }
+  return evidence;
+}
+
 async function settledText(page) {
   // Tapping the production dialogue copy completes its typewriter, and does not
   // activate a choice. Wait for a stable copy before taking a visual receipt.
@@ -41,6 +93,16 @@ async function sceneContract(page, profile, scene) {
       font: parseFloat(getComputedStyle(document.getElementById('dlg-text')).fontSize),
       animation: stage ? getComputedStyle(stage).animationName : 'none',
       background: bg ? getComputedStyle(bg).backgroundImage : null,
+      board: stage?.querySelector('.a1-live-board') ? {
+        count: stage.querySelector('.a1-board-count').textContent,
+        rows: [...stage.querySelectorAll('.a1-board-row')].map(row => ({ id: row.dataset.ticketId, title: row.querySelector('.a1-board-ticket').textContent, owner: row.querySelector('.a1-board-owner').textContent, font: parseFloat(getComputedStyle(row).fontSize) })),
+        tabIndex: stage.querySelector('.a1-live-board').tabIndex,
+        bounds: stage.querySelector('.a1-live-board').getBoundingClientRect().toJSON(),
+        scrollWidth: stage.querySelector('.a1-live-board').scrollWidth,
+        clientWidth: stage.querySelector('.a1-live-board').clientWidth,
+        bakedProps: stage.querySelectorAll('.a1-bg, .a1-prop').length,
+        canonical: TechOpsCampaignNativeAct1Visuals.standupBoard(TechOpsCampaign.load(localStorage))
+      } : null,
       touchVisible: getComputedStyle(document.getElementById('touch-ui')).visibility,
       viewport: { width: innerWidth, height: innerHeight },
       scrollWidth: document.body.scrollWidth
@@ -56,6 +118,24 @@ async function sceneContract(page, profile, scene) {
   assert.ok(state.font >= 13, 'body copy must remain readable');
   assert.equal(state.animation, 'none', 'reduced motion removes scene entrance animation');
   if (state.stage) assert.equal(state.touchVisible, 'hidden', 'movement controls cannot intercept a scene conversation');
+  if (scene === 'standup') {
+    assert.ok(state.board, 'standup renders a live ownership board');
+    assert.equal(state.board.bakedProps, 0, 'concept tickets and permanently-owned background stay retired');
+    assert.equal(state.board.count, `${state.board.canonical.assigned} / ${state.board.canonical.total} ASSIGNED`);
+    assert.deepEqual(state.board.rows.map(({ id, title, owner }) => ({ id, title, owner })), state.board.canonical.rows.map(({ id, title, owner }) => ({ id, title, owner })));
+    assert.equal(state.board.tabIndex, 0, 'keyboard users can reach the overflow region');
+    assert.ok(state.board.rows.every(row => row.font >= 13), 'ownership text stays readable independently of world scaling');
+    assert.ok(state.board.bounds.height >= 44, 'a constrained board retains a usable scrolling viewport');
+    assert.ok(state.board.bounds.top >= state.stage.top && state.board.bounds.bottom <= state.stage.bottom, 'board stays inside its scene area');
+    assert.ok(state.board.scrollWidth <= state.board.clientWidth + 1, 'live ownership never requires horizontal scrolling');
+    const lastOwner = page.locator('.a1-board-row').last().locator('.a1-board-owner');
+    await lastOwner.scrollIntoViewIfNeeded();
+    assert.ok(await lastOwner.evaluate(el => {
+      const b = el.getBoundingClientRect(), hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+      return hit === el || el.contains(hit);
+    }), 'last owner remains visible and unobscured through the board overflow region');
+    await page.locator('.a1-live-board').evaluate(el => { el.scrollTop = 0; });
+  }
   const buttons = page.locator('#dlg-options button');
   for (let i = 0; i < await buttons.count(); i++) {
     const button = buttons.nth(i);
@@ -113,11 +193,15 @@ try {
       await page.screenshot({ path: `${out}/${name}-day.png` });
       await page.evaluate(() => TechOpsCampaignNativeAct1.openStandup());
       const standup = await sceneContract(page, name, 'standup');
+      assert.equal(standup.board.count, '0 / 3 ASSIGNED', 'fresh standup never reports example ownership');
       await page.locator('#dlg-options button').filter({ hasText: 'Assign queue: Mike investigates access' }).click();
+      const confirmedStandup = await sceneContract(page, name, 'standup');
+      assert.equal(confirmedStandup.board.count, '3 / 3 ASSIGNED');
+      assert.deepEqual(confirmedStandup.board.rows.map(row => row.owner), ['Mike', 'Amit', 'Mike']);
       await page.locator('#dlg-options button').filter({ hasText: 'Open workstation' }).click();
       const workstation = await sceneContract(page, name, 'workstation');
       assert.deepEqual(errors, []);
-      report.profiles.push({ name, pass: true, field, standup, workstation });
+      report.profiles.push({ name, pass: true, field, standup, confirmedStandup, workstation });
       console.log(JSON.stringify({ profile: name, status: 'passed' }));
     } catch (error) {
       await page.screenshot({ path: `${out}/${name}-failure.png` }).catch(() => {});
@@ -165,6 +249,26 @@ try {
     await nightPage.waitForFunction(() => window.S?.nightMode && !S.inDialog && !window.__productionDesiredMode, null, { timeout: 1000 });
     narrowEvidence.phase = 'cold-start-with-delayed-decoration';
     const collapsed = narrowEvidence.collapsed = await assertLandscapeControlBounds(nightPage);
+    narrowEvidence.hud = await hudContract(nightPage, 'night');
+    // Simulated resolved safe-area values exercise the shared projection. This
+    // is a renderer-state fixture, not evidence from a physical notched phone.
+    await nightPage.locator('#night-runtime-ui').evaluate(el=>{
+      el.style.setProperty('--night-hud-safe-right','44px');
+      el.style.setProperty('--night-hud-safe-top','20px');
+    });
+    narrowEvidence.insetHud = await hudContract(nightPage, 'night');
+    assert.ok(narrowEvidence.insetHud.menu.x+narrowEvidence.insetHud.menu.width<=568-44,'menu clears simulated right inset');
+    assert.ok(narrowEvidence.insetHud.menu.y>=20,'menu clears simulated top inset');
+    await nightPage.locator('#night-runtime-ui').evaluate(el=>el.style.setProperty('--night-hud-safe-left','var(--unavailable-inset)'));
+    narrowEvidence.insetFallbackHud = await hudContract(nightPage, 'night');
+    assert.ok(narrowEvidence.insetFallbackHud.menu.x+narrowEvidence.insetFallbackHud.menu.width<=568-44,'unresolved left inset cannot erase valid right inset');
+    assert.ok(narrowEvidence.insetFallbackHud.menu.y>=20,'unresolved left inset cannot erase valid top inset');
+    await nightPage.locator('#night-runtime-ui').evaluate(el=>{
+      el.style.removeProperty('--night-hud-safe-right');
+      el.style.removeProperty('--night-hud-safe-top');
+      el.style.removeProperty('--night-hud-safe-left');
+    });
+    await hudContract(nightPage, 'night');
     assert.ok(!collapsed.presentation.bodyClass.includes('night-mobile-cohesion'), 'cold-start fixture must hold the optional visual class');
     assert.equal(collapsed.presentation.inputOwner, 'active', 'production Night input must already own the visible controls');
     const more = nightPage.locator('#night-input-assists');
@@ -230,10 +334,11 @@ try {
     }
     await dogsPage.waitForFunction(() => window.__goodBoysHardButtonLaunch?.status === 'campaign-gameplay' && !window.TechOpsGoodBoysButtonHardFix?.launching);
     const baseline = await assertLandscapeControlBounds(dogsPage);
+    const hud = await hudContract(dogsPage, 'gooddogs');
     assert.equal(baseline.controls.length, 11, 'Good Dogs exposes four directions and seven canonical actions');
     const feedback = await assertControlFeedbackBounds(dogsPage, baseline);
     assert.deepEqual(dogsErrors, []);
-    report.narrowGoodDogs = { pass: true, explicitModeChoice: true, baseline, feedback };
+    report.narrowGoodDogs = { pass: true, explicitModeChoice: true, baseline, feedback, hud };
     await dogsPage.screenshot({ path: `${out}/narrow-landscape-good-dogs-controls.png` });
     console.log(JSON.stringify({ profile: 'narrow-landscape-good-dogs-feedback', status: 'passed' }));
   } catch (error) {

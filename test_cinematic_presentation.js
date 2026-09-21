@@ -14,7 +14,7 @@ function harness({supported = true, reducedMotion = false} = {}) {
     emit(name, value = {}) { for (const fn of [...(this.listeners.get(name) || [])]) fn(value); }
   });
   const doc = Object.assign(events(), {hidden: false});
-  const rafs = new Map(); let serial = 0, time = 100, reloads = 0;
+  const rafs = new Map(), timeouts = new Map(); let serial = 0, time = 100, reloads = 0;
   const trace = [];
   function element(tag) {
     const classes = new Set();
@@ -26,11 +26,13 @@ function harness({supported = true, reducedMotion = false} = {}) {
       insertBefore(child, before) {this.children.splice(this.children.indexOf(before), 0, child); child.parentNode = this;},
       removeChild(child) {this.children.splice(this.children.indexOf(child), 1); child.parentNode = null;},
       remove() {this.parentNode?.removeChild(this);},
+      contains(node) {return this === node || this.children.some(child => child.contains(node));},
       focus() {doc.activeElement = this;},
       querySelectorAll(selector) {const matches = node => selector[0] === '#' ? node.id === selector.slice(1) : selector[0] === '.' ? node.classList.contains(selector.slice(1)) : node.tagName.toLowerCase() === selector; return this.children.flatMap(c => [...(matches(c) ? [c] : []), ...c.querySelectorAll(selector)]);},
       querySelector(selector) {return this.querySelectorAll(selector)[0] || null;},
       getBoundingClientRect() {return {toJSON() {return {width: 960, height: 540};}};}
     });
+    let copy = ''; Object.defineProperty(el, 'textContent', {get() {return copy;}, set(value) {copy = String(value); this.children.forEach(child => child.parentNode = null); this.children = [];}});
     Object.defineProperty(el, 'className', {set(value) {el.setAttribute('class', value);}});
     Object.defineProperty(el, 'isConnected', {get() {return !!this.parentNode;}});
     Object.defineProperty(el, 'innerHTML', {set(html) {
@@ -55,8 +57,9 @@ function harness({supported = true, reducedMotion = false} = {}) {
   const launch = element('button'); launch.id = 'launch'; doc.body.appendChild(launch); launch.focus();
   const root = Object.assign(events(), {console, document: doc, navigator: {maxTouchPoints: 0}, MediaSource: {isTypeSupported: () => supported}, performance: {now: () => time},
     matchMedia: () => ({matches: reducedMotion}), requestAnimationFrame(fn) {rafs.set(++serial, fn); return serial;}, cancelAnimationFrame(id) {rafs.delete(id);},
-    setTimeout(fn, delay) {if (!delay) queueMicrotask(fn); return ++serial;}, clearTimeout() {}, setInterval: () => ++serial, clearInterval() {},
-    getComputedStyle: () => ({visibility: 'visible'}),
+    setTimeout(fn, delay) {const id = ++serial; if (!delay) queueMicrotask(fn); else timeouts.set(id, fn); return id;}, clearTimeout(id) {timeouts.delete(id);}, setInterval: () => ++serial, clearInterval() {},
+    innerWidth: 960, innerHeight: 540, checkDayEnd() {},
+    getComputedStyle: () => ({display: "block", visibility: 'visible'}),
     Image: class {set src(value) {this._src = value; this.complete = true; this.naturalWidth = 384; queueMicrotask(() => this.onload?.());} get src() {return this._src;}},
     S: {inDialog: false, meta: {_v736: {m: 8, done: false}}}, NM: {_v736: {m: 8}, enemies: [], clear: false},
     localStorage: {setItem() {}}, TechOpsGoodDogsCampaignState: {completeReturn() {trace.push('semantic');}},
@@ -67,6 +70,7 @@ function harness({supported = true, reducedMotion = false} = {}) {
     load(file) {vm.runInContext(fs.readFileSync(file, 'utf8'), root, {filename: file});},
     step(ms = 16) {time += ms; const queued = [...rafs.values()]; rafs.clear(); queued.forEach(fn => fn(time));},
     visibility(hidden) {doc.hidden = hidden; doc.emit('visibilitychange');},
+    runTimeouts() {const pending = [...timeouts.values()]; timeouts.clear(); pending.forEach(fn => fn());},
     get reloads() {return reloads;}
   };
 }
@@ -146,6 +150,73 @@ const flush = async () => {for (let i = 0; i < 8; i++) await Promise.resolve();}
     api.next(); assert.match(h.doc.getElementById('good-boys-earthfall-cine').style.backgroundImage, /earthfall\.png/, 'scene transitions use the matching authored plate');
     h.visibility(true); h.step(5000); assert.strictEqual(h.rafs.size, 0, 'Earthfall animation suspends in background');
     h.visibility(false); assert.strictEqual(h.rafs.size, 1);
+  }
+  // Shared canvas owner: actual registered scene and actual semantic controls.
+  // Fixtures prove state/focus behavior, not screen-reader/device qualification.
+  {
+    const h = harness(), frames = []; h.load('v725_hooks.js'); h.load('day_cinematic_mobile_guard.js');
+    const api = h.root.v725; let completes = 0;
+    api.register('acceptance_timed', {title: 'The end of the shift', shots: [{dur: 1000, cap: 'Mike leaves the incident notes for the next shift.', draw(x, time, elapsed) {frames.push({time, elapsed});}}]});
+    assert.strictEqual(api.play('acceptance_timed', () => {completes++; h.root.S.meta.transitionDone = true;}), true);
+    h.step(100);
+    const overlay = h.doc.getElementById('v725-cine'), pause = overlay.querySelector('.day-cine-pause'), skip = overlay.querySelector('.day-cine-skip');
+    assert.strictEqual(overlay.attributes.role, 'dialog'); assert.strictEqual(overlay.attributes['aria-modal'], 'true');
+    assert.strictEqual(h.doc.activeElement, pause);
+    assert.match(overlay.querySelector('.day-cine-caption').textContent, /incident notes/);
+    for (const key of ['Shift', 'ArrowLeft', 'Enter', 'Escape']) h.root.emit('keydown', event({key, target: overlay}));
+    assert.strictEqual(api.active(), true, 'navigation, modifiers, Enter and Escape cannot skip');
+    assert.strictEqual(api.presentation().paused, true, 'Escape pauses without advancing the narrative');
+    h.root.emit('keydown', event({key: 'Tab', target: pause})); assert.strictEqual(h.doc.activeElement, skip);
+    h.root.emit('keydown', event({key: 'Tab', target: skip})); assert.strictEqual(h.doc.activeElement, pause);
+    h.root.emit('keydown', event({key: 'Tab', shiftKey: true, target: pause})); assert.strictEqual(h.doc.activeElement, skip);
+    let prevented = 0;
+    h.root.emit('keydown', event({key: 'Enter', target: pause, preventDefault() {prevented++;}}));
+    assert.strictEqual(prevented, 0, 'focused native button retains its keyboard activation default');
+    pause.emit('pointerdown', event()); assert.strictEqual(api.presentation().paused, true, 'pointerdown alone cannot activate');
+    pause.emit('click', event({detail: 0})); assert.strictEqual(api.presentation().paused, false, 'native keyboard/assistive click resumes');
+    h.step(100); const elapsed = frames.at(-1).elapsed, lateFrame = [...h.rafs.values()][0];
+    h.visibility(true); assert.strictEqual(h.rafs.size, 0);
+    h.step(60000); lateFrame(); assert.strictEqual(api.skip(), false); assert.strictEqual(completes, 0);
+    h.visibility(false); h.step(60000); assert.strictEqual(completes, 0); assert.strictEqual(api.presentation().paused, true);
+    pause.emit('click', event()); h.step(16);
+    assert.strictEqual(frames.at(-1).elapsed, elapsed + 16, 'hidden wall time never enters the resumed shot timeline');
+    assert.strictEqual(h.root.S.meta.transitionDone, undefined, 'background/return/Tab never commits narrative state');
+    skip.focus(); const staleSkip = [...skip.listeners.get('click')][0]; staleSkip(event()); staleSkip(event()); lateFrame(); h.runTimeouts();
+    assert.strictEqual(completes, 1); assert.strictEqual(h.root.S.meta.transitionDone, true, 'explicit skip commits the owner callback once');
+    assert.strictEqual(h.doc.activeElement, h.launch); assert.strictEqual(h.doc.listeners.get('visibilitychange').size, 0); assert.strictEqual(h.root.listeners.get('keydown').size, 0);
+    assert.strictEqual(api.skip(), false);
+    assert.strictEqual(api.play('acceptance_timed', () => {completes++;}), true);
+    const scheduled = h.rafs.size; staleSkip(event()); lateFrame();
+    assert.strictEqual(api.active(), true, 'retired controls cannot skip a later cinematic'); assert.strictEqual(h.rafs.size, scheduled, 'retired frame callback cannot fork a later cinematic RAF');
+    h.step(1500); api.skip(); h.runTimeouts();
+    assert.strictEqual(completes, 2, 'auto-completion then stale skip settles once');
+  }
+  {
+    const h = harness(); h.load('v725_hooks.js'); h.load('day_cinematic_mobile_guard.js'); const api = h.root.v725; let completes = 0;
+    api.register('acceptance_choice', {title: 'Handoff', shots: [
+      {dur: 0, cap: 'The next shift needs a clear record.', choice: {prompt: 'What belongs in the handoff?', options: ['Verified result', 'Unconfirmed theory'], values: ['verified', 'theory'], store: 'handoffChoice'}, draw() {}},
+      {dur: 1000, cap: 'The handoff is recorded.', draw() {}}
+    ]});
+    api.play('acceptance_choice', () => {completes++;}); h.step();
+    const overlay = h.doc.getElementById('v725-cine'), buttons = overlay.querySelector('.day-cine-choices').querySelectorAll('button'), pause = overlay.querySelector('.day-cine-pause');
+    assert.deepStrictEqual(buttons.map(b => b.textContent), ['Verified result', 'Unconfirmed theory'], 'only authored options are presented, without phantom choices');
+    assert.strictEqual(overlay.querySelector('.day-cine-prompt').textContent, 'What belongs in the handoff?');
+    assert.strictEqual(overlay.querySelector('.day-cine-skip').hidden, true); assert.strictEqual(api.skip(), false, 'skip cannot bypass an unresolved choice');
+    overlay.emit('click', event({target: overlay.querySelector('canvas'), clientX: 400, clientY: 250}));
+    assert.strictEqual(h.root.S.meta.handoffChoice, undefined, 'retired canvas choice hit regions cannot compete with semantic choices');
+    api.pause(); api.choose(0); assert.strictEqual(h.root.S.meta.handoffChoice, undefined); assert.strictEqual(buttons[0].disabled, true);
+    pause.emit('click', event()); h.visibility(true); buttons[0].emit('click', event()); assert.strictEqual(h.root.S.meta.handoffChoice, undefined);
+    h.visibility(false); pause.emit('click', event()); buttons[0].focus(); const pick = [...buttons[0].listeners.get('click')][0]; pick(event({detail: 0})); pick(event());
+    assert.strictEqual(h.root.S.meta.handoffChoice, 'verified'); assert.strictEqual(api.stats().choices, 1, 'double activation writes one choice');
+    assert.strictEqual(h.doc.activeElement, pause, 'removed choice returns focus to a live cinematic control');
+    h.step(1500); h.runTimeouts(); assert.strictEqual(completes, 1);
+  }
+  {
+    const h = harness({reducedMotion: true}), frames = []; h.load('v725_hooks.js'); h.load('day_cinematic_mobile_guard.js');
+    h.root.v725.register('acceptance_calm', {title: 'Quiet shot', shots: [{dur: 10000, cap: 'The shift is quiet.', draw(x, time, elapsed) {frames.push([time, elapsed]);}}]});
+    h.root.v725.play('acceptance_calm'); h.step(); h.step(5000);
+    assert.deepStrictEqual(frames, [[0, 0], [0, 0], [0, 0]], 'reduced motion holds the authored shot pose without changing scene duration');
+    assert.strictEqual(h.root.v725.active(), true); h.root.v725.skip(); h.runTimeouts();
   }
   console.log('Cinematic modal focus, background pause, idempotent skip and save recovery: PASS');
 })().catch(error => {console.error(error); process.exitCode = 1;});
