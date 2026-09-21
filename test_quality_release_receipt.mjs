@@ -133,10 +133,12 @@ try{
   assert.equal(assessEvidence({schema_version:1,requirements:[{...performance,profiles:['iphone-safari']}]},[{...structuredClone(baseReport),checks:[mobilePerf]}],{source,root}).status,'ready');
 
   const playtest=req('fresh_context_playtest');
-  const playtestCheck={id:playtest.id,profile:'r1-vertical-slice',status:'passed',evidence_type:'human-playtest',fixture:false,operator:'Fresh-context tester',device:'Desktop',browser:'Chromium',observations:{route_completed:true,developer_intervention:false,assistance:[],confusion_points:['Workstation prompt learned from desk proximity'],blocking_confusion:0,terminal_state:'returned',duration_seconds:1200,checkpoints_seen:[...playtest.required_cases],playtest_record:{artifact_path:'capture.txt',sha256:captureSha}}};
+  const playtestCheck={id:playtest.id,profile:'r1-vertical-slice',status:'passed',evidence_type:'human-playtest',fixture:false,operator:'Fresh-context tester',device:'Desktop',browser:'Chromium',observations:{fresh_context:true,route_completed:true,developer_intervention:false,assistance:[],confusion_points:['Workstation prompt learned from desk proximity'],blocking_confusion:0,terminal_state:'returned',duration_seconds:1200,checkpoints_seen:[...playtest.required_cases],playtest_record:{artifact_path:'capture.txt',sha256:captureSha}}};
   assert.equal(assessSingle(playtest,playtestCheck).status,'ready');
   const coached=structuredClone(playtestCheck);coached.observations.developer_intervention=true;
   assert.equal(assessSingle(playtest,coached).status,'blocked','developer intervention invalidates fresh-context comprehension');
+  const familiar=structuredClone(playtestCheck);familiar.observations.fresh_context=false;
+  assert.equal(assessSingle(playtest,familiar).status,'blocked','tester must explicitly be fresh-context');
 
   const known=req('known_issue_gate');
   const knownCheck={id:known.id,profile:'candidate',status:'passed',evidence_type:'release-governance',observations:{unclassified_count:0,issue_inventory:{artifact_path:'capture.txt',sha256:captureSha},issues:[{id:'#4-device-evidence',severity:'P2',status:'open',disposition:'Accepted for this candidate with explicit owner disposition'},{id:'#old-p0',severity:'P0',status:'closed'}]}};
