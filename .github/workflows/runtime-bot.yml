@@ -135,7 +135,10 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          # Match the authoritative Night Combat Integration gate. The bot runs three\n          # browser/touch profiles and can exceed 150s on macOS while remaining healthy.\n          # Exit 124 is still a failure; this only removes the premature budget mismatch.\n          timeout 300s node scripts/night_combat_bot.mjs
+          # Match the authoritative Night Combat Integration gate. The bot runs three
+          # browser/touch profiles and can exceed 150s on macOS while remaining healthy.
+          # Exit 124 is still a failure; this only removes the premature budget mismatch.
+          timeout 300s node scripts/night_combat_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
