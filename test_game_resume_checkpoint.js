@@ -132,7 +132,7 @@ const legacyProfile = { day: 3, budget: 55, meta: { marker: "legacy" }, certs: [
 data.set("techops_save", JSON.stringify(legacyProfile));
 const migratedLegacy = context.loadProfile();
 assert.strictEqual(migratedLegacy._profileSchemaVersion, 1, "legacy profile is promoted to the explicit current schema");
-assert.deepStrictEqual(context.window.__techopsSaveMigration, { from: 0, to: 1, migrated: true });
+assert.deepStrictEqual(JSON.parse(JSON.stringify(context.window.__techopsSaveMigration)), { from: 0, to: 1, migrated: true }, "migration metadata crosses the VM boundary as plain data");
 assert.strictEqual(migratedLegacy.meta.marker, "legacy", "migration preserves unknown/canonical player metadata");
 assert.deepStrictEqual(migratedLegacy.certs, ["ccna"], "migration preserves existing player collections");
 
