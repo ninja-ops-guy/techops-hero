@@ -513,12 +513,20 @@ const normalizeLoadedProfile = d => {
   window.__techopsSaveMigration = { from: fromVersion, to: PROFILE_SAVE_SCHEMA_VERSION, migrated: fromVersion !== PROFILE_SAVE_SCHEMA_VERSION };
   return d;
 };
+const notifySaveLoadIssue = message => {
+  window.__techopsSaveLoadNotice = message;
+  if (!window.__techopsSaveLoadFailureNotified && typeof toast === "function") {
+    window.__techopsSaveLoadFailureNotified = true;
+    toast(`⚠️ ${message}`, 5200);
+  }
+};
 const load = () => {
   let primaryRaw = null;
   try {
     primaryRaw = localStorage.getItem("techops_save");
   } catch (e) {
     window.__techopsSaveLoadError = String(e && e.stack || e);
+    notifySaveLoadIssue("Browser storage is unavailable. Continue cannot read saved progress in this session.");
     return null;
   }
   if (!primaryRaw) return null;
@@ -526,6 +534,8 @@ const load = () => {
     const d = JSON.parse(primaryRaw);
     const normalized = normalizeLoadedProfile(d);
     window.__techopsSaveLoadError = null;
+    window.__techopsSaveLoadNotice = null;
+    window.__techopsSaveLoadFailureNotified = false;
     return normalized;
   } catch (primaryError) {
     window.__techopsSaveLoadError = String(primaryError && primaryError.stack || primaryError);
@@ -534,10 +544,14 @@ const load = () => {
   let backupRaw = null, backup = null;
   try {
     backupRaw = localStorage.getItem("techops_save_bak");
-    if (!backupRaw) return null;
+    if (!backupRaw) {
+      notifySaveLoadIssue("The saved profile is unreadable and no compatible backup is available. The original bytes were left untouched.");
+      return null;
+    }
     backup = normalizeLoadedProfile(JSON.parse(backupRaw));
   } catch (backupError) {
     window.__techopsSaveBackupError = String(backupError && backupError.stack || backupError);
+    notifySaveLoadIssue("The saved profile and its backup are unreadable. No save data was overwritten.");
     return null;
   }
 
