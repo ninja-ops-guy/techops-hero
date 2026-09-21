@@ -45,6 +45,9 @@ async function startDay(){
   await page.waitForFunction(()=>window.S?.map&&!S.inDialog,null,{timeout:15000});
 }
 async function oneInputSample(){
+  // A released key is reflected in S.moving on the next game frame. Wait for
+  // that neutral state so a prior sample cannot satisfy the next response probe.
+  await page.waitForFunction(()=>window.S?.map&&S.moving===false,null,{timeout:2000});
   const target=await page.evaluate(()=>{
     const options=[[1,0,'ArrowRight'],[-1,0,'ArrowLeft'],[0,1,'ArrowDown'],[0,-1,'ArrowUp']];
     for(const [dx,dy,key] of options){
@@ -59,7 +62,7 @@ async function oneInputSample(){
     const onKey=e=>{if(e.code===key||e.key===key)probe.inputAt=performance.now();};
     document.addEventListener('keydown',onKey,{capture:true,once:true});
     const observe=()=>{
-      if(window.S?.moving&&!Number.isFinite(probe.responseAt))probe.responseAt=performance.now();
+      if(Number.isFinite(probe.inputAt)&&window.S?.moving&&!Number.isFinite(probe.responseAt))probe.responseAt=performance.now();
       if(window.S&&(S.px!==fromX||S.py!==fromY)){probe.tileAt=performance.now();return;}
       requestAnimationFrame(observe);
     };
@@ -71,6 +74,7 @@ async function oneInputSample(){
   }finally{
     await page.keyboard.up(target.key);
   }
+  await page.waitForFunction(()=>window.S?.moving===false,null,{timeout:2000});
   return page.evaluate(()=>{
     const p=window.__techopsPerfInputProbe;
     if(!Number.isFinite(p?.inputAt)||!Number.isFinite(p?.responseAt)||!Number.isFinite(p?.tileAt)||p.responseAt<p.inputAt||p.tileAt<p.responseAt)throw new Error('invalid input probe timing');
