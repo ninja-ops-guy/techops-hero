@@ -38,7 +38,8 @@ function observationMatches(check,requirement,report,source){
   if(check.id==='vertical_slice_checkpoints'){
     const checkpoints=o.checkpoints;
     return requiredCasesMatch(checkpoints,requirement,c=>c.reviewed===true&&c.blocker!==true&&retainedArtifact(report,c))&&
-      checkpoints.length===requirement.required_cases.length&&new Set(checkpoints.map(c=>c.artifact_path)).size===requirement.required_cases.length;
+      checkpoints.length===requirement.required_cases.length&&new Set(checkpoints.map(c=>c.artifact_path)).size===requirement.required_cases.length&&
+      new Set(checkpoints.map(c=>c.sha256)).size===requirement.required_cases.length;
   }
   if(check.id==='device_input_matrix')return requiredCasesMatch(o.cases,requirement,c=>c.progression_reachable===true&&c.prompt_action_match===true&&c.lost_input===false&&c.duplicate_input===false)&&retainedArtifact(report,o.matrix_artifact);
   if(check.id==='physical_mobile')return requiredCasesMatch(o.cases,requirement);
@@ -52,7 +53,7 @@ function observationMatches(check,requirement,report,source){
       Number.isInteger(o.blocking_stalls)&&o.blocking_stalls>=0&&retainedArtifact(report,o.measurement_artifact);
   }
   if(check.id==='device_soak')return Number.isFinite(o.frame_p95_ms)&&o.frame_p95_ms>0&&Number.isFinite(o.frame_p99_ms)&&o.frame_p99_ms>=o.frame_p95_ms&&typeof o.memory_observation==='string'&&o.memory_observation.length>0&&typeof o.thermal_observation==='string'&&o.thermal_observation.length>0&&o.blocking_stalls===0;
-  if(check.id==='fresh_context_playtest')return o.route_completed===true&&o.developer_intervention===false&&Array.isArray(o.assistance)&&o.assistance.length===0&&
+  if(check.id==='fresh_context_playtest')return o.fresh_context===true&&o.route_completed===true&&o.developer_intervention===false&&Array.isArray(o.assistance)&&o.assistance.length===0&&
     Array.isArray(o.confusion_points)&&o.blocking_confusion===0&&typeof o.terminal_state==='string'&&o.terminal_state.length>0&&
     Number.isFinite(o.duration_seconds)&&o.duration_seconds>0&&requiredCasesMatch((o.checkpoints_seen||[]).map(id=>({id,passed:true})),requirement)&&retainedArtifact(report,o.playtest_record);
   if(check.id==='known_issue_gate'){
