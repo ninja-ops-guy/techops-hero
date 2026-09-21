@@ -8,6 +8,7 @@ import {spawnSync} from 'node:child_process';
 import {SUITES, buildTriage, inventory, renderTriage, writeBundle, run} from './scripts/runtime_triage.mjs';
 import {beginRuntimeEvidence} from './scripts/runtime_evidence_capture.mjs';
 const workflow = fs.readFileSync(new URL('./.github/workflows/runtime-bot.yml', import.meta.url), 'utf8');
+const nightCombatWorkflow = fs.readFileSync(new URL('./.github/workflows/night-combat-validation.yml', import.meta.url), 'utf8');
 
 function fixture(t) {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-triage-test-'));
@@ -135,6 +136,14 @@ test('workflow gate parity and privilege boundaries', () => {
   assert.doesNotMatch(reporter, /uses: actions\/checkout|contents: write|pull-requests: write/);
   assert.equal((workflow.match(/issues: write/g) || []).length, 1);
   assert.match(workflow, /name: runtime-triage-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
+});
+test('runtime Night combat timeout matches the authoritative integration budget', () => {
+  const runtimeMatch = workflow.match(/timeout\s+(\d+)s\s+node scripts\/night_combat_bot\.mjs/);
+  const integrationMatch = nightCombatWorkflow.match(/timeout\s+(\d+)s\s+node scripts\/night_combat_bot\.mjs/);
+  assert.ok(runtimeMatch, 'Runtime bot must retain an explicit Night combat timeout');
+  assert.ok(integrationMatch, 'Night Combat Integration must retain an explicit timeout');
+  assert.equal(Number(runtimeMatch[1]), Number(integrationMatch[1]), 'Runtime bot cannot kill Night combat earlier than its authoritative integration gate');
+  assert.ok(Number(runtimeMatch[1]) >= 300, 'three-profile Night combat needs the qualified 300-second budget');
 });
 test('co-op instrumentation does not relax original movement or isolation assertions', () => {
   const source = fs.readFileSync(new URL('./scripts/good_dogs_coop_bot.mjs', import.meta.url), 'utf8');
