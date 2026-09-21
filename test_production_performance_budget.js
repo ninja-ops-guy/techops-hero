@@ -56,6 +56,22 @@ for (const file of [
   assert.ok(fs.statSync(file).size < 180 * 1024, `${file} exceeds 180 KiB concern-module budget`);
 }
 
+
+const profilerPath = "scripts/performance_profile_browser.mjs";
+assert.ok(fs.existsSync(profilerPath), "R1 desktop performance evidence collector must remain available");
+const profiler = fs.readFileSync(profilerPath, "utf8");
+for (const token of [
+  "performance_budget",
+  "desktop-chromium",
+  "cold_first_playable_ms",
+  "core_input_p95_ms",
+  "measurement_artifact",
+  "physical_device:false"
+]) {
+  assert.ok(profiler.includes(token), `performance collector lost required R1 evidence field: ${token}`);
+}
+assert.ok(profiler.includes("Desktop Chromium evidence only; not physical mobile evidence."), "desktop profiler must not imply phone certification");
+
 const report = {
   localStartupScripts: local.length,
   indexKiB: +(indexBytes / 1024).toFixed(1),
