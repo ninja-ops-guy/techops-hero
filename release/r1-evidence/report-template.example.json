@@ -23,7 +23,11 @@
         "tree": "<same full candidate tree>",
         "fingerprint": "<same source fingerprint>",
         "frozen_at": "2026-09-21T00:00:00Z",
-        "change_policy": "invalidate-all-evidence"
+        "change_policy": "invalidate-all-evidence",
+        "freeze_record": {
+          "artifact_path": "captures/example.txt",
+          "sha256": "<same retained artifact sha256>"
+        }
       }
     }
   ]
