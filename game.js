@@ -439,27 +439,123 @@ const save = () => {
       window.__techopsSaveError = saved ? null : "Night checkpoint was not saved";
       return saved;
     }
-    localStorage.setItem(standaloneNight ? NIGHT_CRAWLER_SAVE_KEY : standaloneGoodDogs ? GOOD_DOGS_SAVE_KEY : "techops_save", payload);
+
+    const targetKey = standaloneNight ? NIGHT_CRAWLER_SAVE_KEY : standaloneGoodDogs ? GOOD_DOGS_SAVE_KEY : "techops_save";
+    const writeVerified = (key, value) => {
+      localStorage.setItem(key, value);
+      if (localStorage.getItem(key) !== value) throw new Error(`storage verification failed for ${key}`);
+    };
+
+    // Story Continue gets a one-generation rollback slot. Never overwrite a
+    // readable primary until its prior bytes are either backed up or, if they
+    // are malformed, retained in the bounded quarantine slot.
+    if (targetKey === "techops_save") {
+      const previousRaw = localStorage.getItem("techops_save");
+      if (previousRaw && previousRaw !== payload) {
+        let previousValid = false;
+        try {
+          const previous = JSON.parse(previousRaw);
+          previousValid = !!previous && typeof previous === "object" && !Array.isArray(previous);
+        } catch (e) { }
+        writeVerified(previousValid ? "techops_save_bak" : "techops_save_corrupt_v1", previousRaw);
+      }
+    }
+
+    writeVerified(targetKey, payload);
+
     // The profile save remains backwards-compatible while a separate, plain-
     // data checkpoint makes CONTINUE resume the actual workday scene.
     if (!standaloneNight && !standaloneGoodDogs && S.map && !S.nightMode && !S.inBattle && !S.gameOver) {
       try {
         const snapshot = JSON.parse(JSON.stringify(S));
         snapshot.inDialog = false; snapshot.inBattle = false; snapshot.moving = false;
-        localStorage.setItem(DAY_CHECKPOINT_KEY, JSON.stringify({ version: 2, day: S.day, savedAt: saveRevision, state: snapshot }));
+        const checkpointPayload = JSON.stringify({ version: 2, day: S.day, savedAt: saveRevision, state: snapshot });
+        writeVerified(DAY_CHECKPOINT_KEY, checkpointPayload);
         window.__techopsCheckpointError = null;
       } catch (checkpointError) {
         window.__techopsCheckpointError = String(checkpointError && checkpointError.stack || checkpointError);
       }
     }
     window.__techopsSaveError = null;
+    window.__techopsSaveFailureNotified = false;
     return true;
   } catch (e) {
     window.__techopsSaveError = String(e && e.stack || e);
+    if (!window.__techopsSaveFailureNotified && typeof toast === "function") {
+      window.__techopsSaveFailureNotified = true;
+      toast("⚠️ Save unavailable — progress is still in memory. Check browser storage before closing the game.");
+    }
     return false;
   }
 };
-const load = () => { try { const d = JSON.parse(localStorage.getItem("techops_save")); if (d && d.meta) { d.meta.debt = d.meta.debt || 0; d.meta.wrongDiag = d.meta.wrongDiag || 0; d.meta.recentTypes = d.meta.recentTypes || []; d.meta.kb = d.meta.kb || {}; d.meta.incidents = d.meta.incidents || 0; d.meta.mttr = d.meta.mttr || []; d.meta.hires = d.meta.hires || 0; } return d; } catch (e) { return null; } };
+const normalizeLoadedProfile = d => {
+  if (d && d.meta) {
+    d.meta.debt = d.meta.debt || 0;
+    d.meta.wrongDiag = d.meta.wrongDiag || 0;
+    d.meta.recentTypes = d.meta.recentTypes || [];
+    d.meta.kb = d.meta.kb || {};
+    d.meta.incidents = d.meta.incidents || 0;
+    d.meta.mttr = d.meta.mttr || [];
+    d.meta.hires = d.meta.hires || 0;
+  }
+  return d;
+};
+const load = () => {
+  let primaryRaw = null;
+  try {
+    primaryRaw = localStorage.getItem("techops_save");
+  } catch (e) {
+    window.__techopsSaveLoadError = String(e && e.stack || e);
+    return null;
+  }
+  if (!primaryRaw) return null;
+  try {
+    const d = JSON.parse(primaryRaw);
+    if (!d || typeof d !== "object" || Array.isArray(d)) throw new Error("invalid profile save envelope");
+    window.__techopsSaveLoadError = null;
+    return normalizeLoadedProfile(d);
+  } catch (primaryError) {
+    window.__techopsSaveLoadError = String(primaryError && primaryError.stack || primaryError);
+  }
+
+  let backupRaw = null, backup = null;
+  try {
+    backupRaw = localStorage.getItem("techops_save_bak");
+    if (!backupRaw) return null;
+    backup = JSON.parse(backupRaw);
+    if (!backup || typeof backup !== "object" || Array.isArray(backup)) throw new Error("invalid backup save envelope");
+  } catch (backupError) {
+    window.__techopsSaveBackupError = String(backupError && backupError.stack || backupError);
+    return null;
+  }
+
+  // Preserve the corrupt bytes before repairing the primary. If storage is so
+  // constrained that quarantine cannot be retained, leave the corrupt primary
+  // untouched and recover the backup only in memory for this session.
+  let quarantined = false;
+  try {
+    localStorage.setItem("techops_save_corrupt_v1", primaryRaw);
+    if (localStorage.getItem("techops_save_corrupt_v1") !== primaryRaw) throw new Error("corrupt-save quarantine verification failed");
+    quarantined = true;
+    window.__techopsSaveQuarantineError = null;
+  } catch (quarantineError) {
+    window.__techopsSaveQuarantineError = String(quarantineError && quarantineError.stack || quarantineError);
+  }
+  if (quarantined) {
+    try {
+      localStorage.setItem("techops_save", backupRaw);
+      if (localStorage.getItem("techops_save") !== backupRaw) throw new Error("backup restore verification failed");
+      window.__techopsSaveRecovery = "backup-restored";
+    } catch (restoreError) {
+      window.__techopsSaveRecovery = "backup-memory-only";
+      window.__techopsSaveRestoreError = String(restoreError && restoreError.stack || restoreError);
+    }
+  } else {
+    window.__techopsSaveRecovery = "backup-memory-only";
+  }
+  if (typeof toast === "function") toast("⚠️ Recovered the last valid save backup; corrupt save data was isolated where storage allowed.");
+  return normalizeLoadedProfile(backup);
+};
 function loadDayCheckpoint(profile) {
   try {
     const raw = localStorage.getItem(DAY_CHECKPOINT_KEY), envelope = raw && JSON.parse(raw);
