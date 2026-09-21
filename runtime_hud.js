@@ -54,10 +54,21 @@
     ctx.fillStyle = color || '#d8e7f5'; ctx.font = (weight ? 'bold ' : '') + (weight ? HEADING : BODY) + 'px monospace';
     ctx.fillText(String(value), x, y);
   }
+  function safeArea() {
+    const probe = root.document && root.document.getElementById && root.document.getElementById('night-hud-safe-area');
+    const style = probe && root.getComputedStyle && root.getComputedStyle(probe);
+    const value = key => Math.max(0, parseFloat(style && style[key]) || 0);
+    return { top:value('paddingTop'), right:value('paddingRight'), bottom:value('paddingBottom'), left:value('paddingLeft') };
+  }
   function layout(view) {
     const pad = view.width < 400 ? 6 : 8, gap = 6;
     const width = Math.max(1, view.width - pad * 2), left = Math.min(220, width * .4);
-    return { pad, gap, width, left, right:width - left - gap, top:6 };
+    const right = width - left - gap, top = 6;
+    const safe = safeArea();
+    const menu = { x:Math.max(safe.left, Math.min(pad + width - 6 - 122, view.width - safe.right - 122)), y:Math.max(top + 5, safe.top), width:122, height:44 };
+    const copyTop = view.width < 560 ? Math.max(52, menu.y + menu.height + 6 - top) : 0;
+    const copyWidth = copyTop ? right - 16 : menu.x - (pad + left + gap) - 16;
+    return { pad, gap, width, left, right, top, menu, copyTop, copyWidth };
   }
   function combatModel(n) {
     const c = n._nightCombat;
@@ -75,22 +86,22 @@
     const status = guide && guide.streetStatus(n) || (n.clear ? 'STREET SECURED' : 'HOSTILES ' + (n.enemies || []).filter(e => e.alive).length);
     const combat = combatModel(n), audio = root.TechOpsCombatAudio;
     const caption = audio && typeof audio.caption === 'function' ? audio.caption(n) : '';
-    const receipt = { mode:'night', viewport:view, bodyFont:BODY, headingFont:HEADING, panels:[], text:[], blocked:false };
+    const receipt = { mode:'night', viewport:view, bodyFont:BODY, headingFont:HEADING, panels:[], text:[], menu:l.menu, blocked:false };
     ctx.save();
     try {
       ctx.scale(view.scaleX, view.scaleY); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
       const leftX = l.pad, rightX = leftX + l.left + l.gap;
       ctx.font = 'bold ' + HEADING + 'px monospace';
-      const districtLines = wrap(ctx, d.name || n.district, l.right - 16);
+      const districtLines = wrap(ctx, d.name || n.district, l.copyWidth);
       ctx.font = BODY + 'px monospace';
       const danger = d.danger > 1.4 ? 'HIGH' : d.danger > .8 ? 'MID' : 'LOW';
-      const detailLines = wrap(ctx, 'ST ' + n.street + '/' + d.streets + ' · ' + (options.clock || '') + ' · THREAT ' + danger, l.right - 16);
+      const detailLines = wrap(ctx, 'ST ' + n.street + '/' + d.streets + ' · ' + (options.clock || ''), l.copyWidth);
       const statusText = String(status).replace('REINFORCEMENTS INBOUND', 'INBOUND').replace('STREET SECURED · CONTINUE OR RETURN TO CHARGER', 'STREET SECURED').replace('CHECK THE STREET', 'CHECK STREET');
-      const statusLines = wrap(ctx, statusText, l.right - 16);
+      const statusLines = wrap(ctx, danger + ' THREAT · ' + statusText, l.copyWidth);
       const comboText = n.combo > 1 ? '×' + n.combo + (n.perfectT > now ? ' PERFECT' : '') : '';
       const cashText = '$' + Math.max(0, Math.round(Number(n.cash) || 0));
       const separateCombo = comboText && ctx.measureText(cashText + '  ' + comboText).width > l.left - 16;
-      const cardHeight = Math.max(separateCombo ? 94 : 76, 16 + (districtLines.length + detailLines.length + statusLines.length) * LINE);
+      const cardHeight = Math.max(separateCombo ? 94 : 76, l.copyTop + 16 + (districtLines.length + detailLines.length + statusLines.length) * LINE);
       panel(ctx, leftX, l.top, l.left, cardHeight); panel(ctx, rightX, l.top, l.right, cardHeight);
       receipt.panels.push({ role:'health', x:leftX, y:l.top, width:l.left, height:cardHeight }, { role:'district', x:rightX, y:l.top, width:l.right, height:cardHeight });
       const hp = Math.round(clamp(n.hp, 0, 100)), hpWidth = Math.max(12, l.left - 82);
@@ -103,7 +114,7 @@
       text(ctx, cashText, leftX + 8, l.top + 63, '#98e7ab');
       if (comboText) { ctx.textAlign = 'right'; text(ctx, comboText, leftX + l.left - 8, l.top + (separateCombo ? 81 : 63), n.perfectT > now ? '#ffd24a' : '#d8e7f5'); ctx.textAlign = 'left'; }
       // A short header keeps clock, threat and location on distinct baselines.
-      let cardY = l.top + 19;
+      let cardY = l.top + l.copyTop + 19;
       districtLines.forEach(line => { text(ctx, line, rightX + 8, cardY, d.accent || '#9bd4ff', true); cardY += LINE; });
       detailLines.concat(statusLines).forEach(line => { text(ctx, line, rightX + 8, cardY); cardY += LINE; });
       let y = l.top + cardHeight + l.gap;
@@ -134,12 +145,18 @@
   }
   function drawDrive(ctx, n, title) {
     if (!handles(n)) return false;
-    if (blocked()) return true;
-    const view = viewport(ctx.canvas);
+    if (blocked()) { root.__techOpsNightHudEvidence = { mode:'night', driving:true, blocked:true, panels:[], text:[] }; return true; }
+    const view = viewport(ctx.canvas), l = layout(view), y = l.menu.y + l.menu.height + 8;
     ctx.save();
-    try { ctx.scale(view.scaleX, view.scaleY); ctx.textAlign = 'center'; text(ctx, 'DRIVING — ' + title, view.width / 2, 40, '#d8e7f5', true); }
+    try {
+      ctx.scale(view.scaleX, view.scaleY); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.font = 'bold ' + HEADING + 'px monospace';
+      const lines = wrap(ctx, 'DRIVING — ' + title, l.width - 20), height = 12 + lines.length * LINE;
+      panel(ctx, l.pad, y, l.width, height);
+      lines.forEach((line, index) => text(ctx, line, view.width / 2, y + 18 + index * LINE, '#d8e7f5', true));
+      root.__techOpsNightHudEvidence = { mode:'night', driving:true, blocked:false, viewport:view, bodyFont:BODY, headingFont:HEADING, menu:l.menu, panels:[{role:'drive',x:l.pad,y,width:l.width,height}], text:[{role:'drive',lines}], bottom:y+height };
+    }
     finally { ctx.restore(); }
     return true;
   }
-  root.TechOpsRuntimeHud = { VERSION:1, viewport, handles, wrap, layout, combatModel, drawNight, drawDrive };
+  root.TechOpsRuntimeHud = { VERSION:1, viewport, safeArea, handles, wrap, layout, combatModel, drawNight, drawDrive };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

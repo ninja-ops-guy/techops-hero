@@ -256,7 +256,7 @@
     {
       "id": "SCREEN_SPACE_GAMEPLAY_HUD",
       "failure_mode": "World scaling shrinks health, objectives, combat instructions and captions below legible screen size.",
-      "invariant": "Street Night and Good Dogs essential HUD text stays at least 13 CSS pixels with full wrapped objectives, distinct cards and balanced transforms. The original render owners retain world, combat, input and narrative authority.",
+      "invariant": "Street Night and Good Dogs essential HUD text stays at least 13 CSS pixels with full wrapped objectives, distinct cards, reserved Night run-menu space and balanced transforms. The original render owners retain world, combat, input and narrative authority.",
       "test_ref": "test_runtime_hud.js",
       "spot_check": "At 568×320 and 320×568, inspect actual Night and Good Dogs HUDs, then resize. Verify health, threat, location, objective and caption copy without moving world coordinates."
     },

@@ -263,9 +263,11 @@
     if(ui||!root.document||!root.document.body)return ui;
     const style=root.document.createElement('style');style.id='night-lifecycle-style';style.textContent=`
 #night-runtime-ui[hidden],#night-runtime-ui [hidden]{display:none!important}
-#night-runtime-ui{position:absolute;inset:0;pointer-events:none;z-index:58}
+#night-runtime-ui{position:absolute;inset:0;pointer-events:none;z-index:58;--night-hud-safe-top:env(safe-area-inset-top,0px);--night-hud-safe-right:env(safe-area-inset-right,0px);--night-hud-safe-bottom:env(safe-area-inset-bottom,0px);--night-hud-safe-left:env(safe-area-inset-left,0px)}
+#night-hud-safe-area{position:absolute;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;box-sizing:content-box;padding:var(--night-hud-safe-top) var(--night-hud-safe-right) var(--night-hud-safe-bottom) var(--night-hud-safe-left)}
 #night-campaign,#night-home-interact,#night-home-skip{pointer-events:auto;min-height:44px;border:1px solid #859ba8;border-radius:5px;background:#0b1525ed;color:#e2edf0;padding:10px 15px;font:12px monospace;cursor:pointer}
 #night-campaign{position:absolute;right:max(12px,env(safe-area-inset-right));top:70px}
+#night-runtime-ui #night-campaign[data-readable-hud="true"]{box-sizing:border-box;width:122px;min-width:122px;max-width:none!important;height:44px;min-height:44px!important;padding:6px!important;font:13px/1.15 monospace!important;white-space:nowrap;opacity:1!important}
 #night-home-interact{position:absolute;bottom:max(165px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
 #night-home-skip{position:fixed;right:16px;top:max(62px,env(safe-area-inset-top));z-index:2147483647}
 #night-checkpoint-status{position:absolute;left:12px;right:12px;bottom:max(112px,env(safe-area-inset-bottom));color:#ffe0a2;background:#251b15ed;padding:8px;font:12px/1.4 monospace;text-align:center}
@@ -280,16 +282,29 @@
 `;
     root.document.head.appendChild(style);
     const host=root.document.createElement('div');host.id='night-runtime-ui';host.hidden=true;
+    const safeArea=root.document.createElement('div');safeArea.id='night-hud-safe-area';safeArea.setAttribute('aria-hidden','true');
     const campaign=root.document.createElement('button');campaign.id='night-campaign';campaign.textContent='CAMPAIGN [C]';campaign.onclick=openCampaign;
     const home=root.document.createElement('button');home.id='night-home-interact';home.textContent="Enter Mike's house";home.onclick=openHome;
     const chapter=root.document.createElement('div');chapter.id='night-chapter';chapter.setAttribute('aria-live','polite');
     const checkpoint=root.document.createElement('div');checkpoint.id='night-checkpoint-status';checkpoint.setAttribute('role','status');checkpoint.hidden=true;
-    host.append(campaign,home,chapter,checkpoint);(el('game-wrap')||root.document.body).appendChild(host);ui={host,campaign,home,chapter,checkpoint};return ui;
+    host.append(safeArea,campaign,home,chapter,checkpoint);(el('game-wrap')||root.document.body).appendChild(host);ui={host,campaign,home,chapter,checkpoint};return ui;
   }
   function presentation(dt){
     const n=world(),view=ensureUI();if(!view)return;
     const shown=active(n)&&!blocked();view.host.hidden=!shown;view.home.hidden=!atHome();
     view.campaign.textContent=standalone(state())?'RUN MENU [C]':'CAMPAIGN [C]';
+    // The canvas HUD reserves this DOM control's exact CSS rectangle. Compute
+    // directly from the shared passive layout so startup/rotation cannot use a
+    // stale prior-frame receipt, and retain the original campaign click owner.
+    const hud=root.TechOpsRuntimeHud,canvas=typeof cv!=='undefined'?cv:root.cv||el('game');
+    if(hud&&canvas&&hud.handles(n)){
+      const menu=hud.layout(hud.viewport(canvas)).menu,rect=canvas.getBoundingClientRect&&canvas.getBoundingClientRect(),host=view.host.getBoundingClientRect&&view.host.getBoundingClientRect();
+      view.campaign.setAttribute('data-readable-hud','true');
+      view.campaign.style.left=(menu.x+(rect&&host?rect.left-host.left:0))+'px';view.campaign.style.top=(menu.y+(rect&&host?rect.top-host.top:0))+'px';view.campaign.style.right='auto';
+    }else{
+      view.campaign.setAttribute('data-readable-hud','false');
+      ['left','top','right'].forEach(key=>view.campaign.style.removeProperty(key));
+    }
     view.checkpoint.hidden=!checkpointError||!standalone(state());view.checkpoint.textContent=checkpointError||'';
     if(!active(n))return;
     const key=n.district+':'+n.street;if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+' / STREET '+n.street;}
@@ -309,6 +324,7 @@
     const guard=root.TechOpsProductionWrapperGuard;if(guard&&guard.repairStaleDialog)guard.repairStaleDialog();
     if(tick(dt)&&root.stepNM)root.stepNM(dt);
     if(active(world())){
+      ensureUI(); // Resolve safe-area padding before the first canvas HUD draw.
       if(root.drawNM)root.drawNM();
       checkpointFrame(dt);
       presentation(dt);

@@ -34,7 +34,14 @@ async function enterNight(page,touch){
  }
  throw new Error('Night launch did not reach a playable state: '+JSON.stringify(await snapshot(page)));
 }
-async function returnScene(page){await page.waitForFunction(()=>window.v725?.active()||!window.S?.nightMode);if(await page.evaluate(()=>!!window.v725?.active()))await page.locator('#night-home-skip').click();await page.waitForFunction(()=>!S.nightMode);}
+async function sharedSceneControls(page){
+ const scene=page.locator('#v725-cine'),pause=scene.locator('.day-cine-pause'),skip=scene.locator('.day-cine-skip');
+ await pause.waitFor({state:'visible'});await skip.waitFor({state:'visible'});
+ assert.equal(await page.locator('#night-home-skip').count(),0,'shared cinematic controls must replace the external Night skip');
+ assert.equal(await scene.locator('.day-cine-skip').count(),1,'one shared Skip owns transition settlement');
+ return {scene,pause,skip};
+}
+async function returnScene(page){await page.waitForFunction(()=>window.v725?.active()||!window.S?.nightMode);if(await page.evaluate(()=>!!window.v725?.active()))await (await sharedSceneControls(page)).skip.click();await page.waitForFunction(()=>!S.nightMode);}
 async function prepareStory(page){return page.evaluate(()=>{
  const C=TechOpsCampaign,c=C.createInitialState();for(const[id,owner]of [['shipping_cannot_print','mike'],['plating_workstation_down','amit'],['impossible_access_event','mike']])C.assignTicket(c,id,owner);
  C.completeStandup(c);C.completeWorkstation(c,{redInTheMirrorHeard:true,feliciaVideoSeen:true});
@@ -85,9 +92,20 @@ async function run(name,engine,touch,viewport){
   await page.waitForFunction(()=>NM?.district==='home'&&!NM.drive);await page.evaluate(()=>{NM.x=1730;NM.y=396;});await page.waitForTimeout(180);assert.equal(await page.evaluate(()=>!!S.nightMode),true);
   await page.evaluate(()=>{NM.x=1489;NM.y=396;NM.vx=NM.vy=0;});await page.locator('#night-home-interact').waitFor({state:'visible'});await shot('home');
   await click(page.locator('#night-home-interact'));await click(option('Stay out tonight'));assert.equal(await page.evaluate(()=>!!S.nightMode),true);
-  await click(page.locator('#night-home-interact'));await click(option('Sleep — finish this Night run'));await page.locator('#night-home-skip').waitFor({state:'visible'});
-  assert.equal(await page.evaluate(()=>TechOpsPresentationDirector.isBlocking()),true,'home transition must own input before standalone exit');await shot('transition');
-  const standaloneReload=page.waitForNavigation({waitUntil:'domcontentloaded'});await click(page.locator('#night-home-skip'));await standaloneReload;await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsProductionTitleExperience?.state().ready);
+  await click(page.locator('#night-home-interact'));await click(option('Sleep — finish this Night run'));
+  const transitionControls=await sharedSceneControls(page);
+  await click(transitionControls.pause);await page.waitForFunction(()=>window.v725?.presentation().paused);
+  assert.equal(await transitionControls.pause.getAttribute('aria-label'),'Resume cinematic');
+  assert.equal(await page.evaluate(()=>TechOpsPresentationDirector.isBlocking()),true,'home transition must own input before standalone exit');
+  const pausedShot=await page.evaluate(()=>v725.presentation().shot);
+  await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>v725.active()&&v725.presentation().paused),true,'Tab cannot settle the paused transition');
+  await shot('transition');assert.equal(await page.evaluate(()=>v725.presentation().shot),pausedShot,'capture cannot advance the paused shot');
+  await click(transitionControls.pause);await page.waitForFunction(()=>window.v725?.active()&&!v725.presentation().paused);
+  assert.equal(await transitionControls.pause.getAttribute('aria-label'),'Pause cinematic');
+  // Keep the scene held while navigation listeners are armed on slow runners.
+  await click(transitionControls.pause);await page.waitForFunction(()=>window.v725?.presentation().paused);
+  record.steps.push('shared cinematic Pause/Resume/Tab controls and one explicit Skip');
+  const standaloneReload=page.waitForNavigation({waitUntil:'domcontentloaded'});await click(transitionControls.skip);await standaloneReload;await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsProductionTitleExperience?.state().ready);
   assert.equal(await page.evaluate(()=>localStorage.getItem('techops_save')),storyMarker,'standalone Night cannot overwrite the campaign profile');
   assert.equal(await page.evaluate(()=>localStorage.getItem('techops_char')),null);assert.equal(await page.locator('#title-night-result').isVisible(),true);await shot('morning');
   record.steps.push('home/stay/sleep returns to title with isolated campaign save and visible debrief');

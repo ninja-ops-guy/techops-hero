@@ -69,8 +69,8 @@ test('missing cinematic renderer keeps an explicit safe continuation',()=>{
 });
 function transitionDOM(c){
   const nodes=new Map();
-  const node=()=>({style:{removeProperty(){}},classList:{contains(){return false;},toggle(){}},children:[],hidden:false,
-    setAttribute(){},appendChild(child){this.children.push(child);child.parent=this;if(child.id)nodes.set(child.id,child);return child;},
+  const node=()=>({style:{removeProperty(key){delete this[key];}},classList:{contains(){return false;},toggle(){}},children:[],hidden:false,attributes:{},
+    setAttribute(key,value){this.attributes[key]=String(value);},getAttribute(key){return this.attributes[key];},getBoundingClientRect(){return {left:0,top:0};},appendChild(child){this.children.push(child);child.parent=this;if(child.id)nodes.set(child.id,child);return child;},
     append(...children){children.forEach(child=>this.appendChild(child));},
     remove(){if(nodes.get(this.id)===this)nodes.delete(this.id);if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);this.parent=null;},
     focus(){c.document.activeElement=this;},querySelector(selector){return this.selectors&&this.selectors[selector]||null;}
@@ -118,5 +118,29 @@ test('pending Sector 04 attachment cannot enter a different run',()=>{
 });
 test('one dispatch, no competing heartbeat or automatic edge sleep',()=>{
   const src=fs.readFileSync('runtime_night.js','utf8'),game=fs.readFileSync('game.js','utf8'),hooks=fs.readFileSync('night_hooks.js','utf8');assert.doesNotMatch(src,/setInterval\s*\(/);assert.match(game,/nightRuntime && nightRuntime\.frame\(dt\)/);assert.match(game,/__nightRuntimeLastOk = Date\.now\(\)/);assert.doesNotMatch(hooks,/NM\.district === "home" && NM\.x[^\n]*exitNight/);assert.match(hooks,/"EARLY RETURN"/);assert.match(hooks,/"EXTRACTION REQUIRED"/);assert.match(src,/overflow-y:auto/);
+});
+test('existing presentation places the readable menu in the current HUD reservation before any drawing receipt',()=>{
+  for(const [width,height] of [[568,320],[844,390],[320,568],[390,844],[1280,800]]){
+    const{c,api}=fixture(),n=c.enter();const dom=transitionDOM(c);
+    vm.runInContext(fs.readFileSync('runtime_hud.js','utf8'),c);
+    c.cv={width:Math.round(width*540/height),height:540,getBoundingClientRect:()=>({width,height,left:10,top:8})};
+    const before=JSON.stringify({x:n.x,y:n.y,w:n.w,h:n.h,cam:n.cam});
+    const expected=c.TechOpsRuntimeHud.layout(c.TechOpsRuntimeHud.viewport(c.cv)).menu;
+    assert.equal(c.__techOpsNightHudEvidence,undefined,'the menu cannot require a previous draw');api.frame(.016);
+    const button=dom.nodes.get('night-campaign'),host=dom.nodes.get('night-runtime-ui');
+    assert.equal(button.style.left,(expected.x+10)+'px');assert.equal(button.style.top,(expected.y+8)+'px');assert.equal(button.style.right,'auto');assert.equal(button.getAttribute('data-readable-hud'),'true');
+    assert.equal(button.onclick,api.openCampaign,'the original click owner is retained');assert.equal(host.hidden,false);
+    const probe=dom.nodes.get('night-hud-safe-area');assert.ok(probe,'passive inset probe exists before rendering');
+    c.getComputedStyle=item=>item===probe?{paddingTop:'20px',paddingRight:'44px',paddingBottom:'0px',paddingLeft:'0px'}:{display:'block',visibility:'visible'};
+    api.frame(.016);assert.equal(button.style.top,'28px');assert.ok(parseFloat(button.style.left)+122<=width-44+10);
+    c.getComputedStyle=()=>({display:'block',visibility:'visible'});api.frame(.016);assert.equal(button.style.left,(expected.x+10)+'px');assert.equal(button.style.top,(expected.y+8)+'px');
+    c.cv.getBoundingClientRect=()=>({width:844,height:390,left:10,top:8});host.getBoundingClientRect=()=>({left:4,top:2});
+    const rotated=c.TechOpsRuntimeHud.layout(c.TechOpsRuntimeHud.viewport(c.cv)).menu;api.frame(.016);
+    assert.equal(button.style.left,(rotated.x+6)+'px');assert.equal(button.style.top,(rotated.y+6)+'px');
+    assert.equal(JSON.stringify({x:n.x,y:n.y,w:n.w,h:n.h,cam:n.cam}),before,'menu geometry cannot move the world');
+    c.S.inDialog=true;api.frame(.016);assert.equal(host.hidden,true,'modal keeps ownership');c.S.inDialog=false;
+    n._sector04={};api.frame(.016);assert.equal(button.getAttribute('data-readable-hud'),'false');for(const key of ['left','top','right'])assert.equal(button.style[key],undefined,'specialized Sector04 restores original positioning');
+  }
+  const source=fs.readFileSync('runtime_night.js','utf8');assert.match(source,/#night-runtime-ui #night-campaign\[data-readable-hud="true"\][^\n]*height:44px[^\n]*font:13px\/1\.15 monospace!important/,'readable menu overrides retired10px recording styling');
 });
 console.log(`Night lifecycle: ${passed} regression groups passed`);

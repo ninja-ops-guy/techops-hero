@@ -27,14 +27,19 @@ async function hudContract(page, mode) {
     const bounds = canvas.getBoundingClientRect(), calls = [], native = ctx.fillText;
     ctx.fillText = function(value, x, y, ...rest) {
       const matrix = this.getTransform(), size = Number(this.font.match(/([\d.]+)px/)?.[1]);
+      const width=this.measureText(value).width*Math.hypot(matrix.a,matrix.b)*bounds.width/canvas.width;
+      const anchor=(matrix.a*x+matrix.c*y+matrix.e)*bounds.width/canvas.width;
       calls.push({ text:String(value), size:size * Math.hypot(matrix.c,matrix.d) * bounds.height / canvas.height,
+        x:anchor-(this.textAlign==='center'?width/2:this.textAlign==='right'?width:0),width,
         y:(matrix.b*x+matrix.d*y+matrix.f)*bounds.height/canvas.height });
       return native.call(this,value,x,y,...rest);
     };
     try { await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
     finally { ctx.fillText = native; }
     const hud = mode === 'night' ? window.__techOpsNightHudEvidence : window.TechOpsGoodBoysHudLite.layout();
-    return { hud, calls, canvas:{width:bounds.width,height:bounds.height}, actorTop:NM.y*bounds.height/canvas.height };
+    const menu=document.getElementById('night-campaign'),rect=mode==='night'&&menu?.getBoundingClientRect();
+    const menuEvidence=rect?{x:rect.left-bounds.left,y:rect.top-bounds.top,width:rect.width,height:rect.height,font:parseFloat(getComputedStyle(menu).fontSize),hit:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)===menu}:null;
+    return { hud, calls, menu:menuEvidence,canvas:{width:bounds.width,height:bounds.height}, actorTop:NM.y*bounds.height/canvas.height };
   }, mode);
   const hud = evidence.hud;
   assert.ok(hud && !hud.blocked, mode+' readable HUD must render');
@@ -44,6 +49,16 @@ async function hudContract(page, mode) {
   }
   const bottom = Math.max(...panels.map(p=>p.y+p.height));
   assert.ok(bottom <= evidence.actorTop-4, mode+' HUD leaves the grounded actor unobscured: '+bottom+' vs '+evidence.actorTop);
+  if(mode==='night'){
+    const menu=evidence.menu;assertTouchTarget(menu,'Night run menu');assert.ok(menu.font>=13&&menu.hit,'Night menu is readable and reachable');
+    assert.ok(hud.menu,'HUD reserves the real menu rectangle');
+    for(const key of ['x','y','width','height'])assert.ok(Math.abs(menu[key]-hud.menu[key])<1,'menu follows reserved '+key);
+    for(const call of evidence.calls.filter(c=>c.y<=bottom)){
+      const overlapX=Math.min(call.x+call.width,menu.x+menu.width)-Math.max(call.x,menu.x);
+      const overlapY=Math.min(call.y,menu.y+menu.height)-Math.max(call.y-call.size,menu.y);
+      assert.ok(overlapX<=0||overlapY<=0,'Night run menu cannot cover '+call.text);
+    }
+  }
   const labels = mode === 'night' ? [/^HP \d+$/, /^FOCUS$/, /^\$/] : [/^KATRIN$/, /^MANCHEZ$/, /^SYNC /, /^MISSION /, /^YOU$/, /^AI$/];
   for (const label of labels) {
     // World-attached character labels can repeat a HUD name below the cards.
@@ -233,6 +248,20 @@ try {
     narrowEvidence.phase = 'cold-start-with-delayed-decoration';
     const collapsed = narrowEvidence.collapsed = await assertLandscapeControlBounds(nightPage);
     narrowEvidence.hud = await hudContract(nightPage, 'night');
+    // Simulated resolved safe-area values exercise the shared projection. This
+    // is a renderer-state fixture, not evidence from a physical notched phone.
+    await nightPage.locator('#night-runtime-ui').evaluate(el=>{
+      el.style.setProperty('--night-hud-safe-right','44px');
+      el.style.setProperty('--night-hud-safe-top','20px');
+    });
+    narrowEvidence.insetHud = await hudContract(nightPage, 'night');
+    assert.ok(narrowEvidence.insetHud.menu.x+narrowEvidence.insetHud.menu.width<=568-44,'menu clears simulated right inset');
+    assert.ok(narrowEvidence.insetHud.menu.y>=20,'menu clears simulated top inset');
+    await nightPage.locator('#night-runtime-ui').evaluate(el=>{
+      el.style.removeProperty('--night-hud-safe-right');
+      el.style.removeProperty('--night-hud-safe-top');
+    });
+    await hudContract(nightPage, 'night');
     assert.ok(!collapsed.presentation.bodyClass.includes('night-mobile-cohesion'), 'cold-start fixture must hold the optional visual class');
     assert.equal(collapsed.presentation.inputOwner, 'active', 'production Night input must already own the visible controls');
     const more = nightPage.locator('#night-input-assists');

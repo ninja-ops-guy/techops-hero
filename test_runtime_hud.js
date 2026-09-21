@@ -33,6 +33,12 @@ for (const [width,height] of [[568,320],[844,390],[320,568],[390,844],[1280,800]
     assert.ok(t.y>=13&&t.y<=height,`${width}: text vertical bound: ${t.text}`);
   }
   const e=f.root.__techOpsNightHudEvidence;
+  assert.equal(e.menu.width,122);assert.equal(e.menu.height,44);
+  assert.ok(e.menu.x>=0&&e.menu.y>=0&&e.menu.x+e.menu.width<=width&&e.menu.y+e.menu.height<=height,'menu stays in viewport');
+  for(const t of cssText(f)) {
+    const x=t.align==='center'?t.x-t.width/2:t.align==='right'?t.x-t.width:t.x,y=t.y-t.font,m=e.menu;
+    assert.ok(x+t.width<=m.x||m.x+m.width<=x||y+t.font<=m.y||m.y+m.height<=y,`${width}: menu reservation cannot obscure ${t.text}`);
+  }
   assert.ok(e.text.find(row=>row.role==='combat').lines.join(' ').includes('[RISING FINISH]'),'sound captions render without an audio ownership change');
   assert.equal(e.text.find(row=>row.role==='message').lines.join(' '),f.n.msg,'authored transient message remains complete');
   if(width>=568&&height<=390) assert.ok(e.bottom<190, 'stack stays above the grounded combat focal area');
@@ -58,6 +64,23 @@ for (const mode of ['day','dogs','sector04','waldo','foreign-world']) {
 {
   const f=fixture(); f.n.drive={to:'home'};assert.equal(draw(f),true);assert.equal(f.ops.length,0);assert.equal(f.api.drawDrive(f.ctx,f.n,'HOME STREET'),true);assert.ok(cssText(f).some(t=>t.text==='DRIVING — HOME STREET'&&t.font>=14));
   f.root.S.inDialog=true;f.ops.length=0;assert.equal(f.api.drawDrive(f.ctx,f.n,'HOME STREET'),true);assert.equal(f.ops.length,0);
+}
+for(const [width,height] of [[320,568],[568,320],[844,390]]) {
+  const f=fixture(width,height);f.n.drive={to:'industrial'};const before=JSON.stringify(f.n);
+  f.api.drawDrive(f.ctx,f.n,'INDUSTRIAL DISTRICT');const receipt=f.root.__techOpsNightHudEvidence,m=receipt.menu;
+  assert.equal(receipt.driving,true);assert.equal(receipt.text[0].lines.join(' '),'DRIVING — INDUSTRIAL DISTRICT');
+  for(const t of cssText(f)) {const x=t.x-t.width/2,y=t.y-t.font;assert.ok(t.font>=14-1e-8);assert.ok(x>=0&&x+t.width<=width);assert.ok(y>=m.y+m.height+8,'drive label keeps the real menu reachable');}
+  assert.ok(receipt.bottom<height);assert.equal(JSON.stringify(f.n),before);assert.equal(f.stack.length,0);
+}
+for(const [width,height] of [[320,568],[568,320],[844,390]]) {
+  const f=fixture(width,height),probe={};let insets={paddingTop:'20px',paddingRight:'44px',paddingBottom:'0px',paddingLeft:'0px'};
+  f.root.document.getElementById=id=>id==='night-hud-safe-area'?probe:null;f.root.getComputedStyle=el=>{assert.equal(el,probe);return insets;};
+  draw(f);const receipt=f.root.__techOpsNightHudEvidence,m=receipt.menu;
+  assert.ok(m.y>=20);assert.ok(m.x+m.width<=width-44);
+  for(const t of cssText(f)){const x=t.align==='center'?t.x-t.width/2:t.align==='right'?t.x-t.width:t.x,y=t.y-t.font;assert.ok(x+t.width<=m.x||m.x+m.width<=x||y+t.font<=m.y||m.y+m.height<=y,'safe-area menu does not move over existing canvas text');}
+  assert.equal(receipt.text.find(t=>t.role==='message').lines.join(' '),f.n.msg,'inset wrapping retains full copy');
+  insets={paddingTop:'0px',paddingRight:'0px',paddingBottom:'0px',paddingLeft:'0px'};f.ops.length=0;draw(f);
+  assert.equal(f.root.__techOpsNightHudEvidence.menu.x,width-(width<400?6:8)-6-122,'clearing insets restores the original target location');assert.equal(f.root.__techOpsNightHudEvidence.menu.y,11);
 }
 {
   const f=fixture();f.ctx.font='13px monospace';const token='SUPERCALIFRAGILISTICEXPIALIDOCIOUS'.repeat(4),lines=f.api.wrap(f.ctx,token,90);assert.equal(lines.join(''),token);assert.ok(lines.every(line=>f.ctx.measureText(line).width<=90));
