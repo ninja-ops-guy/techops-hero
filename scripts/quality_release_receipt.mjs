@@ -27,7 +27,7 @@ function observationMatches(check,requirement,report,source){
   const o=check.observations;
   if(check.id==='candidate_freeze')return o.head===source?.head&&o.tree===source?.tree&&o.fingerprint===source?.fingerprint&&
     SHA40.test(o.head||'')&&SHA40.test(o.tree||'')&&SHA256.test(o.fingerprint||'')&&
-    Number.isFinite(Date.parse(o.frozen_at))&&o.change_policy==='invalidate-all-evidence';
+    Number.isFinite(Date.parse(o.frozen_at))&&o.change_policy==='invalidate-all-evidence'&&retainedArtifact(report,o.freeze_record);
   if(check.id==='deployed_identity')return o.head===source?.head&&o.tree===source?.tree&&o.immutable===true&&
     typeof o.build_id==='string'&&o.build_id.length>0&&/^https:\/\//.test(o.deployment_url||'')&&retainedArtifact(report,o.asset_manifest);
   if(check.id==='title_routes')return Array.isArray(o.cards)&&['btn-start','btn-v736','btn-nightcrawler'].every(id=>o.cards.some(c=>c.id===id&&c.disabled===false&&typeof c.label==='string'&&c.label.length))&&o.viewport?.width>0&&o.viewport?.height>0;
@@ -35,27 +35,31 @@ function observationMatches(check,requirement,report,source){
   if(check.id==='night_resume')return o.checkpoint_saved_at>0&&o.campaign_isolation===true&&o.after?.inDialog===false&&Array.isArray(o.before?.enemies)&&['x','hp','district','street','cash','kills'].every(k=>o.before[k]===o.after[k]);
   if(check.id==='good_dogs_selector')return ['solo','local'].includes(o.mode)&&o.cancellation_recovered===true&&o.prologue_shots===3&&typeof o.touch_only_local_disabled==='boolean';
   if(check.id==='cinematic_recovery')return o.source_assigned===false&&o.late_escape_did_not_repeat===true&&Array.isArray(o.writes)&&o.writes.length===1&&o.writes[0].status==='USER_SKIPPED';
-  if(check.id==='vertical_slice_checkpoints')return requiredCasesMatch(o.checkpoints,requirement,c=>c.reviewed===true&&c.blocker!==true&&retainedArtifact(report,c));
-  if(check.id==='device_input_matrix')return requiredCasesMatch(o.cases,requirement,c=>c.progression_reachable===true&&c.prompt_action_match===true&&c.lost_input===false&&c.duplicate_input===false);
+  if(check.id==='vertical_slice_checkpoints'){
+    const checkpoints=o.checkpoints;
+    return requiredCasesMatch(checkpoints,requirement,c=>c.reviewed===true&&c.blocker!==true&&retainedArtifact(report,c))&&
+      checkpoints.length===requirement.required_cases.length&&new Set(checkpoints.map(c=>c.artifact_path)).size===requirement.required_cases.length;
+  }
+  if(check.id==='device_input_matrix')return requiredCasesMatch(o.cases,requirement,c=>c.progression_reachable===true&&c.prompt_action_match===true&&c.lost_input===false&&c.duplicate_input===false)&&retainedArtifact(report,o.matrix_artifact);
   if(check.id==='physical_mobile')return requiredCasesMatch(o.cases,requirement);
-  if(check.id==='persistence_matrix')return requiredCasesMatch(o.cases,requirement,c=>c.equivalent_state===true&&c.data_loss===false&&c.duplicate_events===0&&c.duplicate_rewards===0);
+  if(check.id==='persistence_matrix')return requiredCasesMatch(o.cases,requirement,c=>c.equivalent_state===true&&c.data_loss===false&&c.duplicate_events===0&&c.duplicate_rewards===0)&&retainedArtifact(report,o.matrix_artifact);
   if(check.id==='unassisted_routes')return o.route_completed===true&&o.save_reload_verified===true&&typeof o.terminal_state==='string'&&o.terminal_state.length>0&&Array.isArray(o.assistance)&&o.assistance.length===0;
   if(check.id==='performance_budget'){
     const budget=requirement.budgets?.[check.profile];
     return !!budget&&Number.isFinite(o.first_playable_ms)&&o.first_playable_ms>0&&o.first_playable_ms<=budget.first_playable_ms&&
       Number.isFinite(o.core_input_p95_ms)&&o.core_input_p95_ms>0&&o.core_input_p95_ms<=budget.core_input_p95_ms&&
       Number.isFinite(o.duration_seconds)&&o.duration_seconds>0&&o.asset_decode_failures===0&&o.softlocks===0&&
-      Number.isInteger(o.blocking_stalls)&&o.blocking_stalls>=0;
+      Number.isInteger(o.blocking_stalls)&&o.blocking_stalls>=0&&retainedArtifact(report,o.measurement_artifact);
   }
   if(check.id==='device_soak')return Number.isFinite(o.frame_p95_ms)&&o.frame_p95_ms>0&&Number.isFinite(o.frame_p99_ms)&&o.frame_p99_ms>=o.frame_p95_ms&&typeof o.memory_observation==='string'&&o.memory_observation.length>0&&typeof o.thermal_observation==='string'&&o.thermal_observation.length>0&&o.blocking_stalls===0;
   if(check.id==='fresh_context_playtest')return o.route_completed===true&&o.developer_intervention===false&&Array.isArray(o.assistance)&&o.assistance.length===0&&
     Array.isArray(o.confusion_points)&&o.blocking_confusion===0&&typeof o.terminal_state==='string'&&o.terminal_state.length>0&&
-    Number.isFinite(o.duration_seconds)&&o.duration_seconds>0&&requiredCasesMatch((o.checkpoints_seen||[]).map(id=>({id,passed:true})),requirement);
+    Number.isFinite(o.duration_seconds)&&o.duration_seconds>0&&requiredCasesMatch((o.checkpoints_seen||[]).map(id=>({id,passed:true})),requirement)&&retainedArtifact(report,o.playtest_record);
   if(check.id==='known_issue_gate'){
     if(!Array.isArray(o.issues))return false;
     const valid=o.issues.every(i=>typeof i.id==='string'&&i.id&&['P0','P1','P2','P3'].includes(i.severity)&&['open','closed'].includes(i.status)&&
       (i.status==='closed'||typeof i.disposition==='string'&&i.disposition.length>0));
-    return valid&&!o.issues.some(i=>i.status==='open'&&(i.severity==='P0'||i.severity==='P1'))&&o.unclassified_count===0;
+    return valid&&!o.issues.some(i=>i.status==='open'&&(i.severity==='P0'||i.severity==='P1'))&&o.unclassified_count===0&&retainedArtifact(report,o.issue_inventory);
   }
   if(check.id==='rollback_receipt')return o.candidate_head===source?.head&&SHA40.test(o.rollback_target_sha||'')&&o.rollback_target_sha!==source?.head&&
     o.rollback_tested===true&&o.forward_restore_tested===true&&o.save_compatibility_checked===true&&retainedArtifact(report,o.rollback_record);
