@@ -12,7 +12,21 @@ const report = { scope: "Fixture-assisted Act IV: public prerequisite actions se
 await mkdir(out, { recursive: true });
 let browser, activePage;
 async function title(page) { await page.waitForFunction(() => window.TechOpsProductionTitleExperience?.state().ready === true, null, { timeout: 25000 }); }
-async function click(page, text) { await page.getByRole("button", { name: text, exact: true }).click({ timeout: 10000 }); }
+async function releaseCriticalIncidentCinema(page) {
+  const active = await page.evaluate(() => !!window.v723?.active?.());
+  if (!active) return false;
+  const overlay = page.locator("#v723-cine");
+  await overlay.waitFor({ state: "visible", timeout: 3000 });
+  await page.keyboard.press("e");
+  await page.waitForFunction(() => !window.v723?.active?.() && !document.getElementById("v723-cine"), null, { timeout: 5000 });
+  return true;
+}
+async function click(page, text) {
+  // The critical-incident cinema legitimately owns input while it is on screen.
+  // Exercise its authored E-to-skip contract instead of clicking through the modal.
+  await releaseCriticalIncidentCinema(page);
+  await page.getByRole("button", { name: text, exact: true }).click({ timeout: 10000 });
+}
 async function snapshot(page) { return page.evaluate(() => { const state = TechOpsCampaign.load(localStorage); return { trust: TechOpsCampaignAct2.snapshot(state).trustIsEarned, evidenceScore: state.p1.evidence.score, trustScore: state.p1.trust.score, facts: state.story.facts }; }); }
 try {
   for (let i = 0; i < 80; i++) {
