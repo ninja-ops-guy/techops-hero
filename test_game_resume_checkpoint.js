@@ -7,7 +7,7 @@ const vm = require("vm");
 const source = fs.readFileSync("game.js", "utf8");
 assert.ok(source.includes('localStorage.removeItem("techops_save_bak")'), "New Game must clear the legacy recovery shadow as well as the primary profile");
 assert.ok(source.includes("Shift resumed at ${fmtClock(S.clock)}") && !source.includes("fmtTime(S.clock)"), "Continue feedback must use the shipped clock formatter");
-const block = source.match(/const save = \(\) => \{[\s\S]*?\nfunction loadDayCheckpoint\(profile\) \{[\s\S]*?\n\}/);
+const block = source.match(/const PROFILE_SAVE_SCHEMA_VERSION = \d+;\nconst save = \(\) => \{[\s\S]*?\nfunction loadDayCheckpoint\(profile\) \{[\s\S]*?\n\}/);
 assert.ok(block, "save and checkpoint functions must remain directly testable");
 
 const data = new Map([["techops_save", JSON.stringify({ day: 9, meta: { marker: "existing-story" } })]]);
