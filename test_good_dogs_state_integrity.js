@@ -20,7 +20,7 @@ assert.ok(v736Source.includes("resumeState = JSON.parse(JSON.stringify(options.s
 assert.ok(v736Source.includes("Object.assign(mt, campaign)"), "v736 must restore the complete Good Dogs campaign snapshot");
 
 {
-  const match = gameSource.match(/const save = \(\) => \{[\s\S]*?\n\};\nconst load/);
+  const match = gameSource.match(/const PROFILE_SAVE_SCHEMA_VERSION = \d+;\nconst save = \(\) => \{[\s\S]*?\n\};\nconst load/);
   assert.ok(match, "canonical save implementation must remain directly testable");
   let writes = 0, reject = false, throwWrite = false;
   const storage = new Map();
