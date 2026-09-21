@@ -8,6 +8,7 @@ const tests = [
   "test_review_contracts.js",
   "test_quality_release_receipt.mjs",
   "test_release_governance_report.mjs",
+  "test_release_identity_report.mjs",
   "test_browser_geometry.mjs",
   "test_runtime_hud.js",
   "test_good_dogs_hud_readability.js",
