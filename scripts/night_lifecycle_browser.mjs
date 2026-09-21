@@ -4,7 +4,7 @@ import {chromium,firefox,webkit} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
-const OUT=process.env.NIGHT_REPORT_DIR||'artifacts/night-lifecycle';
+const OUT=process.env.NIGHT_REPORT_DIR||(process.env.BOT_OUT_DIR?`${process.env.BOT_OUT_DIR}/night-lifecycle`:'artifacts/night-lifecycle');
 const URL=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 await mkdir(OUT,{recursive:true});
 const server=process.env.BOT_BASE_URL?null:spawn('python3',['scripts/media_http_server.py','--port','4173','--bind','127.0.0.1'],{stdio:'ignore'});
@@ -18,7 +18,41 @@ async function snapshot(page){return page.evaluate(()=>({
  keys:typeof keys!=='undefined'?{right:!!keys.arrowright,d:!!keys.d}:null,
  dialogue:{text:document.querySelector('#dialogue')?.innerText,hidden:document.querySelector('#dialogue')?.classList.contains('hidden')}
 }));}
-async function mount(page){await page.goto(URL,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsNightRuntime);}
+async function startupSnapshot(page){return page.evaluate(()=>({
+ readyState:document.readyState,visibility:document.visibilityState,bootstrapReady:!!window.__productionBootstrapReady,
+ bootstrap:window.TechOpsProductionBootstrap?.health?.(),title:window.TechOpsProductionTitleExperience?.state?.(),
+ bootstrapError:window.__productionBootstrapError||null,modeError:window.__productionModeRouterError||null,
+ lastScripts:[...document.scripts].slice(-8).map(script=>({src:script.src,async:script.async})),
+ resourceCount:performance.getEntriesByType('resource').length
+}));}
+async function mount(page){
+ await page.goto(URL,{waitUntil:'domcontentloaded'});
+ try{await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsNightRuntime);}
+ catch(error){error.message+='\nStartup observation: '+JSON.stringify(await startupSnapshot(page).catch(()=>null));throw error;}
+}
+async function sectorMenuProbe(page){
+ return page.evaluate(()=>{
+  const states=new WeakMap(),worlds=new WeakMap(),labels=new WeakMap();let nextState=0,nextWorld=0,nextLabel=0;
+  const identity=(map,value,next)=>{if(!value||typeof value!=='object')return null;if(!map.has(value))map.set(value,next());return map.get(value);};
+  const probe={events:[]},button=document.getElementById('night-campaign');
+  const describe=node=>node?{id:node.id||null,tag:node.tagName||null,control:node.closest?.('button')?.id||null}:null;
+  const capture=(phase,event)=>{
+   const state=typeof S!=='undefined'?S:window.S,night=typeof NM!=='undefined'?NM:window.NM,dialogue=document.getElementById('dialogue');
+   const box=button?.getBoundingClientRect(),style=button&&getComputedStyle(button),hit=box&&document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+   const entry={phase,at:performance.now(),event:event?{type:event.type,target:describe(event.target),button:event.button,detail:event.detail,defaultPrevented:event.defaultPrevented}:null,
+    stateId:identity(states,state,()=>++nextState),worldId:identity(worlds,night,()=>++nextWorld),stateWorldId:identity(worlds,state?.nightMode,()=>++nextWorld),
+    night:!!state?.nightMode,inDialog:state?.inDialog,hp:night?.hp,sector:!!night?._sector04?.active,district:night?.district,
+    runtime:window.TechOpsNightRuntime?.health(),presentation:window.TechOpsPresentationDirector?.current(),
+    dialogue:{hidden:dialogue?.classList.contains('hidden'),name:document.getElementById('dlg-name')?.textContent,options:[...document.querySelectorAll('#dlg-options button')].map(option=>option.textContent)},
+    control:{labelNodeId:identity(labels,button?.firstChild,()=>++nextLabel),connected:!!button?.isConnected,disabled:!!button?.disabled,rect:box?.toJSON(),display:style?.display,visibility:style?.visibility,pointerEvents:style?.pointerEvents,hit:describe(hit),hitOwned:!!(hit&&(hit===button||button?.contains(hit)))}};
+   probe.events.push(entry);return entry;
+  };
+  const listen=event=>{if(probe.events.length<24)capture(event.type,event);};
+  for(const type of ['pointerdown','mousedown','pointerup','mouseup','click'])window.addEventListener(type,listen,true);
+  probe.finish=()=>{capture('after activation');for(const type of ['pointerdown','mousedown','pointerup','mouseup','click'])window.removeEventListener(type,listen,true);return probe.events;};
+  window.__nightLifecycleMenuProbe=probe;return capture('before activation');
+ });
+}
 async function enterNight(page,touch){
  const button=page.locator('#btn-nightcrawler');
  if(touch)await button.tap();else await button.click();
@@ -111,10 +145,17 @@ async function run(name,engine,touch,viewport){
   record.steps.push('home/stay/sleep returns to title with isolated campaign save and visible debrief');
   await page.evaluate(()=>localStorage.clear());await mount(page);await page.waitForFunction(()=>window.TechOpsProductionTitleExperience?.state().ready);await click(page.locator('#btn-start'));await click(option('Standard'));await click(option('Clock in'));await page.waitForFunction(()=>window.S&&!S.nightMode&&!S.inDialog);record.steps.push('actual Day entry before fixture-assisted campaign Night');
   const evidence=await prepareStory(page);assert.equal((await page.evaluate(()=>TechOpsSector04Runtime.enterBrowser())).pending,true);await page.waitForFunction(()=>window.v722?.active());await page.keyboard.press('Escape');await page.waitForFunction(()=>S.nightMode?._sector04?.active&&!S.inDialog);
-  await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});await click(page.locator('#night-campaign'));await click(option('Continue Sector 04 investigation'));
+  await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});
+  await sectorMenuProbe(page);
+  try{await click(page.locator('#night-campaign'));}
+  finally{record.sectorMenu=await page.evaluate(()=>window.__nightLifecycleMenuProbe?.finish());}
+  const opened=record.sectorMenu.at(-1);
+  assert.ok(opened.night&&opened.sector&&opened.inDialog&&!opened.dialogue.hidden&&opened.dialogue.options.some(text=>text.includes('Continue Sector 04 investigation')),
+    'Sector 04 menu must open from one visible activation before gameplay can mask the failure: '+JSON.stringify(record.sectorMenu));
+  await click(option('Continue Sector 04 investigation'));
   assert.equal(await page.evaluate(()=>NM._continuityCheck),'same-session');assert.equal(await page.evaluate(()=>JSON.stringify(TechOpsCampaign.load(localStorage).evidence)),evidence);assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).flags.tuesday_morning_reached),false);await shot('sector04');
   record.steps.push('asynchronous Sector 04 entry and evidence-preserving resume');assert.deepEqual(record.errors,[]);record.status='passed';
- }catch(e){record.status='failed';record.failure=String(e.stack||e);if(page){record.state=await snapshot(page).catch(()=>null);await page.screenshot({path:`${OUT}/${name}-failure.png`,timeout:5000}).catch(()=>{});}}
+ }catch(e){record.status='failed';record.failure=String(e.stack||e);if(page){record.state=await snapshot(page).catch(()=>null);record.startup=await startupSnapshot(page).catch(()=>null);await page.screenshot({path:`${OUT}/${name}-failure.png`,timeout:5000}).catch(()=>{});}}
  finally{if(browser)await browser.close();await writeFile(`${OUT}/report.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(record));}
 }
 const profiles=[['chromium',chromium,false,{width:1280,height:800}],['firefox',firefox,false,{width:1280,height:800}],['webkit',webkit,false,{width:1280,height:800}],['webkit-mobile',webkit,true,{width:844,height:390}]];
