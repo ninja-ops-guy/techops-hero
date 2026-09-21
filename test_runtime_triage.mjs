@@ -138,8 +138,9 @@ test('workflow gate parity and privilege boundaries', () => {
   assert.match(workflow, /name: runtime-triage-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
 });
 test('runtime Night combat timeout matches the authoritative integration budget', () => {
-  const runtimeMatch = workflow.match(/^\s*timeout\s+(\d+)s\s+node scripts\/night_combat_bot\.mjs\s*$/m);
-  const integrationMatch = nightCombatWorkflow.match(/^\s*timeout\s+(\d+)s\s+node scripts\/night_combat_bot\.mjs\s*$/m);
+  const timeoutLine = /^\s*timeout\s+(\d+)s\s+node scripts\/night_combat_bot\.mjs(?:\s*\|[^\n]+)?\s*$/m;
+  const runtimeMatch = workflow.match(timeoutLine);
+  const integrationMatch = nightCombatWorkflow.match(timeoutLine);
   assert.ok(runtimeMatch, 'Runtime bot must retain an explicit Night combat timeout');
   assert.ok(integrationMatch, 'Night Combat Integration must retain an explicit timeout');
   assert.equal(Number(runtimeMatch[1]), Number(integrationMatch[1]), 'Runtime bot cannot kill Night combat earlier than its authoritative integration gate');
