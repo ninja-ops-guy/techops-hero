@@ -23,9 +23,13 @@ assert.ok(v736Source.includes("Object.assign(mt, campaign)"), "v736 must restore
   const match = gameSource.match(/const save = \(\) => \{[\s\S]*?\n\};\nconst load/);
   assert.ok(match, "canonical save implementation must remain directly testable");
   let writes = 0, reject = false, throwWrite = false;
+  const storage = new Map();
   const context = {
     S: { day: 1, meta: {}, certs: [], inv: [], journal: [], stats: {}, soft: {}, rep: {}, ach: [], books: [], lab: [], staff: [], infra: [] },
-    localStorage: { setItem() { if (throwWrite) throw new Error("quota"); writes++; } },
+    localStorage: {
+      getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+      setItem(key, value) { if (throwWrite) throw new Error("quota"); writes++; storage.set(key, String(value)); }
+    },
     TechOpsStateValidator: { assertBeforeSave() { return !reject; } }
   };
   context.window = context;
