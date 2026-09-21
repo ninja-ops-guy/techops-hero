@@ -100,6 +100,13 @@
   ],
   "contracts": [
     {
+      "id": "STARTUP_PREFETCH_ORDER",
+      "failure_mode": "Forty sequential script fetches accumulate network latency, or a loading optimization executes dependent modules early and changes runtime ownership.",
+      "invariant": "At most four future production scripts are hinted, with the consuming hint retired after load. Hints never execute code; script execution, actor enforcement, wrapper freezing, timer parking, errors and readiness remain under the existing serial bootstrap. Unsupported or failed hints fall back without blocking startup.",
+      "test_ref": "test_startup_prefetch.js",
+      "spot_check": "Compare the bootstrap request chain with hints supported and ignored; verify every file executes once in FILES order, no temporary hint remains, timers stay parked, and real Day/Night/Good Dogs acceptance still passes. Treat simulated network timing separately from physical-device or live cold-start performance."
+    },
+    {
       "id": "GD_CODEC_CAPABILITY",
       "failure_mode": "An environment without an H.264 decoder attempts the authored movie and enters a retry or autoplay loop.",
       "invariant": "Playback eligibility is decided from MediaSource.isTypeSupported and HTMLMediaElement.canPlayType, never a user-agent string; unsupported environments explain that video is unavailable and retain an explicit Skip control.",

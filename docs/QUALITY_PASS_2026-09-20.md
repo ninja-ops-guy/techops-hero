@@ -69,6 +69,25 @@ repository administration must enforce the check names above before release.
 
 ## Remaining production and AAA gaps
 
+### Startup follow-up — 2026-09-21
+
+The production bootstrap's 40-script fetch chain was strictly serial. Bounded
+script preload hints now request at most four future files without changing
+execution order or the existing actor, wrapper, timer and readiness boundaries.
+Hints are temporary and optional: unsupported/failed hints retain the serial
+fallback. This does not remove the parser stack, legacy entrypoint chain, asset
+decode cost, or other sources of slow startup.
+
+`test_startup_prefetch.js` executes the actual loader against a deterministic
+200-ms-per-script network model: serial 8,000 ms; bounded lookahead 1,600 ms.
+It checks ordering, one execution per file, at most five live hints (four future
+plus the consuming hint), cleanup, error reporting, fallback and timer parking.
+These are simulated network results, not a claimed fivefold live/phone speedup.
+The cloud browser does not expose Resource Timing through its read-only page
+inspection surface, so live startup attribution remains unmeasured there.
+Real-device cold/warm startup, slow-network competition with assets and the
+remaining loading chains still require performance qualification.
+
 | Priority | Remaining gap | Concrete acceptance target |
 | --- | --- | --- |
 | Release | Physical iPhone/Android behavior | Clean touch, rotation, background/resume, safe-area, audio and storage runs on named real devices with exact candidate identity |

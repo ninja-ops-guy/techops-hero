@@ -1,4 +1,4 @@
-/* TechOps Hero — production runtime bootstrap v47.
+/* TechOps Hero — production runtime bootstrap v48.
  * Infrastructure / Night / Good Boys production stack only. Story Bible campaign
  * completion is loaded by campaign_late_game_bootstrap.js after canonical
  * campaign and native Act II dependencies exist, eliminating duplicate loaders.
@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=47,BUILD="20260920-launch-wait-r1",started=false,done=false;
+  var VERSION=48,BUILD="20260921-startup-r1",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",
@@ -51,6 +51,18 @@
     "recording_world_cohesion.js"
   ];
   var DEFER_FROM="good_dogs_production_runtime.js",FREEZE_AT="production_wrapper_guard.js";
+  // Fetch ahead, never execute ahead. The serial load/install boundaries below
+  // still own dependency order and wrapper/timer installation. Unsupported or
+  // failed preload hints simply fall back to the existing script request.
+  var PRELOAD_AHEAD=4,preloads=Object.create(null);
+  function warmNext(index){
+    if(!root.document)return;
+    for(var j=index+1;j<Math.min(FILES.length,index+1+PRELOAD_AHEAD);j++){
+      var src=FILES[j];if(preloads[src]||has(src))continue;
+      try{var link=root.document.createElement("link");link.rel="preload";link.as="script";link.href=src+"?v="+BUILD;(root.document.head||root.document.documentElement).appendChild(link);preloads[src]=link;}catch(e){}
+    }
+  }
+  function retirePreload(src){var link=preloads[src];if(!link)return;try{if(link.parentNode)link.parentNode.removeChild(link);}catch(e){}delete preloads[src];}
   function has(src){try{return !!(root.document&&root.document.querySelector('script[data-production-bootstrap="'+src+'"]'));}catch(e){return false;}}
   function load(src){return new Promise(function(resolve){try{if(!root.document||has(src)){resolve(true);return;}var s=document.createElement("script");s.src=src+"?v="+BUILD;s.async=false;s.dataset.productionBootstrap=src;s.onload=function(){resolve(true);};s.onerror=function(){root.__productionBootstrapError=src;resolve(false);};(root.document.head||root.document.documentElement).appendChild(s);}catch(e){root.__productionBootstrapError=String(e&&e.stack||e);resolve(false);}});}
   async function start(){
@@ -63,7 +75,7 @@
     var deferred=[],deferOn=false,nextFake=-7000;
     function beginTimerDeferral(){if(deferOn||!nativeSetInterval)return;deferOn=true;root.setInterval=function(fn,ms){var rec={fake:nextFake--,fn:fn,ms:Math.max(1,Number(ms)||1),args:Array.prototype.slice.call(arguments,2),cancelled:false,real:null};deferred.push(rec);return rec.fake;};if(nativeClearInterval)root.clearInterval=function(id){for(var i=0;i<deferred.length;i++)if(deferred[i].fake===id&&!deferred[i].real){deferred[i].cancelled=true;return;}return nativeClearInterval(id);};root.__productionTimersDeferred=true;}
     function parkTimers(){if(!deferOn)return;deferOn=false;if(nativeSetInterval)root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;for(var i=0;i<deferred.length;i++)deferred[i].cancelled=true;root.__productionParkedMaintenanceTimers=deferred.length;root.__productionTimersDeferred=false;}
-    try{for(var i=0;i<FILES.length;i++){var src=FILES[i];if(src===DEFER_FROM)beginTimerDeferral();if(src===FREEZE_AT&&deferOn){root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;}await load(src);if(src==="good_dogs_actor_contract.js"){try{if(root.TechOpsGoodDogsActorContract)root.TechOpsGoodDogsActorContract.enforce();}catch(e){root.__productionGoodDogsActorContractError=String(e&&e.stack||e);}}if(src===FREEZE_AT){try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}parkTimers();}}}finally{if(deferOn)parkTimers();}
+    try{for(var i=0;i<FILES.length;i++){var src=FILES[i];warmNext(i);if(src===DEFER_FROM)beginTimerDeferral();if(src===FREEZE_AT&&deferOn){root.setInterval=nativeSetInterval;if(nativeClearInterval)root.clearInterval=nativeClearInterval;}await load(src);retirePreload(src);if(src==="good_dogs_actor_contract.js"){try{if(root.TechOpsGoodDogsActorContract)root.TechOpsGoodDogsActorContract.enforce();}catch(e){root.__productionGoodDogsActorContractError=String(e&&e.stack||e);}}if(src===FREEZE_AT){try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){root.__productionWrapperFreezeError=String(e&&e.stack||e);}parkTimers();}}}finally{Object.keys(preloads).forEach(retirePreload);if(deferOn)parkTimers();}
     try{if(root.TechOpsProductionAssets)await root.TechOpsProductionAssets.install();}catch(e){root.__productionAssetInstallError=String(e&&e.stack||e);}
     try{if(root.TechOpsNightProductionAssets)await root.TechOpsNightProductionAssets.install();}catch(e){}
     try{if(root.TechOpsGoodBoysCampaignAssets){root.TechOpsGoodBoysCampaignAssets.aliasBackgrounds();root.TechOpsGoodBoysCampaignAssets.installDistricts();}}catch(e){}
