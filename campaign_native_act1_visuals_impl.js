@@ -9,13 +9,15 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 5;
+  var VERSION = 6;
   var BASE = "assets/campaign/";
   var ENTER_MS = 240;
   var EXIT_MS = 180;
   var MAP_W = 42, MAP_H = 32;
   var SCENES = Object.freeze({
-    standup: { label: "TECHOPS STANDUP // 08:55", mode: "board", background: "ui.standup.board", props: ["ui.standup.ticket_card", "ui.standup.owner_badge"] },
+    // The source concept board contains baked example tickets and an always-owned
+    // total. Live ownership is rendered below from canonical records instead.
+    standup: { label: "TECHOPS STANDUP // 08:55", mode: "board", background: null, props: [] },
     workstation: { label: "MIKE // WORKSTATION", mode: "first_person", background: "workstation.corporate_aircraft_panel", props: ["workstation.felicia.video_frame", "workstation.orpheus.glitch_frame"] },
     shipping: { label: "SHIPPING DOCK // DAY", mode: "side_view", background: "shipping.dock_background", actor: "shipping.clerk.idle", props: ["shipping.label_printer", "shipping.printed_label_success"] },
     plating: { label: "PLATING LINE // DAY", mode: "side_view", background: "plating.line_background", actor: "plating.operator.idle", props: ["plating.workstation_cracked", "plating.line_stopped_display"] },
@@ -103,6 +105,22 @@
     return !historical && native && typeof native.currentServiceRecord === "function" ? native.currentServiceRecord(state, ticketId) : native && typeof native.ticketRecord === "function" ? native.ticketRecord(state, ticketId) : null;
   }
 
+  function standupBoard(state) {
+    var campaign = root && root.TechOpsCampaign, native = root && root.TechOpsCampaignNativeAct1;
+    var unavailable = { available: false, rows: [], assigned: 0, total: 0, confirmed: false };
+    if (!state || !campaign || typeof campaign.listTicketTemplates !== "function" || !native || typeof native.ticketRecord !== "function") return unavailable;
+    try {
+      var assignments = state.assignments || {};
+      var rows = campaign.listTicketTemplates().map(function (template) {
+        var record = native.ticketRecord(state, template.id);
+        var ownerId = Object.prototype.hasOwnProperty.call(assignments, template.id) && typeof assignments[template.id] === "string" ? assignments[template.id].trim() : "";
+        return { id: template.id, title: record.title, ownerId: ownerId, owner: ownerId ? record.assignedOwner : "UNASSIGNED" };
+      });
+      var assigned = rows.filter(function (row) { return !!row.ownerId; }).length;
+      return { available: true, rows: rows, assigned: assigned, total: rows.length, confirmed: !!(rows.length && assigned === rows.length && state.flags && state.flags.ticket_assignments_confirmed && state.flags.standup_completed) };
+    } catch (_) { return unavailable; }
+  }
+
   function presentationFor(sceneId, state, dialogName) {
     state = state || null;
     var flags = state && state.flags || {};
@@ -111,9 +129,10 @@
     var p = { sceneId: sceneId, variant: "default", props: (SCENES[sceneId] && SCENES[sceneId].props || []).slice(), motion: [], statusText: null };
 
     if (sceneId === "standup") {
-      p.variant = flags.standup_completed ? "owned" : "assigning";
-      p.motion = flags.standup_completed ? ["board_lock", "ambient_drift"] : ["board_focus", "ambient_drift"];
-      p.statusText = flags.standup_completed ? "ALL ACTIVE TICKETS OWNED" : "ASSIGN ONE OWNER PER ACTIVE TICKET";
+      p.board = standupBoard(state);
+      p.variant = p.board.confirmed ? "owned" : "assigning";
+      p.motion = p.board.confirmed ? ["board_lock", "ambient_drift"] : ["board_focus", "ambient_drift"];
+      p.statusText = !p.board.available ? "QUEUE RECORD UNAVAILABLE" : p.board.confirmed ? "DAY 1 OWNERSHIP CONFIRMED" : "CONFIRM ONE OWNER FOR EACH TICKET";
     } else if (sceneId === "workstation") {
       var n = String(dialogName || "").toUpperCase();
       var video = n.indexOf("ENGINEERING THE HUMAN CONNECTION") >= 0 || n.indexOf("COMPANY // FELICIA") >= 0;
@@ -167,6 +186,14 @@
       ".act1-reference.a1-side_view .a1-actor{right:13%;height:48%}.act1-reference.a1-side_view .a1-props{justify-content:flex-start;left:14%;right:42%;bottom:20%}",
       ".act1-reference.a1-first_person .a1-bg{filter:brightness(.58) saturate(.8)}.act1-reference.a1-first_person .a1-props{left:15%;right:15%;bottom:24%;height:46%;align-items:center}.act1-reference.a1-first_person .a1-prop{max-width:44%;max-height:100%;box-shadow:0 0 0 2px rgba(126,255,205,.16),0 18px 40px rgba(0,0,0,.45)}",
       ".act1-reference.a1-board .a1-bg{background-size:contain;background-repeat:no-repeat;background-color:#10171b}.act1-reference.a1-board .a1-props{bottom:14%;height:24%}",
+      ".act1-reference.a1-board .a1-status{display:none}.act1-reference .a1-live-board{position:absolute;inset:58px max(14px,env(safe-area-inset-right)) 14px max(14px,env(safe-area-inset-left));max-width:780px;margin:0 auto;padding:16px;overflow:auto;overscroll-behavior:contain;pointer-events:auto;border:1px solid #61ccea;border-radius:12px;background:linear-gradient(145deg,#0b2233,#07121d);box-shadow:inset 0 0 0 3px #0b344b,0 0 24px #26bfe519;font:13px/1.5 'Courier New',monospace;color:#e3eef5;scrollbar-color:#6091a8 #0b1a27}",
+      ".act1-reference .a1-live-board:focus-visible{outline:3px solid #ffd571;outline-offset:2px}",
+      ".act1-reference .a1-board-heading{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;align-items:baseline;margin:0 0 12px;border-bottom:1px solid #346779;padding-bottom:10px;font-size:13px;line-height:1.5;color:#a2e5f4}",
+      ".act1-reference .a1-board-count{font-weight:700;color:#ffd571;white-space:nowrap}.act1-reference.a1-owned .a1-board-count{color:#7effcd}",
+      ".act1-reference .a1-board-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(90px,auto);gap:10px;padding:12px 10px;margin:8px 0 0;border:1px solid #346779;border-left:3px solid #ffd571;border-radius:6px;background:#07131fea;overflow-wrap:anywhere}",
+      ".act1-reference .a1-board-row[data-owned='true']{border-left-color:#7effcd}.act1-reference .a1-board-ticket{font-weight:700}.act1-reference .a1-board-owner{align-self:center;color:#ffd571;text-align:right}.act1-reference .a1-board-row[data-owned='true'] .a1-board-owner{color:#bce7d9}",
+      "@media(max-width:640px){.act1-reference .a1-live-board{inset:48px 10px 10px;padding:10px}.act1-reference .a1-board-row{grid-template-columns:1fr;gap:3px;padding:9px}.act1-reference .a1-board-owner{text-align:left}.act1-reference .a1-board-heading{margin-bottom:8px;padding-bottom:8px}}",
+      "@media(max-height:500px){.act1-reference.a1-board .a1-label{display:none}.act1-reference .a1-live-board{inset:10px;padding:10px}}",
       ".act1-reference.a1-investigation .a1-bg{filter:brightness(.42) contrast(1.1)}.act1-reference.a1-investigation.a1-documented:after{content:'02:13  //  SECTOR04-EAST';position:absolute;left:8%;right:8%;top:22%;padding:18px;border:1px solid rgba(126,255,205,.32);background:rgba(5,16,20,.76);color:#7effcd;font-size:10px;line-height:1.7;text-align:center;text-shadow:0 0 9px rgba(126,255,205,.55)}",
       ".act1-reference .a1-motion{position:absolute;pointer-events:none}.act1-reference .a1-scan{inset:0;background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(126,255,205,.035) 6px 7px);animation:a1-scan 4s linear infinite}",
       ".act1-reference .a1-glitch{left:13%;right:13%;top:20%;height:2px;background:#8d5cff;box-shadow:0 0 15px rgba(141,92,255,.85);opacity:0;animation:a1-glitch 5.4s steps(1,end) infinite}",
@@ -196,6 +223,22 @@
   }
 
   function image(slot, cls) { var im = root.document.createElement("img"); im.className = cls; im.src = url(slot); im.alt = ""; return im; }
+  function appendStandupBoard(el, board) {
+    var panel = root.document.createElement("section"); panel.className = "a1-live-board";
+    panel.setAttribute("aria-label", "Day 1 ticket ownership"); panel.setAttribute("tabindex", "0");
+    var heading = root.document.createElement("h2"); heading.className = "a1-board-heading";
+    var title = root.document.createElement("span"); title.textContent = "DAY 1 · QUEUE OWNERSHIP"; heading.appendChild(title);
+    var count = root.document.createElement("span"); count.className = "a1-board-count";
+    count.textContent = board.available ? board.assigned + " / " + board.total + " ASSIGNED" : "RECORD UNAVAILABLE"; heading.appendChild(count); panel.appendChild(heading);
+    board.rows.forEach(function (record) {
+      var row = root.document.createElement("div"); row.className = "a1-board-row";
+      row.setAttribute("data-ticket-id", record.id); row.setAttribute("data-owned", String(!!record.ownerId));
+      var ticket = root.document.createElement("span"); ticket.className = "a1-board-ticket"; ticket.textContent = record.title;
+      var owner = root.document.createElement("span"); owner.className = "a1-board-owner"; owner.textContent = record.owner;
+      row.appendChild(ticket); row.appendChild(owner); panel.appendChild(row);
+    });
+    el.appendChild(panel);
+  }
   function motionNode(cls) { var n = root.document.createElement("div"); n.className = "a1-motion " + cls; return n; }
   function addMotion(el, profile) {
     if (!el || reducedMotion()) return;
@@ -236,7 +279,7 @@
     var profile = presentationFor(sceneId, state, dialogName);
     var snapshot = snapshotWorld();
     var focus = worldFocus(snapshot);
-    if (!canDom()) return { id: sceneId, active: false, mode: spec.mode, background: url(spec.background), presentation: profile, worldSnapshot: snapshot, focus: focus };
+    if (!canDom()) return { id: sceneId, active: false, mode: spec.mode, background: spec.background ? url(spec.background) : null, presentation: profile, worldSnapshot: snapshot, focus: focus };
     ensureStyle(); hide(true);
     // Capture after replacing any prior scene so this scene owns the return point.
     root.__techopsAct1WorldSnapshot = snapshot;
@@ -245,10 +288,11 @@
     el.className = "act1-reference a1-from-world a1-" + spec.mode + " a1-" + profile.variant;
     el.style.setProperty("--a1-origin-x", focus.x.toFixed(2) + "%");
     el.style.setProperty("--a1-origin-y", focus.y.toFixed(2) + "%");
-    var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg);
+    if (spec.background) { var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg); }
     var grade = root.document.createElement("div"); grade.className = "a1-grade"; el.appendChild(grade);
     if (spec.actor) el.appendChild(image(spec.actor, "a1-actor"));
     if (profile.props.length) { var props = root.document.createElement("div"); props.className = "a1-props"; profile.props.forEach(function (slot) { props.appendChild(image(slot, "a1-prop")); }); el.appendChild(props); }
+    if (profile.board) appendStandupBoard(el, profile.board);
     addMotion(el, profile);
     if (!reducedMotion()) el.appendChild(motionNode("a1-world-anchor"));
     var label = root.document.createElement("div"); label.className = "a1-label"; label.textContent = spec.label; el.appendChild(label);
@@ -259,7 +303,7 @@
     if (root.document.body.classList) root.document.body.classList.add("act1-scene-open");
     root.__techopsAct1ReferenceScene = sceneId;
     syncLayout();
-    return { id: sceneId, active: true, mode: spec.mode, background: url(spec.background), presentation: profile, worldSnapshot: snapshot, focus: focus };
+    return { id: sceneId, active: true, mode: spec.mode, background: spec.background ? url(spec.background) : null, presentation: profile, worldSnapshot: snapshot, focus: focus };
   }
 
   function install() {
@@ -281,5 +325,5 @@
   }
 
   install();
-  return { VERSION: VERSION, BASE: BASE, ENTER_MS: ENTER_MS, EXIT_MS: EXIT_MS, SCENES: SCENES, filename: filename, url: url, sceneForDialog: sceneForDialog, presentationFor: presentationFor, motionFor: motionFor, snapshotWorld: snapshotWorld, restoreWorld: restoreWorld, worldFocus: worldFocus, syncLayout: syncLayout, show: show, hide: hide, install: install };
+  return { VERSION: VERSION, BASE: BASE, ENTER_MS: ENTER_MS, EXIT_MS: EXIT_MS, SCENES: SCENES, filename: filename, url: url, sceneForDialog: sceneForDialog, standupBoard: standupBoard, presentationFor: presentationFor, motionFor: motionFor, snapshotWorld: snapshotWorld, restoreWorld: restoreWorld, worldFocus: worldFocus, syncLayout: syncLayout, show: show, hide: hide, install: install };
 });

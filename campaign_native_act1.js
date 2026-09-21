@@ -142,7 +142,7 @@
     if (state.flags.ticket_assignments_confirmed) {
       return callDialog("CAMPAIGN STANDUP", "Every active ticket has exactly one owner.<br><br>Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> " + (state.assignments.impossible_access_event === "security" ? "Security Ops" : "Mike"), [{ t: state.flags.day_work_unlocked ? "Back to work" : "Open workstation", f: state.flags.day_work_unlocked ? closeDialog : openWorkstation }]);
     }
-    return callDialog("CAMPAIGN STANDUP", "The board is not flavor. The day cannot begin until every active problem belongs to someone.", [
+    return callDialog("MORNING STANDUP", "Three problems are waiting on the board. Before the team heads out, each one needs an owner.", [
       { t: "Assign queue: Mike investigates access", f: function () { var rt = runtime(); if (rt) rt.confirmAssignments("firsthand"); callDialog("OWNERSHIP CONFIRMED", "Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> Mike<br><br>Every problem belongs to someone before it can be solved.", [{ t: "Open workstation", f: openWorkstation }]); } },
       { t: "Delegate Impossible Access to Security", f: function () { var rt = runtime(); if (rt) rt.confirmAssignments("delegated"); callDialog("OWNERSHIP CONFIRMED", "Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> Security Ops<br><br>Delegation changes perspective, not reality.", [{ t: "Open workstation", f: openWorkstation }]); } },
       { t: "Back", f: closeDialog }
@@ -400,14 +400,14 @@
     var state = ensureWorkstationChecked(loadState());
     if (tab === "QUEUE" && state.flags.tuesday_morning_reached) return openWorkdayHandoff();
     if (tab === "QUEUE") {
-      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL OPENING COMPLETE") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL CLOCK-IN") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "TEAMS") {
       var messages = Object.keys(TICKET_COPY).map(function (id) { return casebookEscape(ticketFollowUp(state, id)); }).join("<br><br>");
       return callDialog("WORKSTATION // TEAMS", messages, (state.flags.tuesday_morning_reached ? [{t:"Review shift handoff",f:openWorkdayHandoff}] : []).concat([{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]));
     }
     if (tab === "ALERTS") {
-      return callDialog("WORKSTATION // ALERTS", "02:13  SECTOR04-EAST  ACCESS GRANTED<br>05:42  PLATING-WS07  SERVICE RECOVERY FAILED<br>07:18  SHIP-LBL02  QUEUE RETRY LIMIT<br><br>Nothing here says conspiracy. It says the morning has work in it.", [{ t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // ALERTS", "02:13  SECTOR04-EAST  ACCESS GRANTED<br>05:42  PLATING-WS07  SERVICE RECOVERY FAILED<br>07:18  SHIP-LBL02  QUEUE RETRY LIMIT<br><br>Three alerts, three people waiting to get back to work.", [{ t: "Back to desktop", f: openWorkstation }]);
     }
     if (tab === "MUSIC") return openMusicTab();
     if (tab === "COMPANY") return openCompanyTab();
@@ -417,10 +417,10 @@
   function openMusicTab() {
     var state = ensureWorkstationChecked(loadState());
     if (state.flags.red_in_mirror_heard) {
-      return callDialog("WORKSTATION // MUSIC", "Now playing history: <b>RED IN THE MIRROR</b><br><br>It is just a song in Mike's morning. No evidence flag. No ORPHEUS clue. Meaning can arrive later.", [{ t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // MUSIC", "Now playing history: <b>RED IN THE MIRROR</b><br><br>The last notes linger under the hum of the workstation. Mike leaves the track in his history and turns back to the morning.", [{ t: "Back to desktop", f: openWorkstation }]);
     }
     return callDialog("WORKSTATION // MUSIC", "A saved track sits in the player: <b>RED IN THE MIRROR</b>.<br><br>The shift has not started yet. Mike can listen before the queue begins to move.", [
-      { t: "Play Red in the Mirror", f: function () { var s = loadState(); act1().hearRedInMirror(s); saveState(s); notify("RED IN THE MIRROR — playback logged as ordinary listening"); openMusicTab(); } },
+      { t: "Play Red in the Mirror", f: function () { var s = loadState(); act1().hearRedInMirror(s); saveState(s); notify("RED IN THE MIRROR — added to listening history"); openMusicTab(); } },
       { t: "Back to desktop", f: openWorkstation }
     ]);
   }
@@ -434,7 +434,7 @@
       ]);
     }
     if (!state.flags.felicia_video_watched) {
-      return callDialog("COMPANY // FELICIA", "Felicia — Security Research / Systems Integrations.<br><br>The company video is available. Mike has not met her yet. This is context, not a reveal.", [
+      return callDialog("COMPANY // FELICIA", "Felicia — Security Research / Systems Integrations.<br><br>A short profile follows her work in the field. Mike has not met her yet.", [
         { t: "Play Engineering the Human Connection", f: playFeliciaVideo },
         { t: "Back to desktop", f: openWorkstation }
       ]);
@@ -442,13 +442,13 @@
     if (!state.flags.day_work_unlocked) {
       var blockers = [];
       if (!state.flags.red_in_mirror_heard) blockers.push("listen to Red in the Mirror in MUSIC");
-      if (blockers.length) return callDialog("WORKSTATION // COMPANY", "Company video complete.<br><br>The authored opening still requires Mike to " + blockers.join(" and ") + " before the clock begins.", [{ t: "Go to MUSIC", f: openMusicTab }, { t: "Back to desktop", f: openWorkstation }]);
-      return callDialog("WORKSTATION // COMPANY", "Company video complete. Queue ownership is confirmed. Mike has checked the workstation. The opening state is coherent.<br><br><b>The ticket clock can begin now.</b>", [
+      if (blockers.length) return callDialog("WORKSTATION // COMPANY", "Company video complete.<br><br>Before clocking in, Mike still wants to " + blockers.join(" and ") + " before the queue starts moving.", [{ t: "Go to MUSIC", f: openMusicTab }, { t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // COMPANY", "Company video complete. The team knows who owns each ticket, and the workstation is ready.<br><br><b>The ticket clock can begin now.</b>", [
         { t: "CLOCK IN — START DAY SHIFT", f: unlockDayShift },
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
-    return callDialog("WORKSTATION // COMPANY", "ENGINEERING THE HUMAN CONNECTION — viewed.<br><br>Day work is unlocked. The company video remains context; Felicia's first real conversation still happens in daylight.", [{ t: "Back to desktop", f: openWorkstation }]);
+    return callDialog("WORKSTATION // COMPANY", "ENGINEERING THE HUMAN CONNECTION — viewed.<br><br>The shift is underway. Felicia's profile is saved here if Mike wants to revisit it.", [{ t: "Back to desktop", f: openWorkstation }]);
   }
 
   function playFeliciaVideo() {
@@ -462,14 +462,14 @@
     var state = loadState();
     act1().completeFeliciaVideo(state, { started: true, skipped: !!skipped });
     saveState(state);
-    notify(skipped ? "Video skipped deliberately — required state committed" : "Company video complete");
+    notify(skipped ? "Company video skipped" : "Company video complete");
     return openCompanyTab();
   }
 
   function unlockDayShift() {
     var state = loadState();
     if (!state.flags.red_in_mirror_heard || !state.flags.felicia_video_watched || !state.flags.workstation_checked || !state.flags.standup_completed) {
-      return callDialog("OPENING INCOMPLETE", "The day clock cannot start until standup, workstation, music, and company context are complete.", [{ t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("OPENING INCOMPLETE", "Finish the standup, workstation check, morning track, and company profile before clocking in.", [{ t: "Back to desktop", f: openWorkstation }]);
     }
     act1().unlockDayWork(state);
     saveState(state);
@@ -508,7 +508,7 @@
 
   function sector04Door() {
     var campaign = loadState();
-    if (!campaign.flags.day_work_unlocked) return callDialog("SECTOR 04 LOCKED", "Night Walker cannot begin until the authored Day 1 opening has completed and day work is unlocked.", [{ t: "Back", f: closeDialog }]);
+    if (!campaign.flags.day_work_unlocked) return callDialog("SECTOR 04 LOCKED", "Finish the morning check-in at your workstation before taking on Sector 04.", [{ t: "Back", f: closeDialog }]);
     return callDialog("SECTOR 04 - NIGHT WALKER", "Rain strikes the hangar roof. Interfaces become physical. Permissions become doors.<br><br>Damage can suppress the Access Guard. Understanding can defeat it.", [
       { t: "Enter Sector 04", f: function () {
         var sxRuntime = sector04Runtime();
@@ -588,7 +588,7 @@
 
   function pauseBaseWorkDialog() {
     var campaign = loadState();
-    return callDialog("SHIFT PAUSED", "The procedural queue is visible, but its clock has not started. Complete the authored opening before ordinary ticket work can age, escalate, or resolve.", [
+    return callDialog("SHIFT PAUSED", "The queue is waiting. Confirm the standup assignments, check the workstation, and finish the morning listening and company profile before clocking in. Ticket clocks remain paused.", [
       { t: campaign.flags.standup_completed ? "Open workstation" : "Go to standup", f: campaign.flags.standup_completed ? openWorkstation : openStandup },
       { t: "Back", f: closeDialog }
     ]);

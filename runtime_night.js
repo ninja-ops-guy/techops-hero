@@ -197,6 +197,25 @@
     ]);
   }
   function sleep(){if(!atHome())return false;return playTransition('night_home_return',()=>root.exitNight(true));}
+  function syncTransitionControls(token){
+    if(!token||token!==transition||token.completed||!root.document)return;
+    const overlay=el('v725-cine'),shared=overlay&&overlay.querySelector('.day-cine-touch');
+    if(shared){
+      const fallback=token.fallback;
+      if(fallback){
+        const hadFocus=root.document.activeElement===fallback;fallback.remove();token.fallback=null;
+        const next=shared.querySelector('.day-cine-pause');if(hadFocus&&next&&!root.document.hidden)next.focus({preventScroll:true});
+      }
+      return;
+    }
+    if(token.fallback)return;
+    const b=root.document.createElement('button');b.id='night-home-skip';b.type='button';b.textContent='Skip transition';
+    b.onclick=()=>{
+      if(token.completed||transition!==token||state()!==token.state||world()!==token.night||root.document.hidden||root.v725!==token.renderer)return;
+      if(token.renderer&&typeof token.renderer.skip==='function')token.renderer.skip();
+    };
+    token.fallback=b;(overlay||root.document.body).appendChild(b);b.focus({preventScroll:true});
+  }
   function playTransition(id,done){
     const s=state(),n=world();if(!active(n)||transition)return false;
     if(root.closeDlg)root.closeDlg();
@@ -206,14 +225,14 @@
     function finish(){
       if(token.completed)return;token.completed=true;
       if(director&&claim)director.end(claim,'completed');if(transition===token)transition=null;
-      if(el('night-home-skip'))el('night-home-skip').remove();
+      if(token.fallback){token.fallback.remove();token.fallback=null;}
       if(state()!==s||world()!==n)return;
       s.inDialog=false;resetInput();done();
     }
     token.finish=finish;
     try{
       if(root.v725&&root.v725.play&&registerScenes()&&root.v725.play(id,finish)){
-        if(root.document){const b=root.document.createElement('button');b.id='night-home-skip';b.textContent='Skip transition';b.onclick=()=>root.v725.skip();root.document.body.appendChild(b);b.focus();}return true;
+        token.renderer=root.v725;syncTransitionControls(token);return true;
       }
     }catch(e){root.__nightCinematicError=String(e);}
     return dialog('HOME / MORNING','The night gives way to morning.',[{t:'Continue to day mode',f:()=>{if(root.closeDlg)root.closeDlg();finish();}}]);
@@ -282,6 +301,7 @@
   function frame(dt){
     const s=state(),n=world();
     if(transition&&(transition.state!==s||transition.night!==n))transition.finish();
+    if(transition&&transition.renderer)syncTransitionControls(transition);
     if(!s||!active(n)){if(ui)ui.host.hidden=true;if(s&&s.meta&&s.meta.nightVisit&&visible('eod')){if(root.draw)root.draw();return true;}return false;}
     if(observed!==n){if(!n._nightLifecycle)onEntered(s,n);observed=n;}
     // Repair only a flag with no visible modal/claim before deciding to pause.

@@ -11,7 +11,7 @@ require("./campaign_act1.js");
 const native = require("./campaign_native_act1.js");
 const visuals = require("./campaign_native_act1_visuals.js");
 
-assert.strictEqual(visuals.VERSION, 5);
+assert.strictEqual(visuals.VERSION, 6);
 assert.strictEqual(visuals.ENTER_MS, 240);
 assert.strictEqual(visuals.EXIT_MS, 180);
 assert.strictEqual(visuals.url("shipping.dock_background"), "assets/campaign/shipping.dock_background.png");
@@ -101,9 +101,48 @@ assert.strictEqual(p.statusText, "DAY SHIFT ACTIVE");
 
 const owned = JSON.parse(JSON.stringify(base));
 owned.flags.standup_completed = true;
+owned.flags.ticket_assignments_confirmed = true;
+owned.assignments = { shipping_cannot_print: "mike", plating_workstation_down: "amit", impossible_access_event: "security" };
 p = visuals.presentationFor("standup", owned);
 assert.strictEqual(p.variant, "owned");
 assert.deepStrictEqual(p.motion, ["board_lock", "ambient_drift"]);
+
+// The concept PNG permanently said 12/12 owned and showed unrelated staff.
+// Presentation must derive every live row and total from the canonical queue.
+const campaign = global.TechOpsCampaign;
+const initialStandup = campaign.createInitialState();
+const initialBefore = JSON.stringify(initialStandup);
+const initialBoard = visuals.standupBoard(initialStandup);
+assert.deepStrictEqual(initialBoard.rows.map(row => row.id), campaign.listTicketTemplates().map(ticket => ticket.id));
+assert.strictEqual(initialBoard.assigned, 0);
+assert.strictEqual(initialBoard.total, 3);
+assert.strictEqual(initialBoard.confirmed, false);
+assert.ok(initialBoard.rows.every(row => row.owner === "UNASSIGNED"));
+assert.strictEqual(JSON.stringify(initialStandup), initialBefore, "opening the board cannot confirm ownership");
+for (const accessOwner of ["mike", "security"]) {
+  const state = campaign.createInitialState();
+  campaign.assignTicket(state, "shipping_cannot_print", "mike");
+  assert.strictEqual(visuals.standupBoard(state).assigned, 1, "partial ownership cannot be represented as complete");
+  campaign.assignTicket(state, "plating_workstation_down", "amit");
+  campaign.assignTicket(state, "impossible_access_event", accessOwner);
+  assert.strictEqual(visuals.standupBoard(state).confirmed, false, "assignments alone cannot invent standup confirmation");
+  campaign.completeStandup(state);
+  const reloaded = campaign.migrate(JSON.parse(JSON.stringify(state)));
+  const before = JSON.stringify(reloaded), board = visuals.standupBoard(reloaded);
+  assert.strictEqual(board.confirmed, true);
+  assert.strictEqual(board.assigned, 3);
+  assert.deepStrictEqual(board.rows.map(row => row.owner), ["Mike", "Amit", accessOwner === "mike" ? "Mike" : "Security Ops"]);
+  assert.strictEqual(JSON.stringify(reloaded), before, "board reads preserve reload state");
+  delete reloaded.assignments.plating_workstation_down;
+  assert.strictEqual(visuals.standupBoard(reloaded).confirmed, false, "stale completed flags cannot certify missing ownership");
+}
+assert.strictEqual(visuals.SCENES.standup.background, null, "baked ownership art cannot reappear behind the live board");
+assert.deepStrictEqual(visuals.SCENES.standup.props, [], "baked ticket and staff props stay retired from live standup");
+assert.strictEqual(visuals.show("standup", "CAMPAIGN STANDUP", initialStandup).background, null);
+global.TechOpsCampaignNativeAct1 = null;
+assert.strictEqual(visuals.standupBoard(owned).available, false, "missing read model cannot fabricate a queue");
+assert.strictEqual(visuals.presentationFor("standup", owned).variant, "assigning");
+global.TechOpsCampaignNativeAct1 = native;
 
 // Text and visual success must share the same canonical read model.
 for (const [scene, id, successfulVariant] of [

@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=48,BUILD="20260921-startup-r1",started=false,done=false;
+  var VERSION=49,BUILD="20260921-presentation-r1",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",
@@ -15,6 +15,7 @@
     "good_boys_campaign_assets.js",
     "state_validator.js",
     "runtime_combat_audio.js",
+    "runtime_hud.js",
     "night_combat.js",
     "night_move_atlas.js",
     "night_move_visuals.js",

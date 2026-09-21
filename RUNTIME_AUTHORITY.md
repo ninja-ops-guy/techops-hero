@@ -85,6 +85,18 @@ See `docs/VISUAL_COMBAT_INTEGRATION.md` for capture provenance and acceptance sc
 
 ## Street combat feedback and next-shift continuity
 
+`runtime_hud.js` is a passive CSS-space presentation service called directly by
+the existing Night render owner. It combines street status, messages, combat
+instructions and `runtime_combat_audio.js` captions without a new frame loop.
+Its viewport geometry also supports the existing Good Dogs single-HUD owner.
+It does not own input, health, world coordinates, saves or story progression;
+Good Dogs, Sector 04 and Waldo remain excluded from its Night renderer.
+
+The standup board reads canonical ticket records and confirmation flags. Its
+scrollable DOM presentation cannot assign tickets; the existing dialogue remains
+the sole owner of standup choices. Shared v725 cinematic controls read the
+owner's presentation snapshot and dispatch to that owner, without a second clock.
+
 `runtime_combat_audio.js` owns only the street-combat SFX bus and its volume/caption
 preferences. `night_combat.js` emits semantic events directly; `night_hooks.js`
 provides actual incoming block contacts and access through the existing Charger

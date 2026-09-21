@@ -662,8 +662,10 @@ function drawNM() {
     ctx.fillStyle = "#ffd24a66";
     for (let i = 0; i < 10; i++) ctx.fillRect(((i * 150 - now / 3) % (W + 150)) - 75, NM_FLOOR + 24, 60, 5);
     nmCar(ctx, W / 2, NM_FLOOR - 6, 300, now);
-    ctx.fillStyle = "#9fb7d9"; ctx.font = "13px monospace"; ctx.textAlign = "center";
-    ctx.fillText(`DRIVING — ${NM_DISTRICTS[NM.drive.to].name}`, W / 2, 70);
+    if (!(window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawDrive(ctx, NM, NM_DISTRICTS[NM.drive.to].name))) {
+      ctx.fillStyle = "#9fb7d9"; ctx.font = "13px monospace"; ctx.textAlign = "center";
+      ctx.fillText(`DRIVING — ${NM_DISTRICTS[NM.drive.to].name}`, W / 2, 70);
+    }
     return;
   }
   // night sky per district
@@ -820,6 +822,12 @@ function drawNM() {
   if (NM.block) { ctx.strokeStyle = "#7ec8ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cxp, cyp, 24, -1.2, 1.2); ctx.stroke(); }
   if(window.TechOpsNightCombat)window.TechOpsNightCombat.draw(ctx,NM);
   // ---------- sheet-style HUD ----------
+  // Screen-space presentation consumes the same state. World coordinates and
+  // Good Dogs / Sector 04 retain their existing render owners and fallback.
+  if (window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawNight(ctx, NM, { district:D, clock:fmtClock(S.clock), now })) {
+    ctx.textAlign = "center";
+    return;
+  }
   const compactHud = W < 620;
   const leftX = compactHud ? 6 : 10, leftY = compactHud ? 6 : 10;
   const leftW = compactHud ? Math.max(142, Math.floor(W * .49) - 9) : 250, leftH = compactHud ? 66 : 76;

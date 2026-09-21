@@ -67,6 +67,36 @@ test('stale callbacks release their claim but do not touch a replacement run',()
 test('missing cinematic renderer keeps an explicit safe continuation',()=>{
   const{c,api}=fixture();c.enter();c.v725=null;api.sleep();assert.equal(c.exits,0);c.dialog.opts[0].f();assert.equal(c.exits,1);assert.equal(c.TechOpsPresentationDirector.isBlocking(),false);
 });
+function transitionDOM(c){
+  const nodes=new Map();
+  const node=()=>({style:{removeProperty(){}},classList:{contains(){return false;},toggle(){}},children:[],hidden:false,
+    setAttribute(){},appendChild(child){this.children.push(child);child.parent=this;if(child.id)nodes.set(child.id,child);return child;},
+    append(...children){children.forEach(child=>this.appendChild(child));},
+    remove(){if(nodes.get(this.id)===this)nodes.delete(this.id);if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);this.parent=null;},
+    focus(){c.document.activeElement=this;},querySelector(selector){return this.selectors&&this.selectors[selector]||null;}
+  });
+  c.document={hidden:false,body:node(),head:node(),getElementById:id=>nodes.get(id)||null,createElement:node};
+  c.getComputedStyle=()=>({display:'block',visibility:'visible'});
+  const overlay=node();overlay.id='v725-cine';
+  c.v725.play=(id,done)=>{c.document.body.appendChild(overlay);c.scene={id,done(){overlay.remove();done();}};return true;};
+  function attachShared(){const shared=node(),pause=node();shared.selectors={'.day-cine-pause':pause};overlay.selectors={'.day-cine-touch':shared};return pause;}
+  return {nodes,overlay,attachShared};
+}
+test('shared cinematic controls own Night transitions without a duplicate skip',()=>{
+  const{c,api}=fixture();c.enter();const dom=transitionDOM(c),pause=dom.attachShared();pause.focus();
+  assert.equal(api.sleep(),true);assert.equal(dom.nodes.has('night-home-skip'),false);assert.equal(c.document.activeElement,pause);
+  c.scene.done();assert.equal(c.exits,1);assert.equal(api.health().transitioning,false);
+});
+test('late shared controls replace only the owned fallback and transfer its focus',()=>{
+  const{c,api}=fixture();c.enter();const dom=transitionDOM(c);api.sleep();
+  const fallback=dom.nodes.get('night-home-skip');assert.ok(fallback,'unavailable shared controls keep an explicit skip');assert.equal(c.document.activeElement,fallback);assert.equal(fallback.parent,dom.overlay,'fallback stays within the cinematic keyboard boundary');
+  c.document.hidden=true;fallback.onclick();assert.equal(c.exits,0,'hidden fallback cannot settle a transition');c.document.hidden=false;
+  const pause=dom.attachShared();api.frame(.016);assert.equal(dom.nodes.has('night-home-skip'),false);assert.equal(c.document.activeElement,pause);
+  c.scene.done();assert.equal(c.exits,1);
+  c.enter();dom.overlay.selectors={};api.sleep();const current=dom.nodes.get('night-home-skip'),done=c.scene.done;
+  fallback.onclick();assert.equal(c.exits,1,'retired fallback cannot skip a replacement transition');assert.equal(dom.nodes.get('night-home-skip'),current);
+  current.onclick();done();assert.equal(c.exits,2,'fallback skip still settles its own transition once');assert.equal(dom.nodes.has('night-home-skip'),false);
+});
 test('campaign discovery cannot invent prerequisites or evidence',()=>{
   const{c,api}=fixture();c.enter();const story={campaign:{day:1},flags:{day_work_unlocked:false},evidence:{}};c.TechOpsCampaign={load:()=>story};c.TechOpsSector04Runtime={enterBrowser(){}};
   const original=JSON.stringify(story);api.openCampaign();assert.match(c.dialog.body,/standup/);assert.equal(c.dialog.opts.some(o=>/Enter Sector/.test(o.t)),false);assert.equal(JSON.stringify(story),original);story.flags.day_work_unlocked=true;api.openCampaign();assert.match(c.dialog.body,/Identity evidence missing/);assert.equal(c.dialog.opts.some(o=>/Enter Sector/.test(o.t)),true);

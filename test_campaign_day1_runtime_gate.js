@@ -74,7 +74,7 @@ assert.strictEqual(global.S.forceEnded, undefined);
 global.interact();
 assert.strictEqual(originalInteractCalls, 0);
 assert.strictEqual(lastDialog.name, "SHIFT PAUSED");
-assert.ok(lastDialog.body.includes("clock has not started"));
+assert.ok(lastDialog.body.includes("Ticket clocks remain paused"));
 assert.strictEqual(lastDialog.options[0].t, "Open workstation");
 global.S.inDialog = false;
 

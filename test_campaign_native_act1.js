@@ -65,7 +65,7 @@ assert.deepStrictEqual(native.assetsForContext("workstation"), [
 global.S.px = global.S.meta.campaignAct1Native.standup.x;
 global.S.py = global.S.meta.campaignAct1Native.standup.y + 1;
 native.openStandup();
-assert.strictEqual(lastDialog.name, "CAMPAIGN STANDUP");
+assert.strictEqual(lastDialog.name, "MORNING STANDUP");
 choose("Assign queue: Mike investigates access");
 let state = global.TechOpsCampaign.load(global.localStorage);
 assert.strictEqual(state.flags.ticket_assignments_confirmed, true);

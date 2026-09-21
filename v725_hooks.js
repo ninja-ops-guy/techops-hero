@@ -24,7 +24,8 @@
    Felicia drawn from her own v6.4 atlas (TO_FELICIA/FEL_ATLAS) only AS
    Felicia; the junior tech, the CIO and K are NEW procedural figures.
    Procedural canvas + WebAudio only — zero new assets. Skippable
-   (E / Enter / Space / click) except while a choice is on screen.
+   (E or the labelled Skip control) except while a choice is on screen.
+   Space/canvas click pauses; Escape pauses without settling the scene.
    Plays at most one cinematic per day, never interrupts a dialog,
    battle, night crawl, or a v7.22/v7.23/v7.24 cinematic, and the
    normal end-of-day flow always runs afterwards.
@@ -684,7 +685,8 @@
   };
   const st725 = { plays: 0, skips: 0, completes: 0, choices: 0 };
   let ov725 = null, cx725 = null, raf725 = 0, t0725 = 0, cine725 = null, done725 = null,
-    shotIdx = -1, waitingChoice = null, resolved725 = null, fired725 = [], lastShotAt = -1;
+    shotIdx = -1, waitingChoice = null, resolved725 = null, fired725 = [], lastShotAt = -1,
+    pausedAt725 = null, returnFocus725 = null, presentationKey725 = "";
 
   function shotsOf() { return CINES[cine725].shots; }
   function shotStartAt(i) { let s = 0; for (let j = 0; j < i; j++) s += shotsOf()[j].dur || 0; return s; }
@@ -693,8 +695,10 @@
   function buildOverlay725() {
     const d = document.createElement("div");
     d.id = "v725-cine";
+    d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true");
+    d.setAttribute("aria-label", CINES[cine725].title || "Cinematic"); d.tabIndex = -1;
     d.style.cssText = "position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer";
-    const c = document.createElement("canvas");
+    const c = document.createElement("canvas"); c.setAttribute("aria-hidden", "true");
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     c.width = LW * dpr; c.height = LH * dpr;
     const scale = Math.min(innerWidth / LW, innerHeight / LH);
@@ -702,10 +706,13 @@
     c.style.imageRendering = "pixelated";
     d.appendChild(c); document.body.appendChild(d);
     d.addEventListener("click", (e) => {
-      if (waitingChoice) { pickChoice725(clickChoice725(e, c)); return; }
-      end725(true);
+      if (document.hidden || (e.target !== c && e.target !== d)) return;
+      if (waitingChoice) { if (!d.querySelector(".day-cine-choices")) pickChoice725(clickChoice725(e, c)); return; }
+      if (pausedAt725 !== null) resume725(); else pause725();
     });
     window.addEventListener("keydown", onKey725, true);
+    document.addEventListener("visibilitychange", visibility725);
+    d.focus({preventScroll: true});
     return { d, c };
   }
   function clickChoice725(e, c) {
@@ -719,7 +726,7 @@
     return -1;
   }
   function pickChoice725(i) {
-    if (!waitingChoice || i < 0 || i >= waitingChoice.options.length) return;
+    if (document.hidden || pausedAt725 !== null || !waitingChoice || i < 0 || i >= waitingChoice.options.length) return;
     const ch = waitingChoice; waitingChoice = null;
     resolved725 = cine725 + ":" + shotIdx;
     st725.choices++;
@@ -731,16 +738,71 @@
     chime725();
     t0725 = performance.now() - (shotStartAt(shotIdx) + 1); // resume into next shot
     lastShotAt = -1;
+    syncPresentation725();
+  }
+  function presentation725() {
+    const def = CINES[cine725], shot = def && def.shots[Math.max(0, shotIdx)];
+    return { active: !!ov725, title: def && def.title || "Cinematic", shot: shotIdx,
+      caption: shot && shot.cap || "", paused: pausedAt725 !== null,
+      prompt: waitingChoice && waitingChoice.prompt || "",
+      choices: waitingChoice ? waitingChoice.options.slice() : [] };
+  }
+  function syncPresentation725() {
+    if (!ov725) return;
+    const view = presentation725(), key = JSON.stringify(view);
+    if (key === presentationKey725) return;
+    presentationKey725 = key;
+    const ui = window.TechOpsDayCinematicMobileGuard;
+    if (ui && typeof ui.sync === "function") ui.sync(ov725.d, view);
+  }
+  function queueFrame725() {
+    const owner = ov725;
+    raf725 = requestAnimationFrame(() => { if (owner && ov725 === owner) draw725(); });
+  }
+  function pause725() {
+    if (!ov725 || pausedAt725 !== null) return false;
+    pausedAt725 = performance.now();
+    cancelAnimationFrame(raf725); raf725 = 0; stopAudio725();
+    syncPresentation725();
+    return true;
+  }
+  function resume725() {
+    if (!ov725 || document.hidden || pausedAt725 === null) return false;
+    t0725 += performance.now() - pausedAt725; pausedAt725 = null;
+    syncPresentation725(); queueFrame725();
+    return true;
+  }
+  function visibility725() {
+    if (document.hidden) pause725();
+    // Returning to the tab leaves the same shot paused until a deliberate Resume.
+    else syncPresentation725();
   }
   function onKey725(e) {
     if (!ov725) return;
-    e.stopPropagation(); e.preventDefault();
+    e.stopPropagation();
+    if (document.hidden) { e.preventDefault(); return; }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const controls = Array.from(ov725.d.querySelectorAll("button")).filter(b => !b.hidden && !b.disabled);
+      if (!controls.length) { ov725.d.focus({preventScroll: true}); return; }
+      const at = controls.indexOf(document.activeElement);
+      const next = at < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (at + (e.shiftKey ? -1 : 1) + controls.length) % controls.length;
+      controls[next].focus({preventScroll: true});
+      return;
+    }
+    // Let native buttons own keyboard activation. Cancelling this default used
+    // to make the HTML controls unusable with Enter/Space and assistive clicks.
+    if ((e.key === "Enter" || e.key === " ") && e.target && e.target.tagName === "BUTTON" && ov725.d.contains(e.target)) return;
+    e.preventDefault();
+    if (e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === "Escape") { pause725(); return; }
+    if (e.key === " ") { if (pausedAt725 !== null) resume725(); else pause725(); return; }
     if (waitingChoice) {
       const n = { "1": 0, "2": 1, "3": 2, "4": 3 }[e.key];
       if (n !== undefined) pickChoice725(n);
       return;
     }
-    end725(true);
+    if (e.key === "e" || e.key === "E") end725(true);
   }
 
   function drawChoice725(x, tm) {
@@ -758,8 +820,11 @@
 
   function draw725() {
     if (!ov725) return;
+    if (document.hidden) { pause725(); return; }
+    if (pausedAt725 !== null) return;
     const x = cx725, dpr = Math.min(2, window.devicePixelRatio || 1);
     const tm = performance.now();
+    const calm = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     let el = tm - t0725;
     const shots = shotsOf();
     // locate shot; choice shots hold until resolved
@@ -773,24 +838,25 @@
     const sh = shots[idx];
     if (idx !== shotIdx) { shotIdx = idx; cue725(idx); }
     if (sh.choice && !waitingChoice && resolved725 !== cine725 + ":" + idx) waitingChoice = sh.choice;
+    syncPresentation725();
     // draw
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
     x.fillStyle = "#000"; x.fillRect(0, 0, LW, LH);
-    try { sh.draw(x, tm, Math.max(0, el - shotStartAt(idx))); } catch (e) { }
-    if (waitingChoice) drawChoice725(x, tm);
+    try { sh.draw(x, calm ? 0 : tm, calm ? 0 : Math.max(0, el - shotStartAt(idx))); } catch (e) { }
+    if (waitingChoice && !ov725.d.querySelector(".day-cine-choices")) drawChoice725(x, calm ? 0 : tm);
     // letterbox + chrome
     x.fillStyle = "#000"; x.fillRect(0, 0, LW, BAR); x.fillRect(0, LH - BAR, LW, BAR);
     x.fillStyle = "rgba(57,211,255,.5)"; x.fillRect(0, BAR - 2, LW, 2); x.fillRect(0, LH - BAR, LW, 2);
     txt(x, "TECHOPS HERO — " + CINES[cine725].title, 28, 32, 16, DIM, "left", true);
-    txt(x, waitingChoice ? "1-" + waitingChoice.options.length + " / CLICK — CHOOSE" : "E / CLICK — SKIP", LW - 28, 32, 14, DIM, "right", true);
-    if (sh.cap) { txt(x, sh.cap, LW / 2, LH - BAR + 32, 17, INK, "center"); }
+    txt(x, waitingChoice ? "1-" + waitingChoice.options.length + " / CLICK — CHOOSE" : "SPACE — PAUSE · E — SKIP", LW - 28, 32, 14, DIM, "right", true);
+    if (sh.cap && !ov725.d.querySelector(".day-cine-caption")) { txt(x, sh.cap, LW / 2, LH - BAR + 32, 17, INK, "center"); }
     // fade edges
     const fade = Math.min(1, el / 500), out = Math.min(1, Math.max(0, (totalDur() - el) / 500));
-    const a = 1 - Math.min(fade, out || 1);
+    const a = calm ? 0 : 1 - Math.min(fade, out || 1);
     if (a > 0) { x.fillStyle = "rgba(0,0,0," + a + ")"; x.fillRect(0, 0, LW, LH); }
     if (!waitingChoice && el >= totalDur() && shots[shots.length - 1].dur > 0 && el > totalDur() + 400) { end725(false); return; }
     if (!waitingChoice && el >= totalDur() && cine725 !== null && shots[shots.length - 1].choice) { end725(false); return; }
-    raf725 = requestAnimationFrame(draw725);
+    queueFrame725();
   }
 
   function cue725(i) {
@@ -818,26 +884,33 @@
   }
 
   function end725(skipped) {
-    if (!ov725) return;
+    if (!ov725 || document.hidden || (skipped && waitingChoice)) return false;
     try { cancelAnimationFrame(raf725); } catch (e) { }
     window.removeEventListener("keydown", onKey725, true);
+    document.removeEventListener("visibilitychange", visibility725);
+    const restoreFocus = returnFocus725; returnFocus725 = null;
+    const ownedFocus = !document.activeElement || document.activeElement === document.body || ov725.d.contains(document.activeElement);
     try { ov725.d.remove(); } catch (e) { }
-    ov725 = null; cx725 = null; waitingChoice = null;
+    ov725 = null; cx725 = null; waitingChoice = null; pausedAt725 = null; presentationKey725 = "";
+    if (ownedFocus && restoreFocus && restoreFocus.isConnected && restoreFocus.focus) restoreFocus.focus({preventScroll: true});
     stopAudio725();
     st725.plays++; if (skipped) st725.skips++; else st725.completes++;
     const cb = done725; done725 = null; cine725 = null;
     if (cb) setTimeout(cb, 30);
+    return true;
   }
 
   function play725(id, onDone) {
-    if (ov725) return false;
+    if (ov725 || document.hidden || !CINES[id] || !CINES[id].shots.length) return false;
     if (canonicalStory() && CINES[id] && CINES[id].retiredStory) return false;
     cine725 = id; done725 = onDone || null;
     shotIdx = -1; waitingChoice = null; resolved725 = null; fired725 = []; lastShotAt = -1;
+    pausedAt725 = null; presentationKey725 = ""; returnFocus725 = document.activeElement;
     ov725 = buildOverlay725();
     cx725 = ov725.c.getContext("2d");
     t0725 = performance.now();
-    raf725 = requestAnimationFrame(draw725);
+    // Publish the first shot/choice before any input can target its controls.
+    draw725();
     return true;
   }
 
@@ -890,6 +963,7 @@
     stats: () => Object.assign({}, st725),
     active: () => !!ov725,
     skip: () => end725(true),
+    pause: pause725, resume: resume725, presentation: presentation725,
     play: (id, cb) => play725(id || "coffee", cb || null),
     choose: (i) => pickChoice725(i),
     get cines() { return Object.keys(CINES); },

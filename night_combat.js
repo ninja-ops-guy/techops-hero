@@ -201,9 +201,12 @@
     return {frame:wind?'guard0':kick||a.kind==='launcher'||a.kind==='throw-up'?'heavy0':a.kind==='uppercut'?'light1':a.kind==='throw'?'light2':['light0','light1','light2'][a.stage],
       lean:a.face*(wind?-.08:low?.34*power:a.kind==='uppercut'?-.16*power:.16*power),shift:a.face*(wind?-3:9*power)};
   }
-  function draw(ctx,n){if(!active(n))return;const c=state(n),W=ctx.canvas.width,calm=root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches;ctx.save();ctx.font='bold 11px monospace';ctx.textAlign='center';
+  function draw(ctx,n){if(!active(n))return;const c=state(n),W=ctx.canvas.width,calm=root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches,hud=root.TechOpsRuntimeHud;ctx.save();ctx.font='bold '+(hud?13*hud.viewport(ctx.canvas).scaleY:11)+'px monospace';ctx.textAlign='center';
     for(const e of n.enemies||[]){const ec=enemy(e);if(!e.alive)continue;const x=e.x+e.w/2-(n.cam||0),y=e.y-60;if(ec.held){ctx.fillStyle='#ffd166';ctx.fillText('GRAB',x,y);}else if(ec.stunUntil>c.time&&!ec.air){ctx.fillStyle='#ffd166';for(let i=0;i<3;i++)ctx.fillRect(x-12+i*10,y+(calm?0:Math.sin(c.time/100+i)*3),4,4);}}
     for(const e of c.fx){const age=c.time-e.time;if(!['jab','cross','launcher','uppercut','low','kick','rising-kick','sweep','air','air-kick','air-slam','throw','collision','slam','wall','ko'].includes(e.type))continue;ctx.globalAlpha=Math.max(0,1-age/450);ctx.fillStyle=e.type==='ko'?'#ffd166':'#fff2cd';ctx.fillText(e.type==='ko'?'KO':String(e.damage||''),e.x-(n.cam||0),e.y-45-(calm?0:age/25));}ctx.globalAlpha=1;
+    // The passive screen-space HUD draws the rhythm bar with status/captions.
+    // World-attached grab and damage feedback above keep their world anchors.
+    if(hud&&hud.handles(n)){ctx.restore();return;}
     const dashReady=c.dash&&!c.dash.spent&&c.time<=c.dash.until;
     if(!c.grab&&!c.attack&&!c.hits&&!dashReady&&c.stunUntil<=c.time){ctx.restore();return;}
     const width=Math.min(290,W-20),x=(W-width)/2,y=91;ctx.fillStyle='#08111de8';ctx.fillRect(x,y,width,42);ctx.fillStyle='#a9c4d9';ctx.fillText(c.grab?'← / → THROW   ↑ LAUNCH   ↓ SLAM':c.stunUntil>c.time?'RECOVER':dashReady?'DASH → ATTACK TO GRAB':c.attack?.kind?.startsWith('air')?'AIR COMBO · THREE HITS MAX':'↑ / ↓ AIM · JUMP TO FOLLOW',W/2,y+14);
