@@ -4,14 +4,21 @@ This file resolves conflicts between historical review documents and the current
 
 ## Current production authority
 
+R1 convergence contracts are now the governing implementation layer. Story Bible v1.2 remains the canonical narrative/reveal baseline; the R1 contracts define how that canon is implemented, judged and certified.
+
 In descending order when implementation guidance conflicts:
 
-1. `PRODUCTION_BASELINE_v1.2.md` — canonical story/reveal/state baseline.
-2. `RUNTIME_AUTHORITY.md` — production ownership and no-new-numbered-hook policy.
-3. `VISUAL_REFERENCE_STANDARD.md` — approved gameplay/reference-art visual contract.
-4. `PRODUCTION_READINESS.md` — current release gate, unresolved risks, and acceptance evidence.
-5. `CINEMATIC_COHESION_V1.md` — current Good Dogs route, level inventory, presentation architecture, mixed-media production spec, and bounded implementation lanes.
-6. `PRODUCTION_REVIEW.md` — current consolidation review where it does not conflict with the documents above.
+1. `docs/production/CONTENT-AUTHORITY-R1.md` — content classes, promotion rules, conflict resolution and concept-art quarantine.
+2. `docs/production/PRODUCTION-BIBLE-R1.md` — current game pillars, interaction semantics, art/animation/UI/technical invariants and change control.
+3. `PRODUCTION_BASELINE_v1.2.md` — canonical story/reveal/state baseline.
+4. `docs/production/AAA-QUALITY-BAR-R1.md` — player-facing production-quality acceptance criteria and severity definitions.
+5. `docs/production/VERTICAL-SLICE-R1.md` — reference-quality end-to-end slice and its required negative paths/checkpoints.
+6. `docs/production/RELEASE-CERTIFICATION-R1.md` — release evidence and ship-gate contract.
+7. `RUNTIME_AUTHORITY.md` — runtime ownership and no-new-numbered-hook policy.
+8. `VISUAL_REFERENCE_STANDARD.md` — approved gameplay/reference-art visual contract where it does not conflict with R1 production authority.
+9. `PRODUCTION_READINESS.md` — readiness snapshot and unresolved risks; it cannot override a newer R1 contract.
+10. `CINEMATIC_COHESION_V1.md` — Good Dogs route/presentation implementation detail where still current.
+11. `PRODUCTION_REVIEW.md` — consolidation review where it does not conflict with the authorities above.
 
 ## Historical / reference-only documents
 
@@ -24,4 +31,4 @@ The following are retained for archaeology and prior-version rationale, but are 
 
 ## Rule
 
-A historical document may explain *why* a system exists, but it cannot certify a current build. Current release claims require the production gate plus physical-device acceptance evidence on the current deployed head.
+A historical document may explain *why* a system exists, but it cannot certify a current build. Current release claims require the R1 release-certification evidence set on one exact candidate head. Automated production gates remain necessary but cannot substitute for required physical-device, visual, performance, persistence or fresh-context human evidence.

@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "desktop": {
+      "operator": "Reviewer name",
+      "device": "Desktop model/runner",
+      "browser": "Browser + version",
+      "captures": {
+        "arrival": "/absolute/path/to/arrival.png",
+        "standup": "/absolute/path/to/standup.png",
+        "npc-talk": "/absolute/path/to/npc-talk.png",
+        "mike-desk": "/absolute/path/to/mike-desk.png",
+        "workstation": "/absolute/path/to/workstation.png",
+        "investigation": "/absolute/path/to/investigation.png",
+        "day-to-night": "/absolute/path/to/day-to-night.png",
+        "night-menu": "/absolute/path/to/night-menu.png",
+        "night-encounter": "/absolute/path/to/night-encounter.png",
+        "return": "/absolute/path/to/return.png"
+      },
+      "review": {
+        "arrival": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "standup": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "npc-talk": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "mike-desk": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "workstation": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "investigation": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "day-to-night": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "night-menu": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "night-encounter": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "return": {
+          "reviewed": true,
+          "blocker": false
+        }
+      }
+    },
+    "phone": {
+      "operator": "Reviewer name",
+      "device": "Physical phone model",
+      "browser": "Browser + OS version",
+      "captures": {
+        "arrival": "/absolute/path/to/arrival.png",
+        "standup": "/absolute/path/to/standup.png",
+        "npc-talk": "/absolute/path/to/npc-talk.png",
+        "mike-desk": "/absolute/path/to/mike-desk.png",
+        "workstation": "/absolute/path/to/workstation.png",
+        "investigation": "/absolute/path/to/investigation.png",
+        "day-to-night": "/absolute/path/to/day-to-night.png",
+        "night-menu": "/absolute/path/to/night-menu.png",
+        "night-encounter": "/absolute/path/to/night-encounter.png",
+        "return": "/absolute/path/to/return.png"
+      },
+      "review": {
+        "arrival": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "standup": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "npc-talk": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "mike-desk": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "workstation": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "investigation": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "day-to-night": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "night-menu": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "night-encounter": {
+          "reviewed": true,
+          "blocker": false
+        },
+        "return": {
+          "reviewed": true,
+          "blocker": false
+        }
+      }
+    }
+  },
+  "playtest": {
+    "operator": "Fresh-context tester name",
+    "device": "Device used",
+    "browser": "Browser + version",
+    "fresh_context": true,
+    "route_completed": true,
+    "developer_intervention": false,
+    "assistance": [],
+    "confusion_points": [],
+    "blocking_confusion": 0,
+    "terminal_state": "returned",
+    "duration_seconds": 1200,
+    "checkpoints_seen": [
+      "arrival",
+      "standup",
+      "npc-talk",
+      "mike-desk",
+      "workstation",
+      "investigation",
+      "day-to-night",
+      "night-menu",
+      "night-encounter",
+      "return"
+    ],
+    "record_path": "/absolute/path/to/playtest-notes-or-recording.txt"
+  }
+}

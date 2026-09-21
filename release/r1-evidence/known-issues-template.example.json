@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "issues": [
+    {
+      "id": "#123",
+      "severity": "P2",
+      "status": "open",
+      "disposition": "Accepted for this candidate with explicit owner rationale"
+    },
+    {
+      "id": "#124",
+      "severity": "P1",
+      "status": "closed"
+    }
+  ]
+}
