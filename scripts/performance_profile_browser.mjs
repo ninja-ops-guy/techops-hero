@@ -55,25 +55,26 @@ async function oneInputSample(){
   });
   if(!target)throw new Error('no adjacent free tile for input latency probe');
   await page.evaluate(({fromX,fromY,key})=>{
-    const probe=window.__techopsPerfInputProbe={fromX,fromY,key,inputAt:null,visibleAt:null};
+    const probe=window.__techopsPerfInputProbe={fromX,fromY,key,inputAt:null,responseAt:null,tileAt:null};
     const onKey=e=>{if(e.code===key||e.key===key)probe.inputAt=performance.now();};
     document.addEventListener('keydown',onKey,{capture:true,once:true});
     const observe=()=>{
-      if(window.S&&(S.px!==fromX||S.py!==fromY)){probe.visibleAt=performance.now();return;}
+      if(window.S?.moving&&!Number.isFinite(probe.responseAt))probe.responseAt=performance.now();
+      if(window.S&&(S.px!==fromX||S.py!==fromY)){probe.tileAt=performance.now();return;}
       requestAnimationFrame(observe);
     };
     requestAnimationFrame(observe);
   },target);
   await page.keyboard.down(target.key);
   try{
-    await page.waitForFunction(()=>Number.isFinite(window.__techopsPerfInputProbe?.visibleAt),null,{timeout:3000});
+    await page.waitForFunction(()=>Number.isFinite(window.__techopsPerfInputProbe?.tileAt),null,{timeout:3000});
   }finally{
     await page.keyboard.up(target.key);
   }
   return page.evaluate(()=>{
     const p=window.__techopsPerfInputProbe;
-    if(!Number.isFinite(p?.inputAt)||!Number.isFinite(p?.visibleAt)||p.visibleAt<p.inputAt)throw new Error('invalid input probe timing');
-    return p.visibleAt-p.inputAt;
+    if(!Number.isFinite(p?.inputAt)||!Number.isFinite(p?.responseAt)||!Number.isFinite(p?.tileAt)||p.responseAt<p.inputAt||p.tileAt<p.responseAt)throw new Error('invalid input probe timing');
+    return {response_ms:p.responseAt-p.inputAt,tile_step_ms:p.tileAt-p.inputAt};
   });
 }
 async function frameSample(){
@@ -127,6 +128,8 @@ try{
 
   const inputSamples=[];
   for(let i=0;i<7;i++)inputSamples.push(await oneInputSample());
+  const responseSamples=inputSamples.map(v=>v.response_ms);
+  const tileSamples=inputSamples.map(v=>v.tile_step_ms);
   const frames=await frameSample();
 
   await page.reload({waitUntil:'domcontentloaded'});
@@ -143,9 +146,12 @@ try{
     viewport:{width:1280,height:800},
     cold_first_playable_ms:+coldFirstPlayable.toFixed(2),
     warm_first_playable_ms:+warmFirstPlayable.toFixed(2),
-    core_input_samples_ms:inputSamples.map(v=>+v.toFixed(2)),
-    core_input_p50_ms:+percentile(inputSamples,.50).toFixed(2),
-    core_input_p95_ms:+percentile(inputSamples,.95).toFixed(2),
+    core_input_response_samples_ms:responseSamples.map(v=>+v.toFixed(2)),
+    core_input_p50_ms:+percentile(responseSamples,.50).toFixed(2),
+    core_input_p95_ms:+percentile(responseSamples,.95).toFixed(2),
+    tile_step_samples_ms:tileSamples.map(v=>+v.toFixed(2)),
+    tile_step_p50_ms:+percentile(tileSamples,.50).toFixed(2),
+    tile_step_p95_ms:+percentile(tileSamples,.95).toFixed(2),
     ...Object.fromEntries(Object.entries(frames).map(([k,v])=>[k,typeof v==='number'?+v.toFixed(2):v])),
     page_errors:pageErrors,
     first_party_resource_failures:firstPartyFailures,
@@ -153,7 +159,7 @@ try{
     limitations:[
       'Desktop Chromium evidence only; not physical mobile evidence.',
       'Frame timing reflects this runner and does not certify phone thermals or memory pressure.',
-      'The input probe measures browser keydown to observed player-position change on the Day runtime.'
+      'Core input response measures browser keydown to the first rendered movement-state response; full grid-tile cadence is retained separately as tile_step latency.'
     ]
   };
   const measurementFile='desktop-chromium-measurements.json';
@@ -166,6 +172,8 @@ try{
     warm_first_playable_ms:measurements.warm_first_playable_ms,
     core_input_p50_ms:measurements.core_input_p50_ms,
     core_input_p95_ms:measurements.core_input_p95_ms,
+    tile_step_p50_ms:measurements.tile_step_p50_ms,
+    tile_step_p95_ms:measurements.tile_step_p95_ms,
     frame_p50_ms:measurements.frame_p50_ms,
     frame_p95_ms:measurements.frame_p95_ms,
     frame_p99_ms:measurements.frame_p99_ms,
