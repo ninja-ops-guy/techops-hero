@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "source": {
+    "head": "<40-char candidate commit>",
+    "tree": "<40-char candidate tree>",
+    "fingerprint": "<64-char source fingerprint>"
+  },
+  "artifacts": [
+    {
+      "path": "captures/example.txt",
+      "sha256": "<64-char sha256>"
+    }
+  ],
+  "checks": [
+    {
+      "id": "candidate_freeze",
+      "profile": "candidate",
+      "status": "passed",
+      "evidence_type": "freeze-record",
+      "observations": {
+        "head": "<same full candidate commit>",
+        "tree": "<same full candidate tree>",
+        "fingerprint": "<same source fingerprint>",
+        "frozen_at": "2026-09-21T00:00:00Z",
+        "change_policy": "invalidate-all-evidence"
+      }
+    }
+  ]
+}
