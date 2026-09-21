@@ -57,8 +57,12 @@
   function safeArea() {
     const probe = root.document && root.document.getElementById && root.document.getElementById('night-hud-safe-area');
     const style = probe && root.getComputedStyle && root.getComputedStyle(probe);
-    const value = key => Math.max(0, parseFloat(style && style[key]) || 0);
-    return { top:value('paddingTop'), right:value('paddingRight'), bottom:value('paddingBottom'), left:value('paddingLeft') };
+    const pixels = value => typeof value === 'string' && /^(?:\d+(?:\.\d+)?|\.\d+)px$/.test(value.trim()) ? Number.parseFloat(value) : 0;
+    // A missing environment axis must not erase a known inset on another axis.
+    // Only resolved px custom values may supplement the computed padding; raw
+    // env()/calc()/percent tokens are not pixel measurements.
+    const value = (axis, key) => Math.max(pixels(style && style[key]), pixels(style && typeof style.getPropertyValue === 'function' && style.getPropertyValue('--night-hud-safe-' + axis)));
+    return { top:value('top','paddingTop'), right:value('right','paddingRight'), bottom:value('bottom','paddingBottom'), left:value('left','paddingLeft') };
   }
   function layout(view) {
     const pad = view.width < 400 ? 6 : 8, gap = 6;

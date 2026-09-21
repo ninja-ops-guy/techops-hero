@@ -39,7 +39,9 @@ async function hudContract(page, mode) {
     const hud = mode === 'night' ? window.__techOpsNightHudEvidence : window.TechOpsGoodBoysHudLite.layout();
     const menu=document.getElementById('night-campaign'),rect=mode==='night'&&menu?.getBoundingClientRect();
     const menuEvidence=rect?{x:rect.left-bounds.left,y:rect.top-bounds.top,width:rect.width,height:rect.height,font:parseFloat(getComputedStyle(menu).fontSize),hit:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)===menu}:null;
-    return { hud, calls, menu:menuEvidence,canvas:{width:bounds.width,height:bounds.height}, actorTop:NM.y*bounds.height/canvas.height };
+    const probe=document.getElementById('night-hud-safe-area'),host=document.getElementById('night-runtime-ui');
+    const safeArea=probe&&host?Object.fromEntries(['top','right','bottom','left'].map(side=>[side,{padding:getComputedStyle(probe).getPropertyValue('padding-'+side),variable:getComputedStyle(host).getPropertyValue('--night-hud-safe-'+side),inline:host.style.getPropertyValue('--night-hud-safe-'+side)}])):null;
+    return { hud, calls, menu:menuEvidence,safeArea,canvas:{width:bounds.width,height:bounds.height}, actorTop:NM.y*bounds.height/canvas.height };
   }, mode);
   const hud = evidence.hud;
   assert.ok(hud && !hud.blocked, mode+' readable HUD must render');
@@ -257,9 +259,14 @@ try {
     narrowEvidence.insetHud = await hudContract(nightPage, 'night');
     assert.ok(narrowEvidence.insetHud.menu.x+narrowEvidence.insetHud.menu.width<=568-44,'menu clears simulated right inset');
     assert.ok(narrowEvidence.insetHud.menu.y>=20,'menu clears simulated top inset');
+    await nightPage.locator('#night-runtime-ui').evaluate(el=>el.style.setProperty('--night-hud-safe-left','var(--unavailable-inset)'));
+    narrowEvidence.insetFallbackHud = await hudContract(nightPage, 'night');
+    assert.ok(narrowEvidence.insetFallbackHud.menu.x+narrowEvidence.insetFallbackHud.menu.width<=568-44,'unresolved left inset cannot erase valid right inset');
+    assert.ok(narrowEvidence.insetFallbackHud.menu.y>=20,'unresolved left inset cannot erase valid top inset');
     await nightPage.locator('#night-runtime-ui').evaluate(el=>{
       el.style.removeProperty('--night-hud-safe-right');
       el.style.removeProperty('--night-hud-safe-top');
+      el.style.removeProperty('--night-hud-safe-left');
     });
     await hudContract(nightPage, 'night');
     assert.ok(!collapsed.presentation.bodyClass.includes('night-mobile-cohesion'), 'cold-start fixture must hold the optional visual class');

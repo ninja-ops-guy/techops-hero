@@ -83,6 +83,22 @@ for(const [width,height] of [[320,568],[568,320],[844,390]]) {
   assert.equal(f.root.__techOpsNightHudEvidence.menu.x,width-(width<400?6:8)-6-122,'clearing insets restores the original target location');assert.equal(f.root.__techOpsNightHudEvidence.menu.y,11);
 }
 {
+  const f=fixture(),probe={};let declarations={'--night-hud-safe-top':'20px','--night-hud-safe-right':'44px','--night-hud-safe-left':'env(unavailable)'};
+  // A browser may expose a known custom value even when invalid style on a
+  // sibling axis leaves measured padding zero. Preserve the known axes only.
+  f.root.document.getElementById=id=>id==='night-hud-safe-area'?probe:null;
+  f.root.getComputedStyle=()=>({paddingTop:'0px',paddingRight:'0px',paddingBottom:'0px',paddingLeft:'0px',getPropertyValue:key=>declarations[key]||''});
+  assert.deepEqual(JSON.parse(JSON.stringify(f.api.safeArea())),{top:20,right:44,bottom:0,left:0});
+  draw(f);assert.equal(f.root.__techOpsNightHudEvidence.menu.x,402);assert.equal(f.root.__techOpsNightHudEvidence.menu.y,20);
+  for(const unresolved of ['44%','44','calc(44px + 1px)','env(safe-area-inset-right)','var(--missing)','-44px','Infinitypx','NaNpx','']) {
+    declarations={'--night-hud-safe-right':unresolved};assert.equal(f.api.safeArea().right,0,unresolved+' is not a resolved safe-area measurement');
+  }
+  declarations={'--night-hud-safe-right':' 44.5px '};assert.equal(f.api.safeArea().right,44.5,'resolved subpixel insets remain valid');
+  const style=fs.readFileSync('runtime_night.js','utf8').match(/#night-hud-safe-area\{([^}]+)\}/)[1];
+  assert.doesNotMatch(style,/(?:^|;)padding:/,'a missing axis cannot invalidate all four padding values');
+  for(const axis of ['top','right','bottom','left'])assert.ok(style.includes('padding-'+axis+':var(--night-hud-safe-'+axis+',0px)'),axis+' resolves independently with a zero fallback');
+}
+{
   const f=fixture();f.ctx.font='13px monospace';const token='SUPERCALIFRAGILISTICEXPIALIDOCIOUS'.repeat(4),lines=f.api.wrap(f.ctx,token,90);assert.equal(lines.join(''),token);assert.ok(lines.every(line=>f.ctx.measureText(line).width<=90));
   assert.deepEqual(JSON.parse(JSON.stringify(f.api.viewport({width:960,height:540}))),{width:960,height:540,scaleX:1,scaleY:1});
   const hidden=f.api.viewport({width:960,height:540,getBoundingClientRect:()=>({width:0,height:0}),style:{width:'480px',height:'270px'}});assert.equal(hidden.width,480);assert.equal(hidden.scaleX,2);
