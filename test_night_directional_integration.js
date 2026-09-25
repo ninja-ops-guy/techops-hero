@@ -27,4 +27,13 @@ assert.ok(bootSource.indexOf('"night_combat.js"')<bootSource.indexOf('"night_com
 assert.ok(v55.includes('TechOpsNightInput.runStep(__origStepNMV55'));
 assert.ok(runtime.includes('TechOpsNightInput.sync()')&&runtime.includes('TechOpsNightInput.reset()'));
 assert.ok(!fs.existsSync('night_session.js'),'do not reintroduce an alternative Night session');
-console.log('Directional integration: controller edges, menu scope, single loader and consolidated lifecycle PASS');
+const bot=fs.readFileSync('scripts/night_combat_bot.mjs','utf8');
+const proofStart=bot.indexOf("  await setup(690);");
+const proofEnd=bot.indexOf("  await shot('movement-dash-grab');",proofStart);
+assert.ok(proofStart>=0&&proofEnd>proofStart,'browser dash-grab proof block exists');
+const proof=bot.slice(proofStart,proofEnd);
+const dashSeen=proof.indexOf("await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));");
+const attack=proof.indexOf("await page.keyboard.press('KeyE');");
+assert.ok(dashSeen>=0&&attack>dashSeen,'trusted punch follows the observed dash');
+assert.doesNotMatch(proof.slice(dashSeen,attack),/page\.evaluate|keyboard\.down|waitForFunction\(\(\)=>\{const c=/,'post-dash round trips cannot consume the production dash-grab window');
+console.log('Directional integration: controller edges, menu scope, single loader, consolidated lifecycle and dash dispatch PASS');
