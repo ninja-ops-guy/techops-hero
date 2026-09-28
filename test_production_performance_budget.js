@@ -20,10 +20,14 @@ const indexBytes = fs.statSync("index.html").size;
 const styleBytes = fs.statSync("style.css").size;
 assert.ok(indexBytes < 250 * 1024, `index.html exceeds 250 KiB structural budget: ${indexBytes}`);
 assert.ok(styleBytes < 160 * 1024, `style.css exceeds 160 KiB structural budget: ${styleBytes}`);
-// The cinematic-cohesion pass adds one parser-time service bundle while retiring
-// both the direct-to-M2 intro and duplicate ship-approach wrapper. The reviewed
-// ceiling therefore contracts to 265; future growth needs an explicit review.
-assert.ok(local.length <= 265, `startup script count ${local.length} exceeds reviewed cinematic-cohesion ceiling 265`);
+// Day field experience adds four bounded concern modules to the prior 265.
+// See docs/DAY_FIELD_EXPERIENCE_2026-09-28.md. This structural allowance is not
+// measured startup certification; the exact-head performance gate still applies.
+assert.ok(local.length <= 269, `startup script count ${local.length} exceeds reviewed Day field ceiling 269`);
+const dayModules = ['runtime_day_cases.js','runtime_day_world.js','runtime_day_audio.js','runtime_day.js'];
+for (const file of dayModules) assert.strictEqual(localFiles.filter(f=>f===file).length,1,`${file} must load once`);
+assert.ok(dayModules.reduce((total,file)=>total+fs.statSync(file).size,0) < 120*1024, 'Day concern layers exceed the reviewed 120 KiB combined budget');
+assert.ok(fs.statSync('runtime_day.css').size < 20*1024, 'Day CSS exceeds the reviewed 20 KiB budget');
 for(const required of ["good_dogs_cutscenes_v2_2.js","good_dogs_cutscene_bridge.js"]){
   assert.strictEqual(localFiles.filter(f=>f===required).length,1,`${required} must be present exactly once in startup budget`);
   assert.ok(fs.statSync(required).size < 32 * 1024,`${required} exceeds 32 KiB cutscene concern-module budget`);

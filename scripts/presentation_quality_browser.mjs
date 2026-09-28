@@ -198,7 +198,17 @@ try {
       const confirmedStandup = await sceneContract(page, name, 'standup');
       assert.equal(confirmedStandup.board.count, '3 / 3 ASSIGNED');
       assert.deepEqual(confirmedStandup.board.rows.map(row => row.owner), ['Mike', 'Amit', 'Mike']);
-      await page.locator('#dlg-options button').filter({ hasText: 'Open workstation' }).click();
+      await page.locator('#dlg-options button').filter({ hasText: "Walk to Mike's workstation" }).click();
+      await page.evaluate(() => {
+        // Explicit visual fixture: move to the authored desk approach before
+        // invoking the real workstation. The route button itself never teleports.
+        TechOpsDayWorld.ensureWorld();
+        const desk = TechOpsDayWorld.stations().find(station => station.id === 'mike_desk');
+        if (!desk?.available || !desk.approach) throw Error('Mike workstation has no service approach');
+        S.px = desk.approach.x; S.py = desk.approach.y;
+        if (!TechOpsDayWorld.deskNearby()) throw Error('Workstation fixture is not physically at the desk');
+        TechOpsCampaignNativeAct1.openWorkstation();
+      });
       const workstation = await sceneContract(page, name, 'workstation');
       assert.deepEqual(errors, []);
       report.profiles.push({ name, pass: true, field, standup, confirmedStandup, workstation });

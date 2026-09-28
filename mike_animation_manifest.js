@@ -10,7 +10,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 3;
+  var VERSION = 4;
   var WALK_FRAME_MS = 135;
 
   var DAY_SHIFT = Object.freeze({
@@ -25,7 +25,7 @@
       walk_up: Object.freeze({ frames: ["up0", "up1", "up0", "up2"], flip: false }),
       walk_right: Object.freeze({ frames: ["right0", "right1", "right0", "right2"], flip: false }),
       walk_left: Object.freeze({ frames: ["right0", "right1", "right0", "right2"], flip: true }),
-      interact: Object.freeze({ frames: ["laptop"], flip: false }),
+      workstation: Object.freeze({ frames: ["laptop"], flip: false }),
       thumbs: Object.freeze({ frames: ["thumbs"], flip: false }),
       party: Object.freeze({ frames: ["party"], flip: false })
     })
@@ -75,9 +75,13 @@
   function resolveDayShift(state, tm) {
     state = state || {};
     tm = Number(tm || 0);
+    if (state.inDialog && state.dayInteraction === "workstation") return { state: "workstation", semantic: "workstation", key: "laptop", flip: false, index: 0 };
+    if (state.inDialog) {
+      var idle = stateKey(state.fx, false), idleSpec = stateSpec(idle);
+      return { state: "idle", semantic: idle, key: idleSpec.frames[0], flip: !!idleSpec.flip, index: 0 };
+    }
     if (state.partyUntil && tm < state.partyUntil) return { state: "party", key: "party", flip: false, index: 0 };
     if (state.thumbsUntil && tm < state.thumbsUntil) return { state: "thumbs", key: "thumbs", flip: false, index: 0 };
-    if (state.inDialog) return { state: "interact", key: "laptop", flip: false, index: 0 };
     var semantic = stateKey(state.fx, !!state.moving);
     var spec = stateSpec(semantic) || DAY_SHIFT.states.idle_down;
     var index = spec.frames.length > 1 ? Math.floor(tm / WALK_FRAME_MS) % spec.frames.length : 0;

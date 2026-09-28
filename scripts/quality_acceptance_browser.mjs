@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Production-page smoke acceptance. Only the isolated codec case injects a fault;
-// browser keyboard/touch events drive all gameplay. This does not certify a phone.
+// Production-page smoke acceptance. Day walks to standup with real input, then
+// uses a labelled desk-position fixture. Choices remain real browser actions.
+// The isolated codec case injects a fault. This does not certify a phone.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,12 +13,12 @@ import {assertLandscapeControlBounds,assertTouchTarget} from './responsive_contr
 const port=Number(process.env.QUALITY_PORT||4197),base=process.env.QUALITY_BASE_URL||`http://127.0.0.1:${port}/`;
 const out=path.resolve(process.env.QUALITY_OUT_DIR||'/tmp/techops-quality-acceptance');
 fs.mkdirSync(out,{recursive:true});
-const report={schema_version:1,status:'running',source:sourceIdentity(),physical_device:false,codec_license:'unverified',checks:[],profiles:[],artifacts:[],limitations:['Emulated viewport and touch are not physical-device evidence.','A bounded opening and recovery run is not a complete campaign playthrough.','Frame samples measure this runner only; they do not certify phone thermals or sustained performance.']};
+const report={schema_version:1,status:'running',source:sourceIdentity(),physical_device:false,codec_license:'unverified',checks:[],profiles:[],artifacts:[],limitations:['Emulated viewport and touch are not physical-device evidence.','Day uses a declared desk-position fixture after the real standup walk; it does not certify walking the new desk route.','External audio is blocked; explicit muted continuation is not soundtrack playback evidence.','A bounded opening and recovery run is not a complete campaign playthrough.','Frame samples measure this runner only; they do not certify phone thermals or sustained performance.']};
 const server=process.env.QUALITY_BASE_URL?null:spawn('python3',['scripts/media_http_server.py','--port',String(port),'--bind','127.0.0.1'],{stdio:'ignore'});
 let browser;
 const profiles=[{id:'chromium-desktop',viewport:{width:1280,height:800},hasTouch:false},{id:'chromium-portrait',viewport:{width:390,height:844},hasTouch:true},{id:'chromium-landscape',viewport:{width:844,height:390},hasTouch:true}];
 const selected=process.env.QUALITY_PROFILES?.split(',');
-const record=(id,p,observations,evidence_type='browser-input')=>report.checks.push({id,profile:p.id,status:'passed',evidence_type,fixture:evidence_type==='fault-injection',observations});
+const record=(id,p,observations,evidence_type='browser-input')=>report.checks.push({id,profile:p.id,status:'passed',evidence_type,fixture:evidence_type==='fault-injection'||evidence_type==='fixture-assisted-browser-input',observations});
 const screenshot=async(page,name)=>{const file=`${name}.png`;await page.screenshot({path:path.join(out,file)});report.artifacts.push({path:file,sha256:digest(fs.readFileSync(path.join(out,file)))});};
 const jsonArtifact=(name,value)=>{const file=`${name}.json`,bytes=JSON.stringify(value,null,2)+'\n';fs.writeFileSync(path.join(out,file),bytes);report.artifacts.push({path:file,sha256:digest(bytes)});return file;};
 async function title(page){await page.waitForFunction(()=>window.__productionTitleReadiness?.ready===true&&!document.querySelector('#btn-start')?.disabled,null,{timeout:30000});}
@@ -73,25 +74,48 @@ async function walkToStandup(page){
 async function day(page,p){
   await startDay(page,p);await walkToStandup(page);await page.keyboard.press('e');
   await click(page,option(page,/Assign queue: Mike/),p.hasTouch);
-  await click(page,option(page,/Open workstation/),p.hasTouch);
+  const beforeRoute=await page.evaluate(()=>({px:S.px,py:S.py}));
+  await click(page,option(page,/Walk to Mike's workstation/),p.hasTouch);
+  assert.deepEqual(await page.evaluate(()=>({px:S.px,py:S.py})),beforeRoute,'Desk route cannot teleport the player');
+  const deskFixture=await page.evaluate(()=>{
+    TechOpsDayWorld.ensureWorld();
+    const desk=TechOpsDayWorld.stations().find(station=>station.id==='mike_desk');
+    if(!desk?.available||!desk.approach)throw Error('Desk fixture has no physical approach');
+    // Explicit negative fixture, followed by the declared scene-entry fixture.
+    let away;
+    for(let y=0;y<S.map.length&&!away;y++)for(let x=0;x<S.map[y].length;x++)if(S.map[y][x]===0&&Math.abs(x-desk.x)+Math.abs(y-desk.y)>2&&!S.npcs.some(n=>n.x===x&&n.y===y)){away={x,y};break;}
+    if(!away)throw Error('No off-desk fixture tile');
+    S.px=away.x;S.py=away.y;
+    const denied=TechOpsCampaignNativeAct1.openWorkstation();
+    const rejected=denied===false&&!S.inDialog&&!TechOpsDayExperience.desktopNearby();
+    const unchanged=S.px===away.x&&S.py===away.y;
+    S.px=desk.approach.x;S.py=desk.approach.y;
+    if(!TechOpsDayWorld.deskNearby())throw Error('Fixture is not at the workstation');
+    TechOpsCampaignNativeAct1.openWorkstation();
+    return {rejected,unchanged,position:{px:S.px,py:S.py},station:desk.id};
+  });
+  assert.equal(deskFixture.rejected,true,'Off-desk workstation must reject entry');
+  assert.equal(deskFixture.unchanged,true,'Rejected workstation cannot teleport the player');
   await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent.includes('WORKSTATION'));
   await click(page,option(page,/^MUSIC$/),p.hasTouch);
-  await click(page,option(page,/Play Red in the Mirror/),p.hasTouch);
+  await click(page,option(page,/^Continue with music muted$/),p.hasTouch);
   await click(page,option(page,/Back to desktop/),p.hasTouch);
   await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent==='MIKE // WORKSTATION');
   await screenshot(page,`${p.id}-workstation`);
   await click(page,option(page,/Exit workstation/),p.hasTouch);
-  // Observe the automatic checkpoint; never manufacture player state or progress.
+  // Observe the saved checkpoint; no ticket or narrative progress is injected.
   const checkpoint=await page.evaluate(()=>JSON.parse(localStorage.getItem(TechOpsSaveKeys.dayCheckpoint)));
   assert.ok(checkpoint?.state?.map,'Day startup must create a durable checkpoint');
   const campaign=await page.evaluate(()=>TechOpsCampaign.load(localStorage));
   assert.equal(campaign.flags.red_in_mirror_heard,true);
+  assert.equal(campaign.morningListening.userSkipped,true);
+  assert.equal(campaign.morningListening.status,'user_skipped');
   await page.reload({waitUntil:'domcontentloaded'});await title(page);await click(page,page.locator('#btn-continue'),p.hasTouch);
   await page.waitForFunction(()=>window.S?.map&&!S.inDialog);
   const resumed=await page.evaluate(()=>({day:S.day,px:S.px,py:S.py,budget:S.budget,clock:S.clock,ticketsAlias:S.tickets.every(t=>S.npcs.includes(t)),music:TechOpsCampaign.load(localStorage).flags.red_in_mirror_heard,shell:TechOpsModeShell.health().mode}));
   for(const key of ['day','px','py','budget','clock'])assert.equal(resumed[key],checkpoint.state[key],`Day checkpoint ${key}`);
   assert.equal(resumed.ticketsAlias,true);assert.equal(resumed.music,true);assert.equal(resumed.shell,'day');
-  record('day_resume',p,{resumed,checkpoint_saved_at:checkpoint.savedAt,entry:'Actual keyboard path to standup; real dialog hit targets; automatic startup checkpoint'});
+  record('day_resume',p,{resumed,deskFixture,checkpoint_saved_at:checkpoint.savedAt,entry:'Actual keyboard path to standup; explicit desk-position fixture with off-desk rejection; real dialog hit targets; muted music continuation; saved checkpoint'},'fixture-assisted-browser-input');
   await screenshot(page,`${p.id}-day-resumed`);
 }
 async function night(page,p){
