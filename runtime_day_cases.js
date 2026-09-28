@@ -16,7 +16,7 @@
   function hypothesis(id,label,reason){return {id:id,label:label,reason:reason};}
   var CASES=freeze({
     laptop_dock_link:{
-      id:'laptop_dock_link',title:'The Dock Is On Vacation',deviceKind:'laptop',deviceLabel:'Engineering laptop and dock',roomId:'eng',zoneId:'eng',requester:'Design engineer',
+      id:'laptop_dock_link',repairSurface:'physical',title:'The Dock Is On Vacation',deviceKind:'laptop',deviceLabel:'Engineering laptop and dock',roomId:'eng',zoneId:'eng',requester:'Design engineer',
       humanNeed:'The engineer needs the approved drawing on the large display for a design review.',
       symptom:'The laptop is awake, but its external display and wired network disappeared together.',
       evidence:[
@@ -36,7 +36,7 @@
       notifications:['AeroDesk reports: your peripherals are pursuing independent careers.','One connector. Two symptoms. Zero reasons to reinstall everything.']
     },
     desktop_restart_window:{
-      id:'desktop_restart_window',title:'Restart Required. Timing Optional.',deviceKind:'desktop',deviceLabel:'Finance batch workstation',roomId:'office',zoneId:'finance',requester:'Finance analyst',
+      id:'desktop_restart_window',repairSurface:'screen',title:'Restart Required. Timing Optional.',deviceKind:'desktop',deviceLabel:'Finance batch workstation',roomId:'office',zoneId:'finance',requester:'Finance analyst',
       humanNeed:'Finance must finish an approved export without losing the running batch.',
       symptom:'The workstation displays a pending restart reminder while a finance export is still running.',
       evidence:[
@@ -56,7 +56,7 @@
       notifications:['AeroDesk would like to restart at a time convenient to AeroDesk.','Your productivity matters. Please hold while we schedule it.']
     },
     signage_player_session:{
-      id:'signage_player_session',title:'Welcome to Yesterday',deviceKind:'mini_pc',deviceLabel:'Lobby signage mini-PC',roomId:'office',zoneId:'lobby',requester:'Reception coordinator',
+      id:'signage_player_session',repairSurface:'screen',title:'Welcome to Yesterday',deviceKind:'mini_pc',deviceLabel:'Lobby signage mini-PC',roomId:'office',zoneId:'lobby',requester:'Reception coordinator',
       humanNeed:'Reception needs the approved visitor welcome board showing the current schedule.',
       symptom:'The display is lit, but the welcome board is stuck on yesterday and shows a player sign-in banner.',
       evidence:[
@@ -76,7 +76,7 @@
       notifications:['Welcome, valued visitor. Today is apparently yesterday.','Your screen is online. Its paperwork has expired.']
     },
     printer_queue_blocked:{
-      id:'printer_queue_blocked',title:'The Printer Is “Ready”',deviceKind:'printer',deviceLabel:'Finance batch printer',roomId:'office',zoneId:'finance',requester:'Accounts payable clerk',
+      id:'printer_queue_blocked',repairSurface:'screen',title:'The Printer Is “Ready”',deviceKind:'printer',deviceLabel:'Finance batch printer',roomId:'office',zoneId:'finance',requester:'Accounts payable clerk',
       humanNeed:'Accounts payable needs one complete approved reconciliation packet for the handoff.',
       symptom:'The Finance printer shows Ready while the same batch job blocks later jobs.',
       evidence:[
@@ -96,7 +96,7 @@
       notifications:['Ready is a state of mind, according to this printer.','Thirty-seven copies of “final-final” are still thirty-seven copies.']
     },
     plc_hmi_dependency:{
-      id:'plc_hmi_dependency',title:'The Line Is Fine. The Screen Disagrees.',deviceKind:'plc_hmi',deviceLabel:'Packaging-cell HMI',roomId:'factory',zoneId:'factory',requester:'Packaging operator',
+      id:'plc_hmi_dependency',repairSurface:'screen',title:'The Line Is Fine. The Screen Disagrees.',deviceKind:'plc_hmi',deviceLabel:'Packaging-cell HMI',roomId:'factory',zoneId:'factory',requester:'Packaging operator',
       humanNeed:'The packaging operator needs trustworthy readouts before the next authorized cell run.',
       symptom:'The packaging HMI shows stale telemetry even though the operator reports the controller remains healthy.',
       evidence:[
@@ -117,7 +117,7 @@
       notifications:['AeroDesk has confidently displayed the last known confidence.','A green screen is not permission to move a machine.']
     },
     industrial_scanner_vlan:{
-      id:'industrial_scanner_vlan',title:'Connected to Somewhere',deviceKind:'industrial_scanner',deviceLabel:'Traceability scanner station',roomId:'factory',zoneId:'factory',requester:'Traceability operator',
+      id:'industrial_scanner_vlan',repairSurface:'screen',title:'Connected to Somewhere',deviceKind:'industrial_scanner',deviceLabel:'Traceability scanner station',roomId:'factory',zoneId:'factory',requester:'Traceability operator',
       humanNeed:'Traceability needs approved scan records attached to the correct work order before the next handoff.',
       symptom:'The station has Ethernet link but cannot reach its approved scan service after a desk-port move.',
       evidence:[
@@ -138,7 +138,7 @@
       notifications:['Connected: yes. Connected to the useful thing: pending.','Your network has successfully delivered you to the wrong department.']
     },
     access_point_poe:{
-      id:'access_point_poe',title:'Wireless, Except for the Wire',deviceKind:'access_point',deviceLabel:'Engineering access point',roomId:'eng',zoneId:'eng',requester:'Test engineer',
+      id:'access_point_poe',repairSurface:'physical',title:'Wireless, Except for the Wire',deviceKind:'access_point',deviceLabel:'Engineering access point',roomId:'eng',zoneId:'eng',requester:'Test engineer',
       humanNeed:'Engineering needs its approved tablet checklist available at the bench.',
       symptom:'The nearby access point is dark and engineering tablets no longer see their usual network.',
       evidence:[
@@ -158,7 +158,7 @@
       notifications:['Wireless service interrupted by a wire. We regret the branding.','Please enjoy our complimentary absence of connectivity.']
     },
     timeclock_time_sync:{
-      id:'timeclock_time_sync',title:'The Clock That Worked Overtime',deviceKind:'time_clock',deviceLabel:'Employee time clock',roomId:'office',zoneId:'hr',requester:'HR shift coordinator',
+      id:'timeclock_time_sync',repairSurface:'screen',title:'The Clock That Worked Overtime',deviceKind:'time_clock',deviceLabel:'Employee time clock',roomId:'office',zoneId:'hr',requester:'HR shift coordinator',
       humanNeed:'The shift coordinator needs accurate clock status without changing anyone’s attendance record.',
       symptom:'The clock is powered but displays the wrong time and flags synchronization warnings.',
       evidence:[

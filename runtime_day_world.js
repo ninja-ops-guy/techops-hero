@@ -8,7 +8,7 @@
   if (root) root.TechOpsDayWorld = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
-  var VERSION = 1, TILE = 32, lastState = null, lastMap = null, routeCache = null;
+  var VERSION = 2, TILE = 32, lastState = null, lastMap = null, routeCache = null;
   var CARDINAL = [[0, 1], [-1, 0], [1, 0], [0, -1]];
   var SPECS = [
     { id: "mike_desk", label: "Mike's workstation", kind: "desk", deviceType: "desktop", roomId: "office", zoneId: "office", surface: "screen", art: 2, x: 31, y: 15 },
@@ -27,7 +27,7 @@
   ];
   var ROOM_NAMES = { office: "IT / OPERATIONS", factory: "PRODUCTION FLOOR", eng: "ENGINEERING LAB", finance: "FINANCE ROW", lobby: "RECEPTION", hr: "HR CORNER", server: "DATA CENTER", exec: "EXECUTIVE SUITE", sales: "SALES FLOOR" };
   function state() { try { return typeof S !== "undefined" ? S : root.S || null; } catch (_) { return root.S || null; } }
-  function active() { var s = state(); return !!(s && s.map && !s.nightMode && !(s.meta && s.meta._standaloneMode)); }
+  function active() { var s = state(); return !!(s && s.map && !s.room && !s.nightMode && !(s.meta && s.meta._standaloneMode)); }
   function copy(value) { return JSON.parse(JSON.stringify(value)); }
   function key(p) { return p.x + "," + p.y; }
   function distance(a, b) { return Math.abs(a.x - b.x) + Math.abs(a.y - b.y); }
@@ -82,21 +82,35 @@
   function data() { var s = state(); return s && s.meta && s.meta.dayStations; }
   function stations() { var d = data(); return d && Array.isArray(d.items) ? d.items.map(copy) : []; }
   function station(id) { var d = data(); return d && Array.isArray(d.items) ? d.items.find(function (item) { return item.id === id; }) || null : null; }
-  function place(s, spec, taken, component) {
+  function approachable(target, component) {
+    return CARDINAL.some(function (d) { return !!component.visited[key(neighbor(target, d))]; });
+  }
+  function accessTargets(s, component) {
+    var list = (s.npcs || []).concat(s.devices || [], s.portals || [], s.coffeeMachines || [], s.loreSpots || []);
+    var night = s._nightObjs || {};
+    Object.keys(night).forEach(function (id) { if (night[id] && Number.isInteger(night[id].x) && Number.isInteger(night[id].y)) list.push(night[id]); });
+    return list.filter(function (item) { return approachable(item, component); });
+  }
+  function place(s, spec, taken, component, blockers, protectedTargets) {
     var origin = spec.contact ? contact(spec.contact) || spec : spec;
     var candidates = component.queue.filter(function (p) {
       return !taken[key(p)] && distance(p, player(s)) > 0 && zone(p.x, p.y) === spec.zoneId;
     }).sort(function (a, b) { return distance(a, origin) - distance(b, origin) || a.y - b.y || a.x - b.x; });
     for (var i = 0; i < candidates.length; i++) {
-      var p = candidates[i], after = flood(s.map, player(s), null, key(p));
-      // A prop may consume a floor tile, but must never sever a corridor.
+      var p = candidates[i], after = flood(s.map, player(s), blockers, key(p));
+      // Use precisely the same NPC collision rules as player movement and
+      // wayfinding. Preserving geometry alone can trap a clerk behind a prop.
       if (after.queue.length !== component.queue.length - 1) continue;
+      // A cul-de-sac's final service tile may disappear without splitting the
+      // floor component. Explicitly retain access to every existing target.
+      if (!protectedTargets.every(function (item) { return approachable(item, after); })) continue;
       var approach = CARDINAL.map(function (d) { return neighbor(p, d); }).find(function (n) { return after.visited[key(n)] && !taken[key(n)]; });
       if (!approach) continue;
       var item = Object.assign({}, spec, { x: p.x, y: p.y, approach: approach, roomName: ROOM_NAMES[spec.zoneId], available: true });
       if (spec.id === "printer_queue_blocked" || spec.id === "access_point_poe") item.supportComputer = { kind: "service_laptop", label: "Mike's service laptop", connection: spec.id === "access_point_poe" ? "Managed switch console" : "Approved print administration session" };
       delete item.contact;
       s.map[p.y][p.x] = spec.art; taken[key(p)] = true;
+      protectedTargets.push(item);
       return { item: item, component: after };
     }
     return { item: Object.assign({}, spec, { available: false, roomName: ROOM_NAMES[spec.zoneId], unavailableReason: "No reachable service position in this room." }), component: component };
@@ -115,9 +129,20 @@
     // restores its collision tiles. Reuse only a complete matching checkpoint.
     var newMapInSameRun = lastState === s && lastMap && lastMap !== s.map;
     if (!newMapInSameRun && validStore(s, d)) { lastState = s; lastMap = s.map; routeCache = null; return true; }
-    var component = flood(s.map, player(s)), taken = occupiedProps(s), items = [];
+    // Upgrade an earlier physical-world checkpoint only when every owned prop
+    // still matches; never erase a coincidental tile on a new procedural map.
+    if (!newMapInSameRun && d && d.version < VERSION && d.day === s.day && Array.isArray(d.items) && d.items.filter(function (item) { return item.available; }).every(function (item) { return s.map[item.y] && s.map[item.y][item.x] === item.art; })) {
+      d.items.forEach(function (item) { if (item.available && SPECS.some(function (spec) { return spec.id === item.id && spec.art === item.art; })) s.map[item.y][item.x] = 0; });
+    }
+    var blockers = occupants(s), component = flood(s.map, player(s), blockers), taken = occupiedProps(s), items = [];
     if (!component.queue.length) return false;
-    SPECS.forEach(function (spec) { var placed = place(s, spec, taken, component); items.push(placed.item); component = placed.component; });
+    var protectedTargets = accessTargets(s, component);
+    SPECS.forEach(function (spec) { var placed = place(s, spec, taken, component, blockers, protectedTargets); items.push(placed.item); component = placed.component; });
+    // Later stations may consume an earlier station's preferred service tile.
+    // Store an approach that is valid in the final map, not during placement.
+    items.forEach(function (item) {
+      if (item.available) item.approach = CARDINAL.map(function (d) { return neighbor(item, d); }).find(function (p) { return !!component.visited[key(p)]; });
+    });
     s.meta = s.meta || {};
     s.meta.dayStations = { version: VERSION, day: s.day, width: s.map[0].length, height: s.map.length, items: items, routeTarget: null };
     lastState = s; lastMap = s.map; routeCache = null;

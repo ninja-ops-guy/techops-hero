@@ -199,19 +199,26 @@ try {
       assert.equal(confirmedStandup.board.count, '3 / 3 ASSIGNED');
       assert.deepEqual(confirmedStandup.board.rows.map(row => row.owner), ['Mike', 'Amit', 'Mike']);
       await page.locator('#dlg-options button').filter({ hasText: "Walk to Mike's workstation" }).click();
-      await page.evaluate(() => {
+      const deskFixture = await page.evaluate(() => {
         // Explicit visual fixture: move to the authored desk approach before
         // invoking the real workstation. The route button itself never teleports.
+        const exitedInterior = S.room?.id || null;
+        if (S.room) {
+          if (typeof window.v69ExitRoom !== 'function') throw Error('Physical desk fixture requires the production interior exit');
+          window.v69ExitRoom();
+        }
+        if (S.room) throw Error('Desk fixture cannot place floor coordinates inside a side-view interior');
         TechOpsDayWorld.ensureWorld();
         const desk = TechOpsDayWorld.stations().find(station => station.id === 'mike_desk');
         if (!desk?.available || !desk.approach) throw Error('Mike workstation has no service approach');
         S.px = desk.approach.x; S.py = desk.approach.y;
         if (!TechOpsDayWorld.deskNearby()) throw Error('Workstation fixture is not physically at the desk');
         TechOpsCampaignNativeAct1.openWorkstation();
+        return { station: desk.id, exitedInterior, interiorExit: exitedInterior ? 'v69ExitRoom' : 'already-on-floor' };
       });
       const workstation = await sceneContract(page, name, 'workstation');
       assert.deepEqual(errors, []);
-      report.profiles.push({ name, pass: true, field, standup, confirmedStandup, workstation });
+      report.profiles.push({ name, pass: true, field, standup, confirmedStandup, workstation, deskFixture });
       console.log(JSON.stringify({ profile: name, status: 'passed' }));
     } catch (error) {
       await page.screenshot({ path: `${out}/${name}-failure.png` }).catch(() => {});

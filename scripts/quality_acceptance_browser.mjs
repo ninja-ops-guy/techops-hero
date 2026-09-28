@@ -78,6 +78,12 @@ async function day(page,p){
   await click(page,option(page,/Walk to Mike's workstation/),p.hasTouch);
   assert.deepEqual(await page.evaluate(()=>({px:S.px,py:S.py})),beforeRoute,'Desk route cannot teleport the player');
   const deskFixture=await page.evaluate(()=>{
+    const exitedInterior=S.room?.id||null;
+    if(S.room){
+      if(typeof window.v69ExitRoom!=='function')throw Error('Physical desk fixture requires the production interior exit');
+      window.v69ExitRoom();
+    }
+    if(S.room)throw Error('Desk fixture cannot place floor coordinates inside a side-view interior');
     TechOpsDayWorld.ensureWorld();
     const desk=TechOpsDayWorld.stations().find(station=>station.id==='mike_desk');
     if(!desk?.available||!desk.approach)throw Error('Desk fixture has no physical approach');
@@ -92,7 +98,7 @@ async function day(page,p){
     S.px=desk.approach.x;S.py=desk.approach.y;
     if(!TechOpsDayWorld.deskNearby())throw Error('Fixture is not at the workstation');
     TechOpsCampaignNativeAct1.openWorkstation();
-    return {rejected,unchanged,position:{px:S.px,py:S.py},station:desk.id};
+    return {rejected,unchanged,position:{px:S.px,py:S.py},station:desk.id,exitedInterior,interiorExit:exitedInterior?'v69ExitRoom':'already-on-floor'};
   });
   assert.equal(deskFixture.rejected,true,'Off-desk workstation must reject entry');
   assert.equal(deskFixture.unchanged,true,'Rejected workstation cannot teleport the player');

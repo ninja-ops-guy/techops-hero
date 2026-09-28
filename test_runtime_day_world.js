@@ -79,6 +79,15 @@ global.S.nightMode = true;
 assert.strictEqual(world.ensureWorld(), false); assert.strictEqual(world.at("mike_desk"), false);
 assert.deepStrictEqual(world.nearby(), []); assert.strictEqual(world.nextObjective(), null);
 global.S.nightMode = false;
+global.S.room = { id: "office", x: 180 };
+assert.strictEqual(world.at("mike_desk"), false, "a side-room's stale entry coordinates cannot authorize floor work");
+assert.strictEqual(world.deskNearby(), false);
+assert.deepStrictEqual(world.nearby(), []);
+assert.strictEqual(world.route("mike_desk").status, "unavailable");
+assert.strictEqual(world.currentRoute(), null);
+assert.strictEqual(world.render({}), false, "floor markers must not paint over side-view interiors");
+global.S.room = null;
+assert(world.deskNearby(), "exiting the room restores physical floor proximity");
 
 // A blocked route is explicit; no wall removal, teleport or fabricated arrival.
 s = setup(5); world.ensureWorld();
@@ -115,4 +124,51 @@ campaign.evidence.ghostIdentityEvidence = { sources: [{ id: "badge_impossible_ac
 assert.strictEqual(world.nextObjective().target, "sector04Door");
 campaign.flags.tuesday_morning_reached = true;
 assert.strictEqual(world.nextObjective().target, "mike_desk");
-console.log("PASS: Day physical world, 24 procedural maps, paths, proximity, checkpoint, mode and canon objectives");
+
+// Real native contact placement can put a requester in a one-tile service bay.
+// Reproduce that full map/contact/world stack; geometry-only checks missed it.
+const fullMapSource = gameSource.slice(gameSource.indexOf("const SRV ="), gameSource.indexOf("// ---------- day setup"));
+const nativeSources = ["campaign_act1.js", "campaign_native_act1.js", "runtime_day_world.js"].map(name => fs.readFileSync(require.resolve("./" + name), "utf8"));
+for (let seed = 1; seed <= 60; seed++) {
+  let randomState = seed;
+  function random() { randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0; return randomState / 4294967296; }
+  const math = Object.create(Math); math.random = random;
+  const storage = new Map();
+  const context = vm.createContext({
+    MAPW: 42, MAPH: 32, Math: math, R: (a, b) => a + Math.floor(random() * (b - a + 1)), pick: a => a[Math.floor(random() * a.length)], clamp: (x, a, b) => Math.max(a, Math.min(b, x)),
+    localStorage: { getItem: k => storage.get(k) || null, setItem: (k, v) => storage.set(k, String(v)) }
+  });
+  vm.runInContext(fullMapSource, context);
+  vm.runInContext("S={day:1,map:genMap(),px:21,py:16,npcs:[],meta:{}};", context);
+  nativeSources.forEach(source => vm.runInContext(source, context));
+  const n = context.TechOpsCampaignNativeAct1, w = context.TechOpsDayWorld, game = context.S;
+  n.ensureWorld();
+  const initiallyReachable = ["standup", "shipping", "plating", "access"].filter(id => w.route(id).ok);
+  assert(w.ensureWorld());
+  initiallyReachable.forEach(id => assert(w.route(id).ok, `native seed ${seed}: station placement blocked ${id}`));
+  const placed = w.stations();
+  assert.strictEqual(placed.length, 13);
+  placed.forEach(item => {
+    assert(item.available, `native seed ${seed}: missing ${item.id}`);
+    assert.strictEqual(game.map[item.approach.y][item.approach.x], 0, "stored approach must survive all later placements");
+    assert(!game.npcs.some(npc => npc.x === item.approach.x && npc.y === item.approach.y));
+    const route = w.route(item.id);
+    assert(route.ok, `native seed ${seed}: station-to-station route ${item.id} blocked`);
+    const end = route.path[route.path.length - 1];
+    game.px = end.x; game.py = end.y;
+    assert(w.at(item.id));
+  });
+  initiallyReachable.forEach(id => assert(w.route(id).ok, `native seed ${seed}: requester inaccessible from final station ${id}`));
+}
+
+// Upgrade an existing physical-world checkpoint without leaving orphan props.
+s = setup(9); world.ensureWorld();
+const oldItems = JSON.parse(JSON.stringify(s.meta.dayStations.items));
+s.meta.dayStations.version = 1;
+global.S = JSON.parse(JSON.stringify(s));
+assert(world.ensureWorld());
+assert.strictEqual(global.S.meta.dayStations.version, world.VERSION);
+world.stations().forEach(item => assertPath(world.route(item.id)));
+const currentTiles = new Set(world.stations().filter(item => item.available).map(item => `${item.x},${item.y}`));
+oldItems.filter(item => item.available && !currentTiles.has(`${item.x},${item.y}`)).forEach(item => assert.strictEqual(global.S.map[item.y][item.x], 0));
+console.log("PASS: Day physical world, 24 generated maps + 60 real native-placement maps, routes, service access, migration, proximity, mode and canon objectives");

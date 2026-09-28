@@ -39,7 +39,7 @@ Original corporate-OS notifications add workplace humor. They are secondary to a
 
 ## Runtime boundaries
 
-`runtime_day_world.js` owns physical station metadata and passive BFS wayfinding. It preserves corridor connectivity, exposes unavailable routes, and never teleports or writes campaign facts. It renders within the existing world transform. Canonical contacts no longer wander away from their recorded interaction positions.
+`runtime_day_world.js` owns physical station metadata and passive BFS wayfinding. It preserves corridor connectivity and reachable approaches to every contact and station using the same occupancy rules as routing, exposes unavailable routes, and never teleports or writes campaign facts. Nearby target selection respects the marked destination and offers an explicit choice when people and equipment share an approach. It renders within the existing world transform. Canonical contacts no longer wander away from their recorded interaction positions.
 
 `runtime_day_cases.js` is a pure ordinary-case state machine. Records persist in the existing `S.meta.dayCases` checkpoint. It rejects invalid surfaces, unsupported hypotheses, unauthorized repairs, and premature verification. Repeated accepted actions are idempotent.
 
@@ -51,8 +51,8 @@ Original corporate-OS notifications add workplace humor. They are secondary to a
 
 ## Verification boundary
 
-The added suites exercise all ordinary cases, invalid transitions, stale inputs, off-device access, save failure, checkpoint reuse, 24 procedural map layouts, and audio ownership. Existing narrative, scene, persistence, Night, and Good Dogs suites remain release gates.
+The added suites exercise all ordinary cases, invalid transitions, stale inputs, off-device access, save failure, checkpoint reuse, 24 procedural layouts plus 60 layouts using real native contact placement, and audio ownership. Existing narrative, scene, persistence, Night, and Good Dogs suites remain release gates.
 
-`scripts/day_device_acceptance_browser.mjs` captures desktop, portrait, compact, and landscape device flows. Its position fixtures are explicitly distinguished from an unassisted full campaign playthrough. Browser captures, real SoundCloud playback, physical iPhone testing, performance evidence and human assessment remain separate requirements for an AAA-quality or release-ready claim.
+`scripts/day_device_acceptance_browser.mjs` captures desktop, portrait, compact, and landscape device flows. Its position fixtures are explicitly distinguished from an unassisted full campaign playthrough. The printer-to-workstation route is traversed with actual keyboard input and checked at every tile. Floor and side-view room owners are tested separately: frozen floor entry coordinates cannot authorize a workstation while Mike is inside a room. Browser captures, real SoundCloud playback, physical iPhone testing, performance evidence and human assessment remain separate requirements for an AAA-quality or release-ready claim.
 
 The parser-time structural ceiling increases from 265 to 269 scripts for the four named Day concern modules, with a combined limit of 120 KiB and a 20 KiB stylesheet limit. The existing 40 MiB startup ceiling remains. This is an explicit scope allowance, not a claim of measured startup or frame-time performance; the exact-head performance evidence gate remains required.

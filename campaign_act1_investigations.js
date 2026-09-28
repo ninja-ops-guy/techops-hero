@@ -64,7 +64,7 @@
   function dayExperience(){return root&&root.TechOpsDayExperience||null;}
   function fieldPresentation(ticketId){
     var s=gameState(),key=ticketId==="shipping_cannot_print"?"shipping":"plating",contact=s&&s.meta&&s.meta.campaignAct1Native&&s.meta.campaignAct1Native[key],experience=dayExperience();
-    return s&&!s.nightMode&&adjacent({x:s.px,y:s.py},contact)?experience.talk(ticketId):experience.routeTo(key);
+    return s&&!s.nightMode&&!s.room&&adjacent({x:s.px,y:s.py},contact)?experience.talk(ticketId):experience.routeTo(key);
   }
   function storage(){try{return root&&root.localStorage||null;}catch(_){return null;}}
   function gameState(){try{return root&&root.S||null;}catch(_){return null;}}
@@ -268,7 +268,7 @@
   function existing(ticketId){var n=nativeAct1();if(n&&typeof n.openTicketFollowUp==="function")return n.openTicketFollowUp(ticketId);return false;}
 
   function targetTicket(){
-    var s=gameState(),n=s&&s.meta&&s.meta.campaignAct1Native;if(!s||s.inDialog||s.inBattle||s.nightMode||!n)return null;var p={x:s.px,y:s.py};
+    var s=gameState(),n=s&&s.meta&&s.meta.campaignAct1Native;if(!s||s.inDialog||s.inBattle||s.nightMode||s.room||!n)return null;var p={x:s.px,y:s.py};
     if(n.shipping&&adjacent(p,n.shipping))return "shipping_cannot_print";
     if(n.plating&&adjacent(p,n.plating))return "plating_workstation_down";
     return null;
@@ -277,7 +277,7 @@
     if(!root||root.__techopsCampaignInvestigationInstalled)return false;
     if(typeof root.interact!=="function"||!campaign()||!nativeAct1())return false;
     var base=root.interact;root.interact=function(){
-      var s=gameState();if(s&&!s.inDialog&&!s.inBattle&&!s.nightMode&&dayExperience()&&dayExperience().interact())return true;
+      var s=gameState();if(s&&s.room&&!s.nightMode)return base.apply(this,arguments);if(s&&!s.inDialog&&!s.inBattle&&!s.nightMode&&dayExperience()&&dayExperience().interact())return true;
       try{var ticketId=targetTicket();if(ticketId){var state=load();if(state.flags&&state.flags.day_work_unlocked&&!state.tickets[ticketId])return openInvestigation(ticketId);}}
       catch(e){root.__techopsCampaignInvestigationError=String(e&&e.stack||e);if(ticketId)return dialog("INVESTIGATION UNAVAILABLE","The field record could not be read. No ticket was closed and no replacement save was created.",[{t:"Back",f:close}]);}
       return base.apply(this,arguments);

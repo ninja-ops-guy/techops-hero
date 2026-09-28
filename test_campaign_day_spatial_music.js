@@ -32,6 +32,26 @@ async function test(name, fn) { await fn(); count++; console.log('PASS ' + name)
     assert.equal(b.store.getItem(b.C.SAVE_KEY), before);
   });
 
+  await test('side-view room cannot borrow its frozen floor entry position for desk or evidence access', () => {
+    const x = setup(), { b, r } = x; x.setNear(true);
+    r.S.room = { id: 'itdept', x: .15, back: { px: r.S.px, py: r.S.py } };
+    r.TechOpsDayWorld = { at() { return true; } };
+    const before = b.store.getItem(b.C.SAVE_KEY);
+    assert.equal(b.N.openWorkstation(), false); assert.equal(x.route, 'mike_desk');
+    b.N.recordAccessEvidence();
+    assert.equal(b.store.getItem(b.C.SAVE_KEY), before);
+    assert.equal(b.I.targetTicket(), null);
+  });
+
+  await test('side-view E reaches the interior owner instead of invisible floor devices or contacts', () => {
+    const x = setup(), { b, r } = x;
+    const p = r.S.meta.campaignAct1Native.shipping; r.S.px = p.x; r.S.py = p.y;
+    r.S.room = { id: 'itdept', x: .15, back: { px: p.x, py: p.y } };
+    r.TechOpsDayExperience.interact = () => { throw new Error('Floor input must not run inside a room'); };
+    b.N.install(); b.I.install(); r.interact();
+    assert.equal(r.baseInteractions, 1); assert.equal(r.S.inDialog, false);
+  });
+
   await test('confirmed PLAY commits once without replaying the legacy soundtrack wrapper', async () => {
     const x = setup(), { b, r } = x; x.setNear(true);
     let resolve, replay = 0;
@@ -76,7 +96,7 @@ async function test(name, fn) { await fn(); count++; console.log('PASS ' + name)
     assert.deepEqual(choices, []); assert.equal(stored(b).flags.red_in_mirror_heard, false);
   });
 
-  for (const stale of ['closed', 'moved', 'new-run', 'new-view', 'night']) {
+  for (const stale of ['closed', 'moved', 'new-run', 'new-view', 'night', 'side-view']) {
     await test('late PLAY after ' + stale + ' cannot advance the opening', async () => {
       const x = setup(), { b, r } = x; x.setNear(true); let resolve;
       r.TechOpsDayAudio = { playMorningTrack: () => new Promise(done => { resolve = done; }) };
@@ -86,6 +106,7 @@ async function test(name, fn) { await fn(); count++; console.log('PASS ' + name)
       if (stale === 'new-run') r.S = Object.assign({}, r.S);
       if (stale === 'new-view') b.N.openWorkstationTab('TEAMS');
       if (stale === 'night') r.S.nightMode = {};
+      if (stale === 'side-view') r.S.room = { id: 'itdept', x: .15 };
       resolve({ status: 'playing' }); await pending;
       assert.equal(stored(b).flags.red_in_mirror_heard, false);
     });

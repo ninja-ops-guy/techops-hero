@@ -13,7 +13,7 @@ function documentMock(){
     const classes=new Set(),n={id,isConnected:true,hidden:false,dataset:{},attributes:{},children:[],classList:{add(...xs){xs.forEach(x=>classes.add(x));},remove(...xs){xs.forEach(x=>classes.delete(x));},contains(x){return classes.has(x);}},setAttribute(k,v){this.attributes[k]=v;},removeAttribute(k){delete this.attributes[k];},appendChild(child){this.children.push(child);nodes.set(child.id,child);},focus(){doc.activeElement=this;}};
     Object.defineProperty(n,'innerHTML',{get(){return this.html||'';},set(html){this.html=html;this.children.forEach(x=>x.isConnected=false);this.children=[];for(const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)){const b=node('');for(const attr of match[1].matchAll(/([\w-]+)(?:="([^"]*)")?/g)){if(attr[1].startsWith('data-'))b.dataset[attr[1].slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=attr[2]||'';}b.label=match[2];this.children.push(b);}}});
     n.querySelectorAll=function(selector){if(selector.includes('data-day-action'))return this.children.filter(x=>x.dataset.dayAction);return this.children;};
-    n.querySelector=function(selector){if(this.id==='dialogue')return nodes.get('dlg-text').children[0]||node('fallback');if(selector==='button')return this.children[0];if(selector.includes('data-day-route'))return this.children.find(x=>'dayRoute'in x.dataset);if(selector.includes('data-day-jobs'))return this.children.find(x=>'dayJobs'in x.dataset);return this.children[0];};
+    n.querySelector=function(selector){if(this.id==='dialogue')return nodes.get('dlg-text').children[0]||node('fallback');if(selector==='button')return this.children[0];if(selector.includes('data-day-route'))return this.children.find(x=>'dayRoute'in x.dataset);if(selector.includes('data-day-jobs'))return this.children.find(x=>'dayJobs'in x.dataset);if(selector.includes('data-day-interact'))return this.children.find(x=>'dayInteract'in x.dataset);return this.children[0];};
     return n;
   }
   doc.body=node('body');['dialogue','dlg-text','dlg-name','title-screen'].forEach(id=>nodes.set(id,node(id)));nodes.get('title-screen').classList.add('hidden');
@@ -67,7 +67,7 @@ test('all eight optional cases complete through the rendered action flow without
     b.open(id);const def=b.cases.definition(id);assert.equal(b.X.transact('repair'),false);
     for(const e of def.evidence){b.surface(e.surface);assert.equal(b.X.transact('observe',e.id),true);}
     assert.equal(b.X.transact('hypothesis',def.correctHypothesis),true);assert.equal(b.X.transact('repair'),false);
-    b.click('authorize');b.click('repair');b.click('technical');assert.equal(b.ctx.S.meta.dayCases[id].requesterVerified,false);b.click('requester');
+    b.click('authorize');b.surface(def.repairSurface);b.click('repair');b.surface('screen');b.click('technical');assert.equal(b.ctx.S.meta.dayCases[id].requesterVerified,false);b.click('requester');
     assert.equal(b.cases.summary(b.ctx.S.meta.dayCases[id]).status,'VERIFIED / RESTORED');const saved=JSON.stringify(b.ctx.S.meta.dayCases[id]);assert.equal(b.X.transact('requester'),false);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases[id]),saved);
   }
   assert.equal(b.storage.writes,writes);assert.equal(b.storage.getItem(b.C.SAVE_KEY||'techops_hero_campaign_v1'),canon);assert.equal(Object.keys(b.C.load(b.storage).tickets).length,0);
@@ -99,5 +99,46 @@ test('canonical requester verification checks physical presence again and closes
   const b=boot();let state=b.C.load(b.storage);b.I.recordEvidence(state,SHIPPING,'printer_self_test');b.I.recordEvidence(state,SHIPPING,'queue_trace');b.I.chooseHypothesis(state,SHIPPING,'permissions');b.I.applyFix(state,SHIPPING);b.I.runTechnicalCheck(state,SHIPPING);b.C.save(state,b.storage);
   assert.equal(b.X.talk(SHIPPING),false);const p=b.ctx.S.meta.campaignAct1Native.shipping;b.ctx.S.px=p.x;b.ctx.S.py=p.y+1;assert.equal(b.X.talk(SHIPPING),true);const stale=b.ctx.dialog.options[0].f;b.ctx.S.px=1;b.ctx.S.py=20;stale();assert.equal(b.C.load(b.storage).tickets[SHIPPING],undefined);
   b.ctx.S.px=p.x;b.ctx.S.py=p.y+1;b.X.talk(SHIPPING);let resolutions=0;const resolve=b.C.resolveTicket;b.C.resolveTicket=function(){resolutions++;return resolve.apply(this,arguments);};b.ctx.dialog.options[0].f();assert.equal(resolutions,1);assert.equal(b.C.load(b.storage).tickets[SHIPPING].verification,'strong');assert.equal(b.ctx.S.meta.dayCases,undefined);
+});
+function ambiguousSpot(b){
+  // The world separately proves reachability; this boundary fixture supplies
+  // the two valid nearby capabilities that originally exposed the tie bug.
+  const candidates=b.W.stations().filter(s=>s.id==='shipping_printer'||s.id==='shipping_workstation');
+  b.W.nearby=()=>candidates;b.W.at=id=>candidates.some(s=>s.id===id);return candidates;
+}
+test('an explicit adjacent device route overrides alphabetical station priority and matches HUD',()=>{
+  const b=boot(),near=ambiguousSpot(b),target=near.find((s,i)=>i>0&&(s.caseId||s.ticketId===SHIPPING));assert(target);b.ctx.S.meta.dayRouteTarget=target.id;b.X.syncHud();assert.match(b.ctx.document.getElementById('day-route-hud').innerHTML,new RegExp('Inspect '+target.label));assert.equal(b.X.interact(),true);assert.equal(b.X.active().stationId,target.id);
+});
+test('ambiguous nearby people and devices offer explicit Talk and Inspect choices',()=>{
+  const b=boot();b.move('laptop_dock_link');b.ctx.S.meta.campaignAct1Native.shipping={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget=null;b.X.syncHud();assert.match(b.ctx.document.getElementById('day-route-hud').innerHTML,/Choose nearby interaction/);assert.equal(b.X.interact(),true);assert.match(b.ctx.dialog.name,/CHOOSE/);const talk=b.ctx.dialog.options.find(o=>o.t==='Talk to Shipping clerk');assert(talk);assert(b.ctx.dialog.options.some(o=>/^Inspect /.test(o.t)));talk.f();assert.equal(b.ctx.dialog.name,'SHIPPING CLERK');
+});
+test('explicit requester route reaches verification even beside a device',()=>{
+  const b=boot(),state=b.C.load(b.storage);b.I.recordEvidence(state,SHIPPING,'printer_self_test');b.I.recordEvidence(state,SHIPPING,'queue_trace');b.I.chooseHypothesis(state,SHIPPING,'permissions');b.I.applyFix(state,SHIPPING);b.I.runTechnicalCheck(state,SHIPPING);b.C.save(state,b.storage);
+  b.move('laptop_dock_link');b.ctx.S.meta.campaignAct1Native.shipping={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget='shipping';b.X.syncHud();assert.match(b.ctx.document.getElementById('day-route-hud').innerHTML,/Talk to Shipping clerk/);b.X.interact();assert.equal(b.ctx.dialog.name,'SHIPPING CLERK');assert.match(b.ctx.dialog.options[0].t,/Witness/);assert.equal(b.X.active(),null);
+});
+test('side view cannot use frozen floor coordinates and preserves a route without teleporting',()=>{
+  const b=boot();b.move('mike_desk');b.X.syncHud();assert(b.ctx.document.body.classList.contains('day-route-visible'));const before={x:b.ctx.S.px,y:b.ctx.S.py};b.ctx.S.room={x:100,kind:'office'};b.X.syncHud();assert(!b.ctx.document.body.classList.contains('day-route-visible'));assert(b.ctx.document.getElementById('day-route-hud').hidden);assert.equal(b.X.desktopNearby(),false);assert.equal(b.X.openDevice('mike_desk'),false);assert.equal(b.X.interact(),false);b.X.routeTo('shipping_workstation');assert.equal(b.ctx.S.meta.dayRouteTarget,'shipping_workstation');assert.equal(b.ctx.S.room.x,100);assert.deepEqual({x:b.ctx.S.px,y:b.ctx.S.py},before);assert.match(b.ctx.lastToast,/room exit/);
+});
+test('an inherited workaround can be verified as limited service without false restoration',()=>{
+  const b=boot(),state=b.C.load(b.storage);b.I.recordEvidence(state,SHIPPING,'printer_self_test');b.I.recordEvidence(state,SHIPPING,'queue_trace');b.I.chooseHypothesis(state,SHIPPING,'permissions');b.I.applyWorkaround(state,SHIPPING);b.C.save(state,b.storage);b.open('shipping_workstation');assert(b.button('requester-route'));assert(!b.ctx.document.getElementById('dlg-text').children.some(x=>x.dataset.dayAction==='repair'));b.X.exit();const p=b.ctx.S.meta.campaignAct1Native.shipping;b.ctx.S.px=p.x;b.ctx.S.py=p.y+1;b.X.talk(SHIPPING);assert.equal(b.ctx.dialog.options[0].t,'Requester confirms limited service');b.ctx.dialog.options[0].f();const closed=b.C.load(b.storage).tickets[SHIPPING];assert.equal(closed.verification,'partial');assert.equal(closed.humanOutcome,'degraded');
+});
+test('Day 2 field workstation reopens its follow-up while unfinished carryover retains original investigation',()=>{
+  const b=boot(),state=b.C.load(b.storage);b.C.resolveTicket(state,SHIPPING,{technicalResolution:true,verification:'partial',humanOutcome:'degraded'});b.C.recordGhostEvidence(state,{id:'badge_impossible_access',perspective:'delegated_partial',discoveredBy:'security'});b.C.enterSector04(state);b.C.insightAccessGuard(state);b.C.severAccessController(state);b.C.transitionToTuesday(state);b.C.save(state,b.storage);b.ctx.S.day=2;b.W.ensureWorld();b.ctx.TechOpsCampaignNativeAct1.openWorkdayFollowup=function(id){b.ctx.followupOpened=id;return true;};b.open('shipping_workstation');assert.equal(b.ctx.followupOpened,SHIPPING);assert.equal(b.X.active(),null);b.open('plating_workstation');assert.equal(b.X.active().stationId,'plating_workstation');
+});
+test('progress list closes before evidence and action layout begins',()=>{
+  const b=boot();b.open('laptop_dock_link');const html=b.ctx.document.getElementById('dlg-text').innerHTML;assert.match(html,/<ol class="day-progress">(?:<li[^>]*>[^<]+<\/li>){4}<\/ol><h3>Evidence/);
+});
+test('repairs require their physical or software surface and all technical checks require a screen',()=>{
+  const b=boot();
+  for(const id of b.cases.ids()){
+    b.open(id);const def=b.cases.definition(id);for(const e of def.evidence){b.surface(e.surface);b.X.transact('observe',e.id);}b.X.transact('hypothesis',def.correctHypothesis);b.X.transact('authorize');b.surface(def.repairSurface==='screen'?'physical':'screen');assert.equal(b.X.transact('repair'),false);assert.equal(b.ctx.S.meta.dayCases[id].fixApplied,false);assert(b.button(def.repairSurface));b.surface(def.repairSurface);assert.equal(b.X.transact('repair'),true);b.surface('physical');assert.equal(b.X.transact('technical'),false);assert(b.button('screen'));b.surface('screen');assert.equal(b.X.transact('technical'),true);
+  }
+  let state=b.C.load(b.storage);b.I.recordEvidence(state,SHIPPING,'printer_self_test');b.I.recordEvidence(state,SHIPPING,'queue_trace');b.I.chooseHypothesis(state,SHIPPING,'permissions');b.C.save(state,b.storage);b.open('shipping_workstation');assert.equal(b.X.transact('repair'),false);b.surface('screen');assert.equal(b.X.transact('repair'),true);b.surface('physical');assert.equal(b.X.transact('technical'),false);b.surface('screen');assert.equal(b.X.transact('technical'),true);
+});
+test('HUD describes the tracked destination instead of contradicting its route button',()=>{
+  const b=boot();b.ctx.S.meta.dayRouteTarget='laptop_dock_link';b.X.syncHud();const hud=b.ctx.document.getElementById('day-route-hud');assert.match(hud.innerHTML,/Destination · Engineering laptop dock/);assert.doesNotMatch(hud.innerHTML,/Inspect the Shipping printer/);b.ctx.S.meta.dayRouteTarget='shipping';b.X.syncHud();assert.match(hud.innerHTML,/Destination · Shipping clerk/);
+});
+test('talking to Security does not read the nearby computer or grant badge evidence',()=>{
+  const b=boot();b.move('security_workstation');b.ctx.S.meta.campaignAct1Native.access={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget='access';let reads=0;b.ctx.TechOpsCampaignNativeAct1.recordAccessEvidence=function(){reads++;return true;};const before=b.storage.writes;b.X.interact();assert.equal(b.ctx.dialog.name,'SECURITY OPS');assert.equal(reads,0);assert.equal(b.storage.writes,before);assert.equal(b.ctx.dialog.options[0].t,'Walk to Security workstation');b.X.exit();b.X.openDevice('security_workstation');assert.equal(reads,1);
 });
 console.log('Day experience integration: '+count+' tests passed');

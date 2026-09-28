@@ -62,10 +62,10 @@
   function saveState(state) { act1().save(state, storage()); return state; }
   function gameState() { return root && root.S ? root.S : null; }
   function dayExperience() { return root && root.TechOpsDayExperience || null; }
-  function requireDesk() { var experience = dayExperience(); return !experience || experience.requireDesk(); }
+  function requireDesk() { var experience = dayExperience(),gs=gameState();if(gs&&gs.room){if(experience)experience.routeTo("mike_desk");return false;}return !experience || experience.requireDesk(); }
   function routeToDesk() { var experience = dayExperience(); return experience ? experience.routeTo("mike_desk") : openWorkstation(); }
   function deskRouteLabel() { return dayExperience() ? "Walk to Mike's workstation" : "Open workstation"; }
-  function atContact(key) { var gs = gameState(), contact = gs && gs.meta && gs.meta.campaignAct1Native && gs.meta.campaignAct1Native[key]; return !!(gs && !gs.nightMode && isAdjacent({x:gs.px,y:gs.py},contact)); }
+  function atContact(key) { var gs = gameState(), contact = gs && gs.meta && gs.meta.campaignAct1Native && gs.meta.campaignAct1Native[key]; return !!(gs && !gs.nightMode && !gs.room && isAdjacent({x:gs.px,y:gs.py},contact)); }
   function fieldTalk(ticketId) {
     var experience = dayExperience(); if (!experience) return false;
     var key = ticketId === "shipping_cannot_print" ? "shipping" : "plating";
@@ -342,7 +342,7 @@
     var key = ticketId === "shipping_cannot_print" ? "shipping" : "plating";
     var needsRequester = action === "verify_requester" || action === "observe" && value === "requester";
     var station = key === "shipping" ? "shipping_workstation" : "plating_workstation";
-    if(needsRequester ? atContact(key) : root.TechOpsDayWorld && root.TechOpsDayWorld.at(station)) return true;
+    if(!(gameState()&&gameState().room)&&(needsRequester ? atContact(key) : root.TechOpsDayWorld && root.TechOpsDayWorld.at(station))) return true;
     experience.routeTo(needsRequester ? key : station);return false;
   }
   function commitWorkdayAction(ticketId, action, value) {
@@ -474,7 +474,7 @@
     var serial=musicViewSerial,game=gameState(),map=game&&game.map,day=game&&game.day,epoch=game&&game._modeEpoch;
     function current(){
       var currentGame=gameState(),experience=dayExperience(),name=root.document&&root.document.getElementById("dlg-name");
-      return serial===musicViewSerial&&currentGame===game&&(!game||game.map===map&&game.day===day&&game._modeEpoch===epoch&&!game.nightMode&&game.inDialog)&&(!experience||experience.desktopNearby())&&(!name||name.textContent==="WORKSTATION // MUSIC");
+      return serial===musicViewSerial&&currentGame===game&&(!game||game.map===map&&game.day===day&&game._modeEpoch===epoch&&!game.nightMode&&!game.room&&game.inDialog)&&(!experience||experience.desktopNearby())&&(!name||name.textContent==="WORKSTATION // MUSIC");
     }
     var pending;try{pending=audio.playMorningTrack({userGesture:true,enableAudio:true});}catch(_){return musicFailure("unavailable");}
     return Promise.resolve(pending).then(function(result){
@@ -574,7 +574,7 @@
   }
 
   function recordAccessEvidence() {
-    if(dayExperience()&&!(root.TechOpsDayWorld&&root.TechOpsDayWorld.at("security_workstation"))){
+    if(dayExperience()&&(gameState()&&gameState().room||!(root.TechOpsDayWorld&&root.TechOpsDayWorld.at("security_workstation")))){
       return callDialog("SECURITY OPS","Security has a badge record that needs review against physical presence. The access log is on the Security workstation; review it there before documenting a conclusion.",[{t:"Walk to Security workstation",f:function(){dayExperience().routeTo("security_workstation");}},{t:"Back to floor",f:closeDialog}]);
     }
     setAssetContext("access");
@@ -706,6 +706,9 @@
       var originalInteract = root.interact;
       root.interact = function () {
         var state = gameState(), native = state && state.meta && state.meta.campaignAct1Native;
+        // Side-view interiors own their own position and visible interactables.
+        // S.px/py are only their frozen floor entry tile, never device proximity.
+        if(state&&state.room&&!state.nightMode)return originalInteract.apply(this,arguments);
         if(state&&!state.inDialog&&!state.inBattle&&!state.nightMode&&dayExperience()&&dayExperience().interact())return true;
         if (state && !state.inDialog && !state.inBattle && !state.nightMode && native) {
           var p = { x: state.px, y: state.py };

@@ -19,7 +19,7 @@ const profiles = [
 ].filter(p => !process.env.DAY_DEVICE_PROFILES || process.env.DAY_DEVICE_PROFILES.split(',').includes(p.id));
 const report = {
   status: 'running', fixture: true, browser: 'chromium',
-  scope: 'Fixture-assisted Day device UI: real New Day, Standard, Clock in and morning choices; coordinate placement at authored approach tiles and direct scene entry. Actual incident buttons drive evidence and case progression. Not an unassisted walk, physical-phone certification, or soundtrack playback certification. External requests are blocked; music uses the explicit muted continuation.',
+  scope: 'Fixture-assisted Day device UI: real New Day, Standard, Clock in and morning choices; declared scene-exit and coordinate fixtures at authored approach tiles. Printer-to-workstation routing is traversed with actual keyboard input; other scene entries remain fixture-assisted. Actual incident buttons drive evidence and case progression. Not a complete unassisted walk, physical-phone certification, or soundtrack playback certification. External requests are blocked; music uses the explicit muted continuation.',
   profiles: []
 };
 let browser, activePage, server;
@@ -48,15 +48,61 @@ async function fixtureAtStation(page, id, open = true) {
     // This is the declared fixture boundary. It does not manufacture evidence,
     // diagnosis, repair, verification, ticket completion, or progression flags.
     if (S.inDialog) closeDlg();
+    const previousRoom = S.room?.id || null;
+    if (S.room) {
+      if (typeof window.v69ExitRoom !== 'function') throw Error('No production side-room exit is available');
+      v69ExitRoom();
+    }
     if (!TechOpsDayWorld.ensureWorld()) throw Error('Station world is unavailable');
     const station = TechOpsDayWorld.stations().find(s => s.id === id);
     if (!station?.available || !station.approach) throw Error('No reachable authored approach: ' + id);
     if (S.map[station.approach.y]?.[station.approach.x] !== 0) throw Error('Station approach is not a walkable tile: ' + id);
     S.px = station.approach.x; S.py = station.approach.y;
+    if (S.room) throw Error('Floor fixture is still rendered inside a side room');
     if (!TechOpsDayWorld.at(id)) throw Error('Fixture did not reach the physical station: ' + id);
     if (open && !TechOpsDayExperience.openDevice(id)) throw Error('Physical station refused to open: ' + id);
-    return { station: id, px: S.px, py: S.py, approach: station.approach };
+    return { station: id, px: S.px, py: S.py, approach: station.approach, previousRoom, exitEntryPoint: previousRoom ? 'v69ExitRoom fixture before coordinate placement' : null };
   }, { id, open });
+}
+async function walkMarkedRoute(page, stationId) {
+  const evidence = { input: 'actual-keyboard', stationId, steps: [], transientOccupancy: [] };
+  for (let i = 0; i < 160; i++) {
+    const next = await page.evaluate(id => {
+      const before = { px: S.px, py: S.py };
+      if (S.room || S.nightMode || S.inDialog || S.inBattle) throw Error('Floor route lost its input owner: ' + JSON.stringify({ room: S.room?.id, night: !!S.nightMode, dialog: S.inDialog, battle: S.inBattle }));
+      if (TechOpsDayWorld.at(id)) return { done: true, before };
+      const route = TechOpsDayWorld.currentRoute();
+      if (!route?.ok || route.target?.id !== id || !route.path?.[1]) throw Error('No marked route step toward ' + id);
+      const to = route.path[1], dx = to.x - S.px, dy = to.y - S.py;
+      if (Math.abs(dx) + Math.abs(dy) !== 1 || S.map[to.y]?.[to.x] !== 0 || S.npcs.some(n => n.x === to.x && n.y === to.y)) throw Error('Route step is not a clear adjacent floor tile');
+      return { before, to, key: dx === 1 ? 'ArrowRight' : dx === -1 ? 'ArrowLeft' : dy === 1 ? 'ArrowDown' : 'ArrowUp' };
+    }, stationId);
+    if (next.done) { evidence.arrived = next.before; evidence.alreadyAdjacent = evidence.steps.length === 0; return evidence; }
+    await page.keyboard.down(next.key);
+    let movementError;
+    try { await page.waitForFunction(({ x, y }) => S.px === x && S.py === y, next.to, { timeout: 1800 }); }
+    catch (error) { movementError = error; }
+    finally { await page.keyboard.up(next.key); }
+    const observed = await page.evaluate(({ to, key }) => ({
+      position: { px: S.px, py: S.py }, room: S.room?.id || null,
+      inDialog: S.inDialog, inBattle: S.inBattle, night: !!S.nightMode,
+      targetOccupied: S.npcs.some(n => n.x === to.x && n.y === to.y),
+      keyReleased: typeof keys === 'undefined' || !keys[key.toLowerCase()]
+    }), next);
+    if (movementError) {
+      // Only an actually observed wandering NPC allows replanning. A wrong
+      // scene/input owner or failed movement remains a failure, never a teleport.
+      if (observed.targetOccupied && !observed.room && !observed.inDialog && !observed.inBattle && !observed.night && observed.position.px === next.before.px && observed.position.py === next.before.py) {
+        evidence.transientOccupancy.push({ ...next, observed }); continue;
+      }
+      throw Error('Keyboard route did not reach its next tile: ' + JSON.stringify({ ...next, observed }), { cause: movementError });
+    }
+    assert.equal(observed.room, null, 'walked Shipping route remains in the displayed floor scene');
+    assert.equal(observed.keyReleased, true, 'route step releases its movement key');
+    assert.deepEqual(observed.position, { px: next.to.x, py: next.to.y }, 'actual keyboard movement reached the routed tile');
+    evidence.steps.push({ from: next.before, to: observed.position, key: next.key, collisionChecked: true });
+  }
+  throw Error('Marked keyboard route exceeded its bounded 160-step budget');
 }
 async function screenshot(page, id, scene) {
   await page.locator('#dlg-text, .day-workspace, .day-evidence').evaluateAll(nodes => nodes.forEach(el => { el.scrollTop = 0; }));
@@ -66,12 +112,26 @@ async function assertConsole(page, label) {
   await page.locator('#dialogue.day-device-mode').waitFor({ state: 'visible' });
   const layout = await page.evaluate(() => {
     const dialog = document.querySelector('#dialogue.day-device-mode'), rect = dialog.getBoundingClientRect();
+    const progress = dialog.querySelector('.day-progress');
     return { rect: rect.toJSON(), width: innerWidth, height: innerHeight,
       bodyScrollWidth: document.body.scrollWidth,
       regions: [...dialog.querySelectorAll('.day-console,.day-workspace,.day-main,.day-evidence')].map(el => ({ name: el.className, client: el.clientWidth, scroll: el.scrollWidth })),
       animation: getComputedStyle(dialog).animationName,
+      sideRoom: S.room?.id || null,
+      progress: progress ? { children: [...progress.children].map(el => el.tagName),
+        labels: [...progress.children].map(el => el.textContent),
+        nestedCaseContent: progress.querySelectorAll('.day-evidence-item,.day-actions,h3').length,
+        actionsOutside: [...dialog.querySelectorAll('.day-actions')].every(el => !progress.contains(el)),
+        evidenceOutside: [...dialog.querySelectorAll('.day-evidence-item')].every(el => !progress.contains(el)) } : null,
       diagram: !!dialog.querySelector('svg[role="img"][aria-label]') };
   });
+  assert.equal(layout.sideRoom, null, `${label}: physical console belongs to the displayed floor, not hidden side-room coordinates`);
+  assert.ok(layout.progress, `${label}: case progression list exists`);
+  assert.deepEqual(layout.progress.children, ['LI', 'LI', 'LI', 'LI'], `${label}: progression contains only four direct list items`);
+  assert.deepEqual(layout.progress.labels, ['Observe', 'Diagnose', 'Repair', 'Verify']);
+  assert.equal(layout.progress.nestedCaseContent, 0, `${label}: evidence and actions cannot be swallowed by the progress row`);
+  assert.equal(layout.progress.actionsOutside, true);
+  assert.equal(layout.progress.evidenceOutside, true);
   assert.ok(layout.rect.left >= -1 && layout.rect.top >= -1 && layout.rect.right <= layout.width + 1 && layout.rect.bottom <= layout.height + 1, `${label}: console stays within viewport`);
   assert.ok(layout.bodyScrollWidth <= layout.width + 1, `${label}: no document horizontal overflow`);
   for (const region of layout.regions) assert.ok(region.scroll <= region.client + 1, `${label}: ${region.name} must not require horizontal scrolling (${region.scroll}/${region.client})`);
@@ -100,6 +160,7 @@ async function morningOpening(page, result) {
   await page.waitForFunction(() => window.S?.map && window.TechOpsDayWorld && window.TechOpsDayExperience && window.TechOpsCampaignNativeAct1 && window.TechOpsDayCases);
   await page.evaluate(() => {
     if (S.inDialog) closeDlg();
+    if (S.room) v69ExitRoom();
     TechOpsCampaignNativeAct1.ensureWorld(); TechOpsDayWorld.ensureWorld();
     const contact = TechOpsDayWorld.contact('standup');
     const approach = [[0, 1], [-1, 0], [1, 0], [0, -1]].map(([x, y]) => ({ x: contact.x + x, y: contact.y + y }))
@@ -128,6 +189,14 @@ async function morningOpening(page, result) {
   assert.equal(result.opening.listening.status, 'user_skipped', 'blocked external soundtrack is never certified as heard');
   assert.equal(result.opening.listening.userSkipped, true);
   assert.equal(!!result.opening.tickets.shipping_cannot_print, false);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  result.floorScene = await page.evaluate(() => ({ room: S.room?.id || null, position: { px: S.px, py: S.py } }));
+  if (result.floorScene.room) {
+    await page.keyboard.press('q');
+    await page.waitForFunction(() => !S.room);
+    result.floorScene.exitInput = 'Q';
+  }
+  assert.equal(await page.evaluate(() => !!S.room), false, 'floor screenshot cannot show a side-room overlay');
   await screenshot(page, result.id, 'floor');
 }
 
@@ -153,6 +222,7 @@ try {
       result.checks.push('Real title and morning controls unlock Day; muted continuation is recorded explicitly');
       result.offDevice = await page.evaluate(() => {
         closeDlg();
+        if (S.room) v69ExitRoom();
         const stations = TechOpsDayWorld.stations(); let found;
         for (let y = 0; y < S.map.length && !found; y++) for (let x = 0; x < S.map[y].length; x++) {
           if (S.map[y][x] === 0 && stations.every(s => Math.abs(x - s.x) + Math.abs(y - s.y) > 2) && !S.npcs.some(n => n.x === x && n.y === y)) { found = { x, y }; break; }
@@ -186,7 +256,11 @@ try {
       assert.equal(await page.evaluate(() => S.inDialog), false);
       result.checks.push('Printer hotspot records physical evidence and the workstation route preserves position');
 
-      result.workstationFixture = await fixtureAtStation(page, 'shipping_workstation');
+      result.workstationWalk = await walkMarkedRoute(page, 'shipping_workstation');
+      const walkedArrival = await position(page);
+      assert.equal(await page.evaluate(() => TechOpsDayExperience.openDevice('shipping_workstation')), true, 'open the workstation from the walked arrival tile');
+      assert.deepEqual(await position(page), walkedArrival, 'opening the workstation cannot teleport after actual walking');
+      result.checks.push(result.workstationWalk.alreadyAdjacent ? 'Printer exit was already adjacent to the workstation; no walking or teleportation claimed' : 'Marked printer-to-workstation route traversed with actual keyboard movement and collision checks');
       await click(page, '02 · Use local screen');
       result.desktopLayout = await assertConsole(page, `${profile.id} desktop`);
       assert.equal(await page.locator('.day-desktop').count(), 1);
