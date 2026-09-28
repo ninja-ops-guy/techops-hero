@@ -188,10 +188,11 @@
     if (pendingTrack) pendingTrack.cancel();
     if (master('volMusic') <= 0) return result('muted');
     // Enabling audio is a separate, explicit music-control choice.
+    root.__techopsSelectingMorningTrack = true;
     if (options.enableAudio === true && typeof root.setMusic === 'function') root.setMusic(true);
-    if (globallyMuted() || master('volMusic') <= 0) return result('muted');
+    if (globallyMuted() || master('volMusic') <= 0) { root.__techopsSelectingMorningTrack=false; return result('muted'); }
     const requested = typeof musicRequested !== 'undefined' ? musicRequested : root.musicRequested;
-    if (requested === false && options.enableAudio !== true) return result('muted');
+    if (requested === false && options.enableAudio !== true) { root.__techopsSelectingMorningTrack=false; return result('muted'); }
     if (typeof root.initMusic === 'function') root.initMusic(true);
     return new Promise(resolve => {
       let finished = false, playingWidget = null, started = false, selected = null, binding = null, hooks = null;
@@ -200,6 +201,8 @@
       function finish(status, extra) {
         if (finished) return;
         finished = true; root.clearTimeout(timeout);
+        root.__techopsSelectingMorningTrack=false;
+        if(status!=='playing'&&playingWidget){try{playingWidget.pause();}catch(_){}}
         if (apiScript && apiScript.removeEventListener) apiScript.removeEventListener('load', connect);
         // SoundCloud unbind removes all callbacks for an event. One shared
         // dispatcher per widget avoids both listener growth and owner removal.
@@ -219,6 +222,7 @@
             if (hidden() || !dayActive() || globallyMuted() || master('volMusic') <= 0) return finish('muted');
             const requestedNow = typeof musicRequested !== 'undefined' ? musicRequested : root.musicRequested;
             if (requestedNow === false) return finish('cancelled');
+            playingWidget.setVolume(master('volMusic') * 100 * factor());
             syncDucks();
             finish('playing', { title: String(sound.title || 'Red in the Mirror'), trackId: sound.id, source: 'existing-soundcloud-widget' });
           });
@@ -235,10 +239,11 @@
             selected = list[index];
             if (hidden() || !dayActive() || globallyMuted() || master('volMusic') <= 0) return finish('muted');
             try {
+              playingWidget.setVolume(0);
               playingWidget.skip(index);
               // Existing global music volume remains the authority.
               if (ducks.size) { baseVolume = master('volMusic') * 100; duckMaster = master('volMusic'); }
-              playingWidget.setVolume(master('volMusic') * 100 * factor());
+              // Stay silent until PLAY reports the selected track, not the old queue item.
               playingWidget.play();
             } catch (_) { finish('unavailable'); }
           });

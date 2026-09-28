@@ -95,7 +95,7 @@
     if (name.indexOf("PLATING") >= 0) return "plating";
     if (name.indexOf("IMPOSSIBLE ACCESS") >= 0 || name.indexOf("SECURITY OPS") >= 0) return "access";
     if (name.indexOf("STANDUP") >= 0 || name.indexOf("OWNERSHIP") >= 0) return "standup";
-    if (name.indexOf("WORKSTATION") >= 0 || name.indexOf("COMPANY") >= 0 || name.indexOf("ENGINEERING THE HUMAN CONNECTION") >= 0 || name.indexOf("09:00 // DAY SHIFT") >= 0) return "workstation";
+    if (name.indexOf("WORKSTATION") >= 0 || name.indexOf("COMPANY") >= 0 || name.indexOf("PEOPLE BEHIND THE FLIGHT") >= 0 || name.indexOf("09:00 // DAY SHIFT") >= 0) return "workstation";
     return null;
   }
 
@@ -135,7 +135,7 @@
       p.statusText = !p.board.available ? "QUEUE RECORD UNAVAILABLE" : p.board.confirmed ? "DAY 1 OWNERSHIP CONFIRMED" : "CONFIRM ONE OWNER FOR EACH TICKET";
     } else if (sceneId === "workstation") {
       var n = String(dialogName || "").toUpperCase();
-      var video = n.indexOf("ENGINEERING THE HUMAN CONNECTION") >= 0 || n.indexOf("COMPANY // FELICIA") >= 0;
+      var video = n.indexOf("PEOPLE BEHIND THE FLIGHT") >= 0 || n.indexOf("COMPANY // FELICIA") >= 0;
       p.variant = flags.day_work_unlocked ? "clocked_in" : (video ? "company_video" : "pre_shift");
       p.motion = ["screen_scan", "camera_push"];
       if (video) p.motion.push("orpheus_glitch");

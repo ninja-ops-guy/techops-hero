@@ -8,7 +8,7 @@
   if (root) root.TechOpsDayWorld = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
-  var VERSION = 2, TILE = 32, lastState = null, lastMap = null, routeCache = null;
+  var VERSION = 3, TILE = 32, lastState = null, lastMap = null, routeCache = null;
   var CARDINAL = [[0, 1], [-1, 0], [1, 0], [0, -1]];
   var SPECS = [
     { id: "mike_desk", label: "Mike's workstation", kind: "desk", deviceType: "desktop", roomId: "office", zoneId: "office", surface: "screen", art: 2, x: 31, y: 15 },
@@ -45,9 +45,15 @@
     if (x >= 29 && x <= 40 && y >= 2 && y <= 8) return "server";
     return y >= 23 ? "factory" : "office";
   }
+  function officePeople() {
+    var people = typeof COWORKERS !== "undefined" ? COWORKERS.slice() : [];
+    if (typeof MAYA !== "undefined") people.push(MAYA);
+    return people;
+  }
+  function authoredDesk() { return typeof MIKE_DESK !== "undefined" ? MIKE_DESK : null; }
   function occupants(s) {
     var out = Object.create(null);
-    (s.npcs || []).forEach(function (n) { out[key(n)] = true; });
+    (s.npcs || []).concat(officePeople()).forEach(function (n) { out[key(n)] = true; });
     return out;
   }
   function occupiedProps(s) {
@@ -86,12 +92,19 @@
     return CARDINAL.some(function (d) { return !!component.visited[key(neighbor(target, d))]; });
   }
   function accessTargets(s, component) {
-    var list = (s.npcs || []).concat(s.devices || [], s.portals || [], s.coffeeMachines || [], s.loreSpots || []);
+    var list = (s.npcs || []).concat(officePeople(), s.devices || [], s.portals || [], s.coffeeMachines || [], s.loreSpots || []);
     var night = s._nightObjs || {};
     Object.keys(night).forEach(function (id) { if (night[id] && Number.isInteger(night[id].x) && Number.isInteger(night[id].y)) list.push(night[id]); });
     return list.filter(function (item) { return approachable(item, component); });
   }
   function place(s, spec, taken, component, blockers, protectedTargets) {
+    var desk = spec.id === "mike_desk" && authoredDesk();
+    if (desk) {
+      var fixed = Object.assign({}, spec, { x: desk.x, y: desk.y, authored: true, roomName: ROOM_NAMES[spec.zoneId], available: s.map[desk.y] && s.map[desk.y][desk.x] === spec.art && approachable(desk, component) });
+      taken[key(desk)] = true;
+      if (fixed.available) protectedTargets.push(fixed);
+      return { item: fixed, component: component };
+    }
     var origin = spec.contact ? contact(spec.contact) || spec : spec;
     var candidates = component.queue.filter(function (p) {
       return !taken[key(p)] && distance(p, player(s)) > 0 && zone(p.x, p.y) === spec.zoneId;
@@ -132,7 +145,7 @@
     // Upgrade an earlier physical-world checkpoint only when every owned prop
     // still matches; never erase a coincidental tile on a new procedural map.
     if (!newMapInSameRun && d && d.version < VERSION && d.day === s.day && Array.isArray(d.items) && d.items.filter(function (item) { return item.available; }).every(function (item) { return s.map[item.y] && s.map[item.y][item.x] === item.art; })) {
-      d.items.forEach(function (item) { if (item.available && SPECS.some(function (spec) { return spec.id === item.id && spec.art === item.art; })) s.map[item.y][item.x] = 0; });
+      d.items.forEach(function (item) { if (item.available && !item.authored && !(item.id === "mike_desk" && authoredDesk() && item.x === authoredDesk().x && item.y === authoredDesk().y) && SPECS.some(function (spec) { return spec.id === item.id && spec.art === item.art; })) s.map[item.y][item.x] = 0; });
     }
     var blockers = occupants(s), component = flood(s.map, player(s), blockers), taken = occupiedProps(s), items = [];
     if (!component.queue.length) return false;

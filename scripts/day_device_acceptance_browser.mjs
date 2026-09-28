@@ -174,12 +174,16 @@ async function morningOpening(page, result) {
   await click(page, 'Assign queue: Mike investigates access');
   await click(page, "Walk to Mike's workstation");
   result.deskFixture = await fixtureAtStation(page, 'mike_desk');
+  await page.locator('.os-desktop').waitFor({state:'visible'});
+  await screenshot(page, result.id, 'simulated-desktop');
   await click(page, 'MUSIC');
   await click(page, 'Continue with music muted');
   await click(page, 'Back to desktop');
   await click(page, 'COMPANY');
   await click(page, 'Open Felicia profile');
-  await click(page, 'Play Engineering the Human Connection');
+  await click(page, 'Play People Behind the Flight');
+  await page.locator('.day-film-shot').waitFor({state:'visible'});
+  await screenshot(page, result.id, 'company-cutscene');
   await click(page, 'Skip video');
   await click(page, 'CLOCK IN — START DAY SHIFT');
   await click(page, 'Stand up');
@@ -200,6 +204,26 @@ async function morningOpening(page, result) {
   }
   assert.equal(await page.evaluate(() => !!S.room), false, 'floor screenshot cannot show a side-room overlay');
   await screenshot(page, result.id, 'floor');
+  result.officeInteractions = await page.evaluate(() => {
+    const desk = TechOpsDayWorld.stations().find(x => x.id === 'mike_desk');
+    if(desk.x !== MIKE_DESK.x || desk.y !== MIKE_DESK.y || !desk.authored) throw Error('Duplicate or relocated Mike desk');
+    const results=[];
+    for(const npc of COWORKERS){
+      if(S.inDialog)closeDlg();if(S.room)v69ExitRoom();
+      const p=[[0,1],[-1,0],[1,0],[0,-1]].map(([x,y])=>({x:npc.x+x,y:npc.y+y})).find(p=>S.map[p.y]?.[p.x]===0&&!S.npcs.some(n=>n.x===p.x&&n.y===p.y)&&!COWORKERS.some(n=>n.x===p.x&&n.y===p.y));
+      if(!p)throw Error('Coworker cannot be reached: '+npc.name);
+      S.px=p.x;S.py=p.y;S.meta.dayRouteTarget='mike_desk';interact();
+      if(document.getElementById('dlg-name').textContent.includes('CHOOSE')){
+        const b=Array.from(document.querySelectorAll('#dlg-options button')).find(b=>b.textContent==='Talk to '+npc.name);if(!b)throw Error('Missing NPC choice '+npc.name);b.click();
+      }
+      const title=document.getElementById('dlg-name').textContent;
+      if(/WORKSTATION|MIKE.*DESK/.test(title))throw Error('NPC opened workstation: '+npc.name);
+      if(!title.toUpperCase().includes(npc.name.toUpperCase()))throw Error('Wrong speaker: '+title);
+      results.push({npc:npc.name,title});
+    }
+    closeDlg();return results;
+  });
+
 }
 
 try {

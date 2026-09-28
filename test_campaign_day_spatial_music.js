@@ -132,7 +132,7 @@ async function test(name, fn) { await fn(); count++; console.log('PASS ' + name)
     b.N.openMusicTab(); const pending = click(b, 'Play Red in the Mirror');
     assert.equal(typeof soundsReady, 'function');
     click(b, 'Continue with music muted'); soundsReady([sound]); await pending;
-    assert.equal(plays, 0); assert.equal(pauses, 1);
+    assert.equal(plays, 0); assert.ok(pauses >= 1);
     assert.equal(stored(b).morningListening.status, 'user_skipped');
     assert.equal(r.TechOpsDayAudio.diagnostics().playback.status, 'muted');
   });

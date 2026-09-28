@@ -98,7 +98,7 @@ assert.match(gapSource, /Red in the Mirror/);
 assert.match(gapSource, /getSounds/);
 assert.match(gapSource, /setVolume\(5\)/);
 assert.match(gapSource, /setVolume\(restoreVolume\|\|18\)/);
-assert.match(gapSource, /ENGINEERING THE HUMAN CONNECTION/);
+assert.match(gapSource, /PEOPLE BEHIND THE FLIGHT/);
 assert.match(gapSource, /ordinary_listening/);
 assert.match(gapSource, /primed-user-gesture/);
 

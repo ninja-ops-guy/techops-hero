@@ -27,6 +27,7 @@
   function canonicalStation(ticketId,screen){return ticketId==='shipping_cannot_print'?(screen?'shipping_workstation':'shipping_printer'):'plating_workstation';}
   function requireDesk(){if(desktopNearby())return true;routeTo('mike_desk');return false;}
   function release(){
+    if(root.TechOpsDayDesktop)root.TechOpsDayDesktop.release();
     targetMenuOwner++;
     var d=root.document&&root.document.getElementById('dialogue');if(d){d.classList.remove('day-device-mode','day-workstation');d.removeAttribute('aria-labelledby');}
     if(root.document)root.document.body.classList.remove('day-device-open');
@@ -53,6 +54,7 @@
       if(action==='technical'&&active.surface!=='screen')throw new Error('Use the local diagnostic screen to verify the technical path.');
       if(action==='repair'&&active.surface!==(data.canonical?'screen':def.repairSurface||'screen'))throw new Error('Use the '+(data.canonical?'screen':def.repairSurface||'screen')+' view for this repair.');
       if(action==='observe'){
+        active.app=value;
         var e=def.evidence.find(function(item){return item.id===value;});
         if(!e||e.surface!==active.surface)throw new Error('Use the correct physical or screen view to make that observation.');
         if(station.ticketId==='shipping_cannot_print'&&((e.surface==='physical'&&station.id!=='shipping_printer')||(e.surface==='screen'&&station.id!=='shipping_workstation')))throw new Error('This observation belongs to the other device. Follow its floor route.');
@@ -119,7 +121,7 @@
     var title=st.label||def.title,kind=st.deviceType||def.deviceKind||'desktop';
     var physical=surface==='physical',canScreen=st.id!=='shipping_printer'&&st.surface!=='physical';
     var visual=physical?'<div class="day-device-stage">'+diagram(kind,rec.fixApplied||done)+items.map(function(e,i){return button(rec.evidence.includes(e.id)?'✓':String(i+1),'observe',e.id,' class="day-hotspot" aria-label="'+escape(e.label)+'" data-seen="'+rec.evidence.includes(e.id)+'" style="left:calc('+Math.max(8,Math.min(85,e.hotspot?e.hotspot.x:25+i*24))+'% - 22px);top:calc('+Math.max(15,Math.min(76,e.hotspot?e.hotspot.y:45))+'% - 22px)"');}).join('')+'<div class="day-stage-caption">'+escape(title)+' · PHYSICAL INSPECTION</div></div><div class="day-hotspot-labels">'+items.map(function(e,i){return button('<b>'+(rec.evidence.includes(e.id)?'✓':i+1)+'</b>'+escape(e.label),'observe',e.id);}).join('')+'</div>':
-      '<div class="day-desktop"><div class="day-os-bar"><span>AERODESK // '+escape(st.supportComputer?st.supportComputer.label:'LOCAL SESSION')+'</span><span>'+escape(title)+'</span></div><div class="day-app-grid">'+items.map(function(e){return button(escape(e.label)+'<small>'+(rec.evidence.includes(e.id)?'Observation saved':'Open diagnostic view')+'</small>','observe',e.id);}).join('')+'</div><div class="day-notification">'+escape(done?'Service restored. The requester can get back to work.':(def.notifications||[])[0]||def.symptom)+'</div><div class="day-taskbar"><span>LOCAL TOOLS · CASE NOTES</span><span>'+(done?'VERIFIED':'DIAGNOSTIC SESSION')+'</span></div></div>';
+      '<div class="day-desktop"><div class="day-os-bar"><span>AERODESK // '+escape(st.supportComputer?st.supportComputer.label:'LOCAL SESSION')+'</span><span>'+escape(title)+'</span></div><div class="day-app-grid">'+items.map(function(e){return button(escape(e.label)+'<small>'+(rec.evidence.includes(e.id)?'Observation saved':'Open diagnostic view')+'</small>','observe',e.id);}).join('')+'</div>'+(active.app&&active.notice?'<section class="day-diagnostic-window"><header>◈ '+escape((items.find(function(e){return e.id===active.app;})||{}).label||'Diagnostic result')+'</header><div class="day-diagnostic-body"><span>LOCAL RESULT / READ ONLY</span><p>'+escape(active.notice)+'</p></div></section>':'')+'<div class="day-notification">'+escape(done?'Service restored. The requester can get back to work.':(def.notifications||[])[0]||def.symptom)+'</div><div class="day-taskbar"><span>LOCAL TOOLS · CASE NOTES</span><span>'+(done?'VERIFIED':'DIAGNOSTIC SESSION')+'</span></div></div>';
     if(physical&&!items.length)visual+='<p class="day-empty">The enclosure is intact. Read the front-panel status, then use the local screen to investigate the software path.</p>';
     var actions='';
     if(done)actions='<div class="day-observation day-success"><h3>Service restored. Task verified.</h3><p>'+escape(def.requesterCheck)+'</p></div>';
@@ -180,15 +182,20 @@
   function nearbyTargets(){
     var s=gs(),w=world();if(!isDay()||!w)return [];var result=w.nearby().slice(),native=s.meta&&s.meta.campaignAct1Native||{};
     [{id:'standup',label:s.day>=2?'Shift handoff board':'Morning standup board'},{id:'shipping',label:'Shipping clerk',ticketId:'shipping_cannot_print'},{id:'plating',label:'Plating operator',ticketId:'plating_workstation_down'},{id:'access',label:'Security Ops'}].forEach(function(item){var p=native[item.id];if(p&&Math.abs(s.px-p.x)+Math.abs(s.py-p.y)<=1)result.push(Object.assign({},item,{kind:'contact',x:p.x,y:p.y}));});
+    var coworkers=typeof COWORKERS!=='undefined'?COWORKERS:[];
+    var people=(s.npcs||[]).map(function(n){return {npc:n,handler:n.ambient?'ambientTalk':'ticketFlow'};}).concat(coworkers.map(function(n){return {npc:n,handler:'coworkerTalk'};}));
+    if(typeof MAYA!=='undefined')people.push({npc:MAYA,handler:'mktShop'});
+    people.forEach(function(entry){var n=entry.npc;if(Math.abs(s.px-n.x)+Math.abs(s.py-n.y)>1||result.some(function(item){return item.kind==='contact'&&item.x===n.x&&item.y===n.y;}))return;result.push({id:'person:'+(n.id||n.name),kind:'person',label:n.name,npc:n,handler:entry.handler,x:n.x,y:n.y});});
     return result;
   }
   function targetResolution(){
-    var options=nearbyTargets(),s=gs(),route=s&&s.meta&&s.meta.dayRouteTarget,target=options.find(function(item){return item.id===route;});
+    var options=nearbyTargets(),s=gs(),route=s&&s.meta&&s.meta.dayRouteTarget,target=options.some(function(item){return item.kind==='person';})?null:options.find(function(item){return item.id===route;});
     return {options:options,target:target||(options.length===1?options[0]:null),choose:options.length>1&&!target};
   }
-  function targetLabel(item){return item.kind==='contact'?(item.id==='standup'?'Read '+item.label:'Talk to '+item.label):item.id==='mike_desk'?'Use Mike’s workstation':'Inspect '+item.label;}
+  function targetLabel(item){return item.kind==='person'?'Talk to '+item.label:item.kind==='contact'?(item.id==='standup'?'Read '+item.label:'Talk to '+item.label):item.id==='mike_desk'?'Use Mike’s workstation':'Inspect '+item.label;}
   function actOnTarget(item){
     if(!nearbyTargets().some(function(current){return current.id===item.id&&current.kind===item.kind;}))return false;
+    if(item.kind==='person'){var handler=root[item.handler];if(typeof handler!=='function')return false;handler(item.npc);return true;}
     if(item.kind!=='contact')return openDevice(item);
     if(item.ticketId)return talk(item.ticketId);
     var n=root.TechOpsCampaignNativeAct1;if(item.id==='standup')return gs().day>=2?n.openWorkdayHandoff():n.openStandup();
@@ -227,4 +234,55 @@
   function keydown(e){if(!active)return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();exit();return;}if(e.key==='Tab'){var list=Array.from(root.document.querySelectorAll('#dialogue.day-device-mode button:not(:disabled)'));if(!list.length)return;var first=list[0],last=list[list.length-1];if(e.shiftKey&&root.document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&root.document.activeElement===last){e.preventDefault();first.focus();}}if(/^(Arrow| |Enter$|[wasdemv]$)/i.test(e.key))e.stopPropagation();}
   if(root.document)root.document.addEventListener('keydown',keydown,true);
   root.TechOpsDayExperience={VERSION:1,openDevice:openDevice,talk:talk,interact:interact,routeTo:routeTo,requireDesk:requireDesk,desktopNearby:desktopNearby,release:release,exit:exit,render:render,syncHud:syncHud,workstationSkin:workstationSkin,transact:transact,active:function(){return active;},openBoard:openBoard};
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+/* Day desktop and opening cinematics. Presentation only: native campaign callbacks
+ * retain state authority, and the existing dialogue owns input and dismissal. */
+(function(root){
+  'use strict';
+  var serial=0,timer=null,current=null;
+  var apps=[['QUEUE','▤','Service queue'],['TEAMS','◉','Team messages'],['ALERTS','△','Event viewer'],['COMPANY','◈','Company intranet'],['MUSIC','♫','Music']];
+  function esc(x){return String(x||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function release(){serial++;if(timer)root.clearTimeout(timer);timer=null;current=null;var d=root.document&&root.document.getElementById('dialogue');if(d)d.classList.remove('day-os-mode','day-film-mode');if(root.document)root.document.body.classList.remove('day-os-open');if(root.TechOpsDayAudio)root.TechOpsDayAudio.resume('opening-film');}
+  function valid(token){return token===serial&&root.S&&root.S.inDialog&&root.TechOpsDayExperience.desktopNearby();}
+  function present(name,body,options){
+    if(!root.document||!root.TechOpsDayExperience||!root.TechOpsDayExperience.desktopNearby())return false;
+    if(!/WORKSTATION|COMPANY|PEOPLE BEHIND THE FLIGHT|MORNING LISTENING|09:00 \/\/ DAY SHIFT/.test(name))return false;
+    release();var token=serial,d=root.document.getElementById('dialogue'),box=root.document.getElementById('dlg-text');if(!d||!box)return false;
+    current={name:name};d.classList.add('day-os-mode');root.document.body.classList.add('day-os-open');root.S.dayInteraction='workstation';box.onclick=null;
+    var home=name==='MIKE // WORKSTATION',film=name==='PEOPLE BEHIND THE FLIGHT'||name==='MORNING LISTENING'||name==='09:00 // DAY SHIFT';
+    var native=root.TechOpsCampaignNativeAct1;
+    var app=name.split(' // ').pop(),icons=apps.map(function(a){return '<button type="button" class="os-icon" data-os-app="'+a[0]+'" aria-label="'+a[0]+'"><span aria-hidden="true">'+a[1]+'</span><b>'+a[0]+'</b><small>'+a[2]+'</small></button>';}).join('');
+    box.innerHTML='<section class="os-desktop" aria-label="Mike’s simulated computer"><div class="os-wallpaper"><span>AEROTECH</span><p>NEW HAVEN · OPERATIONS</p></div><nav class="os-icons" '+(home?'hidden':'')+' aria-label="Desktop applications">'+icons+'</nav><section class="os-window '+(home?'os-welcome':'')+'" aria-label="'+esc(app)+'"><header class="os-titlebar"><span>◈ &nbsp; '+esc(home?'MIKE / WORKSPACE':app)+'</span><div><button type="button" data-os-min aria-label="Minimize window">—</button><button type="button" data-os-max aria-label="Maximize window">□</button><button type="button" data-os-close aria-label="Close application">×</button></div></header><div class="os-address">'+esc(home?'aerodesk://mike/home':'aerodesk://'+app.toLowerCase().replace(/ /g,'-'))+'</div><div class="os-content">'+(home?'<span class="os-kicker">DAY '+esc(root.S.day)+' / MORNING SHIFT</span><h1>Good morning, Mike.</h1><p>Your tools. Your team. One shift at a time.</p><div class="os-shortcuts">'+icons+'</div>': '<h1>'+esc(app)+'</h1>')+'<div class="os-copy">'+body+'</div></div><div class="os-actions"></div></section><footer class="os-taskbar"><button type="button" data-os-home aria-label="Show desktop">▦ <span>AeroDesk</span></button><span class="os-task-name">'+esc(home?'Workspace':app)+'</span><span class="os-session">MIKE · LOCAL SESSION</span><button type="button" data-os-exit>Leave computer</button></footer></section>';
+    function bind(selector,fn){box.querySelectorAll(selector).forEach(function(el){el.onclick=function(){if(!valid(token))return false;if(root.TechOpsDayAudio)root.TechOpsDayAudio.emit('inspect');return fn(el);};});}
+    bind('[data-os-app]',function(el){return native.openWorkstationTab(el.dataset.osApp);});
+    bind('[data-os-home]',function(){native.openWorkstation();});bind('[data-os-close]',function(){native.openWorkstation();});
+    bind('[data-os-exit]',function(){root.closeDlg();});
+    bind('[data-os-min]',function(){box.querySelector('.os-window').classList.toggle('os-minimized');});
+    bind('[data-os-max]',function(){box.querySelector('.os-window').classList.toggle('os-maximized');});
+    var actions=box.querySelector('.os-actions');
+    (options||[]).forEach(function(option){if(home&&apps.some(function(a){return a[0]===option.t;}))return;var b=root.document.createElement('button');b.type='button';b.textContent=option.t;b.onclick=function(){if(valid(token))return option.f();};actions.appendChild(b);});
+    if(film)startFilm(name,box,actions,token);
+    return true;
+  }
+  function startFilm(name,box,actions,token){
+    root.document.getElementById('dialogue').classList.add('day-film-mode');
+    var profile=name==='PEOPLE BEHIND THE FLIGHT',listening=name==='MORNING LISTENING';
+    var shots=profile?[
+      ['FIELD SYSTEMS','Every flight begins with people on the ground.','assets/campaign/workstation.corporate_aircraft_panel.png','wide'],
+      ['FELICIA / SECURITY RESEARCH','Aircraft systems. Antenna racks. A violin case beside the work.','assets/campaign/workstation.corporate_aircraft_panel.png','pan'],
+      ['PEOPLE BEHIND THE FLIGHT','Felicia plays. For a moment, the company profile feels personal.','assets/campaign/workstation.felicia.video_frame.png','portrait'],
+      ['SIGNAL INTERRUPTION','ORPHEUS','assets/campaign/workstation.corporate_aircraft_panel.png','signal'],
+      ['PROFILE ENDS','The corporate edit continues. Mike has not met her yet.','assets/campaign/workstation.felicia.video_frame.png','portrait']
+    ]:listening?[
+      ['RED IN THE MIRROR','The correct track is playing. The queue can wait a moment.','assets/campaign/workstation.corporate_aircraft_panel.png','wide'],
+      ['BEFORE THE SHIFT','An ordinary song, heard before the work begins.','assets/campaign/workstation.corporate_aircraft_panel.png','pan']
+    ]:[['09:00 / NEW HAVEN','Shipping is waiting. Plating is waiting. Security has a contradiction.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT','The clock begins. Leave it better than you found it.','assets/campaign/plating.line_background.png','pan']];
+    var content=box.querySelector('.os-content'),i=0;
+    if(profile&&root.TechOpsDayAudio)root.TechOpsDayAudio.duck('opening-film',.22);
+    var finish=Array.from(actions.querySelectorAll('button')).find(function(b){return b.textContent==='Finish video';});if(finish)finish.disabled=true;
+    function shot(){if(!valid(token))return;var s=shots[i];content.innerHTML='<div class="day-film-shot '+s[3]+'"><img src="'+s[2]+'" alt="'+esc(s[0])+'"><div class="day-film-shade"></div><div class="day-film-caption" aria-live="polite"><small>'+esc(s[0])+'</small><h2>'+esc(s[1])+'</h2></div><div class="day-film-progress">'+shots.map(function(_,n){return '<i class="'+(n<=i?'seen':'')+'"></i>';}).join('')+'</div></div>';if(i<shots.length-1)timer=root.setTimeout(function(){i++;shot();},s[3]==='signal'?650:4200);else{if(finish)finish.disabled=false;next.textContent='Replay scene';}}
+    var next=root.document.createElement('button');next.type='button';next.textContent='Next shot';next.onclick=function(){if(!valid(token))return;root.clearTimeout(timer);i=i<shots.length-1?i+1:0;shot();};actions.appendChild(next);shot();
+  }
+  root.TechOpsDayDesktop={present:present,release:release,active:function(){return current;}};
 })(typeof globalThis!=='undefined'?globalThis:this);

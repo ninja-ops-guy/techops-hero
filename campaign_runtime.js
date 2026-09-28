@@ -105,7 +105,7 @@
     } else if (!f.day_work_unlocked) {
       options.push({ text: "Complete opening workstation sequence", action: function () {
         runWorkstation();
-        dialog("ENGINEERING THE HUMAN CONNECTION", "QUEUE / TEAMS / ALERTS / COMPANY / MUSIC committed.<br><br>Red in the Mirror remains ordinary listening. The company video briefly corrupts with ORPHEUS telemetry, then normal work unlocks.", [{ text: "The clock begins", action: openDeskFlow }]);
+        dialog("PEOPLE BEHIND THE FLIGHT", "QUEUE / TEAMS / ALERTS / COMPANY / MUSIC committed.<br><br>Red in the Mirror remains ordinary listening. The company video briefly corrupts with ORPHEUS telemetry, then normal work unlocks.", [{ text: "The clock begins", action: openDeskFlow }]);
       } });
     } else if (state.evidence.ghostIdentityEvidence.status !== "established") {
       options.push({ text: "Document Impossible Access Event", action: function () { recordImpossibleAccess(); dialog("IMPOSSIBLE ACCESS EVENT", "Badge ID: M.OLIVEFIELD<br>Door: SECTOR04-EAST<br>Timestamp: 02:13<br>Controller ACK: VALID<br><br><b>VALID IDENTITY != VERIFIED PRESENCE</b>", [{ text: "Continue", action: openDeskFlow }]); } });

@@ -2807,6 +2807,7 @@ function renderTab(tab) {
 let scWidget = null, scReady = false, musicOn = false, musicRequested = false, musicLoading = false;
 function applyMusicRequest() {
   if (!scWidget || !scReady) return;
+  if (window.__techopsSelectingMorningTrack && musicRequested) return;
   try { musicRequested ? scWidget.play() : scWidget.pause(); } catch (e) { }
 }
 function initMusic(userInitiated = false) {

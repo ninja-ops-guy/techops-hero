@@ -114,6 +114,12 @@ function fixture(options = {}) {
     f.sound({ id: 23, title: 'Red in the Mirror' }); f.fire('play'); const result = await promise;
     assert.equal(result.status, 'playing'); assert.equal(result.trackId, 23); assert.equal(result.source, 'existing-soundcloud-widget'); assert.equal(f.timers.size, 0);
   });
+  await test('wrong playlist item stays silent until selected track confirms PLAY', async () => {
+    const f=fixture(),promise=f.api.playMorningTrack({userGesture:true,enableAudio:true});
+    assert.equal(f.r.__techopsSelectingMorningTrack,true);assert.equal(f.w.volume,0);
+    f.sound({id:8,title:'Another song'});f.fire('play');assert.equal(f.w.volume,0);
+    f.sound({id:23,title:'Red in the Mirror'});f.fire('play');assert.equal((await promise).status,'playing');assert(f.w.volume>0);assert.equal(f.r.__techopsSelectingMorningTrack,false);
+  });
   await test('explicit Play music control may enable the existing master toggle', async () => {
     const f = fixture(); vm.runInContext('sfxMuted=true;musicRequested=false', f.r); const promise = f.api.playMorningTrack({ userGesture: true, enableAudio: true });
     f.fire('play'); assert.equal((await promise).status, 'playing'); assert.equal(vm.runInContext('musicRequested', f.r), true); assert(f.log.some(x => x[0] === 'setMusic' && x[1] === true));

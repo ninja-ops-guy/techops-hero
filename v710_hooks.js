@@ -176,7 +176,7 @@
         if (fx !== null && Math.abs(s.room.x - fx) < .07) { window.v69ExitRoom(); return __origInteract710.apply(this, arguments); }
       }
       const n = nearestRoomNpc710();
-      if (n) return n.ambient ? ambientTalk(n) : ticketFlow(n);
+      if (n) return n._pseudo && typeof COWORKERS !== "undefined" ? coworkerTalk(COWORKERS.find(c => c.name.toLowerCase() === n.name.toLowerCase()) || n) : n.ambient ? ambientTalk(n) : ticketFlow(n);
       return;
     }
     return __origInteract710.apply(this, arguments);
@@ -236,10 +236,10 @@
     const img = roomImgs[s.room.key];
     // backdrop — cover-fit, never distorted
     if (img && img.complete && img.naturalWidth) {
-      const ir = img.naturalWidth / img.naturalHeight, cr = W / H;
-      let dw, dh;
-      if (cr > ir) { dw = W; dh = W / ir; } else { dh = H; dw = H * ir; }
-      ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      const scale = Math.min(W / img.naturalWidth, floorY / img.naturalHeight);
+      const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+      ctx.fillStyle = "#101b29"; ctx.fillRect(0,0,W,H);
+      ctx.drawImage(img, (W - dw) / 2, floorY - dh, dw, dh);
     } else { ctx.fillStyle = "#1a2030"; ctx.fillRect(0, 0, W, H); }
     // palette truth: biome wash + biome carpet + accent baseboard
     ctx.save();

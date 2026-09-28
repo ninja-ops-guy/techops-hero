@@ -142,3 +142,16 @@ test('talking to Security does not read the nearby computer or grant badge evide
   const b=boot();b.move('security_workstation');b.ctx.S.meta.campaignAct1Native.access={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget='access';let reads=0;b.ctx.TechOpsCampaignNativeAct1.recordAccessEvidence=function(){reads++;return true;};const before=b.storage.writes;b.X.interact();assert.equal(b.ctx.dialog.name,'SECURITY OPS');assert.equal(reads,0);assert.equal(b.storage.writes,before);assert.equal(b.ctx.dialog.options[0].t,'Walk to Security workstation');b.X.exit();b.X.openDevice('security_workstation');assert.equal(reads,1);
 });
 console.log('Day experience integration: '+count+' tests passed');
+
+for(const name of ['NICK','AMIT','BRANDON','DANIEL'])test(name+' remains a talk target beside a tracked workstation',()=>{
+  const b=boot();b.move('mike_desk');
+  b.ctx.COWORKERS=[{id:name.toLowerCase(),name,x:b.ctx.S.px+1,y:b.ctx.S.py}];
+  b.ctx.coworkerTalk=n=>{b.ctx.dlg(n.name,'Conversation',[]);};
+  b.ctx.S.meta.dayRouteTarget='mike_desk';b.X.syncHud();
+  assert.match(b.ctx.document.getElementById('day-route-hud').innerHTML,/Choose nearby interaction/);
+  b.X.interact();const option=b.ctx.dialog.options.find(o=>o.t==='Talk to '+name);assert(option);option.f();
+  assert.equal(b.ctx.dialog.name,name);assert.equal(b.ctx.workstationOpens,undefined);
+});
+test('ordinary ambient and ticket NPCs retain their own interaction owners',()=>{
+  for(const ambient of [true,false]){const b=boot();b.move('mike_desk');const npc={id:'ordinary',name:'Requester',ambient,x:b.ctx.S.px+1,y:b.ctx.S.py};b.ctx.S.npcs.push(npc);b.ctx[ambient?'ambientTalk':'ticketFlow']=n=>{b.ctx.talkedTo=n;};b.ctx.S.meta.dayRouteTarget='mike_desk';b.X.interact();b.ctx.dialog.options.find(o=>o.t==='Talk to Requester').f();assert.equal(b.ctx.talkedTo,npc);assert.equal(b.ctx.workstationOpens,undefined);}
+});

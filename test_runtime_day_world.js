@@ -172,3 +172,22 @@ world.stations().forEach(item => assertPath(world.route(item.id)));
 const currentTiles = new Set(world.stations().filter(item => item.available).map(item => `${item.x},${item.y}`));
 oldItems.filter(item => item.available && !currentTiles.has(`${item.x},${item.y}`)).forEach(item => assert.strictEqual(global.S.map[item.y][item.x], 0));
 console.log("PASS: Day physical world, 24 generated maps + 60 real native-placement maps, routes, service access, migration, proximity, mode and canon objectives");
+
+// Authored office landmarks coexist with procedural stations and old checkpoints.
+for(let seed=1;seed<=12;seed++){
+  const s=setup(seed);world.ensureWorld();const old=world.stations().find(x=>x.id==='mike_desk');
+  s.meta.dayStations.version=2;
+  global.MIKE_DESK={x:31,y:15};global.COWORKERS=[{id:'nick',x:30,y:13},{id:'amit',x:33,y:13},{id:'brandon',x:36,y:13},{id:'daniel',x:35,y:16}];
+  // Same authored room geometry used by office_hooks.setupDay.
+  for(let y=10;y<=17;y++)for(let x=28;x<=41;x++)s.map[y][x]=(y===10||y===17||x===28||x===41)?1:0;
+  s.map[17][39]=s.map[17][40]=0;s.map[15][31]=2;
+  // Recreate a v2 save after authored geometry, preserving its owned props.
+  s.meta.dayStations.items.filter(x=>x.available).forEach(x=>s.map[x.y][x.x]=x.art);
+  global.COWORKERS.forEach(n=>s.map[n.y][n.x]=0);
+  world.ensureWorld();const desk=world.stations().find(x=>x.id==='mike_desk');
+  assert.equal(desk.x,31);assert.equal(desk.y,15);assert(desk.authored);assert(desk.available);assert(world.route('mike_desk').ok);
+  if(old.x!==31||old.y!==15)assert.equal(s.map[old.y][old.x],0,'old phantom desk removed');
+  global.COWORKERS.forEach(n=>assert.equal(s.map[n.y][n.x],0,'coworker position preserved'));
+  delete global.MIKE_DESK;delete global.COWORKERS;
+}
+console.log('PASS authored office desk reuse, coworker positions and v2 checkpoint migration');

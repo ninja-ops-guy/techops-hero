@@ -89,7 +89,7 @@ assert.match(p.statusText, /PROVENANCE/);
 p = visuals.presentationFor("workstation", base, "WORKSTATION // COMPANY");
 assert.strictEqual(p.variant, "pre_shift");
 assert.deepStrictEqual(p.motion, ["screen_scan", "camera_push"]);
-p = visuals.presentationFor("workstation", base, "ENGINEERING THE HUMAN CONNECTION");
+p = visuals.presentationFor("workstation", base, "PEOPLE BEHIND THE FLIGHT");
 assert.strictEqual(p.variant, "company_video");
 assert.ok(p.motion.includes("orpheus_glitch"));
 

@@ -72,7 +72,7 @@
     return atContact(key) ? experience.talk(ticketId) : experience.routeTo(key);
   }
   function hasGameFunction(name) { return root && typeof root[name] === "function"; }
-  function callDialog(name, body, options) { musicViewSerial++; if (hasGameFunction("dlg")) { root.dlg(name, body, options || []); if(dayExperience())dayExperience().workstationSkin(name); return true; } return false; }
+  function callDialog(name, body, options) { musicViewSerial++; if (hasGameFunction("dlg")) { root.dlg(name, root.TechOpsDayDesktop ? "<div>"+body+"</div>" : body, options || []); if(dayExperience())dayExperience().workstationSkin(name); if(root.TechOpsDayDesktop)root.TechOpsDayDesktop.present(name,body,options||[]); return true; } return false; }
   function closeDialog() { musicViewSerial++; if (hasGameFunction("closeDlg")) root.closeDlg(); }
   function notify(message, ms) { if (hasGameFunction("toast")) root.toast(message, ms || 3600); }
   function isAdjacent(a, b) { if (!a || !b) return false; if (hasGameFunction("adjacent")) return root.adjacent(a, b); return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= 1; }
@@ -447,6 +447,7 @@
     state.morningListening={userSkipped:!!skipped,status:skipped?"user_skipped":"playing",source:skipped?"accessibility_choice":playback&&playback.source||"confirmed_audio",at:new Date().toISOString()};
     if(skipped){var event=state.history[state.history.length-1];if(event&&event.type==="red_in_mirror_heard"){event.context="accessibility_skip";event.userSkipped=true;}}
     saveState(state);notify(skipped?"Morning music skipped by choice — continue the opening":"RED IN THE MIRROR — playback confirmed");
+    if(!skipped&&root.TechOpsDayDesktop)return callDialog("MORNING LISTENING","RED IN THE MIRROR",[{t:"Return to music",f:openMusicTab},{t:"Back to desktop",f:openWorkstation}]);
     return openMusicTab();
   }
   function continueMusicMuted() {
@@ -501,14 +502,14 @@
     if (!requireDesk()) return false;
     var state = ensureWorkstationChecked(loadState());
     if (!state.flags.felicia_blog_found) {
-      return callDialog("WORKSTATION // COMPANY", "Internal company blog.<br><br><b>ENGINEERING THE HUMAN CONNECTION</b><br>Field systems profile: Felicia — Security Research / Systems Integrations.<br><br>A thumbnail shows an aircraft interior, antenna racks, and a violin case.", [
+      return callDialog("WORKSTATION // COMPANY", "Internal company blog.<br><br><b>PEOPLE BEHIND THE FLIGHT</b><br>Field systems profile: Felicia — Security Research / Systems Integrations.<br><br>A thumbnail shows an aircraft interior, antenna racks, and a violin case.", [
         { t: "Open Felicia profile", f: function () { if(!requireDesk())return false;var s = loadState(); act1().findFeliciaBlog(s); saveState(s); openCompanyTab(); } },
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
     if (!state.flags.felicia_video_watched) {
       return callDialog("COMPANY // FELICIA", "Felicia — Security Research / Systems Integrations.<br><br>A short profile follows her work in the field. Mike has not met her yet.", [
-        { t: "Play Engineering the Human Connection", f: playFeliciaVideo },
+        { t: "Play People Behind the Flight", f: playFeliciaVideo },
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
@@ -521,12 +522,12 @@
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
-    return callDialog("WORKSTATION // COMPANY", "ENGINEERING THE HUMAN CONNECTION — viewed.<br><br>The shift is underway. Felicia's profile is saved here if Mike wants to revisit it.", [{ t: "Back to desktop", f: openWorkstation }]);
+    return callDialog("WORKSTATION // COMPANY", "PEOPLE BEHIND THE FLIGHT — viewed.<br><br>The shift is underway. Felicia's profile is saved here if Mike wants to revisit it.", [{ t: "Back to desktop", f: openWorkstation }]);
   }
 
   function playFeliciaVideo() {
     if (!requireDesk()) return false;
-    return callDialog("ENGINEERING THE HUMAN CONNECTION", "Factories. Aircraft. Fluorescent smiles.<br><br>Felicia plays violin aboard the aircraft. Behind her: antennas, racks, drones.<br><br>A telemetry graphic corrupts for less than a second:<br><b>ORPHEUS</b><br><br>Then the corporate edit continues normally.", [
+    return callDialog("PEOPLE BEHIND THE FLIGHT", "Factories. Aircraft. Fluorescent smiles.<br><br>Felicia plays violin aboard the aircraft. Behind her: antennas, racks, drones.<br><br>A telemetry graphic corrupts for less than a second:<br><b>ORPHEUS</b><br><br>Then the corporate edit continues normally.", [
       { t: "Finish video", f: function () { completeFeliciaVideo(false); } },
       { t: "Skip video", f: function () { completeFeliciaVideo(true); } }
     ]);
