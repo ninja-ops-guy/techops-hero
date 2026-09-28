@@ -22,7 +22,9 @@ assert.strictEqual(visuals.sceneForDialog("PLATING WORKSTATION DOWN"), "plating"
 assert.strictEqual(visuals.sceneForDialog("IMPOSSIBLE ACCESS EVENT"), "access");
 
 global.__techopsCampaignNativeAct1Assets = { id: "plating" };
-assert.strictEqual(visuals.sceneForDialog("ANY DIALOG"), "plating");
+assert.strictEqual(visuals.sceneForDialog("ANY DIALOG"), null);
+assert.strictEqual(visuals.sceneForDialog("NICK"), null);
+assert.strictEqual(visuals.sceneForDialog("CASEBOOK // RECORDED EVENTS"), "plating");
 global.__techopsCampaignNativeAct1Assets = null;
 
 const snap = visuals.snapshotWorld();

@@ -90,7 +90,8 @@
   function sceneForDialog(name) {
     name = String(name || "").toUpperCase();
     var ctx = contextId();
-    if (ctx && SCENES[ctx]) return ctx;
+    // Stored asset context belongs to casebook continuations, not unrelated NPCs.
+    if (ctx && SCENES[ctx] && /CASEBOOK|RECORDED EVENTS|TICKET HISTORY|FOLLOW.UP/.test(name)) return ctx;
     if (name.indexOf("SHIPPING") >= 0) return "shipping";
     if (name.indexOf("PLATING") >= 0) return "plating";
     if (name.indexOf("IMPOSSIBLE ACCESS") >= 0 || name.indexOf("SECURITY OPS") >= 0) return "access";
@@ -266,7 +267,7 @@
     if (root.document.body.classList) root.document.body.classList.remove("act1-scene-open");
     root.__techopsAct1ReferenceScene = null;
     var snapshot = root.__techopsAct1WorldSnapshot || null;
-    restoreWorld(snapshot);
+    // Presentation never moves Mike; closing must not rewind a newer position.
     root.__techopsAct1WorldSnapshot = null;
     if (immediate || reducedMotion() || !root.setTimeout) removeNow(el);
     else { el.className += " a1-leave"; root.setTimeout(function () { removeNow(el); }, EXIT_MS); }

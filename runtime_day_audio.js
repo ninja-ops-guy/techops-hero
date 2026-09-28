@@ -193,6 +193,7 @@
     if (globallyMuted() || master('volMusic') <= 0) { root.__techopsSelectingMorningTrack=false; return result('muted'); }
     const requested = typeof musicRequested !== 'undefined' ? musicRequested : root.musicRequested;
     if (requested === false && options.enableAudio !== true) { root.__techopsSelectingMorningTrack=false; return result('muted'); }
+    const existingWidget=widget();if(existingWidget){try{existingWidget.setVolume(0);}catch(_){}}
     if (typeof root.initMusic === 'function') root.initMusic(true);
     return new Promise(resolve => {
       let finished = false, playingWidget = null, started = false, selected = null, binding = null, hooks = null;
@@ -202,7 +203,7 @@
         if (finished) return;
         finished = true; root.clearTimeout(timeout);
         root.__techopsSelectingMorningTrack=false;
-        if(status!=='playing'&&playingWidget){try{playingWidget.pause();}catch(_){}}
+        if(status!=='playing'&&playingWidget){try{playingWidget.pause();playingWidget.setVolume(master('volMusic')*100*factor());}catch(_){}}
         if (apiScript && apiScript.removeEventListener) apiScript.removeEventListener('load', connect);
         // SoundCloud unbind removes all callbacks for an event. One shared
         // dispatcher per widget avoids both listener growth and owner removal.

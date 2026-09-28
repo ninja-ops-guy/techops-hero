@@ -405,7 +405,7 @@
   }
 
   function workstationOptions() {
-    return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat(root.TechOpsCombatAudio ? [{t:"Combat sound & captions",f:function(){root.TechOpsCombatAudio.openSettings(openWorkstation);}}] : []).concat([{ t: "Exit workstation", f: closeDialog }]);
+    return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat([{ t: "Exit workstation", f: closeDialog }]);
   }
 
   function openWorkstation() {
@@ -444,7 +444,7 @@
     // not start the same song again when recording the narrative beat.
     if(hear.__techopsDiegeticRed&&typeof hear.__base==="function")hear=hear.__base;
     if(!state.flags.red_in_mirror_heard)hear.call(act1(),state);
-    state.morningListening={userSkipped:!!skipped,status:skipped?"user_skipped":"playing",source:skipped?"accessibility_choice":playback&&playback.source||"confirmed_audio",at:new Date().toISOString()};
+    state.morningListening={userSkipped:!!skipped,status:skipped?"user_skipped":"playing",trackId:skipped?null:playback&&playback.trackId||null,title:skipped?null:playback&&playback.title||"Red in the Mirror",source:skipped?"accessibility_choice":playback&&playback.source||"confirmed_audio",at:new Date().toISOString()};
     if(skipped){var event=state.history[state.history.length-1];if(event&&event.type==="red_in_mirror_heard"){event.context="accessibility_skip";event.userSkipped=true;}}
     saveState(state);notify(skipped?"Morning music skipped by choice — continue the opening":"RED IN THE MIRROR — playback confirmed");
     if(!skipped&&root.TechOpsDayDesktop)return callDialog("MORNING LISTENING","RED IN THE MIRROR",[{t:"Return to music",f:openMusicTab},{t:"Back to desktop",f:openWorkstation}]);
@@ -489,7 +489,7 @@
     var state = ensureWorkstationChecked(loadState());
     if (state.flags.red_in_mirror_heard) {
       var skipped=state.morningListening&&state.morningListening.userSkipped;
-      return callDialog("WORKSTATION // MUSIC", skipped?"<b>RED IN THE MIRROR</b><br><br>You chose to continue with music muted. The morning beat is complete; playback was not claimed.":"Listening history: <b>RED IN THE MIRROR</b><br><br>Mike leaves the track in his history and turns back to the morning.", [{ t: "Back to desktop", f: openWorkstation }]);
+      return callDialog("WORKSTATION // MUSIC", skipped?"<b>RED IN THE MIRROR</b><br><br>You chose to continue with music muted. The morning beat is complete; playback was not claimed.":"Listening history: <b>RED IN THE MIRROR</b><br><br>Mike leaves the track in his history and turns back to the morning.", [{t:"Play Red in the Mirror",f:playMorningMusic},{ t: "Back to desktop", f: openWorkstation }]);
     }
     return callDialog("WORKSTATION // MUSIC", "A saved track sits in the player: <b>RED IN THE MIRROR</b>.<br><br>The shift has not started yet. Mike can listen before the queue begins to move.", [
       { t: "Play Red in the Mirror", f: playMorningMusic },

@@ -77,3 +77,6 @@ body.act1-scene-open #quest-tracker{visibility:hidden!important}
 @media(prefers-reduced-motion:reduce){.os-desktop *{animation:none!important;transition:none!important}}
 .os-icons[hidden]{display:none!important}
 .day-diagnostic-window{margin:0 16px 16px;border:1px solid #7699b3;border-radius:7px;background:#112333;box-shadow:0 12px 28px #0005;overflow:hidden;animation:day-focus-in .18s ease-out}.day-diagnostic-window header{padding:10px 14px;background:#30495f;font:600 13px system-ui,sans-serif}.day-diagnostic-body{padding:18px}.day-diagnostic-body>span{font:10px ui-monospace,monospace;letter-spacing:.12em;color:#8fb9cc}.day-diagnostic-body p{margin-top:10px;font:14px/1.6 ui-monospace,monospace;color:#d7e9f6}
+body.day-room-visible #quest-tracker{visibility:hidden!important;pointer-events:none!important}
+.os-taskbar>button{white-space:nowrap;flex-shrink:0}.os-titlebar>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.os-titlebar>div{flex-shrink:0}
+@media(max-width:360px){.os-session{display:none}.os-taskbar>button:last-child{margin-left:auto}.os-titlebar button{padding:8px 12px}}

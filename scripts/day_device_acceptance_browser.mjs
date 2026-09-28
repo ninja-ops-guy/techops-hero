@@ -176,6 +176,11 @@ async function morningOpening(page, result) {
   result.deskFixture = await fixtureAtStation(page, 'mike_desk');
   await page.locator('.os-desktop').waitFor({state:'visible'});
   await screenshot(page, result.id, 'simulated-desktop');
+  await click(page, 'Maximize window');
+  assert.equal(await page.locator('.os-window.os-maximized').count(),1);
+  await click(page, 'Minimize window');
+  assert.equal(await page.locator('.os-window').isVisible(),false);
+  await click(page, 'Show desktop');
   await click(page, 'MUSIC');
   await click(page, 'Continue with music muted');
   await click(page, 'Back to desktop');

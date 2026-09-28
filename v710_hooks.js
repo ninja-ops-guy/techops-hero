@@ -165,7 +165,6 @@
     if (s && s.nightMode) return __origInteract710.apply(this, arguments);
     if (s && s.room) {
       if (s.inDialog) return;
-      if (nearClueOrFel710(s)) { window.v69ExitRoom(); return __origInteract710.apply(this, arguments); }
       const doorRight = s.room.door === "right";
       if (!doorRight && s.room.x <= .05) return window.v69ExitRoom();
       if (doorRight && s.room.x >= .95) return window.v69ExitRoom();
@@ -177,6 +176,8 @@
       }
       const n = nearestRoomNpc710();
       if (n) return n._pseudo && typeof COWORKERS !== "undefined" ? coworkerTalk(COWORKERS.find(c => c.name.toLowerCase() === n.name.toLowerCase()) || n) : n.ambient ? ambientTalk(n) : ticketFlow(n);
+      // A visible person owns E before any frozen floor-entry clue.
+      if (nearClueOrFel710(s) && Math.abs(s.room.x - (s.room.door === "right" ? .88 : .12)) < .07) { window.v69ExitRoom(); return __origInteract710.apply(this, arguments); }
       return;
     }
     return __origInteract710.apply(this, arguments);
