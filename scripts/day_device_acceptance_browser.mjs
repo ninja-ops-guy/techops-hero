@@ -118,6 +118,7 @@ async function assertConsole(page, label) {
       regions: [...dialog.querySelectorAll('.day-console,.day-workspace,.day-main,.day-evidence')].map(el => ({ name: el.className, client: el.clientWidth, scroll: el.scrollWidth })),
       animation: getComputedStyle(dialog).animationName,
       sideRoom: S.room?.id || null,
+      roomBannerHidden: !document.querySelector('#v710-card') || getComputedStyle(document.querySelector('#v710-card')).display === 'none',
       progress: progress ? { children: [...progress.children].map(el => el.tagName),
         labels: [...progress.children].map(el => el.textContent),
         nestedCaseContent: progress.querySelectorAll('.day-evidence-item,.day-actions,h3').length,
@@ -135,6 +136,7 @@ async function assertConsole(page, label) {
   assert.ok(layout.rect.left >= -1 && layout.rect.top >= -1 && layout.rect.right <= layout.width + 1 && layout.rect.bottom <= layout.height + 1, `${label}: console stays within viewport`);
   assert.ok(layout.bodyScrollWidth <= layout.width + 1, `${label}: no document horizontal overflow`);
   for (const region of layout.regions) assert.ok(region.scroll <= region.client + 1, `${label}: ${region.name} must not require horizontal scrolling (${region.scroll}/${region.client})`);
+  assert.equal(layout.roomBannerHidden, true, `${label}: room banner must not overlay device controls`);
   assert.equal(layout.animation, 'none', `${label}: reduced motion removes entrance animation`);
   const controls = [], buttons = page.locator('#dialogue.day-device-mode .day-console button');
   for (let i = 0; i < await buttons.count(); i++) {

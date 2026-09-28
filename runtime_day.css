@@ -51,3 +51,8 @@ body.day-route-visible #quest-tracker{visibility:hidden!important;pointer-events
 .day-evidence,.day-actions,.day-evidence-item{min-width:0;overflow-wrap:break-word}
 .day-progress>li{min-width:0;overflow-wrap:normal;word-break:normal}
 @media(max-width:360px){.day-console-header{align-items:flex-start}.day-console h2{font-size:16px}.day-close{max-width:105px;padding:8px!important}.day-main,.day-evidence{padding:11px}.day-hotspot-labels{grid-template-columns:1fr}.day-app-grid{padding:11px;gap:8px}.day-app-grid button{padding:9px}}
+/* Department entry cards belong to room presentation, never to field controls. */
+body.day-device-open #v710-card,body.day-route-visible #v710-card{display:none!important}
+@media(max-width:720px){#day-route-hud{top:142px;width:calc(100vw - 24px);max-width:330px;display:grid;grid-template-columns:1fr 1fr}#day-route-hud header,#day-route-hud .day-objective small{display:none}#day-route-hud .day-objective{grid-column:1/-1;padding:8px 11px}#day-route-hud .day-objective strong{font-size:13px;line-height:1.3}#day-route-hud .day-nearby{grid-column:1/-1}#day-route-hud button{font-size:12px}#day-route-hud [data-day-jobs]{border-left:1px solid #345669}}
+@media(max-width:360px){.day-console-footer{display:none}}
+@media(max-height:500px){#day-route-hud{top:64px;width:235px}#day-route-hud .day-objective small{display:none}}
