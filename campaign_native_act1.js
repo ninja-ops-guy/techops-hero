@@ -405,7 +405,7 @@
   }
 
   function workstationOptions() {
-    return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat([{ t: "Exit workstation", f: closeDialog }]);
+    return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat(root.TechOpsCombatAudio ? [{t:"Combat sound & captions",f:function(){root.TechOpsCombatAudio.openSettings(openWorkstation);}}] : []).concat([{ t: "Exit workstation", f: closeDialog }]);
   }
 
   function openWorkstation() {

@@ -261,7 +261,7 @@
     bind('[data-os-min]',function(){box.querySelector('.os-window').classList.toggle('os-minimized');});
     bind('[data-os-max]',function(){box.querySelector('.os-window').classList.toggle('os-maximized');});
     var actions=box.querySelector('.os-actions');
-    (options||[]).forEach(function(option){if(home&&apps.some(function(a){return a[0]===option.t;}))return;var b=root.document.createElement('button');b.type='button';b.textContent=option.t;b.onclick=function(){if(valid(token))return option.f();};actions.appendChild(b);});
+    (options||[]).forEach(function(option){if(home&&apps.some(function(a){return a[0]===option.t;}))return;var b=root.document.createElement('button');b.type='button';b.textContent=option.t==='Combat sound & captions'?'Sound & captions':option.t;b.onclick=function(){if(valid(token))return option.f();};actions.appendChild(b);});
     if(film)startFilm(name,box,actions,token);
     return true;
   }
