@@ -210,13 +210,14 @@
     else ctx.drawImage(img, frame[0] * cell, frame[1] * cell, cell, cell, x - w / 2, floorY - h + bob, w, h);
     ctx.restore();
   }
-  function drawNamePlate(x, floorY, name, color) {
+  function drawNamePlate(x, floorY, name, color, above) {
     ctx.save();
     ctx.font = "bold 9px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const w = Math.max(34, ctx.measureText(name).width + 16), h = 13;
-    const px = x - w / 2, py = floorY + 7;
-    ctx.fillStyle = "#232936"; ctx.fillRect(x - 1.5, py + h, 3, 5);
-    ctx.fillStyle = "#1a1f2b"; ctx.fillRect(x - 7, py + h + 5, 14, 2);
+    const px = x - w / 2, py = above ? floorY - 92 : floorY + 7;
+    ctx.fillStyle = "#232936";
+    if (above) ctx.fillRect(x - 1.5, py - 5, 3, 5);
+    else { ctx.fillRect(x - 1.5, py + h, 3, 5); ctx.fillStyle = "#1a1f2b"; ctx.fillRect(x - 7, py + h + 5, 14, 2); }
     ctx.fillStyle = "#12161f";
     if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(px, py, w, h, 3); ctx.fill(); } else ctx.fillRect(px, py, w, h);
     ctx.strokeStyle = "#46536e"; ctx.lineWidth = 1;
@@ -234,15 +235,33 @@
     const tm = performance.now();
     const W = cv.width, H = cv.height;
     const p = palOf(s.room.id);
-    const floorY = Math.round(H * .82);
+    // Framing per situation: scripted standup gets a cinematic mid shot (crew
+    // must stay visible above the dialogue), tall screens lift the floor line
+    // out of the touch controls, otherwise the authored 82% floor stays.
+    const standupOpen = typeof document !== "undefined" && document.body && document.body.classList.contains("day-standup-open");
+    const tall = W / H < .8;
+    const floorY = Math.round(H * (standupOpen ? .62 : tall ? .68 : .82));
     const img = roomImgs[s.room.key];
+    let bandTop = 0;
     // Preserve pixel edges when scaling the authored backdrop.
     if (img && img.complete && img.naturalWidth) {
       const scale = Math.min(W / img.naturalWidth, floorY / img.naturalHeight);
       const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+      bandTop = Math.round(floorY - dh);
       ctx.fillStyle = "#101b29"; ctx.fillRect(0,0,W,H);
+      // Tall screens: the void above the backdrop reads as the room's ceiling.
+      if (tall && bandTop > 8) {
+        const cg = ctx.createLinearGradient(0, 0, 0, bandTop);
+        cg.addColorStop(0, "#0a1320"); cg.addColorStop(1, "#16222f");
+        ctx.fillStyle = cg; ctx.fillRect(0, 0, W, bandTop);
+        ctx.fillStyle = p.line; ctx.globalAlpha = .12;
+        const ly = Math.round(bandTop * .45);
+        ctx.fillRect(Math.round(W * .22), ly, Math.round(W * .56), 3);
+        ctx.fillRect(Math.round(W * .30), ly + 13, Math.round(W * .40), 2);
+        ctx.globalAlpha = 1;
+      }
       ctx.save();ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(img, Math.round((W-dw)/2), Math.round(floorY-dh), Math.round(dw), Math.round(dh));ctx.restore();
+      ctx.drawImage(img, Math.round((W-dw)/2), bandTop, Math.round(dw), Math.round(dh));ctx.restore();
     } else { ctx.fillStyle = "#1a2030"; ctx.fillRect(0, 0, W, H); }
     // palette truth: biome wash + biome carpet + accent baseboard
     ctx.save();
@@ -270,7 +289,13 @@
       if (typeof npcIdx === "function") drawSideSprite(npcImg, 128, [npcIdx(n), 0], x, floorY, 64, false, tm);
       if (!n.ambient && !n.done) { ctx.font = "15px serif"; ctx.fillText(n.critical ? "🚨" : "🎫", x + 18, floorY - 66); }
       else if (!n.ambient && n.done) { ctx.font = "13px serif"; ctx.fillText("✅", x + 18, floorY - 64); }
-      drawNamePlate(x, floorY, n.name, n.ambient ? "#9fb4d8" : "#ffd24a");
+      const speaking = standupOpen && s.dayStandupSpeaker === n.name;
+      if (speaking) {
+        // speaker emphasis: gold pointer over the head of who owns the line
+        ctx.fillStyle = "#ffd24a";
+        ctx.beginPath(); ctx.moveTo(x - 6, floorY - 100); ctx.lineTo(x + 6, floorY - 100); ctx.lineTo(x, floorY - 90); ctx.closePath(); ctx.fill();
+      }
+      drawNamePlate(x, floorY, n.name, speaking ? "#ffd24a" : n.ambient ? "#9fb4d8" : "#ffd24a", standupOpen);
     });
     // felicia at her mapped station
     const f = felHere(s);
@@ -280,18 +305,34 @@
         const x = fx * W;
         ctx.fillStyle = "#0006"; ctx.beginPath(); ctx.ellipse(x, floorY + 4, 22, 5, 0, 0, 7); ctx.fill();
         drawSideSprite(felImg, (typeof FEL_ATLAS !== "undefined" ? FEL_ATLAS.cell : 128), [0, 0], x, floorY, 66, false, tm);
-        drawNamePlate(x, floorY, "Felicia", "#00d9ff");
+        drawNamePlate(x, floorY, "Felicia", "#00d9ff", standupOpen);
       }
     }
     // Mike's authored workstation is usable from this room, not an invisible floor tile.
     if(s.room.id==='itdept'){
       const x=Math.round(W*.82), y=floorY;
+      // chair silhouette behind the desk
+      ctx.fillStyle='#22303c';ctx.fillRect(x-17,y-46,34,30);
+      ctx.fillStyle='#2b3b49';ctx.fillRect(x-17,y-46,34,6);ctx.fillRect(x-20,y-18,6,18);
+      // desk body: two-tone like the backdrop office desks
+      ctx.fillStyle='#4a5965';ctx.fillRect(x-41,y-16,82,6);
+      ctx.fillStyle='#3d4a55';ctx.fillRect(x-41,y-12,82,2);
+      ctx.fillStyle='#4a5965';ctx.fillRect(x-37,y-10,5,12);ctx.fillRect(x+32,y-10,5,12);
+      // monitor with lit workspace screen + stand
       ctx.fillStyle='#172534';ctx.fillRect(x-32,y-61,64,33);
       ctx.fillStyle='#78bdc9';ctx.fillRect(x-27,y-56,54,23);
-      ctx.fillStyle='#315970';ctx.fillRect(x-24,y-53,29,3);ctx.fillRect(x-24,y-47,43,2);
+      ctx.fillStyle='#a8dde4';ctx.fillRect(x-27,y-56,54,3);
+      ctx.fillStyle='#315970';ctx.fillRect(x-24,y-50,29,3);ctx.fillRect(x-24,y-44,43,2);ctx.fillRect(x-24,y-39,21,2);
+      ctx.fillStyle='#d8ad68';ctx.fillRect(x+12,y-50,9,7);
       ctx.fillStyle='#728b9b';ctx.fillRect(x-3,y-28,6,10);ctx.fillRect(x-17,y-20,34,3);
-      ctx.fillStyle='#4a5965';ctx.fillRect(x-41,y-16,82,6);ctx.fillRect(x-37,y-10,5,12);ctx.fillRect(x+32,y-10,5,12);
-      drawNamePlate(x,y,"Mike’s desk",'#8ddde9');
+      // keyboard, mouse, mug on the surface
+      ctx.fillStyle='#2c3947';ctx.fillRect(x-26,y-19,24,4);
+      ctx.fillStyle='#5c7183';ctx.fillRect(x-24,y-18,20,1);
+      ctx.fillStyle='#2c3947';ctx.fillRect(x+10,y-19,8,4);
+      ctx.fillStyle='#c9853f';ctx.fillRect(x+22,y-24,7,7);ctx.fillStyle='#8a5a2b';ctx.fillRect(x+28,y-22,2,3);
+      // cable dropping to the baseboard
+      ctx.strokeStyle='#31414e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+34,y-14);ctx.quadraticCurveTo(x+44,y-8,x+42,y);ctx.stroke();
+      drawNamePlate(x,y,"Mike’s desk",'#8ddde9',standupOpen);
     }
     // player
     const px = s.room.x * W;

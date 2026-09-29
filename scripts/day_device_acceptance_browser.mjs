@@ -240,6 +240,35 @@ async function morningOpening(page, result) {
   await screenshot(page,result.id,'requester-conversation');
   await page.evaluate(()=>closeDlg());
 
+  // Shipping act1-reference stage: real requester dialog opens the authored
+  // stage; the floor line must be the measured art floor, not a fixed offset.
+  result.shippingStage = await page.evaluate(() => {
+    if (S.inDialog) closeDlg();
+    if (S.room) v69ExitRoom();
+    const p = S.meta.campaignAct1Native && S.meta.campaignAct1Native.shipping;
+    if (!p) throw Error('No authored shipping contact');
+    const spot = [[0,1],[-1,0],[1,0],[0,-1],[0,0]].map(([dx,dy]) => ({ x: p.x + dx, y: p.y + dy }))
+      .find(t => S.map[t.y] && S.map[t.y][t.x] === 0) || p;
+    S.px = spot.x; S.py = spot.y;
+    const ok = TechOpsDayExperience.talk('shipping_cannot_print');
+    return { ok, fixture: 'teleported adjacent to authored shipping contact', title: document.getElementById('dlg-name').textContent, stage: !!document.getElementById('act1-reference') };
+  });
+  assert.equal(result.shippingStage.ok, true, 'shipping requester conversation opens');
+  assert.match(result.shippingStage.title, /SHIPPING/);
+  await page.locator('#act1-reference .a1-actor').waitFor({ state: 'visible', timeout: 5000 });
+  await page.waitForFunction(() => {
+    const el = document.getElementById('act1-reference');
+    if (!el) return false;
+    const v = parseFloat(getComputedStyle(el).getPropertyValue('--a1-floor-bottom'));
+    return v > 0;
+  }, null, { timeout: 5000 });
+  result.shippingFloor = await page.evaluate(() => getComputedStyle(document.getElementById('act1-reference')).getPropertyValue('--a1-floor-bottom').trim());
+  assert.match(result.shippingFloor, /%$/, 'floor line measured from the art');
+  // let the transient room-entry card clear so the capture shows only the stage
+  await page.waitForFunction(() => !document.getElementById('v710-card'), null, { timeout: 6000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  await screenshot(page, result.id, 'shipping-stage');
+  await page.evaluate(() => closeDlg());
 
 }
 

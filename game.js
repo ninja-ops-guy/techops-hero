@@ -1497,6 +1497,9 @@ function interact() {
 function dlg(name, text, options) {
   if (window.TechOpsDayExperience) window.TechOpsDayExperience.release();
   S.inDialog = true;
+  // A live toast would sit above the panel (z 40 > 30) and hide the speaker's
+  // copy; the dialogue owns the screen while it is open.
+  const liveToast = $("toast"); if (liveToast) liveToast.classList.add("hidden");
   $("dialogue").classList.remove("hidden");
   $("dlg-name").textContent = name;
   $("dlg-text").innerHTML = text;

@@ -219,9 +219,11 @@
   function standupScene(decision){
     var s=gs(),i=0;
     var shots=[['NICK','Morning. Shipping has a label problem, Plating has a workstation down, and Security has an access record that needs explaining.'],['AMIT','I’ll own Plating. We coordinate with the operator before touching the production session.'],['BRANDON','Shipping says the printer is ready, but the labels disappear. We need to follow the job, not assume the printer is broken.'],['DANIEL','Make the ownership clear before we scatter. Mike, do you want the access investigation, or should Security take that one?']];
-    function finish(){if(gs()!==s||!s.inDialog)return;s.meta.dayStandupIntroSeen=s.day;if(typeof root.save==='function')root.save();decision();}
+    function finish(){if(gs()!==s||!s.inDialog)return;delete s.dayStandupSpeaker;if(root.document)root.document.body.classList.remove('day-standup-open');s.meta.dayStandupIntroSeen=s.day;if(typeof root.save==='function')root.save();decision();}
     function show(){
       if(gs()!==s||s.nightMode)return;var shot=shots[i];
+      s.dayStandupSpeaker=shot[0];
+      if(root.document)root.document.body.classList.add('day-standup-open');
       root.dlg('STANDUP SCENE // '+shot[0],'<small>08:55 · IT DEPARTMENT · '+(i+1)+' / '+shots.length+'</small><br><br><b>'+shot[0]+'</b><br><br>“'+shot[1]+'”',[
         {t:i===shots.length-1?'Decide the assignments':'Continue standup',f:function(){if(owner!==targetMenuOwner||!s.inDialog)return;if(i===shots.length-1)finish();else{i++;show();}}},
         {t:'Skip to assignments',f:function(){if(owner===targetMenuOwner)finish();}}

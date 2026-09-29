@@ -100,3 +100,60 @@ Observed priorities against the production bible:
 Immediate review fix: clamp workstation prompt inside narrow canvases; render
 side-room backdrop with nearest-neighbor scaling. This removes extra interpolation,
 but does not resolve underlying asset-style differences. No AAA art approval is claimed.
+
+## Review-fix round — September 29 (capture-verified)
+
+Capture bot now also drives the real Shipping requester dialog and captures the
+authored act1-reference stage at all four sizes. Local four-viewport run: PASS,
+0 page errors; evidence in `scripts/docs/qa-day-device-2026-09-29/` (40
+screenshots + report.json + visual-review.html), inspected by hand.
+
+Fixed against the production bible:
+
+- **P1 — standup hid the crew / arrival overlays competed.** The scripted
+  standup now runs as a framed mid-shot: `day-standup-open` lifts the room
+  floor line to 62% while the exchange runs, caps the dialogue panel
+  (38vh desktop / 34vh phone / 30vh compact / 46vh short-landscape), lays the
+  Continue/Skip pair side-by-side on phones, and marks the current speaker
+  (gold pointer + plate). The CLEAR HEAD / overslept status toast is queued
+  after the arrival day card finishes instead of stacking on top of it.
+- **P1 — Shipping stage floated actor/props.** The stage now measures the
+  background art's last lit scanline (several boards carry baked letterbox
+  bars, so fixed offsets could never align) and converts it to a
+  `--a1-floor-bottom` custom property with true `background-size:cover` math,
+  re-applied on resize. Actor, props, forklift/feed/eject motion and the
+  status bar all share that measured floor at every viewport (observed
+  3.5–4.3% across the four sizes). Behind-dialogue actor scale reduced to
+  48% so the clerk matches the dock's perspective.
+- **P1 — arrival card stacked under/over the route HUD.** While the arrival
+  card holds the screen the body-level route HUD yields (`arrival-card-on`).
+- **P1 — toasts obscured live dialogue.** `dlg()` now dismisses any live
+  toast when the dialogue opens (the room-entry hint toast could cover the
+  requester conversation).
+- **P2 — portrait side-room framing.** Tall screens lift the floor line to
+  68% (name plates clear the touch D-pad), the void above the backdrop reads
+  as ceiling (gradient + light strips in the biome accent), and Mike's
+  foreground desk is redrawn to match the room's authored palette (chair,
+  two-tone desk, lit monitor, keyboard, mug, cable) with unchanged
+  interaction bounds.
+- **Hygiene.** The Good Boys handoff suppression matcher now recognises the
+  renamed "People Behind the Flight" panel; REVIEW_GUIDE regenerated
+  (review contracts PASS again).
+
+Regression status: the four Day runtime suites, the capture bot (four
+profiles), Night lifecycle (20 groups), Night combat (38 assertions) and the
+syntax inventory all pass. Seven production-gate groups still fail — all
+verified to fail identically on the pre-round branch head `8711c09`
+(resume-checkpoint extraction, story-authority firewall, Good Dogs state
+integrity, runtime autofix/triage, two Night suites); they are branch debt
+outside this slice, not regressions from this round.
+
+### Remaining P2 dispositions (explicit)
+
+| Item | Disposition |
+| --- | --- |
+| Inspection diagrams read as vector art next to pixel scenes | Kept by design: the close-up is a technical interaction diagram, not in-world art (`runtime_day.css`). A palette/pixel-grid unification pass is deferred to a dedicated art milestone. |
+| Company profile media is photoreal next to pixel characters | Kept as diegetic corporate media (an in-universe company video). Reframing it as pixel art would contradict the "existing production campaign media" authority. |
+| Side voids beside the room backdrop on short-landscape viewports | Accepted for this slice: the authored backdrop is height-bound; filling the width would crop the authored furniture. Revisit with a wider room variant. |
+| Pre-existing gate failures (7 groups, see above) | Tracked as branch debt; fixing save/checkpoint extraction and the Night suites belongs to a separate hardening slice. |
+
