@@ -78,3 +78,25 @@ Office coworkers now have distinct authored two-step topics: Nick (triage and ha
 First entry into the IT room starts a four-speaker standup sequence. Timed shots and explicit advance share the dialogue owner; skipping goes to the assignment decision, not completed work. The intro checkpoint and canonical standup flags prevent replay after completion. The side-view room now contains Mike's desk at room-x .82 with a matching prompt and interaction radius. Side-view workstation admission uses that visible position rather than the frozen floor-entry coordinates; no teleport is involved.
 
 The capture bot now enters the IT room, observes automatic standup, walks with keyboard input to the visible desk, and captures requester dialogue as well as inspections. It produces an annotated `visual-review.html` alongside screenshots and `report.json`. Priorities distinguish P0 spatial/story defects, P1 dialogue/interaction defects, and P2 art-direction debt. Pixel-density/lighting and cinematic-media consistency remain visual-review items, not automatic aesthetic passes.
+
+### Captured review, 2026-09-29
+
+Four-size Playwright capture on `5d435fb` passed the entry-triggered standup,
+real keyboard approach to the side-room desk, simulated desktop, requester
+conversation, and evidence/repair/human-verification paths. These are declared
+fixture-assisted checks, not a full unassisted playthrough. Screens are in Actions
+run 36500949726; `visual-review.html` gives side-by-side criteria and annotations.
+
+Observed priorities against the production bible:
+
+| Priority | Finding | Next acceptance target |
+| --- | --- | --- |
+| P1 | Portrait standup dialogue hides the crew; arrival overlays compete with the scene. | Speaker remains visible and arrival UI finishes before the scripted exchange. |
+| P1 | Shipping scene composition places props/actor against unrelated background depth. | Background, actor feet and equipment share one authored scene coordinate system at all sizes. |
+| P2 | Portrait side-room framing leaves a large empty upper area. | Camera framing keeps the room and active character prominent without cropping controls. |
+| P2 | Detailed side backgrounds, simple floor props and vector inspections differ in pixel density and light. | One pixel grid, palette and light direction across the same device in all views. |
+| P2 | Mike's visible foreground desk differs in detail from backdrop desks. | Replace it with an authored matching asset while preserving its interaction bounds. |
+
+Immediate review fix: clamp workstation prompt inside narrow canvases; render
+side-room backdrop with nearest-neighbor scaling. This removes extra interpolation,
+but does not resolve underlying asset-style differences. No AAA art approval is claimed.

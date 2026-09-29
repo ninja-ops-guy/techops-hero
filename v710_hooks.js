@@ -236,12 +236,13 @@
     const p = palOf(s.room.id);
     const floorY = Math.round(H * .82);
     const img = roomImgs[s.room.key];
-    // backdrop — cover-fit, never distorted
+    // Preserve pixel edges when scaling the authored backdrop.
     if (img && img.complete && img.naturalWidth) {
       const scale = Math.min(W / img.naturalWidth, floorY / img.naturalHeight);
       const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
       ctx.fillStyle = "#101b29"; ctx.fillRect(0,0,W,H);
-      ctx.drawImage(img, (W - dw) / 2, floorY - dh, dw, dh);
+      ctx.save();ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(img, Math.round((W-dw)/2), Math.round(floorY-dh), Math.round(dw), Math.round(dh));ctx.restore();
     } else { ctx.fillStyle = "#1a2030"; ctx.fillRect(0, 0, W, H); }
     // palette truth: biome wash + biome carpet + accent baseboard
     ctx.save();
@@ -306,7 +307,7 @@
       ctx.font = "bold 10px monospace"; ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
       ctx.fillText(`E — talk to ${n.name}`, px, floorY - 84);
     }
-    if(!n&&!s.inDialog&&s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06){ctx.font='bold 10px monospace';ctx.fillStyle='#8ddde9';ctx.textAlign='center';ctx.fillText('E — use Mike’s workstation',px,floorY-84);}
+    if(!n&&!s.inDialog&&s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06){ctx.font='bold 10px monospace';ctx.fillStyle='#8ddde9';ctx.textAlign='center';const hint='E — use Mike’s workstation',half=ctx.measureText(hint).width/2+10;ctx.fillText(hint,Math.max(half,Math.min(W-half,px)),floorY-84);}
     // dept chip: accent stripe + live open-ticket count
     const open = s.npcs.filter(x => !x.done && x.type && (BIOME_OF_DEPT[x.dept] === s.room.id)).length;
     ctx.textAlign = "left";
