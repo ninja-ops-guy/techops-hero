@@ -15,7 +15,8 @@
   function isDay(){var s=gs();return !!(s&&s.map&&!s.room&&!s.nightMode&&!(s.meta&&s.meta._standaloneMode));}
   function stationById(id){return world()&&world().stations().find(function(s){return s.id===id;});}
   function near(station){return !!(isDay()&&station&&world()&&world().at(station.id));}
-  function desktopNearby(){return !!(isDay()&&world()&&world().deskNearby());}
+  function sideDeskNearby(){var s=gs();return !!(s&&!s.nightMode&&!s.inBattle&&s.room&&s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06);}
+  function desktopNearby(){if(sideDeskNearby())return true;return !!(isDay()&&world()&&world().deskNearby());}
   function unlock(){if(root.TechOpsDayAudio)root.TechOpsDayAudio.unlock({userGesture:true});}
   function guard(station){
     if(gs()&&gs().inBattle)return false;
@@ -23,10 +24,11 @@
     if(!campaign().flags.day_work_unlocked){notify('Finish the morning at Mike’s desk and clock in first.');return false;}
     return true;
   }
-  function routeTo(id){var target=stationById(id),s=gs();if(!s)return false;s.meta=s.meta||{};s.meta.dayRouteTarget=id;exit();var route=world()&&world().route(id);notify(s.room?'Route saved. Walk to the glowing room exit or press Q to return to the floor.':route&&route.ok?'Route marked: '+(target?target.label:id):'Check the floor map for '+(target?target.label:id)+'.');syncHud();return true;}
+  function routeTo(id){var target=stationById(id),s=gs();if(!s)return false;s.meta=s.meta||{};s.meta.dayRouteTarget=id;exit();if(id==='mike_desk'&&s.room&&s.room.id==='itdept'){notify('Mike’s desk is on the right side of this room. Walk over and press E.');return true;}var route=world()&&world().route(id);notify(s.room?'Route saved. Walk to the glowing room exit or press Q to return to the floor.':route&&route.ok?'Route marked: '+(target?target.label:id):'Check the floor map for '+(target?target.label:id)+'.');syncHud();return true;}
   function canonicalStation(ticketId,screen){return ticketId==='shipping_cannot_print'?(screen?'shipping_workstation':'shipping_printer'):'plating_workstation';}
   function requireDesk(){if(desktopNearby())return true;routeTo('mike_desk');return false;}
   function release(){
+    if(standupTimer)root.clearTimeout(standupTimer);standupTimer=null;
     if(root.TechOpsDayDesktop)root.TechOpsDayDesktop.release();
     targetMenuOwner++;
     var d=root.document&&root.document.getElementById('dialogue');if(d){d.classList.remove('day-device-mode','day-workstation');d.removeAttribute('aria-labelledby');}
@@ -213,7 +215,33 @@
     var d=root.document&&root.document.getElementById('dialogue');if(!d)return;
     if(desktopNearby()&&/WORKSTATION|COMPANY|PEOPLE BEHIND THE FLIGHT|MIKE \/\//.test(name)){d.classList.add('day-workstation');gs().dayInteraction='workstation';}
   }
+  var standupTimer=null,entryState=null,wasInOffice=false;
+  function standupScene(decision){
+    var s=gs(),i=0;
+    var shots=[['NICK','Morning. Shipping has a label problem, Plating has a workstation down, and Security has an access record that needs explaining.'],['AMIT','I’ll own Plating. We coordinate with the operator before touching the production session.'],['BRANDON','Shipping says the printer is ready, but the labels disappear. We need to follow the job, not assume the printer is broken.'],['DANIEL','Make the ownership clear before we scatter. Mike, do you want the access investigation, or should Security take that one?']];
+    function finish(){if(gs()!==s||!s.inDialog)return;s.meta.dayStandupIntroSeen=s.day;if(typeof root.save==='function')root.save();decision();}
+    function show(){
+      if(gs()!==s||s.nightMode)return;var shot=shots[i];
+      root.dlg('STANDUP SCENE // '+shot[0],'<small>08:55 · IT DEPARTMENT · '+(i+1)+' / '+shots.length+'</small><br><br><b>'+shot[0]+'</b><br><br>“'+shot[1]+'”',[
+        {t:i===shots.length-1?'Decide the assignments':'Continue standup',f:function(){if(owner!==targetMenuOwner||!s.inDialog)return;if(i===shots.length-1)finish();else{i++;show();}}},
+        {t:'Skip to assignments',f:function(){if(owner===targetMenuOwner)finish();}}
+      ]);
+      var owner=targetMenuOwner;
+      if(i<shots.length-1)standupTimer=root.setTimeout(function(){if(gs()===s&&s.inDialog&&owner===targetMenuOwner){i++;show();}},5500);
+    }
+    show();return true;
+  }
+  function checkOfficeEntry(){
+    var s=gs();if(!s||!s.map||s.nightMode||s.day!==1)return;
+    var inside=s.room?s.room.id==='itdept':s.px>=28&&s.px<=41&&s.py>=10&&s.py<=17;
+    if(entryState!==s){entryState=s;wasInOffice=false;}
+    if(!inside){wasInOffice=false;return;}
+    if(wasInOffice||s.inDialog||s.inBattle||s.gameOver||s.meta&&s.meta._standaloneMode)return;
+    var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))return;
+    wasInOffice=true;var c=campaign();if(!c.flags.standup_completed&&root.TechOpsCampaignNativeAct1)root.TechOpsCampaignNativeAct1.openStandup();
+  }
   function syncHud(){
+    if(root.document)checkOfficeEntry();
     if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
     if(!hud){hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);}
     hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';return;}
@@ -233,7 +261,7 @@
   }
   function keydown(e){if(!active)return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();exit();return;}if(e.key==='Tab'){var list=Array.from(root.document.querySelectorAll('#dialogue.day-device-mode button:not(:disabled)'));if(!list.length)return;var first=list[0],last=list[list.length-1];if(e.shiftKey&&root.document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&root.document.activeElement===last){e.preventDefault();first.focus();}}if(/^(Arrow| |Enter$|[wasdemv]$)/i.test(e.key))e.stopPropagation();}
   if(root.document)root.document.addEventListener('keydown',keydown,true);
-  root.TechOpsDayExperience={VERSION:1,openDevice:openDevice,talk:talk,interact:interact,routeTo:routeTo,requireDesk:requireDesk,desktopNearby:desktopNearby,release:release,exit:exit,render:render,syncHud:syncHud,workstationSkin:workstationSkin,transact:transact,active:function(){return active;},openBoard:openBoard};
+  root.TechOpsDayExperience={VERSION:1,standupScene:standupScene,sideDeskNearby:sideDeskNearby,openDevice:openDevice,talk:talk,interact:interact,routeTo:routeTo,requireDesk:requireDesk,desktopNearby:desktopNearby,release:release,exit:exit,render:render,syncHud:syncHud,workstationSkin:workstationSkin,transact:transact,active:function(){return active;},openBoard:openBoard};
 })(typeof globalThis!=='undefined'?globalThis:this);
 
 /* Day desktop and opening cinematics. Presentation only: native campaign callbacks

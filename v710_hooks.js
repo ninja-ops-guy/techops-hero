@@ -176,6 +176,7 @@
       }
       const n = nearestRoomNpc710();
       if (n) return n._pseudo && typeof COWORKERS !== "undefined" ? coworkerTalk(COWORKERS.find(c => c.name.toLowerCase() === n.name.toLowerCase()) || n) : n.ambient ? ambientTalk(n) : ticketFlow(n);
+      if(s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06&&window.TechOpsCampaignNativeAct1)return window.TechOpsCampaignNativeAct1.openWorkstation();
       // A visible person owns E before any frozen floor-entry clue.
       if (nearClueOrFel710(s) && Math.abs(s.room.x - (s.room.door === "right" ? .88 : .12)) < .07) { window.v69ExitRoom(); return __origInteract710.apply(this, arguments); }
       return;
@@ -281,6 +282,16 @@
         drawNamePlate(x, floorY, "Felicia", "#00d9ff");
       }
     }
+    // Mike's authored workstation is usable from this room, not an invisible floor tile.
+    if(s.room.id==='itdept'){
+      const x=Math.round(W*.82), y=floorY;
+      ctx.fillStyle='#172534';ctx.fillRect(x-32,y-61,64,33);
+      ctx.fillStyle='#78bdc9';ctx.fillRect(x-27,y-56,54,23);
+      ctx.fillStyle='#315970';ctx.fillRect(x-24,y-53,29,3);ctx.fillRect(x-24,y-47,43,2);
+      ctx.fillStyle='#728b9b';ctx.fillRect(x-3,y-28,6,10);ctx.fillRect(x-17,y-20,34,3);
+      ctx.fillStyle='#4a5965';ctx.fillRect(x-41,y-16,82,6);ctx.fillRect(x-37,y-10,5,12);ctx.fillRect(x+32,y-10,5,12);
+      drawNamePlate(x,y,"Mike’s desk",'#8ddde9');
+    }
     // player
     const px = s.room.x * W;
     ctx.fillStyle = "#0007"; ctx.beginPath(); ctx.ellipse(px, floorY + 5, 24, 6, 0, 0, 7); ctx.fill();
@@ -295,6 +306,7 @@
       ctx.font = "bold 10px monospace"; ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
       ctx.fillText(`E — talk to ${n.name}`, px, floorY - 84);
     }
+    if(!n&&!s.inDialog&&s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06){ctx.font='bold 10px monospace';ctx.fillStyle='#8ddde9';ctx.textAlign='center';ctx.fillText('E — use Mike’s workstation',px,floorY-84);}
     // dept chip: accent stripe + live open-ticket count
     const open = s.npcs.filter(x => !x.done && x.type && (BIOME_OF_DEPT[x.dept] === s.room.id)).length;
     ctx.textAlign = "left";

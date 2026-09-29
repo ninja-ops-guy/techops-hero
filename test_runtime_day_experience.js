@@ -155,3 +155,14 @@ for(const name of ['NICK','AMIT','BRANDON','DANIEL'])test(name+' remains a talk 
 test('ordinary ambient and ticket NPCs retain their own interaction owners',()=>{
   for(const ambient of [true,false]){const b=boot();b.move('mike_desk');const npc={id:'ordinary',name:'Requester',ambient,x:b.ctx.S.px+1,y:b.ctx.S.py};b.ctx.S.npcs.push(npc);b.ctx[ambient?'ambientTalk':'ticketFlow']=n=>{b.ctx.talkedTo=n;};b.ctx.S.meta.dayRouteTarget='mike_desk';b.X.interact();b.ctx.dialog.options.find(o=>o.t==='Talk to Requester').f();assert.equal(b.ctx.talkedTo,npc);assert.equal(b.ctx.workstationOpens,undefined);}
 });
+
+test('side room uses its visible desk position, never frozen floor coordinates',()=>{
+ const b=boot();b.move('mike_desk');b.ctx.S.room={id:'itdept',x:.15};assert.equal(b.X.desktopNearby(),false);
+ b.ctx.S.room.x=.82;assert.equal(b.X.desktopNearby(),true);assert.equal(b.X.openDevice('mike_desk'),true);
+ b.ctx.S.room.id='finance';assert.equal(b.X.desktopNearby(),false);
+});
+test('office entry triggers standup once per entry and never after completion',()=>{
+ const b=boot();const c=b.C.createInitialState();b.C.save(c,b.storage);let opened=0;b.ctx.TechOpsCampaignNativeAct1.openStandup=()=>opened++;
+ b.ctx.S.room={id:'itdept',x:.12};b.X.syncHud();b.X.syncHud();assert.equal(opened,1);
+ c.flags.standup_completed=true;b.C.save(c,b.storage);b.ctx.S.room=null;b.ctx.S.px=21;b.ctx.S.py=16;b.X.syncHud();b.ctx.S.room={id:'itdept',x:.12};b.X.syncHud();assert.equal(opened,1);
+});

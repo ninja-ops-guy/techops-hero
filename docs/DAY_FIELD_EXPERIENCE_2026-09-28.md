@@ -68,3 +68,13 @@ The music selection path now suppresses the base player's automatic READY playba
 The screenshot's placeholder forklift rectangle/anchor effects are removed, conversation actors are reduced to scene scale, room backgrounds fit the available viewport, and office coworkers use distinct stable existing atlas identities. The renderer still uses the existing authored asset family; these corrections do not establish AAA art certification.
 
 The new desktop is part of runtime_day.js: startup remains four Day modules and within the existing 120 KiB combined JavaScript / 20 KiB CSS limits. Browser acceptance adds the simulated desktop, profile cutscene, original desk identity, and all four real coworker interaction handlers with a stale desk route.
+
+## Dialogue and room-entry correction
+
+The September 28 requester screenshot reproduced two intake defects: all users received the same four gauge-filling choices, and a generic filler render immediately replaced the authored answer. Intake now exposes incident-specific observation and preservation questions plus department-specific impact questions. Asked topics persist on the requester; revisits resume that conversation. Guessing no longer reveals the hidden root cause or awards unsupported confidence. The existing technical investigation remains the authority after intake.
+
+Office coworkers now have distinct authored two-step topics: Nick (triage and handoff), Amit (production dependencies/change boundaries), Brandon (falsifiable tests), Daniel (mentoring and communication). Existing intern recruitment remains available. Department ambient conversations have work-specific topics and per-person memory. Repeat content is available explicitly as review instead of pretending it is a new exchange.
+
+First entry into the IT room starts a four-speaker standup sequence. Timed shots and explicit advance share the dialogue owner; skipping goes to the assignment decision, not completed work. The intro checkpoint and canonical standup flags prevent replay after completion. The side-view room now contains Mike's desk at room-x .82 with a matching prompt and interaction radius. Side-view workstation admission uses that visible position rather than the frozen floor-entry coordinates; no teleport is involved.
+
+The capture bot now enters the IT room, observes automatic standup, walks with keyboard input to the visible desk, and captures requester dialogue as well as inspections. It produces an annotated `visual-review.html` alongside screenshots and `report.json`. Priorities distinguish P0 spatial/story defects, P1 dialogue/interaction defects, and P2 art-direction debt. Pixel-density/lighting and cinematic-media consistency remain visual-review items, not automatic aesthetic passes.

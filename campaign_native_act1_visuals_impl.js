@@ -89,6 +89,7 @@
   }
   function sceneForDialog(name) {
     name = String(name || "").toUpperCase();
+    if(name.indexOf("STANDUP SCENE //")===0)return null;
     var ctx = contextId();
     // Stored asset context belongs to casebook continuations, not unrelated NPCs.
     if (ctx && SCENES[ctx] && /CASEBOOK|RECORDED EVENTS|TICKET HISTORY|FOLLOW.UP/.test(name)) return ctx;

@@ -1511,6 +1511,7 @@ function dlg(name, text, options) {
 function closeDlg() { if (window.TechOpsDayExperience) window.TechOpsDayExperience.release(); S.inDialog = false; $("dialogue").classList.add("hidden"); flushPromo(); }
 
 function ambientTalk(n) {
+  if(typeof dayAmbientConversation === "function" && dayAmbientConversation(n))return;
   const deptLines = {
     Executives: ["We're watching the Q3 numbers very closely.", "My calendar is sacred. Fix it fast."],
     Finance: ["Payroll runs Thursday. Nothing can break Thursday.", "These spreadsheets reconcile themselves, said no one ever."],

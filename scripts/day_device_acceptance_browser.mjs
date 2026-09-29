@@ -164,16 +164,19 @@ async function morningOpening(page, result) {
     if (S.inDialog) closeDlg();
     if (S.room) v69ExitRoom();
     TechOpsCampaignNativeAct1.ensureWorld(); TechOpsDayWorld.ensureWorld();
-    const contact = TechOpsDayWorld.contact('standup');
-    const approach = [[0, 1], [-1, 0], [1, 0], [0, -1]].map(([x, y]) => ({ x: contact.x + x, y: contact.y + y }))
-      .find(p => S.map[p.y]?.[p.x] === 0 && !S.npcs.some(n => n.x === p.x && n.y === p.y));
-    if (!approach) throw Error('Standup has no clear fixture approach');
-    S.px = approach.x; S.py = approach.y;
-    TechOpsCampaignNativeAct1.openStandup();
+    S.room={id:'itdept',key:ROOM_OF_BIOME.itdept,x:.12,door:'left',back:{px:S.px,py:S.py}};
+    TechOpsDayExperience.syncHud(); // real entry-trigger owner; no openStandup call
   });
+  await page.getByRole('button',{name:'Skip to assignments',exact:true}).waitFor();
+  await screenshot(page,result.id,'entry-standup');
+  await click(page,'Skip to assignments');
   await click(page, 'Assign queue: Mike investigates access');
   await click(page, "Walk to Mike's workstation");
-  result.deskFixture = await fixtureAtStation(page, 'mike_desk');
+  await page.keyboard.down('d');
+  try{await page.waitForFunction(()=>S.room&&S.room.x>=.78,null,{timeout:8000});}finally{await page.keyboard.up('d');}
+  await screenshot(page,result.id,'side-room-desk');
+  await page.keyboard.press('e');
+  result.deskFixture={scene:'itdept',input:'actual keyboard walk to visible side-room desk'};
   await page.locator('.os-desktop').waitFor({state:'visible'});
   await screenshot(page, result.id, 'simulated-desktop');
   await click(page, 'Maximize window');
@@ -228,6 +231,15 @@ async function morningOpening(page, result) {
     }
     closeDlg();return results;
   });
+  result.requesterDialogue=await page.evaluate(()=>{
+    const n=S.npcs.find(n=>!n.ambient&&!n.done&&!String(n.id||'').startsWith('campaign_')&&n.type);
+    if(!n)throw Error('No ordinary requester for dialogue audit');
+    if(S.inDialog)closeDlg();ticketFlow(n);
+    return {name:n.name,department:n.dept,options:Array.from(document.querySelectorAll('#dlg-options button')).map(b=>b.textContent)};
+  });
+  await screenshot(page,result.id,'requester-conversation');
+  await page.evaluate(()=>closeDlg());
+
 
 }
 
@@ -355,6 +367,18 @@ try {
 } finally {
   if (browser) await browser.close();
   if (server) server.kill();
+  const reviews=[
+    ['entry-standup','P0 · Entry / story ownership','Entering IT must start the scripted standup once; skipping leads to an explicit assignment decision.'],
+    ['side-room-desk','P0 · Spatial affordance','Visible desk, readable prompt and actual keyboard approach must agree. Check that props and feet share a floor line.'],
+    ['requester-conversation','P1 · Dialogue specificity','Questions must concern this incident and department. Answers must remain visible and already-discussed topics must not repeat.'],
+    ['simulated-desktop','P1 · Interface hierarchy','Local desktop only at the physical desk; working window controls and readable touch targets.'],
+    ['company-cutscene','P2 · Texture / art direction','Review photoreal media versus pixel characters. Functional capture is not art approval; visual consistency remains an authored asset task.'],
+    ['printer-inspection','P1 · Evidence before action','Inspection targets should lie on components and reveal supported observations. Diagram style versus world texture needs art review.'],
+    ['floor','P2 · World texture consistency','Compare tile density, sprite scale and lighting with the side room. Different rendering styles remain a visual debt.']
+  ];
+  report.visualReview={standard:'docs/production/PRODUCTION-BIBLE-R1.md',automaticVerdict:report.status,aestheticCertification:false,priorities:reviews.map(([scene,priority,note])=>({scene,priority,note}))};
+  const html='<!doctype html><meta charset="utf-8"><title>TechOps Hero — experience review</title><style>body{background:#0b1823;color:#dce8f0;font:16px/1.5 system-ui;margin:32px;max-width:1400px}article{border:1px solid #3c586b;padding:18px;margin:24px 0}img{display:block;max-width:100%;max-height:720px;margin:auto}b{color:#ffd38b}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}figure{margin:0;position:relative}figcaption{padding:12px;background:#183448;border-left:4px solid #e7bb62}small{color:#9db4c6}</style><h1>TechOps Hero / captured experience review</h1><p>Fixture-assisted runs at four viewport sizes. Captures are annotated against the production bible. Automated functional passes do not certify texture consistency or AAA presentation.</p>'+reviews.map(([scene,priority,note])=>'<article><b>'+priority+'</b><h2>'+scene.replaceAll('-',' ')+'</h2><p>'+note+'</p><div class="shots">'+profiles.map(p=>'<figure><img loading="lazy" src="'+p.id+'-'+scene+'.png" alt="'+p.id+' '+scene+'"><figcaption>'+p.id+' · '+p.width+' × '+p.height+'<br><small>'+note+'</small></figcaption></figure>').join('')+'</div></article>').join('');
+  await writeFile(`${out}/visual-review.html`,html);
   await writeFile(`${out}/report.json`, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
 }

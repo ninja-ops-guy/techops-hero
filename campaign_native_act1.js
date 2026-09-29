@@ -62,7 +62,7 @@
   function saveState(state) { act1().save(state, storage()); return state; }
   function gameState() { return root && root.S ? root.S : null; }
   function dayExperience() { return root && root.TechOpsDayExperience || null; }
-  function requireDesk() { var experience = dayExperience(),gs=gameState();if(gs&&gs.room){if(experience)experience.routeTo("mike_desk");return false;}return !experience || experience.requireDesk(); }
+  function requireDesk() { var experience = dayExperience(),gs=gameState();if(gs&&gs.room&&!(gs.room.id==="itdept"&&Math.abs(gs.room.x-.82)<=.06)){if(experience)experience.routeTo("mike_desk");return false;}return !experience || experience.requireDesk(); }
   function routeToDesk() { var experience = dayExperience(); return experience ? experience.routeTo("mike_desk") : openWorkstation(); }
   function deskRouteLabel() { return dayExperience() ? "Walk to Mike's workstation" : "Open workstation"; }
   function atContact(key) { var gs = gameState(), contact = gs && gs.meta && gs.meta.campaignAct1Native && gs.meta.campaignAct1Native[key]; return !!(gs && !gs.nightMode && !gs.room && isAdjacent({x:gs.px,y:gs.py},contact)); }
@@ -147,7 +147,9 @@
     return state;
   }
 
-  function openStandup() {
+  function openStandup(decisionOnly) {
+    var experience=dayExperience(),game=gameState();
+    if(!decisionOnly&&experience&&experience.standupScene&&!loadState().flags.standup_completed&&!(game&&game.meta&&game.meta.dayStandupIntroSeen===game.day))return experience.standupScene(function(){openStandup(true);});
     setAssetContext("standup");
     var state = loadState();
     if (state.flags.ticket_assignments_confirmed) {
@@ -475,7 +477,7 @@
     var serial=musicViewSerial,game=gameState(),map=game&&game.map,day=game&&game.day,epoch=game&&game._modeEpoch;
     function current(){
       var currentGame=gameState(),experience=dayExperience(),name=root.document&&root.document.getElementById("dlg-name");
-      return serial===musicViewSerial&&currentGame===game&&(!game||game.map===map&&game.day===day&&game._modeEpoch===epoch&&!game.nightMode&&!game.room&&game.inDialog)&&(!experience||experience.desktopNearby())&&(!name||name.textContent==="WORKSTATION // MUSIC");
+      return serial===musicViewSerial&&currentGame===game&&(!game||game.map===map&&game.day===day&&game._modeEpoch===epoch&&!game.nightMode&&(!game.room||experience&&experience.sideDeskNearby&&experience.sideDeskNearby())&&game.inDialog)&&(!experience||experience.desktopNearby())&&(!name||name.textContent==="WORKSTATION // MUSIC");
     }
     var pending;try{pending=audio.playMorningTrack({userGesture:true,enableAudio:true});}catch(_){return musicFailure("unavailable");}
     return Promise.resolve(pending).then(function(result){
