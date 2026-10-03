@@ -79,7 +79,7 @@ reloadCheckpoint("company profile found", state => {
 });
 
 native.openCompanyTab();
-choose("Play Engineering the Human Connection");
+choose("Play People Behind the Flight");
 choose("Finish video");
 reloadCheckpoint("company video complete", state => {
   assert.strictEqual(state.flags.felicia_video_watched, true);

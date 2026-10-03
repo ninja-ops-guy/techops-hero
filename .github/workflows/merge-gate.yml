@@ -110,6 +110,13 @@ jobs:
         run: |
           set -euo pipefail
           timeout 240s npm run test:browser:quality
+      - name: Day physical device acceptance
+        env:
+          DAY_DEVICE_BASE_URL: http://127.0.0.1:4173/
+          DAY_DEVICE_OUT_DIR: runtime-bot-artifacts/day-devices
+        run: |
+          set -euo pipefail
+          timeout 240s node scripts/day_device_acceptance_browser.mjs
       - name: Responsive presentation acceptance
         env:
           PRESENTATION_BASE_URL: http://127.0.0.1:4173/

@@ -138,6 +138,7 @@
     const el = $("dlg-text");
     if (!el) return;
     clearInterval(twTimer);
+    el.onclick = null; // each dialogue owns its text; a prior typewriter cannot overwrite a device UI
     if (/<[a-z]/i.test(text) || text.length < 60) {
       // HTML-rich or short confirmations: instant text + smooth fade
       retrigger(el, "v66-dlgfade");

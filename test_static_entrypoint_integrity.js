@@ -17,12 +17,12 @@ const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
 for(const src of ["good_boys_bible_world.js","good_boys_access_core_authority.js"]){assert.strictEqual(refFor(src),src+"?v=20260913-grounded-r1");}
 for(const src of ["v64_hooks.js","v70_hooks.js","v73_hooks.js","v74_hooks.js","v726_hooks.js","v727_hooks.js","v729_hooks.js","v730_hooks.js","v736_hooks.js","campaign_act1.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-revision-r1");}
 for(const src of ["good_boys_progression_authority.js","katrin_manchez.atlas.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
-for(const src of ["campaign_world_visuals.js"])assert.strictEqual(refFor(src),src+"?v=20260912-night-combat-r1");
+for(const src of ["game.js","campaign_native_act1.js","campaign_world_visuals.js","v66_hooks.js","runtime_day.js","runtime_day_audio.js","runtime_day_world.js","runtime_day_cases.js"])assert.strictEqual(refFor(src),src+"?v=20260928-day-field-r3");
 const bootstrapBuild=fs.readFileSync("production_bootstrap.js","utf8").match(/BUILD="([A-Za-z0-9._-]+)"/);
-for(const src of ["night_hooks.js","v725_hooks.js","campaign_native_act1.js","good_boys_hud_lite.js"]){assert.strictEqual(refFor(src),src+"?v=20260921-presentation-r1");}
+for(const src of ["night_hooks.js","v725_hooks.js","good_boys_hud_lite.js"]){assert.strictEqual(refFor(src),src+"?v=20260921-presentation-r1");}
 assert.ok(fs.readFileSync("campaign_story.js","utf8").includes("campaign_native_act1_visuals.js?v=20260921-presentation-r1"));
-assert.ok(fs.readFileSync("campaign_native_act1_visuals.js","utf8").includes("campaign_native_act1_visuals_impl.js?v=20260921-presentation-r1"));
-for(const src of ["game.js","campaign_act2.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","cinematic_systems.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}
+assert.ok(fs.readFileSync("campaign_native_act1_visuals.js","utf8").includes("campaign_native_act1_visuals_impl.js?v=20260928-day-field-r3"));
+for(const src of ["campaign_act2.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","cinematic_systems.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}
 assert.strictEqual(refFor("production_title_experience.js"),"production_title_experience.js?v=20260920-quality-r2","title gesture ownership must bypass stale caches");
 assert.strictEqual(refFor("campaign_story.js"),"campaign_story.js?v=20260921-presentation-r1","campaign presentation loader must bypass stale caches");
 assert.ok(fs.readFileSync("campaign_native_act1_visuals.js","utf8").includes("good_boys_button_hard_fix.js?v=20260920-quality-r2"),"lazy title fallback must load the gesture ownership fix");
@@ -118,7 +118,10 @@ assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK B
 console.log("Static entrypoint integrity: PASS");
 
 // Every changed parser-time lifecycle dependency bypasses the old mobile cache.
-for(const src of ["v57_hooks.js", "v69_hooks.js", "v710_hooks.js", "v716_hooks.js", "v735_hooks.js", "campaign_sector04_runtime.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
+for(const src of ["v57_hooks.js", "v69_hooks.js", "v735_hooks.js", "campaign_sector04_runtime.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
 for(const src of ["v55_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-directional-integrated-r2");
 
 for(const src of ["v733_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260913-production-v38-visual-combat-r2");
+
+assert.strictEqual(refFor("v710_hooks.js"),"v710_hooks.js?v=20260929-day-room-r1");
+assert.strictEqual(refFor("v716_hooks.js"),"v716_hooks.js?v=20260929-day-dialogue-r1");

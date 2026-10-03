@@ -1261,6 +1261,7 @@ function draw() {
     } else if (!n.ambient && n.done) { ctx.font = "12px serif"; ctx.fillText("✅", n.x * TILE + 24, n.y * TILE + 7); }
   }
   // player — custom atlas sprite with directional facing
+  if (window.TechOpsDayWorld && !s.nightMode) window.TechOpsDayWorld.render(ctx, tm);
   drawPlayer(s, tm);
   // ---------- DIGITAL TWIN: the living network ----------
   if (s.twin) {
@@ -1394,7 +1395,7 @@ function step(dt) {
   const s = S; if (!s || !s.map || s.inDialog || s.inBattle || s.gameOver || panelOpen || eodOpen) return;
   // ambient NPCs wander the office
   if (Math.random() < .008) {
-    const amb = s.npcs.filter(n => n.ambient);
+    const amb = s.npcs.filter(n => n.ambient && !n.campaignAct1);
     if (amb.length) {
       const n = pick(amb), [wdx, wdy] = pick([[1, 0], [-1, 0], [0, 1], [0, -1]]);
       const wx = n.x + wdx, wy = n.y + wdy;
@@ -1460,6 +1461,7 @@ function loop(t) {
   const nightFrame = !!(nightRuntime && nightRuntime.frame(dt));
   if (nightFrame) window.__nightRuntimeLastOk = Date.now();
   else { step(dt); draw(); }
+  if (window.TechOpsDayExperience) window.TechOpsDayExperience.syncHud();
   requestAnimationFrame(loop);
 }
 
@@ -1493,7 +1495,11 @@ function interact() {
 }
 
 function dlg(name, text, options) {
+  if (window.TechOpsDayExperience) window.TechOpsDayExperience.release();
   S.inDialog = true;
+  // A live toast would sit above the panel (z 40 > 30) and hide the speaker's
+  // copy; the dialogue owns the screen while it is open.
+  const liveToast = $("toast"); if (liveToast) liveToast.classList.add("hidden");
   $("dialogue").classList.remove("hidden");
   $("dlg-name").textContent = name;
   $("dlg-text").innerHTML = text;
@@ -1503,10 +1509,12 @@ function dlg(name, text, options) {
     b.innerHTML = o.t; b.onclick = o.f;
     box.appendChild(b);
   }
+  if (window.TechOpsDayExperience) window.TechOpsDayExperience.workstationSkin(name);
 }
-function closeDlg() { S.inDialog = false; $("dialogue").classList.add("hidden"); flushPromo(); }
+function closeDlg() { if (window.TechOpsDayExperience) window.TechOpsDayExperience.release(); S.inDialog = false; $("dialogue").classList.add("hidden"); flushPromo(); }
 
 function ambientTalk(n) {
+  if(typeof dayAmbientConversation === "function" && dayAmbientConversation(n))return;
   const deptLines = {
     Executives: ["We're watching the Q3 numbers very closely.", "My calendar is sacred. Fix it fast."],
     Finance: ["Payroll runs Thursday. Nothing can break Thursday.", "These spreadsheets reconcile themselves, said no one ever."],
@@ -2803,6 +2811,7 @@ function renderTab(tab) {
 let scWidget = null, scReady = false, musicOn = false, musicRequested = false, musicLoading = false;
 function applyMusicRequest() {
   if (!scWidget || !scReady) return;
+  if (window.__techopsSelectingMorningTrack && musicRequested) return;
   try { musicRequested ? scWidget.play() : scWidget.pause(); } catch (e) { }
 }
 function initMusic(userInitiated = false) {

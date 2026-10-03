@@ -1,0 +1,3698 @@
+{
+  "status": "passed",
+  "fixture": true,
+  "browser": "chromium",
+  "scope": "Fixture-assisted Day device UI: real New Day, Standard, Clock in and morning choices; declared scene-exit and coordinate fixtures at authored approach tiles. Printer-to-workstation routing is traversed with actual keyboard input; other scene entries remain fixture-assisted. Actual incident buttons drive evidence and case progression. Not a complete unassisted walk, physical-phone certification, or soundtrack playback certification. External requests are blocked; music mapping is verified against a stubbed playlist widget (recorded track id must match the playlist Red in the Mirror entry) while audible playback stays uncertified.",
+  "profiles": [
+    {
+      "id": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        "Real title and morning controls unlock Day; muted continuation is recorded explicitly",
+        "Remote device and workstation entry are rejected without teleporting",
+        "Printer hotspot records physical evidence and the workstation route preserves position",
+        "Printer exit was already adjacent to the workstation; no walking or teleportation claimed",
+        "Local screen tools drive diagnosis and technical verification; human closure stays open; exit preserves coordinates",
+        "Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes"
+      ],
+      "pageErrors": [],
+      "requestsBlocked": [
+        "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap",
+        "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/raikouno/sets/ifollowedtherabbitlookatmenow&color=%233a5fcd&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
+        "https://w.soundcloud.com/player/api.js"
+      ],
+      "deskFixture": {
+        "scene": "itdept",
+        "input": "actual keyboard walk to visible side-room desk"
+      },
+      "musicMapping": {
+        "playlistEntryId": 7,
+        "playlistEntryTitle": "Red in the Mirror",
+        "status": "playing",
+        "trackId": 7,
+        "title": "Red in the Mirror",
+        "source": "existing-soundcloud-widget"
+      },
+      "opening": {
+        "unlocked": true,
+        "listening": {
+          "userSkipped": false,
+          "status": "playing",
+          "trackId": 7,
+          "title": "Red in the Mirror",
+          "source": "existing-soundcloud-widget",
+          "at": "2026-10-03T16:54:55.876Z"
+        },
+        "tickets": {},
+        "stations": [
+          {
+            "id": "mike_desk",
+            "available": true
+          },
+          {
+            "id": "shipping_printer",
+            "available": true
+          },
+          {
+            "id": "shipping_workstation",
+            "available": true
+          },
+          {
+            "id": "plating_workstation",
+            "available": true
+          },
+          {
+            "id": "security_workstation",
+            "available": true
+          },
+          {
+            "id": "laptop_dock_link",
+            "available": true
+          },
+          {
+            "id": "desktop_restart_window",
+            "available": true
+          },
+          {
+            "id": "signage_player_session",
+            "available": true
+          },
+          {
+            "id": "printer_queue_blocked",
+            "available": true
+          },
+          {
+            "id": "plc_hmi_dependency",
+            "available": true
+          },
+          {
+            "id": "industrial_scanner_vlan",
+            "available": true
+          },
+          {
+            "id": "access_point_poe",
+            "available": true
+          },
+          {
+            "id": "timeclock_time_sync",
+            "available": true
+          }
+        ]
+      },
+      "floorScene": {
+        "room": "itdept",
+        "position": {
+          "px": 27,
+          "py": 17
+        },
+        "exitInput": "Q"
+      },
+      "officeInteractions": [
+        {
+          "npc": "NICK",
+          "title": "🧑🏻‍💻 NICK — IT DEPT"
+        },
+        {
+          "npc": "AMIT",
+          "title": "🧑🏽‍💻 AMIT — IT DEPT"
+        },
+        {
+          "npc": "BRANDON",
+          "title": "🧑🏼‍💻 BRANDON — IT DEPT"
+        },
+        {
+          "npc": "DANIEL",
+          "title": "🧑🏾‍💻 DANIEL — IT DEPT"
+        }
+      ],
+      "requesterDialogue": {
+        "name": "Vikram",
+        "department": "Sales",
+        "options": [
+          "What can the customer still access?",
+          "Show me the task that fails",
+          "Agree what must be preserved",
+          "Let them continue; come back later"
+        ]
+      },
+      "shippingStage": {
+        "ok": true,
+        "fixture": "teleported adjacent to authored shipping contact",
+        "title": "SHIPPING CLERK",
+        "stage": true
+      },
+      "shippingFloor": "9.16%",
+      "shippingAnchor": {
+        "feetY": 0.9267880154639175,
+        "centerX": 0.195343017578125
+      },
+      "offDevice": {
+        "before": {
+          "px": 1,
+          "py": 1
+        },
+        "after": {
+          "px": 1,
+          "py": 1
+        },
+        "openDevice": false,
+        "workstation": false,
+        "active": null,
+        "inDialog": false
+      },
+      "printerFixture": {
+        "station": "shipping_printer",
+        "px": 22,
+        "py": 29,
+        "approach": {
+          "x": 22,
+          "y": 29
+        },
+        "previousRoom": "exec",
+        "exitEntryPoint": "v69ExitRoom fixture before coordinate placement"
+      },
+      "printerLayout": {
+        "rect": {
+          "x": 14,
+          "y": 14,
+          "width": 1252,
+          "height": 772,
+          "top": 14,
+          "right": 1266,
+          "bottom": 786,
+          "left": 14
+        },
+        "width": 1280,
+        "height": 800,
+        "bodyScrollWidth": 1280,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 1250,
+            "scroll": 1250
+          },
+          {
+            "name": "day-workspace",
+            "client": 1250,
+            "scroll": 1250
+          },
+          {
+            "name": "day-main",
+            "client": 778,
+            "scroll": 778
+          },
+          {
+            "name": "day-evidence",
+            "client": 471,
+            "scroll": 471
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": true,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 123.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 173.34375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "Run printer self-test",
+            "width": 44,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "1Run printer self-test",
+            "width": 734.296875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_workstation",
+            "label": "Walk to Shipping workstation",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "printerEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:55:01.062Z",
+            "updatedAt": "2026-10-03T16:55:01.062Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_printer",
+          "surface": "physical",
+          "notice": "The label printer produces a clean local self-test. Power, media, and the print engine are healthy.",
+          "error": false,
+          "app": "printer_self_test"
+        },
+        "position": {
+          "px": 22,
+          "py": 29
+        }
+      },
+      "route": {
+        "ok": true,
+        "status": "arrived",
+        "target": {
+          "id": "shipping_workstation",
+          "label": "Shipping dispatch workstation",
+          "kind": "device",
+          "deviceType": "desktop",
+          "ticketId": "shipping_cannot_print",
+          "roomId": "factory",
+          "zoneId": "factory",
+          "surface": "screen",
+          "art": 2,
+          "x": 22,
+          "y": 30,
+          "approach": {
+            "x": 21,
+            "y": 30
+          },
+          "roomName": "PRODUCTION FLOOR",
+          "available": true
+        },
+        "path": [
+          {
+            "x": 22,
+            "y": 29
+          }
+        ],
+        "steps": 0,
+        "message": "At Shipping dispatch workstation. Interact to continue."
+      },
+      "workstationWalk": {
+        "input": "actual-keyboard",
+        "stationId": "shipping_workstation",
+        "steps": [],
+        "transientOccupancy": [],
+        "arrived": {
+          "px": 22,
+          "py": 29
+        },
+        "alreadyAdjacent": true
+      },
+      "desktopLayout": {
+        "rect": {
+          "x": 14,
+          "y": 14,
+          "width": 1252,
+          "height": 772,
+          "top": 14,
+          "right": 1266,
+          "bottom": 786,
+          "left": 14
+        },
+        "width": 1280,
+        "height": 800,
+        "bodyScrollWidth": 1280,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 1250,
+            "scroll": 1250
+          },
+          {
+            "name": "day-workspace",
+            "client": 1250,
+            "scroll": 1250
+          },
+          {
+            "name": "day-main",
+            "client": 778,
+            "scroll": 778
+          },
+          {
+            "name": "day-evidence",
+            "client": 471,
+            "scroll": 471
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": false,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 123.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 173.34375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "screen",
+            "value": "",
+            "label": "02 · Use local screen",
+            "width": 157.921875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "queue_trace",
+            "label": "Trace one customs-label jobOpen diagnostic view",
+            "width": 345.140625,
+            "height": 75,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "compare_user",
+            "label": "Compare another authorized userOpen diagnostic view",
+            "width": 345.15625,
+            "height": 75,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_printer",
+            "label": "Walk to label printer",
+            "width": 426.6875,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "screenEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:55:01.062Z",
+            "updatedAt": "2026-10-03T16:55:04.479Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "The same customs label prints for an authorized Shipping lead from the same workstation and queue.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 22,
+          "py": 29
+        }
+      },
+      "technicalOnly": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "human_verify",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": "permissions",
+            "fixApplied": true,
+            "technicalCheckPassed": true,
+            "startedAt": "2026-10-03T16:55:01.062Z",
+            "updatedAt": "2026-10-03T16:55:05.250Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "A new job now remains in the queue through authorization and reaches the printer.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 22,
+          "py": 29
+        }
+      },
+      "laptopFixture": {
+        "station": "laptop_dock_link",
+        "px": 6,
+        "py": 11,
+        "approach": {
+          "x": 6,
+          "y": 11
+        },
+        "previousRoom": null,
+        "exitEntryPoint": null
+      },
+      "optionalTechnicalOnly": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "requester",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": false
+      },
+      "optionalComplete": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "complete",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": true
+      },
+      "status": "passed"
+    },
+    {
+      "id": "portrait",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        "Real title and morning controls unlock Day; muted continuation is recorded explicitly",
+        "Remote device and workstation entry are rejected without teleporting",
+        "Printer hotspot records physical evidence and the workstation route preserves position",
+        "Marked printer-to-workstation route traversed with actual keyboard movement and collision checks",
+        "Local screen tools drive diagnosis and technical verification; human closure stays open; exit preserves coordinates",
+        "Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes"
+      ],
+      "pageErrors": [],
+      "requestsBlocked": [
+        "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap",
+        "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/raikouno/sets/ifollowedtherabbitlookatmenow&color=%233a5fcd&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
+        "https://w.soundcloud.com/player/api.js"
+      ],
+      "deskFixture": {
+        "scene": "itdept",
+        "input": "actual keyboard walk to visible side-room desk"
+      },
+      "musicMapping": {
+        "playlistEntryId": 7,
+        "playlistEntryTitle": "Red in the Mirror",
+        "status": "playing",
+        "trackId": 7,
+        "title": "Red in the Mirror",
+        "source": "existing-soundcloud-widget"
+      },
+      "opening": {
+        "unlocked": true,
+        "listening": {
+          "userSkipped": false,
+          "status": "playing",
+          "trackId": 7,
+          "title": "Red in the Mirror",
+          "source": "existing-soundcloud-widget",
+          "at": "2026-10-03T16:55:14.576Z"
+        },
+        "tickets": {},
+        "stations": [
+          {
+            "id": "mike_desk",
+            "available": true
+          },
+          {
+            "id": "shipping_printer",
+            "available": true
+          },
+          {
+            "id": "shipping_workstation",
+            "available": true
+          },
+          {
+            "id": "plating_workstation",
+            "available": true
+          },
+          {
+            "id": "security_workstation",
+            "available": true
+          },
+          {
+            "id": "laptop_dock_link",
+            "available": true
+          },
+          {
+            "id": "desktop_restart_window",
+            "available": true
+          },
+          {
+            "id": "signage_player_session",
+            "available": true
+          },
+          {
+            "id": "printer_queue_blocked",
+            "available": true
+          },
+          {
+            "id": "plc_hmi_dependency",
+            "available": true
+          },
+          {
+            "id": "industrial_scanner_vlan",
+            "available": true
+          },
+          {
+            "id": "access_point_poe",
+            "available": true
+          },
+          {
+            "id": "timeclock_time_sync",
+            "available": true
+          }
+        ]
+      },
+      "floorScene": {
+        "room": "itdept",
+        "position": {
+          "px": 27,
+          "py": 17
+        },
+        "exitInput": "Q"
+      },
+      "officeInteractions": [
+        {
+          "npc": "NICK",
+          "title": "🧑🏻‍💻 NICK — IT DEPT"
+        },
+        {
+          "npc": "AMIT",
+          "title": "🧑🏽‍💻 AMIT — IT DEPT"
+        },
+        {
+          "npc": "BRANDON",
+          "title": "🧑🏼‍💻 BRANDON — IT DEPT"
+        },
+        {
+          "npc": "DANIEL",
+          "title": "🧑🏾‍💻 DANIEL — IT DEPT"
+        }
+      ],
+      "requesterDialogue": {
+        "name": "Yuki",
+        "department": "HR",
+        "options": [
+          "Which HR task is blocked?",
+          "Describe the window without clicking it",
+          "Stop using this session while we assess it",
+          "Let them continue; come back later"
+        ]
+      },
+      "shippingStage": {
+        "ok": true,
+        "fixture": "teleported adjacent to authored shipping contact",
+        "title": "SHIPPING CLERK",
+        "stage": true
+      },
+      "shippingFloor": "7.41%",
+      "shippingAnchor": {
+        "feetY": 0.9409625232774674,
+        "centerX": 0.12986778846153846
+      },
+      "offDevice": {
+        "before": {
+          "px": 1,
+          "py": 1
+        },
+        "after": {
+          "px": 1,
+          "py": 1
+        },
+        "openDevice": false,
+        "workstation": false,
+        "active": null,
+        "inDialog": false
+      },
+      "printerFixture": {
+        "station": "shipping_printer",
+        "px": 22,
+        "py": 30,
+        "approach": {
+          "x": 22,
+          "y": 30
+        },
+        "previousRoom": "exec",
+        "exitEntryPoint": "v69ExitRoom fixture before coordinate placement"
+      },
+      "printerLayout": {
+        "rect": {
+          "x": 6,
+          "y": 6,
+          "width": 378,
+          "height": 832,
+          "top": 6,
+          "right": 384,
+          "bottom": 838,
+          "left": 6
+        },
+        "width": 390,
+        "height": 844,
+        "bodyScrollWidth": 390,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 376,
+            "scroll": 376
+          },
+          {
+            "name": "day-workspace",
+            "client": 376,
+            "scroll": 376
+          },
+          {
+            "name": "day-main",
+            "client": 376,
+            "scroll": 376
+          },
+          {
+            "name": "day-evidence",
+            "client": 376,
+            "scroll": 376
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": true,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 123.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 155.09375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "Run printer self-test",
+            "width": 44,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "1Run printer self-test",
+            "width": 170,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_workstation",
+            "label": "Walk to Shipping workstation",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "printerEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:55:19.428Z",
+            "updatedAt": "2026-10-03T16:55:19.428Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_printer",
+          "surface": "physical",
+          "notice": "The label printer produces a clean local self-test. Power, media, and the print engine are healthy.",
+          "error": false,
+          "app": "printer_self_test"
+        },
+        "position": {
+          "px": 22,
+          "py": 30
+        }
+      },
+      "route": {
+        "ok": true,
+        "status": "walking",
+        "target": {
+          "id": "shipping_workstation",
+          "label": "Shipping dispatch workstation",
+          "kind": "device",
+          "deviceType": "desktop",
+          "ticketId": "shipping_cannot_print",
+          "roomId": "factory",
+          "zoneId": "factory",
+          "surface": "screen",
+          "art": 2,
+          "x": 24,
+          "y": 29,
+          "approach": {
+            "x": 24,
+            "y": 30
+          },
+          "roomName": "PRODUCTION FLOOR",
+          "available": true
+        },
+        "path": [
+          {
+            "x": 22,
+            "y": 30
+          },
+          {
+            "x": 23,
+            "y": 30
+          },
+          {
+            "x": 24,
+            "y": 30
+          }
+        ],
+        "steps": 2,
+        "message": "Follow the floor guide to Shipping dispatch workstation."
+      },
+      "workstationWalk": {
+        "input": "actual-keyboard",
+        "stationId": "shipping_workstation",
+        "steps": [
+          {
+            "from": {
+              "px": 22,
+              "py": 30
+            },
+            "to": {
+              "px": 23,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 23,
+              "py": 30
+            },
+            "to": {
+              "px": 24,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          }
+        ],
+        "transientOccupancy": [],
+        "arrived": {
+          "px": 24,
+          "py": 30
+        },
+        "alreadyAdjacent": false
+      },
+      "desktopLayout": {
+        "rect": {
+          "x": 6,
+          "y": 6,
+          "width": 378,
+          "height": 832,
+          "top": 6,
+          "right": 384,
+          "bottom": 838,
+          "left": 6
+        },
+        "width": 390,
+        "height": 844,
+        "bodyScrollWidth": 390,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 376,
+            "scroll": 376
+          },
+          {
+            "name": "day-workspace",
+            "client": 376,
+            "scroll": 376
+          },
+          {
+            "name": "day-main",
+            "client": 376,
+            "scroll": 376
+          },
+          {
+            "name": "day-evidence",
+            "client": 376,
+            "scroll": 376
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": false,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 123.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 155.09375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "screen",
+            "value": "",
+            "label": "02 · Use local screen",
+            "width": 140.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "queue_trace",
+            "label": "Trace one customs-label jobOpen diagnostic view",
+            "width": 152,
+            "height": 81.96875,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "compare_user",
+            "label": "Compare another authorized userOpen diagnostic view",
+            "width": 152,
+            "height": 81.96875,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_printer",
+            "label": "Walk to label printer",
+            "width": 348,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "screenEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:55:19.428Z",
+            "updatedAt": "2026-10-03T16:55:23.012Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "The same customs label prints for an authorized Shipping lead from the same workstation and queue.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 24,
+          "py": 30
+        }
+      },
+      "technicalOnly": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "human_verify",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": "permissions",
+            "fixApplied": true,
+            "technicalCheckPassed": true,
+            "startedAt": "2026-10-03T16:55:19.428Z",
+            "updatedAt": "2026-10-03T16:55:23.744Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "A new job now remains in the queue through authorization and reaches the printer.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 24,
+          "py": 30
+        }
+      },
+      "laptopFixture": {
+        "station": "laptop_dock_link",
+        "px": 6,
+        "py": 11,
+        "approach": {
+          "x": 6,
+          "y": 11
+        },
+        "previousRoom": null,
+        "exitEntryPoint": null
+      },
+      "optionalTechnicalOnly": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "requester",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": false
+      },
+      "optionalComplete": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "complete",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": true
+      },
+      "status": "passed"
+    },
+    {
+      "id": "compact",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "checks": [
+        "Real title and morning controls unlock Day; muted continuation is recorded explicitly",
+        "Remote device and workstation entry are rejected without teleporting",
+        "Printer hotspot records physical evidence and the workstation route preserves position",
+        "Marked printer-to-workstation route traversed with actual keyboard movement and collision checks",
+        "Local screen tools drive diagnosis and technical verification; human closure stays open; exit preserves coordinates",
+        "Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes"
+      ],
+      "pageErrors": [],
+      "requestsBlocked": [
+        "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap",
+        "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/raikouno/sets/ifollowedtherabbitlookatmenow&color=%233a5fcd&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
+        "https://w.soundcloud.com/player/api.js"
+      ],
+      "deskFixture": {
+        "scene": "itdept",
+        "input": "actual keyboard walk to visible side-room desk"
+      },
+      "musicMapping": {
+        "playlistEntryId": 7,
+        "playlistEntryTitle": "Red in the Mirror",
+        "status": "playing",
+        "trackId": 7,
+        "title": "Red in the Mirror",
+        "source": "existing-soundcloud-widget"
+      },
+      "opening": {
+        "unlocked": true,
+        "listening": {
+          "userSkipped": false,
+          "status": "playing",
+          "trackId": 7,
+          "title": "Red in the Mirror",
+          "source": "existing-soundcloud-widget",
+          "at": "2026-10-03T16:55:33.241Z"
+        },
+        "tickets": {},
+        "stations": [
+          {
+            "id": "mike_desk",
+            "available": true
+          },
+          {
+            "id": "shipping_printer",
+            "available": true
+          },
+          {
+            "id": "shipping_workstation",
+            "available": true
+          },
+          {
+            "id": "plating_workstation",
+            "available": true
+          },
+          {
+            "id": "security_workstation",
+            "available": true
+          },
+          {
+            "id": "laptop_dock_link",
+            "available": true
+          },
+          {
+            "id": "desktop_restart_window",
+            "available": true
+          },
+          {
+            "id": "signage_player_session",
+            "available": true
+          },
+          {
+            "id": "printer_queue_blocked",
+            "available": true
+          },
+          {
+            "id": "plc_hmi_dependency",
+            "available": true
+          },
+          {
+            "id": "industrial_scanner_vlan",
+            "available": true
+          },
+          {
+            "id": "access_point_poe",
+            "available": true
+          },
+          {
+            "id": "timeclock_time_sync",
+            "available": true
+          }
+        ]
+      },
+      "floorScene": {
+        "room": "itdept",
+        "position": {
+          "px": 27,
+          "py": 17
+        },
+        "exitInput": "Q"
+      },
+      "officeInteractions": [
+        {
+          "npc": "NICK",
+          "title": "🧑🏻‍💻 NICK — IT DEPT"
+        },
+        {
+          "npc": "AMIT",
+          "title": "🧑🏽‍💻 AMIT — IT DEPT"
+        },
+        {
+          "npc": "BRANDON",
+          "title": "🧑🏼‍💻 BRANDON — IT DEPT"
+        },
+        {
+          "npc": "DANIEL",
+          "title": "🧑🏾‍💻 DANIEL — IT DEPT"
+        }
+      ],
+      "requesterDialogue": {
+        "name": "Nadia",
+        "department": "HR",
+        "options": [
+          "Which HR task is blocked?",
+          "Describe the window without clicking it",
+          "Stop using this session while we assess it",
+          "Let them continue; come back later"
+        ]
+      },
+      "shippingStage": {
+        "ok": true,
+        "fixture": "teleported adjacent to authored shipping contact",
+        "title": "SHIPPING CLERK",
+        "stage": true
+      },
+      "shippingFloor": "7.41%",
+      "shippingAnchor": {
+        "feetY": 0.940683962264151,
+        "centerX": 0.279638671875
+      },
+      "offDevice": {
+        "before": {
+          "px": 1,
+          "py": 1
+        },
+        "after": {
+          "px": 1,
+          "py": 1
+        },
+        "openDevice": false,
+        "workstation": false,
+        "active": null,
+        "inDialog": false
+      },
+      "printerFixture": {
+        "station": "shipping_printer",
+        "px": 23,
+        "py": 30,
+        "approach": {
+          "x": 23,
+          "y": 30
+        },
+        "previousRoom": "exec",
+        "exitEntryPoint": "v69ExitRoom fixture before coordinate placement"
+      },
+      "printerLayout": {
+        "rect": {
+          "x": 6,
+          "y": 6,
+          "width": 308,
+          "height": 556,
+          "top": 6,
+          "right": 314,
+          "bottom": 562,
+          "left": 6
+        },
+        "width": 320,
+        "height": 568,
+        "bodyScrollWidth": 320,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 306,
+            "scroll": 306
+          },
+          {
+            "name": "day-workspace",
+            "client": 306,
+            "scroll": 306
+          },
+          {
+            "name": "day-main",
+            "client": 306,
+            "scroll": 306
+          },
+          {
+            "name": "day-evidence",
+            "client": 306,
+            "scroll": 306
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": true,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 105,
+            "height": 55.78125,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 155.09375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "Run printer self-test",
+            "width": 44,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "1Run printer self-test",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_workstation",
+            "label": "Walk to Shipping workstation",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "printerEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:55:38.113Z",
+            "updatedAt": "2026-10-03T16:55:38.113Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_printer",
+          "surface": "physical",
+          "notice": "The label printer produces a clean local self-test. Power, media, and the print engine are healthy.",
+          "error": false,
+          "app": "printer_self_test"
+        },
+        "position": {
+          "px": 23,
+          "py": 30
+        }
+      },
+      "route": {
+        "ok": true,
+        "status": "walking",
+        "target": {
+          "id": "shipping_workstation",
+          "label": "Shipping dispatch workstation",
+          "kind": "device",
+          "deviceType": "desktop",
+          "ticketId": "shipping_cannot_print",
+          "roomId": "factory",
+          "zoneId": "factory",
+          "surface": "screen",
+          "art": 2,
+          "x": 19,
+          "y": 30,
+          "approach": {
+            "x": 18,
+            "y": 30
+          },
+          "roomName": "PRODUCTION FLOOR",
+          "available": true
+        },
+        "path": [
+          {
+            "x": 23,
+            "y": 30
+          },
+          {
+            "x": 24,
+            "y": 30
+          },
+          {
+            "x": 25,
+            "y": 30
+          },
+          {
+            "x": 26,
+            "y": 30
+          },
+          {
+            "x": 27,
+            "y": 30
+          },
+          {
+            "x": 28,
+            "y": 30
+          },
+          {
+            "x": 29,
+            "y": 30
+          },
+          {
+            "x": 30,
+            "y": 30
+          },
+          {
+            "x": 31,
+            "y": 30
+          },
+          {
+            "x": 32,
+            "y": 30
+          },
+          {
+            "x": 33,
+            "y": 30
+          },
+          {
+            "x": 34,
+            "y": 30
+          },
+          {
+            "x": 35,
+            "y": 30
+          },
+          {
+            "x": 36,
+            "y": 30
+          },
+          {
+            "x": 37,
+            "y": 30
+          },
+          {
+            "x": 38,
+            "y": 30
+          },
+          {
+            "x": 39,
+            "y": 30
+          },
+          {
+            "x": 39,
+            "y": 29
+          },
+          {
+            "x": 39,
+            "y": 28
+          },
+          {
+            "x": 39,
+            "y": 27
+          },
+          {
+            "x": 39,
+            "y": 26
+          },
+          {
+            "x": 39,
+            "y": 25
+          },
+          {
+            "x": 39,
+            "y": 24
+          },
+          {
+            "x": 38,
+            "y": 24
+          },
+          {
+            "x": 38,
+            "y": 23
+          },
+          {
+            "x": 37,
+            "y": 23
+          },
+          {
+            "x": 36,
+            "y": 23
+          },
+          {
+            "x": 36,
+            "y": 24
+          },
+          {
+            "x": 35,
+            "y": 24
+          },
+          {
+            "x": 34,
+            "y": 24
+          },
+          {
+            "x": 33,
+            "y": 24
+          },
+          {
+            "x": 32,
+            "y": 24
+          },
+          {
+            "x": 31,
+            "y": 24
+          },
+          {
+            "x": 30,
+            "y": 24
+          },
+          {
+            "x": 30,
+            "y": 25
+          },
+          {
+            "x": 30,
+            "y": 26
+          },
+          {
+            "x": 30,
+            "y": 27
+          },
+          {
+            "x": 29,
+            "y": 27
+          },
+          {
+            "x": 28,
+            "y": 27
+          },
+          {
+            "x": 27,
+            "y": 27
+          },
+          {
+            "x": 26,
+            "y": 27
+          },
+          {
+            "x": 25,
+            "y": 27
+          },
+          {
+            "x": 24,
+            "y": 27
+          },
+          {
+            "x": 23,
+            "y": 27
+          },
+          {
+            "x": 22,
+            "y": 27
+          },
+          {
+            "x": 21,
+            "y": 27
+          },
+          {
+            "x": 21,
+            "y": 26
+          },
+          {
+            "x": 20,
+            "y": 26
+          },
+          {
+            "x": 19,
+            "y": 26
+          },
+          {
+            "x": 18,
+            "y": 26
+          },
+          {
+            "x": 18,
+            "y": 27
+          },
+          {
+            "x": 18,
+            "y": 28
+          },
+          {
+            "x": 18,
+            "y": 29
+          },
+          {
+            "x": 18,
+            "y": 30
+          }
+        ],
+        "steps": 53,
+        "message": "Follow the floor guide to Shipping dispatch workstation."
+      },
+      "workstationWalk": {
+        "input": "actual-keyboard",
+        "stationId": "shipping_workstation",
+        "steps": [
+          {
+            "from": {
+              "px": 23,
+              "py": 30
+            },
+            "to": {
+              "px": 24,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 24,
+              "py": 30
+            },
+            "to": {
+              "px": 25,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 25,
+              "py": 30
+            },
+            "to": {
+              "px": 26,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 26,
+              "py": 30
+            },
+            "to": {
+              "px": 27,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 27,
+              "py": 30
+            },
+            "to": {
+              "px": 28,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 28,
+              "py": 30
+            },
+            "to": {
+              "px": 29,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 29,
+              "py": 30
+            },
+            "to": {
+              "px": 30,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 30,
+              "py": 30
+            },
+            "to": {
+              "px": 31,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 31,
+              "py": 30
+            },
+            "to": {
+              "px": 32,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 32,
+              "py": 30
+            },
+            "to": {
+              "px": 33,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 33,
+              "py": 30
+            },
+            "to": {
+              "px": 34,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 34,
+              "py": 30
+            },
+            "to": {
+              "px": 35,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 35,
+              "py": 30
+            },
+            "to": {
+              "px": 36,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 36,
+              "py": 30
+            },
+            "to": {
+              "px": 37,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 37,
+              "py": 30
+            },
+            "to": {
+              "px": 38,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 38,
+              "py": 30
+            },
+            "to": {
+              "px": 39,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 30
+            },
+            "to": {
+              "px": 39,
+              "py": 29
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 29
+            },
+            "to": {
+              "px": 39,
+              "py": 28
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 28
+            },
+            "to": {
+              "px": 39,
+              "py": 27
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 27
+            },
+            "to": {
+              "px": 39,
+              "py": 26
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 26
+            },
+            "to": {
+              "px": 39,
+              "py": 25
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 25
+            },
+            "to": {
+              "px": 39,
+              "py": 24
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 39,
+              "py": 24
+            },
+            "to": {
+              "px": 38,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 38,
+              "py": 24
+            },
+            "to": {
+              "px": 38,
+              "py": 23
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 38,
+              "py": 23
+            },
+            "to": {
+              "px": 37,
+              "py": 23
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 37,
+              "py": 23
+            },
+            "to": {
+              "px": 36,
+              "py": 23
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 36,
+              "py": 23
+            },
+            "to": {
+              "px": 36,
+              "py": 24
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 36,
+              "py": 24
+            },
+            "to": {
+              "px": 35,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 35,
+              "py": 24
+            },
+            "to": {
+              "px": 34,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 34,
+              "py": 24
+            },
+            "to": {
+              "px": 33,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 33,
+              "py": 24
+            },
+            "to": {
+              "px": 32,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 32,
+              "py": 24
+            },
+            "to": {
+              "px": 31,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 31,
+              "py": 24
+            },
+            "to": {
+              "px": 30,
+              "py": 24
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 30,
+              "py": 24
+            },
+            "to": {
+              "px": 30,
+              "py": 25
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 30,
+              "py": 25
+            },
+            "to": {
+              "px": 30,
+              "py": 26
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 30,
+              "py": 26
+            },
+            "to": {
+              "px": 30,
+              "py": 27
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 30,
+              "py": 27
+            },
+            "to": {
+              "px": 29,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 29,
+              "py": 27
+            },
+            "to": {
+              "px": 28,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 28,
+              "py": 27
+            },
+            "to": {
+              "px": 27,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 27,
+              "py": 27
+            },
+            "to": {
+              "px": 26,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 26,
+              "py": 27
+            },
+            "to": {
+              "px": 25,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 25,
+              "py": 27
+            },
+            "to": {
+              "px": 24,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 24,
+              "py": 27
+            },
+            "to": {
+              "px": 23,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 23,
+              "py": 27
+            },
+            "to": {
+              "px": 22,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 22,
+              "py": 27
+            },
+            "to": {
+              "px": 21,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 21,
+              "py": 27
+            },
+            "to": {
+              "px": 21,
+              "py": 26
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 21,
+              "py": 26
+            },
+            "to": {
+              "px": 20,
+              "py": 26
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 20,
+              "py": 26
+            },
+            "to": {
+              "px": 19,
+              "py": 26
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 19,
+              "py": 26
+            },
+            "to": {
+              "px": 18,
+              "py": 26
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 18,
+              "py": 26
+            },
+            "to": {
+              "px": 18,
+              "py": 27
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 18,
+              "py": 27
+            },
+            "to": {
+              "px": 18,
+              "py": 28
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 18,
+              "py": 28
+            },
+            "to": {
+              "px": 18,
+              "py": 29
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 18,
+              "py": 29
+            },
+            "to": {
+              "px": 18,
+              "py": 30
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          }
+        ],
+        "transientOccupancy": [],
+        "arrived": {
+          "px": 18,
+          "py": 30
+        },
+        "alreadyAdjacent": false
+      },
+      "desktopLayout": {
+        "rect": {
+          "x": 6,
+          "y": 6,
+          "width": 308,
+          "height": 556,
+          "top": 6,
+          "right": 314,
+          "bottom": 562,
+          "left": 6
+        },
+        "width": 320,
+        "height": 568,
+        "bodyScrollWidth": 320,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 306,
+            "scroll": 306
+          },
+          {
+            "name": "day-workspace",
+            "client": 306,
+            "scroll": 306
+          },
+          {
+            "name": "day-main",
+            "client": 306,
+            "scroll": 306
+          },
+          {
+            "name": "day-evidence",
+            "client": 306,
+            "scroll": 306
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": false,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 105,
+            "height": 55.78125,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 155.09375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "screen",
+            "value": "",
+            "label": "02 · Use local screen",
+            "width": 140.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "queue_trace",
+            "label": "Trace one customs-label jobOpen diagnostic view",
+            "width": 126,
+            "height": 115.046875,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "compare_user",
+            "label": "Compare another authorized userOpen diagnostic view",
+            "width": 126,
+            "height": 115.046875,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_printer",
+            "label": "Walk to label printer",
+            "width": 284,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "screenEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:55:38.113Z",
+            "updatedAt": "2026-10-03T16:55:58.076Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "The same customs label prints for an authorized Shipping lead from the same workstation and queue.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 18,
+          "py": 30
+        }
+      },
+      "technicalOnly": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "human_verify",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": "permissions",
+            "fixApplied": true,
+            "technicalCheckPassed": true,
+            "startedAt": "2026-10-03T16:55:38.113Z",
+            "updatedAt": "2026-10-03T16:55:58.761Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "A new job now remains in the queue through authorization and reaches the printer.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 18,
+          "py": 30
+        }
+      },
+      "laptopFixture": {
+        "station": "laptop_dock_link",
+        "px": 8,
+        "py": 11,
+        "approach": {
+          "x": 8,
+          "y": 11
+        },
+        "previousRoom": null,
+        "exitEntryPoint": null
+      },
+      "optionalTechnicalOnly": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "requester",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": false
+      },
+      "optionalComplete": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "complete",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": true
+      },
+      "status": "passed"
+    },
+    {
+      "id": "landscape",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "checks": [
+        "Real title and morning controls unlock Day; muted continuation is recorded explicitly",
+        "Remote device and workstation entry are rejected without teleporting",
+        "Printer hotspot records physical evidence and the workstation route preserves position",
+        "Printer exit was already adjacent to the workstation; no walking or teleportation claimed",
+        "Local screen tools drive diagnosis and technical verification; human closure stays open; exit preserves coordinates",
+        "Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes"
+      ],
+      "pageErrors": [],
+      "requestsBlocked": [
+        "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap",
+        "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/raikouno/sets/ifollowedtherabbitlookatmenow&color=%233a5fcd&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
+        "https://w.soundcloud.com/player/api.js"
+      ],
+      "deskFixture": {
+        "scene": "itdept",
+        "input": "actual keyboard walk to visible side-room desk"
+      },
+      "musicMapping": {
+        "playlistEntryId": 7,
+        "playlistEntryTitle": "Red in the Mirror",
+        "status": "playing",
+        "trackId": 7,
+        "title": "Red in the Mirror",
+        "source": "existing-soundcloud-widget"
+      },
+      "opening": {
+        "unlocked": true,
+        "listening": {
+          "userSkipped": false,
+          "status": "playing",
+          "trackId": 7,
+          "title": "Red in the Mirror",
+          "source": "existing-soundcloud-widget",
+          "at": "2026-10-03T16:56:08.174Z"
+        },
+        "tickets": {},
+        "stations": [
+          {
+            "id": "mike_desk",
+            "available": true
+          },
+          {
+            "id": "shipping_printer",
+            "available": true
+          },
+          {
+            "id": "shipping_workstation",
+            "available": true
+          },
+          {
+            "id": "plating_workstation",
+            "available": true
+          },
+          {
+            "id": "security_workstation",
+            "available": true
+          },
+          {
+            "id": "laptop_dock_link",
+            "available": true
+          },
+          {
+            "id": "desktop_restart_window",
+            "available": true
+          },
+          {
+            "id": "signage_player_session",
+            "available": true
+          },
+          {
+            "id": "printer_queue_blocked",
+            "available": true
+          },
+          {
+            "id": "plc_hmi_dependency",
+            "available": true
+          },
+          {
+            "id": "industrial_scanner_vlan",
+            "available": true
+          },
+          {
+            "id": "access_point_poe",
+            "available": true
+          },
+          {
+            "id": "timeclock_time_sync",
+            "available": true
+          }
+        ]
+      },
+      "floorScene": {
+        "room": "itdept",
+        "position": {
+          "px": 27,
+          "py": 17
+        },
+        "exitInput": "Q"
+      },
+      "officeInteractions": [
+        {
+          "npc": "NICK",
+          "title": "🧑🏻‍💻 NICK — IT DEPT"
+        },
+        {
+          "npc": "AMIT",
+          "title": "🧑🏽‍💻 AMIT — IT DEPT"
+        },
+        {
+          "npc": "BRANDON",
+          "title": "🧑🏼‍💻 BRANDON — IT DEPT"
+        },
+        {
+          "npc": "DANIEL",
+          "title": "🧑🏾‍💻 DANIEL — IT DEPT"
+        }
+      ],
+      "requesterDialogue": {
+        "name": "Priya",
+        "department": "Engineering",
+        "options": [
+          "Which engineering task can we use to verify it?",
+          "Describe the window without clicking it",
+          "Stop using this session while we assess it",
+          "Let them continue; come back later"
+        ]
+      },
+      "shippingStage": {
+        "ok": true,
+        "fixture": "teleported adjacent to authored shipping contact",
+        "title": "SHIPPING CLERK",
+        "stage": true
+      },
+      "shippingFloor": "7.41%",
+      "shippingAnchor": {
+        "feetY": 0.9409855769230769,
+        "centerX": 0.22677719269376337
+      },
+      "offDevice": {
+        "before": {
+          "px": 1,
+          "py": 1
+        },
+        "after": {
+          "px": 1,
+          "py": 1
+        },
+        "openDevice": false,
+        "workstation": false,
+        "active": null,
+        "inDialog": false
+      },
+      "printerFixture": {
+        "station": "shipping_printer",
+        "px": 21,
+        "py": 29,
+        "approach": {
+          "x": 21,
+          "y": 29
+        },
+        "previousRoom": null,
+        "exitEntryPoint": null
+      },
+      "printerLayout": {
+        "rect": {
+          "x": 14,
+          "y": 14,
+          "width": 816,
+          "height": 362,
+          "top": 14,
+          "right": 830,
+          "bottom": 376,
+          "left": 14
+        },
+        "width": 844,
+        "height": 390,
+        "bodyScrollWidth": 844,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 814,
+            "scroll": 814
+          },
+          {
+            "name": "day-workspace",
+            "client": 814,
+            "scroll": 814
+          },
+          {
+            "name": "day-main",
+            "client": 426,
+            "scroll": 426
+          },
+          {
+            "name": "day-evidence",
+            "client": 387,
+            "scroll": 387
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": true,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 123.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 173.34375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "Run printer self-test",
+            "width": 44,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "printer_self_test",
+            "label": "1Run printer self-test",
+            "width": 402.375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_workstation",
+            "label": "Walk to Shipping workstation",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "printerEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:56:13.058Z",
+            "updatedAt": "2026-10-03T16:56:13.058Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_printer",
+          "surface": "physical",
+          "notice": "The label printer produces a clean local self-test. Power, media, and the print engine are healthy.",
+          "error": false,
+          "app": "printer_self_test"
+        },
+        "position": {
+          "px": 21,
+          "py": 29
+        }
+      },
+      "route": {
+        "ok": true,
+        "status": "arrived",
+        "target": {
+          "id": "shipping_workstation",
+          "label": "Shipping dispatch workstation",
+          "kind": "device",
+          "deviceType": "desktop",
+          "ticketId": "shipping_cannot_print",
+          "roomId": "factory",
+          "zoneId": "factory",
+          "surface": "screen",
+          "art": 2,
+          "x": 21,
+          "y": 30,
+          "approach": {
+            "x": 20,
+            "y": 30
+          },
+          "roomName": "PRODUCTION FLOOR",
+          "available": true
+        },
+        "path": [
+          {
+            "x": 21,
+            "y": 29
+          }
+        ],
+        "steps": 0,
+        "message": "At Shipping dispatch workstation. Interact to continue."
+      },
+      "workstationWalk": {
+        "input": "actual-keyboard",
+        "stationId": "shipping_workstation",
+        "steps": [],
+        "transientOccupancy": [],
+        "arrived": {
+          "px": 21,
+          "py": 29
+        },
+        "alreadyAdjacent": true
+      },
+      "desktopLayout": {
+        "rect": {
+          "x": 14,
+          "y": 14,
+          "width": 816,
+          "height": 362,
+          "top": 14,
+          "right": 830,
+          "bottom": 376,
+          "left": 14
+        },
+        "width": 844,
+        "height": 390,
+        "bodyScrollWidth": 844,
+        "regions": [
+          {
+            "name": "day-console",
+            "client": 814,
+            "scroll": 814
+          },
+          {
+            "name": "day-workspace",
+            "client": 814,
+            "scroll": 814
+          },
+          {
+            "name": "day-main",
+            "client": 426,
+            "scroll": 426
+          },
+          {
+            "name": "day-evidence",
+            "client": 387,
+            "scroll": 387
+          }
+        ],
+        "animation": "none",
+        "sideRoom": null,
+        "roomBannerHidden": true,
+        "progress": {
+          "children": [
+            "LI",
+            "LI",
+            "LI",
+            "LI"
+          ],
+          "labels": [
+            "Observe",
+            "Diagnose",
+            "Repair",
+            "Verify"
+          ],
+          "nestedCaseContent": 0,
+          "actionsOutside": true,
+          "evidenceOutside": true
+        },
+        "diagram": false,
+        "controls": [
+          {
+            "action": "exit",
+            "value": "",
+            "label": "Return to floor",
+            "width": 123.796875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "physical",
+            "value": "",
+            "label": "01 · Inspect equipment",
+            "width": 173.34375,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "screen",
+            "value": "",
+            "label": "02 · Use local screen",
+            "width": 157.921875,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "queue_trace",
+            "label": "Trace one customs-label jobOpen diagnostic view",
+            "width": 179.1875,
+            "height": 81.96875,
+            "hit": true
+          },
+          {
+            "action": "observe",
+            "value": "compare_user",
+            "label": "Compare another authorized userOpen diagnostic view",
+            "width": 179.1875,
+            "height": 81.96875,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "driver_issue",
+            "label": "driver issue",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "spooler_queue",
+            "label": "spooler queue",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "permissions",
+            "label": "permissions",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "hypothesis",
+            "value": "network_path",
+            "label": "network path",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          },
+          {
+            "action": "route",
+            "value": "shipping_printer",
+            "label": "Walk to label printer",
+            "width": 362.625,
+            "height": 44,
+            "hit": true
+          }
+        ]
+      },
+      "screenEvidence": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "gather",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": null,
+            "fixApplied": false,
+            "technicalCheckPassed": false,
+            "startedAt": "2026-10-03T16:56:13.058Z",
+            "updatedAt": "2026-10-03T16:56:16.542Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "The same customs label prints for an authorized Shipping lead from the same workstation and queue.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 21,
+          "py": 29
+        }
+      },
+      "technicalOnly": {
+        "campaignFlags": {
+          "standup_started": false,
+          "ticket_assignments_confirmed": true,
+          "standup_completed": true,
+          "workstation_checked": true,
+          "red_in_mirror_heard": true,
+          "felicia_blog_found": true,
+          "felicia_video_watched": true,
+          "day_work_unlocked": true,
+          "sector04_entered": false,
+          "sector04_completed": false,
+          "tuesday_morning_reached": false,
+          "standupStarted": false,
+          "ticketAssignmentsConfirmed": true,
+          "workstationOpened": true,
+          "redInTheMirrorHeard": true,
+          "feliciaVideoSeen": true,
+          "sector04Entered": false,
+          "sector04Completed": false,
+          "tuesdayMorningReached": false
+        },
+        "tickets": {},
+        "investigations": {
+          "shipping_cannot_print": {
+            "ticketId": "shipping_cannot_print",
+            "phase": "human_verify",
+            "evidence": [
+              "printer_self_test",
+              "queue_trace",
+              "compare_user"
+            ],
+            "ruledOut": [],
+            "hypothesis": "permissions",
+            "fixApplied": true,
+            "technicalCheckPassed": true,
+            "startedAt": "2026-10-03T16:56:13.058Z",
+            "updatedAt": "2026-10-03T16:56:17.358Z"
+          }
+        },
+        "ordinary": {},
+        "active": {
+          "stationId": "shipping_workstation",
+          "surface": "screen",
+          "notice": "A new job now remains in the queue through authorization and reaches the printer.",
+          "error": false,
+          "app": "compare_user"
+        },
+        "position": {
+          "px": 21,
+          "py": 29
+        }
+      },
+      "laptopFixture": {
+        "station": "laptop_dock_link",
+        "px": 6,
+        "py": 11,
+        "approach": {
+          "x": 6,
+          "y": 11
+        },
+        "previousRoom": null,
+        "exitEntryPoint": null
+      },
+      "optionalTechnicalOnly": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "requester",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": false
+      },
+      "optionalComplete": {
+        "version": 1,
+        "caseId": "laptop_dock_link",
+        "phase": "complete",
+        "evidence": [
+          "dock_power",
+          "upstream_cable",
+          "device_inventory"
+        ],
+        "ruledOut": [
+          "display_failure"
+        ],
+        "hypothesis": "upstream_disconnected",
+        "authorized": true,
+        "fixApplied": true,
+        "technicalVerified": true,
+        "requesterVerified": true
+      },
+      "status": "passed"
+    }
+  ],
+  "browserVersion": "148.0.7778.96",
+  "visualReview": {
+    "standard": "docs/production/PRODUCTION-BIBLE-R1.md",
+    "automaticVerdict": "passed",
+    "aestheticCertification": false,
+    "priorities": [
+      {
+        "scene": "entry-standup",
+        "priority": "P1 · Entry / story ownership",
+        "note": "Functional entry and skip checks passed in the preceding capture. Current framing: scripted standup holds a cinematic mid shot with Mike parked at an authored mark (left third) so he cannot occlude the speaker; the current speaker carries a floor spotlight and gold pointer while the crew dims, the arrival card is suppressed until standup completes, and the dept chip reports floor-wide open tickets instead of a misleading \"all clear\". Compact dialogue caps at 30–34vh with auxiliary small print dropped."
+      },
+      {
+        "scene": "shipping-stage",
+        "priority": "P1 · Authored staging",
+        "note": "The clerk is anchored to hand-authored scene coordinates (spot x 150/768, feet on the y 400/432 floor line) inside the art window, clear of the forklift and crate stack, with the label printer on the desk front edge occluding the monitor base. Capture asserts the rendered feet and spot against the authored fractions every run; sprite transparent padding is compensated by measured alpha-bbox anchors."
+      },
+      {
+        "scene": "side-room-desk",
+        "priority": "P1 · Spatial affordance",
+        "note": "Desk is visible, keyboard approach opens the workstation, and the \"use workstation\" prompt now rides a dark pill that stays legible on bright backdrops and portrait crops. Remaining: the foreground desk is a canvas-drawn stand-in whose detail level differs from the backdrop furniture; replacing it with a matching furniture asset stays open."
+      },
+      {
+        "scene": "requester-conversation",
+        "priority": "P1 · Dialogue specificity",
+        "note": "Questions must concern this incident and department. Answers must remain visible and already-discussed topics must not repeat."
+      },
+      {
+        "scene": "simulated-desktop",
+        "priority": "P1 · Interface hierarchy",
+        "note": "Local desktop only at the physical desk; working window controls and readable touch targets."
+      },
+      {
+        "scene": "company-cutscene",
+        "priority": "P2 · Texture / art direction",
+        "note": "Review photoreal media versus pixel characters. Functional capture is not art approval; visual consistency remains an authored asset task."
+      },
+      {
+        "scene": "printer-inspection",
+        "priority": "P1 · Evidence before action",
+        "note": "Inspection targets should lie on components and reveal supported observations. Diagram style versus world texture needs art review."
+      },
+      {
+        "scene": "floor",
+        "priority": "P2 · World texture consistency",
+        "note": "Observed: top-down props, flat desk tiles and detailed side-room art have different pixel density and lighting. Next: choose one pixel grid, palette and light direction, then replace inconsistent props in both views."
+      }
+    ]
+  }
+}

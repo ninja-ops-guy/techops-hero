@@ -11,6 +11,7 @@
 
   var DEFAULT_ASSET_BASE = "assets/campaign/";
   var WORKSTATION_TABS = ["QUEUE", "TEAMS", "ALERTS", "COMPANY", "MUSIC"];
+  var musicViewSerial = 0;
 
   var NATIVE_ASSET_BINDINGS = {
     standup: ["ui.standup.board", "ui.standup.ticket_card", "ui.standup.owner_badge"],
@@ -60,9 +61,19 @@
   function loadState() { return act1().load(storage()); }
   function saveState(state) { act1().save(state, storage()); return state; }
   function gameState() { return root && root.S ? root.S : null; }
+  function dayExperience() { return root && root.TechOpsDayExperience || null; }
+  function requireDesk() { var experience = dayExperience(),gs=gameState();if(gs&&gs.room&&!(gs.room.id==="itdept"&&Math.abs(gs.room.x-.82)<=.06)){if(experience)experience.routeTo("mike_desk");return false;}return !experience || experience.requireDesk(); }
+  function routeToDesk() { var experience = dayExperience(); return experience ? experience.routeTo("mike_desk") : openWorkstation(); }
+  function deskRouteLabel() { return dayExperience() ? "Walk to Mike's workstation" : "Open workstation"; }
+  function atContact(key) { var gs = gameState(), contact = gs && gs.meta && gs.meta.campaignAct1Native && gs.meta.campaignAct1Native[key]; return !!(gs && !gs.nightMode && !gs.room && isAdjacent({x:gs.px,y:gs.py},contact)); }
+  function fieldTalk(ticketId) {
+    var experience = dayExperience(); if (!experience) return false;
+    var key = ticketId === "shipping_cannot_print" ? "shipping" : "plating";
+    return atContact(key) ? experience.talk(ticketId) : experience.routeTo(key);
+  }
   function hasGameFunction(name) { return root && typeof root[name] === "function"; }
-  function callDialog(name, body, options) { if (hasGameFunction("dlg")) { root.dlg(name, body, options || []); return true; } return false; }
-  function closeDialog() { if (hasGameFunction("closeDlg")) root.closeDlg(); }
+  function callDialog(name, body, options) { musicViewSerial++; if (hasGameFunction("dlg")) { root.dlg(name, root.TechOpsDayDesktop ? "<div>"+body+"</div>" : body, options || []); if(dayExperience())dayExperience().workstationSkin(name); if(root.TechOpsDayDesktop)root.TechOpsDayDesktop.present(name,body,options||[]); return true; } return false; }
+  function closeDialog() { musicViewSerial++; if (hasGameFunction("closeDlg")) root.closeDlg(); }
   function notify(message, ms) { if (hasGameFunction("toast")) root.toast(message, ms || 3600); }
   function isAdjacent(a, b) { if (!a || !b) return false; if (hasGameFunction("adjacent")) return root.adjacent(a, b); return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= 1; }
 
@@ -136,15 +147,17 @@
     return state;
   }
 
-  function openStandup() {
+  function openStandup(decisionOnly) {
+    var experience=dayExperience(),game=gameState();
+    if(!decisionOnly&&experience&&experience.standupScene&&!loadState().flags.standup_completed&&!(game&&game.meta&&game.meta.dayStandupIntroSeen===game.day))return experience.standupScene(function(){openStandup(true);});
     setAssetContext("standup");
     var state = loadState();
     if (state.flags.ticket_assignments_confirmed) {
-      return callDialog("CAMPAIGN STANDUP", "Every active ticket has exactly one owner.<br><br>Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> " + (state.assignments.impossible_access_event === "security" ? "Security Ops" : "Mike"), [{ t: state.flags.day_work_unlocked ? "Back to work" : "Open workstation", f: state.flags.day_work_unlocked ? closeDialog : openWorkstation }]);
+      return callDialog("CAMPAIGN STANDUP", "Every active ticket has exactly one owner.<br><br>Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> " + (state.assignments.impossible_access_event === "security" ? "Security Ops" : "Mike"), [{ t: state.flags.day_work_unlocked ? "Back to work" : deskRouteLabel(), f: state.flags.day_work_unlocked ? closeDialog : routeToDesk }]);
     }
     return callDialog("MORNING STANDUP", "Three problems are waiting on the board. Before the team heads out, each one needs an owner.", [
-      { t: "Assign queue: Mike investigates access", f: function () { var rt = runtime(); if (rt) rt.confirmAssignments("firsthand"); callDialog("OWNERSHIP CONFIRMED", "Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> Mike<br><br>Every problem belongs to someone before it can be solved.", [{ t: "Open workstation", f: openWorkstation }]); } },
-      { t: "Delegate Impossible Access to Security", f: function () { var rt = runtime(); if (rt) rt.confirmAssignments("delegated"); callDialog("OWNERSHIP CONFIRMED", "Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> Security Ops<br><br>Delegation changes perspective, not reality.", [{ t: "Open workstation", f: openWorkstation }]); } },
+      { t: "Assign queue: Mike investigates access", f: function () { var rt = runtime(); if (rt) rt.confirmAssignments("firsthand"); callDialog("OWNERSHIP CONFIRMED", "Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> Mike<br><br>Every problem belongs to someone before it can be solved.", [{ t: deskRouteLabel(), f: routeToDesk }]); } },
+      { t: "Delegate Impossible Access to Security", f: function () { var rt = runtime(); if (rt) rt.confirmAssignments("delegated"); callDialog("OWNERSHIP CONFIRMED", "Shipping -> Mike<br>Plating -> Amit<br>Impossible Access -> Security Ops<br><br>Delegation changes perspective, not reality.", [{ t: deskRouteLabel(), f: routeToDesk }]); } },
       { t: "Back", f: closeDialog }
     ]);
   }
@@ -267,7 +280,7 @@
     var options = records.map(function (item) { return { t: item.title + " — " + item.status, f: function () { openTicketRecord(item.id, filter); } }; });
     options.push({ t: filter === "all" ? "Show needs attention" : "Show all records", f: function () { openTicketHistory(filter === "all" ? "attention" : "all"); } });
     options.push({ t: "Close history", f: closeDialog });
-    return callDialog("WORKSTATION // TICKET HISTORY", "<b>DAY 1 CASEBOOK</b><br>" + (records.length ? "Choose a record to review ownership, verification, and the human outcome." : "No records in this view.") + "<br><br>This is recorded work, not a new investigation. Reading never changes evidence or completes a ticket.", options);
+    return callDialog(dayExperience() && !dayExperience().desktopNearby() ? "CASEBOOK // TICKET HISTORY" : "WORKSTATION // TICKET HISTORY", "<b>DAY 1 CASEBOOK</b><br>" + (records.length ? "Choose a record to review ownership, verification, and the human outcome." : "No records in this view.") + "<br><br>This is recorded work, not a new investigation. Reading never changes evidence or completes a ticket.", options);
   }
   function openTicketRecord(ticketId, filter) {
     var state = readCasebook(); if (!state) return false;
@@ -316,16 +329,26 @@
   }
   function openWorkdayHandoff() {
     var state = readCasebook(); if (!state) return false;
-    setAssetContext("workstation");
+    var onFloor = dayExperience() && !dayExperience().desktopNearby();
+    setAssetContext(onFloor ? "standup" : "workstation");
     var records = act1().workdayHandoff(state);
-    if (!records.length) return callDialog("WORKSTATION // SHIFT HANDOFF", "The next-shift handoff becomes available after the verified Tuesday transition.", [{t:"Back to desktop",f:openWorkstation}]);
+    if (!records.length) return callDialog(onFloor ? "BOARD // SHIFT HANDOFF" : "WORKSTATION // SHIFT HANDOFF", "The next-shift handoff becomes available after the verified Tuesday transition.", [{t:onFloor?"Return to floor":"Back to desktop",f:onFloor?closeDialog:openWorkstation}]);
     var options = records.map(function (record) { return {t:TICKET_COPY[record.ticketId].title+" — "+shiftStatus(record),f:function(){openWorkdayFollowup(record.ticketId);}}; });
     options.push({t:"Review Day 1 casebook",f:function(){openTicketHistory();}});
-    options.push({t:"Back to desktop",f:openWorkstation});
+    options.push({t:onFloor?"Return to floor":"Back to desktop",f:onFloor?closeDialog:openWorkstation});
     var pending = records.filter(function(record){return record.phase !== "complete";}).length;
-    return callDialog("WORKSTATION // SHIFT HANDOFF", "<b>TUESDAY · "+pending+" FOLLOW-UP"+(pending === 1 ? "" : "S")+"</b><br><br>Verified work stays verified. Open work is not forgotten. A verification gap is not a proven recurrence.<br><br>New checks keep their own record; the original casebook stays intact.", options);
+    return callDialog(onFloor ? "BOARD // SHIFT HANDOFF" : "WORKSTATION // SHIFT HANDOFF", "<b>TUESDAY · "+pending+" FOLLOW-UP"+(pending === 1 ? "" : "S")+"</b><br><br>Verified work stays verified. Open work is not forgotten. A verification gap is not a proven recurrence.<br><br>New checks keep their own record; the original casebook stays intact.", options);
+  }
+  function requireFollowupLocation(ticketId, action, value) {
+    var experience = dayExperience(); if (!experience) return true;
+    var key = ticketId === "shipping_cannot_print" ? "shipping" : "plating";
+    var needsRequester = action === "verify_requester" || action === "observe" && value === "requester";
+    var station = key === "shipping" ? "shipping_workstation" : "plating_workstation";
+    if(!(gameState()&&gameState().room)&&(needsRequester ? atContact(key) : root.TechOpsDayWorld && root.TechOpsDayWorld.at(station))) return true;
+    experience.routeTo(needsRequester ? key : station);return false;
   }
   function commitWorkdayAction(ticketId, action, value) {
+    if(!requireFollowupLocation(ticketId,action,value))return false;
     var state = readCasebook(); if (!state) return false;
     try {
       var record = act1().performWorkdayFollowup(state,ticketId,action,value);
@@ -388,6 +411,7 @@
   }
 
   function openWorkstation() {
+    if (!requireDesk()) return false;
     setAssetContext("workstation");
     var state = loadState();
     if (!state.flags.ticket_assignments_confirmed) return openStandup();
@@ -396,6 +420,7 @@
   }
 
   function openWorkstationTab(tab) {
+    if (!requireDesk()) return false;
     setAssetContext("workstation");
     var state = ensureWorkstationChecked(loadState());
     if (tab === "QUEUE" && state.flags.tuesday_morning_reached) return openWorkdayHandoff();
@@ -414,28 +439,79 @@
     return openWorkstation();
   }
 
+  function commitMorningListening(skipped, playback) {
+    if(!requireDesk())return false;
+    var state=loadState(),hear=act1().hearRedInMirror;
+    // The audio owner has already confirmed playback. The legacy wrapper must
+    // not start the same song again when recording the narrative beat.
+    if(hear.__techopsDiegeticRed&&typeof hear.__base==="function")hear=hear.__base;
+    if(!state.flags.red_in_mirror_heard)hear.call(act1(),state);
+    state.morningListening={userSkipped:!!skipped,status:skipped?"user_skipped":"playing",trackId:skipped?null:playback&&playback.trackId||null,title:skipped?null:playback&&playback.title||"Red in the Mirror",source:skipped?"accessibility_choice":playback&&playback.source||"confirmed_audio",at:new Date().toISOString()};
+    if(skipped){var event=state.history[state.history.length-1];if(event&&event.type==="red_in_mirror_heard"){event.context="accessibility_skip";event.userSkipped=true;}}
+    saveState(state);notify(skipped?"Morning music skipped by choice — continue the opening":"RED IN THE MIRROR — playback confirmed");
+    if(!skipped&&root.TechOpsDayDesktop)return callDialog("MORNING LISTENING","RED IN THE MIRROR",[{t:"Return to music",f:openMusicTab},{t:"Back to desktop",f:openWorkstation}]);
+    return openMusicTab();
+  }
+  function continueMusicMuted() {
+    if(!requireDesk())return false;
+    // Use the existing global audio owner: it pauses an already-playing widget
+    // and makes any delayed playlist callback observe the user's mute choice.
+    if(typeof root.setMusic==="function")root.setMusic(false);
+    if(root.TechOpsDayAudio&&typeof root.TechOpsDayAudio.silence==="function")root.TechOpsDayAudio.silence();
+    return commitMorningListening(true);
+  }
+  function musicFailure(status) {
+    var explanation=status==="save_failed"?"Playback was confirmed, but the morning progress could not be saved. Retry before leaving the workstation.":status==="muted"?"Music is muted. No playback has been recorded.":status==="not-found"?"Red in the Mirror was not found in the playlist. No playback has been recorded.":status==="timeout"?"The music service did not confirm playback in time. No playback has been recorded.":"The music service could not confirm this track. No playback has been recorded.";
+    return callDialog("WORKSTATION // MUSIC",explanation+"<br><br>You can retry or explicitly continue the opening without music.",[
+      {t:"Retry Red in the Mirror",f:playMorningMusic},{t:"Continue with music muted",f:continueMusicMuted},{t:"Back to desktop",f:openWorkstation}
+    ]);
+  }
+  function playMorningMusic() {
+    if(!requireDesk())return false;
+    var audio=root.TechOpsDayAudio;
+    if(!audio||typeof audio.playMorningTrack!=="function"){
+      if(dayExperience())return musicFailure("unavailable");
+      var legacy=loadState();act1().hearRedInMirror(legacy);saveState(legacy);notify("RED IN THE MIRROR — added to listening history");return openMusicTab();
+    }
+    callDialog("WORKSTATION // MUSIC","Connecting to your soundtrack…<br><br><b>RED IN THE MIRROR</b><br>Waiting for the music player to confirm playback. Your opening progress has not changed.",[{t:"Continue with music muted",f:continueMusicMuted},{t:"Back to desktop",f:openWorkstation}]);
+    var serial=musicViewSerial,game=gameState(),map=game&&game.map,day=game&&game.day,epoch=game&&game._modeEpoch;
+    function current(){
+      var currentGame=gameState(),experience=dayExperience(),name=root.document&&root.document.getElementById("dlg-name");
+      return serial===musicViewSerial&&currentGame===game&&(!game||game.map===map&&game.day===day&&game._modeEpoch===epoch&&!game.nightMode&&(!game.room||experience&&experience.sideDeskNearby&&experience.sideDeskNearby())&&game.inDialog)&&(!experience||experience.desktopNearby())&&(!name||name.textContent==="WORKSTATION // MUSIC");
+    }
+    var pending;try{pending=audio.playMorningTrack({userGesture:true,enableAudio:true});}catch(_){return musicFailure("unavailable");}
+    return Promise.resolve(pending).then(function(result){
+      if(!current())return false;
+      if(!result||result.status!=="playing")return musicFailure(result&&result.status);
+      try{return commitMorningListening(false,result);}catch(_){return musicFailure("save_failed");}
+    },function(){if(current())return musicFailure("unavailable");return false;});
+  }
   function openMusicTab() {
+    if (!requireDesk()) return false;
     var state = ensureWorkstationChecked(loadState());
     if (state.flags.red_in_mirror_heard) {
-      return callDialog("WORKSTATION // MUSIC", "Now playing history: <b>RED IN THE MIRROR</b><br><br>The last notes linger under the hum of the workstation. Mike leaves the track in his history and turns back to the morning.", [{ t: "Back to desktop", f: openWorkstation }]);
+      var skipped=state.morningListening&&state.morningListening.userSkipped;
+      return callDialog("WORKSTATION // MUSIC", skipped?"<b>RED IN THE MIRROR</b><br><br>You chose to continue with music muted. The morning beat is complete; playback was not claimed.":"Listening history: <b>RED IN THE MIRROR</b><br><br>Mike leaves the track in his history and turns back to the morning.", [{t:"Play Red in the Mirror",f:playMorningMusic},{ t: "Back to desktop", f: openWorkstation }]);
     }
     return callDialog("WORKSTATION // MUSIC", "A saved track sits in the player: <b>RED IN THE MIRROR</b>.<br><br>The shift has not started yet. Mike can listen before the queue begins to move.", [
-      { t: "Play Red in the Mirror", f: function () { var s = loadState(); act1().hearRedInMirror(s); saveState(s); notify("RED IN THE MIRROR — added to listening history"); openMusicTab(); } },
+      { t: "Play Red in the Mirror", f: playMorningMusic },
+      { t: "Continue with music muted", f: continueMusicMuted },
       { t: "Back to desktop", f: openWorkstation }
     ]);
   }
 
   function openCompanyTab() {
+    if (!requireDesk()) return false;
     var state = ensureWorkstationChecked(loadState());
     if (!state.flags.felicia_blog_found) {
-      return callDialog("WORKSTATION // COMPANY", "Internal company blog.<br><br><b>ENGINEERING THE HUMAN CONNECTION</b><br>Field systems profile: Felicia — Security Research / Systems Integrations.<br><br>A thumbnail shows an aircraft interior, antenna racks, and a violin case.", [
-        { t: "Open Felicia profile", f: function () { var s = loadState(); act1().findFeliciaBlog(s); saveState(s); openCompanyTab(); } },
+      return callDialog("WORKSTATION // COMPANY", "Internal company blog.<br><br><b>PEOPLE BEHIND THE FLIGHT</b><br>Field systems profile: Felicia — Security Research / Systems Integrations.<br><br>A thumbnail shows an aircraft interior, antenna racks, and a violin case.", [
+        { t: "Open Felicia profile", f: function () { if(!requireDesk())return false;var s = loadState(); act1().findFeliciaBlog(s); saveState(s); openCompanyTab(); } },
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
     if (!state.flags.felicia_video_watched) {
       return callDialog("COMPANY // FELICIA", "Felicia — Security Research / Systems Integrations.<br><br>A short profile follows her work in the field. Mike has not met her yet.", [
-        { t: "Play Engineering the Human Connection", f: playFeliciaVideo },
+        { t: "Play People Behind the Flight", f: playFeliciaVideo },
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
@@ -448,17 +524,19 @@
         { t: "Back to desktop", f: openWorkstation }
       ]);
     }
-    return callDialog("WORKSTATION // COMPANY", "ENGINEERING THE HUMAN CONNECTION — viewed.<br><br>The shift is underway. Felicia's profile is saved here if Mike wants to revisit it.", [{ t: "Back to desktop", f: openWorkstation }]);
+    return callDialog("WORKSTATION // COMPANY", "PEOPLE BEHIND THE FLIGHT — viewed.<br><br>The shift is underway. Felicia's profile is saved here if Mike wants to revisit it.", [{ t: "Back to desktop", f: openWorkstation }]);
   }
 
   function playFeliciaVideo() {
-    return callDialog("ENGINEERING THE HUMAN CONNECTION", "Factories. Aircraft. Fluorescent smiles.<br><br>Felicia plays violin aboard the aircraft. Behind her: antennas, racks, drones.<br><br>A telemetry graphic corrupts for less than a second:<br><b>ORPHEUS</b><br><br>Then the corporate edit continues normally.", [
+    if (!requireDesk()) return false;
+    return callDialog("PEOPLE BEHIND THE FLIGHT", "Factories. Aircraft. Fluorescent smiles.<br><br>Felicia plays violin aboard the aircraft. Behind her: antennas, racks, drones.<br><br>A telemetry graphic corrupts for less than a second:<br><b>ORPHEUS</b><br><br>Then the corporate edit continues normally.", [
       { t: "Finish video", f: function () { completeFeliciaVideo(false); } },
       { t: "Skip video", f: function () { completeFeliciaVideo(true); } }
     ]);
   }
 
   function completeFeliciaVideo(skipped) {
+    if (!requireDesk()) return false;
     var state = loadState();
     act1().completeFeliciaVideo(state, { started: true, skipped: !!skipped });
     saveState(state);
@@ -467,6 +545,7 @@
   }
 
   function unlockDayShift() {
+    if (!requireDesk()) return false;
     var state = loadState();
     if (!state.flags.red_in_mirror_heard || !state.flags.felicia_video_watched || !state.flags.workstation_checked || !state.flags.standup_completed) {
       return callDialog("OPENING INCOMPLETE", "Finish the standup, workstation check, morning track, and company profile before clocking in.", [{ t: "Back to desktop", f: openWorkstation }]);
@@ -480,15 +559,17 @@
   }
 
   function openFieldTicket(ticketId) {
+    if(dayExperience())return fieldTalk(ticketId);
     var state=readCasebook();if(!state)return false;
     if(!state.flags.day_work_unlocked || state.tickets[ticketId])return resolveTicket(ticketId);
     if(root.TechOpsCampaignInvestigations && typeof root.TechOpsCampaignInvestigations.openInvestigation === "function")return root.TechOpsCampaignInvestigations.openInvestigation(ticketId);
     return callDialog("INVESTIGATION UNAVAILABLE","The field investigation module has not loaded. No ticket was closed. Return to the contact after the module is available.",[{t:"Back",f:closeDialog}]);
   }
   function resolveTicket(ticketId) {
+    if(dayExperience())return ticketId==="impossible_access_event"?recordAccessEvidence():fieldTalk(ticketId);
     setAssetContext(TICKET_COPY[ticketId] && TICKET_COPY[ticketId].assetContext);
     var campaign = withAssignedState();
-    if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "The queue exists, but its timer has not started. Complete the workstation opening before treating Day 1 tickets.", [{ t: "Open workstation", f: openWorkstation }, { t: "Back", f: closeDialog }]);
+    if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "The queue exists, but its timer has not started. Complete the workstation opening before treating Day 1 tickets.", [{ t: deskRouteLabel(), f: routeToDesk }, { t: "Back", f: closeDialog }]);
     if (campaign.tickets[ticketId]) return openTicketFollowUp(ticketId);
     act1().resolveTicket(campaign, ticketId, { technicalResolution: true, verification: "strong", humanOutcome: "restored" });
     saveState(campaign);
@@ -496,9 +577,12 @@
   }
 
   function recordAccessEvidence() {
+    if(dayExperience()&&(gameState()&&gameState().room||!(root.TechOpsDayWorld&&root.TechOpsDayWorld.at("security_workstation")))){
+      return callDialog("SECURITY OPS","Security has a badge record that needs review against physical presence. The access log is on the Security workstation; review it there before documenting a conclusion.",[{t:"Walk to Security workstation",f:function(){dayExperience().routeTo("security_workstation");}},{t:"Back to floor",f:closeDialog}]);
+    }
     setAssetContext("access");
     var campaign = withAssignedState();
-    if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "Mike needs the complete workstation context before he can investigate access control responsibly.", [{ t: "Open workstation", f: openWorkstation }, { t: "Back", f: closeDialog }]);
+    if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "Mike needs the complete workstation context before he can investigate access control responsibly.", [{ t: deskRouteLabel(), f: routeToDesk }, { t: "Back", f: closeDialog }]);
     if (badgeSources(campaign).length) return openTicketFollowUp("impossible_access_event");
     var perspective = campaign.assignments.impossible_access_event === "security" ? "delegated_verified" : "firsthand";
     act1().recordGhostEvidence(campaign, { id: "badge_impossible_access", perspective: perspective, reliability: "high", completeness: "partial", discoveredBy: perspective === "firsthand" ? "mike" : "security", authority: "access_control" });
@@ -589,7 +673,7 @@
   function pauseBaseWorkDialog() {
     var campaign = loadState();
     return callDialog("SHIFT PAUSED", "The queue is waiting. Confirm the standup assignments, check the workstation, and finish the morning listening and company profile before clocking in. Ticket clocks remain paused.", [
-      { t: campaign.flags.standup_completed ? "Open workstation" : "Go to standup", f: campaign.flags.standup_completed ? openWorkstation : openStandup },
+      { t: campaign.flags.standup_completed ? deskRouteLabel() : "Go to standup", f: campaign.flags.standup_completed ? routeToDesk : function(){return dayExperience()?dayExperience().routeTo("standup"):openStandup();} },
       { t: "Back", f: closeDialog }
     ]);
   }
@@ -625,9 +709,13 @@
       var originalInteract = root.interact;
       root.interact = function () {
         var state = gameState(), native = state && state.meta && state.meta.campaignAct1Native;
+        // Side-view interiors own their own position and visible interactables.
+        // S.px/py are only their frozen floor entry tile, never device proximity.
+        if(state&&state.room&&!state.nightMode)return originalInteract.apply(this,arguments);
+        if(state&&!state.inDialog&&!state.inBattle&&!state.nightMode&&dayExperience()&&dayExperience().interact())return true;
         if (state && !state.inDialog && !state.inBattle && !state.nightMode && native) {
           var p = { x: state.px, y: state.py };
-          if (isAdjacent(p, native.standup)) return state.day >= 2 ? openWorkstation() : openStandup();
+          if (isAdjacent(p, native.standup)) return state.day >= 2 ? (dayExperience()?openWorkdayHandoff():openWorkstation()) : openStandup();
           if (isAdjacent(p, native.shipping)) return openFieldTicket("shipping_cannot_print");
           if (isAdjacent(p, native.plating)) return openFieldTicket("plating_workstation_down");
           if (isAdjacent(p, native.access)) return recordAccessEvidence();
