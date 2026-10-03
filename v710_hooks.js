@@ -188,6 +188,9 @@
   let cardT = null;
   function roomCard(biomeId) {
     const old = document.getElementById("v710-card"); if (old) old.remove();
+    // During the scripted standup the arrival card would compete with the
+    // dialogue and read as an "all clear" verdict while work is unresolved.
+    if (biomeId === "itdept" && !(S.flags && S.flags.standup_completed)) return;
     const p = palOf(biomeId);
     const open = S.npcs.filter(n => !n.done && n.type && (BIOME_OF_DEPT[n.dept] === biomeId)).length;
     const d = document.createElement("div");
@@ -284,12 +287,21 @@
     // npcs at their mapped stations
     const npcs = roomNpcs710(s.room.id);
     npcs.forEach((n, i) => {
+      const speaking = standupOpen && s.dayStandupSpeaker === n.name;
       const x = npcSpot(n, i, npcs.length, s.room.id) * W;
+      // standup staging: the current speaker owns a floor spotlight while the
+      // rest of the crew drops back, so the speaking turn is unmistakable
+      if (speaking) {
+        ctx.fillStyle = "rgba(255,210,74,.28)";
+        ctx.beginPath(); ctx.ellipse(x, floorY + 4, 30, 8, 0, 0, 7); ctx.fill();
+      }
       ctx.fillStyle = "#0006"; ctx.beginPath(); ctx.ellipse(x, floorY + 4, 22, 5, 0, 0, 7); ctx.fill();
+      ctx.save();
+      if (standupOpen && !speaking) ctx.globalAlpha = .55;
       if (typeof npcIdx === "function") drawSideSprite(npcImg, 128, [npcIdx(n), 0], x, floorY, 64, false, tm);
+      ctx.restore();
       if (!n.ambient && !n.done) { ctx.font = "15px serif"; ctx.fillText(n.critical ? "🚨" : "🎫", x + 18, floorY - 66); }
       else if (!n.ambient && n.done) { ctx.font = "13px serif"; ctx.fillText("✅", x + 18, floorY - 64); }
-      const speaking = standupOpen && s.dayStandupSpeaker === n.name;
       if (speaking) {
         // speaker emphasis: gold pointer over the head of who owns the line
         ctx.fillStyle = "#ffd24a";
@@ -334,30 +346,44 @@
       ctx.strokeStyle='#31414e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+34,y-14);ctx.quadraticCurveTo(x+44,y-8,x+42,y);ctx.stroke();
       drawNamePlate(x,y,"Mike’s desk",'#8ddde9',standupOpen);
     }
-    // player
-    const px = s.room.x * W;
+    // player: scripted standup holds Mike at an authored mark (left third,
+    // facing the crew) so he can never occlude the current speaker
+    const px = (standupOpen ? .30 : s.room.x) * W;
     ctx.fillStyle = "#0007"; ctx.beginPath(); ctx.ellipse(px, floorY + 5, 24, 6, 0, 0, 7); ctx.fill();
     if (typeof playerImg !== "undefined" && playerImg.complete && playerImg.naturalWidth && typeof PLAYER_ATLAS !== "undefined") {
       const fk = s.moving ? `${s.fx === "left" ? "left" : "right"}${1 + Math.floor(tm / 160) % 2}` : "down0";
       const fr = PLAYER_ATLAS.frames[fk] || PLAYER_ATLAS.frames.down0 || [0, 0];
       drawSideSprite(playerImg, PLAYER_ATLAS.cell, fr, px, floorY, 72, false, s.moving ? tm : 0);
     } else { ctx.font = "34px serif"; ctx.fillText("🧑‍🔧", px, floorY - 30); }
-    // hint
-    const n = nearestRoomNpc710();
-    if (n && !s.inDialog) {
-      ctx.font = "bold 10px monospace"; ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
-      ctx.fillText(`E — talk to ${n.name}`, px, floorY - 84);
+    // hints ride on a dark pill so they stay legible on bright backdrops,
+    // small screens and portrait crops where bare text washed out
+    function hintPill(text, x, y, color) {
+      ctx.font = "bold 10px monospace"; ctx.textAlign = "center";
+      const w = ctx.measureText(text).width + 18, h = 18;
+      const bx = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x));
+      ctx.fillStyle = "rgba(4,10,14,.84)";
+      if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx - w / 2, y - h / 2, w, h, 9); ctx.fill(); }
+      else ctx.fillRect(bx - w / 2, y - h / 2, w, h);
+      ctx.strokeStyle = color; ctx.globalAlpha = .6; ctx.lineWidth = 1;
+      if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx - w / 2 + .5, y - h / 2 + .5, w - 1, h - 1, 9); ctx.stroke(); }
+      else ctx.strokeRect(bx - w / 2 + .5, y - h / 2 + .5, w - 1, h - 1);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color; ctx.fillText(text, bx, y + .5);
     }
-    if(!n&&!s.inDialog&&s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06){ctx.font='bold 10px monospace';ctx.fillStyle='#8ddde9';ctx.textAlign='center';const hint='E — use Mike’s workstation',half=ctx.measureText(hint).width/2+10;ctx.fillText(hint,Math.max(half,Math.min(W-half,px)),floorY-84);}
-    // dept chip: accent stripe + live open-ticket count
+    const n = nearestRoomNpc710();
+    if (n && !s.inDialog) hintPill(`E — talk to ${n.name}`, px, floorY - 84, "#ffd24a");
+    if(!n&&!s.inDialog&&s.room.id==='itdept'&&Math.abs(s.room.x-.82)<=.06) hintPill("E — use Mike’s workstation", px, floorY - 84, "#8ddde9");
+    // dept chip: accent stripe + live open-ticket count. "all clear" is only
+    // shown when the whole floor is done — never while campaign work is open.
     const open = s.npcs.filter(x => !x.done && x.type && (BIOME_OF_DEPT[x.dept] === s.room.id)).length;
+    const allOpen = s.npcs.filter(x => !x.done && x.type).length;
     ctx.textAlign = "left";
     ctx.fillStyle = "#00000088"; ctx.fillRect(8, 8, 196, 34);
     ctx.fillStyle = p.line; ctx.fillRect(8, 8, 3, 34);
     ctx.font = "bold 11px monospace";
     ctx.fillStyle = "#e8ecf5"; ctx.fillText(p.name, 18, 21);
-    ctx.fillStyle = open ? "#ffd24a" : "#7dd87d";
-    ctx.fillText(open ? `🎫 ${open} open here` : "✅ all clear", 18, 35);
+    ctx.fillStyle = open || allOpen ? "#ffd24a" : "#7dd87d";
+    ctx.fillText(open ? `🎫 ${open} open here` : allOpen ? `🎫 ${allOpen} open on the floor` : "✅ all clear", 18, 35);
   };
 
   const st = document.createElement("style");

@@ -26,66 +26,116 @@
 
   function filename(slot) { return slot + ".png"; }
   function url(slot) { return BASE + filename(slot); }
-  // ---- measured floor line: actors and props stand on the drawn ground ----
-  // Several authored backgrounds carry baked letterbox bars, so a fixed CSS
-  // bottom cannot align sprites with the art. Measure the last lit scanline of
-  // the image once, then convert it to a container-relative floor offset that
-  // tracks cover-cropping at any viewport size.
-  var floorCache = {}, floorPending = null, floorRO = null;
-  function measureFloor(src, cb) {
-    if (floorCache[src]) { cb(floorCache[src]); return; }
-    var im = new (root.Image || Image)();
-    im.onload = function () {
-      var w = im.naturalWidth, h = im.naturalHeight, floorPx = h * 0.93;
-      try {
-        var c = root.document.createElement("canvas"); c.width = w; c.height = h;
-        var x2 = c.getContext("2d", { willReadFrequently: true }); x2.drawImage(im, 0, 0);
-        var cols = [0.25, 0.4, 0.5, 0.6, 0.75].map(function (f) { return Math.floor(f * w); });
-        var y0 = Math.floor(h * 0.5), rows = h - y0, found = [];
-        cols.forEach(function (cx) {
-          var d = x2.getImageData(cx, y0, 1, rows).data;
-          for (var i = rows - 1; i >= 1; i--) {
-            var a = (i * 4), b2 = ((i - 1) * 4);
-            var la = d[a] * .299 + d[a + 1] * .587 + d[a + 2] * .114;
-            var lb = d[b2] * .299 + d[b2 + 1] * .587 + d[b2 + 2] * .114;
-            if (la > 16 && lb > 16) { found.push(y0 + i); break; }
-          }
-        });
-        if (found.length) { found.sort(function (a, b) { return a - b; }); floorPx = found[Math.floor(found.length / 2)]; }
-      } catch (e) { }
-      floorCache[src] = { w: w, h: h, floorPx: floorPx };
-      cb(floorCache[src]);
-    };
-    im.onerror = function () { floorCache[src] = { floorPx: 0 }; cb(floorCache[src]); };
-    im.src = src;
-  }
-  function applyFloor() {
-    var p = floorPending; if (!p || !p.el.isConnected) return;
-    var f = floorCache[p.src];
-    if (!f || !f.floorPx) { p.el.style.setProperty("--a1-floor-bottom", "18%"); return; }
-    var rect = p.bg.getBoundingClientRect(), host = p.el.getBoundingClientRect();
-    if (!rect.height || !host.height) return;
-    // True background-size:cover math: scale to the larger dimension, then the
-    // position-y bias slides the visible window over the (possibly cropped)
-    // image. The bg element carries inset:-2%, so convert into host space.
-    var scale = Math.max(rect.width / f.w, rect.height / f.h);
-    var dispH = f.h * scale;
+  // ---- authored scene coordinates ---------------------------------------
+  // Every staged scene carries hand-authored coordinates against its known
+  // background art (768x432 px boards): the foreground floor contact line,
+  // the actor's standing spot, and each prop's support surface. Sprite files
+  // keep transparent padding, so anchoring uses the measured alpha bbox
+  // (feetY/cx/bbox fractions below), never the raw image edge.
+  var SCENE_LAYOUT = {
+    shipping: {
+      floorY: 400 / 432, // foreground concrete, just above the letterbox bar
+      // The clerk stands in front of their own desk, on the open floor -
+      // clear of the forklift (image x 330-560) and the crate stack (x 500-640).
+      actor: { x: 150 / 768, feetY: 400 / 432, heightPx: 178 },
+      // Story band kept in frame under horizontal cover-crop: the desk, the
+      // standing clerk and the printer. The truck/fence backdrop may crop.
+      band: [100 / 768, 430 / 768],
+      propAnchors: {
+        // Label printer sits on the desk's front edge beside the monitor,
+        // occluding the monitor base the way a real desk object would.
+        "shipping.label_printer": { x: 210 / 768, feetY: 319 / 432, heightPx: 46 },
+        "shipping.printed_label_success": { x: 210 / 768, feetY: 319 / 432, heightPx: 46 }
+      }
+    },
+    plating: {
+      floorY: 385 / 432, // wet floor in front of the tanks
+      // The operator holds the near side of the line, left of the baked-in
+      // board worker (image x 640-710) and the robot arms (x 230-560).
+      actor: { x: 260 / 768, feetY: 385 / 432, heightPx: 168 },
+      band: [80 / 768, 540 / 768],
+      propAnchors: {
+        "plating.workstation_cracked": { x: 130 / 768, feetY: 372 / 432, heightPx: 84 },
+        "plating.line_stopped_display": { x: 400 / 768, feetY: 372 / 432, heightPx: 96 }
+      }
+    }
+  };
+  // Measured alpha-bbox insets per sprite asset (PIL, 2026-09-29): fraction of
+  // the raw image that the visible figure actually occupies. Guards the
+  // authored coordinates against sprite-file padding.
+  var SPRITE_ANCHORS = {
+    "shipping.clerk.idle": { imgW: 256, imgH: 512, feetY: 498 / 512, cx: 0.5, bboxW: 142 / 256, bboxH: 385 / 512 },
+    "shipping.label_printer": { imgW: 192, imgH: 192, feetY: 178 / 192, cx: 0.5, bboxW: 78 / 192, bboxH: 91 / 192 },
+    "shipping.printed_label_success": { imgW: 256, imgH: 192, feetY: 178 / 192, cx: 0.5, bboxW: 105 / 256, bboxH: 109 / 192 },
+    "plating.operator.idle": { imgW: 192, imgH: 384, feetY: 370 / 384, cx: 0.5, bboxW: 60 / 192, bboxH: 152 / 384 },
+    "plating.workstation_cracked": { imgW: 256, imgH: 224, feetY: 210 / 224, cx: 0.5, bboxW: 140 / 256, bboxH: 143 / 224 },
+    "plating.line_stopped_display": { imgW: 384, imgH: 256, feetY: 242 / 256, cx: 0.5, bboxW: 216 / 384, bboxH: 151 / 256 }
+  };
+  var BG_ASPECT = { w: 768, h: 432 }; // authored boards share one size
+  var stagePending = null, stageRO = null;
+  // Cover-crop math shared by every anchor: scale to the larger dimension,
+  // slide the visible window with the authored vertical bias. The bg element
+  // carries inset:-2%, so convert results into host space for the floor var.
+  function stageMetrics(bg, host, layout) {
+    var rect = bg.getBoundingClientRect(), hrect = host.getBoundingClientRect();
+    if (!rect.height || !hrect.height) return null;
+    var scale = Math.max(rect.width / BG_ASPECT.w, rect.height / BG_ASPECT.h);
+    var dispW = BG_ASPECT.w * scale, dispH = BG_ASPECT.h * scale;
+    // Horizontal cover-crop follows the authored story band (desk, actor,
+    // props) instead of blindly centering, so narrow stage boxes keep the
+    // staged figures visible while backdrop edges crop.
+    var cropX = Math.max(0, dispW - rect.width);
+    var offX;
+    if (!cropX || !layout.band) offX = (rect.width - dispW) * 0.5;
+    else {
+      var winW = rect.width / scale; // visible art width in board pixels
+      var bandC = (layout.band[0] + layout.band[1]) * 0.5 * BG_ASPECT.w;
+      var startX = Math.max(0, Math.min(BG_ASPECT.w - winW, bandC - winW * 0.5));
+      offX = -startX * scale;
+    }
     var crop = Math.max(0, dispH - rect.height);
-    var base = f.floorPx * scale - (host.top - rect.top); // floor row, host space, at bias 0
-    var target = host.height * .88; // aim: floor ~12% above the container bottom
-    var b = crop > 0 ? Math.max(0, Math.min(1, (base - target) / crop)) : 0.5;
-    p.bg.style.backgroundPosition = "center " + (b * 100).toFixed(1) + "%";
-    var floorInHost = base - crop * b;
-    var bottomPct = (1 - floorInHost / host.height) * 100;
+    var floorPx = layout.floorY * BG_ASPECT.h;
+    var target = rect.height * 0.90; // keep the authored floor just above the bottom
+    var b = crop > 0 ? Math.max(0, Math.min(1, (floorPx * scale - target) / crop)) : 0.5;
+    var offY = -crop * b;
+    return { rect: rect, hostRect: hrect, scale: scale, dispW: dispW, dispH: dispH, offX: offX, offY: offY, bias: b, cropX: cropX, floorBottomPct: (1 - (floorPx * scale + offY - (hrect.top - rect.top)) / hrect.height) * 100 };
+  }
+  function placeAnchored(bg, m, layout) {
+    var kids = bg.querySelectorAll(".a1-anchored");
+    for (var i = 0; i < kids.length; i++) {
+      var kid = kids[i], slot = kid.getAttribute("data-slot");
+      var sp = SPRITE_ANCHORS[slot];
+      var anchor = kid.className.indexOf("a1-actor") >= 0 ? layout.actor : (layout.propAnchors && layout.propAnchors[slot]);
+      if (!sp || !anchor) continue;
+      // Sprite pixel density follows the background's displayed scale, so
+      // figures keep a constant size relative to the art at any viewport.
+      var imgH = (anchor.heightPx * m.scale) / sp.bboxH;
+      var imgW = imgH * (sp.imgW / sp.imgH);
+      var feetBgY = anchor.feetY * m.dispH + m.offY;
+      var centerBgX = anchor.x * m.dispW + m.offX;
+      kid.style.left = (centerBgX - sp.cx * imgW).toFixed(1) + "px";
+      kid.style.top = (feetBgY - sp.feetY * imgH).toFixed(1) + "px";
+      kid.style.width = imgW.toFixed(1) + "px";
+      kid.style.height = imgH.toFixed(1) + "px";
+    }
+  }
+  function applyStage() {
+    var p = stagePending; if (!p || !p.el.isConnected) return;
+    var m = stageMetrics(p.bg, p.el, p.layout);
+    if (!m) return;
+    var posX = m.cropX > 0 ? (m.offX / -m.cropX * 100).toFixed(1) + "%" : "center";
+    p.bg.style.backgroundPosition = posX + " " + (m.bias * 100).toFixed(1) + "%";
+    var bottomPct = m.floorBottomPct;
     if (!isFinite(bottomPct)) bottomPct = 18;
     p.el.style.setProperty("--a1-floor-bottom", Math.max(2, Math.min(60, bottomPct)).toFixed(2) + "%");
+    placeAnchored(p.bg, m, p.layout);
   }
-  function bindFloor(el, bg, src) {
-    floorPending = { el: el, bg: bg, src: src };
-    measureFloor(src, applyFloor);
+  function bindStage(el, bg, layout) {
+    stagePending = { el: el, bg: bg, layout: layout };
+    applyStage();
     if (typeof root.ResizeObserver === "function") {
-      if (!floorRO) floorRO = new root.ResizeObserver(function () { applyFloor(); });
-      floorRO.observe(el);
+      if (!stageRO) stageRO = new root.ResizeObserver(function () { applyStage(); });
+      stageRO.observe(el);
     }
   }
   function contextId() { var c = root && root.__techopsCampaignNativeAct1Assets; return c && c.id ? c.id : null; }
@@ -244,6 +294,7 @@
       ".act1-reference .a1-label{position:absolute;left:18px;top:max(18px,env(safe-area-inset-top));font-size:9px;color:#d7e6ea;letter-spacing:1px;text-shadow:0 2px 0 #000}",
       ".act1-reference .a1-status{position:absolute;left:8%;right:8%;bottom:calc(var(--a1-floor-bottom,18%) + 12px);padding:9px 12px;border:1px solid rgba(215,230,234,.16);background:rgba(4,10,14,.68);color:#d7e6ea;font-size:8px;line-height:1.5;text-align:center;text-shadow:0 2px 0 #000}",
       ".act1-reference.a1-verified .a1-status,.act1-reference.a1-restored .a1-status,.act1-reference.a1-documented .a1-status,.act1-reference.a1-owned .a1-status{color:#7effcd;border-color:rgba(126,255,205,.32)}",
+      ".act1-reference .a1-anchored{position:absolute;z-index:1;image-rendering:pixelated;filter:drop-shadow(0 10px 8px rgba(0,0,0,.5))}",
       ".act1-reference .a1-actor{position:absolute;right:10%;bottom:var(--a1-floor-bottom,18%);height:52%;max-width:34%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 16px 10px rgba(0,0,0,.55));animation:a1-actor-idle 2.8s ease-in-out infinite alternate}",
       ".act1-reference .a1-props{position:absolute;left:7%;right:7%;bottom:var(--a1-floor-bottom,18%);height:30%;display:flex;gap:18px;align-items:flex-end;justify-content:center}",
       ".act1-reference .a1-prop{max-width:28%;max-height:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 9px 8px rgba(0,0,0,.45))}",
@@ -287,6 +338,9 @@
   }
 
   function image(slot, cls) { var im = root.document.createElement("img"); im.className = cls; im.src = url(slot); im.alt = ""; return im; }
+  // Staged sprites live inside the background element so they inherit its
+  // cover-crop window; bindStage() re-anchors them from authored coordinates.
+  function anchoredImage(slot, cls) { var im = image(slot, cls + " a1-anchored"); im.setAttribute("data-slot", slot); return im; }
   function appendStandupBoard(el, board) {
     var panel = root.document.createElement("section"); panel.className = "a1-live-board";
     panel.setAttribute("aria-label", "Day 1 ticket ownership"); panel.setAttribute("tabindex", "0");
@@ -352,10 +406,22 @@
     el.className = "act1-reference a1-from-world a1-" + spec.mode + " a1-" + profile.variant;
     el.style.setProperty("--a1-origin-x", focus.x.toFixed(2) + "%");
     el.style.setProperty("--a1-origin-y", focus.y.toFixed(2) + "%");
-    if (spec.background) { var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg); bindFloor(el, bg, url(spec.background)); }
+    if (spec.background) {
+      var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg);
+      var layout = SCENE_LAYOUT[sceneId];
+      if (layout) {
+        if (spec.actor) bg.appendChild(anchoredImage(spec.actor, "a1-actor"));
+        profile.props.forEach(function (slot) { bg.appendChild(anchoredImage(slot, "a1-prop")); });
+        bindStage(el, bg, layout);
+      }
+    }
     var grade = root.document.createElement("div"); grade.className = "a1-grade"; el.appendChild(grade);
-    if (spec.actor) el.appendChild(image(spec.actor, "a1-actor"));
-    if (profile.props.length) { var props = root.document.createElement("div"); props.className = "a1-props"; profile.props.forEach(function (slot) { props.appendChild(image(slot, "a1-prop")); }); el.appendChild(props); }
+    // Non-staged scenes keep the CSS-driven composition (first-person props,
+    // board badges); staged sprites were already anchored inside the bg above.
+    if (!layout) {
+      if (spec.actor) el.appendChild(image(spec.actor, "a1-actor"));
+      if (profile.props.length) { var props = root.document.createElement("div"); props.className = "a1-props"; profile.props.forEach(function (slot) { props.appendChild(image(slot, "a1-prop")); }); el.appendChild(props); }
+    }
     if (profile.board) appendStandupBoard(el, profile.board);
     addMotion(el, profile);
     if (!reducedMotion()) el.appendChild(motionNode("a1-world-anchor"));

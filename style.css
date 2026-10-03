@@ -590,6 +590,9 @@ body.act1-scene-open #toast{top:max(54px,calc(env(safe-area-inset-top) + 42px));
    The room renderer raises the floor line to 62% while this class is on, so
    the capped panel never reaches the actors; speakers carry a scene marker. */
 body.day-standup-open #dialogue{max-height:38vh;max-height:38dvh}
+/* Auxiliary fine print inside standup lines (timestamps, asides) is the main
+   overflow source on compact screens; drop it instead of scrolling the panel. */
+body.day-standup-open #dlg-text small{display:none}
 @media(max-width:640px){
   body.day-standup-open #dialogue{max-height:34vh;max-height:34dvh}
   body.day-standup-open #dlg-options{grid-template-columns:1fr 1fr}

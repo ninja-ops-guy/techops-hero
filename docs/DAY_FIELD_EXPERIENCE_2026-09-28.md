@@ -157,3 +157,65 @@ outside this slice, not regressions from this round.
 | Side voids beside the room backdrop on short-landscape viewports | Accepted for this slice: the authored backdrop is height-bound; filling the width would crop the authored furniture. Revisit with a wider room variant. |
 | Pre-existing gate failures (7 groups, see above) | Tracked as branch debt; fixing save/checkpoint extraction and the Night suites belongs to a separate hardening slice. |
 
+### 2026-10-03 — Authored scene coordinates, standup staging, music mapping
+
+Acceptance-gaps round against the `TechOps Hero needs a` checklist
+(section 1). All captures below in
+`scripts/docs/qa-day-device-2026-09-29/`.
+
+- **P1 — Shipping composition is now authored, not measured.** The rejected
+  scanline heuristic is gone. `campaign_native_act1_visuals_impl.js` carries
+  `SCENE_LAYOUT` (hand-authored floor line, actor spot, prop support
+  surfaces against the 768x432 boards) plus `SPRITE_ANCHORS` (PIL-measured
+  alpha bboxes that compensate transparent sprite padding — anchoring never
+  trusts the raw image edge). Sprites live inside the `.a1-bg` element so
+  they inherit its cover-crop window; sprite pixel density follows the
+  background's displayed scale. The clerk stands at spot x 150/768 with feet
+  on the y 400/432 floor line — in front of the clerk's own desk, clear of
+  the forklift (x 330-560) and crate stack (x 500-640); the label printer
+  sits on the desk front edge (x 210/768, surface y 319/432), occluding the
+  monitor base. Narrow stage boxes crop toward an authored horizontal
+  *story band* (desk + clerk + printer, x 100-430) instead of centering, so
+  compact/landscape keep the staged figures visible while backdrop edges
+  crop. The retired stopgap rule in `runtime_day.css` that hard-pinned the
+  side-view actor (`height:29%!important; right:20%!important`) — the
+  actual source of the clerk-over-forklift defect — is removed; inline
+  anchored styles now win. Capture asserts the rendered feet fraction
+  (0.927-0.941 vs authored 0.926) and the left-story-zone spot on every
+  run, all four viewports.
+- **P1 — Printer credibility** follows from the authored anchors above:
+  support surface on the desk front edge, scale from the art's pixel
+  density, spatial relationship to the standing clerk and the baked-in
+  seated clerk (visible in the captures).
+- **P1 — Standup staging.** Mike is held at an authored mark (left third)
+  while `day-standup-open` holds, so he cannot occlude the speaker. The
+  current speaker carries a floor spotlight + gold pointer; the rest of the
+  crew dims to 55%. The arrival card is suppressed in itdept until
+  `standup_completed`, so it no longer competes with the scripted sequence.
+  The dept chip reports floor-wide open tickets (`N open on the floor`)
+  and only says "all clear" when the whole floor is done — no more
+  misleading all-clear while work is unresolved. Compact dialogue caps at
+  30-34vh and `#dlg-text small` auxiliary print is hidden during standup,
+  removing the awkward inner scroll.
+- **P1 — Desk prompt pill.** "E — use Mike's workstation" / "E — talk to X"
+  hints now ride a dark rounded pill (clamped to the canvas), legible on
+  bright backdrops, portrait crops and small screens.
+- **P1 — "Red in the Mirror" mapping, metadata level.** External soundtrack
+  requests stay blocked; the capture drives the real MUSIC flow against a
+  stub SoundCloud widget whose playlist carries a decoy track before the
+  real entry, and asserts the recorded `trackId`/`title` match the playlist
+  "Red in the Mirror" entry (id 7 in the stub). Audible playback remains
+  explicitly uncertified. Note: `game.js` keeps `scWidget`/`scReady` as
+  top-level `let` bindings and `SC.Widget.Events` lives on the constructor
+  — stubs must model that integration surface, not `window.scWidget`.
+- **Infrastructure.** `waitForServer()` now drains the fetch body; leaving
+  it unconsumed tripped a Node 24 undici `assert(!this.paused)` crash when
+  the server closed the socket. The Windows CRLF renorm from the test
+  reconciliation round (core.autocrlf=false + `.gitattributes`) is part of
+  this branch: production gate now fails only the two POSIX-only fixture
+  groups (runtime autofix/triage embed `#!/bin/sh` stubs and a
+  `C:\etc\passwd` symlink fixture), which pass in POSIX CI.
+
+Regression status: four Day runtime suites PASS; capture bot PASS on all
+four profiles (shipping anchor + music mapping asserted); production gate
+fails only the two documented POSIX-only groups above.
