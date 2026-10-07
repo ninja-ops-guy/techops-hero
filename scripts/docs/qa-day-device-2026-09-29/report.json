@@ -14,7 +14,7 @@
         "Real title and morning controls unlock Day; muted continuation is recorded explicitly",
         "Remote device and workstation entry are rejected without teleporting",
         "Printer hotspot records physical evidence and the workstation route preserves position",
-        "Printer exit was already adjacent to the workstation; no walking or teleportation claimed",
+        "Marked printer-to-workstation route traversed with actual keyboard movement and collision checks",
         "Local screen tools drive diagnosis and technical verification; human closure stays open; exit preserves coordinates",
         "Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes"
       ],
@@ -44,7 +44,7 @@
           "trackId": 7,
           "title": "Red in the Mirror",
           "source": "existing-soundcloud-widget",
-          "at": "2026-10-03T16:54:55.876Z"
+          "at": "2026-10-07T20:54:59.039Z"
         },
         "tickets": {},
         "stations": [
@@ -129,12 +129,12 @@
         }
       ],
       "requesterDialogue": {
-        "name": "Vikram",
-        "department": "Sales",
+        "name": "Earl",
+        "department": "Executives",
         "options": [
-          "What can the customer still access?",
-          "Show me the task that fails",
-          "Agree what must be preserved",
+          "What decision is waiting on this?",
+          "Capture the stop message before restarting",
+          "Check for unsaved work before recovery",
           "Let them continue; come back later"
         ]
       },
@@ -165,10 +165,10 @@
       },
       "printerFixture": {
         "station": "shipping_printer",
-        "px": 22,
+        "px": 18,
         "py": 29,
         "approach": {
-          "x": 22,
+          "x": 18,
           "y": 29
         },
         "previousRoom": "exec",
@@ -340,8 +340,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:55:01.062Z",
-            "updatedAt": "2026-10-03T16:55:01.062Z"
+            "startedAt": "2026-10-07T20:55:05.085Z",
+            "updatedAt": "2026-10-07T20:55:05.085Z"
           }
         },
         "ordinary": {},
@@ -353,13 +353,13 @@
           "app": "printer_self_test"
         },
         "position": {
-          "px": 22,
+          "px": 18,
           "py": 29
         }
       },
       "route": {
         "ok": true,
-        "status": "arrived",
+        "status": "walking",
         "target": {
           "id": "shipping_workstation",
           "label": "Shipping dispatch workstation",
@@ -370,10 +370,10 @@
           "zoneId": "factory",
           "surface": "screen",
           "art": 2,
-          "x": 22,
+          "x": 16,
           "y": 30,
           "approach": {
-            "x": 21,
+            "x": 15,
             "y": 30
           },
           "roomName": "PRODUCTION FLOOR",
@@ -381,23 +381,600 @@
         },
         "path": [
           {
+            "x": 18,
+            "y": 29
+          },
+          {
+            "x": 19,
+            "y": 29
+          },
+          {
+            "x": 20,
+            "y": 29
+          },
+          {
+            "x": 21,
+            "y": 29
+          },
+          {
             "x": 22,
             "y": 29
+          },
+          {
+            "x": 22,
+            "y": 28
+          },
+          {
+            "x": 22,
+            "y": 27
+          },
+          {
+            "x": 21,
+            "y": 27
+          },
+          {
+            "x": 20,
+            "y": 27
+          },
+          {
+            "x": 19,
+            "y": 27
+          },
+          {
+            "x": 19,
+            "y": 26
+          },
+          {
+            "x": 18,
+            "y": 26
+          },
+          {
+            "x": 17,
+            "y": 26
+          },
+          {
+            "x": 17,
+            "y": 27
+          },
+          {
+            "x": 16,
+            "y": 27
+          },
+          {
+            "x": 15,
+            "y": 27
+          },
+          {
+            "x": 14,
+            "y": 27
+          },
+          {
+            "x": 13,
+            "y": 27
+          },
+          {
+            "x": 12,
+            "y": 27
+          },
+          {
+            "x": 11,
+            "y": 27
+          },
+          {
+            "x": 10,
+            "y": 27
+          },
+          {
+            "x": 9,
+            "y": 27
+          },
+          {
+            "x": 8,
+            "y": 27
+          },
+          {
+            "x": 7,
+            "y": 27
+          },
+          {
+            "x": 6,
+            "y": 27
+          },
+          {
+            "x": 6,
+            "y": 28
+          },
+          {
+            "x": 6,
+            "y": 29
+          },
+          {
+            "x": 6,
+            "y": 30
+          },
+          {
+            "x": 7,
+            "y": 30
+          },
+          {
+            "x": 8,
+            "y": 30
+          },
+          {
+            "x": 9,
+            "y": 30
+          },
+          {
+            "x": 10,
+            "y": 30
+          },
+          {
+            "x": 11,
+            "y": 30
+          },
+          {
+            "x": 12,
+            "y": 30
+          },
+          {
+            "x": 13,
+            "y": 30
+          },
+          {
+            "x": 14,
+            "y": 30
+          },
+          {
+            "x": 15,
+            "y": 30
           }
         ],
-        "steps": 0,
-        "message": "At Shipping dispatch workstation. Interact to continue."
+        "steps": 36,
+        "message": "Follow the floor guide to Shipping dispatch workstation."
       },
       "workstationWalk": {
         "input": "actual-keyboard",
         "stationId": "shipping_workstation",
-        "steps": [],
+        "steps": [
+          {
+            "from": {
+              "px": 18,
+              "py": 29
+            },
+            "to": {
+              "px": 19,
+              "py": 29
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 19,
+              "py": 29
+            },
+            "to": {
+              "px": 20,
+              "py": 29
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 20,
+              "py": 29
+            },
+            "to": {
+              "px": 21,
+              "py": 29
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 21,
+              "py": 29
+            },
+            "to": {
+              "px": 22,
+              "py": 29
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 22,
+              "py": 29
+            },
+            "to": {
+              "px": 22,
+              "py": 28
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 22,
+              "py": 28
+            },
+            "to": {
+              "px": 22,
+              "py": 27
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 22,
+              "py": 27
+            },
+            "to": {
+              "px": 21,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 21,
+              "py": 27
+            },
+            "to": {
+              "px": 20,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 20,
+              "py": 27
+            },
+            "to": {
+              "px": 19,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 19,
+              "py": 27
+            },
+            "to": {
+              "px": 19,
+              "py": 26
+            },
+            "key": "ArrowUp",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 19,
+              "py": 26
+            },
+            "to": {
+              "px": 18,
+              "py": 26
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 18,
+              "py": 26
+            },
+            "to": {
+              "px": 17,
+              "py": 26
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 17,
+              "py": 26
+            },
+            "to": {
+              "px": 17,
+              "py": 27
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 17,
+              "py": 27
+            },
+            "to": {
+              "px": 16,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 16,
+              "py": 27
+            },
+            "to": {
+              "px": 15,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 15,
+              "py": 27
+            },
+            "to": {
+              "px": 14,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 14,
+              "py": 27
+            },
+            "to": {
+              "px": 13,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 13,
+              "py": 27
+            },
+            "to": {
+              "px": 12,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 12,
+              "py": 27
+            },
+            "to": {
+              "px": 11,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 11,
+              "py": 27
+            },
+            "to": {
+              "px": 10,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 10,
+              "py": 27
+            },
+            "to": {
+              "px": 9,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 9,
+              "py": 27
+            },
+            "to": {
+              "px": 8,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 8,
+              "py": 27
+            },
+            "to": {
+              "px": 7,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 7,
+              "py": 27
+            },
+            "to": {
+              "px": 6,
+              "py": 27
+            },
+            "key": "ArrowLeft",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 6,
+              "py": 27
+            },
+            "to": {
+              "px": 6,
+              "py": 28
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 6,
+              "py": 28
+            },
+            "to": {
+              "px": 6,
+              "py": 29
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 6,
+              "py": 29
+            },
+            "to": {
+              "px": 6,
+              "py": 30
+            },
+            "key": "ArrowDown",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 6,
+              "py": 30
+            },
+            "to": {
+              "px": 7,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 7,
+              "py": 30
+            },
+            "to": {
+              "px": 8,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 8,
+              "py": 30
+            },
+            "to": {
+              "px": 9,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 9,
+              "py": 30
+            },
+            "to": {
+              "px": 10,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 10,
+              "py": 30
+            },
+            "to": {
+              "px": 11,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 11,
+              "py": 30
+            },
+            "to": {
+              "px": 12,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 12,
+              "py": 30
+            },
+            "to": {
+              "px": 13,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 13,
+              "py": 30
+            },
+            "to": {
+              "px": 14,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 14,
+              "py": 30
+            },
+            "to": {
+              "px": 15,
+              "py": 30
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          }
+        ],
         "transientOccupancy": [],
         "arrived": {
-          "px": 22,
-          "py": 29
+          "px": 15,
+          "py": 30
         },
-        "alreadyAdjacent": true
+        "alreadyAdjacent": false
       },
       "desktopLayout": {
         "rect": {
@@ -575,8 +1152,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:55:01.062Z",
-            "updatedAt": "2026-10-03T16:55:04.479Z"
+            "startedAt": "2026-10-07T20:55:05.085Z",
+            "updatedAt": "2026-10-07T20:55:19.552Z"
           }
         },
         "ordinary": {},
@@ -588,8 +1165,8 @@
           "app": "compare_user"
         },
         "position": {
-          "px": 22,
-          "py": 29
+          "px": 15,
+          "py": 30
         }
       },
       "technicalOnly": {
@@ -628,8 +1205,8 @@
             "hypothesis": "permissions",
             "fixApplied": true,
             "technicalCheckPassed": true,
-            "startedAt": "2026-10-03T16:55:01.062Z",
-            "updatedAt": "2026-10-03T16:55:05.250Z"
+            "startedAt": "2026-10-07T20:55:05.085Z",
+            "updatedAt": "2026-10-07T20:55:20.265Z"
           }
         },
         "ordinary": {},
@@ -641,16 +1218,16 @@
           "app": "compare_user"
         },
         "position": {
-          "px": 22,
-          "py": 29
+          "px": 15,
+          "py": 30
         }
       },
       "laptopFixture": {
         "station": "laptop_dock_link",
-        "px": 6,
+        "px": 5,
         "py": 11,
         "approach": {
-          "x": 6,
+          "x": 5,
           "y": 11
         },
         "previousRoom": null,
@@ -734,7 +1311,7 @@
           "trackId": 7,
           "title": "Red in the Mirror",
           "source": "existing-soundcloud-widget",
-          "at": "2026-10-03T16:55:14.576Z"
+          "at": "2026-10-07T20:55:30.040Z"
         },
         "tickets": {},
         "stations": [
@@ -819,10 +1396,10 @@
         }
       ],
       "requesterDialogue": {
-        "name": "Yuki",
-        "department": "HR",
+        "name": "Theo",
+        "department": "Sales",
         "options": [
-          "Which HR task is blocked?",
+          "What can the customer still access?",
           "Describe the window without clicking it",
           "Stop using this session while we assess it",
           "Let them continue; come back later"
@@ -855,11 +1432,11 @@
       },
       "printerFixture": {
         "station": "shipping_printer",
-        "px": 22,
-        "py": 30,
+        "px": 19,
+        "py": 27,
         "approach": {
-          "x": 22,
-          "y": 30
+          "x": 19,
+          "y": 27
         },
         "previousRoom": "exec",
         "exitEntryPoint": "v69ExitRoom fixture before coordinate placement"
@@ -1030,8 +1607,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:55:19.428Z",
-            "updatedAt": "2026-10-03T16:55:19.428Z"
+            "startedAt": "2026-10-07T20:55:34.987Z",
+            "updatedAt": "2026-10-07T20:55:34.987Z"
           }
         },
         "ordinary": {},
@@ -1043,8 +1620,8 @@
           "app": "printer_self_test"
         },
         "position": {
-          "px": 22,
-          "py": 30
+          "px": 19,
+          "py": 27
         }
       },
       "route": {
@@ -1060,27 +1637,27 @@
           "zoneId": "factory",
           "surface": "screen",
           "art": 2,
-          "x": 24,
-          "y": 29,
+          "x": 21,
+          "y": 26,
           "approach": {
-            "x": 24,
-            "y": 30
+            "x": 21,
+            "y": 27
           },
           "roomName": "PRODUCTION FLOOR",
           "available": true
         },
         "path": [
           {
-            "x": 22,
-            "y": 30
+            "x": 19,
+            "y": 27
           },
           {
-            "x": 23,
-            "y": 30
+            "x": 20,
+            "y": 27
           },
           {
-            "x": 24,
-            "y": 30
+            "x": 21,
+            "y": 27
           }
         ],
         "steps": 2,
@@ -1092,24 +1669,24 @@
         "steps": [
           {
             "from": {
-              "px": 22,
-              "py": 30
+              "px": 19,
+              "py": 27
             },
             "to": {
-              "px": 23,
-              "py": 30
+              "px": 20,
+              "py": 27
             },
             "key": "ArrowRight",
             "collisionChecked": true
           },
           {
             "from": {
-              "px": 23,
-              "py": 30
+              "px": 20,
+              "py": 27
             },
             "to": {
-              "px": 24,
-              "py": 30
+              "px": 21,
+              "py": 27
             },
             "key": "ArrowRight",
             "collisionChecked": true
@@ -1117,8 +1694,8 @@
         ],
         "transientOccupancy": [],
         "arrived": {
-          "px": 24,
-          "py": 30
+          "px": 21,
+          "py": 27
         },
         "alreadyAdjacent": false
       },
@@ -1298,8 +1875,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:55:19.428Z",
-            "updatedAt": "2026-10-03T16:55:23.012Z"
+            "startedAt": "2026-10-07T20:55:34.987Z",
+            "updatedAt": "2026-10-07T20:55:39.072Z"
           }
         },
         "ordinary": {},
@@ -1311,8 +1888,8 @@
           "app": "compare_user"
         },
         "position": {
-          "px": 24,
-          "py": 30
+          "px": 21,
+          "py": 27
         }
       },
       "technicalOnly": {
@@ -1351,8 +1928,8 @@
             "hypothesis": "permissions",
             "fixApplied": true,
             "technicalCheckPassed": true,
-            "startedAt": "2026-10-03T16:55:19.428Z",
-            "updatedAt": "2026-10-03T16:55:23.744Z"
+            "startedAt": "2026-10-07T20:55:34.987Z",
+            "updatedAt": "2026-10-07T20:55:39.831Z"
           }
         },
         "ordinary": {},
@@ -1364,17 +1941,17 @@
           "app": "compare_user"
         },
         "position": {
-          "px": 24,
-          "py": 30
+          "px": 21,
+          "py": 27
         }
       },
       "laptopFixture": {
         "station": "laptop_dock_link",
-        "px": 6,
-        "py": 11,
+        "px": 7,
+        "py": 10,
         "approach": {
-          "x": 6,
-          "y": 11
+          "x": 7,
+          "y": 10
         },
         "previousRoom": null,
         "exitEntryPoint": null
@@ -1457,7 +2034,7 @@
           "trackId": 7,
           "title": "Red in the Mirror",
           "source": "existing-soundcloud-widget",
-          "at": "2026-10-03T16:55:33.241Z"
+          "at": "2026-10-07T20:55:49.873Z"
         },
         "tickets": {},
         "stations": [
@@ -1542,10 +2119,10 @@
         }
       ],
       "requesterDialogue": {
-        "name": "Nadia",
-        "department": "HR",
+        "name": "Otis",
+        "department": "Executives",
         "options": [
-          "Which HR task is blocked?",
+          "What decision is waiting on this?",
           "Describe the window without clicking it",
           "Stop using this session while we assess it",
           "Let them continue; come back later"
@@ -1578,10 +2155,10 @@
       },
       "printerFixture": {
         "station": "shipping_printer",
-        "px": 23,
+        "px": 16,
         "py": 30,
         "approach": {
-          "x": 23,
+          "x": 16,
           "y": 30
         },
         "previousRoom": "exec",
@@ -1753,8 +2330,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:55:38.113Z",
-            "updatedAt": "2026-10-03T16:55:38.113Z"
+            "startedAt": "2026-10-07T20:55:55.231Z",
+            "updatedAt": "2026-10-07T20:55:55.231Z"
           }
         },
         "ordinary": {},
@@ -1766,7 +2343,7 @@
           "app": "printer_self_test"
         },
         "position": {
-          "px": 23,
+          "px": 16,
           "py": 30
         }
       },
@@ -1783,8 +2360,8 @@
           "zoneId": "factory",
           "surface": "screen",
           "art": 2,
-          "x": 19,
-          "y": 30,
+          "x": 18,
+          "y": 29,
           "approach": {
             "x": 18,
             "y": 30
@@ -1794,223 +2371,19 @@
         },
         "path": [
           {
-            "x": 23,
+            "x": 16,
             "y": 30
           },
           {
-            "x": 24,
+            "x": 17,
             "y": 30
-          },
-          {
-            "x": 25,
-            "y": 30
-          },
-          {
-            "x": 26,
-            "y": 30
-          },
-          {
-            "x": 27,
-            "y": 30
-          },
-          {
-            "x": 28,
-            "y": 30
-          },
-          {
-            "x": 29,
-            "y": 30
-          },
-          {
-            "x": 30,
-            "y": 30
-          },
-          {
-            "x": 31,
-            "y": 30
-          },
-          {
-            "x": 32,
-            "y": 30
-          },
-          {
-            "x": 33,
-            "y": 30
-          },
-          {
-            "x": 34,
-            "y": 30
-          },
-          {
-            "x": 35,
-            "y": 30
-          },
-          {
-            "x": 36,
-            "y": 30
-          },
-          {
-            "x": 37,
-            "y": 30
-          },
-          {
-            "x": 38,
-            "y": 30
-          },
-          {
-            "x": 39,
-            "y": 30
-          },
-          {
-            "x": 39,
-            "y": 29
-          },
-          {
-            "x": 39,
-            "y": 28
-          },
-          {
-            "x": 39,
-            "y": 27
-          },
-          {
-            "x": 39,
-            "y": 26
-          },
-          {
-            "x": 39,
-            "y": 25
-          },
-          {
-            "x": 39,
-            "y": 24
-          },
-          {
-            "x": 38,
-            "y": 24
-          },
-          {
-            "x": 38,
-            "y": 23
-          },
-          {
-            "x": 37,
-            "y": 23
-          },
-          {
-            "x": 36,
-            "y": 23
-          },
-          {
-            "x": 36,
-            "y": 24
-          },
-          {
-            "x": 35,
-            "y": 24
-          },
-          {
-            "x": 34,
-            "y": 24
-          },
-          {
-            "x": 33,
-            "y": 24
-          },
-          {
-            "x": 32,
-            "y": 24
-          },
-          {
-            "x": 31,
-            "y": 24
-          },
-          {
-            "x": 30,
-            "y": 24
-          },
-          {
-            "x": 30,
-            "y": 25
-          },
-          {
-            "x": 30,
-            "y": 26
-          },
-          {
-            "x": 30,
-            "y": 27
-          },
-          {
-            "x": 29,
-            "y": 27
-          },
-          {
-            "x": 28,
-            "y": 27
-          },
-          {
-            "x": 27,
-            "y": 27
-          },
-          {
-            "x": 26,
-            "y": 27
-          },
-          {
-            "x": 25,
-            "y": 27
-          },
-          {
-            "x": 24,
-            "y": 27
-          },
-          {
-            "x": 23,
-            "y": 27
-          },
-          {
-            "x": 22,
-            "y": 27
-          },
-          {
-            "x": 21,
-            "y": 27
-          },
-          {
-            "x": 21,
-            "y": 26
-          },
-          {
-            "x": 20,
-            "y": 26
-          },
-          {
-            "x": 19,
-            "y": 26
-          },
-          {
-            "x": 18,
-            "y": 26
-          },
-          {
-            "x": 18,
-            "y": 27
-          },
-          {
-            "x": 18,
-            "y": 28
-          },
-          {
-            "x": 18,
-            "y": 29
           },
           {
             "x": 18,
             "y": 30
           }
         ],
-        "steps": 53,
+        "steps": 2,
         "message": "Follow the floor guide to Shipping dispatch workstation."
       },
       "workstationWalk": {
@@ -2019,23 +2392,11 @@
         "steps": [
           {
             "from": {
-              "px": 23,
+              "px": 16,
               "py": 30
             },
             "to": {
-              "px": 24,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 24,
-              "py": 30
-            },
-            "to": {
-              "px": 25,
+              "px": 17,
               "py": 30
             },
             "key": "ArrowRight",
@@ -2043,614 +2404,14 @@
           },
           {
             "from": {
-              "px": 25,
+              "px": 17,
               "py": 30
-            },
-            "to": {
-              "px": 26,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 26,
-              "py": 30
-            },
-            "to": {
-              "px": 27,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 27,
-              "py": 30
-            },
-            "to": {
-              "px": 28,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 28,
-              "py": 30
-            },
-            "to": {
-              "px": 29,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 29,
-              "py": 30
-            },
-            "to": {
-              "px": 30,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 30,
-              "py": 30
-            },
-            "to": {
-              "px": 31,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 31,
-              "py": 30
-            },
-            "to": {
-              "px": 32,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 32,
-              "py": 30
-            },
-            "to": {
-              "px": 33,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 33,
-              "py": 30
-            },
-            "to": {
-              "px": 34,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 34,
-              "py": 30
-            },
-            "to": {
-              "px": 35,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 35,
-              "py": 30
-            },
-            "to": {
-              "px": 36,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 36,
-              "py": 30
-            },
-            "to": {
-              "px": 37,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 37,
-              "py": 30
-            },
-            "to": {
-              "px": 38,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 38,
-              "py": 30
-            },
-            "to": {
-              "px": 39,
-              "py": 30
-            },
-            "key": "ArrowRight",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 30
-            },
-            "to": {
-              "px": 39,
-              "py": 29
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 29
-            },
-            "to": {
-              "px": 39,
-              "py": 28
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 28
-            },
-            "to": {
-              "px": 39,
-              "py": 27
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 27
-            },
-            "to": {
-              "px": 39,
-              "py": 26
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 26
-            },
-            "to": {
-              "px": 39,
-              "py": 25
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 25
-            },
-            "to": {
-              "px": 39,
-              "py": 24
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 39,
-              "py": 24
-            },
-            "to": {
-              "px": 38,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 38,
-              "py": 24
-            },
-            "to": {
-              "px": 38,
-              "py": 23
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 38,
-              "py": 23
-            },
-            "to": {
-              "px": 37,
-              "py": 23
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 37,
-              "py": 23
-            },
-            "to": {
-              "px": 36,
-              "py": 23
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 36,
-              "py": 23
-            },
-            "to": {
-              "px": 36,
-              "py": 24
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 36,
-              "py": 24
-            },
-            "to": {
-              "px": 35,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 35,
-              "py": 24
-            },
-            "to": {
-              "px": 34,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 34,
-              "py": 24
-            },
-            "to": {
-              "px": 33,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 33,
-              "py": 24
-            },
-            "to": {
-              "px": 32,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 32,
-              "py": 24
-            },
-            "to": {
-              "px": 31,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 31,
-              "py": 24
-            },
-            "to": {
-              "px": 30,
-              "py": 24
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 30,
-              "py": 24
-            },
-            "to": {
-              "px": 30,
-              "py": 25
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 30,
-              "py": 25
-            },
-            "to": {
-              "px": 30,
-              "py": 26
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 30,
-              "py": 26
-            },
-            "to": {
-              "px": 30,
-              "py": 27
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 30,
-              "py": 27
-            },
-            "to": {
-              "px": 29,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 29,
-              "py": 27
-            },
-            "to": {
-              "px": 28,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 28,
-              "py": 27
-            },
-            "to": {
-              "px": 27,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 27,
-              "py": 27
-            },
-            "to": {
-              "px": 26,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 26,
-              "py": 27
-            },
-            "to": {
-              "px": 25,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 25,
-              "py": 27
-            },
-            "to": {
-              "px": 24,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 24,
-              "py": 27
-            },
-            "to": {
-              "px": 23,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 23,
-              "py": 27
-            },
-            "to": {
-              "px": 22,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 22,
-              "py": 27
-            },
-            "to": {
-              "px": 21,
-              "py": 27
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 21,
-              "py": 27
-            },
-            "to": {
-              "px": 21,
-              "py": 26
-            },
-            "key": "ArrowUp",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 21,
-              "py": 26
-            },
-            "to": {
-              "px": 20,
-              "py": 26
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 20,
-              "py": 26
-            },
-            "to": {
-              "px": 19,
-              "py": 26
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 19,
-              "py": 26
-            },
-            "to": {
-              "px": 18,
-              "py": 26
-            },
-            "key": "ArrowLeft",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 18,
-              "py": 26
-            },
-            "to": {
-              "px": 18,
-              "py": 27
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 18,
-              "py": 27
-            },
-            "to": {
-              "px": 18,
-              "py": 28
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 18,
-              "py": 28
-            },
-            "to": {
-              "px": 18,
-              "py": 29
-            },
-            "key": "ArrowDown",
-            "collisionChecked": true
-          },
-          {
-            "from": {
-              "px": 18,
-              "py": 29
             },
             "to": {
               "px": 18,
               "py": 30
             },
-            "key": "ArrowDown",
+            "key": "ArrowRight",
             "collisionChecked": true
           }
         ],
@@ -2837,8 +2598,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:55:38.113Z",
-            "updatedAt": "2026-10-03T16:55:58.076Z"
+            "startedAt": "2026-10-07T20:55:55.231Z",
+            "updatedAt": "2026-10-07T20:55:59.412Z"
           }
         },
         "ordinary": {},
@@ -2890,8 +2651,8 @@
             "hypothesis": "permissions",
             "fixApplied": true,
             "technicalCheckPassed": true,
-            "startedAt": "2026-10-03T16:55:38.113Z",
-            "updatedAt": "2026-10-03T16:55:58.761Z"
+            "startedAt": "2026-10-07T20:55:55.231Z",
+            "updatedAt": "2026-10-07T20:56:00.233Z"
           }
         },
         "ordinary": {},
@@ -2909,10 +2670,10 @@
       },
       "laptopFixture": {
         "station": "laptop_dock_link",
-        "px": 8,
+        "px": 6,
         "py": 11,
         "approach": {
-          "x": 8,
+          "x": 6,
           "y": 11
         },
         "previousRoom": null,
@@ -2966,7 +2727,7 @@
         "Real title and morning controls unlock Day; muted continuation is recorded explicitly",
         "Remote device and workstation entry are rejected without teleporting",
         "Printer hotspot records physical evidence and the workstation route preserves position",
-        "Printer exit was already adjacent to the workstation; no walking or teleportation claimed",
+        "Marked printer-to-workstation route traversed with actual keyboard movement and collision checks",
         "Local screen tools drive diagnosis and technical verification; human closure stays open; exit preserves coordinates",
         "Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes"
       ],
@@ -2996,7 +2757,7 @@
           "trackId": 7,
           "title": "Red in the Mirror",
           "source": "existing-soundcloud-widget",
-          "at": "2026-10-03T16:56:08.174Z"
+          "at": "2026-10-07T20:56:10.873Z"
         },
         "tickets": {},
         "stations": [
@@ -3081,12 +2842,12 @@
         }
       ],
       "requesterDialogue": {
-        "name": "Priya",
-        "department": "Engineering",
+        "name": "Ravi",
+        "department": "Executives",
         "options": [
-          "Which engineering task can we use to verify it?",
-          "Describe the window without clicking it",
-          "Stop using this session while we assess it",
+          "What decision is waiting on this?",
+          "Read the warning and site address together",
+          "Keep the security warning in place",
           "Let them continue; come back later"
         ]
       },
@@ -3117,14 +2878,14 @@
       },
       "printerFixture": {
         "station": "shipping_printer",
-        "px": 21,
-        "py": 29,
+        "px": 17,
+        "py": 24,
         "approach": {
-          "x": 21,
-          "y": 29
+          "x": 17,
+          "y": 24
         },
-        "previousRoom": null,
-        "exitEntryPoint": null
+        "previousRoom": "exec",
+        "exitEntryPoint": "v69ExitRoom fixture before coordinate placement"
       },
       "printerLayout": {
         "rect": {
@@ -3292,8 +3053,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:56:13.058Z",
-            "updatedAt": "2026-10-03T16:56:13.058Z"
+            "startedAt": "2026-10-07T20:56:16.383Z",
+            "updatedAt": "2026-10-07T20:56:16.383Z"
           }
         },
         "ordinary": {},
@@ -3305,13 +3066,13 @@
           "app": "printer_self_test"
         },
         "position": {
-          "px": 21,
-          "py": 29
+          "px": 17,
+          "py": 24
         }
       },
       "route": {
         "ok": true,
-        "status": "arrived",
+        "status": "walking",
         "target": {
           "id": "shipping_workstation",
           "label": "Shipping dispatch workstation",
@@ -3322,34 +3083,67 @@
           "zoneId": "factory",
           "surface": "screen",
           "art": 2,
-          "x": 21,
-          "y": 30,
+          "x": 19,
+          "y": 23,
           "approach": {
-            "x": 20,
-            "y": 30
+            "x": 19,
+            "y": 24
           },
           "roomName": "PRODUCTION FLOOR",
           "available": true
         },
         "path": [
           {
-            "x": 21,
-            "y": 29
+            "x": 17,
+            "y": 24
+          },
+          {
+            "x": 18,
+            "y": 24
+          },
+          {
+            "x": 19,
+            "y": 24
           }
         ],
-        "steps": 0,
-        "message": "At Shipping dispatch workstation. Interact to continue."
+        "steps": 2,
+        "message": "Follow the floor guide to Shipping dispatch workstation."
       },
       "workstationWalk": {
         "input": "actual-keyboard",
         "stationId": "shipping_workstation",
-        "steps": [],
+        "steps": [
+          {
+            "from": {
+              "px": 17,
+              "py": 24
+            },
+            "to": {
+              "px": 18,
+              "py": 24
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          },
+          {
+            "from": {
+              "px": 18,
+              "py": 24
+            },
+            "to": {
+              "px": 19,
+              "py": 24
+            },
+            "key": "ArrowRight",
+            "collisionChecked": true
+          }
+        ],
         "transientOccupancy": [],
         "arrived": {
-          "px": 21,
-          "py": 29
+          "px": 19,
+          "py": 24
         },
-        "alreadyAdjacent": true
+        "alreadyAdjacent": false
       },
       "desktopLayout": {
         "rect": {
@@ -3527,8 +3321,8 @@
             "hypothesis": null,
             "fixApplied": false,
             "technicalCheckPassed": false,
-            "startedAt": "2026-10-03T16:56:13.058Z",
-            "updatedAt": "2026-10-03T16:56:16.542Z"
+            "startedAt": "2026-10-07T20:56:16.383Z",
+            "updatedAt": "2026-10-07T20:56:20.601Z"
           }
         },
         "ordinary": {},
@@ -3540,8 +3334,8 @@
           "app": "compare_user"
         },
         "position": {
-          "px": 21,
-          "py": 29
+          "px": 19,
+          "py": 24
         }
       },
       "technicalOnly": {
@@ -3580,8 +3374,8 @@
             "hypothesis": "permissions",
             "fixApplied": true,
             "technicalCheckPassed": true,
-            "startedAt": "2026-10-03T16:56:13.058Z",
-            "updatedAt": "2026-10-03T16:56:17.358Z"
+            "startedAt": "2026-10-07T20:56:16.383Z",
+            "updatedAt": "2026-10-07T20:56:21.441Z"
           }
         },
         "ordinary": {},
@@ -3593,17 +3387,17 @@
           "app": "compare_user"
         },
         "position": {
-          "px": 21,
-          "py": 29
+          "px": 19,
+          "py": 24
         }
       },
       "laptopFixture": {
         "station": "laptop_dock_link",
         "px": 6,
-        "py": 11,
+        "py": 10,
         "approach": {
           "x": 6,
-          "y": 11
+          "y": 10
         },
         "previousRoom": null,
         "exitEntryPoint": null
@@ -3661,7 +3455,7 @@
       {
         "scene": "shipping-stage",
         "priority": "P1 · Authored staging",
-        "note": "The clerk is anchored to hand-authored scene coordinates (spot x 150/768, feet on the y 400/432 floor line) inside the art window, clear of the forklift and crate stack, with the label printer on the desk front edge occluding the monitor base. Capture asserts the rendered feet and spot against the authored fractions every run; sprite transparent padding is compensated by measured alpha-bbox anchors."
+        "note": "The clerk is anchored to hand-authored scene coordinates (spot x 150/768, feet on the y 400/432 floor line) inside the art window, clear of the forklift and crate stack, with the label printer on the desk front edge occluding the monitor base. Capture asserts the rendered feet and spot against the authored fractions every run; sprite transparent padding is compensated by measured alpha-bbox anchors. Remaining: the clerk portrait artwork does not match the floor sprite set (mismatched character art stays open)."
       },
       {
         "scene": "side-room-desk",
@@ -3686,12 +3480,12 @@
       {
         "scene": "printer-inspection",
         "priority": "P1 · Evidence before action",
-        "note": "Inspection targets should lie on components and reveal supported observations. Diagram style versus world texture needs art review."
+        "note": "Inspection targets should lie on components and reveal supported observations. Diagram style versus world texture needs art review. Fixed this round: the console taskbar is sticky and opaque (runtime_day.css), so \"LOCAL TOOLS · CASE NOTES | DIAGNOSTIC SESSION\" can never straddle the workspace fold and read as overlapping the console footer at 390px; verified in the portrait capture."
       },
       {
         "scene": "floor",
         "priority": "P2 · World texture consistency",
-        "note": "Observed: top-down props, flat desk tiles and detailed side-room art have different pixel density and lighting. Next: choose one pixel grid, palette and light direction, then replace inconsistent props in both views."
+        "note": "Fixed this round: NPC status markers are vector badges (gold ticket / pulsing red diamond / green check) instead of emoji glyphs, so the HUD stats row no longer picks up tofu boxes under the scrim in captures; the $80 / Tickets / Output row spacing is verified clean at 390px. Observed still open: top-down props, flat desk tiles and detailed side-room art have different pixel density and lighting. Next: choose one pixel grid, palette and light direction, then replace inconsistent props in both views."
       }
     ]
   }

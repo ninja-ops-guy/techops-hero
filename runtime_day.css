@@ -32,11 +32,15 @@ body.day-device-open #touch-ui,body.day-device-open #quest-tracker,body.day-devi
 .day-empty{color:var(--day-dim);font-size:14px}.day-evidence-item{border-bottom:1px solid #294352;padding:0 0 12px;font-size:13px;color:#bcd1dc}.day-evidence-item strong{display:block;font-size:14px;color:var(--day-green);margin-bottom:3px}
 .day-progress{display:flex;gap:4px;list-style:none;padding:0;margin:0}.day-progress li{flex:1;padding:7px 3px;text-align:center;border-bottom:2px solid #345568;color:var(--day-dim);font-size:11px}.day-progress li[data-done=true]{border-color:var(--day-green);color:var(--day-green)}
 .day-actions{display:grid;gap:8px}.day-actions p{font-size:14px;color:#bcd1dc;margin-bottom:4px}
-.day-desktop{border:1px solid #557086;border-radius:9px;background:linear-gradient(145deg,#234563,#0d2034 66%);overflow:hidden;min-height:265px;box-shadow:0 15px 28px #0004}
+.day-desktop{border:1px solid #557086;border-radius:9px;background:linear-gradient(145deg,#234563,#0d2034 66%);overflow:clip;min-height:265px;box-shadow:0 15px 28px #0004}
 .day-os-bar{padding:8px 12px;font:12px/1.4 ui-monospace,monospace;background:#091b2c;color:#addced;display:flex;justify-content:space-between}
 .day-app-grid{padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.day-app-grid button{min-height:75px;background:#0b203ee0;border-color:#496780;display:flex;flex-direction:column;gap:6px}.day-app-grid button small{font-weight:400;color:#b5c8d9;font-size:12px}
 .day-notification{margin:0 16px 16px;padding:11px 14px;border-left:3px solid #e7bf78;border-radius:3px;background:#152434;color:#e7d6b9;font-size:13px;animation:day-pin-in .3s ease-out}
-.day-taskbar{padding:9px 12px;background:#091b2ce8;display:flex;justify-content:space-between;font:12px monospace;color:#a7c6d6}
+/* Sticky so the session state can never straddle the workspace fold and read
+   as overlapping the console footer on small screens; opaque so scrolled
+   content never ghosts through. overflow:clip above keeps .day-desktop from
+   becoming a scroll container, which would trap the stickiness. */
+.day-taskbar{position:sticky;bottom:0;z-index:1;padding:9px 12px;background:#091b2c;border-top:1px solid #294455;display:flex;justify-content:space-between;font:12px monospace;color:#a7c6d6}
 .day-console-footer{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px 24px;border-top:1px solid var(--day-line);font-size:12px;color:var(--day-dim);background:#091822}
 .day-success{border-color:var(--day-green);background:#153c34;color:#bbf8d9}.day-success h3{color:var(--day-green)}
 #day-route-hud{position:fixed;left:16px;top:92px;width:min(350px,calc(100vw - 32px));z-index:9;border:1px solid #416174;border-radius:9px;background:#0b1a27ed;box-shadow:0 8px 24px #0005;font:13px/1.45 system-ui,sans-serif;color:#e5eff5;overflow:hidden;pointer-events:auto}

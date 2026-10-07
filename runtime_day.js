@@ -25,6 +25,11 @@
     return true;
   }
   function routeTo(id){var target=stationById(id),s=gs();if(!s)return false;s.meta=s.meta||{};s.meta.dayRouteTarget=id;exit();if(id==='mike_desk'&&s.room&&s.room.id==='itdept'){notify('Mike’s desk is on the right side of this room. Walk over and press E.');return true;}var route=world()&&world().route(id);notify(s.room?'Route saved. Walk to the glowing room exit or press Q to return to the floor.':route&&route.ok?'Route marked: '+(target?target.label:id):'Check the floor map for '+(target?target.label:id)+'.');syncHud();return true;}
+  // A route mark is guidance to a destination, not a persistent filter. Once
+  // Mike has arrived and actually used the marked station or contact, keeping
+  // the old mark makes the HUD route button re-target yesterday's stop (e.g.
+  // Mike's desk after clock-in) instead of the current objective.
+  function clearRouteMark(id){var s=gs();if(!s||!s.meta||s.meta.dayRouteTarget!==id)return;s.meta.dayRouteTarget=null;if(world())world().route(null);}
   function canonicalStation(ticketId,screen){return ticketId==='shipping_cannot_print'?(screen?'shipping_workstation':'shipping_printer'):'plating_workstation';}
   function requireDesk(){if(desktopNearby())return true;routeTo('mike_desk');return false;}
   function release(){
@@ -152,7 +157,7 @@
   }
   function openDevice(station){
     station=stationById(typeof station==='string'?station:station&&station.id);
-    if(station&&station.id==='mike_desk'){if(!desktopNearby()||gs().inBattle)return false;return root.TechOpsCampaignNativeAct1.openWorkstation();}
+    if(station&&station.id==='mike_desk'){if(!desktopNearby()||gs().inBattle)return false;var opened=root.TechOpsCampaignNativeAct1.openWorkstation();if(opened)clearRouteMark('mike_desk');return opened;}
     if(!guard(station))return false;
     if(station.ticketId&&CANON[station.ticketId]){
       var state=campaign(),followup=state.flags.tuesday_morning_reached&&root.TechOpsCampaign.workdayHandoff(state).find(function(item){return item.ticketId===station.ticketId;});
@@ -162,7 +167,7 @@
     if(station.ticketId&&!root.TechOpsCampaignInvestigations){notify('Diagnostic tools are still loading. Try again in a moment.');return false;}
     returnFocus=root.document.activeElement;unlock();root.dlg('FIELD SERVICE','',[]);
     active={stationId:station.id,surface:'physical',notice:'',error:false};var d=root.document.getElementById('dialogue');d.classList.add('day-device-mode');d.setAttribute('aria-labelledby','day-device-title');root.document.body.classList.add('day-device-open');
-    if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext('inspection');cue('transition');render();d.querySelector('button').focus();return true;
+    if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext('inspection');cue('transition');render();d.querySelector('button').focus();clearRouteMark(station.id);return true;
   }
   function goRequester(ticketId){var s=gs(),key=ticketId==='shipping_cannot_print'?'shipping':'plating';s.meta.dayRouteTarget=key;if(world())world().route(key);exit();notify('Return to the '+(key==='shipping'?'Shipping clerk':'Plating operator')+' to verify the actual task.');syncHud();}
   function requesterNearby(ticketId){
@@ -171,7 +176,9 @@
   }
   function talk(ticketId){
     if(!requesterNearby(ticketId))return false;
+    var contactKey=ticketId==='shipping_cannot_print'?'shipping':'plating';
     var N=root.TechOpsCampaignNativeAct1,C=campaign(),data=CANON[ticketId];if(!data)return false;
+    clearRouteMark(contactKey);
     if(!C.flags.day_work_unlocked){root.dlg(data.requester,'The shift is paused. Finish the morning at Mike’s desk before taking field work.',[{t:'Mark the route to Mike’s desk',f:function(){routeTo('mike_desk');}},{t:'Back',f:root.closeDlg}]);return true;}
     if(C.tickets[ticketId])return N.openTicketFollowUp(ticketId);
     var I=root.TechOpsCampaignInvestigations,rec=I&&I.getRecord(C,ticketId);
@@ -240,7 +247,7 @@
     if(!inside){wasInOffice=false;return;}
     if(wasInOffice||s.inDialog||s.inBattle||s.gameOver||s.meta&&s.meta._standaloneMode)return;
     var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))return;
-    wasInOffice=true;var c=campaign();if(!c.flags.standup_completed&&root.TechOpsCampaignNativeAct1)root.TechOpsCampaignNativeAct1.openStandup();
+    wasInOffice=true;var c=campaign();if(!c.flags.standup_completed&&root.TechOpsCampaignNativeAct1){clearRouteMark('standup');root.TechOpsCampaignNativeAct1.openStandup();}
   }
   function syncHud(){
     if(root.document)checkOfficeEntry();
@@ -263,7 +270,7 @@
   }
   function keydown(e){if(!active)return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();exit();return;}if(e.key==='Tab'){var list=Array.from(root.document.querySelectorAll('#dialogue.day-device-mode button:not(:disabled)'));if(!list.length)return;var first=list[0],last=list[list.length-1];if(e.shiftKey&&root.document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&root.document.activeElement===last){e.preventDefault();first.focus();}}if(/^(Arrow| |Enter$|[wasdemv]$)/i.test(e.key))e.stopPropagation();}
   if(root.document)root.document.addEventListener('keydown',keydown,true);
-  root.TechOpsDayExperience={VERSION:1,standupScene:standupScene,sideDeskNearby:sideDeskNearby,openDevice:openDevice,talk:talk,interact:interact,routeTo:routeTo,requireDesk:requireDesk,desktopNearby:desktopNearby,release:release,exit:exit,render:render,syncHud:syncHud,workstationSkin:workstationSkin,transact:transact,active:function(){return active;},openBoard:openBoard};
+  root.TechOpsDayExperience={VERSION:1,standupScene:standupScene,sideDeskNearby:sideDeskNearby,openDevice:openDevice,talk:talk,interact:interact,routeTo:routeTo,clearRoute:clearRouteMark,requireDesk:requireDesk,desktopNearby:desktopNearby,release:release,exit:exit,render:render,syncHud:syncHud,workstationSkin:workstationSkin,transact:transact,active:function(){return active;},openBoard:openBoard};
 })(typeof globalThis!=='undefined'?globalThis:this);
 
 /* Day desktop and opening cinematics. Presentation only: native campaign callbacks

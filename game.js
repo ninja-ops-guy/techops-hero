@@ -1253,12 +1253,38 @@ function draw() {
     ctx.globalAlpha = 1; ctx.fillText("🌀", p.x * TILE + 16, p.y * TILE + 17);
   }
   // NPCs (department uniforms)
+  // NPC status markers: vector badges, never emoji glyphs, so captures render
+  // identically on machines without an emoji font (headless CI included).
+  function drawNpcMarker(x, y, kind) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (kind === "ticket") {
+      ctx.fillStyle = "#f5c774"; ctx.strokeStyle = "#7a5a1e"; ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-6, -5, 12, 9, 2); else ctx.rect(-6, -5, 12, 9);
+      ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "#7a5a1e";
+      ctx.beginPath(); ctx.moveTo(-2, -5); ctx.lineTo(-2, 4); ctx.stroke();
+    } else if (kind === "critical") {
+      const p = 1 + Math.sin(performance.now() / 220) * .18;
+      ctx.scale(p, p);
+      ctx.fillStyle = "#ff5a6a"; ctx.strokeStyle = "#7c1f2b"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(6, 0); ctx.lineTo(0, 7); ctx.lineTo(-6, 0); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.font = "700 8px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("!", 0, .5);
+    } else { // done
+      ctx.fillStyle = "#2e8b57"; ctx.strokeStyle = "#173f2d"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(0, 0, 6, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "#d6ffe6"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(-3, 0); ctx.lineTo(-1, 2.5); ctx.lineTo(3.5, -2.5); ctx.stroke();
+    }
+    ctx.restore();
+  }
   for (const n of s.npcs) {
     drawSpr(SPR_NPC, DEPT_PAL[n.dept] || PAL_NPCS[n.pv ?? 0], n.x, n.y);
-    if (!n.ambient && !n.done) {
-      ctx.font = "13px serif";
-      ctx.fillText(n.critical ? "🚨" : "🎫", n.x * TILE + 24, n.y * TILE + 7);
-    } else if (!n.ambient && n.done) { ctx.font = "12px serif"; ctx.fillText("✅", n.x * TILE + 24, n.y * TILE + 7); }
+    if (!n.ambient && !n.done) drawNpcMarker(n.x * TILE + 24, n.y * TILE + 2, n.critical ? "critical" : "ticket");
+    else if (!n.ambient && n.done) drawNpcMarker(n.x * TILE + 24, n.y * TILE + 2, "done");
   }
   // player — custom atlas sprite with directional facing
   if (window.TechOpsDayWorld && !s.nightMode) window.TechOpsDayWorld.render(ctx, tm);

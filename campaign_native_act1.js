@@ -416,6 +416,8 @@
     var state = loadState();
     if (!state.flags.ticket_assignments_confirmed) return openStandup();
     state = ensureWorkstationChecked(state);
+    var experience = dayExperience();
+    if (experience && typeof experience.clearRoute === "function") experience.clearRoute("mike_desk");
     return callDialog("MIKE // WORKSTATION", "The shift is waiting on the other side of the screen: tickets in the queue, messages from the team, and alerts that need a closer look.<br><br><b>" + workstationStatus(state) + "</b>", workstationOptions());
   }
 

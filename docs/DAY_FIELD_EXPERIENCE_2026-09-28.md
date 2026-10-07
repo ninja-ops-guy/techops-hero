@@ -219,3 +219,87 @@ Acceptance-gaps round against the `TechOps Hero needs a` checklist
 Regression status: four Day runtime suites PASS; capture bot PASS on all
 four profiles (shipping anchor + music mapping asserted); production gate
 fails only the two documented POSIX-only groups above.
+
+## Review-feedback round — 2026-10-07 (HUD overlap + unassisted playthrough)
+
+Addressing the 2026-10-03 review: HUD text overlap in the portrait floor
+and workstation captures, one full no-fixture playthrough, honest preview
+republish packaging, and kept-open visual items. Captures in
+`scripts/docs/qa-day-playthrough-2026-10-03/` (playthrough) and
+`scripts/docs/qa-day-device-2026-09-29/` (regenerated acceptance set).
+
+- **P1 — Portrait workstation "overlapping HUD text" (fixed).** The
+  in-desktop `.day-taskbar` ("LOCAL TOOLS · CASE NOTES | DIAGNOSTIC
+  SESSION") sat at the bottom of `.day-desktop`; when the diagnostic
+  window + notification made the desktop taller than the 390px
+  workspace, the taskbar straddled the scroll fold and the opaque console
+  footer painted over its lower half. Fix: `.day-taskbar` is now
+  `position: sticky; bottom: 0` with an opaque background and a
+  separating border, and `.day-desktop` uses `overflow: clip` so it no
+  longer traps the stickiness (overflow:hidden would create a
+  non-scrolling scroll container and make sticky inert). Verified: the
+  portrait workstation capture shows the taskbar fully legible above the
+  footer in the full diagnostic state.
+- **P1 — Portrait floor HUD crowding (fixed).** Diagnosis via
+  `elementsFromPoint`: the box between "$80" and "Tickets 0/5" was not a
+  DOM element at all — it was the canvas-drawn "🎫" NPC status marker
+  rendering as a tofu glyph (headless Chromium has no emoji font)
+  positioned under the HUD scrim by camera framing. Fix: NPC status
+  markers are now vector badges drawn in `game.js` — gold ticket stub,
+  pulsing red diamond with "!", green check disc — so they render
+  identically with or without an emoji font and read as intentional
+  badges. The "$80 / Tickets / Output" stats row itself measured clean
+  (no sibling overlap) once the marker was removed; verified in the
+  regenerated portrait floor capture.
+- **P1 — Stale route mark found by the playthrough (fixed).**
+  `S.meta.dayRouteTarget` was only ever cleared on workaround
+  verification, so after the morning desk visit the HUD "Show floor
+  route" button kept re-marking Mike's desk even though the objective had
+  moved to the Shipping printer — the playthrough surfaced it by walking
+  the real UI. Fix: `clearRouteMark` (runtime_day.js) clears the mark and
+  the map route when the marked destination is actually used — device
+  opened (`openDevice`), desk workstation opened (`openWorkstation` via
+  the new `TechOpsDayExperience.clearRoute` API), requester conversation
+  opened (`talk`), and the standup entry trigger. Unit suites re-run
+  clean.
+- **P1 — Full unassisted playthrough (new evidence).**
+  `scripts/day_device_playthrough_browser.mjs` runs the whole Day-1 shift
+  with normal player controls: real title/morning buttons, HUD "Show
+  floor route" buttons, arrow-key walking with per-tile collision checks,
+  side-room entry by walking across the biome edge, E interactions, and
+  console buttons. No coordinate fixtures, no progress injection;
+  `page.evaluate` is read-only (state assertions + route guidance +
+  geometry diagnostics). Beats: standup → assignments → desk → muted
+  music continuation → company profile → clock-in → floor → Shipping
+  printer evidence → workstation diagnosis → technical verification →
+  requester witnessed task → ticket `shipping_cannot_print` resolved
+  (status "resolved", verification "strong", humanOutcome "restored").
+  Morning music uses the real "Continue with music muted" accessibility
+  button; `morningListening.status` is recorded as `user_skipped` and is
+  NOT claimed as audible playback (see below).
+- **P1 — "Red in the Mirror" audible playback: still uncertified here.**
+  This environment is headless and blocks external requests, so the
+  stubbed track-mapping assertion (fixture bot) and the muted-continuation
+  path (playthrough) are the only results on record. Manual browser steps
+  for the preview: (1) open the preview URL; (2) New Day → Standard →
+  Clock in; (3) walk into the IT office so the standup fires, skip to
+  assignments, choose "Assign queue: Mike investigates access"; (4) walk
+  right inside the room and press E at Mike's desk; (5) AeroDesk → MUSIC
+  → "Play Red in the Mirror"; (6) expect the MORNING LISTENING
+  confirmation dialog and audible playback; if the browser blocks
+  autoplay, click anywhere on the page once and press play again. Pass =
+  playback heard AND the confirmation dialog shows; the flag alone is not
+  sufficient evidence.
+- **Open items kept open (per review):** mismatched Shipping clerk
+  character/portrait artwork; placeholder canvas-drawn side-room desk
+  art; remaining world-texture / pixel-density / light-direction
+  consistency work; diagram style vs world texture art review.
+- **Known limitations kept on record:** the intermittent interaction
+  failure (one CHOOSE-menu officeInteractions draw, then five consecutive
+  clean passes — not reproduced since) and the two POSIX-only production
+  gate groups that cannot run on Windows (runtime autofix/triage shell
+  stubs and the `C:\etc\passwd` symlink fixture).
+
+Regression status: Day experience/world/cases suites PASS; four-viewport
+acceptance bot PASS (6 checks each); full playthrough PASS on portrait
+390x844 with the Shipping ticket resolved end-to-end.
