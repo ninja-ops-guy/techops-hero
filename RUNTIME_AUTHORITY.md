@@ -109,3 +109,15 @@ adapter owns contact/workstation presentation. Historical `ticketRecord` and
 current-service presentation remain separate: later verification cannot rewrite
 the original casebook's outcome, completion owner, or evidence provenance.
 See `docs/GAMEPLAY_FEEDBACK_WORKDAY_PASS_2026-09-12.md` for scope and validation limits.
+
+## Day physical service experience
+
+`runtime_day_world.js` places physical service stations and computes passive floor
+routes. `runtime_day.js` owns device-close-up presentation and spatial admission;
+it reuses the existing dialogue and main render/input owners.
+`runtime_day_cases.js` owns only optional ordinary incident records in the existing
+Day checkpoint. Canonical tickets and story facts remain in the campaign modules.
+`runtime_day_audio.js` emits bounded Day cues and uses the existing soundtrack
+player. No new frame loop, polling wrapper, teleport or parallel story save is
+introduced. See `docs/DAY_FIELD_EXPERIENCE_2026-09-28.md` for the narrative boundary
+and exact validation scope.

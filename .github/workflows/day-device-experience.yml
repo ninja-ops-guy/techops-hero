@@ -1,0 +1,43 @@
+name: Day device experience
+on:
+  pull_request:
+    paths:
+      - 'runtime_day*'
+      - 'campaign_native_act1.js'
+      - 'campaign_act1_investigations.js'
+      - 'game.js'
+      - 'index.html'
+      - 'scripts/day_device_acceptance_browser.mjs'
+      - '.github/workflows/day-device-experience.yml'
+permissions:
+  contents: read
+jobs:
+  field-experience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify spatial, state, and audio boundaries
+        run: |
+          node test_runtime_day_cases.js
+          node test_runtime_day_world.js
+          node test_runtime_day_audio.js
+          node test_runtime_day_experience.js
+      - name: Capture actual device interactions
+        env:
+          DAY_DEVICE_OUT_DIR: runtime-bot-artifacts/day-devices
+        run: node scripts/day_device_acceptance_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: day-device-${{ github.event.pull_request.head.sha }}
+          path: runtime-bot-artifacts/day-devices/
+          retention-days: 7

@@ -43,8 +43,13 @@
     card.innerHTML = `<div style="font-family:'Press Start 2P',monospace;font-size:18px;color:${color || "#ffd24a"};text-shadow:0 0 18px ${color || "#ffd24a"}88,2px 2px #000">${title}</div>` +
       (sub ? `<div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#9fb7d9;margin-top:10px;text-shadow:1px 1px #000">${sub}</div>` : "");
     card.style.opacity = "1"; card.style.transform = "translate(-50%,-50%) scale(1)";
+    // While the arrival card holds the screen, body-level HUD cards step aside.
+    if (document.body) document.body.classList.add("arrival-card-on");
     clearTimeout(window._v63CardT);
-    window._v63CardT = setTimeout(() => { card.style.opacity = "0"; card.style.transform = "translate(-50%,-50%) scale(.9)"; }, 1500);
+    window._v63CardT = setTimeout(() => {
+      card.style.opacity = "0"; card.style.transform = "translate(-50%,-50%) scale(.9)";
+      if (document.body) document.body.classList.remove("arrival-card-on");
+    }, 1500);
   };
 })();
 

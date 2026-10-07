@@ -62,77 +62,85 @@ ticketFlow = function (n) {
   commBattle(n);
 };
 
+// Stable authored observations: no random cause revelation or confidence for guessing.
+const DAY_INTAKE = {
+  printer: ["The print job never reaches the tray.", "Show me the queue and the printer panel", "I'll keep the job in place so you can compare the two. Please don't clear everyone's documents.", "Leave the queued jobs intact", "Yes. I can wait on this job if it helps you find where it stops."],
+  vpn: ["The remote connection won't complete.", "Show me where the connection stops", "I'll reproduce the connection attempt. Let's record the exact message before changing my sign-in settings.", "Keep the current sign-in settings", "Agreed. I don't want a password reset to become a second problem."],
+  dns: ["The network looks connected, but the site won't open.", "Show me the failing address", "Here is the address I normally use. We should compare the actual error before calling the whole network down.", "Keep the failing page open", "I'll leave this tab as it is. You can test from here."],
+  ad: ["I can't sign into the account I use for work.", "Read the sign-in message with me", "I'll show you the message. I won't say my password out loud or put it in the ticket.", "Pause repeated sign-in attempts", "Okay. I'll stop trying until we've checked whether the account is locked."],
+  malware: ["An unexpected window appeared on my computer.", "Describe the window without clicking it", "I'll leave it alone. Can you capture what you need without opening any of its links?", "Stop using this session while we assess it", "Understood. I'll use another approved way to contact the team."],
+  email: ["The messages I need aren't where I expect them.", "Show me the mailbox view and one missing message", "I can give you a sender and approximate date. Please check the view before changing or deleting anything.", "Preserve the mailbox while we investigate", "Please do. Some of those messages are records we need to keep."],
+  bsod: ["The computer stops with a blue screen.", "Capture the stop message before restarting", "I'll show you the code if it happens again. I want the error recorded, not another unexplained restart.", "Check for unsaved work before recovery", "Yes. Tell me what can be preserved before you touch the machine."],
+  plc: ["The production terminal can't communicate with the cell.", "Ask the operator what state the cell is in", "The operator needs to confirm that in person. A screen error isn't permission to change the controller.", "Agree the operator hold before any change", "Bring the operator and controls owner into it. Don't bypass an interlock for this."],
+  wifi: ["The wireless connection drops while I'm working.", "Show me the location where it drops", "Let's test in that spot and compare it with somewhere that works. Moving desks isn't a diagnosis.", "Keep an approved fallback available", "If there's a working desk, I can use it while you investigate. Tell me before switching the connection."],
+  cert: ["The site is showing a connection warning.", "Read the warning and site address together", "I'll show you the details. I haven't continued past the warning.", "Keep the security warning in place", "Good. I need the site working, but I don't want to teach everyone to ignore that warning."],
+  disk: ["The computer says there's no space left.", "Show me the storage report", "Let's identify what's taking space. Some of the large files are work records, not rubbish.", "Agree what can be removed first", "Ask before deleting anything. I can tell you who owns the files."],
+  update: ["The machine is still displaying the update screen.", "Check the update status before interrupting it", "I'll tell you what I've seen. Let's check whether it's progressing before forcing it off.", "Arrange another workstation while we check", "That would help. I need to work without risking the update on this machine."],
+  share: ["The shared folder says access denied.", "Show me the exact folder and denial", "This is the folder I need. Check the intended access with its owner; don't just give me everything.", "Confirm the folder owner before changing access", "I can help identify the owner. I need the right access, not someone else's account."],
+  vlan: ["The desk connection isn't giving the laptop a usable network.", "Compare the laptop connection with the wall port", "I'll show you what is plugged in. Label anything you move so the next shift can trace it.", "Keep the phone and production links untouched", "Please. This desk has more than one device, and they're not all on the same service."],
+  backup: ["We need to check whether the backup can actually be restored.", "Review the failed job and the restore request", "Let's keep the job logs. A green console alone won't answer whether the requested data is recoverable.", "Preserve existing recovery points", "Agreed. Don't discard the last known copy while trying to repair the next backup."],
+  slowpc: ["The computer is taking too long to become usable.", "Watch one slow start with me", "I'll show you the point where I start waiting. Let's measure it rather than remove applications at random.", "Check which applications the job requires", "Some of them look unnecessary until you try to do my job. I'll walk you through them."],
+  _generic: ["Something is stopping the work on this device.", "Show me the task that fails", "I'll demonstrate the task and the exact failure. I'd rather show you than guess at the cause.", "Agree what must be preserved", "Tell me what you plan to change, and I'll flag anything the team still needs."]
+};
+const DAY_WORK_CONTEXT = {
+  HR: ["People are waiting for an HR task to finish.", "Which HR task is blocked?", "I can explain the task without putting employee details in the public ticket. Let's keep the personal information private."],
+  Finance: ["I need to finish the finance work without losing the records.", "Which finance deadline is affected?", "Let's record the affected deadline and the work that is blocked. Please preserve the source records while you test."],
+  Manufacturing: ["I need the work area ready for the next operation.", "Is the line stopped or working around this?", "Check the current line state with the operator. We'll distinguish a stopped process from a workstation inconvenience."],
+  Engineering: ["I need a repeatable result, not a temporary good run.", "Which engineering task can we use to verify it?", "Use the same task that failed. If a different test works, it doesn't prove this workflow is restored."],
+  Sales: ["I need a working way to reach the customer.", "What can the customer still access?", "Let's separate the customer-facing failure from what I can still do internally, then agree an approved fallback."],
+  Executives: ["I need to know what can happen next and when I'll hear from you.", "What decision is waiting on this?", "Give me the affected decision and the next update point. Don't promise a repair time before you've inspected it."],
+  Marketing: ["The team needs to get this work out with the correct material.", "Which deliverable is waiting?", "Let's identify the blocked deliverable and preserve the approved version. A rushed replacement can create another problem."]
+};
+let dayIntakeSerial = 0;
 function commBattle(n) {
-  const s = S;
-  const rep = s.rep[n.dept] || 0;
-  // departments remember: high rep = friendlier callers + better descriptions; low rep = wary
-  if (typeof n.patience !== "number") {
-    n.patience = (COMM_PATIENCE[n.dept] || 5) + (rep >= 4 ? 1 : 0) - (rep <= 1 ? 1 : 0) + ((n.timesHelped || 0) >= 3 ? 1 : 0);
-  }
-  const maxPat = n.patience;
-  if (typeof n.ticketGauge !== "number") n.ticketGauge = s.day >= 4 ? 2 : 0; // users learn
-  n.preConf = n.preConf || 0;
-  n.guessed = n.guessed || false;
-  const veteran = s.day >= 4;
-
-  // v7.20: face-to-face when you walked up to them — it's only a call if you're apart
-  const f2f = typeof n.x === "number" && Math.abs(n.x - s.px) + Math.abs(n.y - s.py) <= 2;
-  const bars = (v, mx) => "▮".repeat(Math.max(0, v)) + "▯".repeat(Math.max(0, mx - v));
-  const render = (line) => {
-    dlg(f2f ? `🗣️ ${n.name} (${n.dept})` : `📞 Incoming Call — ${n.name} (${n.dept})`,
-      `<small>${COMM_MOOD[n.dept] || "🙂 Calm"}</small><br>` +
-      `Patience ${bars(n.patience, maxPat)}<br>Ticket ${bars(n.ticketGauge, 4)}<br><br><i>${line}</i>`,
-      [
-        { t: "🎫 \"Did you submit a ticket?\"", f: () => act("ask") },
-        { t: "💬 Reassure them first", f: () => act("reassure") },
-        { t: "🔍 Guess the cause", f: () => act("guess") },
-        { t: "😤 \"I need a ticket. Period.\"", f: () => act("demand") },
+  const s=S, token=++dayIntakeSerial, incident=DAY_INTAKE[n.type&&n.type.id]||DAY_INTAKE._generic;
+  const context=DAY_WORK_CONTEXT[n.dept]||["I need a reliable way to finish the work.","What work is blocked?","Let's record the actual task and who is waiting on it."];
+  const memory=n.dayConversation||(n.dayConversation={asked:[],visits:0});memory.visits++;
+  const heard=memory.asked, valid=()=>S===s&&s.inDialog&&token===dayIntakeSerial&&!n.done;
+  const identity=Array.from(n.name||'').reduce((h,c)=>h+c.charCodeAt(0),0)%3;
+  const greetings=["Thanks for coming over, Mike.","Mike, I've kept this open for you.","Can we look at this together?"];
+  const topics=[
+    {id:'impact',label:context[1],reply:context[2],response:'Record the impact and agree the next update'},
+    {id:'demonstrate',label:incident[1],reply:incident[2],response:'Keep that observation with this incident'},
+    {id:'protect',label:incident[3],reply:incident[4],response:'Agree those limits before touching the device'}
+  ];
+  function remember(id){if(!heard.includes(id)){heard.push(id);if(typeof save==='function')save();}}
+  function menu(line){
+    const options=topics.filter(t=>!heard.includes(t.id)).map(t=>({t:t.label,f:()=>{
+      if(!valid())return;remember(t.id);
+      dlg(`${n.name} — ${n.dept}`,`<b>${t.label}</b><br><br>“${t.reply}”`,[
+        {t:t.response,f:()=>{if(valid())menu('We have that in the handoff. What else do you need to know?');}},
+        {t:'Begin the technical investigation',f:()=>{if(valid())finish();}},
+        {t:'Pause here; keep the conversation for later',f:()=>{if(valid())closeDlg();}}
       ]);
-  };
-  const finish = (line) => {
-    toast("🎫 Ticket created — the real work begins.");
-    __origTicketFlowV43(n);
-  };
-  const complaint = () => {
-    addStress(15);
-    s.rep[n.dept] = Math.max(0, (s.rep[n.dept] || 0) - 1);
-    n.trustHurt = true;
-    dlg(`📞 ${n.name} (${n.dept})`, `<i>"So you're refusing to help me? I'm calling your manager."</i><br><br><small>Complaint filed: +15 stress, ${n.dept} reputation −1.</small>`,
-      [{ t: "...great.", f: () => __origTicketFlowV43(n) }]);
-  };
-  const act = (kind) => {
-    const noisy = n.dept === "Manufacturing" && (kind === "ask" || kind === "guess") && Math.random() < .25;
-    if (kind === "ask") {
-      n.ticketGauge += 2;
-      if (noisy) { n.patience -= 1; render(`"WHAT? THE LINE IS LOUD. SAY AGAIN?" — misheard, patience frays.`); }
-      else render(veteran ? `"Already rebooted AND submitted it. I learn, you know."` : `"Oh… no. How do I even do that?" — you walk them through it.`);
-    } else if (kind === "reassure") {
-      n.ticketGauge += 1; n.patience = Math.min(maxPat + 1, n.patience + 1);
-      render(COMM_REASSURE[n.dept] || `"Okay… okay. Thanks. It's just been a morning." — shoulders drop.`);
-    } else if (kind === "guess") {
-      if (noisy) { n.patience -= 1; render(`"YOU'RE BREAKING UP—" the line noise eats your question.`); }
-      else if (n.guessed) { n.ticketGauge += 1; render(`"We already covered that part." — keep it moving.`); }
-      else {
-        n.guessed = true; n.ticketGauge += 1; n.preConf += rep >= 4 ? 20 : 15; // trusted techs get better clues
-        render(n.root
-          ? `"Funny you ask — three other desks act up the same way." 🧩 <small>(+15 confidence later — smells like ${n.root})</small>`
-          : `"Huh, that actually narrows it down." <small>(+15 confidence when you portal in)</small>`);
-      }
-    } else if (kind === "demand") {
-      n.ticketGauge += 3; n.patience -= 2;
-      if (n.patience <= 0) return complaint();
-      render(COMM_DEMAND[n.dept] || (f2f ? `"...fine. FINE. Submitting it now." — frost in the air.` : `"...fine. FINE. Submitting it now." — frost on the line.`));
-    }
-    if (n.ticketGauge >= 4) return finish();
-    render(n.patience <= 1 ? `<i>"I'm running out of patience here…"</i>` : pick([
-      ...(COMM_FILLER[n.dept] || []),
-      `"So… can you fix it?"`, `"I have a meeting in ten."`, `"Is this going to take long?"`]));
-  };
-  render(
-    n.trustHurt ? `"You blew me off last time. This better be quick."`
-    : (n.timesHelped || 0) >= 3 ? `"You fixed my laptop last month — I trust you. Same gremlin, I think."`
-    : veteran ? `"Hey, it's me again — I rebooted first, like you taught us."`
-    : `"${pick(COMM_OPENERS[n.dept] || ["Something's wrong with my computer.", "Nothing works and I changed NOTHING.", "It's broken. I didn't touch it. Ever."])}"`);
+    }}));
+    if(heard.length)options.push({t:n.trustHurt?'Investigate before promising a fix':'Take this to the device',f:()=>{if(valid())finish();}});
+    options.push({t:heard.length?'Return later with these notes':'Let them continue; come back later',f:()=>{if(valid())closeDlg();}});
+    dlg(`${n.name} — ${n.dept}`,`<b>${n.type&&n.type.label||'Service request'}</b><br><br>${line}<br><br><small>${heard.length?'Discussed: '+topics.filter(t=>heard.includes(t.id)).map(t=>t.label).join(' · '):'Ask about the work, observe the symptom, and agree the limits.'}</small>`,options);
+  }
+  function finish(){dayIntakeSerial++;n.ticketGauge=4;__origTicketFlowV43(n);}
+  const intro=n.trustHurt?'I need you to hear this before changing anything. Last time left me wary.':memory.visits>1?(heard.length?'You’re back. We can pick up from the notes we already agreed.':'We didn’t get to the details earlier. I still have the problem here.'):(n.timesHelped||0)>0?'You helped me before. Let’s check this properly rather than assume it’s the same fault.':greetings[identity];
+  menu(`${intro}<br>“${incident[0]} ${context[0]}”`);
+}
+
+const DAY_AMBIENT_TOPICS={
+ HR:[['What helps a new starter on day one?','A working account, the right access and someone who expects them. A laptop on a desk is only one part of being ready.'],['What should stay out of a support ticket?','Personal employee details that are not needed to solve the issue. Record the system and the task; use the approved private channel for sensitive context.']],
+ Finance:[['What makes a fix useful to Finance?','Let me run the same reconciliation afterward. If the numbers and the source records survive, then we can talk about closure.'],['How should we schedule a change around your work?','Ask which deadline it touches before choosing the window. The same ten-minute interruption can mean very different things on different days.']],
+ Manufacturing:[['Where should a visitor stand on the floor?','Outside the marked travel lanes, with the operator aware you are there. A troubleshooting screen should not make you forget the machine beside it.'],['What do you need in a shift handoff?','The equipment state, the work being held and the person who owns the next step. The next shift should not have to discover our workaround by accident.']],
+ Engineering:[['What makes a useful fault report?','A repeatable task, the exact result and what changed between the good run and the failed run. Screenshots help when they show the part that matters.'],['How do you handle a result you cannot reproduce?','Keep the original observation and say that the repeat test differed. Do not replace an inconvenient result with the one you hoped to see.']],
+ Sales:[['What does a good outage update look like?','Tell me what I can still do, what I should tell the customer and when the next update is coming. I can plan around uncertainty if you name it.'],['What should we test before the next demo?','The actual customer path, on the connection we will use. A successful test from a different desk can be a very convincing false comfort.']],
+ Marketing:[['How do we avoid sending the wrong version?','Keep the approved material clearly identified and check the destination. A working upload can still deliver the wrong thing.'],['What would make support less disruptive?','Tell the person doing the work what you need to test. We can often find a window if the first contact is a conversation rather than a restart.']],
+ Executives:[['What belongs in an incident update?','Impact, owner, current evidence and the next decision. If something is not known yet, say that before a guess turns into a promise.'],['What do you need from the technical team?','A clear choice with its tradeoffs. We need enough detail to make the decision, not a dashboard full of green things unrelated to it.']]
+};
+function dayAmbientConversation(n){
+ if(!n||!S||S.nightMode||n._felScene||n._pin||n._cue)return false;
+ const topics=DAY_AMBIENT_TOPICS[n.dept];if(!topics)return false;
+ const s=S;s.meta.dayAmbientTalk=s.meta.dayAmbientTalk||{};const key=s.day+':'+(n.id||n.name)+':'+n.dept;
+ const m=s.meta.dayAmbientTalk[key]||(s.meta.dayAmbientTalk[key]={visits:0,heard:[]});
+ const intro=m.visits++?'“Back for a minute? We can pick up where we left off.”':'“Hi, Mike. Nothing to restart here — what did you want to ask?”';
+ const options=topics.filter((t,i)=>!m.heard.includes(i)).map(t=>({t:t[0],f:()=>{if(S!==s||!s.inDialog)return;const i=topics.indexOf(t);if(!m.heard.includes(i))m.heard.push(i);save();dlg(n.name+' — '+n.dept,'“'+t[1]+'”',[{t:'Ask another question',f:()=>dayAmbientConversation(n)},{t:'Thanks — I’ll let you get back to it',f:closeDlg}]);}}));
+ if(!options.length)options.push({t:'Revisit our earlier conversation',f:()=>dlg(n.name+' — '+n.dept,topics.map(t=>'“'+t[1]+'”').join('<br><br>'),[{t:'Thanks — see you around',f:closeDlg}])});
+ options.push({t:'Just saying hello — see you around',f:closeDlg});save();dlg(n.name+' — '+n.dept,intro,options);return true;
 }
 
 // ---------- battle bonuses: call prep + knowledge mastery ----------

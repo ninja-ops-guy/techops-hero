@@ -4,6 +4,12 @@ const { spawnSync } = require("child_process");
 const fs = require("fs");
 
 const tests = [
+  "test_day_dialogue_variance.js",
+  "test_campaign_day_spatial_music.js",
+  "test_runtime_day_cases.js",
+  "test_runtime_day_world.js",
+  "test_runtime_day_audio.js",
+  "test_runtime_day_experience.js",
   "test_startup_prefetch.js",
   "test_review_contracts.js",
   "test_quality_release_receipt.mjs",

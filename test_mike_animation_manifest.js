@@ -3,7 +3,7 @@ const assert = require("assert");
 const manifest = require("./mike_animation_manifest.js");
 const world = require("./campaign_world_visuals.js");
 
-assert.strictEqual(manifest.VERSION, 3);
+assert.strictEqual(manifest.VERSION, 4);
 assert.strictEqual(manifest.WALK_FRAME_MS, 135);
 assert.strictEqual(manifest.DAY_SHIFT.atlas, "PLAYER_ATLAS");
 assert.strictEqual(manifest.ACTION_ATLAS.atlas, "MIKE_ACTIONS");
@@ -41,7 +41,11 @@ assert.strictEqual(manifest.resolveDayShift({fx:"down", moving:true}, 135).key, 
 assert.strictEqual(manifest.resolveDayShift({fx:"down", moving:true}, 270).key, "down0");
 assert.strictEqual(manifest.resolveDayShift({fx:"down", moving:true}, 405).key, "down2");
 assert.strictEqual(manifest.resolveDayShift({fx:"left", moving:true}, 135).flip, true);
-assert.strictEqual(manifest.resolveDayShift({fx:"right", moving:false, inDialog:true}, 0).key, "laptop");
+assert.strictEqual(manifest.resolveDayShift({fx:"right", moving:false, inDialog:true}, 0).key, "right0", "ordinary conversation preserves facing without a laptop");
+assert.strictEqual(manifest.resolveDayShift({fx:"left", moving:true, inDialog:true, dayInteraction:"inspect", partyUntil:500}, 135).key, "right0", "dialogue suppresses stale movement and celebration");
+assert.strictEqual(manifest.resolveDayShift({fx:"left", moving:true, inDialog:true, dayInteraction:"inspect"}, 135).flip, true);
+assert.strictEqual(manifest.resolveDayShift({fx:"right", inDialog:true, dayInteraction:"workstation"}, 0).key, "laptop");
+assert.strictEqual(manifest.resolveDayShift({fx:"right", inDialog:false, dayInteraction:"workstation"}, 0).key, "right0", "stale workstation metadata cannot hold the pose after dismissal");
 
 // The metadata-only sheet is not render-ready unless a real source payload is present.
 const frames = {};
