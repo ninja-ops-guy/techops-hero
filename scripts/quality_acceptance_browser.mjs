@@ -49,6 +49,9 @@ async function walkToStandup(page){
   // Observe the map to choose paths; movement itself always uses real key edges.
   for(let step=0;step<140;step++){
     const next=await page.evaluate(()=>{
+      // Office entry owns the authored standup before the board is adjacent.
+      // Return only its observed identity; the caller validates the handoff.
+      if(S.inDialog)return {dialog:{name:document.querySelector('#dlg-name')?.textContent,speaker:S.dayStandupSpeaker,staged:document.body.classList.contains('day-standup-open')},position:{px:S.px,py:S.py}};
       const target=S.meta.campaignAct1Native.standup,start={x:S.px,y:S.py};
       if(Math.abs(start.x-target.x)+Math.abs(start.y-target.y)<=1)return {done:true};
       const queue=[{...start,first:null}],seen=new Set([`${start.x},${start.y}`]);
@@ -57,9 +60,16 @@ async function walkToStandup(page){
         const first=c.first||{key,x,y};if(Math.abs(x-target.x)+Math.abs(y-target.y)<=1)return first;seen.add(k);queue.push({x,y,first});
       }}return null;
     });
-    assert.ok(next,'No reachable standup path');if(next.done)return;
+    assert.ok(next,'No reachable standup path');
+    if(next.dialog){
+      assert.equal(next.dialog.staged,true,'Only the authored standup may interrupt the walk');
+      assert.equal(next.dialog.speaker,'NICK','Office entry must begin the standup with Nick');
+      assert.equal(next.dialog.name,'STANDUP SCENE // NICK','Unexpected dialogue interrupted the standup walk');
+      return {entry:'office-entry',position:next.position};
+    }
+    if(next.done)return {entry:'board-interaction'};
     await page.keyboard.down(next.key);
-    try{await page.waitForFunction(({x,y})=>S.px===x&&S.py===y,next,{timeout:1600});}
+    try{await page.waitForFunction(({x,y})=>S.px===x&&S.py===y||S.inDialog,next,{timeout:1600});}
     catch(error){
       const state=await page.evaluate(({x,y,key})=>({px:S.px,py:S.py,room:S.room,inDialog:S.inDialog,panel:typeof panelOpen!=='undefined'&&panelOpen,shell:TechOpsModeShell.health(),keys:typeof keys!=='undefined'?keys:null,targetOccupied:S.npcs.some(n=>n.x===x&&n.y===y),keyHeld:typeof keys!=='undefined'&&keys[key.toLowerCase()]}),next);
       // Ambient NPCs may enter a previously free tile. Replan around observed
@@ -72,8 +82,23 @@ async function walkToStandup(page){
   throw Error('Standup walk exceeded bounded route');
 }
 async function day(page,p){
-  await startDay(page,p);await walkToStandup(page);await page.keyboard.press('e');
+  await startDay(page,p);
+  const standup=await walkToStandup(page);
+  if(standup.entry==='board-interaction')await page.keyboard.press('e');
+  standup.speakers=[];
+  for(const speaker of ['NICK','AMIT','BRANDON','DANIEL']){
+    await page.waitForFunction(()=>S.inDialog);
+    const scene=await page.evaluate(()=>({name:document.querySelector('#dlg-name')?.textContent,speaker:S.dayStandupSpeaker,staged:document.body.classList.contains('day-standup-open'),assigned:TechOpsCampaign.load(localStorage).flags.ticket_assignments_confirmed}));
+    assert.equal(scene.name,'STANDUP SCENE // '+speaker,'Authored standup shot order');
+    assert.equal(scene.speaker,speaker);assert.equal(scene.staged,true);
+    assert.equal(scene.assigned,false,'Reading the standup cannot assign tickets');
+    standup.speakers.push(speaker);
+    await click(page,option(page,speaker==='DANIEL'?/^Decide the assignments$/:/^Continue standup$/),p.hasTouch);
+  }
+  assert.equal(await page.locator('#dlg-name').textContent(),'MORNING STANDUP');
   await click(page,option(page,/Assign queue: Mike/),p.hasTouch);
+  const assigned=await page.evaluate(()=>TechOpsCampaign.load(localStorage).flags);
+  assert.equal(assigned.ticket_assignments_confirmed,true);assert.equal(assigned.standup_completed,true);
   const beforeRoute=await page.evaluate(()=>({px:S.px,py:S.py}));
   await click(page,option(page,/Walk to Mike's workstation/),p.hasTouch);
   assert.deepEqual(await page.evaluate(()=>({px:S.px,py:S.py})),beforeRoute,'Desk route cannot teleport the player');
@@ -103,12 +128,14 @@ async function day(page,p){
   assert.equal(deskFixture.rejected,true,'Off-desk workstation must reject entry');
   assert.equal(deskFixture.unchanged,true,'Rejected workstation cannot teleport the player');
   await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent.includes('WORKSTATION'));
-  await click(page,option(page,/^MUSIC$/),p.hasTouch);
-  await click(page,option(page,/^Continue with music muted$/),p.hasTouch);
-  await click(page,option(page,/Back to desktop/),p.hasTouch);
+  // AeroDesk presents the real controls; its legacy dialogue options are hidden.
+  const desktop=page.locator('.os-desktop');
+  await click(page,desktop.getByRole('button',{name:'MUSIC',exact:true}),p.hasTouch);
+  await click(page,desktop.getByRole('button',{name:'Continue with music muted',exact:true}),p.hasTouch);
+  await click(page,desktop.getByRole('button',{name:'Back to desktop',exact:true}),p.hasTouch);
   await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent==='MIKE // WORKSTATION');
   await screenshot(page,`${p.id}-workstation`);
-  await click(page,option(page,/Exit workstation/),p.hasTouch);
+  await click(page,desktop.getByRole('button',{name:'Exit workstation',exact:true}),p.hasTouch);
   // Observe the saved checkpoint; no ticket or narrative progress is injected.
   const checkpoint=await page.evaluate(()=>JSON.parse(localStorage.getItem(TechOpsSaveKeys.dayCheckpoint)));
   assert.ok(checkpoint?.state?.map,'Day startup must create a durable checkpoint');
@@ -121,7 +148,7 @@ async function day(page,p){
   const resumed=await page.evaluate(()=>({day:S.day,px:S.px,py:S.py,budget:S.budget,clock:S.clock,ticketsAlias:S.tickets.every(t=>S.npcs.includes(t)),music:TechOpsCampaign.load(localStorage).flags.red_in_mirror_heard,shell:TechOpsModeShell.health().mode}));
   for(const key of ['day','px','py','budget','clock'])assert.equal(resumed[key],checkpoint.state[key],`Day checkpoint ${key}`);
   assert.equal(resumed.ticketsAlias,true);assert.equal(resumed.music,true);assert.equal(resumed.shell,'day');
-  record('day_resume',p,{resumed,deskFixture,checkpoint_saved_at:checkpoint.savedAt,entry:'Actual keyboard path to standup; explicit desk-position fixture with off-desk rejection; real dialog hit targets; muted music continuation; saved checkpoint'},'fixture-assisted-browser-input');
+  record('day_resume',p,{resumed,standup,deskFixture,checkpoint_saved_at:checkpoint.savedAt,entry:'Actual keyboard path to authored standup and four real dialogue advances; explicit desk-position fixture with off-desk rejection; real dialog hit targets; muted music continuation; saved checkpoint'},'fixture-assisted-browser-input');
   await screenshot(page,`${p.id}-day-resumed`);
 }
 async function night(page,p){
