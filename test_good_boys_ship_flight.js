@@ -40,3 +40,136 @@ assert.ok(handoff.includes("TechOpsGoodBoysButtonHardFix"),"handoff capture must
 assert.ok(!handoff.includes("repair.playOpening()"),"handoff must not retain a competing opening path");
 assert.ok(registry.includes("assets/v736/good_boys_ship/cockpit_pilot.jpg"),"registry must preload the pilot");
 console.log("Good Boys canonical supplied-asset ship/cockpit opening: PASS");
+
+// Exercise the production flight owner, including failed browser image loads and
+// a stalled animation clock. A recovered BOARD action must not sit underneath a
+// leftover full-screen flight, and expired callbacks must not complete a retry.
+const vm=require("vm");
+function flightHarness(){
+  const nodes=new Map(),timers=new Map(),frames=new Map(),images=[],events=new Map(),results=[],ends=[];
+  let nextId=1,clock=0,resets=0,crashes=0;
+  const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})},{get(target,key){return target[key]||(target[key]=()=>{});}});
+  function element(tag){
+    const children=new Map();
+    return {tag,style:{},dataset:{},parentNode:null,textContent:"",addEventListener(){},appendChild(node){node.parentNode=this;},
+      remove(){if(this.id&&nodes.get(this.id)===this)nodes.delete(this.id);this.parentNode=null;},
+      querySelector(selector){if(!children.has(selector))children.set(selector,element(selector));return children.get(selector);},
+      querySelectorAll(selector){return selector==="[data-dir]"?[]:[this.querySelector("[data-boost]")];},
+      getContext(){return ctx;}};
+  }
+  const root={console,Date,Math,Object,Array,Number,String,Promise,performance:{now:()=>clock},
+    document:{createElement:element,getElementById:id=>nodes.get(id)||null,
+      body:{appendChild(node){node.parentNode=this;nodes.set(node.id,node);}}},
+    Image:class{constructor(){this.complete=false;this.naturalWidth=0;images.push(this);}set src(value){this._src=value;}},
+    setTimeout(fn,ms){const id=nextId++;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),
+    setInterval(){return nextId++;},clearInterval(){},
+    requestAnimationFrame(fn){const id=nextId++;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id),
+    addEventListener(name,fn){if(!events.has(name))events.set(name,new Set());events.get(name).add(fn);},
+    removeEventListener(name,fn){if(events.has(name))events.get(name).delete(fn);},
+    S:{meta:{_v736:{m:2}}},NM:{_v736:{m:2,_gbBoardRequested:true}},
+    GoodDogsCutscenes:{play:async()=>({status:"COMPLETED"})},
+    TechOpsGoodBoysOpeningV4:{showDeckInteraction:async()=>({completed:true}),showCrashScene:async()=>{crashes++;return{completed:true};}},
+    TechOpsGoodBoysBoardShipAction:{reset(){resets++;}},
+    TechOpsPresentationDirector:{begin:()=>({id:"boarding"}),end:(token,result)=>ends.push(result)},save(){}}
+  root.globalThis=root;vm.createContext(root);vm.runInContext(flight,root);
+  return {root,nodes,timers,frames,images,results,ends,events,ship:root.TechOpsGoodBoysShipFlight,
+    get resets(){return resets;},get crashes(){return crashes;},
+    board(){return this.ship.runBoardingSequence(result=>results.push(result));},
+    image(ok){const image=images[images.length-1];image.complete=true;image.naturalWidth=ok?768:0;image.naturalHeight=ok?620:0;(ok?image.onload:image.onerror)();return image;},
+    timer(ms){const entry=Array.from(timers).find(([,timer])=>timer.ms===ms);assert.ok(entry,"expected timer "+ms);timers.delete(entry[0]);entry[1].fn();},
+    frame(at){const entry=frames.entries().next().value;assert.ok(entry,"expected animation frame");frames.delete(entry[0]);clock=at;entry[1](at);return entry[1];}};
+}
+const flush=()=>new Promise(resolve=>setImmediate(resolve));
+(async()=>{
+  const failed=flightHarness();
+  assert.strictEqual(failed.board(),true);await flush();
+  failed.image(false);await flush();
+  assert.strictEqual(failed.results.length,1,"asset failure settles boarding exactly once");
+  assert.strictEqual(failed.results[0].completed,false);
+  assert.strictEqual(failed.ship.active(),false,"failed flight releases its active ownership");
+  assert.strictEqual(failed.nodes.has("good-boys-ship-flight"),false,"asset failure must uncover the recovered BOARD action");
+  assert.strictEqual(failed.resets,1);assert.deepStrictEqual(failed.ends,["error"]);
+  assert.strictEqual(failed.root.S.meta._v736.m,2,"failed flight preserves M2");
+  assert.strictEqual(failed.root.NM._v736._gbBoardSequenceComplete,undefined);
+  assert.strictEqual(failed.crashes,0,"failed flight cannot start the crash or mark progression");
+  assert.strictEqual(failed.frames.size,0);
+  assert.strictEqual(failed.board(),true,"BOARD remains retryable after an image failure");await flush();
+  failed.image(true);await flush();failed.frame(8200);await flush();
+  assert.strictEqual(failed.results.length,2);assert.strictEqual(failed.results[1].completed,true);
+  assert.strictEqual(failed.crashes,1);assert.deepStrictEqual(failed.ends,["error","completed"]);
+
+  const stalled=flightHarness();
+  assert.strictEqual(stalled.board(),true);await flush();stalled.image(true);await flush();
+  const expiredFrame=stalled.frames.values().next().value;
+  stalled.timer(30000);await flush();
+  assert.strictEqual(stalled.results.length,1);assert.match(stalled.results[0].error,/timed out/);
+  assert.strictEqual(stalled.ship.active(),false,"timeout must cancel the active flight so BOARD can retry");
+  assert.strictEqual(stalled.nodes.has("good-boys-ship-flight"),false,"timeout must remove the input-blocking overlay");
+  assert.strictEqual(stalled.frames.size,0,"timeout must cancel the pending animation frame");
+  assert.strictEqual(stalled.root.S.meta._v736.m,2);assert.strictEqual(stalled.crashes,0);
+  assert.strictEqual(stalled.board(),true);await flush();
+  expiredFrame(9000);await flush();
+  assert.strictEqual(stalled.results.length,1,"a callback from the expired flight cannot settle the new BOARD attempt");
+  assert.strictEqual(stalled.ship.active(),true);assert.strictEqual(stalled.crashes,0);
+  stalled.frame(8200);await flush();
+  assert.strictEqual(stalled.results.length,2);assert.strictEqual(stalled.results[1].completed,true);
+  expiredFrame(10000);await flush();
+  assert.strictEqual(stalled.results.length,2,"late callbacks cannot duplicate settlement");
+  assert.strictEqual(stalled.crashes,1);assert.strictEqual(stalled.resets,1);
+  assert.strictEqual(stalled.nodes.has("good-boys-ship-flight"),false);
+
+  const loading=flightHarness();
+  assert.strictEqual(loading.board(),true);await flush();
+  const expiredImage=loading.images[0],expiredLoad=expiredImage.onload,expiredError=expiredImage.onerror;
+  loading.timer(30000);await flush();
+  assert.strictEqual(loading.timers.size,0,"settling a flight cancels its unresolved asset watchdog");
+  assert.strictEqual(loading.board(),true);await flush();
+  const retryState=JSON.stringify(loading.ship.telemetry());
+  expiredImage.complete=true;expiredImage.naturalWidth=768;expiredLoad();expiredError();await flush();
+  assert.strictEqual(JSON.stringify(loading.ship.telemetry()),retryState,"expired loader callbacks cannot overwrite retry telemetry");
+  assert.strictEqual(loading.frames.size,0,"expired asset completion cannot start the retry animation");
+  loading.image(true);await flush();loading.frame(8200);await flush();
+  assert.strictEqual(loading.results.length,2);assert.strictEqual(loading.results[1].completed,true);
+
+  const waiting=flightHarness();let finishDeck;
+  waiting.root.TechOpsGoodBoysOpeningV4.showDeckInteraction=()=>new Promise(resolve=>{finishDeck=resolve;});
+  assert.strictEqual(waiting.board(),true);await flush();
+  assert.strictEqual(waiting.timers.size,0,"flight watchdog must not time out a player-owned cockpit interaction");
+  assert.strictEqual(waiting.results.length,0);
+  finishDeck({completed:true});await flush();waiting.image(true);await flush();waiting.frame(8200);await flush();
+  assert.strictEqual(waiting.results.length,1);assert.strictEqual(waiting.results[0].completed,true);
+
+  for(const failure of ["error","empty-load"]){
+    const cockpit=flightHarness();vm.runInContext(deck,cockpit.root);
+    assert.strictEqual(cockpit.board(),true);await flush();
+    const pilot=cockpit.images.find(image=>/cockpit_pilot/.test(image._src));
+    assert.ok(pilot,"boarding mounted the real cockpit pilot loader");
+    const lateLoad=pilot.onload,lateError=pilot.onerror;
+    if(failure==="error")pilot.onerror();else pilot.onload();
+    await flush();
+    assert.strictEqual(cockpit.results.length,1,failure+" must settle the cockpit and release BOARD");
+    assert.strictEqual(cockpit.results[0].completed,false);
+    assert.strictEqual(cockpit.nodes.has("good-boys-deck-supplied"),false);
+    assert.strictEqual(cockpit.frames.size,0,"failed cockpit cancels its animation loop");
+    assert.strictEqual(cockpit.events.get("keydown").size,1,"only the flight owner's persistent keyboard listener remains");
+    assert.strictEqual(cockpit.events.get("keyup").size,1);
+    assert.strictEqual(cockpit.ship.active(),false);assert.strictEqual(cockpit.resets,1);
+    assert.strictEqual(cockpit.root.S.meta._v736.m,2);assert.strictEqual(cockpit.crashes,0);
+    assert.strictEqual(cockpit.board(),true);await flush();
+    const retryHost=cockpit.nodes.get("good-boys-deck-supplied"),retryTelemetry=cockpit.root.__goodBoysDeckInteract;
+    pilot.naturalWidth=620;lateLoad();lateError();await flush();
+    assert.strictEqual(cockpit.nodes.get("good-boys-deck-supplied"),retryHost,"expired image callbacks cannot remove the new cockpit");
+    assert.strictEqual(cockpit.root.__goodBoysDeckInteract,retryTelemetry,"expired image callbacks cannot overwrite retry state");
+    assert.strictEqual(cockpit.results.length,1);
+    const retryPilot=cockpit.images[cockpit.images.length-1];retryPilot.naturalWidth=620;retryPilot.onload();
+    const key={key:"ArrowRight",preventDefault(){},stopPropagation(){}};
+    for(const listener of cockpit.events.get("keydown"))listener(key);
+    for(let i=1;i<=10;i++)cockpit.frame(i*34);
+    for(const listener of cockpit.events.get("keyup"))listener(key);
+    for(const listener of cockpit.events.get("keydown"))listener({...key,key:"Enter"});
+    await flush();cockpit.image(true);await flush();cockpit.frame(8540);await flush();
+    assert.strictEqual(cockpit.results.length,2);assert.strictEqual(cockpit.results[1].completed,true);
+    assert.strictEqual(cockpit.crashes,1);assert.strictEqual(cockpit.resets,1);
+  }
+  console.log("Good Dogs executable flight failure cleanup, retry, timeout and stale-callback settlement: PASS");
+})().catch(error=>{console.error(error);process.exitCode=1;});

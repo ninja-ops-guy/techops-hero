@@ -16,6 +16,25 @@
   const reduced=()=>!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const standalone=s=>!!(s&&s.meta&&s.meta._standaloneMode==='nightcrawler');
   const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
+  const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  const count=(value,min=0,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(value)&&value>=min&&value<=max;
+  function validCombatState(combat){
+    // Queued player actions and feedback are retired by normalizedSnapshot, but
+    // retained counters/timers must match night_combat.js's actual writer. A
+    // missing combat object is pre-combat; a partial one is not an older schema.
+    return object(combat)&&finite(combat.time,0,1000000000)&&Array.isArray(combat.events)&&Array.isArray(combat.fx)&&
+      finite(combat.stunUntil,0,1000000000)&&['lastInput','lastHit'].every(key=>finite(combat[key],-10000,1000000000))&&
+      count(combat.serial)&& (combat.relay===undefined||count(combat.relay));
+  }
+  function validEnemyCombat(combat){
+    if(!object(combat)||!['held','air'].every(key=>typeof combat[key]==='boolean')||
+      !['thrown','locked','wallHit'].every(key=>combat[key]===undefined||typeof combat[key]==='boolean'))return false;
+    // Air reactions survive a reload. Their motion and collision history must
+    // be usable by stepEnemy without NaN positions or repeated collision hits.
+    return ['stunUntil','recoverUntil'].every(key=>finite(combat[key],0,1000000000))&&
+      ['vx','vy'].every(key=>finite(combat[key],-1000,1000))&&count(combat.id,1)&&count(combat.airHits,0,3)&&
+      Array.isArray(combat.flightHits)&&combat.flightHits.every(id=>count(id,1));
+  }
   const districts=['downtown','longwharf','industrial','wooster','airport','suburbs','home'];
   function validCheckpoint(s){
     const n=s&&s.nightMode;
@@ -26,7 +45,8 @@
     if(!n.done||typeof n.done!=='object'||Array.isArray(n.done)||Object.entries(n.done).some(([id,done])=>!districts.includes(id)||done!==true))return false;
     if(!Array.isArray(n.platforms)||n.platforms.length>100||n.platforms.some(p=>!p||!finite(p.x,-100,1900)||!finite(p.y,-2000,900)||!finite(p.w,1,1900)||!finite(p.h,1,200)))return false;
     if(!Array.isArray(n.enemies)||n.enemies.length>100||n.enemies.some(e=>!e||!finite(e.x,-300,2100)||!finite(e.y,-2000,900)||!finite(e.w,1,200)||!finite(e.h,1,200)||!finite(e.hp,-100000,100000)||!finite(e.maxHp,1,100000)||e.hp>e.maxHp||typeof e.alive!=='boolean'||e.alive!==(e.hp>0)||!finite(e.dmg,0,10000)||!finite(e.spd,0,100)||!Array.isArray(e.cash)||e.cash.length!==2||!e.cash.every(v=>finite(v,0,100000))))return false;
-    if(n._nightCombat&&!finite(n._nightCombat.time,0,1000000000))return false;
+    if(n._nightCombat!==undefined&&!validCombatState(n._nightCombat))return false;
+    if(n.enemies.some(e=>e._nightCombat!==undefined&&!validEnemyCombat(e._nightCombat)))return false;
     if(n._nightLifecycle&&!finite(n._nightLifecycle.seconds,0,MINUTE_SECONDS))return false;
     if(n.drive&&(!districts.includes(n.drive.to)||!finite(n.drive.t,0,10000)||!finite(n.drive.dur,1,10000)||n.drive.t>n.drive.dur))return false;
     return ['certs','inv','journal','ach','books','lab','staff','infra'].every(key=>Array.isArray(s[key]))&&['stats','soft','rep'].every(key=>s[key]&&typeof s[key]==='object');
