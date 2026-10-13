@@ -93,12 +93,15 @@ for(const [name,type,touch] of profiles){
   await setup(770);
   await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));
-  await page.waitForFunction(()=>{const c=NM._nightCombat;return !!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20);});
-  await page.evaluate(()=>{NM.enemies[0].x=NM.x+48;});
-  await page.keyboard.down('ArrowRight');
-  try{
-   await page.keyboard.press('KeyE');
-  }finally{await page.keyboard.up('ArrowRight');}
+  // Stage the existing target fixture and check its deadline in one call.
+  // The two real taps already establish facing; a third direction press only
+  // adds latency before the punch. No input or combat state is synthesized.
+  await page.evaluate(()=>{
+   const c=NM._nightCombat;
+   if(!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20))throw Error('Dash grab fixture missed the live dash window');
+   NM.enemies[0].x=NM.x+48;
+  });
+  await page.keyboard.press('KeyE');
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));
   await shot('movement-dash-grab');checks.push('trusted double-tap -> dash -> attack grabs inside the live dash window');
   for(const direction of ['left','right','up','down']){
