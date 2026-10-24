@@ -137,6 +137,16 @@ const flush = async () => {for (let i = 0; i < 8; i++) await Promise.resolve();}
     assert.strictEqual(h.reloads, 2); assert.strictEqual(api.next(), false);
   }
   {
+    const h = harness(), title = h.doc.createElement('section'), mode = h.doc.createElement('button');
+    title.id = 'title-screen'; title.classList.add('hidden'); mode.id = 'btn-v736';
+    h.doc.body.appendChild(title); h.doc.body.appendChild(mode);
+    h.root.location.reload = () => {throw new Error('reload unavailable');};
+    h.load('good_boys_earthfall_ending.js');
+    assert.strictEqual(h.root.TechOpsGoodBoysEarthfallEnding.skip(), true);
+    assert.strictEqual(title.classList.contains('hidden'), false, 'fallback return still opens the title');
+    assert.strictEqual(h.doc.activeElement, mode, 'fallback return moves focus out of hidden gameplay and onto the title route');
+  }
+  {
     const h = harness(); delete h.root.document; h.load('good_boys_earthfall_ending.js');
     assert.strictEqual(h.root.S.meta._v736.done, false, 'missing presentation cannot automatically complete Earthfall');
     assert.deepStrictEqual(h.trace, []);
