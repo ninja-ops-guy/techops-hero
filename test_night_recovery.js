@@ -33,7 +33,12 @@ function fixture(){
       _nightLifecycle:{seconds:2.35,weather:'rain',exitCommitted:false}};
     c.S.nightMode=c.NM;return c.S;
   }
-  return {c,api:c.TechOpsNightRuntime,data,events,elements,start};
+  function startWaldo(){
+    start();c.NM.district='waldo';c.NM.street=1;c.NM.enemies=[];c.NM.platforms=[];c.NM.done={};
+    c.NM.waldo={used:{},mow:null,repair:null,waldoX:900,waldoDir:1,waldoT:0};
+    c.S.car={engine:80,tires:75,brakes:70,battery:85,body:90};return c.S;
+  }
+  return {c,api:c.TechOpsNightRuntime,data,events,elements,start,startWaldo};
 }
 test('the real game save checkpoints the complete isolated Night world',()=>{
   const {c,api,data,start}=fixture();start();const before=new Map(data);
@@ -65,6 +70,46 @@ test('all street districts, final clear states and active drive checkpoints are 
     assert.equal(api.saveCheckpoint(),true,district);assert.equal(api.checkpointStatus().status,'ready',district);
   }
   c.NM.drive={to:'downtown',t:0,dur:1500};assert.equal(api.saveCheckpoint(),true);
+});
+test("Waldo travel, property activity, departure and once-only rewards survive a complete reload loop",()=>{
+  const {c,api,data,events,startWaldo}=fixture();startWaldo();const otherSlots=new Map(data);
+  c.NM.drive={to:'waldo',t:620,dur:1500};assert.equal(api.saveCheckpoint(),true);
+  c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);assert.deepEqual(plain(c.NM.drive),{to:'waldo',t:620,dur:1500});
+  c.NM.drive=null;c.NM.x=742;c.NM.cam=300;c.NM.waldo.waldoX=933;c.NM.waldo.waldoDir=-1;c.NM.waldo.waldoT=1.2;
+  c.NM.waldo.mow={cells:Array.from({length:24},(_,i)=>i<7?2:i===7?1:0),done:false,cutSfx:4800};
+  c.NM.waldo.used.grill=true;c.S.meta._v733smokePaid=true;c.S.meta._v733docs=['sat-ground-station'];
+  c.S.inDialog=true;events.pagehide();const saved=data.get(api.CHECKPOINT_KEY);assert.equal(JSON.parse(saved).state.inDialog,false);
+  c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);
+  assert.equal(api.active(c.NM),false,'Waldo must not acquire Night frame, clock, HUD or combat ownership');
+  assert.equal(c.NM.x,742);assert.equal(c.NM.cam,300);assert.equal(c.NM.waldo.waldoX,933);assert.equal(c.NM.waldo.waldoDir,-1);assert.equal(c.NM.waldo.waldoT,1.2);
+  assert.deepEqual(plain(c.NM.waldo.mow.cells),Array.from({length:24},(_,i)=>i<7?2:i===7?1:0));assert.equal(c.NM.waldo.used.grill,true);
+  assert.equal(c.S.meta._v733smokePaid,true);assert.deepEqual(plain(c.S.meta._v733docs),['sat-ground-station']);
+  c.NM.waldo.mow.cells.fill(2);c.NM.waldo.mow.done=true;c.NM.waldo.used.mow=true;c.S.meta._v733q1=true;c.S.meta.orbital=true;
+  c.NM.waldo.repair={part:'brakes',marker:.47,dir:-1,rounds:2,hits:1};c.S.budget=60;
+  for(let i=0;i<105;i++)api.frame(.05);assert.equal(api.checkpointStatus().state.nightMode.waldo.repair.marker,.47,'frame autosave must include Waldo without simulating its clock');
+  c.NM.drive={to:'home',t:300,dur:1500};assert.equal(api.saveCheckpoint(),true);
+  c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);
+  assert.deepEqual(plain(c.NM.drive),{to:'home',t:300,dur:1500});assert.deepEqual(plain(c.NM.waldo.repair),{part:'brakes',marker:.47,dir:-1,rounds:2,hits:1});
+  assert.equal(c.NM.waldo.used.mow,true);assert.equal(c.S.meta._v733q1,true);assert.equal(c.S.budget,60);
+  for(const [key,value] of otherSlots)assert.equal(data.get(key),value,'Waldo recovery must not alter '+key);
+});
+test("malformed Waldo checkpoints fail closed without replacing live state or saved bytes",()=>{
+  const {c,api,data,startWaldo}=fixture();startWaldo();c.NM.waldo.mow={cells:new Array(24).fill(0),done:false};assert.equal(api.saveCheckpoint(),true);
+  const valid=data.get(api.CHECKPOINT_KEY),live=c.S,otherSlots=new Map(data),cases=[
+    ['missing property',n=>{delete n.waldo;}],['property array',n=>{n.waldo=[];}],['used array',n=>{n.waldo.used=[];}],
+    ['non-boolean use',n=>{n.waldo.used.grill='yes';}],['unknown use',n=>{n.waldo.used.unknown=true;}],
+    ['invalid position',n=>{n.waldo.waldoX=null;}],['invalid direction',n=>{n.waldo.waldoDir=0;}],['invalid wander timer',n=>{n.waldo.waldoT=-1;}],
+    ['short lawn',n=>{n.waldo.mow.cells.pop();}],['invalid lawn cell',n=>{n.waldo.mow.cells[0]=3;}],['invalid mow completion',n=>{n.waldo.mow.done='yes';}],
+    ['invalid mow sound time',n=>{n.waldo.mow.cutSfx=null;}],['repair array',n=>{n.waldo.repair=[];}],['unknown repair part',n=>{n.waldo.repair={part:'warp',marker:.5,dir:1,rounds:3,hits:0};}],
+    ['invalid repair marker',n=>{n.waldo.repair={part:'brakes',marker:2,dir:1,rounds:3,hits:0};}],['invalid repair direction',n=>{n.waldo.repair={part:'brakes',marker:.5,dir:0,rounds:3,hits:0};}],
+    ['invalid repair rounds',n=>{n.waldo.repair={part:'brakes',marker:.5,dir:1,rounds:4,hits:0};}],['excess repair hits',n=>{n.waldo.repair={part:'brakes',marker:.5,dir:1,rounds:3,hits:4};}]
+  ];
+  for(const [name,mutate] of cases){
+    const record=JSON.parse(valid);mutate(record.state.nightMode);const raw=JSON.stringify(record);data.set(api.CHECKPOINT_KEY,raw);
+    assert.equal(api.checkpointStatus().status,'invalid',name);assert.equal(api.resumeCheckpoint(),false,name);
+    assert.equal(c.S,live,name+' must not replace live state');assert.equal(data.get(api.CHECKPOINT_KEY),raw,name+' must retain the original bytes');
+    for(const [key,value] of otherSlots)if(key!==api.CHECKPOINT_KEY)assert.equal(data.get(key),value,name+' must not alter '+key);
+  }
 });
 test('corrupt, future, malformed and foreign saves never mutate live state or other slots',()=>{
   const {c,api,data,start}=fixture();start();api.saveCheckpoint();const valid=data.get(api.CHECKPOINT_KEY),live=c.S;

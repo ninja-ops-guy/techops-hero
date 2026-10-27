@@ -36,19 +36,32 @@
       Array.isArray(combat.flightHits)&&combat.flightHits.every(id=>count(id,1));
   }
   const districts=['downtown','longwharf','industrial','wooster','airport','suburbs','home'];
+  const checkpointEligible=n=>!!(active(n)||n&&typeof n==='object'&&n.district==='waldo'&&!n._v736&&root.__productionDesiredMode!=='goodboys');
+  function validWaldoState(w){
+    if(!object(w)||!object(w.used)||Object.entries(w.used).some(([id,used])=>!['mow','grill','porch','dish','k734'].includes(id)||used!==true))return false;
+    if(!finite(w.waldoX,700,1050)||![-1,1].includes(w.waldoDir)||!finite(w.waldoT,0,1000000000))return false;
+    if(w.mow!==null&&(!object(w.mow)||!Array.isArray(w.mow.cells)||w.mow.cells.length!==24||
+      w.mow.cells.some(cell=>!count(cell,0,2))||typeof w.mow.done!=='boolean'||
+      w.mow.cutSfx!==undefined&&!finite(w.mow.cutSfx,0,1000000000)))return false;
+    if(w.repair!==null&&(!object(w.repair)||!['engine','tires','brakes','battery','body'].includes(w.repair.part)||
+      !finite(w.repair.marker,0,1)||![-1,1].includes(w.repair.dir)||!count(w.repair.rounds,1,3)||
+      !count(w.repair.hits,0,3-w.repair.rounds)))return false;
+    return true;
+  }
   function validCheckpoint(s){
     const n=s&&s.nightMode;
-    if(!standalone(s)||!n||n._v736||n._sector04||n._nightSettled||!districts.includes(n.district)||!finite(n.street,1,n.district==='home'?1:2)||!Number.isInteger(n.street))return false;
+    if(!standalone(s)||!n||n._v736||n._sector04||n._nightSettled||![...districts,'waldo'].includes(n.district)||!finite(n.street,1,['home','waldo'].includes(n.district)?1:2)||!Number.isInteger(n.street))return false;
     if(!finite(s.day,1,100000)||!finite(s.clock,1080,10000000)||![.7,1,1.3].includes(s.diff)||!Array.isArray(s.map)||!s.map.length||s.gameOver||s.inBattle)return false;
     if(!finite(n.x,-100,1900)||!finite(n.y,-2000,900)||!finite(n.w,1,200)||!finite(n.h,1,200)||!finite(n.hp,.001,10000)||!finite(n.cash,0,100000000)||!Number.isInteger(n.kills)||n.kills<0)return false;
     if(!finite(n.vx,-1000,1000)||!finite(n.vy,-1000,1000)||![-1,1].includes(n.face)||!finite(n.cam,-100,1900))return false;
-    if(!n.done||typeof n.done!=='object'||Array.isArray(n.done)||Object.entries(n.done).some(([id,done])=>!districts.includes(id)||done!==true))return false;
+    if(!n.done||typeof n.done!=='object'||Array.isArray(n.done)||Object.entries(n.done).some(([id,done])=>![...districts,'waldoSocial'].includes(id)||done!==true))return false;
+    if((n.district==='waldo'||n.waldo!==undefined)&&!validWaldoState(n.waldo))return false;
     if(!Array.isArray(n.platforms)||n.platforms.length>100||n.platforms.some(p=>!p||!finite(p.x,-100,1900)||!finite(p.y,-2000,900)||!finite(p.w,1,1900)||!finite(p.h,1,200)))return false;
     if(!Array.isArray(n.enemies)||n.enemies.length>100||n.enemies.some(e=>!e||!finite(e.x,-300,2100)||!finite(e.y,-2000,900)||!finite(e.w,1,200)||!finite(e.h,1,200)||!finite(e.hp,-100000,100000)||!finite(e.maxHp,1,100000)||e.hp>e.maxHp||typeof e.alive!=='boolean'||e.alive!==(e.hp>0)||!finite(e.dmg,0,10000)||!finite(e.spd,0,100)||!Array.isArray(e.cash)||e.cash.length!==2||!e.cash.every(v=>finite(v,0,100000))))return false;
     if(n._nightCombat!==undefined&&!validCombatState(n._nightCombat))return false;
     if(n.enemies.some(e=>e._nightCombat!==undefined&&!validEnemyCombat(e._nightCombat)))return false;
     if(n._nightLifecycle&&!finite(n._nightLifecycle.seconds,0,MINUTE_SECONDS))return false;
-    if(n.drive&&(!districts.includes(n.drive.to)||!finite(n.drive.t,0,10000)||!finite(n.drive.dur,1,10000)||n.drive.t>n.drive.dur))return false;
+    if(n.drive&&(![...districts,'waldo'].includes(n.drive.to)||!finite(n.drive.t,0,10000)||!finite(n.drive.dur,1,10000)||n.drive.t>n.drive.dur))return false;
     return ['certs','inv','journal','ach','books','lab','staff','infra'].every(key=>Array.isArray(s[key]))&&['stats','soft','rep'].every(key=>s[key]&&typeof s[key]==='object');
   }
   function checkpointStatus(){
@@ -97,7 +110,7 @@
     root.__nightCheckpointResumed={savedAt:record.savedAt,district:n.district,street:n.street};return true;
   }
   function checkpointFrame(dt){
-    const s=state(),n=world();if(!standalone(s)||!active(n)||n._sector04||blocked())return;
+    const s=state(),n=world();if(!standalone(s)||!checkpointEligible(n)||n._sector04||blocked())return;
     checkpointAge+=Math.min(.1,Math.max(0,Number(dt)||0));
     const mark=[n.district,n.street,n.cash,n.kills,Object.keys(n.done||{}).join(','),n.drive&&n.drive.to||''].join('|');
     if(checkpointAge>=5||mark!==checkpointMark){saveCheckpoint(s);checkpointAge=0;checkpointMark=mark;}
@@ -342,7 +355,7 @@
     const s=state(),n=world();
     if(transition&&(transition.state!==s||transition.night!==n))transition.finish();
     if(transition&&transition.renderer)syncTransitionControls(transition);
-    if(!s||!active(n)){if(ui)ui.host.hidden=true;if(s&&s.meta&&s.meta.nightVisit&&visible('eod')){if(root.draw)root.draw();return true;}return false;}
+    if(!s||!active(n)){if(standalone(s)&&checkpointEligible(n))checkpointFrame(dt);if(ui)ui.host.hidden=true;if(s&&s.meta&&s.meta.nightVisit&&visible('eod')){if(root.draw)root.draw();return true;}return false;}
     if(observed!==n){if(!n._nightLifecycle)onEntered(s,n);observed=n;}
     // Repair only a flag with no visible modal/claim before deciding to pause.
     // The older dispatch paused before the guard could perform this repair.
@@ -374,8 +387,8 @@
     };
     const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
     if(root.document)root.document.addEventListener('keydown',e=>{if(!active(world()))return;if(transition&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(root.v725)root.v725.skip();return;}if(blocked())return;if(e.key.toLowerCase()==='c'){e.preventDefault();e.stopImmediatePropagation();openCampaign();}else if(atHome()&&e.key.toLowerCase()==='e'){e.preventDefault();e.stopImmediatePropagation();openHome();}},true);
-    if(root.addEventListener)root.addEventListener('pagehide',()=>{if(standalone(state())&&active(world()))saveCheckpoint();});
-    if(root.document)root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden&&standalone(state())&&active(world()))saveCheckpoint();});
+    if(root.addEventListener)root.addEventListener('pagehide',()=>{if(standalone(state())&&checkpointEligible(world()))saveCheckpoint();});
+    if(root.document)root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden&&standalone(state())&&checkpointEligible(world()))saveCheckpoint();});
     registerScenes();ensureUI();
   }
   root.TechOpsNightRuntime={VERSION:3,MINUTE_SECONDS,HOME_X,CHECKPOINT_KEY,CHECKPOINT_VERSION,checkpointStatus,saveCheckpoint,resumeCheckpoint,saveAndReturn,active,state,world,beforeEnter,onEntered,advance,clockLabel,tick,frame,blocked,atHome,openHome,sleep,openCampaign,resumeDay,restoreDayShell,endVisit,drawHome,registerScenes,install,health:()=>({active:active(world()),transitioning:!!transition,clock:state()&&state().clock,returnDay:state()&&state().meta&&state().meta.nightVisit&&state().meta.nightVisit.day,checkpointError})};
