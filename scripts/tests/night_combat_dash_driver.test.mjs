@@ -52,7 +52,7 @@ function fixture({latency=0,punchDelay=0,omitFirstTap=false,stagingDelay=0}={}){
  return {r,calls,snapshots,run:()=>vm.runInContext('(async()=>{'+setup+driver+'})()',context)};
 }
 
-for(const latency of [0,20,60,80])test(`offline driver accepts production grab under ${latency} ms modeled command latency`,async()=>{
+for(const latency of [0,20,60,80,100])test(`offline driver accepts production grab under ${latency} ms modeled command latency`,async()=>{
  const f=fixture({latency});
  try{await f.run();}catch(error){console.log('MODEL FAILURE '+JSON.stringify({latency,punch:f.snapshots[0],events:f.r.NM._nightCombat.events}));throw error;}
  const c=f.r.NM._nightCombat;

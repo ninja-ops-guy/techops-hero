@@ -99,7 +99,10 @@ for(const [name,type,touch] of profiles){
   await page.evaluate(()=>{
    const c=NM._nightCombat;
    if(!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20))throw Error('Dash grab fixture missed the live dash window');
-   NM.enemies[0].x=NM.x+48;
+   // Use the world-edge fixture so continued dash movement cannot carry Mike
+   // past the target before a delayed trusted punch arrives. The 340 ms
+   // production window, real movement and trusted input remain unchanged.
+   NM.x=1720;NM.enemies[0].x=NM.x+48;
   });
   await page.keyboard.press('KeyE');
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));
