@@ -12,7 +12,8 @@
   function npcIdx(n) {
     if (!n) return 1;
     const nm = (n.name || "").toLowerCase();
-    if (["mike", "nick", "amit", "brandon", "daniel"].some(k => nm.includes(k))) return 0; // IT crew wears the vest
+    const crew = {mike:0,nick:0,amit:1,brandon:6,daniel:7};
+    if (Object.prototype.hasOwnProperty.call(crew,nm)) return crew[nm];
     if (NPC_DEPT_IDX[n.dept] !== undefined) return NPC_DEPT_IDX[n.dept];
     let h = 0; for (const ch of nm) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return 1 + (h % 7);

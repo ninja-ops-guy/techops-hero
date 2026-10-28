@@ -39,7 +39,7 @@
     open_network: { command: "REVOKE ROOT", achievement: "NO SINGLE POINT OF FAILURE", consequence: "distributed_authority" }
   });
   var CANON_LINES = Object.freeze({
-    workstationHeadline: "ENGINEERING THE HUMAN CONNECTION",
+    workstationHeadline: "PEOPLE BEHIND THE FLIGHT",
     feliciaProfile: "FELICIA - SECURITY RESEARCH / SYSTEMS INTEGRATIONS",
     sector04Terminal: "YOU ARE FIXING THE SYMPTOMS.",
     mikeReply: "Then show me the problem.",

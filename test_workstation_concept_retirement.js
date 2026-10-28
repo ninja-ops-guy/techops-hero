@@ -50,7 +50,7 @@ const context = {
   dlg(name) {
     // Simulate the legacy Day 1 visual wrapper mounting the obsolete board
     // immediately before the actual dialogue UI is returned.
-    if (/WORKSTATION|COMPANY|ENGINEERING THE HUMAN CONNECTION|09:00 \/\/ DAY SHIFT/i.test(String(name || ""))) {
+    if (/WORKSTATION|COMPANY|PEOPLE BEHIND THE FLIGHT|09:00 \/\/ DAY SHIFT/i.test(String(name || ""))) {
       currentOverlay = overlay("act1-reference a1-from-world a1-first_person a1-company_video");
       context.__techopsAct1ReferenceScene = "workstation";
     }

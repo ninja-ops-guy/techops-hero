@@ -26,6 +26,118 @@
 
   function filename(slot) { return slot + ".png"; }
   function url(slot) { return BASE + filename(slot); }
+  // ---- authored scene coordinates ---------------------------------------
+  // Every staged scene carries hand-authored coordinates against its known
+  // background art (768x432 px boards): the foreground floor contact line,
+  // the actor's standing spot, and each prop's support surface. Sprite files
+  // keep transparent padding, so anchoring uses the measured alpha bbox
+  // (feetY/cx/bbox fractions below), never the raw image edge.
+  var SCENE_LAYOUT = {
+    shipping: {
+      floorY: 400 / 432, // foreground concrete, just above the letterbox bar
+      // The clerk stands in front of their own desk, on the open floor -
+      // clear of the forklift (image x 330-560) and the crate stack (x 500-640).
+      actor: { x: 150 / 768, feetY: 400 / 432, heightPx: 178 },
+      // Story band kept in frame under horizontal cover-crop: the desk, the
+      // standing clerk and the printer. The truck/fence backdrop may crop.
+      band: [100 / 768, 430 / 768],
+      propAnchors: {
+        // Label printer sits on the desk's front edge beside the monitor,
+        // occluding the monitor base the way a real desk object would.
+        "shipping.label_printer": { x: 210 / 768, feetY: 319 / 432, heightPx: 46 },
+        "shipping.printed_label_success": { x: 210 / 768, feetY: 319 / 432, heightPx: 46 }
+      }
+    },
+    plating: {
+      floorY: 385 / 432, // wet floor in front of the tanks
+      // The operator holds the near side of the line, left of the baked-in
+      // board worker (image x 640-710) and the robot arms (x 230-560).
+      actor: { x: 260 / 768, feetY: 385 / 432, heightPx: 168 },
+      band: [80 / 768, 540 / 768],
+      propAnchors: {
+        "plating.workstation_cracked": { x: 130 / 768, feetY: 372 / 432, heightPx: 84 },
+        "plating.line_stopped_display": { x: 400 / 768, feetY: 372 / 432, heightPx: 96 }
+      }
+    }
+  };
+  // Measured alpha-bbox insets per sprite asset (PIL, 2026-09-29): fraction of
+  // the raw image that the visible figure actually occupies. Guards the
+  // authored coordinates against sprite-file padding.
+  var SPRITE_ANCHORS = {
+    "shipping.clerk.idle": { imgW: 256, imgH: 512, feetY: 498 / 512, cx: 0.5, bboxW: 142 / 256, bboxH: 385 / 512 },
+    "shipping.label_printer": { imgW: 192, imgH: 192, feetY: 178 / 192, cx: 0.5, bboxW: 78 / 192, bboxH: 91 / 192 },
+    "shipping.printed_label_success": { imgW: 256, imgH: 192, feetY: 178 / 192, cx: 0.5, bboxW: 105 / 256, bboxH: 109 / 192 },
+    "plating.operator.idle": { imgW: 192, imgH: 384, feetY: 370 / 384, cx: 0.5, bboxW: 60 / 192, bboxH: 152 / 384 },
+    "plating.workstation_cracked": { imgW: 256, imgH: 224, feetY: 210 / 224, cx: 0.5, bboxW: 140 / 256, bboxH: 143 / 224 },
+    "plating.line_stopped_display": { imgW: 384, imgH: 256, feetY: 242 / 256, cx: 0.5, bboxW: 216 / 384, bboxH: 151 / 256 }
+  };
+  var BG_ASPECT = { w: 768, h: 432 }; // authored boards share one size
+  var stagePending = null, stageRO = null;
+  // Cover-crop math shared by every anchor: scale to the larger dimension,
+  // slide the visible window with the authored vertical bias. The bg element
+  // carries inset:-2%, so convert results into host space for the floor var.
+  function stageMetrics(bg, host, layout) {
+    var rect = bg.getBoundingClientRect(), hrect = host.getBoundingClientRect();
+    if (!rect.height || !hrect.height) return null;
+    var scale = Math.max(rect.width / BG_ASPECT.w, rect.height / BG_ASPECT.h);
+    var dispW = BG_ASPECT.w * scale, dispH = BG_ASPECT.h * scale;
+    // Horizontal cover-crop follows the authored story band (desk, actor,
+    // props) instead of blindly centering, so narrow stage boxes keep the
+    // staged figures visible while backdrop edges crop.
+    var cropX = Math.max(0, dispW - rect.width);
+    var offX;
+    if (!cropX || !layout.band) offX = (rect.width - dispW) * 0.5;
+    else {
+      var winW = rect.width / scale; // visible art width in board pixels
+      var bandC = (layout.band[0] + layout.band[1]) * 0.5 * BG_ASPECT.w;
+      var startX = Math.max(0, Math.min(BG_ASPECT.w - winW, bandC - winW * 0.5));
+      offX = -startX * scale;
+    }
+    var crop = Math.max(0, dispH - rect.height);
+    var floorPx = layout.floorY * BG_ASPECT.h;
+    var target = rect.height * 0.90; // keep the authored floor just above the bottom
+    var b = crop > 0 ? Math.max(0, Math.min(1, (floorPx * scale - target) / crop)) : 0.5;
+    var offY = -crop * b;
+    return { rect: rect, hostRect: hrect, scale: scale, dispW: dispW, dispH: dispH, offX: offX, offY: offY, bias: b, cropX: cropX, floorBottomPct: (1 - (floorPx * scale + offY - (hrect.top - rect.top)) / hrect.height) * 100 };
+  }
+  function placeAnchored(bg, m, layout) {
+    var kids = bg.querySelectorAll(".a1-anchored");
+    for (var i = 0; i < kids.length; i++) {
+      var kid = kids[i], slot = kid.getAttribute("data-slot");
+      var sp = SPRITE_ANCHORS[slot];
+      var anchor = kid.className.indexOf("a1-actor") >= 0 ? layout.actor : (layout.propAnchors && layout.propAnchors[slot]);
+      if (!sp || !anchor) continue;
+      // Sprite pixel density follows the background's displayed scale, so
+      // figures keep a constant size relative to the art at any viewport.
+      var imgH = (anchor.heightPx * m.scale) / sp.bboxH;
+      var imgW = imgH * (sp.imgW / sp.imgH);
+      var feetBgY = anchor.feetY * m.dispH + m.offY;
+      var centerBgX = anchor.x * m.dispW + m.offX;
+      kid.style.left = (centerBgX - sp.cx * imgW).toFixed(1) + "px";
+      kid.style.top = (feetBgY - sp.feetY * imgH).toFixed(1) + "px";
+      kid.style.width = imgW.toFixed(1) + "px";
+      kid.style.height = imgH.toFixed(1) + "px";
+    }
+  }
+  function applyStage() {
+    var p = stagePending; if (!p || !p.el.isConnected) return;
+    var m = stageMetrics(p.bg, p.el, p.layout);
+    if (!m) return;
+    var posX = m.cropX > 0 ? (m.offX / -m.cropX * 100).toFixed(1) + "%" : "center";
+    p.bg.style.backgroundPosition = posX + " " + (m.bias * 100).toFixed(1) + "%";
+    var bottomPct = m.floorBottomPct;
+    if (!isFinite(bottomPct)) bottomPct = 18;
+    p.el.style.setProperty("--a1-floor-bottom", Math.max(2, Math.min(60, bottomPct)).toFixed(2) + "%");
+    placeAnchored(p.bg, m, p.layout);
+  }
+  function bindStage(el, bg, layout) {
+    stagePending = { el: el, bg: bg, layout: layout };
+    applyStage();
+    if (typeof root.ResizeObserver === "function") {
+      if (!stageRO) stageRO = new root.ResizeObserver(function () { applyStage(); });
+      stageRO.observe(el);
+    }
+  }
   function contextId() { var c = root && root.__techopsCampaignNativeAct1Assets; return c && c.id ? c.id : null; }
   function canDom() { return !!(root && root.document && root.document.body); }
   function reducedMotion() { try { return !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { return false; } }
@@ -89,13 +201,15 @@
   }
   function sceneForDialog(name) {
     name = String(name || "").toUpperCase();
+    if(name.indexOf("STANDUP SCENE //")===0)return null;
     var ctx = contextId();
-    if (ctx && SCENES[ctx]) return ctx;
+    // Stored asset context belongs to casebook continuations, not unrelated NPCs.
+    if (ctx && SCENES[ctx] && /CASEBOOK|RECORDED EVENTS|TICKET HISTORY|FOLLOW.UP/.test(name)) return ctx;
     if (name.indexOf("SHIPPING") >= 0) return "shipping";
     if (name.indexOf("PLATING") >= 0) return "plating";
     if (name.indexOf("IMPOSSIBLE ACCESS") >= 0 || name.indexOf("SECURITY OPS") >= 0) return "access";
     if (name.indexOf("STANDUP") >= 0 || name.indexOf("OWNERSHIP") >= 0) return "standup";
-    if (name.indexOf("WORKSTATION") >= 0 || name.indexOf("COMPANY") >= 0 || name.indexOf("ENGINEERING THE HUMAN CONNECTION") >= 0 || name.indexOf("09:00 // DAY SHIFT") >= 0) return "workstation";
+    if (name.indexOf("WORKSTATION") >= 0 || name.indexOf("COMPANY") >= 0 || name.indexOf("PEOPLE BEHIND THE FLIGHT") >= 0 || name.indexOf("09:00 // DAY SHIFT") >= 0) return "workstation";
     return null;
   }
 
@@ -135,7 +249,7 @@
       p.statusText = !p.board.available ? "QUEUE RECORD UNAVAILABLE" : p.board.confirmed ? "DAY 1 OWNERSHIP CONFIRMED" : "CONFIRM ONE OWNER FOR EACH TICKET";
     } else if (sceneId === "workstation") {
       var n = String(dialogName || "").toUpperCase();
-      var video = n.indexOf("ENGINEERING THE HUMAN CONNECTION") >= 0 || n.indexOf("COMPANY // FELICIA") >= 0;
+      var video = n.indexOf("PEOPLE BEHIND THE FLIGHT") >= 0 || n.indexOf("COMPANY // FELICIA") >= 0;
       p.variant = flags.day_work_unlocked ? "clocked_in" : (video ? "company_video" : "pre_shift");
       p.motion = ["screen_scan", "camera_push"];
       if (video) p.motion.push("orpheus_glitch");
@@ -171,19 +285,20 @@
     if (!canDom() || root.document.getElementById("act1-reference-style")) return;
     var s = root.document.createElement("style"); s.id = "act1-reference-style";
     s.textContent = [
-      ".act1-reference{position:fixed;inset:0;z-index:13;overflow:hidden;pointer-events:none;background:#071017;font-family:'Press Start 2P',monospace;transform-origin:var(--a1-origin-x,50%) var(--a1-origin-y,50%);animation:a1-enter .24s cubic-bezier(.2,.8,.2,1) both}",
+      ".act1-reference{--a1-floor-bottom:18%;position:fixed;inset:0;z-index:13;overflow:hidden;pointer-events:none;background:#071017;font-family:'Press Start 2P',monospace;transform-origin:var(--a1-origin-x,50%) var(--a1-origin-y,50%);animation:a1-enter .24s cubic-bezier(.2,.8,.2,1) both}",
       ".act1-reference.a1-from-world{clip-path:circle(150% at var(--a1-origin-x,50%) var(--a1-origin-y,50%));animation:a1-world-enter .24s cubic-bezier(.2,.8,.2,1) both}",
       ".act1-reference.a1-leave{animation:a1-world-leave .18s ease-in both}",
       ".act1-reference .a1-world-anchor{position:absolute;left:var(--a1-origin-x,50%);top:var(--a1-origin-y,50%);width:10px;height:10px;margin:-5px;border:1px solid rgba(126,255,205,.55);border-radius:50%;box-shadow:0 0 18px rgba(126,255,205,.48);animation:a1-anchor .7s ease-out both}",
       ".act1-reference .a1-bg{position:absolute;inset:-2%;background-size:cover;background-position:center;image-rendering:auto;filter:saturate(.92) contrast(1.06);animation:a1-breathe 8s ease-in-out infinite alternate}",
       ".act1-reference .a1-grade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,10,15,.74),rgba(5,10,15,.12) 45%,rgba(5,10,15,.55)),radial-gradient(circle at 50% 42%,transparent 20%,rgba(0,0,0,.6) 100%)}",
       ".act1-reference .a1-label{position:absolute;left:18px;top:max(18px,env(safe-area-inset-top));font-size:9px;color:#d7e6ea;letter-spacing:1px;text-shadow:0 2px 0 #000}",
-      ".act1-reference .a1-status{position:absolute;left:8%;right:8%;bottom:10%;padding:9px 12px;border:1px solid rgba(215,230,234,.16);background:rgba(4,10,14,.68);color:#d7e6ea;font-size:8px;line-height:1.5;text-align:center;text-shadow:0 2px 0 #000}",
+      ".act1-reference .a1-status{position:absolute;left:8%;right:8%;bottom:calc(var(--a1-floor-bottom,18%) + 12px);padding:9px 12px;border:1px solid rgba(215,230,234,.16);background:rgba(4,10,14,.68);color:#d7e6ea;font-size:8px;line-height:1.5;text-align:center;text-shadow:0 2px 0 #000}",
       ".act1-reference.a1-verified .a1-status,.act1-reference.a1-restored .a1-status,.act1-reference.a1-documented .a1-status,.act1-reference.a1-owned .a1-status{color:#7effcd;border-color:rgba(126,255,205,.32)}",
-      ".act1-reference .a1-actor{position:absolute;right:10%;bottom:18%;height:52%;max-width:34%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 16px 10px rgba(0,0,0,.55));animation:a1-actor-idle 2.8s ease-in-out infinite alternate}",
-      ".act1-reference .a1-props{position:absolute;left:7%;right:7%;bottom:18%;height:30%;display:flex;gap:18px;align-items:flex-end;justify-content:center}",
+      ".act1-reference .a1-anchored{position:absolute;z-index:1;image-rendering:pixelated;filter:drop-shadow(0 10px 8px rgba(0,0,0,.5))}",
+      ".act1-reference .a1-actor{position:absolute;right:10%;bottom:var(--a1-floor-bottom,18%);height:52%;max-width:34%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 16px 10px rgba(0,0,0,.55));animation:a1-actor-idle 2.8s ease-in-out infinite alternate}",
+      ".act1-reference .a1-props{position:absolute;left:7%;right:7%;bottom:var(--a1-floor-bottom,18%);height:30%;display:flex;gap:18px;align-items:flex-end;justify-content:center}",
       ".act1-reference .a1-prop{max-width:28%;max-height:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 9px 8px rgba(0,0,0,.45))}",
-      ".act1-reference.a1-side_view .a1-actor{right:13%;height:48%}.act1-reference.a1-side_view .a1-props{justify-content:flex-start;left:14%;right:42%;bottom:20%}",
+      ".act1-reference.a1-side_view .a1-actor{right:13%;height:48%}.act1-reference.a1-side_view .a1-props{justify-content:flex-start;left:14%;right:42%;bottom:calc(var(--a1-floor-bottom,18%) + 2%)}",
       ".act1-reference.a1-first_person .a1-bg{filter:brightness(.58) saturate(.8)}.act1-reference.a1-first_person .a1-props{left:15%;right:15%;bottom:24%;height:46%;align-items:center}.act1-reference.a1-first_person .a1-prop{max-width:44%;max-height:100%;box-shadow:0 0 0 2px rgba(126,255,205,.16),0 18px 40px rgba(0,0,0,.45)}",
       ".act1-reference.a1-board .a1-bg{background-size:contain;background-repeat:no-repeat;background-color:#10171b}.act1-reference.a1-board .a1-props{bottom:14%;height:24%}",
       ".act1-reference.a1-board .a1-status{display:none}.act1-reference .a1-live-board{position:absolute;inset:58px max(14px,env(safe-area-inset-right)) 14px max(14px,env(safe-area-inset-left));max-width:780px;margin:0 auto;padding:16px;overflow:auto;overscroll-behavior:contain;pointer-events:auto;border:1px solid #61ccea;border-radius:12px;background:linear-gradient(145deg,#0b2233,#07121d);box-shadow:inset 0 0 0 3px #0b344b,0 0 24px #26bfe519;font:13px/1.5 'Courier New',monospace;color:#e3eef5;scrollbar-color:#6091a8 #0b1a27}",
@@ -197,9 +312,9 @@
       ".act1-reference.a1-investigation .a1-bg{filter:brightness(.42) contrast(1.1)}.act1-reference.a1-investigation.a1-documented:after{content:'02:13  //  SECTOR04-EAST';position:absolute;left:8%;right:8%;top:22%;padding:18px;border:1px solid rgba(126,255,205,.32);background:rgba(5,16,20,.76);color:#7effcd;font-size:10px;line-height:1.7;text-align:center;text-shadow:0 0 9px rgba(126,255,205,.55)}",
       ".act1-reference .a1-motion{position:absolute;pointer-events:none}.act1-reference .a1-scan{inset:0;background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(126,255,205,.035) 6px 7px);animation:a1-scan 4s linear infinite}",
       ".act1-reference .a1-glitch{left:13%;right:13%;top:20%;height:2px;background:#8d5cff;box-shadow:0 0 15px rgba(141,92,255,.85);opacity:0;animation:a1-glitch 5.4s steps(1,end) infinite}",
-      ".act1-reference .a1-forklift{left:-24%;bottom:21%;width:18%;height:11%;border:3px solid rgba(213,178,75,.42);background:linear-gradient(90deg,rgba(65,52,19,.72),rgba(128,99,28,.62));box-shadow:28px -18px 0 -12px rgba(80,64,22,.7);animation:a1-forklift 10s linear infinite}",
-      ".act1-reference .a1-feed{left:18%;bottom:20%;width:62px;height:3px;background:#dfe8e7;box-shadow:0 5px 0 rgba(255,255,255,.3);transform-origin:left center;animation:a1-feed 2.6s ease-in-out infinite}",
-      ".act1-reference .a1-eject{left:23%;bottom:23%;width:72px;height:34px;background:rgba(245,248,244,.92);box-shadow:0 0 18px rgba(126,255,205,.35);animation:a1-eject 2.8s ease-in-out infinite}",
+      ".act1-reference .a1-forklift{left:-24%;bottom:calc(var(--a1-floor-bottom,18%) + 3%);width:18%;height:11%;border:3px solid rgba(213,178,75,.42);background:linear-gradient(90deg,rgba(65,52,19,.72),rgba(128,99,28,.62));box-shadow:28px -18px 0 -12px rgba(80,64,22,.7);animation:a1-forklift 10s linear infinite}",
+      ".act1-reference .a1-feed{left:18%;bottom:calc(var(--a1-floor-bottom,18%) + 2%);width:62px;height:3px;background:#dfe8e7;box-shadow:0 5px 0 rgba(255,255,255,.3);transform-origin:left center;animation:a1-feed 2.6s ease-in-out infinite}",
+      ".act1-reference .a1-eject{left:23%;bottom:calc(var(--a1-floor-bottom,18%) + 5%);width:72px;height:34px;background:rgba(245,248,244,.92);box-shadow:0 0 18px rgba(126,255,205,.35);animation:a1-eject 2.8s ease-in-out infinite}",
       ".act1-reference .a1-beacon{right:4%;top:18%;width:18px;height:18px;border-radius:50%;background:#ff593f;box-shadow:0 0 30px #ff593f;animation:a1-beacon 1.15s steps(2,end) infinite}",
       ".act1-reference .a1-machine{left:0;right:0;bottom:24%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,194,86,.45),transparent);animation:a1-machine 3.2s linear infinite}",
       ".act1-reference .a1-run{left:0;right:0;bottom:24%;height:4px;background:linear-gradient(90deg,transparent,rgba(126,255,205,.42),transparent);animation:a1-run 1.35s linear infinite}",
@@ -218,11 +333,14 @@
       "@keyframes a1-beacon{0%,45%{opacity:.25}50%,100%{opacity:1}}@keyframes a1-machine{from{transform:translateX(-30%)}to{transform:translateX(30%)}}@keyframes a1-run{from{transform:translateX(-40%)}to{transform:translateX(40%)}}",
       "@keyframes a1-audit{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(165px);opacity:.8}}@keyframes a1-lock{0%,100%{opacity:.35}50%{opacity:.8}}@keyframes a1-verify{0%,100%{opacity:.25;transform:scaleX(.5)}50%{opacity:.9;transform:scaleX(1)}}@keyframes a1-boardfocus{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}",
       "@media(prefers-reduced-motion:reduce){.act1-reference,.act1-reference *{animation:none!important;transition:none!important;clip-path:none!important}}",
-      "@media(max-width:600px){.act1-reference .a1-label{font-size:7px}.act1-reference .a1-status{font-size:6px;bottom:14%}.act1-reference .a1-actor{right:4%;height:40%;max-width:44%;bottom:25%}.act1-reference .a1-props{left:4%;right:4%;gap:8px;bottom:25%;height:24%}.act1-reference.a1-first_person .a1-props{left:6%;right:6%;height:36%}.act1-reference.a1-investigation:after{left:4%;right:4%;font-size:7px;padding:12px}.act1-reference .a1-forklift{bottom:28%}}"
+      "@media(max-width:600px){.act1-reference .a1-label{font-size:7px}.act1-reference .a1-status{font-size:6px}.act1-reference .a1-actor{right:4%;height:40%;max-width:44%;bottom:calc(var(--a1-floor-bottom,18%) + 7%)}.act1-reference .a1-props{left:4%;right:4%;gap:8px;bottom:calc(var(--a1-floor-bottom,18%) + 7%);height:24%}.act1-reference.a1-first_person .a1-props{left:6%;right:6%;height:36%}.act1-reference.a1-investigation:after{left:4%;right:4%;font-size:7px;padding:12px}.act1-reference .a1-forklift{bottom:calc(var(--a1-floor-bottom,18%) + 10%)}}"
     ].join("\n"); root.document.head.appendChild(s);
   }
 
   function image(slot, cls) { var im = root.document.createElement("img"); im.className = cls; im.src = url(slot); im.alt = ""; return im; }
+  // Staged sprites live inside the background element so they inherit its
+  // cover-crop window; bindStage() re-anchors them from authored coordinates.
+  function anchoredImage(slot, cls) { var im = image(slot, cls + " a1-anchored"); im.setAttribute("data-slot", slot); return im; }
   function appendStandupBoard(el, board) {
     var panel = root.document.createElement("section"); panel.className = "a1-live-board";
     panel.setAttribute("aria-label", "Day 1 ticket ownership"); panel.setAttribute("tabindex", "0");
@@ -266,7 +384,7 @@
     if (root.document.body.classList) root.document.body.classList.remove("act1-scene-open");
     root.__techopsAct1ReferenceScene = null;
     var snapshot = root.__techopsAct1WorldSnapshot || null;
-    restoreWorld(snapshot);
+    // Presentation never moves Mike; closing must not rewind a newer position.
     root.__techopsAct1WorldSnapshot = null;
     if (immediate || reducedMotion() || !root.setTimeout) removeNow(el);
     else { el.className += " a1-leave"; root.setTimeout(function () { removeNow(el); }, EXIT_MS); }
@@ -288,10 +406,22 @@
     el.className = "act1-reference a1-from-world a1-" + spec.mode + " a1-" + profile.variant;
     el.style.setProperty("--a1-origin-x", focus.x.toFixed(2) + "%");
     el.style.setProperty("--a1-origin-y", focus.y.toFixed(2) + "%");
-    if (spec.background) { var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg); }
+    if (spec.background) {
+      var bg = root.document.createElement("div"); bg.className = "a1-bg"; bg.style.backgroundImage = "url(" + JSON.stringify(url(spec.background)) + ")"; el.appendChild(bg);
+      var layout = SCENE_LAYOUT[sceneId];
+      if (layout) {
+        if (spec.actor) bg.appendChild(anchoredImage(spec.actor, "a1-actor"));
+        profile.props.forEach(function (slot) { bg.appendChild(anchoredImage(slot, "a1-prop")); });
+        bindStage(el, bg, layout);
+      }
+    }
     var grade = root.document.createElement("div"); grade.className = "a1-grade"; el.appendChild(grade);
-    if (spec.actor) el.appendChild(image(spec.actor, "a1-actor"));
-    if (profile.props.length) { var props = root.document.createElement("div"); props.className = "a1-props"; profile.props.forEach(function (slot) { props.appendChild(image(slot, "a1-prop")); }); el.appendChild(props); }
+    // Non-staged scenes keep the CSS-driven composition (first-person props,
+    // board badges); staged sprites were already anchored inside the bg above.
+    if (!layout) {
+      if (spec.actor) el.appendChild(image(spec.actor, "a1-actor"));
+      if (profile.props.length) { var props = root.document.createElement("div"); props.className = "a1-props"; profile.props.forEach(function (slot) { props.appendChild(image(slot, "a1-prop")); }); el.appendChild(props); }
+    }
     if (profile.board) appendStandupBoard(el, profile.board);
     addMotion(el, profile);
     if (!reducedMotion()) el.appendChild(motionNode("a1-world-anchor"));

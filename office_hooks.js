@@ -249,6 +249,61 @@ function coworkerLines(c) {
   if (s.meta.mktPts >= 10) base.push(`"Marketing keeps talking about you. They made a mood board. It's unsettling."`);
   return base;
 }
+const DAY_CREW_TOPICS = {
+ nick: {
+  greetings:["Nick turns one monitor toward you. ‘Tell me what the person needs to do. The error can wait one sentence.’","Nick closes a graph. ‘All right. What are we trying to keep running?’","‘Back already?’ Nick makes room beside the desk. ‘New information, or a second pair of eyes?’"],
+  topics:[
+   ['How do you triage a queue like this?', 'Start with the work that stopped. Then impact, then owner. A loud notification and a stopped line are not the same thing.', 'So the person’s blocked task comes first.', 'Exactly. If we cannot say what they need to do again, we do not have a verification plan.'],
+   ['What belongs in the handoff?', 'The last thing you actually observed, what you changed, and what still has not been tested. Leave the next person a starting point.', 'And if the workaround is holding?', 'Write that it is a workaround. Temporary service is useful. Calling it permanent makes tomorrow harder.'],
+   ['How is the plant surviving in here?', 'It gets water on a schedule. Nobody asks it to join a status meeting.', 'Could we put the print server on that schedule?', 'Only if you promise not to water it. I would have to put that in the incident report.']]
+ },
+ amit: {
+  greetings:["Amit leaves the production notes open. ‘Before a change, tell me what depends on this machine.’","‘One variable at a time,’ Amit says, looking up. ‘What did the evidence actually eliminate?’","Amit taps the saved notes. ‘We can continue from here. No need to retell the whole incident.’"],
+  topics:[
+   ['Where do I stop on a production-system repair?', 'At the boundary of the change we agreed. I can own a workstation dependency; that does not make a PLC interlock mine to bypass.', 'Bring the operator in before the change.', 'And controls engineering when it crosses their boundary. A running screen is not proof of a safe process.'],
+   ['What makes you reject a restart?', 'When it destroys the only evidence we have, interrupts a live process, or stands in for understanding the failure.', 'What would make one justified?', 'A supported recovery step, an agreed window, and a check afterward. “It usually works” is not the same thing.'],
+   ['Is that mug an actual code review?', 'It is the only review I can finish before the coffee gets cold.', 'No comments on the handle?', 'One. Do not merge the tea into the coffee. We have tried that release.']]
+ },
+ brandon: {
+  greetings:["Brandon rolls his chair back. ‘Show me the weird part. The part that does not fit the first explanation.’","‘I have a theory,’ Brandon says. ‘I would prefer a test before becoming attached to it.’","Brandon points at your notes. ‘Any result that surprised us since last time?’"],
+  topics:[
+   ['What would you test before swapping equipment?', 'Compare the failing path with a working one, changing one thing at a time. Otherwise the spare becomes a very expensive superstition.', 'And if the spare works?', 'Useful evidence. Put the original back under controlled conditions before declaring which part was responsible.'],
+   ['How do you avoid chasing the first theory?', 'Write down something that would prove it wrong. If no possible result changes your mind, you are defending it instead of testing it.', 'Give the other explanation a fair test.', 'Yes. A wrong theory discarded early is time saved, not a personal defeat.'],
+   ['Does every problem need a Pokémon comparison?', 'No. Just the ones that evolve after you think you have resolved them.', 'That is uncomfortably accurate.', 'Wait until the printer learns a new move. I am keeping a spare cable in my party.']]
+ },
+ daniel: {
+  greetings:["Daniel clears a space in the training notes. ‘What can we turn into something the next person can follow?’","‘Who needs backup?’ Daniel asks. ‘Teaching and doing are both work; we should plan for both.’","Daniel looks up. ‘How did the last conversation land? People remember whether we listened.’"],
+  topics:[
+   ['What should an intern own on an incident?', 'A bounded task with a named person checking it. Let them explain what they observed before you supply the answer.', 'Give them a useful task, not just a checklist.', 'And tell them when to stop and ask. Independence grows faster when the boundary is clear.'],
+   ['How do you recover a difficult conversation?', 'Say what you missed without making the user argue for it twice. Then agree a small next step you can actually deliver.', 'No invented repair deadline.', 'Right. You can promise an update. You cannot promise a diagnosis you have not made.'],
+   ['What makes a good teaching note?', 'Write the clue that changed your mind. The command is easy to copy; the reason for choosing it is what the next person needs.', 'Show the decision, not just the successful command.', 'Exactly. Include the dead end if it will stop them repeating it.']]
+ }
+};
+function dayCrewOptions(c, options) {
+  const profile=DAY_CREW_TOPICS[c.id];if(!profile)return null;
+  const s=S; s.meta.dayCrewTalk=s.meta.dayCrewTalk||{};
+  const key=s.day+':'+c.id, memory=s.meta.dayCrewTalk[key]||(s.meta.dayCrewTalk[key]={visits:0,heard:[]});
+  const title=`${c.face} ${c.name} — IT DEPT`, valid=()=>S===s&&s.inDialog;
+  profile.topics.forEach((topic,index)=>{
+    if(memory.heard.includes(index))return;
+    options.push({t:topic[0],f:()=>{
+      if(!valid())return;
+      dlg(title,`“${topic[1]}”`,[{t:topic[2],f:()=>{
+        if(!valid())return;if(!memory.heard.includes(index))memory.heard.push(index);save();
+        dlg(title,`“${topic[3]}”`,[{t:'Ask about something else',f:()=>{if(valid())coworkerTalk(c);}},{t:'Leave them to it',f:closeDlg}]);
+      }},{t:'Let me think about that',f:closeDlg}]);
+    }});
+  });
+  if(memory.heard.length===profile.topics.length)options.push({t:'Review a previous conversation',f:()=>{
+    dlg(title,'Which conversation would you like to revisit?',profile.topics.map(t=>({t:t[0],f:()=>dlg(title,`“${t[1]}”<br><br>“${t[3]}”`,[{t:'Back to the team',f:()=>coworkerTalk(c)},{t:'Leave them to it',f:closeDlg}])})).concat([{t:'Leave them to it',f:closeDlg}]));
+  }});
+  const greeting=profile.greetings[Math.min(memory.visits++,profile.greetings.length-1)];save();
+  let status='';
+  try{const state=window.TechOpsCampaign&&window.TechOpsCampaign.load(localStorage);if(c.id==='amit'&&state&&state.flags.standup_completed){const rec=state.investigations&&state.investigations.plating_workstation_down;status=rec&&rec.technicalCheckPassed?'Plating has a technical pass. We still need the operator’s real task.':'I own the Plating incident. We will coordinate any service change with the operator.';}}
+  catch(_){}
+  return greeting+(status?'<br><br>“'+status+'”':'')+(memory.heard.length===profile.topics.length?'<br><br><small>You have covered today’s topics. Earlier conversations remain available to review.</small>':'');
+}
+
 function coworkerTalk(c) {
   const s = S;
   const opts = [];
@@ -264,13 +319,9 @@ function coworkerTalk(c) {
       },
     });
   }
-  opts.push({ t: "💬 Chat", f: () => dlg(c.name, pick(coworkerLines(c)), [{ t: "Ha.", f: () => coworkerTalk(c) }, { t: "Back to work", f: closeDlg }]) });
-  opts.push({ t: "Leave", f: closeDlg });
-  const deskNote = c.id === "amit" ? `<br><small>Amit's mug says "</>". Of course it does.</small>` :
-    c.id === "brandon" ? `<br><small>Brandon has a Pokéball banner. He will mention it.</small>` :
-    c.id === "nick" ? `<br><small>Nick's plant is the only thing thriving in this room.</small>` :
-    `<br><small>Daniel runs the intern program. Allegedly it's "mentorship".</small>`;
-  dlg(`${c.face} ${c.name} — IT DEPT`, `Screens glow. Keyboards clack.${deskNote}`, opts);
+  const line=dayCrewOptions(c,opts);
+  opts.push({t:'Leave them to it',f:closeDlg});
+  dlg(`${c.face} ${c.name} — IT DEPT`,line||'“What do you need a hand with?”',opts);
 }
 
 // ---------- marketing: points → swag shop ----------

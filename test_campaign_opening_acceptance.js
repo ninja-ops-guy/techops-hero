@@ -97,7 +97,7 @@ assert.strictEqual(state().flags.day_work_unlocked, false);
 
 native.openWorkstationTab("COMPANY");
 choose("Open Felicia profile");
-choose("Play Engineering the Human Connection");
+choose("Play People Behind the Flight");
 choose("Finish video");
 assert.strictEqual(state().flags.felicia_video_watched, true);
 assert.strictEqual(state().flags.day_work_unlocked, false);

@@ -26,7 +26,7 @@
     try{var el=root.document.getElementById("act1-reference");if(el)el.remove();}catch(_){}
     try{
       var d=root.document.getElementById("dialogue"),name=root.document.getElementById("dlg-name");
-      if(d&&name&&/WORKSTATION|COMPANY|ENGINEERING THE HUMAN CONNECTION|SELECT SHIFT DIFFICULTY|CIO DISPATCH/i.test(name.textContent||""))d.classList.add("hidden");
+      if(d&&name&&/WORKSTATION|COMPANY|PEOPLE BEHIND THE FLIGHT|ENGINEERING THE HUMAN CONNECTION|SELECT SHIFT DIFFICULTY|CIO DISPATCH/i.test(name.textContent||""))d.classList.add("hidden");
     }catch(_){}
     root.__goodBoysDayPresentationSuppressed={at:Date.now(),phase:root.__goodBoysOpeningPhase||null,physical:!!root.__goodBoysPhysicalLaunchActive,passive:true};
     return true;
