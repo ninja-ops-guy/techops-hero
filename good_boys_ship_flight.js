@@ -8,7 +8,7 @@
   if(!root||!root.document)return;
   var PRIOR=root.TechOpsGoodBoysShipFlight;if(PRIOR&&Number(PRIOR.VERSION||0)>=6)return;
   try{if(PRIOR&&PRIOR.timer)root.clearInterval(PRIOR.timer);}catch(_){}
-  var VERSION=6,DURATION_MS=8200,active=false,boardingActive=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,timer=null;
+  var VERSION=6,DURATION_MS=8200,active=false,boardingActive=false,installed=false,origAdvance=null,raf=0,keys={},touch={x:0,boost:false},flight=null,atlasImage=null,atlasTimer=0,atlasRequest=0,timer=null;
   var ATLAS={
     src:"assets/good_boys/good_ship_arcade.atlas.png?v=20260903-good-ship-gameplay-assets-r2",width:768,height:620,
     frames:{
@@ -25,9 +25,9 @@
   function fr(name){return ATLAS.frames[name]||null;}
   function loadAtlas(){return new Promise(function(resolve){
     if(atlasImage&&atlasImage.complete&&atlasImage.naturalWidth){resolve(atlasImage);return;}
-    var img=new root.Image();atlasImage=img;var settled=false;
-    function done(ok){if(settled)return;settled=true;if(ok){trace("asset.ready",{w:img.naturalWidth,h:img.naturalHeight});state({assetReady:true,phase:"ready"});resolve(img);}else{trace("asset.error");state({assetReady:false,phase:"asset-error",error:"Good Ship atlas failed to decode"});resolve(null);}}
-    img.onload=function(){done(true);};img.onerror=function(){done(false);};img.src=ATLAS.src;root.setTimeout(function(){done(!!(img.complete&&img.naturalWidth));},3200);
+    var img=new root.Image(),request=++atlasRequest;atlasImage=img;var settled=false;
+    function done(ok){if(settled||request!==atlasRequest)return;settled=true;root.clearTimeout(atlasTimer);atlasTimer=0;if(ok){trace("asset.ready",{w:img.naturalWidth,h:img.naturalHeight});state({assetReady:true,phase:"ready"});resolve(img);}else{trace("asset.error");state({assetReady:false,phase:"asset-error",error:"Good Ship atlas failed to decode"});resolve(null);}}
+    img.onload=function(){done(true);};img.onerror=function(){done(false);};img.src=ATLAS.src;atlasTimer=root.setTimeout(function(){done(!!(img.complete&&img.naturalWidth));},3200);
   });}
   function drawFrame(ctx,name,dx,dy,dw,dh,alpha){var r=fr(name);if(!atlasImage||!atlasImage.naturalWidth||!r)return false;if(!dh)dh=dw*(r[3]/r[2]);ctx.save();ctx.imageSmoothingEnabled=false;if(alpha!=null)ctx.globalAlpha=alpha;ctx.drawImage(atlasImage,r[0],r[1],r[2],r[3],dx,dy,dw,dh);ctx.restore();return true;}
   function collide(a,b){return a.x-a.w/2<b.x+b.w/2&&a.x+a.w/2>b.x-b.w/2&&a.y-a.h/2<b.y+b.h/2&&a.y+a.h/2>b.y-b.h/2;}
@@ -39,19 +39,20 @@
     Array.prototype.forEach.call(host.querySelectorAll("button"),function(b){b.style.cssText="min-height:52px;border:1px solid #38bdf8;background:#07131f;color:#eef8ff;font:700 11px monospace;touch-action:none;border-radius:5px";});root.document.body.appendChild(host);return {host:host,canvas:cv,W:W,H:H,portrait:portrait};
   }
   function bind(host){function dir(v,e){if(e){e.preventDefault();e.stopPropagation();}touch.x=v;}host.querySelectorAll("[data-dir]").forEach(function(b){var v=Number(b.dataset.dir)||0;b.addEventListener("pointerdown",function(e){dir(v,e);},{passive:false});["pointerup","pointercancel","pointerleave","lostpointercapture"].forEach(function(n){b.addEventListener(n,function(e){if(touch.x===v)dir(0,e);},{passive:false});});});var boost=host.querySelector("[data-boost]");boost.addEventListener("pointerdown",function(e){e.preventDefault();touch.boost=true;},{passive:false});["pointerup","pointercancel","pointerleave","lostpointercapture"].forEach(function(n){boost.addEventListener(n,function(){touch.boost=false;});});}
-  function cleanup(host){try{if(raf)root.cancelAnimationFrame(raf);}catch(_){}raf=0;touch.x=0;touch.boost=false;try{if(host&&host.parentNode)host.remove();}catch(_){} }
+  function cleanup(host){try{if(raf)root.cancelAnimationFrame(raf);root.clearTimeout(atlasTimer);}catch(_){}raf=0;atlasTimer=0;atlasRequest++;touch.x=0;touch.boost=false;if(flight===host)flight=null;try{if(host&&host.parentNode)host.remove();}catch(_){} }
+  function cancelFlight(){if(!active&&!flight)return false;active=false;cleanup(flight);state({phase:"flight-cancelled",completed:false});trace("flight.cancelled");return true;}
   function launch(done){
-    if(active)return false;active=true;trace("flight.begin");state({phase:"loading",completed:false,assetReady:false,hull:3,hits:0,progress:0,distanceKm:6.8});var ui=make(),host=ui.host,cv=ui.canvas,W=ui.W,H=ui.H,portrait=ui.portrait;bind(host);
+    if(active)return false;active=true;trace("flight.begin");state({phase:"loading",completed:false,assetReady:false,hull:3,hits:0,progress:0,distanceKm:6.8});var ui=make(),host=ui.host,cv=ui.canvas,W=ui.W,H=ui.H,portrait=ui.portrait;flight=host;bind(host);
     loadAtlas().then(function(img){
-      if(!active)return;if(!img){var er=host.querySelector("[data-error]");if(er)er.style.display="block";active=false;state({phase:"asset-error",completed:false,assetReady:false});trace("flight.blocked.asset-error");if(typeof done==="function")done({completed:false,assetError:true});return;}
+      if(!active||flight!==host)return;if(!img){var er=host.querySelector("[data-error]");if(er)er.style.display="block";active=false;cleanup(host);state({phase:"asset-error",completed:false,assetReady:false});trace("flight.blocked.asset-error");if(typeof done==="function")done({completed:false,assetError:true});return;}
       var ctx=cv.getContext("2d"),dist=host.querySelector("[data-dist]"),hullText=host.querySelector("[data-hull]"),start=now(),last=start,spawnIndex=0,spawnPlan=[550,1250,1950,2650,3350,4050,4750,5450,6100,6800,7450];
       var ship={x:W*.5,y:H*(portrait?.82:.78),w:portrait?58:54,h:portrait?74:70,hull:3,hits:0,invuln:0},objects=[];
       function spawn(){var idx=(spawnIndex%5)+1,lane=(.12+(((spawnIndex*7)%11)/10)*.76)*W,scale=portrait?1:0.9;objects.push({key:"asteroid_"+idx,x:lane,y:-85,w:(42+idx*6)*scale,h:(40+idx*5)*scale,speed:(145+idx*17)*(portrait?1.15:1),dead:false});spawnIndex++;}
       function hit(o,t){if(o.dead||t<ship.invuln)return;o.dead=true;ship.hits++;ship.hull=Math.max(1,ship.hull-1);ship.invuln=t+700;trace("asteroid.hit",{hits:ship.hits,hull:ship.hull});hullText.textContent="HULL "+[0,1,2].map(function(i){return i<ship.hull?"●":"○";}).join(" ");}
       function background(progress){ctx.fillStyle="#01040a";ctx.fillRect(0,0,W,H);var r=fr("space_bg");if(r){var scale=Math.max(W/r[2],H/r[3]),dw=r[2]*scale,dh=r[3]*scale,drift=(progress*dh)%dh,x=(W-dw)/2;for(var y=-dh+drift;y<H;y+=dh)ctx.drawImage(atlasImage,r[0],r[1],r[2],r[3],x,y,dw,dh);}ctx.fillStyle="rgba(1,4,10,.24)";ctx.fillRect(0,0,W,H);}
-      function finish(){if(!active)return;active=false;cleanup(host);state({phase:"flight-complete",completed:true,assetReady:true,progress:1,distanceKm:0,hull:ship.hull,hits:ship.hits});trace("flight.arrived",{hull:ship.hull,hits:ship.hits});if(typeof done==="function")done({completed:true,hull:ship.hull,hits:ship.hits,asset:ATLAS.src});}
+      function finish(){if(!active||flight!==host)return;active=false;cleanup(host);state({phase:"flight-complete",completed:true,assetReady:true,progress:1,distanceKm:0,hull:ship.hull,hits:ship.hits});trace("flight.arrived",{hull:ship.hull,hits:ship.hits});if(typeof done==="function")done({completed:true,hull:ship.hull,hits:ship.hits,asset:ATLAS.src});}
       function loop(t){
-        if(!active)return;var dt=Math.min(.05,Math.max(.001,(t-last)/1000));last=t;var elapsed=t-start,progress=Math.min(1,elapsed/DURATION_MS);while(spawnIndex<spawnPlan.length&&elapsed>=spawnPlan[spawnIndex])spawn();
+        if(!active||flight!==host)return;var dt=Math.min(.05,Math.max(.001,(t-last)/1000));last=t;var elapsed=t-start,progress=Math.min(1,elapsed/DURATION_MS);while(spawnIndex<spawnPlan.length&&elapsed>=spawnPlan[spawnIndex])spawn();
         var input=(keys.ArrowLeft||keys.a?-1:0)+(keys.ArrowRight||keys.d?1:0)+touch.x,boost=!!(keys.Shift||keys[" "]||touch.boost),speed=boost?(portrait?340:390):(portrait?245:280);ship.x=Math.max(ship.w*.7,Math.min(W-ship.w*.7,ship.x+Math.sign(input)*speed*dt));
         objects.forEach(function(o){if(o.dead)return;o.y+=o.speed*dt;if(o.y>H+100)o.dead=true;if(collide(ship,o))hit(o,t);});
         background(progress);
@@ -64,7 +65,7 @@
   }
   function phase(name,extra){root.__goodBoysOpeningPhase=Object.assign({phase:name,owner:"m2-boarding-sequence-v6",at:Date.now()},extra||{});}
   function movieResult(result,id){if(!result)throw new Error(id+" returned no result");var status=result.status||result.result;if(status!=="COMPLETED"&&status!=="USER_SKIPPED")throw new Error(id+" did not complete: "+String(status));return result;}
-  function flightPromise(){return new Promise(function(resolve,reject){var settled=false,to=root.setTimeout(function(){if(settled)return;settled=true;reject(new Error("Canonical Good Ship flight timed out"));},30000);var ok=launch(function(result){if(settled)return;settled=true;root.clearTimeout(to);if(!result||result.completed!==true){reject(new Error(result&&result.assetError?"Canonical Good Ship asset failed to load":"Canonical Good Ship flight did not complete"));return;}resolve(result);});if(ok===false){settled=true;root.clearTimeout(to);reject(new Error("Canonical Good Ship flight refused launch"));}});}
+  function flightPromise(){return new Promise(function(resolve,reject){var settled=false,to=root.setTimeout(function(){if(settled)return;settled=true;cancelFlight();reject(new Error("Canonical Good Ship flight timed out"));},30000);var ok=launch(function(result){if(settled)return;settled=true;root.clearTimeout(to);if(!result||result.completed!==true){reject(new Error(result&&result.assetError?"Canonical Good Ship asset failed to load":"Canonical Good Ship flight did not complete"));return;}resolve(result);});if(ok===false){settled=true;root.clearTimeout(to);reject(new Error("Canonical Good Ship flight refused launch"));}});}
   function resetBoard(){try{var b=root.TechOpsGoodBoysBoardShipAction;if(b&&typeof b.reset==="function")b.reset();else if(b&&typeof b.render==="function")b.render();}catch(_){} }
   async function establishShip(){
     var n=root.NM,c=n&&n._v736,m=root.S&&root.S.meta&&root.S.meta._v736;
