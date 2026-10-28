@@ -5,22 +5,25 @@ import path from 'node:path';
 import {chromium,webkit,devices} from 'playwright';
 import {beginRuntimeEvidence} from './runtime_evidence_capture.mjs';
 import {roomBootstrapSnapshot} from './room_bootstrap_snapshot.mjs';
+import {createNightDiagnostics} from './night_combat_diagnostics.mjs';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
+const diagnostics=createNightDiagnostics({out});
 const results=[];
 const profiles=[['chromium',chromium,false],['chromium-touch',chromium,true],['webkit',webkit,true]];
 const selected=process.env.NIGHT_COMBAT_BROWSERS?.split(',');
 for(const [name,type,touch] of profiles){
  if(selected&&!selected.includes(name))continue;
- let browser,context,page,capture=null;
+ let browser,context,page,capture=null,profileError,hasProfileError=false,gameplayStarted=false;
  const errors=[],checks=[];
  const record={browser:name,touch,fixture:true,checks,errors,pass:false};results.push(record);
+ diagnostics.mark(name,'profile','begin');
  try{
-  browser=await type.launch({headless:true,...(type===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(type===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})});
+  browser=await diagnostics.phase(name,'browser.launch',()=>type.launch({headless:true,...(type===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(type===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})}));
   record.browserVersion=browser.version();
-  context=await browser.newContext(touch?{...devices['iPhone 13']}:{viewport:{width:1440,height:900}});
-  await context.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
-  page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(60000);
+  context=await diagnostics.phase(name,'context.create',()=>browser.newContext(touch?{...devices['iPhone 13']}:{viewport:{width:1440,height:900}}));
+  await diagnostics.phase(name,'context.route',()=>context.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort()));
+  page=await diagnostics.phase(name,'page.create',()=>context.newPage());page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(60000);
   const shot=label=>page.screenshot({path:path.join(out,`night-combat-${name}-${label}.png`)});
   const click=locator=>touch?locator.tap():locator.click();
   const setup=async (enemyX=700)=>page.evaluate(x=>{
@@ -30,10 +33,11 @@ for(const [name,type,touch] of profiles){
    n.platforms=[];n.enemies=[{x,y:396,w:24,h:34,hp:500,maxHp:500,kind:'thug',name:'Sparring fixture',alive:true,dmg:0,spd:0,windup:0,hitT:0,cd:999,cash:[0,0],tint:'#7ee787'}];
   },enemyX);
   const idle=()=>page.waitForFunction(()=>!NM._nightCombat?.attack);
-  capture=await beginRuntimeEvidence(context,page,{out,prefix:`night-combat-${name}`});
-  await page.goto(base,{waitUntil:'domcontentloaded'});
-  record.roomBootstrap=await page.evaluate(roomBootstrapSnapshot);
-  await page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsNightInput&&document.querySelector('#btn-nightcrawler'));
+  capture=await diagnostics.phase(name,'capture.begin',()=>beginRuntimeEvidence(context,page,{out,prefix:`night-combat-${name}`}));
+  await diagnostics.phase(name,'navigation',()=>page.goto(base,{waitUntil:'domcontentloaded'}));
+  record.roomBootstrap=await diagnostics.phase(name,'bootstrap.snapshot',()=>page.evaluate(roomBootstrapSnapshot));
+  await diagnostics.phase(name,'bootstrap.ready',()=>page.waitForFunction(()=>window.TechOpsProductionBootstrap?.ready()&&window.TechOpsNightInput&&document.querySelector('#btn-nightcrawler')));
+  gameplayStarted=true;diagnostics.mark(name,'gameplay','begin');
   await click(page.locator('#btn-nightcrawler'));
   const deadline=Date.now()+20000;
   while(Date.now()<deadline){
@@ -89,12 +93,18 @@ for(const [name,type,touch] of profiles){
   await setup(770);
   await page.keyboard.press('ArrowRight',{delay:40});await page.keyboard.press('ArrowRight',{delay:40});
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='dash'));
-  await page.waitForFunction(()=>{const c=NM._nightCombat;return !!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20);});
-  await page.evaluate(()=>{NM.enemies[0].x=NM.x+48;});
-  await page.keyboard.down('ArrowRight');
-  try{
-   await page.keyboard.press('KeyE');
-  }finally{await page.keyboard.up('ArrowRight');}
+  // Stage the existing target fixture and check its deadline in one call.
+  // The two real taps already establish facing; a third direction press only
+  // adds latency before the punch. No input or combat state is synthesized.
+  await page.evaluate(()=>{
+   const c=NM._nightCombat;
+   if(!(c?.dash&&!c.dash.spent&&c.time<=c.dash.until-20))throw Error('Dash grab fixture missed the live dash window');
+   // Use the world-edge fixture so continued dash movement cannot carry Mike
+   // past the target before a delayed trusted punch arrives. The 340 ms
+   // production window, real movement and trusted input remain unchanged.
+   NM.x=1720;NM.enemies[0].x=NM.x+48;
+  });
+  await page.keyboard.press('KeyE');
   await page.waitForFunction(()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash));
   await shot('movement-dash-grab');checks.push('trusted double-tap -> dash -> attack grabs inside the live dash window');
   for(const direction of ['left','right','up','down']){
@@ -158,15 +168,21 @@ for(const [name,type,touch] of profiles){
   await click(page.locator('#dlg-options button').filter({hasText:'Back to the street'}));checks.push('standalone run-menu combat isolation');
   if(errors.length)throw Error(errors.join('\n'));
   record.pass=true;
- }catch(e){record.error=String(e.stack||e);if(page){record.state=await page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:typeof NM!=='undefined'&&NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:typeof S!=='undefined'&&S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}})).catch(()=>null);await page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000}).catch(()=>{});}}
+  diagnostics.mark(name,'gameplay','end');
+ }catch(e){profileError=e;hasProfileError=true;diagnostics.mark(name,gameplayStarted?'gameplay':'profile.failure','error');record.error=diagnostics.errorText(e);if(page){record.state=await diagnostics.phase(name,'failure.snapshot',()=>page.evaluate(()=>({guard:window.TechOpsProductionWrapperGuard?.health(),n:typeof NM!=='undefined'&&NM&&{x:NM.x,y:NM.y,face:NM.face,dialog:typeof S!=='undefined'&&S?.inDialog,combat:NM._nightCombat,enemies:NM.enemies}}))).catch(()=>null);await diagnostics.phase(name,'failure.screenshot',()=>page.screenshot({path:path.join(out,`night-combat-${name}-error.png`),timeout:5000})).catch(()=>{});}}
  finally{
-  if(page&&!record.roomBootstrap)record.roomBootstrap=await page.evaluate(roomBootstrapSnapshot).catch(()=>null);
-  try{record.artifacts=capture?await capture.finish():{trace:null,runtime:null,captureErrors:['Capture did not start']};}
-  catch(error){record.artifacts={trace:null,runtime:null,captureErrors:[String(error)]};}
+  if(page&&!record.roomBootstrap)record.roomBootstrap=await diagnostics.phase(name,'cleanup.snapshot',()=>page.evaluate(roomBootstrapSnapshot)).catch(()=>null);
+  try{record.artifacts=capture?await diagnostics.phase(name,'capture.finish',()=>capture.finish()):{trace:null,runtime:null,captureErrors:['Capture did not start']};}
+  catch(error){if(!hasProfileError){profileError=error;hasProfileError=true;}record.artifacts={trace:null,runtime:null,captureErrors:[diagnostics.errorText(error)]};}
   // Evidence failures cannot turn an unobserved run green. Preserve gameplay errors.
   if(record.artifacts.captureErrors.length){record.pass=false;record.error=record.error||'Night combat evidence capture failed';}
-  if(context)await context.close();if(browser)await browser.close();
-  console.log(JSON.stringify(record));fs.writeFileSync(path.join(out,'night-combat.json'),JSON.stringify(results,null,2));
+  let cleanupError,cleanupFailed=false;
+  if(context)try{await diagnostics.phase(name,'context.close',()=>context.close());}catch(error){cleanupError=error;cleanupFailed=true;diagnostics.cleanupFailure(record,'context.close',error);}
+  if(browser)try{await diagnostics.phase(name,'browser.close',()=>browser.close());}catch(error){if(!cleanupFailed)cleanupError=error;cleanupFailed=true;diagnostics.cleanupFailure(record,'browser.close',error);}
+  diagnostics.report(name,record,results);
+  // A rejected close still stops later profiles, but cannot replace the first
+  // gameplay failure or prevent an attempted browser close. Hangs still await.
+  if(cleanupFailed)throw hasProfileError?profileError:cleanupError;
  }
 }
 if(!results.length||results.some(r=>!r.pass))process.exitCode=1;
