@@ -2,6 +2,12 @@ name: Runtime bot
 
 on:
   workflow_dispatch:
+    inputs:
+      night_debug:
+        description: "Enable Playwright browser logs for the Night step only"
+        type: boolean
+        required: false
+        default: false
   push:
     branches: [main]
     paths:
@@ -133,12 +139,18 @@ jobs:
       - name: Verify contextual Night Crawler combat
         id: night_combat
         continue-on-error: true
+        env:
+          NIGHT_DEBUG: ${{ github.event_name == 'workflow_dispatch' && inputs.night_debug }}
         run: |
           set +e
           # Match the authoritative Night Combat Integration gate. The bot runs three
           # browser/touch profiles and can exceed 150s on macOS while remaining healthy.
           # Exit 124 is still a failure; this only removes the premature budget mismatch.
-          timeout 300s node scripts/night_combat_bot.mjs
+          if [ "$NIGHT_DEBUG" = "true" ]; then
+            DEBUG=pw:browser timeout 300s node scripts/night_combat_bot.mjs
+          else
+            timeout 300s node scripts/night_combat_bot.mjs
+          fi
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0

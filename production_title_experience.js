@@ -356,6 +356,10 @@
     gate.ready = true;
     gate.detail = "Good Dogs opening cancelled. Choose any ready mode.";
     render();
+    // The selector closes while the launcher is disabled; restore focus only
+    // after rendering has enabled the title controls again.
+    var launcher = byId("btn-v736");
+    if (launcher && !launcher.disabled && typeof launcher.focus === "function") launcher.focus({preventScroll: true});
     return true;
   }
   function watchGoodDogsReturn() {
