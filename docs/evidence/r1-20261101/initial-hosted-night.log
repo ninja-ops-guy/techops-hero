@@ -1,0 +1,1362 @@
+﻿2026-11-01T22:24:03.4826384Z Current runner version: '2.338.2'
+2026-11-01T22:24:03.4851654Z ##[group]Runner Image Provisioner
+2026-11-01T22:24:03.4852524Z Hosted Compute Agent
+2026-11-01T22:24:03.4853534Z Version: 20261021.618
+2026-11-01T22:24:03.4854199Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-11-01T22:24:03.4854904Z Build Date: 2026-10-21T00:45:21Z
+2026-11-01T22:24:03.4855667Z Worker ID: {170bcd2f-f86b-4e04-bcc5-918520d54973}
+2026-11-01T22:24:03.4856432Z Region: westcentralus
+2026-11-01T22:24:03.4857036Z Cloud: Azure
+2026-11-01T22:24:03.4857587Z ##[endgroup]
+2026-11-01T22:24:03.4859135Z ##[group]Operating System
+2026-11-01T22:24:03.4859857Z Ubuntu
+2026-11-01T22:24:03.4860382Z 26.04.1
+2026-11-01T22:24:03.4860995Z LTS
+2026-11-01T22:24:03.4861518Z ##[endgroup]
+2026-11-01T22:24:03.4862069Z ##[group]Runner Image
+2026-11-01T22:24:03.4863125Z Image: ubuntu-26.04
+2026-11-01T22:24:03.4863807Z Version: 20261025.179.1
+2026-11-01T22:24:03.4865152Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261025.179/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-01T22:24:03.4866718Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261025.179
+2026-11-01T22:24:03.4867757Z ##[endgroup]
+2026-11-01T22:24:03.4868906Z ##[group]GITHUB_TOKEN Permissions
+2026-11-01T22:24:03.4870910Z Contents: read
+2026-11-01T22:24:03.4871519Z Metadata: read
+2026-11-01T22:24:03.4872061Z ##[endgroup]
+2026-11-01T22:24:03.4874615Z Secret source: Actions
+2026-11-01T22:24:03.4875611Z Cache mode: write
+2026-11-01T22:24:03.4876415Z Prepare workflow directory
+2026-11-01T22:24:03.5296125Z Prepare all required actions
+2026-11-01T22:24:03.5343902Z Getting action download info
+2026-11-01T22:24:03.7978583Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-01T22:24:03.9524731Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-01T22:24:04.0640701Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-01T22:24:04.2601828Z Complete job name: validate
+2026-11-01T22:24:04.3526639Z ##[group]Run actions/checkout@v4
+2026-11-01T22:24:04.3527542Z with:
+2026-11-01T22:24:04.3528033Z   ref: 6c498e33aa73af62a5a347dbc067ae04adfc7cea
+2026-11-01T22:24:04.3528644Z   persist-credentials: false
+2026-11-01T22:24:04.3529181Z   repository: ninja-ops-guy/techops-hero
+2026-11-01T22:24:04.3533467Z   token: ***
+2026-11-01T22:24:04.3533911Z   ssh-strict: true
+2026-11-01T22:24:04.3534340Z   ssh-user: git
+2026-11-01T22:24:04.3534771Z   clean: true
+2026-11-01T22:24:04.3535212Z   sparse-checkout-cone-mode: true
+2026-11-01T22:24:04.3535736Z   fetch-depth: 1
+2026-11-01T22:24:04.3536161Z   fetch-tags: false
+2026-11-01T22:24:04.3536610Z   show-progress: true
+2026-11-01T22:24:04.3537057Z   lfs: false
+2026-11-01T22:24:04.3537469Z   submodules: false
+2026-11-01T22:24:04.3537915Z   set-safe-directory: true
+2026-11-01T22:24:04.3538414Z   allow-unsafe-pr-checkout: false
+2026-11-01T22:24:04.3539221Z ##[endgroup]
+2026-11-01T22:24:04.6612117Z Syncing repository: ninja-ops-guy/techops-hero
+2026-11-01T22:24:04.6614483Z ##[group]Getting Git version info
+2026-11-01T22:24:04.6615337Z Working directory is '/home/runner/work/techops-hero/techops-hero'
+2026-11-01T22:24:04.6616467Z [command]/usr/bin/git version
+2026-11-01T22:24:04.6641335Z git version 2.56.0
+2026-11-01T22:24:04.6662394Z ##[endgroup]
+2026-11-01T22:24:04.6677647Z Temporarily overriding HOME='/home/runner/work/_temp/93143250-f1aa-46de-87f0-66d87939591c' before making global git config changes
+2026-11-01T22:24:04.6680025Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-01T22:24:04.6683207Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/techops-hero/techops-hero
+2026-11-01T22:24:04.6756728Z Deleting the contents of '/home/runner/work/techops-hero/techops-hero'
+2026-11-01T22:24:04.6759609Z ##[group]Initializing the repository
+2026-11-01T22:24:04.6764970Z [command]/usr/bin/git init /home/runner/work/techops-hero/techops-hero
+2026-11-01T22:24:04.6896809Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-01T22:24:04.6898398Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-01T22:24:04.6899538Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-01T22:24:04.6900454Z hint: call:
+2026-11-01T22:24:04.6900979Z hint:
+2026-11-01T22:24:04.6901613Z hint: 	git config --global init.defaultBranch <name>
+2026-11-01T22:24:04.6902381Z hint:
+2026-11-01T22:24:04.6903462Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-01T22:24:04.6904607Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-01T22:24:04.6905520Z hint:
+2026-11-01T22:24:04.6906047Z hint: 	git branch -m <name>
+2026-11-01T22:24:04.6906652Z hint:
+2026-11-01T22:24:04.6907420Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-01T22:24:04.6913991Z Initialized empty Git repository in /home/runner/work/techops-hero/techops-hero/.git/
+2026-11-01T22:24:04.6925734Z [command]/usr/bin/git remote add origin https://github.com/ninja-ops-guy/techops-hero
+2026-11-01T22:24:04.6975636Z ##[endgroup]
+2026-11-01T22:24:04.6976894Z ##[group]Disabling automatic garbage collection
+2026-11-01T22:24:04.6979177Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-01T22:24:04.7010152Z ##[endgroup]
+2026-11-01T22:24:04.7010897Z ##[group]Setting up auth
+2026-11-01T22:24:04.7017209Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-01T22:24:04.7050823Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-01T22:24:04.7601848Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-01T22:24:04.7608048Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-01T22:24:04.7843837Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-01T22:24:04.7880734Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-01T22:24:04.8155388Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-01T22:24:04.8194734Z ##[endgroup]
+2026-11-01T22:24:04.8195578Z ##[group]Fetching the repository
+2026-11-01T22:24:04.8207079Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 6c498e33aa73af62a5a347dbc067ae04adfc7cea
+2026-11-01T22:24:07.1036318Z From https://github.com/ninja-ops-guy/techops-hero
+2026-11-01T22:24:07.1037585Z  * branch            6c498e33aa73af62a5a347dbc067ae04adfc7cea -> FETCH_HEAD
+2026-11-01T22:24:07.1054285Z ##[endgroup]
+2026-11-01T22:24:07.1056159Z ##[group]Determining the checkout info
+2026-11-01T22:24:07.1057745Z ##[endgroup]
+2026-11-01T22:24:07.1060806Z [command]/usr/bin/git sparse-checkout disable
+2026-11-01T22:24:07.1128263Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-01T22:24:07.1161466Z ##[group]Checking out the ref
+2026-11-01T22:24:07.1164758Z [command]/usr/bin/git checkout --progress --force 6c498e33aa73af62a5a347dbc067ae04adfc7cea
+2026-11-01T22:24:07.3966093Z Note: switching to '6c498e33aa73af62a5a347dbc067ae04adfc7cea'.
+2026-11-01T22:24:07.3967276Z 
+2026-11-01T22:24:07.3968102Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-01T22:24:07.3969974Z changes and commit them, and you can discard any commits you make in this
+2026-11-01T22:24:07.3971910Z state without impacting any branches by switching back to a branch.
+2026-11-01T22:24:07.3973418Z 
+2026-11-01T22:24:07.3974093Z If you want to create a new branch to retain commits you create, you may
+2026-11-01T22:24:07.3976014Z do so (now or later) by using -c with the switch command. Example:
+2026-11-01T22:24:07.3976898Z 
+2026-11-01T22:24:07.3977307Z   git switch -c <new-branch-name>
+2026-11-01T22:24:07.3977950Z 
+2026-11-01T22:24:07.3978345Z Or undo this operation with:
+2026-11-01T22:24:07.3978939Z 
+2026-11-01T22:24:07.3979296Z   git switch -
+2026-11-01T22:24:07.3979791Z 
+2026-11-01T22:24:07.3980599Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-01T22:24:07.3981738Z 
+2026-11-01T22:24:07.3982914Z HEAD is now at 6c498e3 Integrate R1 Day, Night, Waldo and Good Dogs recovery candidates
+2026-11-01T22:24:07.3992141Z ##[endgroup]
+2026-11-01T22:24:07.4039184Z [command]/usr/bin/git log -1 --format=%H
+2026-11-01T22:24:07.4064285Z 6c498e33aa73af62a5a347dbc067ae04adfc7cea
+2026-11-01T22:24:07.4074832Z ##[group]Removing auth
+2026-11-01T22:24:07.4078367Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-01T22:24:07.4110853Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-01T22:24:07.4389245Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-01T22:24:07.4414399Z http.https://github.com/.extraheader
+2026-11-01T22:24:07.4423560Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-01T22:24:07.4461782Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-01T22:24:07.4732086Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-01T22:24:07.4766921Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-01T22:24:07.5036460Z ##[endgroup]
+2026-11-01T22:24:07.5439249Z ##[group]Run actions/setup-node@v4
+2026-11-01T22:24:07.5440429Z with:
+2026-11-01T22:24:07.5441309Z   node-version: 22
+2026-11-01T22:24:07.5442286Z   always-auth: false
+2026-11-01T22:24:07.5443487Z   check-latest: false
+2026-11-01T22:24:07.5453439Z   token: ***
+2026-11-01T22:24:07.5454374Z ##[endgroup]
+2026-11-01T22:24:07.7787688Z Found in cache @ /opt/hostedtoolcache/node/22.23.4/x64
+2026-11-01T22:24:07.7791668Z (node:2494) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-01T22:24:07.7793017Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-01T22:24:07.7795324Z ##[group]Environment details
+2026-11-01T22:24:08.2282844Z node: v22.23.4
+2026-11-01T22:24:08.2283472Z npm: 10.9.9
+2026-11-01T22:24:08.2284140Z yarn: 1.22.22
+2026-11-01T22:24:08.2285693Z ##[endgroup]
+2026-11-01T22:24:08.2439763Z ##[group]Run set -euo pipefail
+2026-11-01T22:24:08.2440251Z [36;1mset -euo pipefail[0m
+2026-11-01T22:24:08.2440605Z [36;1mmkdir -p "$RUNNER_TEMP/night-source"[0m
+2026-11-01T22:24:08.2441105Z [36;1mgit rev-parse HEAD > "$RUNNER_TEMP/night-source/tested-commit.txt"[0m
+2026-11-01T22:24:08.2441728Z [36;1mgit archive --format=tar HEAD | gzip -1 > "$RUNNER_TEMP/night-source/source.tar.gz"[0m
+2026-11-01T22:24:08.2442454Z [36;1msha256sum "$RUNNER_TEMP/night-source/source.tar.gz" > "$RUNNER_TEMP/night-source/source-sha256.txt"[0m
+2026-11-01T22:24:08.2485333Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-01T22:24:08.2485782Z ##[endgroup]
+2026-11-01T22:24:10.4665743Z ##[group]Run actions/upload-artifact@v4
+2026-11-01T22:24:10.4666256Z with:
+2026-11-01T22:24:10.4666772Z   name: night-combat-source-6c498e33aa73af62a5a347dbc067ae04adfc7cea
+2026-11-01T22:24:10.4667515Z   path: /home/runner/work/_temp/night-source/
+2026-11-01T22:24:10.4667834Z   compression-level: 0
+2026-11-01T22:24:10.4668061Z   retention-days: 1
+2026-11-01T22:24:10.4668527Z   if-no-files-found: warn
+2026-11-01T22:24:10.4668980Z   overwrite: false
+2026-11-01T22:24:10.4669350Z   include-hidden-files: false
+2026-11-01T22:24:10.4669759Z ##[endgroup]
+2026-11-01T22:24:10.6506301Z (node:2532) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-01T22:24:10.6507290Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-01T22:24:10.6559552Z With the provided path, there will be 3 files uploaded
+2026-11-01T22:24:10.6562902Z Artifact name is valid!
+2026-11-01T22:24:10.6563903Z Root directory input is valid!
+2026-11-01T22:24:10.9829962Z Beginning upload of artifact content to blob storage
+2026-11-01T22:24:11.0522033Z (node:2532) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-01T22:24:11.7460168Z Uploaded bytes 8388608
+2026-11-01T22:24:11.7769018Z Uploaded bytes 16777216
+2026-11-01T22:24:11.8184216Z Uploaded bytes 25165824
+2026-11-01T22:24:11.8466494Z Uploaded bytes 33554432
+2026-11-01T22:24:11.9847601Z Uploaded bytes 41943040
+2026-11-01T22:24:12.0021665Z Uploaded bytes 50331648
+2026-11-01T22:24:12.0543727Z Uploaded bytes 58720256
+2026-11-01T22:24:12.0851749Z Uploaded bytes 67108864
+2026-11-01T22:24:12.2406178Z Uploaded bytes 75497472
+2026-11-01T22:24:12.4773593Z Uploaded bytes 80930245
+2026-11-01T22:24:12.5377200Z Finished uploading artifact content to blob storage!
+2026-11-01T22:24:12.5378938Z SHA256 digest of uploaded artifact zip is 0647168130f775d0266a019d4730a300551f641e848fec86561d83ad5a70bafb
+2026-11-01T22:24:12.5380392Z Finalizing artifact upload
+2026-11-01T22:24:12.9874084Z Artifact night-combat-source-6c498e33aa73af62a5a347dbc067ae04adfc7cea.zip successfully finalized. Artifact ID 13103910587
+2026-11-01T22:24:12.9876206Z Artifact night-combat-source-6c498e33aa73af62a5a347dbc067ae04adfc7cea has been successfully uploaded! Final size is 80930245 bytes. Artifact ID is 13103910587
+2026-11-01T22:24:12.9881490Z Artifact download URL: https://github.com/ninja-ops-guy/techops-hero/actions/runs/41356932775/artifacts/13103910587
+2026-11-01T22:24:13.0078208Z ##[group]Run set -euo pipefail
+2026-11-01T22:24:13.0078568Z [36;1mset -euo pipefail[0m
+2026-11-01T22:24:13.0078868Z [36;1mmkdir -p runtime-bot-artifacts[0m
+2026-11-01T22:24:13.0079391Z [36;1mnode scripts/production_release_gate.js | tee runtime-bot-artifacts/production-gate.log[0m
+2026-11-01T22:24:13.0110764Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-01T22:24:13.0111133Z ##[endgroup]
+2026-11-01T22:24:13.0464683Z TechOps Hero production gate: 112 suites
+2026-11-01T22:24:13.0759555Z PASS incident-specific intake, branching answers, persistent topic memory, distinct crew, no guessed evidence and stale-close protection
+2026-11-01T22:24:13.1116687Z PASS desktop entrypoints away from Mike desk do not write opening state
+2026-11-01T22:24:13.1161428Z PASS side-view room cannot borrow its frozen floor entry position for desk or evidence access
+2026-11-01T22:24:13.1183708Z PASS side-view E reaches the interior owner instead of invisible floor devices or contacts
+2026-11-01T22:24:13.1216937Z PASS confirmed PLAY commits once without replaying the legacy soundtrack wrapper
+2026-11-01T22:24:13.1237830Z PASS timeout does not claim listening and offers a recoverable choice
+2026-11-01T22:24:13.1259026Z PASS muted does not claim listening and offers a recoverable choice
+2026-11-01T22:24:13.1282302Z PASS not-found does not claim listening and offers a recoverable choice
+2026-11-01T22:24:13.1306708Z PASS unavailable does not claim listening and offers a recoverable choice
+2026-11-01T22:24:13.1326703Z PASS cancelled does not claim listening and offers a recoverable choice
+2026-11-01T22:24:13.1358749Z PASS explicit muted continuation uses the audio owner and records an honest skip
+2026-11-01T22:24:13.1382195Z PASS stale muted callback away from the desk cannot mute or advance another scene
+2026-11-01T22:24:13.1400224Z PASS late PLAY after closed cannot advance the opening
+2026-11-01T22:24:13.1416917Z PASS late PLAY after moved cannot advance the opening
+2026-11-01T22:24:13.1433648Z PASS late PLAY after new-run cannot advance the opening
+2026-11-01T22:24:13.1459779Z PASS late PLAY after new-view cannot advance the opening
+2026-11-01T22:24:13.1476248Z PASS late PLAY after night cannot advance the opening
+2026-11-01T22:24:13.1492597Z PASS late PLAY after side-view cannot advance the opening
+2026-11-01T22:24:13.1531737Z PASS muted continuation prevents a delayed real DayAudio playlist callback from playing
+2026-11-01T22:24:13.1551822Z PASS field UI and public quick-close routes cannot create remote evidence or close a ticket
+2026-11-01T22:24:13.1552837Z Day spatial campaign and morning audio: 19 tests passed
+2026-11-01T22:24:13.1929732Z Day device cases: PASS (424 assertions; 8 complete paths, surface/order/authority/save/idempotence negatives)
+2026-11-01T22:24:17.8144624Z PASS: Day physical world, 24 generated maps + 60 real native-placement maps, routes, service access, migration, proximity, mode and canon objectives
+2026-11-01T22:24:18.1043771Z PASS authored office desk reuse, coworker positions and v2 checkpoint migration
+2026-11-01T22:24:18.1439937Z PASS load is silent, idempotent and creates no extra soundtrack player
+2026-11-01T22:24:18.1457249Z PASS SFX need an explicit gesture and reuse the global audio context
+2026-11-01T22:24:18.1470303Z PASS all six semantic cues are finite and voices stay bounded
+2026-11-01T22:24:18.1479134Z PASS cue spam and unknown/prototype event names are ignored
+2026-11-01T22:24:18.1487106Z PASS master mute silences active cues and blocks new effects
+2026-11-01T22:24:18.1502798Z PASS SFX preferences multiply master gain, persist separately and never change music choice
+2026-11-01T22:24:18.1516061Z PASS zero SFX volume and unsupported browsers fail silently
+2026-11-01T22:24:18.1526611Z PASS night mode and paused state suppress day effects
+2026-11-01T22:24:18.1537087Z PASS background hides all effects and ducks music without playing or pausing
+2026-11-01T22:24:18.1545965Z PASS nested duck reasons restore only after their own release, respecting pause
+2026-11-01T22:24:18.1552838Z PASS stale asynchronous volume reads cannot reapply a closed duck
+2026-11-01T22:24:18.1565664Z PASS music slider changed during duck determines restore volume
+2026-11-01T22:24:18.1573877Z PASS morning song requires gesture and explicit opt-in respects a mute choice
+2026-11-01T22:24:18.1580575Z PASS zero music volume never calls the global play toggle even on explicit opt-in
+2026-11-01T22:24:18.1596920Z PASS song request is pending until real PLAY confirms the exact current track
+2026-11-01T22:24:18.1605679Z PASS wrong playlist item stays silent until selected track confirms PLAY
+2026-11-01T22:24:18.1612944Z PASS explicit Play music control may enable the existing master toggle
+2026-11-01T22:24:18.1639590Z PASS no widget, missing song, failed command and playback error never report heard
+2026-11-01T22:24:18.1646310Z PASS mute while playback is pending prevents a success receipt
+2026-11-01T22:24:18.1661271Z PASS background cancels a pending song request and cannot award listening
+2026-11-01T22:24:18.1685281Z PASS repeated attempts keep one event dispatcher and preserve another owner
+2026-11-01T22:24:18.1686335Z PASS rejected WebAudio resume never replays stale cues
+2026-11-01T22:24:18.1687020Z Day audio: 22 tests passed
+2026-11-01T22:24:18.2748568Z PASS physical proximity gates device opening, observations and Mike’s desk
+2026-11-01T22:24:18.3380945Z PASS Mike’s physical workstation remains available before clock-in
+2026-11-01T22:24:18.3984029Z PASS no device opens during Night or combat
+2026-11-01T22:24:18.4624090Z PASS screen and physical evidence cannot be cross-collected
+2026-11-01T22:24:18.5276789Z PASS Shipping’s printer cannot expose or collect workstation observations
+2026-11-01T22:24:18.6242924Z PASS all eight optional cases complete through the rendered action flow without canonical writes
+2026-11-01T22:24:18.6886159Z PASS retained buttons cannot operate a replacement modal
+2026-11-01T22:24:18.7503638Z PASS device rendering clears the previous dialogue typewriter click owner
+2026-11-01T22:24:18.8147047Z PASS optional failed-save mutation rolls back and successful replay is idempotent
+2026-11-01T22:24:18.8778504Z PASS canonical operator hold requires supported cause and rolls back on failed checkpoint
+2026-11-01T22:24:18.9355353Z PASS canonical save failure leaves evidence uncommitted and retry records it once
+2026-11-01T22:24:18.9934359Z PASS canonical requester verification checks physical presence again and closes only through authority
+2026-11-01T22:24:19.0513462Z PASS an explicit adjacent device route overrides alphabetical station priority and matches HUD
+2026-11-01T22:24:19.1105211Z PASS ambiguous nearby people and devices offer explicit Talk and Inspect choices
+2026-11-01T22:24:19.1702063Z PASS explicit requester route reaches verification even beside a device
+2026-11-01T22:24:19.2285261Z PASS side view cannot use frozen floor coordinates and preserves a route without teleporting
+2026-11-01T22:24:19.2860457Z PASS an inherited workaround can be verified as limited service without false restoration
+2026-11-01T22:24:19.3959579Z PASS Day 2 field workstation reopens its follow-up while unfinished carryover retains original investigation
+2026-11-01T22:24:19.4542398Z PASS progress list closes before evidence and action layout begins
+2026-11-01T22:24:19.5474817Z PASS repairs require their physical or software surface and all technical checks require a screen
+2026-11-01T22:24:19.6074165Z PASS HUD describes the tracked destination instead of contradicting its route button
+2026-11-01T22:24:19.6684305Z PASS talking to Security does not read the nearby computer or grant badge evidence
+2026-11-01T22:24:19.6685345Z Day experience integration: 22 tests passed
+2026-11-01T22:24:19.7285438Z PASS NICK remains a talk target beside a tracked workstation
+2026-11-01T22:24:19.7898979Z PASS AMIT remains a talk target beside a tracked workstation
+2026-11-01T22:24:19.8527767Z PASS BRANDON remains a talk target beside a tracked workstation
+2026-11-01T22:24:19.9137541Z PASS DANIEL remains a talk target beside a tracked workstation
+2026-11-01T22:24:20.0358840Z PASS ordinary ambient and ticket NPCs retain their own interaction owners
+2026-11-01T22:24:20.1039434Z PASS side room uses its visible desk position, never frozen floor coordinates
+2026-11-01T22:24:20.1603817Z PASS office entry triggers standup once per entry and never after completion
+2026-11-01T22:24:20.2061625Z Startup prefetch: ordering, bounded hints, fallback, errors, timers, cleanup and idempotency PASS
+2026-11-01T22:24:20.2063950Z {"evidence":"simulated-200ms-per-script-network","serial":{"time":8200,"maxHints":0,"files":41},"prefetched":{"time":1800,"maxHints":5,"files":41}}
+2026-11-01T22:24:20.2673226Z Review inventory, codec boundary, idempotent skip and resurrection contracts: PASS
+2026-11-01T22:24:20.3215813Z Release certification refuses missing, stale, spoofed-tier, weak R1 and modified evidence: PASS
+2026-11-01T22:24:20.3618050Z R1 release governance evidence builder: PASS
+2026-11-01T22:24:20.4040749Z R1 candidate/deployment identity evidence builder: PASS
+2026-11-01T22:24:20.4466013Z R1 vertical-slice visual + fresh-context evidence builder: PASS
+2026-11-01T22:24:20.4920324Z R1 deterministic runtime asset manifest: PASS
+2026-11-01T22:24:20.5270755Z Browser geometry accepts measured 44px roundoff, rejects undersized or invalid targets: PASS
+2026-11-01T22:24:20.5799060Z Runtime HUD: CSS-pixel readability, complete copy, bounded cards, captions, resize, mode/modal isolation and world anchors PASS
+2026-11-01T22:24:20.6809280Z Good Dogs HUD: CSS font/card bounds, solo/co-op roles, health states, complete objectives/messages, duplicate retirement, modal isolation and rotation PASS
+2026-11-01T22:24:20.7203539Z Campaign Director v2 / Story Bible v1.2: Act I contract PASS
+2026-11-01T22:24:20.7538918Z Game save resilience + day checkpoint + standalone Night/Good Dogs isolation: PASS
+2026-11-01T22:24:20.7908918Z Day notice queue: modal deferral, eventual delivery, one-shot settlement and stale mode/run expiry PASS
+2026-11-01T22:24:20.8215676Z Unified Day/Night difficulty contract: PASS
+2026-11-01T22:24:20.8515176Z Ticket stabilize -> verify -> document + honest escalation contract: PASS
+2026-11-01T22:24:20.9059791Z Story Bible v1.2 legacy Felicia/ending firewall: PASS
+2026-11-01T22:24:20.9413395Z Campaign Acts II-III semantics + bounded companion/Duet gate: PASS
+2026-11-01T22:24:20.9755021Z Campaign Acts II-III reload/reveal gates: PASS
+2026-11-01T22:24:21.0217445Z Ordered natural Act I -> Act VI progression with Act IV reload: PASS
+2026-11-01T22:24:21.0691107Z Act IV investigation: 3 responses, every-boundary reload, reasoning, verification, ownership and migration PASS
+2026-11-01T22:24:21.1116698Z Campaign native Act II gameplay: PASS
+2026-11-01T22:24:21.1492841Z Campaign casebook visual outcome/provenance parity: PASS
+2026-11-01T22:24:21.1495878Z Campaign Day 1 world-camera continuity + retired workstation concept overlay: PASS
+2026-11-01T22:24:21.1794702Z Workstation concept retirement regression: PASS
+2026-11-01T22:24:21.2221453Z Cinematic systems, exact level inventory, animation semantics, camera determinism, and M3 mixed-media asset: PASS
+2026-11-01T22:24:21.2792319Z Cinematic modal focus, background pause, idempotent skip and save recovery: PASS
+2026-11-01T22:24:21.3297637Z Handoff provenance, transparency, budget, semantic priority, animation timing, and world isolation: PASS 585070 bytes
+2026-11-01T22:24:21.3718338Z Crash duration, capability, recovery, pause/visibility, idempotence and modal cleanup: PASS
+2026-11-01T22:24:21.4131068Z Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity: PASS
+2026-11-01T22:24:21.4185641Z Good Dogs executable chronology, legacy-save, skip and failure boundaries: PASS
+2026-11-01T22:24:21.4987703Z TAP version 13
+2026-11-01T22:24:21.5022285Z # Subtest: fresh M4, settled film and released native handoff are playable
+2026-11-01T22:24:21.5028288Z ok 1 - fresh M4, settled film and released native handoff are playable
+2026-11-01T22:24:21.5028965Z   ---
+2026-11-01T22:24:21.5029226Z   duration_ms: 2.737496
+2026-11-01T22:24:21.5029798Z   type: 'test'
+2026-11-01T22:24:21.5030059Z   ...
+2026-11-01T22:24:21.5032566Z # Subtest: run \#808: film-only exit passes the old predicate while the outgoing runtime is ending
+2026-11-01T22:24:21.5034590Z ok 2 - run \#808: film-only exit passes the old predicate while the outgoing runtime is ending
+2026-11-01T22:24:21.5035475Z   ---
+2026-11-01T22:24:21.5035890Z   duration_ms: 0.960015
+2026-11-01T22:24:21.5036424Z   type: 'test'
+2026-11-01T22:24:21.5036806Z   ...
+2026-11-01T22:24:21.5037727Z # Subtest: CUT_04 transient dialog=false is not fresh-runtime evidence
+2026-11-01T22:24:21.5039743Z ok 3 - CUT_04 transient dialog=false is not fresh-runtime evidence
+2026-11-01T22:24:21.5041256Z   ---
+2026-11-01T22:24:21.5041648Z   duration_ms: 1.725954
+2026-11-01T22:24:21.5042109Z   type: 'test'
+2026-11-01T22:24:21.5042480Z   ...
+2026-11-01T22:24:21.5043795Z # Subtest: rejects ending runtime
+2026-11-01T22:24:21.5045301Z ok 4 - rejects ending runtime
+2026-11-01T22:24:21.5046041Z   ---
+2026-11-01T22:24:21.5046429Z   duration_ms: 0.693548
+2026-11-01T22:24:21.5046869Z   type: 'test'
+2026-11-01T22:24:21.5047243Z   ...
+2026-11-01T22:24:21.5048087Z # Subtest: rejects inactive authority
+2026-11-01T22:24:21.5049502Z ok 5 - rejects inactive authority
+2026-11-01T22:24:21.5050102Z   ---
+2026-11-01T22:24:21.5050477Z   duration_ms: 0.712648
+2026-11-01T22:24:21.5050897Z   type: 'test'
+2026-11-01T22:24:21.5051246Z   ...
+2026-11-01T22:24:21.5061498Z # Subtest: rejects wrong world
+2026-11-01T22:24:21.5063109Z ok 6 - rejects wrong world
+2026-11-01T22:24:21.5063932Z   ---
+2026-11-01T22:24:21.5064325Z   duration_ms: 0.732089
+2026-11-01T22:24:21.5064762Z   type: 'test'
+2026-11-01T22:24:21.5065152Z   ...
+2026-11-01T22:24:21.5065692Z # Subtest: rejects runtime mission mismatch
+2026-11-01T22:24:21.5066801Z ok 7 - rejects runtime mission mismatch
+2026-11-01T22:24:21.5067663Z   ---
+2026-11-01T22:24:21.5068039Z   duration_ms: 0.714362
+2026-11-01T22:24:21.5068475Z   type: 'test'
+2026-11-01T22:24:21.5068851Z   ...
+2026-11-01T22:24:21.5069361Z # Subtest: rejects saved mission mismatch
+2026-11-01T22:24:21.5070068Z ok 8 - rejects saved mission mismatch
+2026-11-01T22:24:21.5070682Z   ---
+2026-11-01T22:24:21.5070943Z   duration_ms: 0.741929
+2026-11-01T22:24:21.5071219Z   type: 'test'
+2026-11-01T22:24:21.5071444Z   ...
+2026-11-01T22:24:21.5072473Z # Subtest: rejects canonical state mismatch
+2026-11-01T22:24:21.5073829Z ok 9 - rejects canonical state mismatch
+2026-11-01T22:24:21.5074409Z   ---
+2026-11-01T22:24:21.5074639Z   duration_ms: 0.985859
+2026-11-01T22:24:21.5074904Z   type: 'test'
+2026-11-01T22:24:21.5075124Z   ...
+2026-11-01T22:24:21.5076978Z # Subtest: rejects authority mission mismatch
+2026-11-01T22:24:21.5077885Z ok 10 - rejects authority mission mismatch
+2026-11-01T22:24:21.5078372Z   ---
+2026-11-01T22:24:21.5078713Z   duration_ms: 0.946667
+2026-11-01T22:24:21.5079104Z   type: 'test'
+2026-11-01T22:24:21.5079420Z   ...
+2026-11-01T22:24:21.5079843Z # Subtest: rejects pending handoff
+2026-11-01T22:24:21.5080881Z ok 11 - rejects pending handoff
+2026-11-01T22:24:21.5081481Z   ---
+2026-11-01T22:24:21.5081699Z   duration_ms: 0.685591
+2026-11-01T22:24:21.5081940Z   type: 'test'
+2026-11-01T22:24:21.5082144Z   ...
+2026-11-01T22:24:21.5083467Z # Subtest: rejects pending runtime
+2026-11-01T22:24:21.5085262Z ok 12 - rejects pending runtime
+2026-11-01T22:24:21.5085784Z   ---
+2026-11-01T22:24:21.5086214Z   duration_ms: 0.676242
+2026-11-01T22:24:21.5086641Z   type: 'test'
+2026-11-01T22:24:21.5086881Z   ...
+2026-11-01T22:24:21.5087614Z # Subtest: rejects transition cooldown
+2026-11-01T22:24:21.5088833Z ok 13 - rejects transition cooldown
+2026-11-01T22:24:21.5089548Z   ---
+2026-11-01T22:24:21.5089788Z   duration_ms: 0.606486
+2026-11-01T22:24:21.5090026Z   type: 'test'
+2026-11-01T22:24:21.5090227Z   ...
+2026-11-01T22:24:21.5091464Z # Subtest: rejects missing completion
+2026-11-01T22:24:21.5092922Z ok 14 - rejects missing completion
+2026-11-01T22:24:21.5103574Z   ---
+2026-11-01T22:24:21.5103876Z   duration_ms: 0.608991
+2026-11-01T22:24:21.5105003Z   type: 'test'
+2026-11-01T22:24:21.5105436Z   ...
+2026-11-01T22:24:21.5105915Z # Subtest: rejects old mission completion
+2026-11-01T22:24:21.5106527Z ok 15 - rejects old mission completion
+2026-11-01T22:24:21.5107012Z   ---
+2026-11-01T22:24:21.5107334Z   duration_ms: 0.629986
+2026-11-01T22:24:21.5107579Z   type: 'test'
+2026-11-01T22:24:21.5107980Z   ...
+2026-11-01T22:24:21.5108326Z # Subtest: rejects handoff error
+2026-11-01T22:24:21.5108623Z ok 16 - rejects handoff error
+2026-11-01T22:24:21.5108879Z   ---
+2026-11-01T22:24:21.5109084Z   duration_ms: 0.589842
+2026-11-01T22:24:21.5109322Z   type: 'test'
+2026-11-01T22:24:21.5109667Z   ...
+2026-11-01T22:24:21.5109914Z # Subtest: rejects bridge error
+2026-11-01T22:24:21.5110198Z ok 17 - rejects bridge error
+2026-11-01T22:24:21.5110435Z   ---
+2026-11-01T22:24:21.5110707Z   duration_ms: 1.207562
+2026-11-01T22:24:21.5111090Z   type: 'test'
+2026-11-01T22:24:21.5111411Z   ...
+2026-11-01T22:24:21.5112245Z # Subtest: rejects native cinematic without DOM
+2026-11-01T22:24:21.5113336Z ok 18 - rejects native cinematic without DOM
+2026-11-01T22:24:21.5113852Z   ---
+2026-11-01T22:24:21.5114120Z   duration_ms: 0.596636
+2026-11-01T22:24:21.5114362Z   type: 'test'
+2026-11-01T22:24:21.5114576Z   ...
+2026-11-01T22:24:21.5114921Z # Subtest: rejects native DOM absent from bridge blockers
+2026-11-01T22:24:21.5115382Z ok 19 - rejects native DOM absent from bridge blockers
+2026-11-01T22:24:21.5123682Z   ---
+2026-11-01T22:24:21.5124061Z   duration_ms: 0.591355
+2026-11-01T22:24:21.5124456Z   type: 'test'
+2026-11-01T22:24:21.5124793Z   ...
+2026-11-01T22:24:21.5125216Z # Subtest: rejects director-only claim
+2026-11-01T22:24:21.5125585Z ok 20 - rejects director-only claim
+2026-11-01T22:24:21.5125977Z   ---
+2026-11-01T22:24:21.5126295Z   duration_ms: 0.624765
+2026-11-01T22:24:21.5127048Z   type: 'test'
+2026-11-01T22:24:21.5127269Z   ...
+2026-11-01T22:24:21.5127581Z # Subtest: rejects progression cinematic ownership
+2026-11-01T22:24:21.5128013Z ok 21 - rejects progression cinematic ownership
+2026-11-01T22:24:21.5128464Z   ---
+2026-11-01T22:24:21.5128847Z   duration_ms: 0.629735
+2026-11-01T22:24:21.5129267Z   type: 'test'
+2026-11-01T22:24:21.5129641Z   ...
+2026-11-01T22:24:21.5130092Z # Subtest: rejects fading dialogue
+2026-11-01T22:24:21.5130680Z ok 22 - rejects fading dialogue
+2026-11-01T22:24:21.5131130Z   ---
+2026-11-01T22:24:21.5131488Z   duration_ms: 0.609393
+2026-11-01T22:24:21.5131910Z   type: 'test'
+2026-11-01T22:24:21.5132275Z   ...
+2026-11-01T22:24:21.5133052Z # Subtest: rejects visible prison briefing
+2026-11-01T22:24:21.5133742Z ok 23 - rejects visible prison briefing
+2026-11-01T22:24:21.5134228Z   ---
+2026-11-01T22:24:21.5134585Z   duration_ms: 0.652362
+2026-11-01T22:24:21.5134981Z   type: 'test'
+2026-11-01T22:24:21.5135318Z   ...
+2026-11-01T22:24:21.5135782Z # Subtest: rejects running bridge
+2026-11-01T22:24:21.5136375Z ok 24 - rejects running bridge
+2026-11-01T22:24:21.5136802Z   ---
+2026-11-01T22:24:21.5137153Z   duration_ms: 0.57482
+2026-11-01T22:24:21.5137558Z   type: 'test'
+2026-11-01T22:24:21.5137909Z   ...
+2026-11-01T22:24:21.5139875Z # Subtest: rejects active film flag
+2026-11-01T22:24:21.5140689Z ok 25 - rejects active film flag
+2026-11-01T22:24:21.5141560Z   ---
+2026-11-01T22:24:21.5141922Z   duration_ms: 0.648715
+2026-11-01T22:24:21.5142334Z   type: 'test'
+2026-11-01T22:24:21.5142929Z   ...
+2026-11-01T22:24:21.5143414Z # Subtest: rejects bridge-visible blocker
+2026-11-01T22:24:21.5144062Z ok 26 - rejects bridge-visible blocker
+2026-11-01T22:24:21.5144564Z   ---
+2026-11-01T22:24:21.5144929Z   duration_ms: 0.638713
+2026-11-01T22:24:21.5145346Z   type: 'test'
+2026-11-01T22:24:21.5145688Z   ...
+2026-11-01T22:24:21.5146143Z # Subtest: rejects wrong clip exit
+2026-11-01T22:24:21.5146717Z ok 27 - rejects wrong clip exit
+2026-11-01T22:24:21.5147169Z   ---
+2026-11-01T22:24:21.5147529Z   duration_ms: 0.570982
+2026-11-01T22:24:21.5147933Z   type: 'test'
+2026-11-01T22:24:21.5148290Z   ...
+2026-11-01T22:24:21.5148759Z # Subtest: rejects nonterminal clip exit
+2026-11-01T22:24:21.5149627Z ok 28 - rejects nonterminal clip exit
+2026-11-01T22:24:21.5150131Z   ---
+2026-11-01T22:24:21.5150475Z   duration_ms: 0.620425
+2026-11-01T22:24:21.5150897Z   type: 'test'
+2026-11-01T22:24:21.5151265Z   ...
+2026-11-01T22:24:21.5151707Z # Subtest: rejects unrecorded clip
+2026-11-01T22:24:21.5152288Z ok 29 - rejects unrecorded clip
+2026-11-01T22:24:21.5152980Z   ---
+2026-11-01T22:24:21.5153332Z   duration_ms: 0.565912
+2026-11-01T22:24:21.5153729Z   type: 'test'
+2026-11-01T22:24:21.5154067Z   ...
+2026-11-01T22:24:21.5154608Z # Subtest: rejects persistent invisible dialog latch
+2026-11-01T22:24:21.5155381Z ok 30 - rejects persistent invisible dialog latch
+2026-11-01T22:24:21.5155914Z   ---
+2026-11-01T22:24:21.5156257Z   duration_ms: 0.629725
+2026-11-01T22:24:21.5156647Z   type: 'test'
+2026-11-01T22:24:21.5156996Z   ...
+2026-11-01T22:24:21.5157427Z # Subtest: rejects missing authority
+2026-11-01T22:24:21.5158013Z ok 31 - rejects missing authority
+2026-11-01T22:24:21.5158460Z   ---
+2026-11-01T22:24:21.5158797Z   duration_ms: 0.615776
+2026-11-01T22:24:21.5159211Z   type: 'test'
+2026-11-01T22:24:21.5159560Z   ...
+2026-11-01T22:24:21.5160039Z # Subtest: rejects missing native observer
+2026-11-01T22:24:21.5160709Z ok 32 - rejects missing native observer
+2026-11-01T22:24:21.5161227Z   ---
+2026-11-01T22:24:21.5161585Z   duration_ms: 0.533474
+2026-11-01T22:24:21.5162005Z   type: 'test'
+2026-11-01T22:24:21.5162355Z   ...
+2026-11-01T22:24:21.5183273Z # Subtest: rejects missing runtime
+2026-11-01T22:24:21.5183937Z ok 33 - rejects missing runtime
+2026-11-01T22:24:21.5184402Z   ---
+2026-11-01T22:24:21.5184769Z   duration_ms: 0.604432
+2026-11-01T22:24:21.5185191Z   type: 'test'
+2026-11-01T22:24:21.5185543Z   ...
+2026-11-01T22:24:21.5186242Z # Subtest: hidden/inactive media overlays do not create false blockers
+2026-11-01T22:24:21.5187554Z ok 34 - hidden/inactive media overlays do not create false blockers
+2026-11-01T22:24:21.5188316Z   ---
+2026-11-01T22:24:21.5188683Z   duration_ms: 0.646631
+2026-11-01T22:24:21.5189113Z   type: 'test'
+2026-11-01T22:24:21.5189478Z   ...
+2026-11-01T22:24:21.5190229Z # Subtest: reader accepts deeply frozen state and never settles/ticks/clears it
+2026-11-01T22:24:21.5191375Z ok 35 - reader accepts deeply frozen state and never settles/ticks/clears it
+2026-11-01T22:24:21.5192075Z   ---
+2026-11-01T22:24:21.5192414Z   duration_ms: 0.874176
+2026-11-01T22:24:21.5193127Z   type: 'test'
+2026-11-01T22:24:21.5193473Z   ...
+2026-11-01T22:24:21.5194140Z # Subtest: absent campaign state cannot be initialized by observation
+2026-11-01T22:24:21.5195141Z ok 36 - absent campaign state cannot be initialized by observation
+2026-11-01T22:24:21.5195661Z   ---
+2026-11-01T22:24:21.5195870Z   duration_ms: 0.559148
+2026-11-01T22:24:21.5196104Z   type: 'test'
+2026-11-01T22:24:21.5196312Z   ...
+2026-11-01T22:24:21.5196752Z # Subtest: a broken acceptance API propagates instead of being normalized to success
+2026-11-01T22:24:21.5197426Z ok 37 - a broken acceptance API propagates instead of being normalized to success
+2026-11-01T22:24:21.5197841Z   ---
+2026-11-01T22:24:21.5198062Z   duration_ms: 2.41829
+2026-11-01T22:24:21.5198299Z   type: 'test'
+2026-11-01T22:24:21.5198498Z   ...
+2026-11-01T22:24:21.5198957Z # Subtest: bounded waiter observes pending -> native-owned -> released without mutation
+2026-11-01T22:24:21.5199648Z ok 38 - bounded waiter observes pending -> native-owned -> released without mutation
+2026-11-01T22:24:21.5200064Z   ---
+2026-11-01T22:24:21.5200262Z   duration_ms: 1.051676
+2026-11-01T22:24:21.5200495Z   type: 'test'
+2026-11-01T22:24:21.5200696Z   ...
+2026-11-01T22:24:21.5570694Z # Subtest: persistent dialog or missing handoff times out and cannot reach the next fixture
+2026-11-01T22:24:21.5571717Z ok 39 - persistent dialog or missing handoff times out and cannot reach the next fixture
+2026-11-01T22:24:21.5572419Z   ---
+2026-11-01T22:24:21.5573023Z   duration_ms: 52.68241
+2026-11-01T22:24:21.5573448Z   type: 'test'
+2026-11-01T22:24:21.5573805Z   ...
+2026-11-01T22:24:21.5574966Z # Subtest: invalid deadlines and mission requests are rejected before browser evaluation
+2026-11-01T22:24:21.5576163Z ok 40 - invalid deadlines and mission requests are rejected before browser evaluation
+2026-11-01T22:24:21.5576924Z   ---
+2026-11-01T22:24:21.5577272Z   duration_ms: 0.376036
+2026-11-01T22:24:21.5577552Z   type: 'test'
+2026-11-01T22:24:21.5577828Z   ...
+2026-11-01T22:24:21.5578778Z # Subtest: actual production modules expose native ownership even when bridge DOM inventory is empty
+2026-11-01T22:24:21.5580552Z ok 41 - actual production modules expose native ownership even when bridge DOM inventory is empty
+2026-11-01T22:24:21.5581672Z   ---
+2026-11-01T22:24:21.5582135Z   duration_ms: 6.717127
+2026-11-01T22:24:21.5582939Z   type: 'test'
+2026-11-01T22:24:21.5583310Z   ...
+2026-11-01T22:24:21.5594094Z # Subtest: progression fixture waits before Cell 118 mutation and before declaring CUT_05 playable
+2026-11-01T22:24:21.5595663Z ok 42 - progression fixture waits before Cell 118 mutation and before declaring CUT_05 playable
+2026-11-01T22:24:21.5596598Z   ---
+2026-11-01T22:24:21.5597076Z   duration_ms: 0.249581
+2026-11-01T22:24:21.5597567Z   type: 'test'
+2026-11-01T22:24:21.5598018Z   ...
+2026-11-01T22:24:21.5659919Z 1..42
+2026-11-01T22:24:21.5660465Z # tests 42
+2026-11-01T22:24:21.5660769Z # suites 0
+2026-11-01T22:24:21.5661285Z # pass 42
+2026-11-01T22:24:21.5661771Z # fail 0
+2026-11-01T22:24:21.5662276Z # cancelled 0
+2026-11-01T22:24:21.5663020Z # skipped 0
+2026-11-01T22:24:21.5663628Z # todo 0
+2026-11-01T22:24:21.5664162Z # duration_ms 107.511312
+2026-11-01T22:24:21.6290589Z Good Dogs independent co-op controls, puzzle gates, solo commands, revive and opening ownership: PASS
+2026-11-01T22:24:21.6734572Z Good Dogs cold resume + transactional persistence integrity: PASS
+2026-11-01T22:24:21.7072401Z Campaign playable world visuals + Good Boys Story Bible route v8: PASS
+2026-11-01T22:24:21.7532863Z Late-game / MORNINGSTAR / swarm contracts: PASS
+2026-11-01T22:24:21.7840945Z Swarm doctrine legacy-save migration: PASS
+2026-11-01T22:24:21.8157756Z Good Boys Waldo-house canon + production-art authority: PASS
+2026-11-01T22:24:21.8187070Z Night cinematic composed guard recursion regression: PASS
+2026-11-01T22:24:21.8525367Z Good Dogs combat separation + whiff contract: PASS
+2026-11-01T22:24:21.8827022Z Good Boys / Night world and Charger isolation: PASS
+2026-11-01T22:24:21.9139964Z Canonical Good Boys completion ownership / legacy fallback: PASS
+2026-11-01T22:24:21.9464383Z Good Dogs canonical M1-first opening and M2-owned flight handoff: PASS
+2026-11-01T22:24:21.9490626Z Good Dogs immediate selector reopen: PASS
+2026-11-01T22:24:21.9770806Z Good Boys Pages visual contract: PASS
+2026-11-01T22:24:22.0059182Z Good Dogs reference UI v2 contract: PASS
+2026-11-01T22:24:22.1548970Z Runtime autofix evidence attribution and repeat-run integrity: PASS
+2026-11-01T22:24:22.2775743Z Runtime triage: pass; 0 finding(s); 9 evidence files
+2026-11-01T22:24:22.5942375Z TAP version 13
+2026-11-01T22:24:22.5968143Z # Subtest: all nine suites pass only with exit codes and valid reports
+2026-11-01T22:24:22.5974036Z ok 1 - all nine suites pass only with exit codes and valid reports
+2026-11-01T22:24:22.5974913Z   ---
+2026-11-01T22:24:22.5975337Z   duration_ms: 24.447234
+2026-11-01T22:24:22.5975814Z   type: 'test'
+2026-11-01T22:24:22.5976198Z   ...
+2026-11-01T22:24:22.5977549Z # Subtest: art-only exit failure is surfaced
+2026-11-01T22:24:22.5980485Z ok 2 - art-only exit failure is surfaced
+2026-11-01T22:24:22.5981082Z   ---
+2026-11-01T22:24:22.5981507Z   duration_ms: 2.564638
+2026-11-01T22:24:22.5981992Z   type: 'test'
+2026-11-01T22:24:22.5982399Z   ...
+2026-11-01T22:24:22.5983367Z # Subtest: presentation-only exit failure is surfaced
+2026-11-01T22:24:22.5986453Z ok 3 - presentation-only exit failure is surfaced
+2026-11-01T22:24:22.5987230Z   ---
+2026-11-01T22:24:22.5987634Z   duration_ms: 1.50934
+2026-11-01T22:24:22.5988098Z   type: 'test'
+2026-11-01T22:24:22.5988494Z   ...
+2026-11-01T22:24:22.5989126Z # Subtest: night_combat-only exit failure is surfaced
+2026-11-01T22:24:22.5990996Z ok 4 - night_combat-only exit failure is surfaced
+2026-11-01T22:24:22.5991631Z   ---
+2026-11-01T22:24:22.5992003Z   duration_ms: 1.362324
+2026-11-01T22:24:22.5992455Z   type: 'test'
+2026-11-01T22:24:22.5993087Z   ...
+2026-11-01T22:24:22.5993626Z # Subtest: coop-only exit failure is surfaced
+2026-11-01T22:24:22.5995152Z ok 5 - coop-only exit failure is surfaced
+2026-11-01T22:24:22.5995712Z   ---
+2026-11-01T22:24:22.5996081Z   duration_ms: 1.619516
+2026-11-01T22:24:22.5996482Z   type: 'test'
+2026-11-01T22:24:22.5996846Z   ...
+2026-11-01T22:24:22.5999173Z # Subtest: intro-only exit failure is surfaced
+2026-11-01T22:24:22.6001198Z ok 6 - intro-only exit failure is surfaced
+2026-11-01T22:24:22.6001946Z   ---
+2026-11-01T22:24:22.6002368Z   duration_ms: 1.348088
+2026-11-01T22:24:22.6003282Z   type: 'test'
+2026-11-01T22:24:22.6003798Z   ...
+2026-11-01T22:24:22.6004469Z # Subtest: late_game-only exit failure is surfaced
+2026-11-01T22:24:22.6005277Z ok 7 - late_game-only exit failure is surfaced
+2026-11-01T22:24:22.6005891Z   ---
+2026-11-01T22:24:22.6006291Z   duration_ms: 1.228473
+2026-11-01T22:24:22.6006788Z   type: 'test'
+2026-11-01T22:24:22.6007217Z   ...
+2026-11-01T22:24:22.6007725Z # Subtest: bot-only exit failure is surfaced
+2026-11-01T22:24:22.6008452Z ok 8 - bot-only exit failure is surfaced
+2026-11-01T22:24:22.6009038Z   ---
+2026-11-01T22:24:22.6009412Z   duration_ms: 2.020268
+2026-11-01T22:24:22.6009893Z   type: 'test'
+2026-11-01T22:24:22.6010323Z   ...
+2026-11-01T22:24:22.6011035Z # Subtest: progression-only exit failure is surfaced
+2026-11-01T22:24:22.6011893Z ok 9 - progression-only exit failure is surfaced
+2026-11-01T22:24:22.6014498Z   ---
+2026-11-01T22:24:22.6015148Z   duration_ms: 1.526572
+2026-11-01T22:24:22.6015615Z   type: 'test'
+2026-11-01T22:24:22.6016002Z   ...
+2026-11-01T22:24:22.6016622Z # Subtest: backgrounds-only exit failure is surfaced
+2026-11-01T22:24:22.6017913Z ok 10 - backgrounds-only exit failure is surfaced
+2026-11-01T22:24:22.6018506Z   ---
+2026-11-01T22:24:22.6018900Z   duration_ms: 1.361773
+2026-11-01T22:24:22.6019358Z   type: 'test'
+2026-11-01T22:24:22.6019733Z   ...
+2026-11-01T22:24:22.6020867Z # Subtest: run 762 co-op evidence is isolated; broader traces do not masquerade as co-op coverage
+2026-11-01T22:24:22.6022373Z ok 11 - run 762 co-op evidence is isolated; broader traces do not masquerade as co-op coverage
+2026-11-01T22:24:22.6023639Z   ---
+2026-11-01T22:24:22.6024028Z   duration_ms: 2.410121
+2026-11-01T22:24:22.6024460Z   type: 'test'
+2026-11-01T22:24:22.6024835Z   ...
+2026-11-01T22:24:22.6025502Z # Subtest: warnings survive without making a healthy suite fail
+2026-11-01T22:24:22.6026451Z ok 12 - warnings survive without making a healthy suite fail
+2026-11-01T22:24:22.6027076Z   ---
+2026-11-01T22:24:22.6027456Z   duration_ms: 1.41887
+2026-11-01T22:24:22.6027885Z   type: 'test'
+2026-11-01T22:24:22.6028277Z   ...
+2026-11-01T22:24:22.6029018Z # Subtest: capture failures remain explicit even when gameplay passed
+2026-11-01T22:24:22.6030077Z ok 13 - capture failures remain explicit even when gameplay passed
+2026-11-01T22:24:22.6030759Z   ---
+2026-11-01T22:24:22.6031139Z   duration_ms: 1.521712
+2026-11-01T22:24:22.6031590Z   type: 'test'
+2026-11-01T22:24:22.6031961Z   ...
+2026-11-01T22:24:22.6032861Z # Subtest: malformed/empty report is not green: {broken
+2026-11-01T22:24:22.6033738Z ok 14 - malformed/empty report is not green: {broken
+2026-11-01T22:24:22.6043698Z   ---
+2026-11-01T22:24:22.6044083Z   duration_ms: 1.542422
+2026-11-01T22:24:22.6044503Z   type: 'test'
+2026-11-01T22:24:22.6044847Z   ...
+2026-11-01T22:24:22.6045375Z # Subtest: malformed/empty report is not green: null
+2026-11-01T22:24:22.6046114Z ok 15 - malformed/empty report is not green: null
+2026-11-01T22:24:22.6046640Z   ---
+2026-11-01T22:24:22.6046991Z   duration_ms: 1.415263
+2026-11-01T22:24:22.6047388Z   type: 'test'
+2026-11-01T22:24:22.6047742Z   ...
+2026-11-01T22:24:22.6048061Z # Subtest: malformed/empty report is not green: []
+2026-11-01T22:24:22.6048485Z ok 16 - malformed/empty report is not green: []
+2026-11-01T22:24:22.6048796Z   ---
+2026-11-01T22:24:22.6049456Z   duration_ms: 1.47245
+2026-11-01T22:24:22.6049739Z   type: 'test'
+2026-11-01T22:24:22.6049946Z   ...
+2026-11-01T22:24:22.6050244Z # Subtest: malformed/empty report is not green: {}
+2026-11-01T22:24:22.6050643Z ok 17 - malformed/empty report is not green: {}
+2026-11-01T22:24:22.6050932Z   ---
+2026-11-01T22:24:22.6051124Z   duration_ms: 1.38727
+2026-11-01T22:24:22.6051345Z   type: 'test'
+2026-11-01T22:24:22.6051541Z   ...
+2026-11-01T22:24:22.6051975Z # Subtest: missing report, missing output, timeout, and absent directory fail closed
+2026-11-01T22:24:22.6053906Z ok 18 - missing report, missing output, timeout, and absent directory fail closed
+2026-11-01T22:24:22.6054735Z   ---
+2026-11-01T22:24:22.6073962Z   duration_ms: 1.467481
+2026-11-01T22:24:22.6074425Z   type: 'test'
+2026-11-01T22:24:22.6074774Z   ...
+2026-11-01T22:24:22.6075355Z # Subtest: oversized report is rejected without parsing
+2026-11-01T22:24:22.6076156Z ok 19 - oversized report is rejected without parsing
+2026-11-01T22:24:22.6076726Z   ---
+2026-11-01T22:24:22.6077093Z   duration_ms: 13.940926
+2026-11-01T22:24:22.6077521Z   type: 'test'
+2026-11-01T22:24:22.6077888Z   ...
+2026-11-01T22:24:22.6078400Z # Subtest: symlink evidence is never followed
+2026-11-01T22:24:22.6079105Z ok 20 - symlink evidence is never followed
+2026-11-01T22:24:22.6079630Z   ---
+2026-11-01T22:24:22.6079979Z   duration_ms: 1.364668
+2026-11-01T22:24:22.6080397Z   type: 'test'
+2026-11-01T22:24:22.6080745Z   ...
+2026-11-01T22:24:22.6081585Z # Subtest: compact bundle includes JSON, REPL and failure screenshot, not trace archives
+2026-11-01T22:24:22.6083499Z ok 21 - compact bundle includes JSON, REPL and failure screenshot, not trace archives
+2026-11-01T22:24:22.6084291Z   ---
+2026-11-01T22:24:22.6084641Z   duration_ms: 6.296335
+2026-11-01T22:24:22.6085321Z   type: 'test'
+2026-11-01T22:24:22.6085666Z   ...
+2026-11-01T22:24:22.6086395Z # Subtest: untrusted report markup and mentions are neutralized in summary
+2026-11-01T22:24:22.6087473Z ok 22 - untrusted report markup and mentions are neutralized in summary
+2026-11-01T22:24:22.6088158Z   ---
+2026-11-01T22:24:22.6088508Z   duration_ms: 1.469826
+2026-11-01T22:24:22.6088930Z   type: 'test'
+2026-11-01T22:24:22.6089264Z   ...
+2026-11-01T22:24:22.6090089Z # Subtest: CLI binds PR head separately from tested merge SHA and preserves real artifact ID
+2026-11-01T22:24:22.6090813Z ok 23 - CLI binds PR head separately from tested merge SHA and preserves real artifact ID
+2026-11-01T22:24:22.6091445Z   ---
+2026-11-01T22:24:22.6091764Z   duration_ms: 4.894727
+2026-11-01T22:24:22.6091995Z   type: 'test'
+2026-11-01T22:24:22.6092200Z   ...
+2026-11-01T22:24:22.6092896Z # Subtest: trace capture stops once before cleanup and retains runtime failures
+2026-11-01T22:24:22.6093997Z ok 24 - trace capture stops once before cleanup and retains runtime failures
+2026-11-01T22:24:22.6094429Z   ---
+2026-11-01T22:24:22.6094628Z   duration_ms: 2.881452
+2026-11-01T22:24:22.6094856Z   type: 'test'
+2026-11-01T22:24:22.6095052Z   ...
+2026-11-01T22:24:22.6095353Z # Subtest: trace start failure cannot invent a trace
+2026-11-01T22:24:22.6095760Z ok 25 - trace start failure cannot invent a trace
+2026-11-01T22:24:22.6096057Z   ---
+2026-11-01T22:24:22.6096259Z   duration_ms: 1.366292
+2026-11-01T22:24:22.6096484Z   type: 'test'
+2026-11-01T22:24:22.6096679Z   ...
+2026-11-01T22:24:22.6096978Z # Subtest: trace stop failure cannot invent a trace
+2026-11-01T22:24:22.6097380Z ok 26 - trace stop failure cannot invent a trace
+2026-11-01T22:24:22.6097673Z   ---
+2026-11-01T22:24:22.6097871Z   duration_ms: 1.254753
+2026-11-01T22:24:22.6098093Z   type: 'test'
+2026-11-01T22:24:22.6098284Z   ...
+2026-11-01T22:24:22.6098597Z # Subtest: workflow gate parity and privilege boundaries
+2026-11-01T22:24:22.6099042Z ok 27 - workflow gate parity and privilege boundaries
+2026-11-01T22:24:22.6099353Z   ---
+2026-11-01T22:24:22.6099546Z   duration_ms: 0.452909
+2026-11-01T22:24:22.6099771Z   type: 'test'
+2026-11-01T22:24:22.6099963Z   ...
+2026-11-01T22:24:22.6100581Z # Subtest: runtime Night combat timeout matches the authoritative integration budget
+2026-11-01T22:24:22.6101268Z ok 28 - runtime Night combat timeout matches the authoritative integration budget
+2026-11-01T22:24:22.6101678Z   ---
+2026-11-01T22:24:22.6101871Z   duration_ms: 0.239138
+2026-11-01T22:24:22.6102097Z   type: 'test'
+2026-11-01T22:24:22.6102301Z   ...
+2026-11-01T22:24:22.6103094Z # Subtest: co-op instrumentation does not relax original movement or isolation assertions
+2026-11-01T22:24:22.6103786Z ok 29 - co-op instrumentation does not relax original movement or isolation assertions
+2026-11-01T22:24:22.6104210Z   ---
+2026-11-01T22:24:22.6104402Z   duration_ms: 0.190547
+2026-11-01T22:24:22.6104625Z   type: 'test'
+2026-11-01T22:24:22.6104818Z   ...
+2026-11-01T22:24:22.6105216Z # Subtest: reporter creates an issue even when triage artifact is missing
+2026-11-01T22:24:22.6106087Z ok 30 - reporter creates an issue even when triage artifact is missing
+2026-11-01T22:24:22.6106784Z   ---
+2026-11-01T22:24:22.6107124Z   duration_ms: 97.465818
+2026-11-01T22:24:22.6107497Z   type: 'test'
+2026-11-01T22:24:22.6107704Z   ...
+2026-11-01T22:24:22.6108148Z # Subtest: reporter appends evidence to existing issue without executing artifact text
+2026-11-01T22:24:22.6108814Z ok 31 - reporter appends evidence to existing issue without executing artifact text
+2026-11-01T22:24:22.6109222Z   ---
+2026-11-01T22:24:22.6109427Z   duration_ms: 116.983199
+2026-11-01T22:24:22.6109659Z   type: 'test'
+2026-11-01T22:24:22.6109851Z   ...
+2026-11-01T22:24:22.6110138Z # Subtest: same run attempt is not posted twice
+2026-11-01T22:24:22.6110519Z ok 32 - same run attempt is not posted twice
+2026-11-01T22:24:22.6110798Z   ---
+2026-11-01T22:24:22.6110994Z   duration_ms: 92.219903
+2026-11-01T22:24:22.6111222Z   type: 'test'
+2026-11-01T22:24:22.6111585Z   ...
+2026-11-01T22:24:22.6111766Z 1..32
+2026-11-01T22:24:22.6111954Z # tests 32
+2026-11-01T22:24:22.6113889Z # suites 0
+2026-11-01T22:24:22.6114243Z # pass 32
+2026-11-01T22:24:22.6114565Z # fail 0
+2026-11-01T22:24:22.6114895Z # cancelled 0
+2026-11-01T22:24:22.6115235Z # skipped 0
+2026-11-01T22:24:22.6115564Z # todo 0
+2026-11-01T22:24:22.6115918Z # duration_ms 416.873864
+2026-11-01T22:24:22.6444405Z Good Boys production compositor ownership: PASS
+2026-11-01T22:24:22.6923637Z Good Boys UI ownership, single opening authority, hardened cutscene lifecycle, fail-closed flight, and lazy media regression: PASS
+2026-11-01T22:24:22.7249995Z Good Boys mobile launch guard/resume lexical runtime: PASS
+2026-11-01T22:24:22.7533978Z Good Boys legacy ship approach compatibility guard: PASS
+2026-11-01T22:24:22.7987382Z Good Boys canonical supplied-asset ship/cockpit opening: PASS
+2026-11-01T22:24:22.8173548Z Good Dogs executable flight failure cleanup, retry, timeout and stale-callback settlement: PASS
+2026-11-01T22:24:22.8548924Z Good Dogs Story Bible semantic contract: PASS
+2026-11-01T22:24:22.8867192Z Good Dogs Index -> security -> Access Node sequence: PASS
+2026-11-01T22:24:22.9175497Z Good Boys ship-deck mapping contract: PASS
+2026-11-01T22:24:22.9917506Z Production mode router v11 input/coop regression: PASS
+2026-11-01T22:24:23.0333392Z Production title/readiness experience: PASS
+2026-11-01T22:24:23.0675192Z Production presentation ownership and keyboard controls: PASS
+2026-11-01T22:24:23.1029671Z Runtime mode shell direct entry, Sector 04 isolation, title compatibility and idempotent restore: PASS
+2026-11-01T22:24:23.1329181Z Production runtime safety v2: PASS
+2026-11-01T22:24:23.1636328Z Production immutable parser compositor: PASS
+2026-11-01T22:24:23.1641431Z Movement focus handoff: PASS
+2026-11-01T22:24:23.1934522Z Production runtime lock v2: PASS
+2026-11-01T22:24:23.2239689Z Mobile production tester contract: PASS
+2026-11-01T22:24:23.2549738Z Production static performance budget: PASS {"localStartupScripts":269,"indexKiB":16.8,"styleKiB":43,"startupJsMiB":2.52,"largestScript":"game.js?v=20260928-day-field-r3","largestScriptKiB":175.1}
+2026-11-01T22:24:23.3393973Z Production asset integration: PASS (101 PNGs, 3 JPGs, 9 JSON manifests, 52 payload parts, 43 asset authorities; 118 physical assets covered; transient retry + bounded preload verified)
+2026-11-01T22:24:23.5146592Z TAP version 13
+2026-11-01T22:24:23.5163996Z # Subtest: post-K M5 only; modal, mismatched, pre-rescue and later missions retain native renderer
+2026-11-01T22:24:23.5169669Z ok 1 - post-K M5 only; modal, mismatched, pre-rescue and later missions retain native renderer
+2026-11-01T22:24:23.5170551Z   ---
+2026-11-01T22:24:23.5170957Z   duration_ms: 3.247398
+2026-11-01T22:24:23.5171400Z   type: 'test'
+2026-11-01T22:24:23.5171783Z   ...
+2026-11-01T22:24:23.5174760Z # Subtest: current canonical Index -> security -> explicit Access Node order survives 3D demo
+2026-11-01T22:24:23.5176858Z ok 2 - current canonical Index -> security -> explicit Access Node order survives 3D demo
+2026-11-01T22:24:23.5177802Z   ---
+2026-11-01T22:24:23.5178192Z   duration_ms: 1.643331
+2026-11-01T22:24:23.5178639Z   type: 'test'
+2026-11-01T22:24:23.5179046Z   ...
+2026-11-01T22:24:23.5179923Z # Subtest: retry does not inherit old encounter flags; resume keeps actual checkpoint
+2026-11-01T22:24:23.5182825Z ok 3 - retry does not inherit old encounter flags; resume keeps actual checkpoint
+2026-11-01T22:24:23.5184153Z   ---
+2026-11-01T22:24:23.5184827Z   duration_ms: 1.573821
+2026-11-01T22:24:23.5185610Z   type: 'test'
+2026-11-01T22:24:23.5186161Z   ...
+2026-11-01T22:24:23.5187298Z # Subtest: pause blocks movement and actions; Index predictions refer to past samples
+2026-11-01T22:24:23.5188945Z ok 4 - pause blocks movement and actions; Index predictions refer to past samples
+2026-11-01T22:24:23.5189984Z   ---
+2026-11-01T22:24:23.5190560Z   duration_ms: 3.000145
+2026-11-01T22:24:23.5191330Z   type: 'test'
+2026-11-01T22:24:23.5207225Z   ...
+2026-11-01T22:24:23.5208466Z # Subtest: compositor uses the 3D callback once and keeps the immutable simulation
+2026-11-01T22:24:23.5209930Z ok 5 - compositor uses the 3D callback once and keeps the immutable simulation
+2026-11-01T22:24:23.5210631Z   ---
+2026-11-01T22:24:23.5210986Z   duration_ms: 1.591093
+2026-11-01T22:24:23.5211392Z   type: 'test'
+2026-11-01T22:24:23.5211732Z   ...
+2026-11-01T22:24:23.5212977Z # Subtest: local partner has independent movement, can be revived, and a dead checkpoint cannot heal on reload
+2026-11-01T22:24:23.5214515Z ok 6 - local partner has independent movement, can be revived, and a dead checkpoint cannot heal on reload
+2026-11-01T22:24:23.5215374Z   ---
+2026-11-01T22:24:23.5215721Z   duration_ms: 1.171536
+2026-11-01T22:24:23.5216119Z   type: 'test'
+2026-11-01T22:24:23.5216471Z   ...
+2026-11-01T22:24:23.5217221Z # Subtest: all six quality-tier models match the shipped manifest and GLB envelope
+2026-11-01T22:24:23.5218330Z ok 7 - all six quality-tier models match the shipped manifest and GLB envelope
+2026-11-01T22:24:23.5219030Z   ---
+2026-11-01T22:24:23.5219370Z   duration_ms: 38.684397
+2026-11-01T22:24:23.5219763Z   type: 'test'
+2026-11-01T22:24:23.5220104Z   ...
+2026-11-01T22:24:23.5220939Z # Subtest: four-way keyboard and touch controls match the camera without orbiting on reversal
+2026-11-01T22:24:23.5222199Z ok 8 - four-way keyboard and touch controls match the camera without orbiting on reversal
+2026-11-01T22:24:23.5223163Z   ---
+2026-11-01T22:24:23.5223493Z   duration_ms: 5.192546
+2026-11-01T22:24:23.5223881Z   type: 'test'
+2026-11-01T22:24:23.5224211Z   ...
+2026-11-01T22:24:23.5225033Z # Subtest: grounded corridor has no platform collision, normalized movement, or jump action
+2026-11-01T22:24:23.5226292Z ok 9 - grounded corridor has no platform collision, normalized movement, or jump action
+2026-11-01T22:24:23.5227042Z   ---
+2026-11-01T22:24:23.5227381Z   duration_ms: 4.328635
+2026-11-01T22:24:23.5227764Z   type: 'test'
+2026-11-01T22:24:23.5228090Z   ...
+2026-11-01T22:24:23.5228771Z # Subtest: corridor attacks and Access Node use respect lateral distance
+2026-11-01T22:24:23.5229770Z ok 10 - corridor attacks and Access Node use respect lateral distance
+2026-11-01T22:24:23.5230399Z   ---
+2026-11-01T22:24:23.5230734Z   duration_ms: 1.322319
+2026-11-01T22:24:23.5231332Z   type: 'test'
+2026-11-01T22:24:23.5231675Z   ...
+2026-11-01T22:24:23.5232396Z # Subtest: portrait cameras keep both complete dogs inside the horizontal frame
+2026-11-01T22:24:23.5233867Z ok 11 - portrait cameras keep both complete dogs inside the horizontal frame
+2026-11-01T22:24:23.5234551Z   ---
+2026-11-01T22:24:23.5234888Z   duration_ms: 2.695805
+2026-11-01T22:24:23.5235288Z   type: 'test'
+2026-11-01T22:24:23.5235618Z   ...
+2026-11-01T22:24:23.5236505Z # Subtest: actual native M5 simulation walks four directions on the floor and isolates other missions
+2026-11-01T22:24:23.5237893Z ok 12 - actual native M5 simulation walks four directions on the floor and isolates other missions
+2026-11-01T22:24:23.5238698Z   ---
+2026-11-01T22:24:23.5239030Z   duration_ms: 2.201417
+2026-11-01T22:24:23.5239437Z   type: 'test'
+2026-11-01T22:24:23.5239770Z   ...
+2026-11-01T22:24:23.5240528Z # Subtest: guided play uses proximity targeting without facing misses or remote hits
+2026-11-01T22:24:23.5241699Z ok 13 - guided play uses proximity targeting without facing misses or remote hits
+2026-11-01T22:24:23.5242403Z   ---
+2026-11-01T22:24:23.5242960Z   duration_ms: 1.102297
+2026-11-01T22:24:23.5243347Z   type: 'test'
+2026-11-01T22:24:23.5243689Z   ...
+2026-11-01T22:24:23.5244491Z # Subtest: solo partner contributes attacks and hold-strike respects cooldown and pause
+2026-11-01T22:24:23.5245696Z ok 14 - solo partner contributes attacks and hold-strike respects cooldown and pause
+2026-11-01T22:24:23.5246383Z   ---
+2026-11-01T22:24:23.5246577Z   duration_ms: 1.025413
+2026-11-01T22:24:23.5246810Z   type: 'test'
+2026-11-01T22:24:23.5247024Z   ...
+2026-11-01T22:24:23.5247574Z # Subtest: objective and enabled interaction follow encounter, console range, partner and door readiness
+2026-11-01T22:24:23.5248614Z ok 15 - objective and enabled interaction follow encounter, console range, partner and door readiness
+2026-11-01T22:24:23.5249105Z   ---
+2026-11-01T22:24:23.5249314Z   duration_ms: 1.39795
+2026-11-01T22:24:23.5249548Z   type: 'test'
+2026-11-01T22:24:23.5249753Z   ...
+2026-11-01T22:24:23.5250182Z # Subtest: distant enemies cannot damage the dogs before the encounter is reached
+2026-11-01T22:24:23.5250822Z ok 16 - distant enemies cannot damage the dogs before the encounter is reached
+2026-11-01T22:24:23.5251227Z   ---
+2026-11-01T22:24:23.5251431Z   duration_ms: 1.859937
+2026-11-01T22:24:23.5251769Z   type: 'test'
+2026-11-01T22:24:23.5252120Z   ...
+2026-11-01T22:24:23.5253261Z # Subtest: guided inputs complete all four beats without editing health or encounter flags
+2026-11-01T22:24:23.5254527Z ok 17 - guided inputs complete all four beats without editing health or encounter flags
+2026-11-01T22:24:23.5255277Z   ---
+2026-11-01T22:24:23.5255622Z   duration_ms: 7.766779
+2026-11-01T22:24:23.5256012Z   type: 'test'
+2026-11-01T22:24:23.5256376Z   ...
+2026-11-01T22:24:23.5257110Z # Subtest: swap transfers control to the partner without teleporting either dog
+2026-11-01T22:24:23.5258212Z ok 18 - swap transfers control to the partner without teleporting either dog
+2026-11-01T22:24:23.5258896Z   ---
+2026-11-01T22:24:23.5259243Z   duration_ms: 1.037295
+2026-11-01T22:24:23.5259649Z   type: 'test'
+2026-11-01T22:24:23.5259985Z   ...
+2026-11-01T22:24:23.5260305Z 1..18
+2026-11-01T22:24:23.5260612Z # tests 18
+2026-11-01T22:24:23.5260932Z # suites 0
+2026-11-01T22:24:23.5261258Z # pass 18
+2026-11-01T22:24:23.5261578Z # fail 0
+2026-11-01T22:24:23.5261898Z # cancelled 0
+2026-11-01T22:24:23.5262242Z # skipped 0
+2026-11-01T22:24:23.5262563Z # todo 0
+2026-11-01T22:24:23.5263132Z # duration_ms 97.832669
+2026-11-01T22:24:23.5608396Z Mike canonical animation manifest + provenance + source readiness: PASS
+2026-11-01T22:24:23.5925911Z Mike workstation arcade: PASS
+2026-11-01T22:24:23.6226610Z Campaign production visual atlas renderer: PASS
+2026-11-01T22:24:23.6517392Z Campaign asset contract: PASS
+2026-11-01T22:24:23.6836734Z Campaign asset pipeline: PASS
+2026-11-01T22:24:23.9885751Z Campaign runtime assets: PASS
+2026-11-01T22:24:24.0285685Z Complete campaign contract: PASS
+2026-11-01T22:24:24.0610649Z Campaign scene schema / Story Bible v1.2: PASS
+2026-11-01T22:24:24.0950013Z Campaign runtime adapter / Story Bible v1.2: PASS
+2026-11-01T22:24:24.1338482Z Campaign native Act I workstation integration: PASS
+2026-11-01T22:24:24.1680231Z PASS fresh casebook does not invent progress or reveal future answers
+2026-11-01T22:24:24.1703410Z PASS verification and human outcome remain independent across all valid outcomes
+2026-11-01T22:24:24.1715798Z PASS partial, missing technical proof, and inconsistent outcomes cannot look verified
+2026-11-01T22:24:24.1733322Z PASS assignment and recorded completion ownership do not collapse into each other
+2026-11-01T22:24:24.1747063Z PASS unrelated identity evidence cannot reveal the badge record
+2026-11-01T22:24:24.1766340Z PASS delegated badge evidence keeps its actual source and remains unresolved
+2026-11-01T22:24:24.1783803Z PASS reviewing an existing badge report cannot upgrade provenance or duplicate history
+2026-11-01T22:24:24.1804549Z PASS history can be read before standup without clock-in, workstation writes or discovery
+2026-11-01T22:24:24.1823513Z PASS QUEUE exposes the casebook through real dialog callbacks without duplicate actions
+2026-11-01T22:24:24.1841448Z PASS needs-attention filter retains unresolved access and excludes only proven restoration
+2026-11-01T22:24:24.1855462Z PASS TEAMS remembers the saved outcomes rather than repeating stale pre-repair complaints
+2026-11-01T22:24:24.1872478Z PASS completed-contact interaction uses honest memory and cannot grant a second completion
+2026-11-01T22:24:24.1883226Z PASS old saves without history get no fabricated events
+2026-11-01T22:24:24.1895199Z PASS timeline is bounded, chronological and excludes future story events
+2026-11-01T22:24:24.1911617Z PASS invalid event timestamps remain unknown instead of becoming invented dates
+2026-11-01T22:24:24.1927246Z PASS save-controlled labels are escaped and prototype-shaped owner IDs stay text
+2026-11-01T22:24:24.1953854Z PASS cold runtime reload reconstructs memory from the canonical save only
+2026-11-01T22:24:24.1979210Z PASS Tuesday transition preserves the recorded casebook without resetting outcomes
+2026-11-01T22:24:24.1993720Z PASS malformed or inaccessible storage fails visibly without overwriting progress
+2026-11-01T22:24:24.2045925Z PASS every record callback reloads fresh state and repeated review remains read-only
+2026-11-01T22:24:24.2046623Z Campaign casebook: 20 tests passed
+2026-11-01T22:24:24.2379092Z PASS shipping_cannot_print cannot skip evidence
+2026-11-01T22:24:24.2393672Z PASS shipping_cannot_print wrong hypothesis is evidence-backed and non-terminal
+2026-11-01T22:24:24.2405557Z PASS shipping_cannot_print remediation cannot skip supported hypothesis
+2026-11-01T22:24:24.2431004Z PASS shipping_cannot_print verification cannot skip remediation or technical check
+2026-11-01T22:24:24.2444306Z PASS shipping_cannot_print full flow closes only after requester verification
+2026-11-01T22:24:24.2454863Z PASS plating_workstation_down cannot skip evidence
+2026-11-01T22:24:24.2466056Z PASS plating_workstation_down wrong hypothesis is evidence-backed and non-terminal
+2026-11-01T22:24:24.2482283Z PASS plating_workstation_down remediation cannot skip supported hypothesis
+2026-11-01T22:24:24.2493926Z PASS plating_workstation_down verification cannot skip remediation or technical check
+2026-11-01T22:24:24.2506244Z PASS plating_workstation_down full flow closes only after requester verification
+2026-11-01T22:24:24.2525124Z PASS progress persists inside canonical save and resumes without a parallel namespace
+2026-11-01T22:24:24.2535734Z PASS duplicate evidence is idempotent and does not spam history
+2026-11-01T22:24:24.2546761Z PASS canonical resolver remains the only closure authority
+2026-11-01T22:24:24.2557508Z PASS resolved tickets cannot be mutated by the investigation API
+2026-11-01T22:24:24.2568708Z PASS unknown tickets, evidence and hypotheses fail closed
+2026-11-01T22:24:24.2584022Z PASS interaction intercepts only unresolved Shipping and Plating after day unlock
+2026-11-01T22:24:24.2618598Z PASS UI path requires gather -> hypothesis -> remediation -> technical -> requester
+2026-11-01T22:24:24.2632419Z PASS reload between every investigation phase resumes from canonical state
+2026-11-01T22:24:24.2634543Z PASS investigation copy contains no ORPHEUS/reveal leakage
+2026-11-01T22:24:24.2636671Z PASS bootstrap loader references the stable investigation module
+2026-11-01T22:24:24.2637364Z Campaign Day 1 investigations: 20 tests passed
+2026-11-01T22:24:24.3001152Z PASS reading an absent investigation cannot create a store or history
+2026-11-01T22:24:24.3033921Z PASS reading a frozen present investigation is non-mutating
+2026-11-01T22:24:24.3053357Z PASS insufficient evidence and unknown hypotheses cannot create history
+2026-11-01T22:24:24.3074285Z PASS shipping_cannot_print needs the diagnostic clue, not just any two observations
+2026-11-01T22:24:24.3090713Z PASS plating_workstation_down needs the diagnostic clue, not just any two observations
+2026-11-01T22:24:24.3109096Z PASS reviewing an additional clue cannot regress technical validation
+2026-11-01T22:24:24.3131237Z PASS repeat fixes/checks/support cannot change the phase or history
+2026-11-01T22:24:24.3155186Z PASS a stale different hypothesis cannot replace remediation in progress
+2026-11-01T22:24:24.3171668Z PASS repeat rejected hypotheses do not spam history
+2026-11-01T22:24:24.3212314Z PASS the review screen offers resume, not a phase-resetting hypothesis path
+2026-11-01T22:24:24.3248149Z PASS double-tapping a stale closure callback is safe and awards no second closure
+2026-11-01T22:24:24.3273785Z PASS an unloaded investigation module cannot turn world interaction into instant closure
+2026-11-01T22:24:24.3296854Z PASS a malformed investigation cannot fall through to the legacy instant resolver
+2026-11-01T22:24:24.3321672Z PASS a stale evidence callback after another closure rereads the record safely
+2026-11-01T22:24:24.3344975Z PASS temporary workarounds cannot bypass a supported hypothesis or real limited-service confirmation
+2026-11-01T22:24:24.3362422Z PASS a confirmed workaround produces partial/degraded canonical closure, never full restoration
+2026-11-01T22:24:24.3380026Z PASS reported restoration requires technical proof and stays partial
+2026-11-01T22:24:24.3419407Z PASS temporary workaround verification resumes after a cold reload
+2026-11-01T22:24:24.3435342Z PASS duplicate temporary workaround actions do not create extra history or change phase
+2026-11-01T22:24:24.3467057Z PASS workaround preview can be declined without changing the saved investigation
+2026-11-01T22:24:24.3467984Z Investigation integrity: 20 tests passed
+2026-11-01T22:24:24.3991549Z PASS shipping_cannot_print strong/restored has an evidence-appropriate next shift
+2026-11-01T22:24:24.4031493Z PASS shipping_cannot_print strong/degraded has an evidence-appropriate next shift
+2026-11-01T22:24:24.4053091Z PASS shipping_cannot_print strong/unmet has an evidence-appropriate next shift
+2026-11-01T22:24:24.4076509Z PASS shipping_cannot_print partial/restored has an evidence-appropriate next shift
+2026-11-01T22:24:24.4100625Z PASS shipping_cannot_print partial/degraded has an evidence-appropriate next shift
+2026-11-01T22:24:24.4126521Z PASS shipping_cannot_print partial/unmet has an evidence-appropriate next shift
+2026-11-01T22:24:24.4158640Z PASS plating_workstation_down strong/restored has an evidence-appropriate next shift
+2026-11-01T22:24:24.4188164Z PASS plating_workstation_down strong/degraded has an evidence-appropriate next shift
+2026-11-01T22:24:24.4211227Z PASS plating_workstation_down strong/unmet has an evidence-appropriate next shift
+2026-11-01T22:24:24.4237573Z PASS plating_workstation_down partial/restored has an evidence-appropriate next shift
+2026-11-01T22:24:24.4256957Z PASS plating_workstation_down partial/degraded has an evidence-appropriate next shift
+2026-11-01T22:24:24.4276184Z PASS plating_workstation_down partial/unmet has an evidence-appropriate next shift
+2026-11-01T22:24:24.4297092Z PASS Day 1 cannot create next-shift state or expose handoff observations
+2026-11-01T22:24:24.4313112Z PASS untouched tickets carry over without being closed or re-randomized
+2026-11-01T22:24:24.4335915Z PASS Impossible Access never enters ordinary recurrence or changes provenance
+2026-11-01T22:24:24.4354885Z PASS repeating Tuesday cannot reset work, duplicate history or rewind later chapters
+2026-11-01T22:24:24.4378683Z PASS migrated Tuesday saves expose a read-only deterministic handoff
+2026-11-01T22:24:24.4398857Z PASS rejected actions are atomic, including before lazy migration
+2026-11-01T22:24:24.4416344Z PASS history review does not count as an independent technical observation
+2026-11-01T22:24:24.4531983Z PASS every follow-up phase round-trips through the canonical save key
+2026-11-01T22:24:24.4560171Z PASS duplicate evidence, hypotheses, fixes, checks and closure cannot farm history
+2026-11-01T22:24:24.4583727Z PASS unsupported hypotheses are nonterminal and do not spam rejection history
+2026-11-01T22:24:24.4605968Z PASS reviewing new observations cannot undo a supported remediation
+2026-11-01T22:24:24.4630204Z PASS conflicting old outcomes remain conflicting in history after a new confirmed outcome
+2026-11-01T22:24:24.4651836Z PASS verified carryover completion uses its original investigation and owner
+2026-11-01T22:24:24.4667922Z PASS handoff copy cannot mutate the persisted snapshot
+2026-11-01T22:24:24.4668736Z Workday follow-up contracts: 26 tests passed
+2026-11-01T22:24:24.5080082Z PASS Tuesday contacts are actually placed and repeat placement is idempotent
+2026-11-01T22:24:24.5119181Z PASS next-shift placement does not overlap existing noncampaign NPCs
+2026-11-01T22:24:24.5163233Z PASS actual adjacent interaction reaches the next-shift investigation
+2026-11-01T22:24:24.5197008Z PASS Tuesday board opens the workstation, not a replay of Day 1 standup
+2026-11-01T22:24:24.5229069Z PASS QUEUE, TEAMS and original casebook all expose the same handoff
+2026-11-01T22:24:24.5258155Z PASS reviewing the handoff, original records, and observations is read-only
+2026-11-01T22:24:24.5328043Z PASS shipping_cannot_print recheck UI requires both observations and real requester confirmation
+2026-11-01T22:24:24.5367068Z PASS plating_workstation_down recheck UI requires both observations and real requester confirmation
+2026-11-01T22:24:24.5412025Z PASS shipping_cannot_print degraded-service UI includes hypothesis, repair, recheck, and task confirmation
+2026-11-01T22:24:24.5451335Z PASS plating_workstation_down degraded-service UI includes hypothesis, repair, recheck, and task confirmation
+2026-11-01T22:24:24.5490490Z PASS a stale requester-confirmation callback cannot close twice or add history
+2026-11-01T22:24:24.5511772Z PASS current service visuals can improve while original casebook remains degraded
+2026-11-01T22:24:24.5537074Z PASS completed follow-up contacts remember the actual next-shift outcome
+2026-11-01T22:24:24.5564855Z PASS sound settings are reachable from the existing workstation without adding a tab
+2026-11-01T22:24:24.5587650Z PASS unresolved carryover has a resume action, not an instant closure
+2026-11-01T22:24:24.5609521Z PASS blocked storage fails visibly and cannot replace the authoritative save
+2026-11-01T22:24:24.5634616Z PASS historical casebook visuals do not borrow a later restoration
+2026-11-01T22:24:24.5652892Z PASS resuming an already constructed Tuesday world installs contacts immediately
+2026-11-01T22:24:24.5670290Z PASS old Day 1 security contacts do not leak into the Tuesday contact set
+2026-11-01T22:24:24.5699942Z PASS carried work completion never invents a new firsthand provenance
+2026-11-01T22:24:24.5765397Z PASS shipping_cannot_print reported choice reaches Tuesday consequences through normal field UI
+2026-11-01T22:24:24.5823769Z PASS shipping_cannot_print workaround choice reaches Tuesday consequences through normal field UI
+2026-11-01T22:24:24.5875986Z PASS plating_workstation_down reported choice reaches Tuesday consequences through normal field UI
+2026-11-01T22:24:24.5933038Z PASS plating_workstation_down workaround choice reaches Tuesday consequences through normal field UI
+2026-11-01T22:24:24.5933906Z Workday follow-up UI/runtime: 24 tests passed
+2026-11-01T22:24:24.6360163Z Canonical Day 1 runtime gate: PASS
+2026-11-01T22:24:24.6776762Z Campaign production opening acceptance: PASS
+2026-11-01T22:24:24.7122167Z Sector 04 native sandbox: PASS
+2026-11-01T22:24:24.7490560Z Sector 04 runtime bridge: PASS
+2026-11-01T22:24:24.7939857Z Campaign save/reload traversal: PASS
+2026-11-01T22:24:24.8224493Z Campaign browser entrypoint: PASS
+2026-11-01T22:24:24.8647550Z Static entrypoint integrity: PASS
+2026-11-01T22:24:24.8953935Z v736 runtime asset wiring checks passed
+2026-11-01T22:24:24.9270493Z Night reference visual authority + normal-run isolation: PASS
+2026-11-01T22:24:24.9596758Z Glitch split-asset graceful degradation: PASS
+2026-11-01T22:24:24.9895686Z PASS joystick intent sampled at action time, outside the temporary key bridge
+2026-11-01T22:24:24.9920158Z PASS explicit stationary grab, released movement and a new direction throw
+2026-11-01T22:24:24.9933315Z PASS live joystick chooses left-facing punch before the next frame
+2026-11-01T22:24:24.9943640Z PASS explicit punch never becomes an accidental close-range grab
+2026-11-01T22:24:24.9953464Z PASS up punch uppercuts and launches on contact, not on input
+2026-11-01T22:24:24.9963124Z PASS down punch hits low without launching
+2026-11-01T22:24:24.9973967Z PASS kick launches a grounded opponent
+2026-11-01T22:24:24.9983510Z PASS rising-kick launches a grounded opponent
+2026-11-01T22:24:25.0003750Z PASS down kick sweeps with bounded ground recovery
+2026-11-01T22:24:25.0027694Z PASS low attacks cannot hit a hovering or launched opponent
+2026-11-01T22:24:25.0039290Z PASS kick range differs from punch range
+2026-11-01T22:24:25.0048977Z PASS attack facing remains fixed at contact after movement turns
+2026-11-01T22:24:25.0083561Z PASS grab rejects air, hover, disabled grab, and out-of-range targets
+2026-11-01T22:24:25.0090359Z PASS grab uses feet alignment for different character heights
+2026-11-01T22:24:25.0112089Z PASS grab expiry and incoming damage release both actors
+2026-11-01T22:24:25.0121268Z PASS early throw confirm is buffered rather than dropped
+2026-11-01T22:24:25.0129263Z PASS removed enemy cannot leave a stuck grab
+2026-11-01T22:24:25.0139202Z PASS recovery buffer retains kick type and direction at press time
+2026-11-01T22:24:25.0156415Z PASS a grounded relaunch never resets an existing air-combo count
+2026-11-01T22:24:25.0179851Z PASS air punches/kicks stop at three hits and force descent
+2026-11-01T22:24:25.0191718Z PASS down-air kick slams early, with no infinite lift
+2026-11-01T22:24:25.0209235Z PASS only a connected launcher may cancel recovery into jump
+2026-11-01T22:24:25.0217539Z PASS pause does not advance combat or accept actions
+2026-11-01T22:24:25.0237492Z PASS KO reward resolves once even on repeated inputs
+2026-11-01T22:24:25.0256591Z PASS Good Dogs, Sector 04 and Waldo remain excluded
+2026-11-01T22:24:25.0264587Z PASS opposite directions cancel and no caller keys are mutated
+2026-11-01T22:24:25.0280254Z PASS adapter keeps up as aim, supplies a distinct jump edge, restores keys on exceptions
+2026-11-01T22:24:25.0289300Z PASS jump substitution is not mistaken for uppercut aim
+2026-11-01T22:24:25.0297584Z PASS a jump pressed before the first frame survives runtime binding
+2026-11-01T22:24:25.0308144Z PASS tap-jump queue survives hit-stop and is consumed exactly once afterward
+2026-11-01T22:24:25.0316536Z PASS normalization reaches both arrow and letter inputs in the real frame bridge
+2026-11-01T22:24:25.0325072Z PASS pause cancels a queued jump rather than releasing it on resume
+2026-11-01T22:24:25.0326843Z PASS input adapter uses the existing frame caller and core owns no listener or extra loop
+2026-11-01T22:24:25.0334310Z PASS house interaction remains delegated instead of becoming a punch
+2026-11-01T22:24:25.0345099Z PASS Charger interaction stays reachable and a nearby enemy keeps punch ownership
+2026-11-01T22:24:25.0370601Z PASS pause/game-over/hidden tab and director lock refuse both direct and input actions
+2026-11-01T22:24:25.0380476Z PASS canonical Night world wins over a stale global alias
+2026-11-01T22:24:25.0390510Z PASS audio failures cannot interrupt contact or KO settlement
+2026-11-01T22:24:25.0391144Z {"suite":"night-directional-combat","passed":38,"failed":0}
+2026-11-01T22:24:25.0777237Z PASS production Night step: uppercut -> jump -> 3 air hits at 0.016 seconds/frame
+2026-11-01T22:24:25.0820007Z PASS production Night step: rising-kick -> jump -> 3 air hits at 0.016 seconds/frame
+2026-11-01T22:24:25.0858641Z PASS production Night step: kick -> jump -> 3 air hits at 0.016 seconds/frame
+2026-11-01T22:24:25.0879791Z PASS production Night step: uppercut -> jump -> 3 air hits at 0.1 seconds/frame
+2026-11-01T22:24:25.0900502Z PASS production Night step: rising-kick -> jump -> 3 air hits at 0.1 seconds/frame
+2026-11-01T22:24:25.0926514Z PASS production Night step: kick -> jump -> 3 air hits at 0.1 seconds/frame
+2026-11-01T22:24:25.0948185Z PASS production Night step: uppercut -> jump -> 3 air hits at 0.25 seconds/frame
+2026-11-01T22:24:25.0968779Z PASS production Night step: rising-kick -> jump -> 3 air hits at 0.25 seconds/frame
+2026-11-01T22:24:25.0990461Z PASS production Night step: kick -> jump -> 3 air hits at 0.25 seconds/frame
+2026-11-01T22:24:25.0992463Z {"suite":"night-directional-physics","passed":9,"failed":0}
+2026-11-01T22:24:25.1340664Z PASS normal airborne targeting keeps the authored 92px window
+2026-11-01T22:24:25.1350077Z PASS engaged follow overrides only vertical tolerance inside the bounded follow envelope
+2026-11-01T22:24:25.1381861Z PASS follow never bypasses horizontal reach, facing, recovery, lock, or target identity
+2026-11-01T22:24:25.1406972Z PASS launcher follow is inert until the player explicitly jumps
+2026-11-01T22:24:25.1423391Z PASS engaged follow keeps transient-grounded juggle contacts owned until landing or lock
+2026-11-01T22:24:25.1444894Z PASS a whiff preserves follow ownership so a still-airborne juggle remains recoverable
+2026-11-01T22:24:25.1454707Z PASS landing ends follow ownership even without a timeout
+2026-11-01T22:24:25.1455524Z {"suite":"night-follow-window","passed":7,"failed":0}
+2026-11-01T22:24:25.1789485Z Directional integration: controller edges, menu scope, single loader and consolidated lifecycle PASS
+2026-11-01T22:24:25.2284930Z PASS double-tap both keyboard directions, with no repeat while held
+2026-11-01T22:24:25.2311833Z PASS late taps and alternating directions do not dash
+2026-11-01T22:24:25.2334603Z PASS keyboard taps shorter than a render frame are retained, repeats are ignored
+2026-11-01T22:24:25.2361874Z PASS overlapping direction aliases require a complete release before the next tap
+2026-11-01T22:24:25.2386421Z PASS tap expiry uses elapsed input time even during hit-stop or a stalled frame
+2026-11-01T22:24:25.2400082Z PASS joystick double flicks need neutral; analog jitter cannot retrigger
+2026-11-01T22:24:25.2411473Z PASS opposed keyboard and joystick inputs cannot create a dash
+2026-11-01T22:24:25.2421895Z PASS cooldown, block and stun cannot create additional dash windows
+2026-11-01T22:24:25.2442993Z PASS pause/blur cleanup clears tap history and the dash-to-grab window
+2026-11-01T22:24:25.2465718Z PASS real movement: double tap, approach, attack grabs and stops the dash
+2026-11-01T22:24:25.2485834Z PASS outside the dash window, normal forward attacks stay punches
+2026-11-01T22:24:25.2505536Z PASS dash attacks never pull distant/hovering targets into a grab
+2026-11-01T22:24:25.2524236Z PASS high/low aim remains available immediately after dashing
+2026-11-01T22:24:25.2549626Z PASS unchanged owners: Good Dogs, Sector 04 and social Waldo
+2026-11-01T22:24:25.4639857Z {"suite":"night-movement-combos","passed":14,"airSequences":54,"delayedTouchSequences":12,"maxObservedHorizontalGap":58.4,"failed":0}
+2026-11-01T22:24:25.5487099Z {"suite":"visual-combat-assets","moves":20,"authoredFrames":80,"scenePlates":5,"runtimeArtBytes":2909227,"failed":0}
+2026-11-01T22:24:25.6078005Z Night contextual combat: contact timing, rhythm, grabs, throws, stun, finite juggles, collision rewards and campaign isolation PASS
+2026-11-01T22:24:25.6391286Z PASS load is silent, lazy and listener installation is idempotent
+2026-11-01T22:24:25.6416902Z PASS one shared context and one reusable noise buffer serve repeated effects
+2026-11-01T22:24:25.6445077Z PASS every supported semantic cue schedules a finite local voice
+2026-11-01T22:24:25.6453073Z PASS cue timbres distinguish a miss, hit, finisher, block and knockout
+2026-11-01T22:24:25.6465285Z PASS duplicate serials and crowd bursts do not double-play
+2026-11-01T22:24:25.6485304Z PASS serials reset with the combat state, not across every swing
+2026-11-01T22:24:25.6496305Z PASS guarded damage is not a second impact sound
+2026-11-01T22:24:25.6503348Z PASS unknown/prototype names are safely ignored
+2026-11-01T22:24:25.6547425Z PASS voice count is bounded even during a crowd collision storm
+2026-11-01T22:24:25.6564020Z PASS quiet effects cannot steal all active high-priority feedback
+2026-11-01T22:24:25.6577178Z PASS ended sounds disconnect every voice node
+2026-11-01T22:24:25.6586690Z PASS partial WebAudio construction failures clean up and cannot affect combat
+2026-11-01T22:24:25.6595678Z PASS failed bus graphs are not retained as a working audio bus
+2026-11-01T22:24:25.6622918Z PASS the game lexical mute binding still controls combat effects
+2026-11-01T22:24:25.6630477Z PASS combat volume zero does not create an audio context
+2026-11-01T22:24:25.6643620Z PASS combat preference validation is finite, bounded, and independent of story saves
+2026-11-01T22:24:25.6666355Z PASS corrupt or unavailable preference storage does not break play
+2026-11-01T22:24:25.6679065Z PASS hidden document silences existing voices and rejects new sounds
+2026-11-01T22:24:25.6692893Z PASS suspended contexts drop, rather than enqueue, late combat events
+2026-11-01T22:24:25.6721241Z PASS unsupported audio leaves actual hit timing and damage intact
+2026-11-01T22:24:25.6742321Z PASS Good Dogs, Sector 04 and Waldo do not enter the street audio bus
+2026-11-01T22:24:25.6750468Z PASS captions remain available with sounds off and expire on the simulation clock
+2026-11-01T22:24:25.6760330Z PASS caption preference is reachable without touching music controls
+2026-11-01T22:24:25.6777159Z PASS real combat events drive hit, block, and hurt sounds exactly once
+2026-11-01T22:24:25.6778566Z PASS new audio cannot control or stop music playback
+2026-11-01T22:24:25.6786738Z PASS guard captions do not get overwritten by the guarded damage modifier
+2026-11-01T22:24:25.6802176Z PASS knockout noise synthesis does not consume reward RNG
+2026-11-01T22:24:25.6811868Z PASS rejected resume promise is contained without replay
+2026-11-01T22:24:25.6818986Z PASS master SFX zero suppresses construction and sound
+2026-11-01T22:24:25.6830787Z PASS master and combat gains multiply without touching music
+2026-11-01T22:24:25.6842417Z PASS stereo location is clamped and voice-owned pan nodes disconnect
+2026-11-01T22:24:25.6855104Z PASS stereo left/right follows confirmed event location, not random sound position
+2026-11-01T22:24:25.6866217Z PASS older browsers without stereo panners keep functional mono effects
+2026-11-01T22:24:25.6873852Z PASS old Night world emits no sound after switching into another mode or dialog
+2026-11-01T22:24:25.6898822Z PASS pause, drive, game over and presentation blockers suppress sound and captions
+2026-11-01T22:24:25.6909899Z PASS suppressed effects cannot be replayed after unpausing
+2026-11-01T22:24:25.6919363Z PASS classic-script state overrides stale window aliases for sound
+2026-11-01T22:24:25.6926873Z PASS missing active world does not unlock on a stale-world gesture
+2026-11-01T22:24:25.6927606Z Combat audio: 38 tests passed
+2026-11-01T22:24:25.7262374Z PASS mobile skin preserves the M3 relay verb on repeated updates
+2026-11-01T22:24:25.7324389Z PASS mobile skin preserves reach, cell and custom mission interaction labels
+2026-11-01T22:24:25.7330980Z PASS mobile skin leaves disabled and contextual action ownership untouched
+2026-11-01T22:24:25.7339548Z PASS stale Good Dogs state cannot restyle a Day or another Night world
+2026-11-01T22:24:25.7353100Z PASS live Good Dogs still receives the current mobile skin
+2026-11-01T22:24:25.7366483Z PASS bootstrap retains latest main Night flow and mobile controls exactly once
+2026-11-01T22:24:25.7369329Z PASS entrypoint cache key matches the integrated bootstrap build
+2026-11-01T22:24:25.7389156Z PASS entrypoint requests exactly one local loader with the current bootstrap cache key
+2026-11-01T22:24:25.7397320Z PASS integration gate includes Night flow and every new quality regression suite
+2026-11-01T22:24:25.7399773Z Quality integration: 9 tests passed
+2026-11-01T22:24:25.7685764Z Live-crawl visual cohesion contract: PASS
+2026-11-01T22:24:25.8052957Z PASS load starts no loop, context, listener or duplicate DOM HUD
+2026-11-01T22:24:25.8083968Z PASS live upgrade stops old loop and removes only retired owned surfaces
+2026-11-01T22:24:25.8118917Z PASS all eight mission descriptions derive IDs from the actual immutable registry
+2026-11-01T22:24:25.8146208Z PASS M4 follows actual clue objects and needs three observations, not walking distance
+2026-11-01T22:24:25.8165254Z PASS M4 clue completion points to the real cell entrance and does not claim the prisoner free
+2026-11-01T22:24:25.8186908Z PASS M4 empty enemy list cannot certify ambush success
+2026-11-01T22:24:25.8203955Z PASS M4 no K reveal in guidance before the native release
+2026-11-01T22:24:25.8220654Z PASS M5 empty room does not skip the Mike Index
+2026-11-01T22:24:25.8246998Z PASS M5 guidance distinguishes boss, incoming security, node and secured route
+2026-11-01T22:24:25.8267025Z PASS M6 uses actual decrypt seconds and measured surveillance state
+2026-11-01T22:24:25.8285370Z PASS M6 zero decrypt alone cannot imply final wave or release completion
+2026-11-01T22:24:25.8304031Z PASS M6 lost or uninitialized uplink does not look like success
+2026-11-01T22:24:25.8323463Z PASS M7 empty boss roster and walking to shuttle cannot bypass tandem guidance
+2026-11-01T22:24:25.8343321Z PASS M3 reads native relay and exit coordinates and phase without invoking mutating helpers
+2026-11-01T22:24:25.8365469Z PASS M2 pending wave is not an empty-room victory
+2026-11-01T22:24:25.8382484Z PASS M1 points to Hidden Bay only after trail state exists
+2026-11-01T22:24:25.8400589Z PASS M8 does not manufacture campaign completion
+2026-11-01T22:24:25.8517875Z PASS dialog, battle, driving, ending, hidden and presentation-owned surfaces suppress guidance
+2026-11-01T22:24:25.8538864Z PASS stale runtime, Day state, game over and canonical mission divergence never show an old objective
+2026-11-01T22:24:25.8554541Z PASS invalid missions fail closed without repairing or clamping the save
+2026-11-01T22:24:25.8736497Z PASS all read models accept frozen runtime and preserve all save/mission fields
+2026-11-01T22:24:25.8770671Z PASS the native HUD consumes guidance in its original objective slot
+2026-11-01T22:24:25.8788337Z PASS Night status preserves explicit clear and pending state and excludes other modes
+2026-11-01T22:24:25.8806141Z PASS landmark utilities return real finite metadata without a fake endpoint after route end
+2026-11-01T22:24:25.8822394Z PASS paused missions cannot leak objective guidance
+2026-11-01T22:24:25.8839262Z PASS classic-script state takes precedence over stale window aliases
+2026-11-01T22:24:25.8864012Z PASS classic-script world is used when no explicit world is supplied
+2026-11-01T22:24:25.8864869Z Gameplay experience: 27 tests passed
+2026-11-01T22:24:25.9265625Z PASS profiles are distinct, frozen, and cover only the four late prison scenes
+2026-11-01T22:24:25.9305350Z PASS stage geometry and registry definitions are never changed by staging
+2026-11-01T22:24:25.9335187Z PASS every referenced source frame exists in the approved manifest
+2026-11-01T22:24:25.9353891Z PASS M4 consoles follow the real four clue positions rather than three legacy decorative markers
+2026-11-01T22:24:25.9373508Z PASS M4 old saves without evidence use registry consoles without inventing new evidence
+2026-11-01T22:24:25.9416644Z PASS malformed or excessive evidence cannot create unbounded placements
+2026-11-01T22:24:25.9435295Z PASS M5 access console and exit align with registry gameplay anchors
+2026-11-01T22:24:25.9454375Z PASS M6 uplink uses the actual runtime position; cell remains at registry position
+2026-11-01T22:24:25.9474640Z PASS M7 shuttle entrance aligns with canonical registry instead of an invented destination
+2026-11-01T22:24:25.9493818Z PASS ordinary streets, Sector 04, M1-M3 and M8 retain existing environment owners
+2026-11-01T22:24:25.9518453Z PASS Day state and a stale mission mirror cannot draw prison layers
+2026-11-01T22:24:25.9590210Z PASS all compositions are deterministic and accept frozen campaign/runtime state
+2026-11-01T22:24:25.9617110Z PASS failed source decode retains the background and reports no decoded success
+2026-11-01T22:24:25.9636754Z PASS successful source calls are culled and bounded by viewport and layout
+2026-11-01T22:24:25.9655419Z PASS camera culling drops all offscreen approved props rather than repeatedly drawing them
+2026-11-01T22:24:25.9673318Z PASS foreground treatment is below feet and bounded
+2026-11-01T22:24:25.9699113Z PASS opened lighting requires recorded mission outcome, never an empty room or x position
+2026-11-01T22:24:25.9726318Z PASS reduced motion produces identical drawing commands at different wall-clock times
+2026-11-01T22:24:25.9744143Z PASS landmarks do not cover source art with the old 116x96 opaque panel
+2026-11-01T22:24:25.9760177Z PASS labels yield to nearby airborne actor and avoid unconfirmed identity
+2026-11-01T22:24:25.9781224Z PASS canvas state is restored if an asset renderer fails
+2026-11-01T22:24:25.9806752Z PASS the existing cinematic renderer calls new staging without new draw/step wrappers
+2026-11-01T22:24:25.9834385Z PASS decoded-only backdrop replaces baked landmark boxes without changing gameplay geometry
+2026-11-01T22:24:25.9852439Z PASS opened prisoner doors use the paired open source frame at the real interaction entrance
+2026-11-01T22:24:25.9871301Z PASS cell art and objective follow the same runtime-width projection after registry initialization
+2026-11-01T22:24:25.9886939Z PASS offscreen target labels do not impersonate a visible target at the viewport edge
+2026-11-01T22:24:25.9908757Z PASS structural supports are anchored to existing platforms without changing geometry
+2026-11-01T22:24:25.9944344Z PASS excessive platform fixtures cannot create unbounded scenery work
+2026-11-01T22:24:25.9988018Z PASS distinct detention and shuttle scenery remains deterministic at portrait and desktop sizes
+2026-11-01T22:24:25.9989101Z PASS staging has no authority over the existing M5 3D renderer
+2026-11-01T22:24:25.9989597Z Orbital scene staging: 30 tests passed
+2026-11-01T22:24:26.0393612Z PASS one frame-owned clock advances once without aging work tickets
+2026-11-01T22:24:26.0426979Z PASS dialogue, pause, game-over and hidden tabs stop time
+2026-11-01T22:24:26.0452751Z PASS invalid deltas and suspended frames cannot fast-forward the night
+2026-11-01T22:24:26.0471098Z PASS midnight changes display, not the workday or office state
+2026-11-01T22:24:26.0503495Z PASS travel counts, while Good Dogs and Waldo retain their own loop
+2026-11-01T22:24:26.0524610Z PASS home requires the spatial ground-level door and explicit interaction
+2026-11-01T22:24:26.0568308Z PASS home claims survive the actual stale-dialog guard and block gameplay
+2026-11-01T22:24:26.0621401Z PASS normal finish and skip use one settlement and clear Night identity
+2026-11-01T22:24:26.0640500Z PASS stale callbacks release their claim but do not touch a replacement run
+2026-11-01T22:24:26.0662618Z PASS missing cinematic renderer keeps an explicit safe continuation
+2026-11-01T22:24:26.0687649Z PASS shared cinematic controls own Night transitions without a duplicate skip
+2026-11-01T22:24:26.0719149Z PASS late shared controls replace only the owned fallback and transfer its focus
+2026-11-01T22:24:26.0739888Z PASS campaign discovery cannot invent prerequisites or evidence
+2026-11-01T22:24:26.0761414Z PASS same-day return preserves evidence, original clock, weather and cash
+2026-11-01T22:24:26.0775501Z PASS delayed day notices are scoped to state, day and mode generation
+2026-11-01T22:24:26.0840375Z PASS real Sector 04 adapter waits for Night Drive and reuses the encounter
+2026-11-01T22:24:26.0868378Z PASS pending Sector 04 attachment cannot enter a different run
+2026-11-01T22:24:26.0880243Z PASS one dispatch, no competing heartbeat or automatic edge sleep
+2026-11-01T22:24:26.1014808Z PASS existing presentation places the readable menu in the current HUD reservation before any drawing receipt
+2026-11-01T22:24:26.1070262Z PASS campaign control retains its label node across stable frames and updates only changed presentation
+2026-11-01T22:24:26.1071018Z Night lifecycle: 20 regression groups passed
+2026-11-01T22:24:26.1445652Z PASS the real game save checkpoints the complete isolated Night world
+2026-11-01T22:24:26.1475629Z PASS resume restores durable location and travel, without held actions or stale modal callbacks
+2026-11-01T22:24:26.1502442Z PASS all street districts, final clear states and active drive checkpoints are supported
+2026-11-01T22:24:26.1538466Z PASS Waldo travel, property activity, departure and once-only rewards survive a complete reload loop
+2026-11-01T22:24:26.1575836Z PASS malformed Waldo checkpoints fail closed without replacing live state or saved bytes
+2026-11-01T22:24:26.1591008Z PASS corrupt, future, malformed and foreign saves never mutate live state or other slots
+2026-11-01T22:24:26.1647246Z PASS malformed combat checkpoints stop before restoration and preserve all saved bytes
+2026-11-01T22:24:26.1689088Z PASS a real airborne throw resumes with finite physics and no repeated collision reward
+2026-11-01T22:24:26.1706216Z PASS quota failure preserves the previous snapshot and reports failure until retry succeeds
+2026-11-01T22:24:26.1739293Z PASS frame checkpoints and pagehide retain real progress without a second simulation timer
+2026-11-01T22:24:26.1756881Z PASS fractional minute rollover remains a valid checkpoint and autosaves the next minute
+2026-11-01T22:24:26.1772170Z PASS a standalone run cannot enter or mutate the campaign through its run menu
+2026-11-01T22:24:26.1788321Z PASS completion retires the saved run before paying rewards and retries failed storage explicitly
+2026-11-01T22:24:26.1817239Z PASS title router resumes the checkpoint once without starting a new run, difficulty or intro
+2026-11-01T22:24:26.1849433Z PASS a failed restore remains stopped through health polls and keeps the saved checkpoint
+2026-11-01T22:24:26.1850415Z Night recovery: 15 regression groups passed
+2026-11-01T22:24:26.2217571Z PASS one frame-owned clock advances once without aging work tickets
+2026-11-01T22:24:26.2252062Z PASS dialogue, pause, game-over and hidden tabs stop time
+2026-11-01T22:24:26.2279309Z PASS invalid deltas and suspended frames cannot fast-forward the night
+2026-11-01T22:24:26.2297402Z PASS midnight changes display, not the workday or office state
+2026-11-01T22:24:26.2327401Z PASS travel counts, while Good Dogs and Waldo retain their own loop
+2026-11-01T22:24:26.2347911Z PASS home requires the spatial ground-level door and explicit interaction
+2026-11-01T22:24:26.2392226Z PASS home claims survive the actual stale-dialog guard and block gameplay
+2026-11-01T22:24:26.2440984Z PASS normal finish and skip use one settlement and clear Night identity
+2026-11-01T22:24:26.2460362Z PASS stale callbacks release their claim but do not touch a replacement run
+2026-11-01T22:24:26.2481555Z PASS missing cinematic renderer keeps an explicit safe continuation
+2026-11-01T22:24:26.2506380Z PASS shared cinematic controls own Night transitions without a duplicate skip
+2026-11-01T22:24:26.2532096Z PASS late shared controls replace only the owned fallback and transfer its focus
+2026-11-01T22:24:26.2558318Z PASS campaign discovery cannot invent prerequisites or evidence
+2026-11-01T22:24:26.2578869Z PASS same-day return preserves evidence, original clock, weather and cash
+2026-11-01T22:24:26.2593147Z PASS delayed day notices are scoped to state, day and mode generation
+2026-11-01T22:24:26.2654562Z PASS real Sector 04 adapter waits for Night Drive and reuses the encounter
+2026-11-01T22:24:26.2680476Z PASS pending Sector 04 attachment cannot enter a different run
+2026-11-01T22:24:26.2692918Z PASS one dispatch, no competing heartbeat or automatic edge sleep
+2026-11-01T22:24:26.2821914Z PASS existing presentation places the readable menu in the current HUD reservation before any drawing receipt
+2026-11-01T22:24:26.2876178Z PASS campaign control retains its label node across stable frames and updates only changed presentation
+2026-11-01T22:24:26.2877231Z Night lifecycle: 20 regression groups passed
+2026-11-01T22:24:26.3201592Z Night mobile visual contract: PASS
+2026-11-01T22:24:26.3239795Z Short landscape world projection and actor bounds: PASS
+2026-11-01T22:24:26.3537845Z Gameplay recording cohesion contract: PASS
+2026-11-01T22:24:26.3833715Z Recording world cohesion single-render, platform dressing, transition, and bootstrap contract: PASS
+2026-11-01T22:24:26.4122443Z UI co-op asset authority: PASS
+2026-11-01T22:24:31.6016349Z JavaScript syntax check: PASS (589 files)
+2026-11-01T22:24:31.6325859Z Mike action atlas quarantine: PASS
+2026-11-01T22:24:31.6358808Z 
+2026-11-01T22:24:31.6359539Z PRODUCTION GATE: PASS
+2026-11-01T22:24:31.6444439Z ##[group]Run npm ci --no-audit --no-fund
+2026-11-01T22:24:31.6444827Z [36;1mnpm ci --no-audit --no-fund[0m
+2026-11-01T22:24:31.6474041Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-01T22:24:31.6474403Z ##[endgroup]
+2026-11-01T22:24:32.6873615Z 
+2026-11-01T22:24:32.6874195Z added 2 packages in 974ms
+2026-11-01T22:24:32.7030218Z ##[group]Run npx playwright install --with-deps chromium webkit
+2026-11-01T22:24:32.7031341Z [36;1mnpx playwright install --with-deps chromium webkit[0m
+2026-11-01T22:24:32.7074627Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-01T22:24:32.7075259Z ##[endgroup]
+2026-11-01T22:24:33.5305666Z BEWARE: your OS is not officially supported by Playwright; installing dependencies for ubuntu26.04-x64 as a fallback.
+2026-11-01T22:24:33.5308280Z Cannot install dependencies for ubuntu26.04-x64 with Playwright 1.55.1!
+2026-11-01T22:24:33.5400740Z Failed to install browsers
+2026-11-01T22:24:33.5401309Z Error: ERROR: Playwright does not support chromium on ubuntu26.04-x64
+2026-11-01T22:24:33.5615341Z ##[error]Process completed with exit code 1.
+2026-11-01T22:24:33.5700579Z ##[group]Run actions/upload-artifact@v4
+2026-11-01T22:24:33.5700891Z with:
+2026-11-01T22:24:33.5701239Z   name: night-combat-validation-6c498e33aa73af62a5a347dbc067ae04adfc7cea
+2026-11-01T22:24:33.5701682Z   path: runtime-bot-artifacts/
+2026-11-01T22:24:33.5701966Z   if-no-files-found: warn
+2026-11-01T22:24:33.5702338Z   retention-days: 7
+2026-11-01T22:24:33.5702923Z   compression-level: 6
+2026-11-01T22:24:33.5703168Z   overwrite: false
+2026-11-01T22:24:33.5703398Z   include-hidden-files: false
+2026-11-01T22:24:33.5703650Z ##[endgroup]
+2026-11-01T22:24:33.7455555Z (node:7663) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-01T22:24:33.7456655Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-01T22:24:33.7508305Z With the provided path, there will be 1 file uploaded
+2026-11-01T22:24:33.7514393Z Artifact name is valid!
+2026-11-01T22:24:33.7515378Z Root directory input is valid!
+2026-11-01T22:24:34.0664591Z Beginning upload of artifact content to blob storage
+2026-11-01T22:24:34.0884536Z (node:7663) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-01T22:24:34.3259881Z Uploaded bytes 16059
+2026-11-01T22:24:34.3841743Z Finished uploading artifact content to blob storage!
+2026-11-01T22:24:34.3843739Z SHA256 digest of uploaded artifact zip is a71d48c2aa78ee77e6f34194333524fbd5974021d616073015a39bc5eadd194a
+2026-11-01T22:24:34.3844978Z Finalizing artifact upload
+2026-11-01T22:24:34.8125625Z Artifact night-combat-validation-6c498e33aa73af62a5a347dbc067ae04adfc7cea.zip successfully finalized. Artifact ID 13103358427
+2026-11-01T22:24:34.8127268Z Artifact night-combat-validation-6c498e33aa73af62a5a347dbc067ae04adfc7cea has been successfully uploaded! Final size is 16059 bytes. Artifact ID is 13103358427
+2026-11-01T22:24:34.8130797Z Artifact download URL: https://github.com/ninja-ops-guy/techops-hero/actions/runs/41356932775/artifacts/13103358427
+2026-11-01T22:24:34.8341526Z Post job cleanup.
+2026-11-01T22:24:34.9259437Z [command]/usr/bin/git version
+2026-11-01T22:24:34.9300554Z git version 2.56.0
+2026-11-01T22:24:34.9340233Z Temporarily overriding HOME='/home/runner/work/_temp/b8ab2fc5-1f8f-4a16-891e-9118dc964bc8' before making global git config changes
+2026-11-01T22:24:34.9341639Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-01T22:24:34.9346702Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/techops-hero/techops-hero
+2026-11-01T22:24:34.9389880Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-01T22:24:34.9428644Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-01T22:24:34.9710332Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-01T22:24:34.9749369Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-01T22:24:35.0031291Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-01T22:24:35.0068246Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-01T22:24:35.0519193Z Cleaning up orphan processes
+2026-11-01T22:24:35.1104536Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
