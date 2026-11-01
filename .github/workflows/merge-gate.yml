@@ -19,11 +19,12 @@ defaults:
 jobs:
   static:
     name: Static and release contracts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -59,7 +60,7 @@ jobs:
 
   browser:
     name: Browser acceptance
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 30
     env:
       BOT_CHROMIUM_CHANNEL: chrome
@@ -68,6 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -180,7 +182,7 @@ jobs:
     name: required
     if: always()
     needs: [static, browser]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
       - name: Enforce authoritative gate
