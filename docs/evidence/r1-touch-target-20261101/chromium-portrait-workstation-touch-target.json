@@ -1,0 +1,67 @@
+[
+  {
+    "progress": 0,
+    "width": 168,
+    "height": 58.375,
+    "computed": {
+      "minHeight": "44px",
+      "height": "58.375px",
+      "transform": "none",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 0.25,
+    "width": 168,
+    "height": 58.375,
+    "computed": {
+      "minHeight": "44px",
+      "height": "58.375px",
+      "transform": "none",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 0.5,
+    "width": 168,
+    "height": 58.375,
+    "computed": {
+      "minHeight": "44px",
+      "height": "58.375px",
+      "transform": "none",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 0.75,
+    "width": 168,
+    "height": 58.375,
+    "computed": {
+      "minHeight": "44px",
+      "height": "58.375px",
+      "transform": "none",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 1,
+    "width": 168,
+    "height": 58.375,
+    "computed": {
+      "minHeight": "44px",
+      "height": "58.375px",
+      "transform": "none",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  }
+]

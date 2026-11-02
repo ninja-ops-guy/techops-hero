@@ -1,0 +1,67 @@
+[
+  {
+    "progress": 0,
+    "width": 148.1875,
+    "height": 44,
+    "computed": {
+      "minHeight": "44px",
+      "height": "44px",
+      "transform": "matrix(1, 0, 0, 1, 0, -0.468333)",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 0.25,
+    "width": 148.1875,
+    "height": 44,
+    "computed": {
+      "minHeight": "44px",
+      "height": "44px",
+      "transform": "matrix(1, 0, 0, 1, 0, -0.468333)",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 0.5,
+    "width": 148.1875,
+    "height": 44,
+    "computed": {
+      "minHeight": "44px",
+      "height": "44px",
+      "transform": "matrix(1, 0, 0, 1, 0, -0.468333)",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 0.75,
+    "width": 148.1875,
+    "height": 44,
+    "computed": {
+      "minHeight": "44px",
+      "height": "44px",
+      "transform": "matrix(1, 0, 0, 1, 0, -0.468333)",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  },
+  {
+    "progress": 1,
+    "width": 148.1875,
+    "height": 44,
+    "computed": {
+      "minHeight": "44px",
+      "height": "44px",
+      "transform": "matrix(1, 0, 0, 1, 0, -0.468333)",
+      "windowScale": "none",
+      "windowTransform": "none",
+      "animationName": "day-os-fade-in"
+    }
+  }
+]

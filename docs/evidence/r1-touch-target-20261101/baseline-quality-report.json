@@ -1,0 +1,1308 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "source": {
+    "head": "229a9f686a09d7b8214ac62e2b6b710bbd497546",
+    "tree": "088ba7af2c23307bc103b76c6fabd1587d6760b6",
+    "dirty": false,
+    "fingerprint": "ca017cf8a25e80457982d5110ee43689e1b92cf0896106641645ee59cc5c4590"
+  },
+  "physical_device": false,
+  "codec_license": "unverified",
+  "checks": [
+    {
+      "id": "title_routes",
+      "profile": "chromium-desktop",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "cards": [
+          {
+            "id": "btn-start",
+            "disabled": false,
+            "label": "Start a new Day Shift campaign"
+          },
+          {
+            "id": "btn-v736",
+            "disabled": false,
+            "label": "Start or resume the Good Dogs co-op campaign"
+          },
+          {
+            "id": "btn-nightcrawler",
+            "disabled": false,
+            "label": "Start the standalone Night Crawler mode"
+          }
+        ],
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        }
+      }
+    },
+    {
+      "id": "day_resume",
+      "profile": "chromium-desktop",
+      "status": "passed",
+      "evidence_type": "fixture-assisted-browser-input",
+      "fixture": true,
+      "observations": {
+        "resumed": {
+          "day": 1,
+          "px": 39,
+          "py": 17,
+          "budget": 80,
+          "clock": 510,
+          "ticketsAlias": true,
+          "music": true,
+          "shell": "day"
+        },
+        "standup": {
+          "entry": "office-entry",
+          "position": {
+            "px": 39,
+            "py": 17
+          },
+          "speakers": [
+            "NICK",
+            "AMIT",
+            "BRANDON",
+            "DANIEL"
+          ]
+        },
+        "deskFixture": {
+          "rejected": true,
+          "unchanged": true,
+          "position": {
+            "px": 31,
+            "py": 16
+          },
+          "station": "mike_desk",
+          "exitedInterior": "itdept",
+          "interiorExit": "v69ExitRoom"
+        },
+        "checkpoint_saved_at": 1793591213408,
+        "entry": "Actual keyboard path to authored standup and four real dialogue advances; explicit desk-position fixture with off-desk rejection; real dialog hit targets; muted music continuation; saved checkpoint"
+      }
+    },
+    {
+      "id": "night_resume",
+      "profile": "chromium-desktop",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "before": {
+          "x": 142.28148450294898,
+          "y": 396,
+          "hp": 100,
+          "district": "downtown",
+          "street": 1,
+          "clock": 1080,
+          "cash": 0,
+          "kills": 0,
+          "enemies": [
+            {
+              "x": 560.2308118902783,
+              "y": 400,
+              "hp": 34,
+              "alive": true
+            },
+            {
+              "x": 922.8149404180568,
+              "y": 400,
+              "hp": 34,
+              "alive": true
+            },
+            {
+              "x": 1229.4550426998046,
+              "y": 402,
+              "hp": 40,
+              "alive": true
+            }
+          ]
+        },
+        "after": {
+          "x": 142.28148450294898,
+          "hp": 100,
+          "district": "downtown",
+          "street": 1,
+          "clock": 1080,
+          "cash": 0,
+          "kills": 0,
+          "inDialog": false,
+          "daySave": "{\"_profileSchemaVersion\":1,\"day\":1,\"clock\":510,\"xp\":0,\"budget\":80,\"stress\":10,\"hp\":40,\"maxHp\":40,\"certs\":[],\"inv\":[],\"journal\":[],\"stats\":{\"networking\":1,\"windows\":1,\"linux\":0,\"cloud\":0,\"security\":1,\"programming\":0,\"hardware\":1,\"automation\":0},\"soft\":{\"communication\":1,\"patience\":1,\"documentation\":0},\"rep\":{\"Manufacturing\":1,\"Finance\":1,\"Engineering\":1,\"Executives\":1,\"HR\":1,\"Sales\":1,\"Marketing\":1},\"meta\":{\"closed\":0,\"printerKills\":0,\"chains\":0,\"crits\":0,\"legendaries\":0,\"cmds\":0,\"lore\":[],\"debt\":0,\"wrongDiag\":0,\"recentTypes\":[],\"kb\":{},\"incidents\":0,\"mttr\":[],\"hires\":0,\"_arc73\":{\"intel\":[],\"talks\":0,\"seen\":{},\"choice\":null,\"ending\":null},\"canonicalDay1Spine\":{\"active\":true,\"guaranteed\":true,\"tickets\":[\"shipping_cannot_print\",\"plating_workstation_down\",\"impossible_access_event\"],\"contacts\":[\"campaign_shipping\",\"campaign_plating\",\"campaign_access\"],\"missingTickets\":[],\"missingContacts\":[],\"at\":1793591213145},\"_v736\":{\"m\":1,\"evidence\":[],\"k\":false,\"waldo\":false,\"done\":false},\"nightObjs\":{\"door\":{\"x\":20,\"y\":28},\"ramps\":[{\"id\":\"atrium\",\"label\":\"Atrium Kicker\",\"x\":17,\"y\":20,\"nextDay\":0},{\"id\":\"dock\",\"label\":\"Loading Dock Ramp\",\"x\":8,\"y\":26,\"nextDay\":0}],\"shortcuts\":[{\"id\":\"rail\",\"label\":\"Handrail Shortcut\",\"needs\":\"skate\",\"x\":5,\"y\":12,\"nextDay\":0},{\"id\":\"alley\",\"label\":\"Back-Alley Cut\",\"needs\":\"bike\",\"x\":31,\"y\":13,\"nextDay\":0}]},\"interns\":0,\"mktPts\":0,\"outfit\":{\"hat\":null,\"shirt\":null,\"pants\":null,\"bottle\":false},\"delegated\":{},\"tree\":null,\"fridayEmergency\":false,\"v56\":{\"unlocked\":[]},\"maint\":null,\"_gallery\":{\"shift_start\":true},\"campaignAct1Native\":{\"standup\":{\"x\":34,\"y\":12},\"shipping\":{\"x\":21,\"y\":29},\"plating\":{\"x\":18,\"y\":30},\"access\":{\"x\":11,\"y\":25},\"sector04Door\":{\"x\":20,\"y\":28}},\"dayWorkUnlocked\":false,\"ticketTimersActive\":false,\"_v63Spots\":[[0,30,3],[1,32,3],[2,16,15],[3,25,16],[4,34,3],[5,3,2],[6,12,2],[7,22,3],[8,6,10],[9,31,4],[10,28,1],[11,14,1],[12,34,6],[13,24,16],[14,18,16],[15,5,2],[16,8,11],[17,38,7],[18,23,10],[19,36,5],[20,4,17],[21,7,17],[22,12,24],[23,16,27],[24,20,24],[25,24,29],[26,28,23],[27,32,27],[28,36,24],[29,1,22],[30,22,22],[31,40,20],[32,34,30],[33,8,26],[34,14,30],[35,18,23],[36,26,21],[37,38,27],[38,10,30],[39,30,30]],\"_v63SpotsDay\":1,\"_fel\":{\"met\":0,\"clues\":[],\"trust\":0,\"defeated\":false,\"unlocked\":false,\"pos\":null,\"spots\":null,\"blockedDay\":0,\"intel\":{\"employees\":0,\"systems\":0,\"facilities\":0,\"security\":0},\"scanned\":[],\"zones\":[],\"ao\":{},\"aoDay\":0,\"suspicion\":0,\"wv\":true,\"wdTiles\":0,\"blendTiles\":0},\"dayStations\":{\"version\":3,\"day\":1,\"width\":42,\"height\":32,\"items\":[{\"id\":\"mike_desk\",\"label\":\"Mike's workstation\",\"kind\":\"desk\",\"deviceType\":\"desktop\",\"roomId\":\"office\",\"zoneId\":\"office\",\"surface\":\"screen\",\"art\":2,\"x\":31,\"y\":15,\"authored\":true,\"roomName\":\"IT / OPERATIONS\",\"available\":true,\"approach\":{\"x\":31,\"y\":16}},{\"id\":\"shipping_printer\",\"label\":\"Shipping label printer\",\"kind\":\"device\",\"deviceType\":\"printer\",\"ticketId\":\"shipping_cannot_print\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"physical\",\"art\":14,\"x\":21,\"y\":27,\"approach\":{\"x\":20,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"shipping_workstation\",\"label\":\"Shipping dispatch workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"shipping_cannot_print\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"screen\",\"art\":2,\"x\":21,\"y\":26,\"approach\":{\"x\":20,\"y\":26},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"plating_workstation\",\"label\":\"Plating operator workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"plating_workstation_down\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":2,\"x\":18,\"y\":29,\"approach\":{\"x\":17,\"y\":29},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"security_workstation\",\"label\":\"Security evidence workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"impossible_access_event\",\"roomId\":\"office\",\"zoneId\":\"office\",\"surface\":\"screen\",\"art\":2,\"x\":14,\"y\":22,\"approach\":{\"x\":14,\"y\":23},\"roomName\":\"IT / OPERATIONS\",\"available\":true},{\"id\":\"laptop_dock_link\",\"caseId\":\"laptop_dock_link\",\"label\":\"Engineering laptop dock\",\"kind\":\"device\",\"deviceType\":\"laptop\",\"roomId\":\"eng\",\"zoneId\":\"eng\",\"surface\":\"both\",\"art\":2,\"x\":6,\"y\":10,\"approach\":{\"x\":6,\"y\":11},\"roomName\":\"ENGINEERING LAB\",\"available\":true},{\"id\":\"desktop_restart_window\",\"caseId\":\"desktop_restart_window\",\"label\":\"Finance workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"roomId\":\"office\",\"zoneId\":\"finance\",\"surface\":\"both\",\"art\":2,\"x\":14,\"y\":4,\"approach\":{\"x\":13,\"y\":4},\"roomName\":\"FINANCE ROW\",\"available\":true},{\"id\":\"signage_player_session\",\"caseId\":\"signage_player_session\",\"label\":\"Lobby signage player\",\"kind\":\"device\",\"deviceType\":\"mini_pc\",\"roomId\":\"office\",\"zoneId\":\"lobby\",\"surface\":\"both\",\"art\":21,\"x\":25,\"y\":15,\"approach\":{\"x\":25,\"y\":16},\"roomName\":\"RECEPTION\",\"available\":true},{\"id\":\"printer_queue_blocked\",\"caseId\":\"printer_queue_blocked\",\"label\":\"Finance batch printer\",\"kind\":\"device\",\"deviceType\":\"printer\",\"roomId\":\"office\",\"zoneId\":\"finance\",\"surface\":\"both\",\"art\":14,\"x\":18,\"y\":5,\"approach\":{\"x\":17,\"y\":5},\"roomName\":\"FINANCE ROW\",\"available\":true,\"supportComputer\":{\"kind\":\"service_laptop\",\"label\":\"Mike's service laptop\",\"connection\":\"Approved print administration session\"}},{\"id\":\"plc_hmi_dependency\",\"caseId\":\"plc_hmi_dependency\",\"label\":\"Packaging cell HMI\",\"kind\":\"device\",\"deviceType\":\"plc_hmi\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":6,\"x\":25,\"y\":26,\"approach\":{\"x\":25,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"industrial_scanner_vlan\",\"caseId\":\"industrial_scanner_vlan\",\"label\":\"Traceability scanner\",\"kind\":\"device\",\"deviceType\":\"industrial_scanner\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":6,\"x\":34,\"y\":26,\"approach\":{\"x\":34,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"access_point_poe\",\"caseId\":\"access_point_poe\",\"label\":\"Engineering wireless AP\",\"kind\":\"device\",\"deviceType\":\"access_point\",\"roomId\":\"eng\",\"zoneId\":\"eng\",\"surface\":\"both\",\"art\":21,\"x\":8,\"y\":12,\"approach\":{\"x\":8,\"y\":13},\"roomName\":\"ENGINEERING LAB\",\"available\":true,\"supportComputer\":{\"kind\":\"service_laptop\",\"label\":\"Mike's service laptop\",\"connection\":\"Managed switch console\"}},{\"id\":\"timeclock_time_sync\",\"caseId\":\"timeclock_time_sync\",\"label\":\"HR time clock\",\"kind\":\"device\",\"deviceType\":\"time_clock\",\"roomId\":\"office\",\"zoneId\":\"hr\",\"surface\":\"both\",\"art\":21,\"x\":24,\"y\":10,\"approach\":{\"x\":24,\"y\":11},\"roomName\":\"HR CORNER\",\"available\":true}],\"routeTarget\":null},\"dayStandupIntroSeen\":1},\"ach\":[],\"books\":[],\"lab\":[],\"stressResist\":0,\"diff\":1,\"ngPlus\":false,\"shadowDone\":false,\"staff\":[],\"audited\":false,\"infra\":[],\"certDiscount\":0,\"_saveRevision\":1793591213408}",
+          "savedAt": 1793591241175
+        },
+        "checkpoint_saved_at": 1793591241175,
+        "campaign_isolation": true,
+        "difficulty_wait": {
+          "desired": "nightcrawler",
+          "initialized": false,
+          "inDialog": true,
+          "titleVisible": false
+        },
+        "control_bounds": {
+          "applicable": false
+        }
+      }
+    },
+    {
+      "id": "good_dogs_selector",
+      "profile": "chromium-desktop",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "mode": "local",
+        "touch_only_local_disabled": false,
+        "cancellation_recovered": true,
+        "prologue_shots": 3,
+        "note": "Physical keyboard detected. Local two-player is available.",
+        "control_bounds": {
+          "applicable": false
+        },
+        "movement": {
+          "input": "browser-keyboard-hold",
+          "before": 110,
+          "after": 132.18051224000004
+        }
+      }
+    },
+    {
+      "id": "cinematic_recovery",
+      "profile": "chromium-desktop",
+      "status": "passed",
+      "evidence_type": "fault-injection",
+      "fixture": true,
+      "observations": {
+        "capability": "both probes false",
+        "source_assigned": false,
+        "writes": [
+          {
+            "id": "GD_CUT_01",
+            "status": "USER_SKIPPED",
+            "skipped": true
+          }
+        ],
+        "late_escape_did_not_repeat": true
+      }
+    },
+    {
+      "id": "title_routes",
+      "profile": "chromium-portrait",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "cards": [
+          {
+            "id": "btn-start",
+            "disabled": false,
+            "label": "Start a new Day Shift campaign"
+          },
+          {
+            "id": "btn-v736",
+            "disabled": false,
+            "label": "Start or resume the Good Dogs co-op campaign"
+          },
+          {
+            "id": "btn-nightcrawler",
+            "disabled": false,
+            "label": "Start the standalone Night Crawler mode"
+          }
+        ],
+        "viewport": {
+          "width": 390,
+          "height": 844
+        }
+      }
+    },
+    {
+      "id": "day_resume",
+      "profile": "chromium-portrait",
+      "status": "passed",
+      "evidence_type": "fixture-assisted-browser-input",
+      "fixture": true,
+      "observations": {
+        "resumed": {
+          "day": 1,
+          "px": 40,
+          "py": 17,
+          "budget": 80,
+          "clock": 510,
+          "ticketsAlias": true,
+          "music": true,
+          "shell": "day"
+        },
+        "standup": {
+          "entry": "office-entry",
+          "position": {
+            "px": 40,
+            "py": 17
+          },
+          "speakers": [
+            "NICK",
+            "AMIT",
+            "BRANDON",
+            "DANIEL"
+          ]
+        },
+        "deskFixture": {
+          "rejected": true,
+          "unchanged": true,
+          "position": {
+            "px": 31,
+            "py": 16
+          },
+          "station": "mike_desk",
+          "exitedInterior": "itdept",
+          "interiorExit": "v69ExitRoom"
+        },
+        "checkpoint_saved_at": 1793591263959,
+        "entry": "Actual keyboard path to authored standup and four real dialogue advances; explicit desk-position fixture with off-desk rejection; real dialog hit targets; muted music continuation; saved checkpoint"
+      }
+    },
+    {
+      "id": "night_resume",
+      "profile": "chromium-portrait",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "before": {
+          "x": 145.1552195001147,
+          "y": 396,
+          "hp": 100,
+          "district": "downtown",
+          "street": 1,
+          "clock": 1080,
+          "cash": 0,
+          "kills": 0,
+          "enemies": [
+            {
+              "x": 523.2758694196935,
+              "y": 400,
+              "hp": 34,
+              "alive": true
+            },
+            {
+              "x": 871.2360366816059,
+              "y": 400,
+              "hp": 34,
+              "alive": true
+            },
+            {
+              "x": 1251.0366827842429,
+              "y": 402,
+              "hp": 40,
+              "alive": true
+            }
+          ]
+        },
+        "after": {
+          "x": 145.1552195001147,
+          "hp": 100,
+          "district": "downtown",
+          "street": 1,
+          "clock": 1080,
+          "cash": 0,
+          "kills": 0,
+          "inDialog": false,
+          "daySave": "{\"_profileSchemaVersion\":1,\"day\":1,\"clock\":510,\"xp\":0,\"budget\":80,\"stress\":10,\"hp\":40,\"maxHp\":40,\"certs\":[],\"inv\":[],\"journal\":[],\"stats\":{\"networking\":1,\"windows\":1,\"linux\":0,\"cloud\":0,\"security\":1,\"programming\":0,\"hardware\":1,\"automation\":0},\"soft\":{\"communication\":1,\"patience\":1,\"documentation\":0},\"rep\":{\"Manufacturing\":1,\"Finance\":1,\"Engineering\":1,\"Executives\":1,\"HR\":1,\"Sales\":1,\"Marketing\":1},\"meta\":{\"closed\":0,\"printerKills\":0,\"chains\":0,\"crits\":0,\"legendaries\":0,\"cmds\":0,\"lore\":[],\"debt\":0,\"wrongDiag\":0,\"recentTypes\":[],\"kb\":{},\"incidents\":0,\"mttr\":[],\"hires\":0,\"_arc73\":{\"intel\":[],\"talks\":0,\"seen\":{},\"choice\":null,\"ending\":null},\"_v736\":{\"m\":1,\"evidence\":[],\"k\":false,\"waldo\":false,\"done\":false},\"canonicalDay1Spine\":{\"active\":true,\"guaranteed\":true,\"tickets\":[\"shipping_cannot_print\",\"plating_workstation_down\",\"impossible_access_event\"],\"contacts\":[\"campaign_shipping\",\"campaign_plating\",\"campaign_access\"],\"missingTickets\":[],\"missingContacts\":[],\"at\":1793591263841},\"nightObjs\":{\"door\":{\"x\":21,\"y\":28},\"ramps\":[{\"id\":\"atrium\",\"label\":\"Atrium Kicker\",\"x\":17,\"y\":20,\"nextDay\":0},{\"id\":\"dock\",\"label\":\"Loading Dock Ramp\",\"x\":8,\"y\":26,\"nextDay\":0}],\"shortcuts\":[{\"id\":\"rail\",\"label\":\"Handrail Shortcut\",\"needs\":\"skate\",\"x\":6,\"y\":12,\"nextDay\":0},{\"id\":\"alley\",\"label\":\"Back-Alley Cut\",\"needs\":\"bike\",\"x\":14,\"y\":13,\"nextDay\":0}]},\"interns\":0,\"mktPts\":0,\"outfit\":{\"hat\":null,\"shirt\":null,\"pants\":null,\"bottle\":false},\"delegated\":{},\"tree\":null,\"fridayEmergency\":false,\"v56\":{\"unlocked\":[]},\"maint\":null,\"_gallery\":{\"shift_start\":true,\"chaos_outage\":true},\"campaignAct1Native\":{\"standup\":{\"x\":33,\"y\":11},\"shipping\":{\"x\":23,\"y\":30},\"plating\":{\"x\":18,\"y\":29},\"access\":{\"x\":39,\"y\":12},\"sector04Door\":{\"x\":21,\"y\":28}},\"dayWorkUnlocked\":false,\"ticketTimersActive\":false,\"_v63Spots\":[[0,30,3],[1,32,3],[2,16,15],[3,25,16],[4,34,3],[5,3,2],[6,12,2],[7,22,3],[8,6,10],[9,31,4],[10,28,1],[11,14,2],[12,34,6],[13,24,16],[14,18,16],[15,4,2],[16,8,10],[17,38,7],[18,23,10],[19,36,5],[20,4,17],[21,7,17],[22,12,24],[23,16,29],[24,20,24],[25,24,29],[26,28,23],[27,32,27],[28,36,24],[29,1,22],[30,22,21],[31,40,20],[32,34,30],[33,8,26],[34,14,30],[35,18,23],[36,26,21],[37,38,27],[38,10,30],[39,30,30]],\"_v63SpotsDay\":1,\"_fel\":{\"met\":0,\"clues\":[],\"trust\":0,\"defeated\":false,\"unlocked\":false,\"pos\":null,\"spots\":null,\"blockedDay\":0,\"intel\":{\"employees\":0,\"systems\":0,\"facilities\":0,\"security\":0},\"scanned\":[],\"zones\":[],\"ao\":{},\"aoDay\":0,\"suspicion\":0,\"wv\":true,\"wdTiles\":0,\"blendTiles\":0},\"dayStations\":{\"version\":3,\"day\":1,\"width\":42,\"height\":32,\"items\":[{\"id\":\"mike_desk\",\"label\":\"Mike's workstation\",\"kind\":\"desk\",\"deviceType\":\"desktop\",\"roomId\":\"office\",\"zoneId\":\"office\",\"surface\":\"screen\",\"art\":2,\"x\":31,\"y\":15,\"authored\":true,\"roomName\":\"IT / OPERATIONS\",\"available\":true,\"approach\":{\"x\":31,\"y\":16}},{\"id\":\"shipping_printer\",\"label\":\"Shipping label printer\",\"kind\":\"device\",\"deviceType\":\"printer\",\"ticketId\":\"shipping_cannot_print\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"physical\",\"art\":14,\"x\":22,\"y\":30,\"approach\":{\"x\":21,\"y\":30},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"shipping_workstation\",\"label\":\"Shipping dispatch workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"shipping_cannot_print\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"screen\",\"art\":2,\"x\":24,\"y\":30,\"approach\":{\"x\":25,\"y\":30},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"plating_workstation\",\"label\":\"Plating operator workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"plating_workstation_down\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":2,\"x\":19,\"y\":29,\"approach\":{\"x\":19,\"y\":30},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"security_workstation\",\"label\":\"Security evidence workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"impossible_access_event\",\"roomId\":\"office\",\"zoneId\":\"office\",\"surface\":\"screen\",\"art\":2,\"x\":39,\"y\":18,\"approach\":{\"x\":38,\"y\":18},\"roomName\":\"IT / OPERATIONS\",\"available\":true},{\"id\":\"laptop_dock_link\",\"caseId\":\"laptop_dock_link\",\"label\":\"Engineering laptop dock\",\"kind\":\"device\",\"deviceType\":\"laptop\",\"roomId\":\"eng\",\"zoneId\":\"eng\",\"surface\":\"both\",\"art\":2,\"x\":6,\"y\":10,\"approach\":{\"x\":6,\"y\":11},\"roomName\":\"ENGINEERING LAB\",\"available\":true},{\"id\":\"desktop_restart_window\",\"caseId\":\"desktop_restart_window\",\"label\":\"Finance workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"roomId\":\"office\",\"zoneId\":\"finance\",\"surface\":\"both\",\"art\":2,\"x\":14,\"y\":4,\"approach\":{\"x\":14,\"y\":5},\"roomName\":\"FINANCE ROW\",\"available\":true},{\"id\":\"signage_player_session\",\"caseId\":\"signage_player_session\",\"label\":\"Lobby signage player\",\"kind\":\"device\",\"deviceType\":\"mini_pc\",\"roomId\":\"office\",\"zoneId\":\"lobby\",\"surface\":\"both\",\"art\":21,\"x\":25,\"y\":15,\"approach\":{\"x\":25,\"y\":16},\"roomName\":\"RECEPTION\",\"available\":true},{\"id\":\"printer_queue_blocked\",\"caseId\":\"printer_queue_blocked\",\"label\":\"Finance batch printer\",\"kind\":\"device\",\"deviceType\":\"printer\",\"roomId\":\"office\",\"zoneId\":\"finance\",\"surface\":\"both\",\"art\":14,\"x\":18,\"y\":5,\"approach\":{\"x\":18,\"y\":6},\"roomName\":\"FINANCE ROW\",\"available\":true,\"supportComputer\":{\"kind\":\"service_laptop\",\"label\":\"Mike's service laptop\",\"connection\":\"Approved print administration session\"}},{\"id\":\"plc_hmi_dependency\",\"caseId\":\"plc_hmi_dependency\",\"label\":\"Packaging cell HMI\",\"kind\":\"device\",\"deviceType\":\"plc_hmi\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":6,\"x\":24,\"y\":26,\"approach\":{\"x\":24,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"industrial_scanner_vlan\",\"caseId\":\"industrial_scanner_vlan\",\"label\":\"Traceability scanner\",\"kind\":\"device\",\"deviceType\":\"industrial_scanner\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":6,\"x\":34,\"y\":26,\"approach\":{\"x\":34,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"access_point_poe\",\"caseId\":\"access_point_poe\",\"label\":\"Engineering wireless AP\",\"kind\":\"device\",\"deviceType\":\"access_point\",\"roomId\":\"eng\",\"zoneId\":\"eng\",\"surface\":\"both\",\"art\":21,\"x\":8,\"y\":12,\"approach\":{\"x\":8,\"y\":13},\"roomName\":\"ENGINEERING LAB\",\"available\":true,\"supportComputer\":{\"kind\":\"service_laptop\",\"label\":\"Mike's service laptop\",\"connection\":\"Managed switch console\"}},{\"id\":\"timeclock_time_sync\",\"caseId\":\"timeclock_time_sync\",\"label\":\"HR time clock\",\"kind\":\"device\",\"deviceType\":\"time_clock\",\"roomId\":\"office\",\"zoneId\":\"hr\",\"surface\":\"both\",\"art\":21,\"x\":24,\"y\":9,\"approach\":{\"x\":23,\"y\":9},\"roomName\":\"HR CORNER\",\"available\":true}],\"routeTarget\":null},\"dayStandupIntroSeen\":1},\"ach\":[],\"books\":[],\"lab\":[],\"stressResist\":0,\"diff\":1,\"ngPlus\":false,\"shadowDone\":false,\"staff\":[],\"audited\":false,\"infra\":[],\"certDiscount\":0,\"_saveRevision\":1793591263959}",
+          "savedAt": 1793591273432
+        },
+        "checkpoint_saved_at": 1793591273432,
+        "campaign_isolation": true,
+        "difficulty_wait": null,
+        "control_bounds": {
+          "applicable": false
+        }
+      }
+    },
+    {
+      "id": "good_dogs_selector",
+      "profile": "chromium-portrait",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "mode": "solo",
+        "touch_only_local_disabled": true,
+        "cancellation_recovered": true,
+        "prologue_shots": 3,
+        "note": "Local two-player needs a physical keyboard on this touch device. Use Single player, or connect a keyboard and press any key.",
+        "control_bounds": {
+          "applicable": false
+        },
+        "movement": {
+          "input": "browser-touch-hold",
+          "before": 110,
+          "after": 146.57953736000005
+        }
+      }
+    },
+    {
+      "id": "cinematic_recovery",
+      "profile": "chromium-portrait",
+      "status": "passed",
+      "evidence_type": "fault-injection",
+      "fixture": true,
+      "observations": {
+        "capability": "both probes false",
+        "source_assigned": false,
+        "writes": [
+          {
+            "id": "GD_CUT_01",
+            "status": "USER_SKIPPED",
+            "skipped": true
+          }
+        ],
+        "late_escape_did_not_repeat": true
+      }
+    },
+    {
+      "id": "title_routes",
+      "profile": "chromium-landscape",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "cards": [
+          {
+            "id": "btn-start",
+            "disabled": false,
+            "label": "Start a new Day Shift campaign"
+          },
+          {
+            "id": "btn-v736",
+            "disabled": false,
+            "label": "Start or resume the Good Dogs co-op campaign"
+          },
+          {
+            "id": "btn-nightcrawler",
+            "disabled": false,
+            "label": "Start the standalone Night Crawler mode"
+          }
+        ],
+        "viewport": {
+          "width": 844,
+          "height": 390
+        }
+      }
+    },
+    {
+      "id": "day_resume",
+      "profile": "chromium-landscape",
+      "status": "passed",
+      "evidence_type": "fixture-assisted-browser-input",
+      "fixture": true,
+      "observations": {
+        "resumed": {
+          "day": 1,
+          "px": 39,
+          "py": 17,
+          "budget": 80,
+          "clock": 510,
+          "ticketsAlias": true,
+          "music": true,
+          "shell": "day"
+        },
+        "standup": {
+          "entry": "office-entry",
+          "position": {
+            "px": 39,
+            "py": 17
+          },
+          "speakers": [
+            "NICK",
+            "AMIT",
+            "BRANDON",
+            "DANIEL"
+          ]
+        },
+        "deskFixture": {
+          "rejected": true,
+          "unchanged": true,
+          "position": {
+            "px": 31,
+            "py": 16
+          },
+          "station": "mike_desk",
+          "exitedInterior": "itdept",
+          "interiorExit": "v69ExitRoom"
+        },
+        "checkpoint_saved_at": 1793591293932,
+        "entry": "Actual keyboard path to authored standup and four real dialogue advances; explicit desk-position fixture with off-desk rejection; real dialog hit targets; muted music continuation; saved checkpoint"
+      }
+    },
+    {
+      "id": "night_resume",
+      "profile": "chromium-landscape",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "before": {
+          "x": 145.12330342768198,
+          "y": 396,
+          "hp": 100,
+          "district": "downtown",
+          "street": 1,
+          "clock": 1080,
+          "cash": 0,
+          "kills": 0,
+          "enemies": [
+            {
+              "x": 548.0593981805491,
+              "y": 400,
+              "hp": 34,
+              "alive": true
+            },
+            {
+              "x": 857.6106152166592,
+              "y": 400,
+              "hp": 34,
+              "alive": true
+            },
+            {
+              "x": 1188.8270247239686,
+              "y": 402,
+              "hp": 40,
+              "alive": true
+            }
+          ]
+        },
+        "after": {
+          "x": 145.12330342768198,
+          "hp": 100,
+          "district": "downtown",
+          "street": 1,
+          "clock": 1080,
+          "cash": 0,
+          "kills": 0,
+          "inDialog": false,
+          "daySave": "{\"_profileSchemaVersion\":1,\"day\":1,\"clock\":510,\"xp\":0,\"budget\":80,\"stress\":10,\"hp\":40,\"maxHp\":40,\"certs\":[],\"inv\":[],\"journal\":[],\"stats\":{\"networking\":1,\"windows\":1,\"linux\":0,\"cloud\":0,\"security\":1,\"programming\":0,\"hardware\":1,\"automation\":0},\"soft\":{\"communication\":1,\"patience\":1,\"documentation\":0},\"rep\":{\"Manufacturing\":1,\"Finance\":1,\"Engineering\":1,\"Executives\":1,\"HR\":1,\"Sales\":1,\"Marketing\":1},\"meta\":{\"closed\":0,\"printerKills\":0,\"chains\":0,\"crits\":0,\"legendaries\":0,\"cmds\":0,\"lore\":[],\"debt\":0,\"wrongDiag\":0,\"recentTypes\":[],\"kb\":{},\"incidents\":0,\"mttr\":[],\"hires\":0,\"_arc73\":{\"intel\":[],\"talks\":0,\"seen\":{},\"choice\":null,\"ending\":null},\"_v736\":{\"m\":1,\"evidence\":[],\"k\":false,\"waldo\":false,\"done\":false},\"canonicalDay1Spine\":{\"active\":true,\"guaranteed\":true,\"tickets\":[\"shipping_cannot_print\",\"plating_workstation_down\",\"impossible_access_event\"],\"contacts\":[\"campaign_shipping\",\"campaign_plating\",\"campaign_access\"],\"missingTickets\":[],\"missingContacts\":[],\"at\":1793591293711},\"nightObjs\":{\"door\":{\"x\":20,\"y\":29},\"ramps\":[{\"id\":\"atrium\",\"label\":\"Atrium Kicker\",\"x\":17,\"y\":20,\"nextDay\":0},{\"id\":\"dock\",\"label\":\"Loading Dock Ramp\",\"x\":8,\"y\":26,\"nextDay\":0}],\"shortcuts\":[{\"id\":\"rail\",\"label\":\"Handrail Shortcut\",\"needs\":\"skate\",\"x\":6,\"y\":12,\"nextDay\":0},{\"id\":\"alley\",\"label\":\"Back-Alley Cut\",\"needs\":\"bike\",\"x\":36,\"y\":6,\"nextDay\":0}]},\"interns\":0,\"mktPts\":0,\"outfit\":{\"hat\":null,\"shirt\":null,\"pants\":null,\"bottle\":false},\"delegated\":{},\"tree\":null,\"fridayEmergency\":false,\"v56\":{\"unlocked\":[]},\"maint\":null,\"_gallery\":{\"shift_start\":true,\"chaos_drill\":true},\"campaignAct1Native\":{\"standup\":{\"x\":34,\"y\":12},\"shipping\":{\"x\":22,\"y\":24},\"plating\":{\"x\":23,\"y\":30},\"access\":{\"x\":39,\"y\":24},\"sector04Door\":{\"x\":20,\"y\":29}},\"dayWorkUnlocked\":false,\"ticketTimersActive\":false,\"_v63Spots\":[[0,30,3],[1,32,3],[2,16,15],[3,25,16],[4,34,3],[5,3,2],[6,12,2],[7,22,3],[8,6,9],[9,31,4],[10,28,1],[11,14,2],[12,34,6],[13,24,16],[14,18,16],[15,5,2],[16,8,11],[17,38,7],[18,23,10],[19,36,5],[20,4,17],[21,7,17],[22,12,24],[23,16,27],[24,20,26],[25,24,29],[26,28,23],[27,32,27],[28,36,24],[29,1,22],[30,22,22],[31,40,20],[32,34,30],[33,8,26],[34,14,30],[35,18,23],[36,26,21],[37,38,27],[38,10,30],[39,30,30]],\"_v63SpotsDay\":1,\"_fel\":{\"met\":0,\"clues\":[],\"trust\":0,\"defeated\":false,\"unlocked\":false,\"pos\":null,\"spots\":null,\"blockedDay\":0,\"intel\":{\"employees\":0,\"systems\":0,\"facilities\":0,\"security\":0},\"scanned\":[],\"zones\":[],\"ao\":{},\"aoDay\":0,\"suspicion\":0,\"wv\":true,\"wdTiles\":0,\"blendTiles\":0},\"dayStations\":{\"version\":3,\"day\":1,\"width\":42,\"height\":32,\"items\":[{\"id\":\"mike_desk\",\"label\":\"Mike's workstation\",\"kind\":\"desk\",\"deviceType\":\"desktop\",\"roomId\":\"office\",\"zoneId\":\"office\",\"surface\":\"screen\",\"art\":2,\"x\":31,\"y\":15,\"authored\":true,\"roomName\":\"IT / OPERATIONS\",\"available\":true,\"approach\":{\"x\":31,\"y\":16}},{\"id\":\"shipping_printer\",\"label\":\"Shipping label printer\",\"kind\":\"device\",\"deviceType\":\"printer\",\"ticketId\":\"shipping_cannot_print\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"physical\",\"art\":14,\"x\":22,\"y\":23,\"approach\":{\"x\":21,\"y\":23},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"shipping_workstation\",\"label\":\"Shipping dispatch workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"shipping_cannot_print\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"screen\",\"art\":2,\"x\":21,\"y\":24,\"approach\":{\"x\":21,\"y\":23},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"plating_workstation\",\"label\":\"Plating operator workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"plating_workstation_down\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":2,\"x\":23,\"y\":29,\"approach\":{\"x\":22,\"y\":29},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"security_workstation\",\"label\":\"Security evidence workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"ticketId\":\"impossible_access_event\",\"roomId\":\"office\",\"zoneId\":\"office\",\"surface\":\"screen\",\"art\":2,\"x\":39,\"y\":22,\"approach\":{\"x\":39,\"y\":23},\"roomName\":\"IT / OPERATIONS\",\"available\":true},{\"id\":\"laptop_dock_link\",\"caseId\":\"laptop_dock_link\",\"label\":\"Engineering laptop dock\",\"kind\":\"device\",\"deviceType\":\"laptop\",\"roomId\":\"eng\",\"zoneId\":\"eng\",\"surface\":\"both\",\"art\":2,\"x\":6,\"y\":9,\"approach\":{\"x\":5,\"y\":9},\"roomName\":\"ENGINEERING LAB\",\"available\":true},{\"id\":\"desktop_restart_window\",\"caseId\":\"desktop_restart_window\",\"label\":\"Finance workstation\",\"kind\":\"device\",\"deviceType\":\"desktop\",\"roomId\":\"office\",\"zoneId\":\"finance\",\"surface\":\"both\",\"art\":2,\"x\":15,\"y\":4,\"approach\":{\"x\":15,\"y\":5},\"roomName\":\"FINANCE ROW\",\"available\":true},{\"id\":\"signage_player_session\",\"caseId\":\"signage_player_session\",\"label\":\"Lobby signage player\",\"kind\":\"device\",\"deviceType\":\"mini_pc\",\"roomId\":\"office\",\"zoneId\":\"lobby\",\"surface\":\"both\",\"art\":21,\"x\":25,\"y\":15,\"approach\":{\"x\":25,\"y\":16},\"roomName\":\"RECEPTION\",\"available\":true},{\"id\":\"printer_queue_blocked\",\"caseId\":\"printer_queue_blocked\",\"label\":\"Finance batch printer\",\"kind\":\"device\",\"deviceType\":\"printer\",\"roomId\":\"office\",\"zoneId\":\"finance\",\"surface\":\"both\",\"art\":14,\"x\":18,\"y\":5,\"approach\":{\"x\":18,\"y\":6},\"roomName\":\"FINANCE ROW\",\"available\":true,\"supportComputer\":{\"kind\":\"service_laptop\",\"label\":\"Mike's service laptop\",\"connection\":\"Approved print administration session\"}},{\"id\":\"plc_hmi_dependency\",\"caseId\":\"plc_hmi_dependency\",\"label\":\"Packaging cell HMI\",\"kind\":\"device\",\"deviceType\":\"plc_hmi\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":6,\"x\":25,\"y\":26,\"approach\":{\"x\":25,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"industrial_scanner_vlan\",\"caseId\":\"industrial_scanner_vlan\",\"label\":\"Traceability scanner\",\"kind\":\"device\",\"deviceType\":\"industrial_scanner\",\"roomId\":\"factory\",\"zoneId\":\"factory\",\"surface\":\"both\",\"art\":6,\"x\":34,\"y\":26,\"approach\":{\"x\":34,\"y\":27},\"roomName\":\"PRODUCTION FLOOR\",\"available\":true},{\"id\":\"access_point_poe\",\"caseId\":\"access_point_poe\",\"label\":\"Engineering wireless AP\",\"kind\":\"device\",\"deviceType\":\"access_point\",\"roomId\":\"eng\",\"zoneId\":\"eng\",\"surface\":\"both\",\"art\":21,\"x\":8,\"y\":12,\"approach\":{\"x\":8,\"y\":13},\"roomName\":\"ENGINEERING LAB\",\"available\":true,\"supportComputer\":{\"kind\":\"service_laptop\",\"label\":\"Mike's service laptop\",\"connection\":\"Managed switch console\"}},{\"id\":\"timeclock_time_sync\",\"caseId\":\"timeclock_time_sync\",\"label\":\"HR time clock\",\"kind\":\"device\",\"deviceType\":\"time_clock\",\"roomId\":\"office\",\"zoneId\":\"hr\",\"surface\":\"both\",\"art\":21,\"x\":24,\"y\":10,\"approach\":{\"x\":24,\"y\":11},\"roomName\":\"HR CORNER\",\"available\":true}],\"routeTarget\":null},\"dayStandupIntroSeen\":1},\"ach\":[],\"books\":[],\"lab\":[],\"stressResist\":0,\"diff\":1,\"ngPlus\":false,\"shadowDone\":false,\"staff\":[],\"audited\":false,\"infra\":[],\"certDiscount\":0,\"_saveRevision\":1793591293932}",
+          "savedAt": 1793591304368
+        },
+        "checkpoint_saved_at": 1793591304368,
+        "campaign_isolation": true,
+        "difficulty_wait": null,
+        "control_bounds": {
+          "applicable": true,
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "presentation": {
+            "bodyClass": "v71-anims recording-day techops-night-shell",
+            "inputCapabilities": {
+              "pointerCoarse": true,
+              "pointerFine": false,
+              "pointerNone": false,
+              "hover": false,
+              "anyPointerCoarse": true,
+              "maxTouchPoints": 1
+            },
+            "inputOwner": null,
+            "expanded": "false",
+            "narrowLandscape": false,
+            "controls": [
+              {
+                "id": "touch-ui",
+                "className": "",
+                "inlineStyle": null,
+                "parent": "game-wrap",
+                "bounds": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 844,
+                  "height": 390,
+                  "top": 0,
+                  "right": 844,
+                  "bottom": 390,
+                  "left": 0
+                },
+                "width": "844px",
+                "gap": "normal",
+                "right": "0px",
+                "display": "block",
+                "visibility": "visible",
+                "pointerEvents": "none",
+                "direction": "row",
+                "columns": "none"
+              },
+              {
+                "id": "dpad",
+                "className": "",
+                "inlineStyle": null,
+                "parent": "touch-ui",
+                "bounds": {
+                  "x": 8,
+                  "y": 338,
+                  "width": 194,
+                  "height": 44,
+                  "top": 338,
+                  "right": 202,
+                  "bottom": 382,
+                  "left": 8
+                },
+                "width": "194px",
+                "gap": "6px",
+                "right": "642px",
+                "display": "grid",
+                "visibility": "visible",
+                "pointerEvents": "auto",
+                "direction": "row",
+                "columns": "44px 44px 44px 44px"
+              },
+              {
+                "id": "v55-nmbtns",
+                "className": "",
+                "inlineStyle": null,
+                "parent": "game-wrap",
+                "bounds": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "width": "auto",
+                "gap": "8px",
+                "right": "10px",
+                "display": "none",
+                "visibility": "visible",
+                "pointerEvents": "auto",
+                "direction": "column",
+                "columns": "none"
+              },
+              {
+                "id": "touch-buttons",
+                "className": "",
+                "inlineStyle": null,
+                "parent": "touch-ui",
+                "bounds": {
+                  "x": 742,
+                  "y": 338,
+                  "width": 94,
+                  "height": 44,
+                  "top": 338,
+                  "right": 836,
+                  "bottom": 382,
+                  "left": 742
+                },
+                "width": "94px",
+                "gap": "6px",
+                "right": "8px",
+                "display": "flex",
+                "visibility": "visible",
+                "pointerEvents": "auto",
+                "direction": "row",
+                "columns": "none"
+              }
+            ]
+          },
+          "mode": "night",
+          "projectedFoot": 310.55555555555554,
+          "canvas": {
+            "width": 1169,
+            "height": 540,
+            "scale": 0.7222222222222222
+          },
+          "controls": [
+            {
+              "id": "dbtn d-up",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 58,
+              "right": 102,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-up",
+              "visible": true
+            },
+            {
+              "id": "dbtn d-left",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 8,
+              "right": 52,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-left",
+              "visible": true
+            },
+            {
+              "id": "dbtn d-right",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 158,
+              "right": 202,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-right",
+              "visible": true
+            },
+            {
+              "id": "dbtn d-down",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 108,
+              "right": 152,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-down",
+              "visible": true
+            },
+            {
+              "id": "tb-interact",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 742,
+              "right": 786,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "tb-interact",
+              "visible": true
+            },
+            {
+              "id": "tb-menu",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 792,
+              "right": 836,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "tb-menu",
+              "visible": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "good_dogs_selector",
+      "profile": "chromium-landscape",
+      "status": "passed",
+      "evidence_type": "browser-input",
+      "fixture": false,
+      "observations": {
+        "mode": "solo",
+        "touch_only_local_disabled": true,
+        "cancellation_recovered": true,
+        "prologue_shots": 3,
+        "note": "Local two-player needs a physical keyboard on this touch device. Use Single player, or connect a keyboard and press any key.",
+        "control_bounds": {
+          "applicable": true,
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "presentation": {
+            "bodyClass": "v71-anims techops-night-shell good-boys-controls good-boys-directed recording-day good-dogs-active",
+            "inputCapabilities": {
+              "pointerCoarse": true,
+              "pointerFine": false,
+              "pointerNone": false,
+              "hover": false,
+              "anyPointerCoarse": true,
+              "maxTouchPoints": 1
+            },
+            "inputOwner": null,
+            "expanded": "false",
+            "narrowLandscape": false,
+            "controls": [
+              {
+                "id": "touch-ui",
+                "className": "",
+                "inlineStyle": "",
+                "parent": "game-wrap",
+                "bounds": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 844,
+                  "height": 390,
+                  "top": 0,
+                  "right": 844,
+                  "bottom": 390,
+                  "left": 0
+                },
+                "width": "844px",
+                "gap": "normal",
+                "right": "0px",
+                "display": "block",
+                "visibility": "visible",
+                "pointerEvents": "none",
+                "direction": "row",
+                "columns": "none"
+              },
+              {
+                "id": "dpad",
+                "className": "",
+                "inlineStyle": null,
+                "parent": "touch-ui",
+                "bounds": {
+                  "x": 8,
+                  "y": 338,
+                  "width": 194,
+                  "height": 44,
+                  "top": 338,
+                  "right": 202,
+                  "bottom": 382,
+                  "left": 8
+                },
+                "width": "194px",
+                "gap": "6px",
+                "right": "642px",
+                "display": "grid",
+                "visibility": "visible",
+                "pointerEvents": "auto",
+                "direction": "row",
+                "columns": "44px 44px 44px 44px"
+              },
+              {
+                "id": "v55-nmbtns",
+                "className": "on",
+                "inlineStyle": null,
+                "parent": "game-wrap",
+                "bounds": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "width": "auto",
+                "gap": "8px",
+                "right": "10px",
+                "display": "none",
+                "visibility": "hidden",
+                "pointerEvents": "none",
+                "direction": "column",
+                "columns": "none"
+              },
+              {
+                "id": "touch-buttons",
+                "className": "",
+                "inlineStyle": "display: none !important;",
+                "parent": "touch-ui",
+                "bounds": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "width": "auto",
+                "gap": "6px",
+                "right": "8px",
+                "display": "none",
+                "visibility": "visible",
+                "pointerEvents": "auto",
+                "direction": "row",
+                "columns": "none"
+              }
+            ]
+          },
+          "mode": "gooddogs",
+          "projectedFoot": 310.55555555555554,
+          "canvas": {
+            "width": 1169,
+            "height": 540,
+            "scale": 0.7222222222222222
+          },
+          "controls": [
+            {
+              "id": "dbtn d-up",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 58,
+              "right": 102,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-up",
+              "visible": true
+            },
+            {
+              "id": "dbtn d-left",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 8,
+              "right": 52,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-left",
+              "visible": true
+            },
+            {
+              "id": "dbtn d-right",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 158,
+              "right": 202,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-right",
+              "visible": true
+            },
+            {
+              "id": "dbtn d-down",
+              "width": 44,
+              "height": 44,
+              "top": 338,
+              "left": 108,
+              "right": 152,
+              "bottom": 382,
+              "computed": {
+                "width": "44px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "0px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "dbtn d-down",
+              "visible": true
+            },
+            {
+              "id": "gb-swap",
+              "width": 66.5625,
+              "height": 44,
+              "top": 338,
+              "left": 346,
+              "right": 412.5625,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5625px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-swap",
+              "visible": true
+            },
+            {
+              "id": "gb-sync",
+              "width": 66.578125,
+              "height": 44,
+              "top": 338,
+              "left": 416.5625,
+              "right": 483.140625,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5781px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-sync",
+              "visible": true
+            },
+            {
+              "id": "gb-attack",
+              "width": 66.5625,
+              "height": 44,
+              "top": 338,
+              "left": 487.140625,
+              "right": 553.703125,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5625px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-attack",
+              "visible": true
+            },
+            {
+              "id": "gb-boost",
+              "width": 66.578125,
+              "height": 44,
+              "top": 338,
+              "left": 557.703125,
+              "right": 624.28125,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5781px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-boost",
+              "visible": true
+            },
+            {
+              "id": "gb-airdash",
+              "width": 66.5625,
+              "height": 44,
+              "top": 338,
+              "left": 628.28125,
+              "right": 694.84375,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5625px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-airdash",
+              "visible": true
+            },
+            {
+              "id": "gb-partner",
+              "width": 66.578125,
+              "height": 44,
+              "top": 338,
+              "left": 698.84375,
+              "right": 765.421875,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5781px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-partner",
+              "visible": true
+            },
+            {
+              "id": "gb-use",
+              "width": 66.5625,
+              "height": 44,
+              "top": 338,
+              "left": 769.421875,
+              "right": 835.984375,
+              "bottom": 382,
+              "computed": {
+                "width": "66.5625px",
+                "minWidth": "44px",
+                "flexBasis": "auto",
+                "flexShrink": "1",
+                "boxSizing": "border-box",
+                "padding": "4px 2px",
+                "transform": "none"
+              },
+              "reachable": true,
+              "hit": "gb-use",
+              "visible": true
+            }
+          ]
+        },
+        "movement": {
+          "input": "browser-touch-hold",
+          "before": 110,
+          "after": 141.76993735999994
+        }
+      }
+    },
+    {
+      "id": "cinematic_recovery",
+      "profile": "chromium-landscape",
+      "status": "passed",
+      "evidence_type": "fault-injection",
+      "fixture": true,
+      "observations": {
+        "capability": "both probes false",
+        "source_assigned": false,
+        "writes": [
+          {
+            "id": "GD_CUT_01",
+            "status": "USER_SKIPPED",
+            "skipped": true
+          }
+        ],
+        "late_escape_did_not_repeat": true
+      }
+    }
+  ],
+  "profiles": [
+    {
+      "id": "chromium-desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "hasTouch": false,
+      "status": "passed",
+      "performance": {
+        "frames": 120,
+        "duration_ms": 1983.4000000119208,
+        "p50_ms": 16.699999999999818,
+        "p95_ms": 16.799999999999727,
+        "max_ms": 16.800000000000182,
+        "long_frames": 0,
+        "heap_bytes": 18200000
+      }
+    },
+    {
+      "id": "chromium-portrait",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "hasTouch": true,
+      "status": "passed",
+      "performance": {
+        "frames": 120,
+        "duration_ms": 1984.2999999940394,
+        "p50_ms": 16.699999999999818,
+        "p95_ms": 16.700000000000273,
+        "max_ms": 16.800000000000182,
+        "long_frames": 0,
+        "heap_bytes": 19300000
+      }
+    },
+    {
+      "id": "chromium-landscape",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "hasTouch": true,
+      "status": "passed",
+      "performance": {
+        "frames": 120,
+        "duration_ms": 1990.4,
+        "p50_ms": 16.699999999999818,
+        "p95_ms": 16.700000000000273,
+        "max_ms": 16.800000000000182,
+        "long_frames": 0,
+        "heap_bytes": 23100000
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chromium-desktop-title.png",
+      "sha256": "993840f1b8b454db1dba5f714445e7c307d5f247c224bf62c291220d2a46b2f0"
+    },
+    {
+      "path": "chromium-desktop-workstation.png",
+      "sha256": "81187cf3352a5e9aa6bcf60574e496220a29c375bfb57b346c8a5f879a3f454e"
+    },
+    {
+      "path": "chromium-desktop-day-resumed.png",
+      "sha256": "0c4a1e2e2383f6f48d6d0082e651e1ec93bff0144500dea627c342e36c8774b8"
+    },
+    {
+      "path": "chromium-desktop-night-resumed.png",
+      "sha256": "8871d415e8c0d669ea1a6a405f4673e76488b52c84eaa275ed4b238b2f81e3e1"
+    },
+    {
+      "path": "chromium-desktop-dogs-selector.png",
+      "sha256": "654af3dcd193b850361b6ab096876d6dcd0a2987e3dd989cd24895d93bd7f723"
+    },
+    {
+      "path": "chromium-desktop-dogs-prologue.png",
+      "sha256": "1309fa66457957f70bf75c5baf2ce0aba0223a6ba040a5a77436fa79e8032095"
+    },
+    {
+      "path": "chromium-desktop-dogs-property.png",
+      "sha256": "4a6b8a11c64e3be83715befda86eddd69bde49291b0a8cea0745ae81f7e99f38"
+    },
+    {
+      "path": "chromium-desktop-codec-recovery.png",
+      "sha256": "b6f6b5bec790f98853f3eba653f050cf02545b2de872bb1f8e2390f150523d9a"
+    },
+    {
+      "path": "chromium-portrait-title.png",
+      "sha256": "63e64ca8df88181733e43705e3477a62f4a6398b64cb57be5994be81d417b77c"
+    },
+    {
+      "path": "chromium-portrait-workstation.png",
+      "sha256": "bb4ba9f1631e3439f5576cd2aaf452d2b38632c44452d198cd05a42e0ec0f5f4"
+    },
+    {
+      "path": "chromium-portrait-day-resumed.png",
+      "sha256": "506e6b5d61fa964441603839e5723e3d28ea16760b023ae9e539268bd24e2caf"
+    },
+    {
+      "path": "chromium-portrait-night-resumed.png",
+      "sha256": "765f40b99cf63c3450a2d1bd3d9166f6fe325cade1962d58a5c6e26fbc885252"
+    },
+    {
+      "path": "chromium-portrait-dogs-selector.png",
+      "sha256": "ceb2b3711ccdfea1f5e5dbe6109c30f71a6c3dac0cd03d31105fa8d2583159c3"
+    },
+    {
+      "path": "chromium-portrait-dogs-prologue.png",
+      "sha256": "4f50a9cb09be2a707abaffc0f8daed623ca3b4845fbfbb54c39ab962396b514b"
+    },
+    {
+      "path": "chromium-portrait-dogs-property.png",
+      "sha256": "a986ad341a7dde9c0ae041c8e78d1542a42cc3d8efab5f58c2562c35ae581951"
+    },
+    {
+      "path": "chromium-portrait-codec-recovery.png",
+      "sha256": "fe6894bf0e6debdb45f72774bde0d5670c82b8400ea79fe6c92f1a9a12f94de8"
+    },
+    {
+      "path": "chromium-landscape-title.png",
+      "sha256": "2e5fbf56b20a7c8cc943061016beb886b2522dab974c20421aecaf078fc76384"
+    },
+    {
+      "path": "chromium-landscape-workstation.png",
+      "sha256": "9518dc18921fe97b153b620d474894eed9cb5573ed1562250f659e1a6886620a"
+    },
+    {
+      "path": "chromium-landscape-day-resumed.png",
+      "sha256": "424d3800273d95221e51a436f9ae992f8423ea5304e9c2003f00200ff035545f"
+    },
+    {
+      "path": "chromium-landscape-night-resumed.png",
+      "sha256": "11c60550bb3ea3f75e2c1336f3d3b5d01ac33c5ade6a19478e7c50f261478575"
+    },
+    {
+      "path": "chromium-landscape-dogs-selector.png",
+      "sha256": "b54075d860003183b589c5512a295609a1b9caa564f49ea68ba0f115e407a411"
+    },
+    {
+      "path": "chromium-landscape-dogs-prologue.png",
+      "sha256": "2945959dc012ea4cc5357a6410c5fb7cb25b6c3c0b90b6487e7ee529587848e5"
+    },
+    {
+      "path": "chromium-landscape-dogs-property.png",
+      "sha256": "eb33fcfbada030ddf958c89c8ed926b7f4f91097b062d58a13bb70246efd189d"
+    },
+    {
+      "path": "chromium-landscape-codec-recovery.png",
+      "sha256": "071526c2c8e4e82890ab05afbb272c9a5af1748420b9ba28de8b7bc243cd0dc7"
+    }
+  ],
+  "limitations": [
+    "Emulated viewport and touch are not physical-device evidence.",
+    "Day uses a declared desk-position fixture after the real standup walk; it does not certify walking the new desk route.",
+    "External audio is blocked; explicit muted continuation is not soundtrack playback evidence.",
+    "A bounded opening and recovery run is not a complete campaign playthrough.",
+    "Frame samples measure this runner only; they do not certify phone thermals or sustained performance."
+  ],
+  "browser_version": "140.0.7339.186",
+  "finished_at": "2026-11-02T03:48:32.846Z"
+}
