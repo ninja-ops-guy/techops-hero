@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {chromium} from 'playwright';
+import {assertWorkstationTouchTarget} from './workstation_touch_target.mjs';
 import {sourceIdentity,digest} from './quality_release_receipt.mjs';
 import {assertLandscapeControlBounds,assertTouchTarget} from './responsive_control_contract.mjs';
 
@@ -132,7 +133,10 @@ async function day(page,p){
   const desktop=page.locator('.os-desktop');
   await click(page,desktop.getByRole('button',{name:'MUSIC',exact:true}),p.hasTouch);
   await click(page,desktop.getByRole('button',{name:'Continue with music muted',exact:true}),p.hasTouch);
-  await click(page,desktop.getByRole('button',{name:'Back to desktop',exact:true}),p.hasTouch);
+  const backToDesktop=desktop.getByRole('button',{name:'Back to desktop',exact:true});
+  const workstationTargets=await assertWorkstationTouchTarget(backToDesktop);
+  jsonArtifact(`${p.id}-workstation-touch-target`,workstationTargets);
+  await click(page,backToDesktop,p.hasTouch);
   await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent==='MIKE // WORKSTATION');
   await screenshot(page,`${p.id}-workstation`);
   await click(page,desktop.getByRole('button',{name:'Exit workstation',exact:true}),p.hasTouch);
