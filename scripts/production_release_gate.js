@@ -110,6 +110,7 @@ const tests = [
   "test_production_gameplay_experience.js",
   "test_orbital_scene_staging.js",
   "test_night_lifecycle.js",
+  "test_night_lifecycle_diagnostics.mjs",
   "test_night_recovery.js",
   "test_runtime_night.js",
   "test_night_mobile_visual_contract.js",
