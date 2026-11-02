@@ -20,15 +20,21 @@ async function snapshot(page){return page.evaluate(()=>({
 }));}
 async function startupSnapshot(page){return page.evaluate(()=>({
  readyState:document.readyState,visibility:document.visibilityState,bootstrapReady:!!window.__productionBootstrapReady,
- bootstrap:window.TechOpsProductionBootstrap?.health?.(),title:window.TechOpsProductionTitleExperience?.state?.(),
+ bootstrap:window.TechOpsProductionBootstrap?{version:TechOpsProductionBootstrap.VERSION,ready:TechOpsProductionBootstrap.ready(),scriptCount:document.querySelectorAll('script[data-production-bootstrap]').length}:null,title:window.TechOpsProductionTitleExperience?.state?.(),
  bootstrapError:window.__productionBootstrapError||null,modeError:window.__productionModeRouterError||null,
  lastScripts:[...document.scripts].slice(-8).map(script=>({src:script.src,async:script.async})),
  resourceCount:performance.getEntriesByType('resource').length
 }));}
-async function mount(page){
+async function mount(page,record,phase){
+ record.phase=phase;
  await page.goto(URL,{waitUntil:'domcontentloaded'});
  try{await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsNightRuntime);}
- catch(error){error.message+='\nStartup observation: '+JSON.stringify(await startupSnapshot(page).catch(()=>null));throw error;}
+ catch(error){
+  const observation=await startupSnapshot(page).catch(failure=>({unavailable:String(failure.message||failure)}));
+  // Mutating Error.message leaves its existing stack unchanged. Retain the
+  // observation in the reported error even when the renderer is unreachable.
+  throw new Error(phase+': '+error.message+'\nStartup observation: '+JSON.stringify(observation),{cause:error});
+ }
 }
 async function sectorMenuProbe(page){
  return page.evaluate(()=>{
@@ -83,7 +89,7 @@ async function prepareStory(page){return page.evaluate(()=>{
  C.recordGhostEvidence(c,{id:'badge_impossible_access',perspective:'firsthand',discoveredBy:'mike'});C.save(c,localStorage);return JSON.stringify(c.evidence);
 });}
 async function run(name,engine,touch,viewport){
- const record={browser:name,touch,viewport,status:'running',steps:[],errors:[]};results.push(record);
+ const record={browser:name,touch,viewport,status:'running',steps:[],errors:[],browserEvents:[],failedRequests:[]};results.push(record);
  let browser,page;
  try{
   browser=await engine.launch({headless:true,...(engine===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{})});
@@ -91,6 +97,10 @@ async function run(name,engine,touch,viewport){
   const context=await browser.newContext({viewport,hasTouch:touch,deviceScaleFactor:1});context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(60000);
   await context.route('**/*',r=>r.request().url().startsWith(URL)?r.continue():r.abort());
   page=await context.newPage();page.on('pageerror',e=>record.errors.push(String(e.stack||e)));
+  const browserEvent=type=>{if(record.browserEvents.length<20)record.browserEvents.push({type,phase:record.phase,at:new Date().toISOString()});};
+  page.on('crash',()=>browserEvent('page-crash'));page.on('close',()=>browserEvent('page-close'));
+  browser.on('disconnected',()=>browserEvent('browser-disconnected'));
+  page.on('requestfailed',request=>{if(request.url().startsWith(URL)&&record.failedRequests.length<40)record.failedRequests.push({phase:record.phase,url:request.url(),type:request.resourceType(),failure:request.failure()?.errorText});});
   // On the touch profile, drive the browser touchscreen at the locator's rendered
   // center instead of relying on locator.tap() actionability. This remains real
   // browser touch input: if an overlay owns the hit target, the state assertion
@@ -104,7 +114,7 @@ async function run(name,engine,touch,viewport){
   };
   const option=text=>page.locator('#dlg-options button').filter({hasText:text});
   const shot=label=>page.screenshot({path:`${OUT}/${name}-${label}.png`});
-  await mount(page);const storyMarker=JSON.stringify({day:7,clock:700,meta:{marker:'standalone-night-isolation'}});await page.evaluate(value=>localStorage.setItem('techops_save',value),storyMarker);await enterNight(page,touch);record.steps.push('reachable title/difficulty/Night Drive launch');
+  await mount(page,record,'initial Night startup');const storyMarker=JSON.stringify({day:7,clock:700,meta:{marker:'standalone-night-isolation'}});await page.evaluate(value=>localStorage.setItem('techops_save',value),storyMarker);await enterNight(page,touch);record.steps.push('reachable title/difficulty/Night Drive launch');
   // Observe both acknowledged input and actual simulation advancement. Do not
   // accept mere elapsed wall time as proof of movement, or write gameplay keys.
   const before=await snapshot(page);await page.keyboard.down('ArrowRight');
@@ -139,11 +149,12 @@ async function run(name,engine,touch,viewport){
   // Keep the scene held while navigation listeners are armed on slow runners.
   await click(transitionControls.pause);await page.waitForFunction(()=>window.v725?.presentation().paused);
   record.steps.push('shared cinematic Pause/Resume/Tab controls and one explicit Skip');
+  record.phase='standalone return-to-title reload';
   const standaloneReload=page.waitForNavigation({waitUntil:'domcontentloaded'});await click(transitionControls.skip);await standaloneReload;await page.waitForFunction(()=>window.__productionBootstrapReady&&window.TechOpsProductionTitleExperience?.state().ready);
   assert.equal(await page.evaluate(()=>localStorage.getItem('techops_save')),storyMarker,'standalone Night cannot overwrite the campaign profile');
   assert.equal(await page.evaluate(()=>localStorage.getItem('techops_char')),null);assert.equal(await page.locator('#title-night-result').isVisible(),true);await shot('morning');
   record.steps.push('home/stay/sleep returns to title with isolated campaign save and visible debrief');
-  await page.evaluate(()=>localStorage.clear());await mount(page);await page.waitForFunction(()=>window.TechOpsProductionTitleExperience?.state().ready);await click(page.locator('#btn-start'));await click(option('Standard'));await click(option('Clock in'));await page.waitForFunction(()=>window.S&&!S.nightMode&&!S.inDialog);record.steps.push('actual Day entry before fixture-assisted campaign Night');
+  await page.evaluate(()=>localStorage.clear());await mount(page,record,'fresh Day startup after localStorage.clear');await page.waitForFunction(()=>window.TechOpsProductionTitleExperience?.state().ready);await click(page.locator('#btn-start'));await click(option('Standard'));await click(option('Clock in'));await page.waitForFunction(()=>window.S&&!S.nightMode&&!S.inDialog);record.steps.push('actual Day entry before fixture-assisted campaign Night');
   const evidence=await prepareStory(page);assert.equal((await page.evaluate(()=>TechOpsSector04Runtime.enterBrowser())).pending,true);await page.waitForFunction(()=>window.v722?.active());await page.keyboard.press('Escape');await page.waitForFunction(()=>S.nightMode?._sector04?.active&&!S.inDialog);
   await page.evaluate(()=>{NM.x=720;NM._continuityCheck='same-session';NM.enemies.forEach(e=>e.x=1000);});
   await sectorMenuProbe(page);
@@ -162,8 +173,8 @@ async function run(name,engine,touch,viewport){
   await click(option('Continue Sector 04 investigation'));
   assert.equal(await page.evaluate(()=>NM._continuityCheck),'same-session');assert.equal(await page.evaluate(()=>JSON.stringify(TechOpsCampaign.load(localStorage).evidence)),evidence);assert.equal(await page.evaluate(()=>TechOpsCampaign.load(localStorage).flags.tuesday_morning_reached),false);await shot('sector04');
   record.steps.push('asynchronous Sector 04 entry and evidence-preserving resume');assert.deepEqual(record.errors,[]);record.status='passed';
- }catch(e){record.status='failed';record.failure=String(e.stack||e);if(page){record.state=await snapshot(page).catch(()=>null);record.startup=await startupSnapshot(page).catch(()=>null);await page.screenshot({path:`${OUT}/${name}-failure.png`,timeout:5000}).catch(()=>{});}}
- finally{if(browser)await browser.close();await writeFile(`${OUT}/report.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(record));}
+ }catch(e){record.status='failed';record.failure=String(e.stack||e);if(page){record.state=await snapshot(page).catch(error=>({unavailable:String(error.message||error)}));record.startup=await startupSnapshot(page).catch(error=>({unavailable:String(error.message||error)}));await page.screenshot({path:`${OUT}/${name}-failure.png`,timeout:5000}).catch(()=>{});}}
+ finally{record.phase='test cleanup';if(browser)await browser.close();await writeFile(`${OUT}/report.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(record));}
 }
 const profiles=[['chromium',chromium,false,{width:1280,height:800}],['firefox',firefox,false,{width:1280,height:800}],['webkit',webkit,false,{width:1280,height:800}],['webkit-mobile',webkit,true,{width:844,height:390}]];
 // Local execution can select installed engines; CI deliberately leaves this unset.
