@@ -334,8 +334,11 @@ async function morningOpening(page, result) {
   await page.waitForFunction(() => {
     const el = document.getElementById('act1-reference');
     if (!el) return false;
-    const v = parseFloat(getComputedStyle(el).getPropertyValue('--a1-floor-bottom'));
-    return v > 0;
+    // The stylesheet's default 18% is positive even before stage geometry is
+    // applied. Require the measured inline floor and authored actor placement.
+    const actor = el.querySelector('.a1-anchored.a1-actor');
+    const v = parseFloat(el.style.getPropertyValue('--a1-floor-bottom'));
+    return v > 0 && !!(actor && actor.style.left && actor.style.top && actor.style.width && actor.style.height);
   }, null, { timeout: 5000 });
   result.shippingFloor = await page.evaluate(() => getComputedStyle(document.getElementById('act1-reference')).getPropertyValue('--a1-floor-bottom').trim());
   assert.match(result.shippingFloor, /%$/, 'floor line measured from the art');

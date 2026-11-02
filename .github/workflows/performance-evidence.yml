@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   collect:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
         env:
           PERF_OUT_DIR: artifacts/r1-performance
           PERF_OPERATOR: github-actions-desktop-profiler
-          PERF_DEVICE: ubuntu-latest
+          PERF_DEVICE: ubuntu-24.04
         run: node scripts/performance_profile_browser.mjs
       - name: Upload retained performance evidence
         if: always()

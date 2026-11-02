@@ -412,7 +412,6 @@
       if (layout) {
         if (spec.actor) bg.appendChild(anchoredImage(spec.actor, "a1-actor"));
         profile.props.forEach(function (slot) { bg.appendChild(anchoredImage(slot, "a1-prop")); });
-        bindStage(el, bg, layout);
       }
     }
     var grade = root.document.createElement("div"); grade.className = "a1-grade"; el.appendChild(grade);
@@ -433,6 +432,9 @@
     if (root.document.body.classList) root.document.body.classList.add("act1-scene-open");
     root.__techopsAct1ReferenceScene = sceneId;
     syncLayout();
+    // Measure only after attachment and layout setup. ResizeObserver's first
+    // delivery is asynchronous; the initial frame must already be anchored.
+    if (layout) bindStage(el, bg, layout);
     return { id: sceneId, active: true, mode: spec.mode, background: spec.background ? url(spec.background) : null, presentation: profile, worldSnapshot: snapshot, focus: focus };
   }
 
