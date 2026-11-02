@@ -149,6 +149,9 @@
     var height = Math.ceil(dialog.getBoundingClientRect().height + 24);
     var style = root.document.documentElement && root.document.documentElement.style;
     if (style && height > 24) style.setProperty("--techops-dialog-height", height + "px");
+    // Dialogue content is populated after show(); its reserved height changes
+    // the stage box. Re-anchor in this same layout sync, before observer delivery.
+    applyStage();
     if (!layoutObserver && typeof root.ResizeObserver === "function") {
       layoutObserver = new root.ResizeObserver(syncLayout);
       layoutObserver.observe(dialog);

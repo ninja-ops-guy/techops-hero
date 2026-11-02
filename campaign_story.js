@@ -133,7 +133,7 @@
     if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
     window.__techopsAct1VisualLoader = true;
     var script = window.document.createElement("script");
-    script.src = "campaign_native_act1_visuals.js?v=20261102-stage-mount-r1";
+    script.src = "campaign_native_act1_visuals.js?v=20261102-stage-mount-r2";
     script.async = false;
     window.document.head.appendChild(script);
     return true;

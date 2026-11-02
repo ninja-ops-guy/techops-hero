@@ -215,7 +215,7 @@ console.log("Campaign Day 1 world-camera continuity + retired workstation concep
 {
   const vm = require('vm');
   for (const observerAvailable of [false, true]) {
-    let viewport = { width: 844, height: 390 };
+    let viewport = { width: 844, height: 390 }, dialogueHeight = 400, nextDialogueHeight = 200;
     const observers = [];
     class Element {
       constructor(tag) {
@@ -238,8 +238,12 @@ console.log("Campaign Day 1 world-camera continuity + retired workstation concep
       }
       getBoundingClientRect() {
         if (!this.isConnected) return { width: 0, height: 0, top: 0, left: 0 };
-        const bg = this.className === 'a1-bg';
-        return { width: viewport.width * (bg ? 1.04 : 1), height: viewport.height * (bg ? 1.04 : 1), top: bg ? -viewport.height * .02 : 0, left: bg ? -viewport.width * .02 : 0 };
+        if (this.id === 'dialogue') return { width: viewport.width, height: dialogueHeight, top: 0, left: 0 };
+        // Production style.css gives staged backgrounds inset:0 and reserves
+        // dialogue height, except the landscape side-by-side composition.
+        const landscape = viewport.height <= 500 && viewport.width >= 641;
+        const height = landscape ? viewport.height : Math.max(110, viewport.height - (parseFloat(document.documentElement.style.getPropertyValue('--techops-dialog-height')) || 0));
+        return { width: viewport.width * (landscape ? .45 : 1), height, top: 0, left: 0 };
       }
     }
     const body = new Element('body'), head = new Element('head');
@@ -247,7 +251,7 @@ console.log("Campaign Day 1 world-camera continuity + retired workstation concep
       const find = el => el.id === id ? el : el.children.map(find).find(Boolean);
       return find(body) || find(head) || null;
     } };
-    const context = { document, matchMedia: () => ({ matches: true }) };
+    const context = { document, matchMedia: () => ({ matches: true }), dlg() { dialogueHeight = nextDialogueHeight; return 'dialogue rendered'; } };
     if (observerAvailable) context.ResizeObserver = class {
       constructor(callback) { this.callback = callback; observers.push(this); }
       observe(el) { this.target = el; }
@@ -281,6 +285,25 @@ console.log("Campaign Day 1 world-camera continuity + retired workstation concep
     assert.strictEqual(document.getElementById('act1-reference'), null);
     assertMounted('plating');
     assertMounted('shipping');
+    // Portrait stage height follows the actual dialogue, which is populated
+    // after show() in the production dlg wrapper. No observer delivery yet.
+    viewport = { width: 390, height: 844 };
+    const dialogue = new Element('div'); dialogue.id = 'dialogue'; body.appendChild(dialogue);
+    api.show('shipping', 'SHIPPING', base);
+    const previousHeight = document.getElementById('act1-reference').children[0].querySelectorAll('.a1-anchored')[0].style.height;
+    assert.strictEqual(context.dlg('SHIPPING CANNOT PRINT'), 'dialogue rendered');
+    const stage = document.getElementById('act1-reference'), bg = stage.children[0];
+    const clerk = bg.querySelectorAll('.a1-anchored')[0];
+    assert.notStrictEqual(clerk.style.height, previousHeight, 'dialogue layout sync must immediately re-anchor the resized stage');
+    const feet = (parseFloat(clerk.style.top) + parseFloat(clerk.style.height)) / bg.getBoundingClientRect().height;
+    assert.ok(feet - 400 / 432 > -.03 && feet - 400 / 432 < .05, `portrait clerk after dialogue resize: ${feet}`);
+    nextDialogueHeight = 440;
+    context.dlg('SHIPPING CANNOT PRINT');
+    const smallerBg = document.getElementById('act1-reference').children[0];
+    const smallerClerk = smallerBg.querySelectorAll('.a1-anchored')[0];
+    assert.notStrictEqual(smallerClerk.style.height, clerk.style.height, 'short-to-tall dialogue also re-anchors immediately');
+    const smallerFeet = (parseFloat(smallerClerk.style.top) + parseFloat(smallerClerk.style.height)) / smallerBg.getBoundingClientRect().height;
+    assert.ok(smallerFeet - 400 / 432 > -.03 && smallerFeet - 400 / 432 < .05, `portrait clerk after taller dialogue: ${smallerFeet}`);
   }
   console.log('Act 1 synchronous mount, deferred/absent observer, resize and repeated scene geometry: PASS');
 }
