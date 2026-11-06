@@ -536,8 +536,8 @@ body.act1-scene-open #act1-reference.a1-board .a1-bg{background-size:cover;backg
 body.act1-scene-open #act1-reference .a1-grade{background:linear-gradient(180deg,#061019bb,transparent 24%,transparent 62%,#061019e8),linear-gradient(90deg,#06101955,transparent 30%,transparent 75%,#06101955)}
 body.act1-scene-open #act1-reference .a1-label{left:var(--ops-safe-left);right:var(--ops-safe-right);top:max(18px,env(safe-area-inset-top));font:700 12px/1.5 "Courier New",monospace;letter-spacing:.14em;color:#e3eef5}
 body.act1-scene-open #act1-reference .a1-status{left:var(--ops-safe-left);right:var(--ops-safe-right);bottom:14px;font:700 11px/1.5 "Courier New",monospace;padding:10px 14px;border:1px solid #53768c66;border-left:3px solid var(--ops-accent);background:#07121ce8;text-align:left}
-body.act1-scene-open #act1-reference .a1-props{bottom:17%;height:28%;left:10%;right:10%;justify-content:center}
-body.act1-scene-open #act1-reference .a1-actor{height:64%;max-width:37%;bottom:13%;right:8%}
+body.act1-scene-open #act1-reference .a1-props{bottom:calc(var(--a1-floor-bottom,13%) + 4%);height:28%;left:10%;right:10%;justify-content:center}
+body.act1-scene-open #act1-reference .a1-actor{height:48%;max-width:37%;bottom:var(--a1-floor-bottom,13%);right:8%}
 body.act1-scene-open #act1-reference.a1-side_view .a1-props{right:43%;height:32%;justify-content:flex-start}
 body.act1-scene-open #act1-reference.a1-first_person .a1-props{left:12%;right:12%;height:56%;bottom:17%}
 body.act1-scene-open #act1-reference.a1-first_person .a1-prop{max-width:45%}
@@ -563,7 +563,7 @@ body.act1-scene-open #toast{top:max(54px,calc(env(safe-area-inset-top) + 42px));
   body.act1-scene-open #act1-reference .a1-label{font-size:11px;letter-spacing:.07em}
   body.act1-scene-open #act1-reference .a1-status{font-size:10px;bottom:10px;padding:9px 10px}
   body.act1-scene-open #act1-reference.a1-board .a1-bg{background-position:43% 30%}
-  body.act1-scene-open #act1-reference .a1-props{height:24%;bottom:19%;left:5%;right:5%}
+  body.act1-scene-open #act1-reference .a1-props{height:24%;bottom:calc(var(--a1-floor-bottom,15%) + 4%);left:5%;right:5%}
   body.act1-scene-open #act1-reference .a1-prop{max-width:40%}
   body.act1-scene-open #act1-reference.a1-first_person .a1-props{left:5%;right:5%;height:47%;bottom:23%}
 }
@@ -585,6 +585,28 @@ body.act1-scene-open #toast{top:max(54px,calc(env(safe-area-inset-top) + 42px));
   body.recording-day #game-wrap #hud-right button,body.recording-day #hud-right #v54-phone{grid-row:auto;min-width:44px}
   body.recording-day #game-wrap #quest-tracker{max-height:18dvh}
 }
+
+/* Scripted standup: one framed mid-shot keeps the speaking crew on stage.
+   The room renderer raises the floor line to 62% while this class is on, so
+   the capped panel never reaches the actors; speakers carry a scene marker. */
+body.day-standup-open #dialogue{max-height:38vh;max-height:38dvh}
+/* Auxiliary fine print inside standup lines (timestamps, asides) is the main
+   overflow source on compact screens; drop it instead of scrolling the panel. */
+body.day-standup-open #dlg-text small{display:none}
+@media(max-width:640px){
+  body.day-standup-open #dialogue{max-height:34vh;max-height:34dvh}
+  body.day-standup-open #dlg-options{grid-template-columns:1fr 1fr}
+}
+@media(max-width:360px){
+  body.day-standup-open #dialogue{max-height:30vh;max-height:30dvh}
+}
+@media(max-height:500px) and (min-width:641px){
+  body.day-standup-open #dialogue{max-height:46vh;max-height:46dvh}
+}
+
+/* The arrival card outranks the body-level route HUD; the HUD yields instead of
+   stacking under it. */
+body.arrival-card-on #day-route-hud{opacity:0;pointer-events:none;transition:opacity .25s ease}
 
 /* Gameplay targets stay fixed under hover, press, and held feedback. Keep the
    existing color/brightness feedback without translating or shrinking hit areas. */

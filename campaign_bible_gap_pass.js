@@ -120,7 +120,7 @@
   function watchFeliciaVideo(){
     if(!root.document)return false;
     var name=root.document.getElementById("dlg-name"),dialog=root.document.getElementById("dialogue");
-    var visible=!!(name&&/ENGINEERING THE HUMAN CONNECTION/i.test(name.textContent||"")&&(!dialog||!dialog.classList.contains("hidden")));
+    var visible=!!(name&&/PEOPLE BEHIND THE FLIGHT/i.test(name.textContent||"")&&(!dialog||!dialog.classList.contains("hidden")));
     if(visible&&!feliciaVideoVisible)DiegeticMusic.duck("felicia-company-video");
     if(!visible&&feliciaVideoVisible)DiegeticMusic.resume("felicia-company-video-closed");
     feliciaVideoVisible=visible;return visible;

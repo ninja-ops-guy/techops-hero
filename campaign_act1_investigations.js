@@ -61,6 +61,11 @@
 
   function campaign(){return root&&root.TechOpsCampaign||null;}
   function nativeAct1(){return root&&root.TechOpsCampaignNativeAct1||null;}
+  function dayExperience(){return root&&root.TechOpsDayExperience||null;}
+  function fieldPresentation(ticketId){
+    var s=gameState(),key=ticketId==="shipping_cannot_print"?"shipping":"plating",contact=s&&s.meta&&s.meta.campaignAct1Native&&s.meta.campaignAct1Native[key],experience=dayExperience();
+    return s&&!s.nightMode&&!s.room&&adjacent({x:s.px,y:s.py},contact)?experience.talk(ticketId):experience.routeTo(key);
+  }
   function storage(){try{return root&&root.localStorage||null;}catch(_){return null;}}
   function gameState(){try{return root&&root.S||null;}catch(_){return null;}}
   function now(){return new Date().toISOString();}
@@ -181,6 +186,7 @@
   }
   function begin(ticketId){var state=load();if(state.tickets[ticketId])return existing(ticketId);var record=getRecord(state,ticketId,true);save(state);notify(definition(ticketId).title+" — investigation started");return openGather(ticketId,record);}
   function openInvestigation(ticketId){
+    if(dayExperience())return fieldPresentation(ticketId);
     var def=definition(ticketId),state=load();
     if(!state.flags.day_work_unlocked)return false;
     if(state.tickets[ticketId])return existing(ticketId);
@@ -192,6 +198,7 @@
     ]);
   }
   function openGather(ticketId,record){
+    if(dayExperience())return fieldPresentation(ticketId);
     var def=definition(ticketId),state=load();record=record||getRecord(state,ticketId,true);
     var options=def.evidence.filter(function(item){return record.evidence.indexOf(item.id)<0;}).map(function(item){return {t:item.label,f:function(){return change(ticketId,function(s){return recordEvidence(s,ticketId,item.id);},function(){return dialog("EVIDENCE // "+def.title,item.text,[{t:"Continue investigation",f:function(){openGather(ticketId);}}]);});}};});
     if(record.phase!=="gather")options.push({t:"Resume current step",f:function(){openInvestigation(ticketId);}});
@@ -200,6 +207,7 @@
     return dialog("INVESTIGATE // "+def.title,"<b>RECORDED EVIDENCE</b><br>"+gatherSummary(def,record)+(record.ruledOut.length?"<br><br><b>RULED OUT</b><br>"+record.ruledOut.map(labelHypothesis).join(" · "):""),options);
   }
   function openHypotheses(ticketId){
+    if(dayExperience())return fieldPresentation(ticketId);
     var def=definition(ticketId),state=load(),record=getRecord(state,ticketId,true);
     if(state.tickets[ticketId])return existing(ticketId);
     if(record.phase!=="gather")return openInvestigation(ticketId);
@@ -209,6 +217,7 @@
     options.push({t:"Back to evidence",f:function(){openGather(ticketId);}});return dialog("FORM HYPOTHESIS // "+def.title,"Choose the explanation that best accounts for the observations. A familiar fix is not evidence.",options);
   }
   function openRemediation(ticketId){
+    if(dayExperience())return fieldPresentation(ticketId);
     var def=definition(ticketId),state=load(),record=getRecord(state,ticketId,false);if(!record||record.hypothesis!==def.correctHypothesis)return openGather(ticketId,record);
     if(record.fixApplied)return openVerification(ticketId);
     return dialog("REMEDIATE // "+def.title,"<b>SUPPORTED CAUSE:</b> "+labelHypothesis(record.hypothesis)+"<br><br>"+def.remediation+"<br><br>Applying the fix is not the same as proving the outcome.",[
@@ -244,6 +253,7 @@
   }
 
   function openVerification(ticketId){
+    if(dayExperience())return fieldPresentation(ticketId);
     var def=definition(ticketId),state=load(),record=getRecord(state,ticketId,false);if(!record||!record.fixApplied)return openRemediation(ticketId);
     if(!record.technicalCheckPassed)return dialog("VERIFY TECHNICALLY // "+def.title,def.technicalCheck+"<br><br>This proves the technical path, not the user's outcome.",[
       {t:"Run technical check",f:function(){return change(ticketId,function(s){return runTechnicalCheck(s,ticketId);},function(){return openVerification(ticketId);});}},
@@ -258,7 +268,7 @@
   function existing(ticketId){var n=nativeAct1();if(n&&typeof n.openTicketFollowUp==="function")return n.openTicketFollowUp(ticketId);return false;}
 
   function targetTicket(){
-    var s=gameState(),n=s&&s.meta&&s.meta.campaignAct1Native;if(!s||s.inDialog||s.inBattle||s.nightMode||!n)return null;var p={x:s.px,y:s.py};
+    var s=gameState(),n=s&&s.meta&&s.meta.campaignAct1Native;if(!s||s.inDialog||s.inBattle||s.nightMode||s.room||!n)return null;var p={x:s.px,y:s.py};
     if(n.shipping&&adjacent(p,n.shipping))return "shipping_cannot_print";
     if(n.plating&&adjacent(p,n.plating))return "plating_workstation_down";
     return null;
@@ -267,6 +277,7 @@
     if(!root||root.__techopsCampaignInvestigationInstalled)return false;
     if(typeof root.interact!=="function"||!campaign()||!nativeAct1())return false;
     var base=root.interact;root.interact=function(){
+      var s=gameState();if(s&&s.room&&!s.nightMode)return base.apply(this,arguments);if(s&&!s.inDialog&&!s.inBattle&&!s.nightMode&&dayExperience()&&dayExperience().interact())return true;
       try{var ticketId=targetTicket();if(ticketId){var state=load();if(state.flags&&state.flags.day_work_unlocked&&!state.tickets[ticketId])return openInvestigation(ticketId);}}
       catch(e){root.__techopsCampaignInvestigationError=String(e&&e.stack||e);if(ticketId)return dialog("INVESTIGATION UNAVAILABLE","The field record could not be read. No ticket was closed and no replacement save was created.",[{t:"Back",f:close}]);}
       return base.apply(this,arguments);

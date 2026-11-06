@@ -39,7 +39,7 @@
     open_network: { command: "REVOKE ROOT", achievement: "NO SINGLE POINT OF FAILURE", consequence: "distributed_authority" }
   });
   var CANON_LINES = Object.freeze({
-    workstationHeadline: "ENGINEERING THE HUMAN CONNECTION",
+    workstationHeadline: "PEOPLE BEHIND THE FLIGHT",
     feliciaProfile: "FELICIA - SECURITY RESEARCH / SYSTEMS INTEGRATIONS",
     sector04Terminal: "YOU ARE FIXING THE SYMPTOMS.",
     mikeReply: "Then show me the problem.",
@@ -133,7 +133,7 @@
     if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
     window.__techopsAct1VisualLoader = true;
     var script = window.document.createElement("script");
-    script.src = "campaign_native_act1_visuals.js?v=20260921-presentation-r1";
+    script.src = "campaign_native_act1_visuals.js?v=20261102-stage-mount-r2";
     script.async = false;
     window.document.head.appendChild(script);
     return true;

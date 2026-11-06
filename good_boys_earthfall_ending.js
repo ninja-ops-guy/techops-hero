@@ -56,7 +56,7 @@
   function returnToTitle(){
     root.__goodBoysEarthfallReturnToTitle={at:Date.now(),saved:complete};
     try{if(root.location&&typeof root.location.reload==="function"){root.location.reload();return true;}}catch(e){root.__goodBoysEarthfallReloadError=String(e&&e.stack||e);}
-    try{var d=root.document,title=d&&d.getElementById("title-screen"),hud=d&&d.getElementById("hud"),touch=d&&d.getElementById("touch-ui");if(title)title.classList.remove("hidden");if(hud)hud.classList.add("hidden");if(touch)touch.classList.add("hidden");return!!title;}catch(e){root.__goodBoysEarthfallReturnError=String(e&&e.stack||e);return false;}
+    try{var d=root.document,title=d&&d.getElementById("title-screen"),hud=d&&d.getElementById("hud"),touch=d&&d.getElementById("touch-ui");if(title)title.classList.remove("hidden");if(hud)hud.classList.add("hidden");if(touch)touch.classList.add("hidden");if(title){var mode=d.getElementById("btn-v736")||d.getElementById("btn-start");if(mode&&!mode.disabled&&typeof mode.focus==="function")mode.focus();}return!!title;}catch(e){root.__goodBoysEarthfallReturnError=String(e&&e.stack||e);return false;}
   }
   function finish(){if(!running||settling||root.document.hidden)return false;settling=true;if(!finishFlags()){settling=false;scene=SCENES.length-1;render();var error=overlay&&overlay.querySelector(".gbe-error");if(error)error.textContent="Your ending could not be saved. Keep this page open and choose Save & return to title to retry.";return false;}close();returnToTitle();return true;}
   function skipEnding(e){if(e){e.preventDefault();e.stopPropagation();}return finish();}

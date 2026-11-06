@@ -1,0 +1,2354 @@
+{
+  "status": "passed",
+  "fixture": false,
+  "browser": "chromium",
+  "profile": {
+    "id": "portrait",
+    "width": 390,
+    "height": 844,
+    "touch": true
+  },
+  "scope": "Complete unassisted Day-1 playthrough with normal player controls: real title/morning buttons, HUD route marking, keyboard walking with collision checks, side-room entry by walking, workstation desktop interactions, Shipping printer + workstation investigation, and requester verification. No teleports, no coordinate fixtures, no progress injection. page.evaluate is read-only. Morning music uses the real \"Continue with music muted\" accessibility path (external audio is blocked here); audible playback of Red in the Mirror remains uncertified in this environment.",
+  "browserVersion": "148.0.7778.96",
+  "spawn": {
+    "px": 21,
+    "py": 17,
+    "room": null,
+    "inDialog": false,
+    "flags": {
+      "standup_started": true,
+      "ticket_assignments_confirmed": false,
+      "standup_completed": false,
+      "workstation_checked": false,
+      "red_in_mirror_heard": false,
+      "felicia_blog_found": false,
+      "felicia_video_watched": false,
+      "day_work_unlocked": false,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": true,
+      "ticketAssignmentsConfirmed": false,
+      "workstationOpened": false,
+      "redInTheMirrorHeard": false,
+      "feliciaVideoSeen": false,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {},
+    "listening": null,
+    "objective": {
+      "id": "standup"
+    }
+  },
+  "hudDiagBeforeRoute": {
+    "viewport": {
+      "w": 390,
+      "h": 844
+    },
+    "hudTop": {
+      "el": "hud-top",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 128.5,
+      "right": 390,
+      "bottom": 128.5
+    },
+    "gridTemplateColumns": "234px 125px",
+    "children": [
+      {
+        "el": "hud-left",
+        "x": 12,
+        "y": 10,
+        "w": 234,
+        "h": 41.5,
+        "right": 246,
+        "bottom": 51.5
+      },
+      {
+        "el": "hud-bars",
+        "x": 253,
+        "y": 10,
+        "w": 125,
+        "h": 30,
+        "right": 378,
+        "bottom": 40
+      },
+      {
+        "el": "hud-right",
+        "x": 12,
+        "y": 58.5,
+        "w": 366,
+        "h": 62,
+        "right": 378,
+        "bottom": 120.5
+      }
+    ],
+    "hudRightChildren": [
+      {
+        "el": "v54-phone",
+        "x": 12,
+        "y": 76.5,
+        "w": 44,
+        "h": 44,
+        "right": 56,
+        "bottom": 120.5
+      },
+      {
+        "el": "hud-budget",
+        "x": 12,
+        "y": 58.5,
+        "w": 101.7,
+        "h": 14,
+        "right": 113.7,
+        "bottom": 72.5
+      },
+      {
+        "el": "hud-tickets",
+        "x": 117.7,
+        "y": 58.5,
+        "w": 101.7,
+        "h": 14,
+        "right": 219.4,
+        "bottom": 72.5
+      },
+      {
+        "el": "hud-prod",
+        "x": 223.4,
+        "y": 58.5,
+        "w": 154.6,
+        "h": 14,
+        "right": 378,
+        "bottom": 72.5
+      },
+      {
+        "el": "btn-twin",
+        "x": 64.8,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 113.7,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-sweep",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      {
+        "el": "btn-music",
+        "x": 117.7,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 166.6,
+        "bottom": 120.5
+      },
+      {
+        "el": "v67-gear",
+        "x": 170.6,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 219.4,
+        "bottom": 120.5
+      },
+      {
+        "el": "v67-gal",
+        "x": 223.4,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 272.3,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-menu",
+        "x": 276.3,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 325.1,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-morningstar",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      {
+        "el": "btn-swarm-command",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    ],
+    "questTracker": {
+      "el": "quest-tracker",
+      "x": 12,
+      "y": 130.5,
+      "w": 257.4,
+      "h": 185,
+      "right": 269.4,
+      "bottom": 315.5
+    },
+    "hitStack": [
+      {
+        "x": 130,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day arrival-card-on ",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      },
+      {
+        "x": 140,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day arrival-card-on ",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      },
+      {
+        "x": 150,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day arrival-card-on ",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      }
+    ],
+    "overlaps": [
+      {
+        "a": "hud-right",
+        "b": "v54-phone"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-budget"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-tickets"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-prod"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-twin"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-music"
+      },
+      {
+        "a": "hud-right",
+        "b": "v67-gear"
+      },
+      {
+        "a": "hud-right",
+        "b": "v67-gal"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-menu"
+      }
+    ]
+  },
+  "standupRoute": {
+    "ok": true,
+    "target": "standup",
+    "steps": 33
+  },
+  "walkToStandup": {
+    "input": "actual-keyboard",
+    "id": "standup",
+    "kind": "contact",
+    "steps": [
+      {
+        "from": {
+          "px": 21,
+          "py": 17
+        },
+        "to": {
+          "x": 21,
+          "y": 18
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 21,
+          "py": 18
+        },
+        "to": {
+          "x": 21,
+          "y": 19
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 21,
+          "py": 19
+        },
+        "to": {
+          "x": 22,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 22,
+          "py": 19
+        },
+        "to": {
+          "x": 23,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 23,
+          "py": 19
+        },
+        "to": {
+          "x": 24,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 24,
+          "py": 19
+        },
+        "to": {
+          "x": 25,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 25,
+          "py": 19
+        },
+        "to": {
+          "x": 26,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 26,
+          "py": 19
+        },
+        "to": {
+          "x": 27,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 27,
+          "py": 19
+        },
+        "to": {
+          "x": 28,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 28,
+          "py": 19
+        },
+        "to": {
+          "x": 29,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 29,
+          "py": 19
+        },
+        "to": {
+          "x": 30,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 30,
+          "py": 19
+        },
+        "to": {
+          "x": 31,
+          "y": 19
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 31,
+          "py": 19
+        },
+        "to": {
+          "x": 31,
+          "y": 20
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 31,
+          "py": 20
+        },
+        "to": {
+          "x": 32,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 32,
+          "py": 20
+        },
+        "to": {
+          "x": 33,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 33,
+          "py": 20
+        },
+        "to": {
+          "x": 34,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 34,
+          "py": 20
+        },
+        "to": {
+          "x": 35,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 35,
+          "py": 20
+        },
+        "to": {
+          "x": 36,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 36,
+          "py": 20
+        },
+        "to": {
+          "x": 37,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 37,
+          "py": 20
+        },
+        "to": {
+          "x": 38,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 38,
+          "py": 20
+        },
+        "to": {
+          "x": 39,
+          "y": 20
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 20
+        },
+        "to": {
+          "x": 39,
+          "y": 19
+        },
+        "key": "ArrowUp"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 19
+        },
+        "to": {
+          "x": 39,
+          "y": 18
+        },
+        "key": "ArrowUp"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 18
+        },
+        "to": {
+          "x": 39,
+          "y": 17
+        },
+        "key": "ArrowUp"
+      }
+    ],
+    "transientOccupancy": [],
+    "stop": {
+      "stop": "dialog"
+    }
+  },
+  "afterStandup": {
+    "px": 39,
+    "py": 17,
+    "room": {
+      "id": "itdept",
+      "x": 0.88,
+      "door": "right"
+    },
+    "inDialog": false,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": false,
+      "red_in_mirror_heard": false,
+      "felicia_blog_found": false,
+      "felicia_video_watched": false,
+      "day_work_unlocked": false,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": false,
+      "redInTheMirrorHeard": false,
+      "feliciaVideoSeen": false,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {},
+    "listening": null,
+    "objective": null
+  },
+  "walkToDesk": {
+    "input": "actual-keyboard",
+    "id": "mike_desk",
+    "kind": "station",
+    "steps": [],
+    "transientOccupancy": [],
+    "stop": {
+      "stop": "room",
+      "room": {
+        "id": "itdept",
+        "x": 0.88
+      }
+    }
+  },
+  "afterMusic": {
+    "px": 39,
+    "py": 17,
+    "room": {
+      "id": "itdept",
+      "x": 0.7999679999999998,
+      "door": "right"
+    },
+    "inDialog": true,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": false,
+      "felicia_video_watched": false,
+      "day_work_unlocked": false,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": false,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {},
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": null
+  },
+  "afterClockIn": {
+    "px": 39,
+    "py": 17,
+    "room": {
+      "id": "itdept",
+      "x": 0.7999679999999998,
+      "door": "right"
+    },
+    "inDialog": false,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": true,
+      "felicia_video_watched": true,
+      "day_work_unlocked": true,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": true,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {},
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": null
+  },
+  "floorAfterClockIn": {
+    "px": 39,
+    "py": 17,
+    "room": null,
+    "inDialog": false,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": true,
+      "felicia_video_watched": true,
+      "day_work_unlocked": true,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": true,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {},
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": {
+      "id": "shipping_printer"
+    }
+  },
+  "hudDiagFloor": {
+    "viewport": {
+      "w": 390,
+      "h": 844
+    },
+    "hudTop": {
+      "el": "hud-top",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 128.5,
+      "right": 390,
+      "bottom": 128.5
+    },
+    "gridTemplateColumns": "234px 125px",
+    "children": [
+      {
+        "el": "hud-left",
+        "x": 12,
+        "y": 10,
+        "w": 234,
+        "h": 41.5,
+        "right": 246,
+        "bottom": 51.5
+      },
+      {
+        "el": "hud-bars",
+        "x": 253,
+        "y": 10,
+        "w": 125,
+        "h": 30,
+        "right": 378,
+        "bottom": 40
+      },
+      {
+        "el": "hud-right",
+        "x": 12,
+        "y": 58.5,
+        "w": 366,
+        "h": 62,
+        "right": 378,
+        "bottom": 120.5
+      }
+    ],
+    "hudRightChildren": [
+      {
+        "el": "v54-phone",
+        "x": 12,
+        "y": 76.5,
+        "w": 44,
+        "h": 44,
+        "right": 56,
+        "bottom": 120.5
+      },
+      {
+        "el": "hud-budget",
+        "x": 12,
+        "y": 58.5,
+        "w": 101.7,
+        "h": 14,
+        "right": 113.7,
+        "bottom": 72.5
+      },
+      {
+        "el": "hud-tickets",
+        "x": 117.7,
+        "y": 58.5,
+        "w": 101.7,
+        "h": 14,
+        "right": 219.4,
+        "bottom": 72.5
+      },
+      {
+        "el": "hud-prod",
+        "x": 223.4,
+        "y": 58.5,
+        "w": 154.6,
+        "h": 14,
+        "right": 378,
+        "bottom": 72.5
+      },
+      {
+        "el": "btn-twin",
+        "x": 64.8,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 113.7,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-sweep",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      {
+        "el": "btn-music",
+        "x": 117.7,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 166.6,
+        "bottom": 120.5
+      },
+      {
+        "el": "v67-gear",
+        "x": 170.6,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 219.4,
+        "bottom": 120.5
+      },
+      {
+        "el": "v67-gal",
+        "x": 223.4,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 272.3,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-menu",
+        "x": 276.3,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 325.1,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-morningstar",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      {
+        "el": "btn-swarm-command",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    ],
+    "questTracker": {
+      "el": "quest-tracker",
+      "x": 12,
+      "y": 130.5,
+      "w": 257.4,
+      "h": 185,
+      "right": 269.4,
+      "bottom": 315.5
+    },
+    "hitStack": [
+      {
+        "x": 130,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day day-route-visibl",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      },
+      {
+        "x": 140,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day day-route-visibl",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      },
+      {
+        "x": 150,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day day-route-visibl",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      }
+    ],
+    "overlaps": [
+      {
+        "a": "hud-right",
+        "b": "v54-phone"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-budget"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-tickets"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-prod"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-twin"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-music"
+      },
+      {
+        "a": "hud-right",
+        "b": "v67-gear"
+      },
+      {
+        "a": "hud-right",
+        "b": "v67-gal"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-menu"
+      }
+    ]
+  },
+  "printerRoute": {
+    "ok": true,
+    "target": "shipping_printer",
+    "steps": 33
+  },
+  "walkToPrinter": {
+    "input": "actual-keyboard",
+    "id": "shipping_printer",
+    "kind": "station",
+    "steps": [
+      {
+        "from": {
+          "px": 39,
+          "py": 17
+        },
+        "to": {
+          "x": 39,
+          "y": 18
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 18
+        },
+        "to": {
+          "x": 39,
+          "y": 19
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 19
+        },
+        "to": {
+          "x": 39,
+          "y": 20
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 20
+        },
+        "to": {
+          "x": 39,
+          "y": 21
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 21
+        },
+        "to": {
+          "x": 39,
+          "y": 22
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 22
+        },
+        "to": {
+          "x": 39,
+          "y": 23
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 39,
+          "py": 23
+        },
+        "to": {
+          "x": 38,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 38,
+          "py": 23
+        },
+        "to": {
+          "x": 37,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 37,
+          "py": 23
+        },
+        "to": {
+          "x": 36,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 36,
+          "py": 23
+        },
+        "to": {
+          "x": 35,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 35,
+          "py": 23
+        },
+        "to": {
+          "x": 34,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 34,
+          "py": 23
+        },
+        "to": {
+          "x": 33,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 33,
+          "py": 23
+        },
+        "to": {
+          "x": 32,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 32,
+          "py": 23
+        },
+        "to": {
+          "x": 31,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 31,
+          "py": 23
+        },
+        "to": {
+          "x": 30,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 30,
+          "py": 23
+        },
+        "to": {
+          "x": 29,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 29,
+          "py": 23
+        },
+        "to": {
+          "x": 28,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 28,
+          "py": 23
+        },
+        "to": {
+          "x": 27,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 27,
+          "py": 23
+        },
+        "to": {
+          "x": 26,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 26,
+          "py": 23
+        },
+        "to": {
+          "x": 25,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 25,
+          "py": 23
+        },
+        "to": {
+          "x": 24,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 24,
+          "py": 23
+        },
+        "to": {
+          "x": 23,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 23,
+          "py": 23
+        },
+        "to": {
+          "x": 22,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 22,
+          "py": 23
+        },
+        "to": {
+          "x": 21,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 21,
+          "py": 23
+        },
+        "to": {
+          "x": 20,
+          "y": 23
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 20,
+          "py": 23
+        },
+        "to": {
+          "x": 20,
+          "y": 24
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 20,
+          "py": 24
+        },
+        "to": {
+          "x": 20,
+          "y": 25
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 20,
+          "py": 25
+        },
+        "to": {
+          "x": 20,
+          "y": 26
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 20,
+          "py": 26
+        },
+        "to": {
+          "x": 19,
+          "y": 26
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 19,
+          "py": 26
+        },
+        "to": {
+          "x": 19,
+          "y": 27
+        },
+        "key": "ArrowDown"
+      },
+      {
+        "from": {
+          "px": 19,
+          "py": 27
+        },
+        "to": {
+          "x": 18,
+          "y": 27
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 18,
+          "py": 27
+        },
+        "to": {
+          "x": 17,
+          "y": 27
+        },
+        "key": "ArrowLeft"
+      },
+      {
+        "from": {
+          "px": 17,
+          "py": 27
+        },
+        "to": {
+          "x": 16,
+          "y": 27
+        },
+        "key": "ArrowLeft"
+      }
+    ],
+    "transientOccupancy": [],
+    "stop": {
+      "stop": "arrived",
+      "at": {
+        "px": 16,
+        "py": 27
+      }
+    }
+  },
+  "printerEvidence": {
+    "px": 16,
+    "py": 27,
+    "room": null,
+    "inDialog": true,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": true,
+      "felicia_video_watched": true,
+      "day_work_unlocked": true,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": true,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {
+      "shipping_cannot_print": {
+        "ticketId": "shipping_cannot_print",
+        "phase": "gather",
+        "evidence": [
+          "printer_self_test"
+        ],
+        "ruledOut": [],
+        "hypothesis": null,
+        "fixApplied": false,
+        "technicalCheckPassed": false,
+        "startedAt": "2026-10-07T20:47:13.876Z",
+        "updatedAt": "2026-10-07T20:47:13.876Z"
+      }
+    },
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": {
+      "id": "shipping_workstation"
+    }
+  },
+  "consoleDiagPrinter": {
+    "dialogue": {
+      "el": "day-device-mode",
+      "x": 6,
+      "y": 6,
+      "w": 378,
+      "h": 832,
+      "right": 384,
+      "bottom": 838,
+      "clientH": 830,
+      "scrollH": 830
+    },
+    "dlgText": {
+      "el": "v66-dlgfade",
+      "x": 7,
+      "y": 7,
+      "w": 376,
+      "h": 830,
+      "right": 383,
+      "bottom": 837,
+      "clientH": 830,
+      "scrollH": 830
+    },
+    "console": {
+      "el": "day-console",
+      "x": 7,
+      "y": 7,
+      "w": 376,
+      "h": 830,
+      "right": 383,
+      "bottom": 837,
+      "clientH": 830,
+      "scrollH": 830,
+      "children": [
+        {
+          "el": "day-console-header",
+          "x": 7,
+          "y": 7,
+          "w": 376,
+          "h": 69,
+          "right": 383,
+          "bottom": 76,
+          "clientH": 68,
+          "scrollH": 68
+        },
+        {
+          "el": "day-stage-nav",
+          "x": 7,
+          "y": 76,
+          "w": 376,
+          "h": 61,
+          "right": 383,
+          "bottom": 137,
+          "clientH": 60,
+          "scrollH": 60
+        },
+        {
+          "el": "day-workspace",
+          "x": 7,
+          "y": 137,
+          "w": 376,
+          "h": 633,
+          "right": 383,
+          "bottom": 770,
+          "clientH": 633,
+          "scrollH": 1042
+        },
+        {
+          "el": "day-console-footer",
+          "x": 7,
+          "y": 770,
+          "w": 376,
+          "h": 67,
+          "right": 383,
+          "bottom": 837,
+          "clientH": 66,
+          "scrollH": 66
+        }
+      ]
+    },
+    "workspace": {
+      "el": "day-workspace",
+      "x": 7,
+      "y": 137,
+      "w": 376,
+      "h": 633,
+      "right": 383,
+      "bottom": 770,
+      "clientH": 633,
+      "scrollH": 1042
+    },
+    "desktop": null,
+    "taskbar": null,
+    "footer": {
+      "el": "day-console-footer",
+      "x": 7,
+      "y": 770,
+      "w": 376,
+      "h": 67,
+      "right": 383,
+      "bottom": 837,
+      "clientH": 66,
+      "scrollH": 66
+    },
+    "taskbarOverlapsFooter": null
+  },
+  "walkToWorkstation": {
+    "input": "actual-keyboard",
+    "id": "shipping_workstation",
+    "kind": "station",
+    "steps": [
+      {
+        "from": {
+          "px": 16,
+          "py": 27
+        },
+        "to": {
+          "x": 17,
+          "y": 27
+        },
+        "key": "ArrowRight"
+      },
+      {
+        "from": {
+          "px": 17,
+          "py": 27
+        },
+        "to": {
+          "x": 18,
+          "y": 27
+        },
+        "key": "ArrowRight"
+      }
+    ],
+    "transientOccupancy": [],
+    "stop": {
+      "stop": "arrived",
+      "at": {
+        "px": 18,
+        "py": 27
+      }
+    }
+  },
+  "consoleDiagWorkstation": {
+    "dialogue": {
+      "el": "day-device-mode",
+      "x": 6,
+      "y": 6,
+      "w": 378,
+      "h": 832,
+      "right": 384,
+      "bottom": 838,
+      "clientH": 830,
+      "scrollH": 830
+    },
+    "dlgText": {
+      "el": "v66-dlgfade",
+      "x": 7,
+      "y": 7,
+      "w": 376,
+      "h": 830,
+      "right": 383,
+      "bottom": 837,
+      "clientH": 830,
+      "scrollH": 830
+    },
+    "console": {
+      "el": "day-console",
+      "x": 7,
+      "y": 7,
+      "w": 376,
+      "h": 830,
+      "right": 383,
+      "bottom": 837,
+      "clientH": 830,
+      "scrollH": 830,
+      "children": [
+        {
+          "el": "day-console-header",
+          "x": 7,
+          "y": 7,
+          "w": 376,
+          "h": 88.8,
+          "right": 383,
+          "bottom": 95.8,
+          "clientH": 88,
+          "scrollH": 88
+        },
+        {
+          "el": "day-stage-nav",
+          "x": 7,
+          "y": 95.8,
+          "w": 376,
+          "h": 61,
+          "right": 383,
+          "bottom": 156.8,
+          "clientH": 60,
+          "scrollH": 60
+        },
+        {
+          "el": "day-workspace",
+          "x": 7,
+          "y": 156.8,
+          "w": 376,
+          "h": 613.2,
+          "right": 383,
+          "bottom": 770,
+          "clientH": 613,
+          "scrollH": 942
+        },
+        {
+          "el": "day-console-footer",
+          "x": 7,
+          "y": 770,
+          "w": 376,
+          "h": 67,
+          "right": 383,
+          "bottom": 837,
+          "clientH": 66,
+          "scrollH": 66
+        }
+      ]
+    },
+    "workspace": {
+      "el": "day-workspace",
+      "x": 7,
+      "y": 156.8,
+      "w": 376,
+      "h": 613.2,
+      "right": 383,
+      "bottom": 770,
+      "clientH": 613,
+      "scrollH": 942
+    },
+    "desktop": {
+      "el": "day-desktop",
+      "x": 21,
+      "y": 322.4,
+      "w": 348,
+      "h": 275.6,
+      "right": 369,
+      "bottom": 597.9,
+      "clientH": 274,
+      "scrollH": 274
+    },
+    "taskbar": {
+      "el": "day-taskbar",
+      "x": 22,
+      "y": 563.9,
+      "w": 346,
+      "h": 33,
+      "right": 368,
+      "bottom": 596.9,
+      "clientH": 32,
+      "scrollH": 32
+    },
+    "footer": {
+      "el": "day-console-footer",
+      "x": 7,
+      "y": 770,
+      "w": 376,
+      "h": 67,
+      "right": 383,
+      "bottom": 837,
+      "clientH": 66,
+      "scrollH": 66
+    },
+    "taskbarOverlapsFooter": false
+  },
+  "screenEvidence": {
+    "px": 18,
+    "py": 27,
+    "room": null,
+    "inDialog": true,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": true,
+      "felicia_video_watched": true,
+      "day_work_unlocked": true,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": true,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {
+      "shipping_cannot_print": {
+        "ticketId": "shipping_cannot_print",
+        "phase": "gather",
+        "evidence": [
+          "printer_self_test",
+          "queue_trace",
+          "compare_user"
+        ],
+        "ruledOut": [],
+        "hypothesis": null,
+        "fixApplied": false,
+        "technicalCheckPassed": false,
+        "startedAt": "2026-10-07T20:47:13.876Z",
+        "updatedAt": "2026-10-07T20:47:15.597Z"
+      }
+    },
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": {
+      "id": "shipping_workstation"
+    }
+  },
+  "technical": {
+    "px": 18,
+    "py": 27,
+    "room": null,
+    "inDialog": true,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": true,
+      "felicia_video_watched": true,
+      "day_work_unlocked": true,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": true,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {},
+    "investigations": {
+      "shipping_cannot_print": {
+        "ticketId": "shipping_cannot_print",
+        "phase": "human_verify",
+        "evidence": [
+          "printer_self_test",
+          "queue_trace",
+          "compare_user"
+        ],
+        "ruledOut": [],
+        "hypothesis": "permissions",
+        "fixApplied": true,
+        "technicalCheckPassed": true,
+        "startedAt": "2026-10-07T20:47:13.876Z",
+        "updatedAt": "2026-10-07T20:47:16.177Z"
+      }
+    },
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": {
+      "id": "shipping"
+    }
+  },
+  "walkToRequester": {
+    "input": "actual-keyboard",
+    "id": "shipping",
+    "kind": "contact",
+    "steps": [
+      {
+        "from": {
+          "px": 18,
+          "py": 27
+        },
+        "to": {
+          "x": 17,
+          "y": 27
+        },
+        "key": "ArrowLeft"
+      }
+    ],
+    "transientOccupancy": [],
+    "stop": {
+      "stop": "arrived",
+      "at": {
+        "px": 17,
+        "py": 27
+      }
+    }
+  },
+  "afterVerification": {
+    "px": 17,
+    "py": 27,
+    "room": null,
+    "inDialog": false,
+    "flags": {
+      "standup_started": false,
+      "ticket_assignments_confirmed": true,
+      "standup_completed": true,
+      "workstation_checked": true,
+      "red_in_mirror_heard": true,
+      "felicia_blog_found": true,
+      "felicia_video_watched": true,
+      "day_work_unlocked": true,
+      "sector04_entered": false,
+      "sector04_completed": false,
+      "tuesday_morning_reached": false,
+      "standupStarted": false,
+      "ticketAssignmentsConfirmed": true,
+      "workstationOpened": true,
+      "redInTheMirrorHeard": true,
+      "feliciaVideoSeen": true,
+      "sector04Entered": false,
+      "sector04Completed": false,
+      "tuesdayMorningReached": false
+    },
+    "tickets": {
+      "shipping_cannot_print": {
+        "status": "resolved",
+        "ownerId": "mike",
+        "technicalResolution": true,
+        "verification": "strong",
+        "humanOutcome": "restored",
+        "completedAt": "2026-10-07T20:47:16.969Z"
+      }
+    },
+    "investigations": {
+      "shipping_cannot_print": {
+        "ticketId": "shipping_cannot_print",
+        "phase": "complete",
+        "evidence": [
+          "printer_self_test",
+          "queue_trace",
+          "compare_user"
+        ],
+        "ruledOut": [],
+        "hypothesis": "permissions",
+        "fixApplied": true,
+        "technicalCheckPassed": true,
+        "startedAt": "2026-10-07T20:47:13.876Z",
+        "updatedAt": "2026-10-07T20:47:16.969Z",
+        "completedAt": "2026-10-07T20:47:16.969Z"
+      }
+    },
+    "listening": {
+      "userSkipped": true,
+      "status": "user_skipped",
+      "trackId": null,
+      "title": null,
+      "source": "accessibility_choice",
+      "at": "2026-10-07T20:47:00.356Z"
+    },
+    "objective": {
+      "id": "plating_workstation"
+    }
+  },
+  "hudDiagFinal": {
+    "viewport": {
+      "w": 390,
+      "h": 844
+    },
+    "hudTop": {
+      "el": "hud-top",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 128.5,
+      "right": 390,
+      "bottom": 128.5
+    },
+    "gridTemplateColumns": "234px 125px",
+    "children": [
+      {
+        "el": "hud-left",
+        "x": 12,
+        "y": 10,
+        "w": 234,
+        "h": 41.5,
+        "right": 246,
+        "bottom": 51.5
+      },
+      {
+        "el": "hud-bars",
+        "x": 253,
+        "y": 10,
+        "w": 125,
+        "h": 30,
+        "right": 378,
+        "bottom": 40
+      },
+      {
+        "el": "hud-right",
+        "x": 12,
+        "y": 58.5,
+        "w": 366,
+        "h": 62,
+        "right": 378,
+        "bottom": 120.5
+      }
+    ],
+    "hudRightChildren": [
+      {
+        "el": "v54-phone",
+        "x": 12,
+        "y": 76.5,
+        "w": 44,
+        "h": 44,
+        "right": 56,
+        "bottom": 120.5
+      },
+      {
+        "el": "hud-budget",
+        "x": 12,
+        "y": 58.5,
+        "w": 101.7,
+        "h": 14,
+        "right": 113.7,
+        "bottom": 72.5
+      },
+      {
+        "el": "hud-tickets",
+        "x": 117.7,
+        "y": 58.5,
+        "w": 101.7,
+        "h": 14,
+        "right": 219.4,
+        "bottom": 72.5
+      },
+      {
+        "el": "hud-prod",
+        "x": 223.4,
+        "y": 58.5,
+        "w": 154.6,
+        "h": 14,
+        "right": 378,
+        "bottom": 72.5
+      },
+      {
+        "el": "btn-twin",
+        "x": 64.8,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 113.7,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-sweep",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      {
+        "el": "btn-music",
+        "x": 117.7,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 166.6,
+        "bottom": 120.5
+      },
+      {
+        "el": "v67-gear",
+        "x": 170.6,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 219.4,
+        "bottom": 120.5
+      },
+      {
+        "el": "v67-gal",
+        "x": 223.4,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 272.3,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-menu",
+        "x": 276.3,
+        "y": 76.5,
+        "w": 48.9,
+        "h": 44,
+        "right": 325.1,
+        "bottom": 120.5
+      },
+      {
+        "el": "btn-morningstar",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      {
+        "el": "btn-swarm-command",
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    ],
+    "questTracker": {
+      "el": "quest-tracker",
+      "x": 12,
+      "y": 130.5,
+      "w": 257.4,
+      "h": 185,
+      "right": 269.4,
+      "bottom": 315.5
+    },
+    "hitStack": [
+      {
+        "x": 130,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day day-route-visibl",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      },
+      {
+        "x": 140,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day day-route-visibl",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      },
+      {
+        "x": 150,
+        "y": 65,
+        "stack": [
+          {
+            "el": "game",
+            "text": ""
+          },
+          {
+            "el": "game-wrap",
+            "text": "DAY 1 · MONHelp Desk Technician09:00 · A"
+          },
+          {
+            "el": "v71-anims recording-day day-route-visibl",
+            "text": "\nDAY 1 · MONHelp Desk Technician09:00 · "
+          },
+          {
+            "el": "",
+            "text": "\n\n\n\n\nTechOps Hero — Production v1.2\n\n\n\n\n"
+          }
+        ]
+      }
+    ],
+    "overlaps": [
+      {
+        "a": "hud-right",
+        "b": "v54-phone"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-budget"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-tickets"
+      },
+      {
+        "a": "hud-right",
+        "b": "hud-prod"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-twin"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-music"
+      },
+      {
+        "a": "hud-right",
+        "b": "v67-gear"
+      },
+      {
+        "a": "hud-right",
+        "b": "v67-gal"
+      },
+      {
+        "a": "hud-right",
+        "b": "btn-menu"
+      }
+    ]
+  },
+  "beats": [
+    {
+      "name": "standup-opened",
+      "state": {
+        "px": 39,
+        "py": 17,
+        "room": null,
+        "inDialog": true,
+        "objective": {
+          "id": "standup"
+        }
+      }
+    },
+    {
+      "name": "standup-complete",
+      "state": {
+        "px": 39,
+        "py": 17,
+        "room": {
+          "id": "itdept",
+          "x": 0.88,
+          "door": "right"
+        },
+        "inDialog": false,
+        "objective": null
+      }
+    },
+    {
+      "name": "side-room-desk",
+      "state": {
+        "px": 39,
+        "py": 17,
+        "room": {
+          "id": "itdept",
+          "x": 0.7999679999999998,
+          "door": "right"
+        },
+        "inDialog": false,
+        "objective": null
+      }
+    },
+    {
+      "name": "workstation-opened",
+      "dialog": "MIKE // WORKSTATION",
+      "state": {
+        "px": 39,
+        "py": 17,
+        "room": {
+          "id": "itdept",
+          "x": 0.7999679999999998,
+          "door": "right"
+        },
+        "inDialog": true,
+        "objective": null
+      }
+    },
+    {
+      "name": "clock-in",
+      "state": {
+        "px": 39,
+        "py": 17,
+        "room": {
+          "id": "itdept",
+          "x": 0.7999679999999998,
+          "door": "right"
+        },
+        "inDialog": false,
+        "objective": null
+      }
+    },
+    {
+      "name": "returned-to-floor",
+      "state": {
+        "px": 39,
+        "py": 17,
+        "room": null,
+        "inDialog": false,
+        "objective": {
+          "id": "shipping_printer"
+        }
+      }
+    },
+    {
+      "name": "printer-console-opened",
+      "state": {
+        "px": 16,
+        "py": 27,
+        "room": null,
+        "inDialog": true,
+        "objective": {
+          "id": "shipping_printer"
+        }
+      }
+    },
+    {
+      "name": "workstation-screen-opened",
+      "state": {
+        "px": 18,
+        "py": 27,
+        "room": null,
+        "inDialog": true,
+        "objective": {
+          "id": "shipping_workstation"
+        }
+      }
+    },
+    {
+      "name": "technical-verified",
+      "state": {
+        "px": 18,
+        "py": 27,
+        "room": null,
+        "inDialog": true,
+        "objective": {
+          "id": "shipping"
+        }
+      }
+    },
+    {
+      "name": "shipping-verified",
+      "state": {
+        "px": 17,
+        "py": 27,
+        "room": null,
+        "inDialog": false,
+        "objective": {
+          "id": "plating_workstation"
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "requestsBlocked": [
+    "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+  ]
+}

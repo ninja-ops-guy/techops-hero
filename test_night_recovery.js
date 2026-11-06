@@ -33,7 +33,12 @@ function fixture(){
       _nightLifecycle:{seconds:2.35,weather:'rain',exitCommitted:false}};
     c.S.nightMode=c.NM;return c.S;
   }
-  return {c,api:c.TechOpsNightRuntime,data,events,elements,start};
+  function startWaldo(){
+    start();c.NM.district='waldo';c.NM.street=1;c.NM.enemies=[];c.NM.platforms=[];c.NM.done={};
+    c.NM.waldo={used:{},mow:null,repair:null,waldoX:900,waldoDir:1,waldoT:0};
+    c.S.car={engine:80,tires:75,brakes:70,battery:85,body:90};return c.S;
+  }
+  return {c,api:c.TechOpsNightRuntime,data,events,elements,start,startWaldo};
 }
 test('the real game save checkpoints the complete isolated Night world',()=>{
   const {c,api,data,start}=fixture();start();const before=new Map(data);
@@ -46,8 +51,10 @@ test('the real game save checkpoints the complete isolated Night world',()=>{
 });
 test('resume restores durable location and travel, without held actions or stale modal callbacks',()=>{
   const {c,api,start}=fixture();start();c.S.inDialog=true;c.S.paused=true;c.NM.drive={to:'airport',t:620,dur:1500};
-  const enemy=c.NM.enemies[0];enemy._nightCombat={id:2,held:true,air:false,stunUntil:1200};
-  c.NM._nightCombat={time:1000,events:[],fx:[],grab:{enemy,at:800},follow:{enemy},attack:{buffer:{keys:{j:true}}}};
+  vm.runInContext(fs.readFileSync('night_combat.js','utf8'),c);
+  const enemy=c.NM.enemies[0];c.TechOpsNightCombat.stepEnemy(c.NM,enemy,0);
+  enemy._nightCombat.held=true;enemy._nightCombat.stunUntil=1200;
+  Object.assign(c.TechOpsNightCombat.state(c.NM),{time:1000,grab:{enemy,at:800},follow:{enemy},attack:{buffer:{keys:{j:true}}}});
   assert.equal(api.saveCheckpoint(),true);assert.equal(enemy._nightCombat.held,true,'saving must not mutate live combat');
   c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);
   assert.equal(c.S.nightMode,c.NM);assert.equal(c.S.inDialog,false);assert.equal(c.S.paused,false);assert.equal(c.S.moving,false);
@@ -64,6 +71,46 @@ test('all street districts, final clear states and active drive checkpoints are 
   }
   c.NM.drive={to:'downtown',t:0,dur:1500};assert.equal(api.saveCheckpoint(),true);
 });
+test("Waldo travel, property activity, departure and once-only rewards survive a complete reload loop",()=>{
+  const {c,api,data,events,startWaldo}=fixture();startWaldo();const otherSlots=new Map(data);
+  c.NM.drive={to:'waldo',t:620,dur:1500};assert.equal(api.saveCheckpoint(),true);
+  c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);assert.deepEqual(plain(c.NM.drive),{to:'waldo',t:620,dur:1500});
+  c.NM.drive=null;c.NM.x=742;c.NM.cam=300;c.NM.waldo.waldoX=933;c.NM.waldo.waldoDir=-1;c.NM.waldo.waldoT=1.2;
+  c.NM.waldo.mow={cells:Array.from({length:24},(_,i)=>i<7?2:i===7?1:0),done:false,cutSfx:4800};
+  c.NM.waldo.used.grill=true;c.S.meta._v733smokePaid=true;c.S.meta._v733docs=['sat-ground-station'];
+  c.S.inDialog=true;events.pagehide();const saved=data.get(api.CHECKPOINT_KEY);assert.equal(JSON.parse(saved).state.inDialog,false);
+  c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);
+  assert.equal(api.active(c.NM),false,'Waldo must not acquire Night frame, clock, HUD or combat ownership');
+  assert.equal(c.NM.x,742);assert.equal(c.NM.cam,300);assert.equal(c.NM.waldo.waldoX,933);assert.equal(c.NM.waldo.waldoDir,-1);assert.equal(c.NM.waldo.waldoT,1.2);
+  assert.deepEqual(plain(c.NM.waldo.mow.cells),Array.from({length:24},(_,i)=>i<7?2:i===7?1:0));assert.equal(c.NM.waldo.used.grill,true);
+  assert.equal(c.S.meta._v733smokePaid,true);assert.deepEqual(plain(c.S.meta._v733docs),['sat-ground-station']);
+  c.NM.waldo.mow.cells.fill(2);c.NM.waldo.mow.done=true;c.NM.waldo.used.mow=true;c.S.meta._v733q1=true;c.S.meta.orbital=true;
+  c.NM.waldo.repair={part:'brakes',marker:.47,dir:-1,rounds:2,hits:1};c.S.budget=60;
+  for(let i=0;i<105;i++)api.frame(.05);assert.equal(api.checkpointStatus().state.nightMode.waldo.repair.marker,.47,'frame autosave must include Waldo without simulating its clock');
+  c.NM.drive={to:'home',t:300,dur:1500};assert.equal(api.saveCheckpoint(),true);
+  c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);
+  assert.deepEqual(plain(c.NM.drive),{to:'home',t:300,dur:1500});assert.deepEqual(plain(c.NM.waldo.repair),{part:'brakes',marker:.47,dir:-1,rounds:2,hits:1});
+  assert.equal(c.NM.waldo.used.mow,true);assert.equal(c.S.meta._v733q1,true);assert.equal(c.S.budget,60);
+  for(const [key,value] of otherSlots)assert.equal(data.get(key),value,'Waldo recovery must not alter '+key);
+});
+test("malformed Waldo checkpoints fail closed without replacing live state or saved bytes",()=>{
+  const {c,api,data,startWaldo}=fixture();startWaldo();c.NM.waldo.mow={cells:new Array(24).fill(0),done:false};assert.equal(api.saveCheckpoint(),true);
+  const valid=data.get(api.CHECKPOINT_KEY),live=c.S,otherSlots=new Map(data),cases=[
+    ['missing property',n=>{delete n.waldo;}],['property array',n=>{n.waldo=[];}],['used array',n=>{n.waldo.used=[];}],
+    ['non-boolean use',n=>{n.waldo.used.grill='yes';}],['unknown use',n=>{n.waldo.used.unknown=true;}],
+    ['invalid position',n=>{n.waldo.waldoX=null;}],['invalid direction',n=>{n.waldo.waldoDir=0;}],['invalid wander timer',n=>{n.waldo.waldoT=-1;}],
+    ['short lawn',n=>{n.waldo.mow.cells.pop();}],['invalid lawn cell',n=>{n.waldo.mow.cells[0]=3;}],['invalid mow completion',n=>{n.waldo.mow.done='yes';}],
+    ['invalid mow sound time',n=>{n.waldo.mow.cutSfx=null;}],['repair array',n=>{n.waldo.repair=[];}],['unknown repair part',n=>{n.waldo.repair={part:'warp',marker:.5,dir:1,rounds:3,hits:0};}],
+    ['invalid repair marker',n=>{n.waldo.repair={part:'brakes',marker:2,dir:1,rounds:3,hits:0};}],['invalid repair direction',n=>{n.waldo.repair={part:'brakes',marker:.5,dir:0,rounds:3,hits:0};}],
+    ['invalid repair rounds',n=>{n.waldo.repair={part:'brakes',marker:.5,dir:1,rounds:4,hits:0};}],['excess repair hits',n=>{n.waldo.repair={part:'brakes',marker:.5,dir:1,rounds:3,hits:4};}]
+  ];
+  for(const [name,mutate] of cases){
+    const record=JSON.parse(valid);mutate(record.state.nightMode);const raw=JSON.stringify(record);data.set(api.CHECKPOINT_KEY,raw);
+    assert.equal(api.checkpointStatus().status,'invalid',name);assert.equal(api.resumeCheckpoint(),false,name);
+    assert.equal(c.S,live,name+' must not replace live state');assert.equal(data.get(api.CHECKPOINT_KEY),raw,name+' must retain the original bytes');
+    for(const [key,value] of otherSlots)if(key!==api.CHECKPOINT_KEY)assert.equal(data.get(key),value,name+' must not alter '+key);
+  }
+});
 test('corrupt, future, malformed and foreign saves never mutate live state or other slots',()=>{
   const {c,api,data,start}=fixture();start();api.saveCheckpoint();const valid=data.get(api.CHECKPOINT_KEY),live=c.S;
   const wrongMode=JSON.parse(valid);wrongMode.state.meta._standaloneMode='gooddogs';
@@ -73,6 +120,72 @@ test('corrupt, future, malformed and foreign saves never mutate live state or ot
   for(const raw of ['{broken',JSON.stringify(wrongMode),JSON.stringify(wrongSector),JSON.stringify(badEnemy),JSON.stringify(future),JSON.stringify({meta:{_standaloneMode:'nightcrawler'}})]){
     data.set(api.CHECKPOINT_KEY,raw);assert.equal(api.checkpointStatus().status,'invalid');assert.equal(api.resumeCheckpoint(),false);assert.equal(c.S,live);assert.equal(data.get(api.CHECKPOINT_KEY),raw);
   }
+});
+test('malformed combat checkpoints stop before restoration and preserve all saved bytes',()=>{
+  const {c,api,data,start}=fixture();start();
+  vm.runInContext(fs.readFileSync('night_combat.js','utf8'),c);
+  c.TechOpsNightCombat.state(c.NM);
+  c.TechOpsNightCombat.stepEnemy(c.NM,c.NM.enemies[0],0);
+  assert.equal(api.saveCheckpoint(),true);
+  const valid=data.get(api.CHECKPOINT_KEY),live=c.S,otherSlots=new Map(data);
+  const cases=[
+    ['event container',n=>{n._nightCombat.events={};}],
+    ['effect container',n=>{n._nightCombat.fx={};}],
+    ['missing effects',n=>{delete n._nightCombat.fx;}],
+    ['combat array',n=>{n._nightCombat=[];}],
+    ['invalid combat timer',n=>{n._nightCombat.stunUntil='later';}],
+    ['invalid event sequence',n=>{n._nightCombat.serial='invalid';}],
+    ['invalid relay counter',n=>{n._nightCombat.relay='invalid';}],
+    ['enemy primitive',n=>{n.enemies[0]._nightCombat=4;}],
+    ['enemy array',n=>{n.enemies[0]._nightCombat=[];}],
+    ['reaction flag',n=>{n.enemies[0]._nightCombat.air='yes';}],
+    ['reaction velocity',n=>{n.enemies[0]._nightCombat.vy=null;}],
+    ['reaction hit counter',n=>{n.enemies[0]._nightCombat.airHits='invalid';}],
+    ['collision history',n=>{n.enemies[0]._nightCombat.flightHits={};}],
+    ['collision identity',n=>{n.enemies[0]._nightCombat.flightHits=['2'];}],
+    ['airborne velocity missing',n=>{n.enemies[0]._nightCombat.air=true;delete n.enemies[0]._nightCombat.vx;}],
+    ['thrown collision history missing',n=>{n.enemies[0]._nightCombat.air=true;n.enemies[0]._nightCombat.thrown=true;delete n.enemies[0]._nightCombat.flightHits;}]
+  ];
+  for(const key of ['time','stunUntil','lastInput','lastHit','serial'])cases.push(['missing combat '+key,n=>{delete n._nightCombat[key];}]);
+  for(const key of ['id','stunUntil','air','airHits','recoverUntil','vx','vy','flightHits','held'])cases.push(['missing reaction '+key,n=>{delete n.enemies[0]._nightCombat[key];}]);
+  for(const [name,mutate] of cases){
+    const record=JSON.parse(valid);mutate(record.state.nightMode);const raw=JSON.stringify(record);data.set(api.CHECKPOINT_KEY,raw);
+    assert.equal(api.checkpointStatus().status,'invalid',name);assert.equal(api.resumeCheckpoint(),false,name);
+    assert.equal(c.S,live,name+' must not replace live state');assert.equal(data.get(api.CHECKPOINT_KEY),raw,name+' must retain the original bytes');
+    for(const [key,value] of otherSlots)if(key!==api.CHECKPOINT_KEY)assert.equal(data.get(key),value,name+' must not alter '+key);
+  }
+});
+test('a real airborne throw resumes with finite physics and no repeated collision reward',()=>{
+  const {c,api,data,start}=fixture();start();
+  vm.runInContext(fs.readFileSync('night_combat.js','utf8'),c);
+  const combat=c.TechOpsNightCombat,n=c.NM,e=n.enemies[0],other=n.enemies[1];
+  n.block=false;n.x=777;e.x=810;e.hp=e.maxHp=100;other.alive=true;other.hp=other.maxHp=100;other.x=827;other.y=e.y;
+  assert.equal(combat.grab(n,{}),true);combat.tick(n,.05,{});combat.tick(n,.05,{});combat.tick(n,.05,{});
+  assert.equal(combat.attack(n,{arrowright:true},'punch'),true);
+  combat.stepEnemy(n,e,.016);
+  assert.ok(e._nightCombat.air&&e._nightCombat.thrown,'fixture must checkpoint a real in-flight throw');
+  assert.ok(e._nightCombat.flightHits.includes(other._nightCombat.id),'fixture must include a prior collision');
+  const before={hp:e.hp,otherHp:other.hp,cash:n.cash,kills:n.kills,time:n._nightCombat.time,flightHits:plain(e._nightCombat.flightHits)};
+  assert.equal(api.saveCheckpoint(),true);const valid=data.get(api.CHECKPOINT_KEY);
+  for(const mutate of [n=>{n.enemies[0]._nightCombat.airHits='invalid';},n=>{delete n.enemies[0]._nightCombat.stunUntil;},n=>{n._nightCombat.serial='invalid';}]){
+    const record=JSON.parse(valid);mutate(record.state.nightMode);const raw=JSON.stringify(record);data.set(api.CHECKPOINT_KEY,raw);
+    assert.equal(api.checkpointStatus().status,'invalid');assert.equal(api.resumeCheckpoint(),false);assert.equal(c.NM,n);assert.equal(data.get(api.CHECKPOINT_KEY),raw);
+  }
+  data.set(api.CHECKPOINT_KEY,valid);c.S=null;c.NM=null;assert.equal(api.resumeCheckpoint(),true);
+  const restored=c.NM,thrown=restored.enemies[0],target=restored.enemies[1];
+  assert.equal(restored._nightCombat.attack,null,'queued player action is retired without replaying contact');
+  assert.equal(thrown._nightCombat.air,true);assert.deepEqual(plain(thrown._nightCombat.flightHits),before.flightHits);
+  assert.equal(restored._nightCombat.time,before.time);assert.equal(thrown.hp,before.hp);
+  combat.tick(restored,.016,{});combat.stepEnemy(restored,thrown,.016);
+  assert.ok(Number.isFinite(thrown.x)&&Number.isFinite(thrown.y),'restored enemy physics must remain playable');
+  assert.equal(target.hp,before.otherHp,'a previously struck collision target must not take the same flight hit again');
+  assert.equal(restored.cash,before.cash);assert.equal(restored.kills,before.kills);
+  assert.equal(combat.attack(restored,{},'punch'),true);combat.tick(restored,.05,{});combat.tick(restored,.05,{});
+  assert.ok(thrown.hp<before.hp,'a fresh player attack must still connect after recovery');
+  assert.equal(thrown._nightCombat.airHits,1,'a resumed juggle retains its finite hit budget');
+  assert.ok(Number.isFinite(thrown._nightCombat.stunUntil));assert.ok(Number.isSafeInteger(restored._nightCombat.serial));
+  assert.ok(restored._nightCombat.events.length>0&&restored._nightCombat.events.every(event=>Number.isSafeInteger(event.id)),'post-resume events retain numeric identities');
+  assert.equal(api.saveCheckpoint(),true,'the recovered fight remains valid for its next checkpoint');
 });
 test('quota failure preserves the previous snapshot and reports failure until retry succeeds',()=>{
   const {c,api,data,start}=fixture();start();assert.equal(api.saveCheckpoint(),true);const original=data.get(api.CHECKPOINT_KEY);

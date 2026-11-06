@@ -22,7 +22,9 @@ assert.strictEqual(visuals.sceneForDialog("PLATING WORKSTATION DOWN"), "plating"
 assert.strictEqual(visuals.sceneForDialog("IMPOSSIBLE ACCESS EVENT"), "access");
 
 global.__techopsCampaignNativeAct1Assets = { id: "plating" };
-assert.strictEqual(visuals.sceneForDialog("ANY DIALOG"), "plating");
+assert.strictEqual(visuals.sceneForDialog("ANY DIALOG"), null);
+assert.strictEqual(visuals.sceneForDialog("NICK"), null);
+assert.strictEqual(visuals.sceneForDialog("CASEBOOK // RECORDED EVENTS"), "plating");
 global.__techopsCampaignNativeAct1Assets = null;
 
 const snap = visuals.snapshotWorld();
@@ -89,7 +91,7 @@ assert.match(p.statusText, /PROVENANCE/);
 p = visuals.presentationFor("workstation", base, "WORKSTATION // COMPANY");
 assert.strictEqual(p.variant, "pre_shift");
 assert.deepStrictEqual(p.motion, ["screen_scan", "camera_push"]);
-p = visuals.presentationFor("workstation", base, "ENGINEERING THE HUMAN CONNECTION");
+p = visuals.presentationFor("workstation", base, "PEOPLE BEHIND THE FLIGHT");
 assert.strictEqual(p.variant, "company_video");
 assert.ok(p.motion.includes("orpheus_glitch"));
 
@@ -206,3 +208,102 @@ assert.doesNotMatch(retirement, /COMPANY FEED \/\/ FELICIA/);
 assert.doesNotMatch(retirement, /OPENING BRIEFING · SHIFT CLOCK PAUSED UNTIL CLOCK IN/);
 
 console.log("Campaign Day 1 world-camera continuity + retired workstation concept overlay: PASS");
+
+// Geometry must be applied during show(), not on ResizeObserver's first delivery.
+// This DOM fixture returns zero detached geometry and withholds observer callbacks,
+// matching the mount boundary that used to leave the default 18%/right-side CSS.
+{
+  const vm = require('vm');
+  for (const observerAvailable of [false, true]) {
+    let viewport = { width: 844, height: 390 }, dialogueHeight = 400, nextDialogueHeight = 200;
+    const observers = [];
+    class Element {
+      constructor(tag) {
+        this.tagName = tag; this.children = []; this.className = ''; this.attrs = {};
+        this.style = { setProperty(key, value) { this[key] = value; }, getPropertyValue(key) { return this[key] || ''; } };
+        this.classList = { add() {}, remove() {} };
+      }
+      get isConnected() { return this === body || this === head || !!(this.parentNode && this.parentNode.isConnected); }
+      appendChild(child) { child.parentNode = this; this.children.push(child); return child; }
+      removeChild(child) { this.children = this.children.filter(x => x !== child); child.parentNode = null; }
+      setAttribute(key, value) { this.attrs[key] = value; }
+      getAttribute(key) { return this.attrs[key]; }
+      querySelectorAll(selector) {
+        const matches = [];
+        for (const child of this.children) {
+          if (selector === '.a1-anchored' && child.className.split(' ').includes('a1-anchored')) matches.push(child);
+          matches.push(...child.querySelectorAll(selector));
+        }
+        return matches;
+      }
+      getBoundingClientRect() {
+        if (!this.isConnected) return { width: 0, height: 0, top: 0, left: 0 };
+        if (this.id === 'dialogue') return { width: viewport.width, height: dialogueHeight, top: 0, left: 0 };
+        // Production style.css gives staged backgrounds inset:0 and reserves
+        // dialogue height, except the landscape side-by-side composition.
+        const landscape = viewport.height <= 500 && viewport.width >= 641;
+        const height = landscape ? viewport.height : Math.max(110, viewport.height - (parseFloat(document.documentElement.style.getPropertyValue('--techops-dialog-height')) || 0));
+        return { width: viewport.width * (landscape ? .45 : 1), height, top: 0, left: 0 };
+      }
+    }
+    const body = new Element('body'), head = new Element('head');
+    const document = { body, head, documentElement: new Element('html'), createElement: tag => new Element(tag), getElementById(id) {
+      const find = el => el.id === id ? el : el.children.map(find).find(Boolean);
+      return find(body) || find(head) || null;
+    } };
+    const context = { document, matchMedia: () => ({ matches: true }), dlg() { dialogueHeight = nextDialogueHeight; return 'dialogue rendered'; } };
+    if (observerAvailable) context.ResizeObserver = class {
+      constructor(callback) { this.callback = callback; observers.push(this); }
+      observe(el) { this.target = el; }
+    };
+    vm.createContext(context); vm.runInContext(visualSource, context);
+    const api = context.TechOpsCampaignNativeAct1Visuals;
+    function assertMounted(scene) {
+      api.show(scene, scene.toUpperCase(), base);
+      const el = document.getElementById('act1-reference'), bg = el.children[0];
+      const actor = bg.querySelectorAll('.a1-anchored').find(x => x.className.includes('a1-actor'));
+      assert.ok(el.style.getPropertyValue('--a1-floor-bottom'), `${scene}: measured floor before any observer delivery (${observerAvailable})`);
+      assert.ok(actor.style.left && actor.style.top && actor.style.width && actor.style.height, `${scene}: anchored immediately on mount`);
+      if (scene === 'shipping') {
+        const rect = bg.getBoundingClientRect();
+        const feet = (parseFloat(actor.style.top) + parseFloat(actor.style.height)) / rect.height;
+        const center = (parseFloat(actor.style.left) + parseFloat(actor.style.width) / 2) / rect.width;
+        assert.ok(feet - 400 / 432 > -.03 && feet - 400 / 432 < .05, `landscape clerk floor: ${feet}`);
+        assert.ok(center > .03 && center < .42, `landscape clerk story zone: ${center}`);
+      }
+      return actor;
+    }
+    const actor = assertMounted('shipping');
+    if (observerAvailable) {
+      const oldWidth = actor.style.width;
+      viewport = { width: 390, height: 844 };
+      observers.forEach(observer => observer.callback());
+      assert.notStrictEqual(actor.style.width, oldWidth, 'observer still recalculates after resize');
+      viewport = { width: 844, height: 390 };
+    }
+    api.hide(true);
+    assert.strictEqual(document.getElementById('act1-reference'), null);
+    assertMounted('plating');
+    assertMounted('shipping');
+    // Portrait stage height follows the actual dialogue, which is populated
+    // after show() in the production dlg wrapper. No observer delivery yet.
+    viewport = { width: 390, height: 844 };
+    const dialogue = new Element('div'); dialogue.id = 'dialogue'; body.appendChild(dialogue);
+    api.show('shipping', 'SHIPPING', base);
+    const previousHeight = document.getElementById('act1-reference').children[0].querySelectorAll('.a1-anchored')[0].style.height;
+    assert.strictEqual(context.dlg('SHIPPING CANNOT PRINT'), 'dialogue rendered');
+    const stage = document.getElementById('act1-reference'), bg = stage.children[0];
+    const clerk = bg.querySelectorAll('.a1-anchored')[0];
+    assert.notStrictEqual(clerk.style.height, previousHeight, 'dialogue layout sync must immediately re-anchor the resized stage');
+    const feet = (parseFloat(clerk.style.top) + parseFloat(clerk.style.height)) / bg.getBoundingClientRect().height;
+    assert.ok(feet - 400 / 432 > -.03 && feet - 400 / 432 < .05, `portrait clerk after dialogue resize: ${feet}`);
+    nextDialogueHeight = 440;
+    context.dlg('SHIPPING CANNOT PRINT');
+    const smallerBg = document.getElementById('act1-reference').children[0];
+    const smallerClerk = smallerBg.querySelectorAll('.a1-anchored')[0];
+    assert.notStrictEqual(smallerClerk.style.height, clerk.style.height, 'short-to-tall dialogue also re-anchors immediately');
+    const smallerFeet = (parseFloat(smallerClerk.style.top) + parseFloat(smallerClerk.style.height)) / smallerBg.getBoundingClientRect().height;
+    assert.ok(smallerFeet - 400 / 432 > -.03 && smallerFeet - 400 / 432 < .05, `portrait clerk after taller dialogue: ${smallerFeet}`);
+  }
+  console.log('Act 1 synchronous mount, deferred/absent observer, resize and repeated scene geometry: PASS');
+}

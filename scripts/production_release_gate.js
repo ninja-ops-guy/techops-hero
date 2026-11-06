@@ -4,6 +4,12 @@ const { spawnSync } = require("child_process");
 const fs = require("fs");
 
 const tests = [
+  "test_day_dialogue_variance.js",
+  "test_campaign_day_spatial_music.js",
+  "test_runtime_day_cases.js",
+  "test_runtime_day_world.js",
+  "test_runtime_day_audio.js",
+  "test_runtime_day_experience.js",
   "test_startup_prefetch.js",
   "test_review_contracts.js",
   "test_quality_release_receipt.mjs",
@@ -64,6 +70,7 @@ const tests = [
   "test_production_runtime_lock.js",
   "test_mobile_production_tester.js",
   "test_production_performance_budget.js",
+  "test_merge_gate_provenance.js",
   "test_production_asset_registry.js",
   "test_good_dogs_3d.mjs",
   "test_mike_animation_manifest.js",
@@ -104,6 +111,7 @@ const tests = [
   "test_production_gameplay_experience.js",
   "test_orbital_scene_staging.js",
   "test_night_lifecycle.js",
+  "test_night_lifecycle_diagnostics.mjs",
   "test_night_recovery.js",
   "test_runtime_night.js",
   "test_night_mobile_visual_contract.js",

@@ -19,7 +19,7 @@ defaults:
     shell: bash
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -40,13 +40,13 @@ jobs:
       - name: Browser acceptance
         run: |
           set -euo pipefail
-          timeout 480s node scripts/night_lifecycle_browser.mjs | tee artifacts/night-lifecycle/browser.log
+          timeout 480s node scripts/night_lifecycle_diagnostics.mjs | tee artifacts/night-lifecycle/browser.log
       - name: Tested source identity
         if: always()
         run: |
           set -euo pipefail
           mkdir -p artifacts/night-lifecycle
-          sha256sum runtime_night.js scripts/night_lifecycle_browser.mjs production_bootstrap.js > artifacts/night-lifecycle/source-sha256.txt
+          sha256sum runtime_night.js scripts/night_lifecycle_browser.mjs scripts/night_lifecycle_diagnostics.mjs production_bootstrap.js > artifacts/night-lifecycle/source-sha256.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

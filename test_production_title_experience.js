@@ -59,6 +59,7 @@ class Element {
   setAttribute(name, value) { this.attributes[name] = String(value); }
   getAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null; }
   addEventListener(type, handler) { (this.listeners[type] ||= []).push(handler); }
+  focus() { if (!this.disabled && !this.hidden) this.ownerDocument.activeElement = this; }
   closest(selector) {
     const ids = String(selector).split(",").map(value => value.trim().replace(/^#/, ""));
     let node = this;
@@ -194,9 +195,14 @@ assert.match(STYLE, /prefers-reduced-motion:reduce/, "title motion must honor re
   api.capture(syntheticClick);
   assert.deepEqual(b.counts(), { dogLaunches: 1, nightLaunches: 0 }, "pointer/click pair must delegate Good Dogs exactly once");
   assert.equal(first.immediateStopped, true, "legacy Good Dogs capture and onclick routes must be blocked");
+  b.context.document.activeElement = b.context.document.body;
+  assert.equal(b.dogs.disabled, true);
+  b.dogs.focus();
+  assert.equal(b.context.document.activeElement, b.context.document.body, "disabled launcher cannot receive selector focus restoration");
   b.context.__goodBoysOpeningPhase = {phase:"title"};
   assert.equal(api.routeCancelled("gooddogs"),true);
   assert.equal(api.state().ready,true,'cancellation releases the title synchronously');
+  assert.equal(b.context.document.activeElement, b.dogs, 'cancellation focuses the enabled Good Dogs title control');
   api.capture(event(b.dogs));
   assert.equal(b.counts().dogLaunches,2,'an immediate valid reopen cannot wait for a polling interval');
 }

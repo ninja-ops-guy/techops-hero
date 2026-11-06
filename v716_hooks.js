@@ -337,6 +337,7 @@
     // never hijack scripted/cue NPCs (Felicia's rooftop scene, pinned story NPCs, crew)
     const scripted = n && (n._felScene || n._pin || n._cue ||
       (typeof CREW !== "undefined" && CREW.some(c => c.name === n.name)));
+    if (!scripted && typeof dayAmbientConversation === "function" && dayAmbientConversation(n)) return;
     if (!scripted && Math.random() < 0.45) {
       const deptExtra = {
         IT: [`"Nick swears the dashboard wall is 'load-bearing decoration'."`, `"Standup was 6 minutes today. A record."`],

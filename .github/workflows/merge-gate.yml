@@ -19,11 +19,12 @@ defaults:
 jobs:
   static:
     name: Static and release contracts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -59,7 +60,7 @@ jobs:
 
   browser:
     name: Browser acceptance
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 30
     env:
       BOT_CHROMIUM_CHANNEL: chrome
@@ -68,10 +69,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Record exact tested source
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts
+          git rev-parse HEAD > runtime-bot-artifacts/tested-commit.txt
       - name: Install portable timeout command
         run: |
           brew install coreutils
@@ -110,6 +117,13 @@ jobs:
         run: |
           set -euo pipefail
           timeout 240s npm run test:browser:quality
+      - name: Day physical device acceptance
+        env:
+          DAY_DEVICE_BASE_URL: http://127.0.0.1:4173/
+          DAY_DEVICE_OUT_DIR: runtime-bot-artifacts/day-devices
+        run: |
+          set -euo pipefail
+          timeout 240s node scripts/day_device_acceptance_browser.mjs
       - name: Responsive presentation acceptance
         env:
           PRESENTATION_BASE_URL: http://127.0.0.1:4173/
@@ -164,7 +178,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: merge-gate-browser-${{ github.sha }}
+          name: merge-gate-browser-${{ github.event.pull_request.head.sha || github.sha }}
           path: runtime-bot-artifacts/
           if-no-files-found: warn
           retention-days: 7
@@ -173,7 +187,7 @@ jobs:
     name: required
     if: always()
     needs: [static, browser]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
       - name: Enforce authoritative gate

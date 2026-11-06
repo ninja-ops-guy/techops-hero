@@ -71,14 +71,37 @@ async function hudContract(page, mode) {
   return evidence;
 }
 
-async function settledText(page) {
+async function settledText(page, scene) {
   // Tapping the production dialogue copy completes its typewriter, and does not
   // activate a choice. Wait for a stable copy before taking a visual receipt.
-  await page.locator('#dlg-text').click();
+  // The desktop owns interactive apps inside #dlg-text. Click its actual copy,
+  // so testing stale typewriter handlers cannot accidentally open an app.
+  await page.locator(scene === 'workstation' ? '.os-copy' : '#dlg-text').click();
   await page.waitForTimeout(250);
 }
+async function advanceStandupIntroduction(page) {
+  // openStandup first presents the authored introduction. The board is reached
+  // by the player's final choice, not by waiting for a different scene owner.
+  const speakers = [];
+  for (const speaker of ['NICK', 'AMIT', 'BRANDON', 'DANIEL']) {
+    const state = await page.evaluate(() => ({
+      name: document.getElementById('dlg-name').textContent,
+      speaker: S.dayStandupSpeaker,
+      staged: document.body.classList.contains('day-standup-open'),
+      assigned: TechOpsCampaign.load(localStorage).flags.ticket_assignments_confirmed
+    }));
+    assert.equal(state.name, 'STANDUP SCENE // ' + speaker);
+    assert.equal(state.speaker, speaker);
+    assert.equal(state.staged, true, 'introduction retains the world scene');
+    assert.equal(state.assigned, false, 'reading the introduction cannot assign tickets');
+    speakers.push(speaker);
+    await page.getByRole('button', { name: speaker === 'DANIEL' ? 'Decide the assignments' : 'Continue standup', exact: true }).click();
+  }
+  assert.equal(await page.locator('#dlg-name').textContent(), 'MORNING STANDUP');
+  return { input: 'actual dialogue buttons', speakers };
+}
 async function sceneContract(page, profile, scene) {
-  await settledText(page);
+  await settledText(page, scene);
   if (scene === 'workstation') await page.waitForFunction(() => !window.__techopsAct1ReferenceScene);
   else await page.waitForFunction(id => window.__techopsAct1ReferenceScene === id, scene);
   const state = await page.evaluate(() => {
@@ -136,12 +159,15 @@ async function sceneContract(page, profile, scene) {
     }), 'last owner remains visible and unobscured through the board overflow region');
     await page.locator('.a1-live-board').evaluate(el => { el.scrollTop = 0; });
   }
-  const buttons = page.locator('#dlg-options button');
+  const buttons = page.locator(scene === 'workstation' ? '.os-window button, .os-taskbar button' : '#dlg-options button');
+  assert.ok(await buttons.count() > 0, 'active presentation exposes real controls');
+  if (scene === 'workstation') assert.equal(await page.locator('#dlg-options').isVisible(), false, 'desktop owns choices instead of the hidden legacy options');
   for (let i = 0; i < await buttons.count(); i++) {
     const button = buttons.nth(i);
     await button.scrollIntoViewIfNeeded();
     const box = await button.boundingBox();
-    assertTouchTarget(box, 'dialogue choice');
+    const label = await button.getAttribute('aria-label') || await button.innerText();
+    assertTouchTarget(box, label || 'dialogue choice');
     assert.ok(await button.evaluate(el => {
       const b = el.getBoundingClientRect();
       const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
@@ -192,20 +218,39 @@ try {
       if (name === 'landscape') assert.ok(field.objectives.bottom <= field.controls.top, 'landscape objectives must not overlap movement controls');
       await page.screenshot({ path: `${out}/${name}-day.png` });
       await page.evaluate(() => TechOpsCampaignNativeAct1.openStandup());
+      const standupIntroduction = await advanceStandupIntroduction(page);
       const standup = await sceneContract(page, name, 'standup');
       assert.equal(standup.board.count, '0 / 3 ASSIGNED', 'fresh standup never reports example ownership');
       await page.locator('#dlg-options button').filter({ hasText: 'Assign queue: Mike investigates access' }).click();
       const confirmedStandup = await sceneContract(page, name, 'standup');
       assert.equal(confirmedStandup.board.count, '3 / 3 ASSIGNED');
       assert.deepEqual(confirmedStandup.board.rows.map(row => row.owner), ['Mike', 'Amit', 'Mike']);
-      await page.locator('#dlg-options button').filter({ hasText: 'Open workstation' }).click();
+      await page.locator('#dlg-options button').filter({ hasText: "Walk to Mike's workstation" }).click();
+      const deskFixture = await page.evaluate(() => {
+        // Explicit visual fixture: move to the authored desk approach before
+        // invoking the real workstation. The route button itself never teleports.
+        const exitedInterior = S.room?.id || null;
+        if (S.room) {
+          if (typeof window.v69ExitRoom !== 'function') throw Error('Physical desk fixture requires the production interior exit');
+          window.v69ExitRoom();
+        }
+        if (S.room) throw Error('Desk fixture cannot place floor coordinates inside a side-view interior');
+        TechOpsDayWorld.ensureWorld();
+        const desk = TechOpsDayWorld.stations().find(station => station.id === 'mike_desk');
+        if (!desk?.available || !desk.approach) throw Error('Mike workstation has no service approach');
+        S.px = desk.approach.x; S.py = desk.approach.y;
+        if (!TechOpsDayWorld.deskNearby()) throw Error('Workstation fixture is not physically at the desk');
+        TechOpsCampaignNativeAct1.openWorkstation();
+        return { station: desk.id, exitedInterior, interiorExit: exitedInterior ? 'v69ExitRoom' : 'already-on-floor' };
+      });
       const workstation = await sceneContract(page, name, 'workstation');
       assert.deepEqual(errors, []);
-      report.profiles.push({ name, pass: true, field, standup, confirmedStandup, workstation });
+      report.profiles.push({ name, pass: true, field, standupIntroduction, standup, confirmedStandup, workstation, deskFixture });
       console.log(JSON.stringify({ profile: name, status: 'passed' }));
     } catch (error) {
       await page.screenshot({ path: `${out}/${name}-failure.png` }).catch(() => {});
       report.profiles.push({ name, pass: false, failure: String(error.stack || error), errors });
+      console.log(JSON.stringify({ profile: name, status: 'failed', failure: String(error.stack || error) }));
     } finally { await context.close(); }
   }
   // MORE is a distinct responsive state: six combat controls must coexist
