@@ -70,6 +70,7 @@ const tests = [
   "test_production_runtime_lock.js",
   "test_mobile_production_tester.js",
   "test_production_performance_budget.js",
+  "test_merge_gate_provenance.js",
   "test_production_asset_registry.js",
   "test_good_dogs_3d.mjs",
   "test_mike_animation_manifest.js",

@@ -74,6 +74,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Record exact tested source
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts
+          git rev-parse HEAD > runtime-bot-artifacts/tested-commit.txt
       - name: Install portable timeout command
         run: |
           brew install coreutils
@@ -173,7 +178,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: merge-gate-browser-${{ github.sha }}
+          name: merge-gate-browser-${{ github.event.pull_request.head.sha || github.sha }}
           path: runtime-bot-artifacts/
           if-no-files-found: warn
           retention-days: 7
