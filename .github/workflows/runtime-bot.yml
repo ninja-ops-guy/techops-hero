@@ -60,7 +60,7 @@ jobs:
       - run: node --test test_runtime_triage.mjs
 
   media-isolation:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
           retention-days: 14
 
   browser-runtime:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 18
     env:
       BOT_CHROMIUM_CHANNEL: chrome
