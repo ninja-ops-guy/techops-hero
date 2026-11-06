@@ -1,0 +1,21 @@
+MODEL {"latency":0,"punch":{"time":80,"dash":{"at":40,"until":380,"face":1,"spent":false},"x":1720,"enemyX":1768},"events":[{"id":1,"type":"dash","time":40,"x":663.428416,"y":396},{"id":2,"type":"grab","time":80,"x":1780,"y":413,"fromDash":true}]}
+MODEL {"latency":20,"punch":{"time":180,"dash":{"at":80,"until":420,"face":1,"spent":false},"x":1724.6244486072314,"enemyX":1768},"events":[{"id":1,"type":"dash","time":80,"x":664.8279603387017,"y":396},{"id":2,"type":"grab","time":180,"x":1780,"y":413,"fromDash":true}]}
+MODEL {"latency":60,"punch":{"time":380,"dash":{"at":160,"until":500,"face":1,"spent":false},"x":1722.6511974711932,"enemyX":1768},"events":[{"id":1,"type":"dash","time":160,"x":666.4238760947245,"y":396},{"id":2,"type":"grab","time":380,"x":1780,"y":413,"fromDash":true}]}
+MODEL {"latency":80,"punch":{"time":480,"dash":{"at":200,"until":540,"face":1,"spent":false},"x":1721.6062593394674,"enemyX":1768},"events":[{"id":1,"type":"dash","time":200,"x":666.9350020914007,"y":396},{"id":2,"type":"grab","time":480,"x":1780,"y":413,"fromDash":true}]}
+MODEL {"latency":100,"punch":{"time":580,"dash":{"at":240,"until":580,"face":1,"spent":false},"x":1720.9099939286614,"enemyX":1768},"events":[{"id":1,"type":"dash","time":240,"x":667.2668556195094,"y":396},{"id":2,"type":"grab","time":580,"x":1780,"y":413,"fromDash":true}]}
+✔ offline driver accepts production grab under 0 ms modeled command latency (6.565515ms)
+✔ offline driver accepts production grab under 20 ms modeled command latency (3.343103ms)
+✔ offline driver accepts production grab under 60 ms modeled command latency (2.549639ms)
+✔ offline driver accepts production grab under 80 ms modeled command latency (2.964263ms)
+✔ offline driver accepts production grab under 100 ms modeled command latency (4.958285ms)
+✔ late delivered punch remains a jab and fails the unchanged fromDash assertion (31.684214ms)
+✔ missing first direction tap cannot be repaired by a third tap or retry (27.534796ms)
+✔ window already expired at target staging fails without sending an attack (3.444566ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 175.647644

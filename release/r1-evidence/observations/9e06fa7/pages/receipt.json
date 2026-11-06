@@ -1,0 +1,45 @@
+{
+  "source": {
+    "head": "9e06fa74c5aca335b1b471b651dd722d49826fb3",
+    "tree": "049ddd067613c0e119ee6c39e7c9a66cdc0e05c9",
+    "dirty": false,
+    "fingerprint": "124ebe13ce2b8eda2af487833b82d3d6dbe1774085133b2d4f4a0f720583e6ad"
+  },
+  "release_manifest_sha256": "289d1e1cbae1902264cbbd05d9fc75095827f033a5cad41fe3a22d0ffdbd83f2",
+  "manifest_paths": 520,
+  "entity_bytes": 41176061,
+  "source_acquisition": {
+    "artifact_id": 13472358393,
+    "run_id": 42151418205,
+    "tested_commit": "5bc54aaa4a2bb1795865c27b60c9e383665238d2",
+    "artifact_zip_sha256": "bd29cefe4bc894b2b9914d89d07fc127fc55551ef9ff1542aef4ebc8a3e9d1c7",
+    "archive_tar_gz_sha256": "096595c9115c25b6df0dbe52eff13f198738776fde158a2aded7cbd36ecfa8d0",
+    "verification": "Matched source archive digest, staged all archived paths, reproduced merged Git tree, and independently verified signed merge commit object SHA before running repo tools."
+  },
+  "deployment": {
+    "run_id": 42251935247,
+    "job_id": 128009144564,
+    "artifact_id": 13520767313,
+    "artifact_zip_sha256": "f60d6caac47050bbf4ba2f33500ca1b01bfb610be18d5aadd7aedcc2b6d3914b",
+    "pages_deployment_id": "9e06fa74c5aca335b1b471b651dd722d49826fb3",
+    "package_manifest_sha256": "289d1e1cbae1902264cbbd05d9fc75095827f033a5cad41fe3a22d0ffdbd83f2",
+    "published_base_url": "https://ninja-ops-guy.github.io/techops-hero/",
+    "root_http_status": 200,
+    "root_entity_bytes": 17167,
+    "root_sha256": "9c05828442dfb097f96ea6da7ebf0a6ba76ba6838483bc20d22fec5af4d44735"
+  },
+  "public_gets": {
+    "started": "2026-11-06T16:49:08.775478+00:00",
+    "finished": "2026-11-06T16:55:28.602837+00:00",
+    "matched": 520,
+    "mp4s": 9,
+    "public_responses_sha256": "252d7d972dd26d0143e52f72da51cf49c6d31cd578e8aee2af42f7c2ad5302b3"
+  },
+  "local_production_gate": {
+    "node": "v24.22.1",
+    "suites": 114,
+    "exit_code": 0,
+    "log_sha256": "47b8aa2d83f7efd2c8028281c41adbe9ac2a2dd4fe561cc174e4c70e370cde53"
+  },
+  "scope": "One point-in-time sweep of the production Pages alias and one immutable deployment artifact. The project URL can serve different builds in the future. Media hashes do not establish decode, audio or human playback."
+}

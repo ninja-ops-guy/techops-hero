@@ -1,0 +1,2613 @@
+{
+  "schema_version": 1,
+  "source": {
+    "head": "9e06fa74c5aca335b1b471b651dd722d49826fb3",
+    "tree": "049ddd067613c0e119ee6c39e7c9a66cdc0e05c9",
+    "dirty": false,
+    "fingerprint": "124ebe13ce2b8eda2af487833b82d3d6dbe1774085133b2d4f4a0f720583e6ad"
+  },
+  "total_files": 520,
+  "total_bytes": 41176061,
+  "files": [
+    {
+      "path": "apt.js",
+      "size": 121,
+      "sha256": "93eb5732d7dd0a585b7e751b8caf8b1dd47b4dd6c2bfdf96c1a77ba04940720d"
+    },
+    {
+      "path": "apt_p1.js",
+      "size": 7105,
+      "sha256": "731a79deed686708472016e7c6b5ad57341c6a0913bb5e8d38044f98f8108150"
+    },
+    {
+      "path": "apt_p2.js",
+      "size": 685,
+      "sha256": "bb5976174013afe6c0b3d1c5730c03f2c30914e4bf5afb17e553d4e1d4bfa4ac"
+    },
+    {
+      "path": "assets/campaign/plating.line_background.png",
+      "size": 361095,
+      "sha256": "c04a473f96ab78f1f30af1582f0d5e8aebd3a5c1378c211dda614f1d61d6487d"
+    },
+    {
+      "path": "assets/campaign/plating.line_stopped_display.png",
+      "size": 61359,
+      "sha256": "5033c97b996b8c32932a984f105234a425858cd9aabfc9fb0dacba8ae58c6715"
+    },
+    {
+      "path": "assets/campaign/plating.operator.idle.png",
+      "size": 17026,
+      "sha256": "35c5bc4db25b7f3012fc1f64c96da8a24567ff3564610263ab8eefdfdee93fac"
+    },
+    {
+      "path": "assets/campaign/plating.workstation_cracked.png",
+      "size": 43233,
+      "sha256": "0a7c2b504ff52d0eba2b0e816435504cf6130c3eba7e8c9eb1bb640f4c0a389e"
+    },
+    {
+      "path": "assets/campaign/production_source_manifest.json",
+      "size": 18459,
+      "sha256": "413d64aac592aeb1ca32ef5c9cffb4fb61c89efc059d47d3e35aa49e367304b5"
+    },
+    {
+      "path": "assets/campaign/sector04.access_guard.attack.png",
+      "size": 65404,
+      "sha256": "ac6747ca6bb5330a38698c87d7d9bcbad8ad0ff17890fa462bb42e5cc5bbcc7c"
+    },
+    {
+      "path": "assets/campaign/sector04.access_guard.idle.png",
+      "size": 47840,
+      "sha256": "0878468635bc3fd5415e058412a0b366c0c0189f58825eb81467df4549660bcc"
+    },
+    {
+      "path": "assets/campaign/sector04.access_guard.respawn.png",
+      "size": 77078,
+      "sha256": "1a060db62d6dc0f8416839aa883fe0262e231d597d2f339988458d98e5710b3c"
+    },
+    {
+      "path": "assets/campaign/sector04.access_guard.suppressed.png",
+      "size": 35054,
+      "sha256": "9c2b56e60907dae2adf1d194ed3690091095cb2cb4f4b0f7b44c7d050d6e6baf"
+    },
+    {
+      "path": "assets/campaign/sector04.identity_controller.active.png",
+      "size": 241206,
+      "sha256": "5b6dd1cf2da7c4d586b6529bea97dd14651e05248424e2bd672c0e62692a1f23"
+    },
+    {
+      "path": "assets/campaign/sector04.identity_controller.severed.png",
+      "size": 193191,
+      "sha256": "0cedf6f652366257478ee9c32eeef2ad2f258ec3ea81d95e5625c8985f679909"
+    },
+    {
+      "path": "assets/campaign/sector04.identity_controller.spark_fx.png",
+      "size": 62207,
+      "sha256": "d4e0f811e1e8b423985bb1ee8561b129b5e6ec6ae05dcc7b971fbb5fcf198c9a"
+    },
+    {
+      "path": "assets/campaign/sector04.locked_violin_door.png",
+      "size": 268744,
+      "sha256": "5a49851acdf16d15373df923a3368a056bc3be8803e606c80cb3549e20610173"
+    },
+    {
+      "path": "assets/campaign/sector04.purple_damage.enemy.png",
+      "size": 72826,
+      "sha256": "cbc659d1ba81602b43bd053251c5f38bd14aec2c1d8bff13ba99d920f2a58a59"
+    },
+    {
+      "path": "assets/campaign/sector04.purple_damage.fx.png",
+      "size": 89178,
+      "sha256": "534d6f2f8664792dbeaeec4e70fa0ec31774479296295161ec5829c02bc10599"
+    },
+    {
+      "path": "assets/campaign/sector04.terminal.symptoms.png",
+      "size": 464427,
+      "sha256": "6f7cfbb7bf0ec5cd89e89fec933b5ef26530503a122dfc6bacbfe5b2f6525931"
+    },
+    {
+      "path": "assets/campaign/sector04.violin_note.fx.png",
+      "size": 266572,
+      "sha256": "b21ec4e8b56e2a982348290b43019a6d56b9d5ba372b9250269a368143d1d24c"
+    },
+    {
+      "path": "assets/campaign/shipping.clerk.idle.png",
+      "size": 78618,
+      "sha256": "6c5a50461682e80a4788e0599f861b8ce1caf412b16887b33e3cc35695a6daff"
+    },
+    {
+      "path": "assets/campaign/shipping.dock_background.png",
+      "size": 274758,
+      "sha256": "58844ab47b46771d4b040acc56737e6d8164244a60056baa31684e4d76996c77"
+    },
+    {
+      "path": "assets/campaign/shipping.label_printer.png",
+      "size": 16095,
+      "sha256": "cc531b408761532122c84ab6e7ae78e38925a1192b61939999dcc226c600d2f7"
+    },
+    {
+      "path": "assets/campaign/shipping.printed_label_success.png",
+      "size": 22293,
+      "sha256": "7a65a41a00ee28677f6545ef5e6cc31d27d3db95b1c6e20ce7b34af2930a0d33"
+    },
+    {
+      "path": "assets/campaign/ui.standup.board.png",
+      "size": 686484,
+      "sha256": "3afce5f611beae5c4d4d738200896aa4e20ec7277bbd35f14758f00e10b1bbd4"
+    },
+    {
+      "path": "assets/campaign/ui.standup.owner_badge.png",
+      "size": 30440,
+      "sha256": "8a1471e2b39c962020b51df4e0595dffdd8af392c7a6e7bfc333ae537829355a"
+    },
+    {
+      "path": "assets/campaign/ui.standup.ticket_card.png",
+      "size": 69669,
+      "sha256": "858ef8d718c3a7ec2c8e7c284422d8fd11c2146a6b36c4ba64a6e32f4ebb4802"
+    },
+    {
+      "path": "assets/campaign/workstation.corporate_aircraft_panel.png",
+      "size": 424888,
+      "sha256": "f6998c716c87972fafb11c1bd8d150ea0936304ce56a9f7896fd0dfc295d666b"
+    },
+    {
+      "path": "assets/campaign/workstation.felicia.video_frame.png",
+      "size": 394971,
+      "sha256": "4d2daf4a35490e8baffc53b3cc5e25869d16d4df2d414d7797e2538fee221cef"
+    },
+    {
+      "path": "assets/campaign/workstation.orpheus.glitch_frame.png",
+      "size": 487398,
+      "sha256": "4212a26b85d0b4dba2aa71138fd608de8e429552d044362bbbd1ddc87ab6c394"
+    },
+    {
+      "path": "assets/cinematic/m3_orbital_prison_breach.png",
+      "size": 178624,
+      "sha256": "e78c9e17801fdd1f0bff494cae82d1e8fd12515c5e02a715b96f54c75637bc37"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/01_signal_beyond_earth_pixel.mp4",
+      "size": 3714611,
+      "sha256": "a253a093be9ab9a993acbde36a47284380ed5eebd78babad4382b17106191fbe"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/02_signal_pull_transition_pixel.mp4",
+      "size": 1479140,
+      "sha256": "870e08a99f414c7559f5aaffb236570b157158891a6ee44570c17f56e9e28436"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/03_orbital_approach_pixel.mp4",
+      "size": 1036127,
+      "sha256": "687e223476c64a0b2192cef1ad1ec73962683f22ca23254dc10631e4ceef58d4"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/04_cell118_triple_jump_to_terminal_pixel.mp4",
+      "size": 3286351,
+      "sha256": "60afe398eb43947dc529360f07463cf9c5c4f9d02640d41a27c3231b7420c1e2"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/05_cell118_approach_k_reveal_pixel.mp4",
+      "size": 3126388,
+      "sha256": "ab7b5fd1de70f181f67634ed02e01e49d3697aeef3d9d2f80870dbc72a3f6bdf"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/06_k_freed_prison_escort_pixel.mp4",
+      "size": 2977416,
+      "sha256": "4211b73ffbaa92fd50b8aa71a350873501f824011d98d5cfd569e6888b728c94"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/07_cell1984_hack_pixel.mp4",
+      "size": 708851,
+      "sha256": "53d4ef89a90201421e4ec6fd1f3022e9944bba82a0411936cdf9743fbf45a838"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/08_team_reunited_exit_pixel.mp4",
+      "size": 417186,
+      "sha256": "24a444d2801e667fc775585674d6593d41ec4087af1ea0cca73dd9d592eaea01"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/09_prison_crash_selected_pixel.mp4",
+      "size": 3446766,
+      "sha256": "703dbd4da506b10e16c62a33b88f41159605d2f6daf4aaa43afdc67e9407e162"
+    },
+    {
+      "path": "assets/cutscenes/good_dogs/campaign_clip_manifest_v2_2_pixel.json",
+      "size": 11365,
+      "sha256": "ba7c299d3e39295549d4fd5572746922a6cd6861865880304c65c6bf2a28ec07"
+    },
+    {
+      "path": "assets/good-dogs-3d/asset-manifest.json",
+      "size": 2326,
+      "sha256": "63880626ab8a01961cfafa49a94efd137fb4bc720fb856c14a37e3c29439f6e0"
+    },
+    {
+      "path": "assets/good-dogs-3d/package.json",
+      "size": 33,
+      "sha256": "a90fc33418afa2b9cbf4768524b021135b965ecdf993457505bfae3ac44a8428"
+    },
+    {
+      "path": "assets/good-dogs-3d/textures/ivory-fur.jpg",
+      "size": 202734,
+      "sha256": "b1e508336f169c2309ede4ef2b4c206f2b7d12a191360710d05f2e861cfb88a2"
+    },
+    {
+      "path": "assets/good-dogs-3d/textures/prison-steel.jpg",
+      "size": 599596,
+      "sha256": "f705c37e545c92b475c54c9c96d8f610417c91672592f1fd05880db16d958142"
+    },
+    {
+      "path": "assets/good_boys/good_ship_arcade.atlas.png",
+      "size": 477852,
+      "sha256": "298d7fc74d2827e9b4532bcb5deae71c44b06bfddac713cdc7839e91602c284b"
+    },
+    {
+      "path": "assets/handoff/atlas.json",
+      "size": 50700,
+      "sha256": "2b5ab97383f9b4f85a6adbbcfe55bc88dec97cba05bf3495ab9a3dc79b946636"
+    },
+    {
+      "path": "assets/handoff/charger.png",
+      "size": 42137,
+      "sha256": "e0a1f54bb6aeac6315a98ca45e21b9113cb7adee6ff2f8c097914346307c98e9"
+    },
+    {
+      "path": "assets/handoff/kat.png",
+      "size": 77519,
+      "sha256": "0ab0eb65769d483f590a1876db63b7de2a7e6b8e371c9dbf054f0e98e5bef2bc"
+    },
+    {
+      "path": "assets/handoff/man.png",
+      "size": 89717,
+      "sha256": "de2923e4ba05cf9158a934d921016a24d66c5c042f79cfe406c6c50b45dcea54"
+    },
+    {
+      "path": "assets/handoff/mike.png",
+      "size": 76195,
+      "sha256": "155c9f4fae30b249552abddaaf6055b100157fb95d11883fa00139fbb5a3c290"
+    },
+    {
+      "path": "assets/handoff/mikeCombat.png",
+      "size": 31876,
+      "sha256": "564ce434b7a82510acb2bceed6e765b1b5594e41c5660d4e1dce28775899b4b3"
+    },
+    {
+      "path": "assets/handoff/prison.png",
+      "size": 171034,
+      "sha256": "9293ce4536e242e03a4df11acc9688260a3aa06486ecd4f5e493cc395ccf47f7"
+    },
+    {
+      "path": "assets/handoff/waldo.png",
+      "size": 96592,
+      "sha256": "303b8e2b34f24a1b95b70bb5d8d24f86fe7c86b3728b671f6b37899ce476ddb3"
+    },
+    {
+      "path": "assets/v736/good_boys_ship/cockpit_pilot.jpg",
+      "size": 51003,
+      "sha256": "b3a506161dde8f974c24cc5554d114b2df3abd292c7b6822195afd1dcc56541e"
+    },
+    {
+      "path": "assets/v736/k_action_atlas.png",
+      "size": 382380,
+      "sha256": "6811803c6bf5c322fdf3f8b27729ccfefdbf7dfd7450172c4f6f320a7e50b8fb"
+    },
+    {
+      "path": "assets/v736/k_studio_atlas.png",
+      "size": 392707,
+      "sha256": "6558c062da5316ddf471676edf07cc02a9638284a54e0e8980ecee6096ee0667"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_bark.png",
+      "size": 45405,
+      "sha256": "936f5b10ba27eb91277aeecbd317e055afc8c0e0ab42ec3765202d985bbf3e7b"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_cheer.png",
+      "size": 35344,
+      "sha256": "c17f556bb55122debd974a261e0cbf925af15b71193d38ea8f6b1fae1d4abcfe"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_crouch.png",
+      "size": 43053,
+      "sha256": "d7491f20c46961a180bec7c26e556ee51f564b4b41f60f3a0b3714ae75522215"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_dizzy.png",
+      "size": 39229,
+      "sha256": "44315d36cfa55b318a3db5b0aec6486b2498348209765eaa9ff07bc0d6a1e3fd"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_down.png",
+      "size": 35126,
+      "sha256": "05aac69a2cf4898bcd412349a668d1dad2d3fdf7053793343e9e2ba68e91a1e1"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_down_heavy.png",
+      "size": 35846,
+      "sha256": "9e0ed9d7ce472200ad1fd1445da5e17927b01099347499fd2756f7e780b9b8fd"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_hack.png",
+      "size": 54971,
+      "sha256": "74a1f14ea55427aaeb95f81e28c01b0fbb58062d5d6e2c2d6f4f36fc7688af45"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_hack2.png",
+      "size": 46669,
+      "sha256": "724e96881c569fe49ab3b37a02075c65826f99db4017657bed895e95756695b5"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_hack_low.png",
+      "size": 46669,
+      "sha256": "724e96881c569fe49ab3b37a02075c65826f99db4017657bed895e95756695b5"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle0.png",
+      "size": 51265,
+      "sha256": "cd19a2ebf4ce14b66648aabb5dc2ca012ea47afecca0f89ee2c99443115fd86d"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle1.png",
+      "size": 44215,
+      "sha256": "7b28c7c61d9d7de3dd79f7cef6ef93b8cd2678470886b1694fc1a8876e62485f"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle2.png",
+      "size": 54971,
+      "sha256": "74a1f14ea55427aaeb95f81e28c01b0fbb58062d5d6e2c2d6f4f36fc7688af45"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle3.png",
+      "size": 43008,
+      "sha256": "5dea1c40d33bddf3aaabc225b6750794308455a05b9c9f0877b6db55ad4d61b3"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle4.png",
+      "size": 52179,
+      "sha256": "dc6da5cb56e09f57fecd0e681ac032e5d3951645a83be3afe0611b4fe745597d"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle5.png",
+      "size": 50388,
+      "sha256": "7a3d378f53b0533d6a1640f15050bb8009845e67be8a1d1ce3662a7597e19601"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_idle6.png",
+      "size": 37523,
+      "sha256": "3897ecd880467d3bfd73543192b246dd7ab4d046e579012c24e76a900f414952"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_leap.png",
+      "size": 52179,
+      "sha256": "dc6da5cb56e09f57fecd0e681ac032e5d3951645a83be3afe0611b4fe745597d"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_leap2.png",
+      "size": 35156,
+      "sha256": "8dd823e63a07580518f1cd7e131693c89bb0afc3ebbf3d3b19cf828d389f9b5a"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_leap_low.png",
+      "size": 35156,
+      "sha256": "8dd823e63a07580518f1cd7e131693c89bb0afc3ebbf3d3b19cf828d389f9b5a"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_look.png",
+      "size": 37523,
+      "sha256": "3897ecd880467d3bfd73543192b246dd7ab4d046e579012c24e76a900f414952"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_pounce.png",
+      "size": 43008,
+      "sha256": "5dea1c40d33bddf3aaabc225b6750794308455a05b9c9f0877b6db55ad4d61b3"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_pounce2.png",
+      "size": 38939,
+      "sha256": "993a8530d6a49f05dc37616376c8b0a8e90e717028cf267bb845b89a7d4e5a75"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_pounce_low.png",
+      "size": 38939,
+      "sha256": "993a8530d6a49f05dc37616376c8b0a8e90e717028cf267bb845b89a7d4e5a75"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_roll.png",
+      "size": 50388,
+      "sha256": "7a3d378f53b0533d6a1640f15050bb8009845e67be8a1d1ce3662a7597e19601"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_shield.png",
+      "size": 43656,
+      "sha256": "2602621cae80b56f179194552589588f5edde7458b16b687ce9135ab0b434d66"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_sleep.png",
+      "size": 35846,
+      "sha256": "9e0ed9d7ce472200ad1fd1445da5e17927b01099347499fd2756f7e780b9b8fd"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_stand.png",
+      "size": 33685,
+      "sha256": "d83861ab6247d048d746ebff68da8adf371a61b86a72199bde39c14bcc9a187d"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_strike.png",
+      "size": 51161,
+      "sha256": "2be2c1d1a9ccd40b1fcfc57ec5a4c43a0a813f65f281eb69902ff733f0a0b6ce"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/kat_wall_hit.png",
+      "size": 48846,
+      "sha256": "9b78eb9fe542536289fc14c59fbf69b4ff6435565a111dd0ff8a104eba6c878f"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_bark.png",
+      "size": 55264,
+      "sha256": "c165b8362c3a17ac178bdd0d7ce475c6b203207ba54591af8c1dd82c3f2251c9"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_crouch.png",
+      "size": 46950,
+      "sha256": "862648e17daa599b1eb4b8ca4e677fe426e66226d200d26ed5bb6f6585501828"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_down.png",
+      "size": 39839,
+      "sha256": "deb7268cafdb3788ba75856d8581893133de2aca93332e3561d140f96fd0f949"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_down_wall.png",
+      "size": 44267,
+      "sha256": "6cc6937dbcb1651ae059f96e8a2e1079ba9ed4e4242d6d5e951f3996b63adc69"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_hack.png",
+      "size": 55671,
+      "sha256": "b905270a603751f5969a015e30940563a8477a64241d480b0d6bbac1a8112ba1"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle0.png",
+      "size": 55087,
+      "sha256": "4d900593afe0e51b1ca206c35fd1c97446d12a474f8b8aa0a11e3f5b3b371c21"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle1.png",
+      "size": 49675,
+      "sha256": "6bdbbfd3d8a7d4bb886ddf8ebe94167e7e65bd61dbb1a7e46eedf2db703c4c39"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle2.png",
+      "size": 49675,
+      "sha256": "6bdbbfd3d8a7d4bb886ddf8ebe94167e7e65bd61dbb1a7e46eedf2db703c4c39"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle3.png",
+      "size": 49542,
+      "sha256": "00c7b115f14aa79e506d8e5b1cbf639b06ce51bbb559fea2a417c4393203544d"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle4.png",
+      "size": 47605,
+      "sha256": "1672fdb6f71f84569b0073ef6f3f46f7df608e329cfc608130996e1b0f08a49c"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle5.png",
+      "size": 48224,
+      "sha256": "abd92ee5f45f2e324bfead5d703ed9a95d6a330033d2ab01aa89bf477452597a"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_idle6.png",
+      "size": 44278,
+      "sha256": "f4012ce3a52020df110348eed22fc5d8619ac974e92fcffd06d06aa2d2882b54"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_leap.png",
+      "size": 47605,
+      "sha256": "1672fdb6f71f84569b0073ef6f3f46f7df608e329cfc608130996e1b0f08a49c"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_look.png",
+      "size": 44278,
+      "sha256": "f4012ce3a52020df110348eed22fc5d8619ac974e92fcffd06d06aa2d2882b54"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_pounce.png",
+      "size": 49542,
+      "sha256": "00c7b115f14aa79e506d8e5b1cbf639b06ce51bbb559fea2a417c4393203544d"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_roll.png",
+      "size": 48224,
+      "sha256": "abd92ee5f45f2e324bfead5d703ed9a95d6a330033d2ab01aa89bf477452597a"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_shield.png",
+      "size": 46950,
+      "sha256": "862648e17daa599b1eb4b8ca4e677fe426e66226d200d26ed5bb6f6585501828"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_strike.png",
+      "size": 57890,
+      "sha256": "b5b73ce73cda273b52a93f81a9332a9fafa2d5724795121911394039ae9f95ec"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_wall_down.png",
+      "size": 44267,
+      "sha256": "6cc6937dbcb1651ae059f96e8a2e1079ba9ed4e4242d6d5e951f3996b63adc69"
+    },
+    {
+      "path": "assets/v736/katrin_manchez/man_wall_hit.png",
+      "size": 52803,
+      "sha256": "16390155a2a0ac4b5f3839f170e6541f710ea2769fd1a5d99190b22eedce0f19"
+    },
+    {
+      "path": "assets/v736/katrin_manchez_atlas.png",
+      "size": 1682488,
+      "sha256": "657ee9e16c5cf0fd4543d4bea40cd217036bf12da6fb3d8722770cfe1d3a74f4"
+    },
+    {
+      "path": "assets/v736/katrin_manchez_manifest.json",
+      "size": 12478,
+      "sha256": "7ebbf908c23ca81eae9b7c21ca44084574835ac74af0741dafb63ab1d72c286e"
+    },
+    {
+      "path": "assets/v742/cutscenes/access_core.png",
+      "size": 130128,
+      "sha256": "cf4679221de88b1a05b004565b05219e42d4d8bb9dec51b984abed3d6dc3094f"
+    },
+    {
+      "path": "assets/v742/cutscenes/cell_118.png",
+      "size": 129132,
+      "sha256": "d06089a46088d2dd753e9ae87bb052a2a776f6a77cc6dfc11bb0498fa967562b"
+    },
+    {
+      "path": "assets/v742/cutscenes/cell_1984.png",
+      "size": 181668,
+      "sha256": "e0b3c4be7b00d0e7607fc9137d534f277cff3c51635ad23c58a954254be6bc20"
+    },
+    {
+      "path": "assets/v742/cutscenes/crash_site.png",
+      "size": 182766,
+      "sha256": "f4ad8b678622b1892821c4a1f44dcfa384b46ce6fb7ef2e44f6e50816f46df94"
+    },
+    {
+      "path": "assets/v742/cutscenes/earthfall.png",
+      "size": 164696,
+      "sha256": "0b8f8dc956c32c54501d45ddb3b4a61d172d390ae67f35e1742c4a46a82ac7df"
+    },
+    {
+      "path": "assets/v742/cutscenes/hidden_bay.png",
+      "size": 131932,
+      "sha256": "4067fe9d5c157bc5b22d65fd49e480f845988d22d6a3170785406e191f224861"
+    },
+    {
+      "path": "assets/v742/cutscenes/orbital_approach.png",
+      "size": 138915,
+      "sha256": "79a44a4ead9b68fc9f63eafce1472de0a9c0ca3822fa3ca4267beb4d288dbd96"
+    },
+    {
+      "path": "assets/v742/cutscenes/secret_ship_interior.png",
+      "size": 135231,
+      "sha256": "c3f9f49c5b0fcca33995e9fcccc6394ec0f9cab17e483896c2cdfc1900d0ad4d"
+    },
+    {
+      "path": "assets/v742/cutscenes/waldo_dialogue.png",
+      "size": 164733,
+      "sha256": "fbad4e2e3b9361e3fd055839bfc48fec132b134f08622c4d2e6b962932174731"
+    },
+    {
+      "path": "assets/v742/cutscenes/waldo_garage.png",
+      "size": 131056,
+      "sha256": "461c839787c119992d58f6cd079bdaa057b454d4f9fbf403f0889a084d0b4aee"
+    },
+    {
+      "path": "assets/v742/cutscenes/waldo_house.png",
+      "size": 138827,
+      "sha256": "ac933a492b12b2c7898fb220cd4693b69e1f32584aacdcabc4363ba3ac5f4fdc"
+    },
+    {
+      "path": "assets/v742/cutscenes/warden_shuttle_bay.png",
+      "size": 135632,
+      "sha256": "706c8b94a46075ae03ae99f1c7a74d6de8d8d3e683d788736995ecd3f0f4403e"
+    },
+    {
+      "path": "assets/visual-combat/gooddogs-home.webp",
+      "size": 301554,
+      "sha256": "dc8cb5beb43e5b835a25a4ba6933333930492f318c865b3dde2c8934b8f01a2b"
+    },
+    {
+      "path": "assets/visual-combat/home.webp",
+      "size": 452786,
+      "sha256": "9904487798538f3c178eea1c8336b64a7d87783addf07617dfe7959daa290ac5"
+    },
+    {
+      "path": "assets/visual-combat/industrial.webp",
+      "size": 425976,
+      "sha256": "6cca3cec34b2150d838a9eeef084d4ff34abec68b4c8cf1130eb41531562d3ca"
+    },
+    {
+      "path": "assets/visual-combat/longwharf.webp",
+      "size": 384970,
+      "sha256": "cdfd26f80e3dc44f9b4ab761430ca802ccaf2286fc3387dc28793301d963833b"
+    },
+    {
+      "path": "assets/visual-combat/mike-moves.json",
+      "size": 36582,
+      "sha256": "baaf95b990129e424cc52e40584c7edc4e4ee6fad1971ab4b40222f808611eca"
+    },
+    {
+      "path": "assets/visual-combat/mike-moves.png",
+      "size": 886619,
+      "sha256": "f7cebb3310733978319734e90ec231aa85e80bf407d957439a4bc4e7d55ba7ad"
+    },
+    {
+      "path": "assets/visual-combat/scene-sources.json",
+      "size": 2691,
+      "sha256": "24565e6db21a14e45cd2de892ec4a1d14679f8dd35b1df018e2f3caaaf174725"
+    },
+    {
+      "path": "assets/visual-combat/waldo-props.json",
+      "size": 839,
+      "sha256": "ae8e8971f8d425512d99a96b829f41dfec6e078977edc50b1ff04ed89da9f7d2"
+    },
+    {
+      "path": "assets/visual-combat/waldo-props.png",
+      "size": 57414,
+      "sha256": "555743e94dea7e88aa442c3798767518d23369c06b73eb12b83dc2f24208c556"
+    },
+    {
+      "path": "assets/visual-combat/waldo.webp",
+      "size": 399908,
+      "sha256": "5cac09b4d1ab614005696d23a1fdc1d8714a7125f7b495d09145aec5b9502694"
+    },
+    {
+      "path": "bg_airport.js",
+      "size": 125,
+      "sha256": "1bdff98e907ef48f16c465f9ef2afc1b47da49935a6859046a1a9c3d1b90374e"
+    },
+    {
+      "path": "bg_downtown.js",
+      "size": 127,
+      "sha256": "7d20c0e5e64c8a42910f88b508c710b6b467d76456de4b703178dcd28e54ff9f"
+    },
+    {
+      "path": "bg_garage.js",
+      "size": 123,
+      "sha256": "de6c4d2b9d8f433ec6eead0c9ff90242ecfdd64a7ad48461a42f67f40dbbf429"
+    },
+    {
+      "path": "bg_industrial.js",
+      "size": 131,
+      "sha256": "20ecdffd8e13b14dec3458aa36df7f39353e8427fdadff611029c0c6b5397101"
+    },
+    {
+      "path": "bg_longwharf.js",
+      "size": 129,
+      "sha256": "bb9f799d9bda417c1611984da567268f7ab58ce1bafba91bab21a4b3a1b4632f"
+    },
+    {
+      "path": "bg_noc.js",
+      "size": 5055,
+      "sha256": "dda077db7ca6bc66548fc32e9959ac47dc0d96c2a98812707fc79d9b41c8ec6f"
+    },
+    {
+      "path": "bg_orpheus_eye.js",
+      "size": 133,
+      "sha256": "c63ad8c20bdcf65e4182b33c31e572b5862f0b3297196ca5b7271714bf9af7e9"
+    },
+    {
+      "path": "bg_shuttle_crew.js",
+      "size": 135,
+      "sha256": "c083e4740d72affccdec6b0bc85ea089da822c4a1610e6a17780014cb4c3af16"
+    },
+    {
+      "path": "bg_suburbs.js",
+      "size": 125,
+      "sha256": "74f766c299444afb3cc2229b4805ff5f72421d0d293e0f2329ae9858a5dfbd89"
+    },
+    {
+      "path": "bg_waldo_den.js",
+      "size": 129,
+      "sha256": "d46e1670924b3136778a25a67bcaf4f3c22101705cb553895cb9c6dd500515ae"
+    },
+    {
+      "path": "bg_wooster.js",
+      "size": 125,
+      "sha256": "57edf0972e2385687a18374d28765223cd46cd8ff2f73571b99622ed72d9d7f0"
+    },
+    {
+      "path": "campaign_act1.js",
+      "size": 30354,
+      "sha256": "e0d6675712695fb9f7b21e31d352224ced6bf3c1e1e86dd739283879c3e51afb"
+    },
+    {
+      "path": "campaign_act2.js",
+      "size": 25396,
+      "sha256": "96d82df67f611f54964270e8818066925c9b47b561cec5d23e61244569be5d91"
+    },
+    {
+      "path": "campaign_asset_pipeline.js",
+      "size": 7437,
+      "sha256": "c2cbb6c7ba3e1924649da19b27983f7785f82961d13dc84ba2d1baba8d0b40bf"
+    },
+    {
+      "path": "campaign_assets.js",
+      "size": 13524,
+      "sha256": "9e56dafa6bef41ee639bb8929e5830be4621196a29076f968c0b872bdd230ddb"
+    },
+    {
+      "path": "campaign_bg.js",
+      "size": 2031,
+      "sha256": "0bd02cb55698ddee7b098cc3a586e3fab0c0ec0030909f560f4549d99bd2df61"
+    },
+    {
+      "path": "campaign_native_act1.js",
+      "size": 57760,
+      "sha256": "19f56c42a33c5fe86bfeb3ab66a21fff96280dae7bee6d441ba5f089dc9c2f13"
+    },
+    {
+      "path": "campaign_native_act1_visuals.js",
+      "size": 3214,
+      "sha256": "c59ae43721474d2cb189b99c4a9ee550838ea0074929132ab91f6e8d4aed21b8"
+    },
+    {
+      "path": "campaign_native_act2.js",
+      "size": 19266,
+      "sha256": "6d17759004175b2ec04dac30b67f05012bb829564d6b5c3111f622b2a4231f8f"
+    },
+    {
+      "path": "campaign_runtime.js",
+      "size": 10600,
+      "sha256": "543cd2f66524ec934759e3473b23faa747ac11e689d27c7471fbd6b986c7c996"
+    },
+    {
+      "path": "campaign_scene_schema.js",
+      "size": 7321,
+      "sha256": "ef1c6bac3b05f41a545b8b2ba968f316c52f1124584c71a9e7c971b7a31d4297"
+    },
+    {
+      "path": "campaign_sector04.js",
+      "size": 6648,
+      "sha256": "8c4c1912f11cad70e62e09b35b35128e21cb766dc451ca2fb6b6d754a08bf588"
+    },
+    {
+      "path": "campaign_sector04_runtime.js",
+      "size": 25936,
+      "sha256": "ffe6b3d9951f8638ad67aa73c514b50be06921c47772a7629473bfb5d0392258"
+    },
+    {
+      "path": "campaign_story.js",
+      "size": 11304,
+      "sha256": "f46d692b2f51f9f9fdcd8f9b47228fb002b046fc93edce3d66e2c96484bafd05"
+    },
+    {
+      "path": "campaign_ui.atlas.js",
+      "size": 1259,
+      "sha256": "9ce3464bf0f7a051cffd1cbe6dd9645ad6d525507b66e6073931946421ec9dd6"
+    },
+    {
+      "path": "campaign_ui_payload_p2.js",
+      "size": 64027,
+      "sha256": "9807e8cfc3193e1e83fbdf0b984d0a4e91f2a2e99e2bebbeeab5f1429f7d6594"
+    },
+    {
+      "path": "campaign_ui_payload_p4.js",
+      "size": 64027,
+      "sha256": "03f32d99f431247d3f3a03b856a011afd834d5c7aabbb8f5a215cfc7b8c7b75f"
+    },
+    {
+      "path": "campaign_ui_payload_p5.js",
+      "size": 64022,
+      "sha256": "271d988b4ebd691b4c6740e6bda1fd823bbb2d97061d3243bf0ed73122b0e785"
+    },
+    {
+      "path": "campaign_ui_payload_p8.js",
+      "size": 64027,
+      "sha256": "9381385f7fa738b8dae232ee203459b3061c5da8fe4bcdc8234d47404d3d0226"
+    },
+    {
+      "path": "campaign_ui_payload_p9.js",
+      "size": 51797,
+      "sha256": "1e4755129e546d74b6e9cf4299b1085994c1d8885e9cc8b905d789be5f22ace3"
+    },
+    {
+      "path": "campaign_visual_direction.js",
+      "size": 13022,
+      "sha256": "917917b87fa298fc0a22110c311b92161805bd1c4e4925dc74e051657b878848"
+    },
+    {
+      "path": "campaign_world_visuals.js",
+      "size": 11769,
+      "sha256": "9dabf94f22d222a6e6fd09589c6dff1f108ecac4c8a0b49ff6f1668bb5d5de06"
+    },
+    {
+      "path": "charger_reference_v1.js",
+      "size": 635,
+      "sha256": "cb9533b2900f4861dcacdd6a3d6a40e51e97fc4723cbf02ac72120631d3eed15"
+    },
+    {
+      "path": "cinematic_systems.js",
+      "size": 43338,
+      "sha256": "b8f68746de00acdd1788005490e2d2cd45cc64a3ef00f1c0fb9107cd2b247871"
+    },
+    {
+      "path": "comm_hooks.js",
+      "size": 25390,
+      "sha256": "6aa4047d165747a896bfdf2c802f918f68e7bfc6809f195ddee73266cd188d0a"
+    },
+    {
+      "path": "day_cinematic_mobile_guard.js",
+      "size": 8839,
+      "sha256": "cedc03c18cd3996c508e8c6b53c56b0a3052552f629b9073d0de28abe6329b36"
+    },
+    {
+      "path": "dogs.atlas.js",
+      "size": 643,
+      "sha256": "516c64bf2fdae12953b2ed2dae13c7dbabe26d8f2d532f84fae90be9aa6d94d1"
+    },
+    {
+      "path": "dogs.js",
+      "size": 2190,
+      "sha256": "181c41c72f1accd86c3756b7bbaff5ec86713f7a1c7318a9c2133f4f58ae7e17"
+    },
+    {
+      "path": "dogs_action.atlas.js",
+      "size": 681,
+      "sha256": "02d57a4a002505448a896a2f6a527d361f54789c5da76e0348ed864d05d6ce81"
+    },
+    {
+      "path": "dogs_action.js",
+      "size": 126,
+      "sha256": "fe3259ef8fabb63ea7f8ab0d288af3099b90fe6ea7aff4b95b0c60d42f31713b"
+    },
+    {
+      "path": "duo_kw.atlas.js",
+      "size": 1402,
+      "sha256": "f7c562c8fc72202daf0af63488f2bcdbe339da29d4a4e5b845b831a4f39c4b00"
+    },
+    {
+      "path": "emblem.js",
+      "size": 157,
+      "sha256": "0502e01a26839302827587fcfee36ea19b2914db0413290b3a9b141d97c483bf"
+    },
+    {
+      "path": "emblem_p1.js",
+      "size": 8521,
+      "sha256": "6cd1126cc94aec65c0a97a97f424c2558879eb830dbe6dc66b25c29c5d91b169"
+    },
+    {
+      "path": "emblem_p2.js",
+      "size": 8521,
+      "sha256": "2169bec0639c8e18f8228a920ac0cb7d760bac323a5bbad9c56c59d89f97b236"
+    },
+    {
+      "path": "emblem_p3.js",
+      "size": 8520,
+      "sha256": "7819bcc82392232ce7bf734cb836e42e81a896c91ee260edcce8a73a776cad8a"
+    },
+    {
+      "path": "emote.js",
+      "size": 111,
+      "sha256": "d1e77bdc9e2c36ab277bbfd059c369fabc6f753ac3d01034f0980ebcd5e9a62d"
+    },
+    {
+      "path": "emote_p1.js",
+      "size": 5923,
+      "sha256": "a2a1297ccc88b1acd40843c6b9178d348c7c721a49428ecc65a92e26a7982de0"
+    },
+    {
+      "path": "enemy_roster.atlas.js",
+      "size": 5822,
+      "sha256": "888fc6ab416596b02d6909c68f395e4b4b5dcb7d282773b44e520313aab956b0"
+    },
+    {
+      "path": "enemy_roster.js",
+      "size": 129,
+      "sha256": "f5f4243cbeb3ebc0156c2873e3db241630216a171ae8949da97361645619da92"
+    },
+    {
+      "path": "env_objects.atlas.js",
+      "size": 1621,
+      "sha256": "45afd49f8569f8f44f61d8b6b3f5a79b05432c2238fe011a2a07ab97c0af57b7"
+    },
+    {
+      "path": "env_overlays.atlas.js",
+      "size": 1934,
+      "sha256": "f81a2395b151cc563bf1d387c2154fd58bbb383fb27cdc945019b39b77c72de1"
+    },
+    {
+      "path": "env_struct.atlas.js",
+      "size": 2263,
+      "sha256": "93c512fb0d7f27017a581a7eee5300ee87df7c75f8d99f3dd2eec983035d059d"
+    },
+    {
+      "path": "env_terrain.atlas.js",
+      "size": 2857,
+      "sha256": "2579023ec23f5b5e719ac37c54ed1c66a87361d599b696557ea8aaec984cda86"
+    },
+    {
+      "path": "extra_sprites.js",
+      "size": 636,
+      "sha256": "5294496632955893e397fba6c10c3e824cdcca4b4816c32b9b11794965d203cd"
+    },
+    {
+      "path": "favicon.svg",
+      "size": 229,
+      "sha256": "7b5d5d9a73a9249fe27f68d844c4daf8ec55306a80d4248235e80ca13ee6951f"
+    },
+    {
+      "path": "felicia.js",
+      "size": 429,
+      "sha256": "b7dc7018425fb1ffe817c392bedf51bea70541385f95a52362cfe5d506ebf6b8"
+    },
+    {
+      "path": "felicia_music.atlas.js",
+      "size": 611,
+      "sha256": "204df6e350ecae91779d62fd41cf3845ba5fe30872cf2491dd3ee9f0e52a6f5b"
+    },
+    {
+      "path": "felicia_music.js",
+      "size": 130,
+      "sha256": "f8ce42729504e6c24e4d7e20d4262747c247234967d93dcff3f6edeec80f58f9"
+    },
+    {
+      "path": "felicia_p1.js",
+      "size": 2763,
+      "sha256": "067992dc91390d05e1087899379b8ac16e9082cfd8d7b2f22f4c081053800543"
+    },
+    {
+      "path": "felicia_p10.js",
+      "size": 2765,
+      "sha256": "b4d1e4c23027ebaa0cf616ad0ad14033797668e559099413d64b3ecceebc327e"
+    },
+    {
+      "path": "felicia_p11.js",
+      "size": 2765,
+      "sha256": "fd8ed1a3d1a3f8693e13887294378f8610e15677314d4d99cbd793577b6efdde"
+    },
+    {
+      "path": "felicia_p12.js",
+      "size": 2581,
+      "sha256": "7d0db9890a98336bd3556958bcc9279b94613b148db9952f395492e88b32e1f2"
+    },
+    {
+      "path": "felicia_p2.js",
+      "size": 2763,
+      "sha256": "d1576d18085a66d65c0978d1206178015c66c35fbfe4066084a0edafad23950f"
+    },
+    {
+      "path": "felicia_p3.js",
+      "size": 2763,
+      "sha256": "db4963fa3babeb7498e71179a41a74ce974f72b8b06ab7d2de6f87ea6c5d3481"
+    },
+    {
+      "path": "felicia_p4.js",
+      "size": 2763,
+      "sha256": "20894cb330e067838d40f2385bd4a8409be7ae728f234e48b48f4fefb277a44b"
+    },
+    {
+      "path": "felicia_p5.js",
+      "size": 2763,
+      "sha256": "7e97e5f58770825f38d56e36fa7d7ea15eb2241b5297f9039c35642e991e53b9"
+    },
+    {
+      "path": "felicia_p6.js",
+      "size": 2763,
+      "sha256": "9e143fae4ab9df1d5e10326641acf7cd309bd2eda88e0c6acffb9a69f6d58fe0"
+    },
+    {
+      "path": "felicia_p7.js",
+      "size": 2763,
+      "sha256": "3c6c6a44a3ae4f9d8e8df4f1e9502e17c2aa6340c2d7f5bb35e05580674c8a52"
+    },
+    {
+      "path": "felicia_p8.js",
+      "size": 2763,
+      "sha256": "b5f7e750bd489f44590c135952aaf62f8811da23ec937f214b84a622d5279466"
+    },
+    {
+      "path": "felicia_p9.js",
+      "size": 2763,
+      "sha256": "efc26e7e81975beda78d8320c787853a270830b55f5f8ee55fb6a9adaf0ed7ba"
+    },
+    {
+      "path": "game.js",
+      "size": 179255,
+      "sha256": "7b5c094ba4a580a0b080adb6a79670077623df7e7a6109b6015add6b4d114a25"
+    },
+    {
+      "path": "gameplay_recording_cohesion.js",
+      "size": 6799,
+      "sha256": "0e3b11a23f269ccd448b7e03979c6cbc036ea95a2101f544c0a8df05d2225a84"
+    },
+    {
+      "path": "glitch.js",
+      "size": 515,
+      "sha256": "84f20aa1ac2d3b7cf12a63a1e5deae1a7b94a10f091742cef1a9ac4636e9c4e5"
+    },
+    {
+      "path": "glitch_p1.js",
+      "size": 7116,
+      "sha256": "2d57c5ef20aa972b9b29b6ee0e18674fc17cb979fd8854d9a3857ac58d1c61e8"
+    },
+    {
+      "path": "glitch_p2.js",
+      "size": 7099,
+      "sha256": "6d4673f937a56a2c331e534922cbda06f7e1105ad836c499616532130b32b5d7"
+    },
+    {
+      "path": "glitch_p3.js",
+      "size": 7099,
+      "sha256": "79d07336cf1af35f7d9a567b87a36fcf6ab0473848c372ed9d52bc12761bad5c"
+    },
+    {
+      "path": "glitch_p4.js",
+      "size": 6299,
+      "sha256": "8b97d22b09fe5836d195d15a3eed6618161cfcb3c27a892321bde6c88ad12aea"
+    },
+    {
+      "path": "good_boys_access_core_authority.js",
+      "size": 10650,
+      "sha256": "9d79a922942cebad6214f77f9f3bfaee7240310f7736396610f17805758d2536"
+    },
+    {
+      "path": "good_boys_background_authority.js",
+      "size": 4952,
+      "sha256": "3b8afa1d0bebb6d852dc6a62c49480eea32f5eb2c44e86b2a1824d7c6e9a10bd"
+    },
+    {
+      "path": "good_boys_bible_world.js",
+      "size": 15557,
+      "sha256": "663a84ce243e1db90c121689c14651625b3b14ee5e038af81ef34561a7035511"
+    },
+    {
+      "path": "good_boys_campaign_assets.js",
+      "size": 4457,
+      "sha256": "4dff6af4fed01303e1c5ae9a1533bf185513b1a04219f4a30ae4a1b9e73a8eda"
+    },
+    {
+      "path": "good_boys_campaign_director.js",
+      "size": 10094,
+      "sha256": "4f6fbb70c3a422c4e84458ca8a5f512885c617fc41a972d43488e9f045c441f1"
+    },
+    {
+      "path": "good_boys_canon_runtime.js",
+      "size": 14112,
+      "sha256": "e7f69c6b9501912ef3aeb677cfe15f4c812913f6d39038e033f5a47bd6aabd65"
+    },
+    {
+      "path": "good_boys_cinematic_ui_guard.js",
+      "size": 3849,
+      "sha256": "4f24e38f283d39a290abca54023f991bf513a85989a323276ef4ec58a79bab4c"
+    },
+    {
+      "path": "good_boys_depth_lite.js",
+      "size": 11543,
+      "sha256": "aca4140f12617b57a9fd3227739d538f1f47f604ba8e833f3604e39f1c9718b6"
+    },
+    {
+      "path": "good_boys_earthfall_ending.js",
+      "size": 16510,
+      "sha256": "7c59a5aa79a0f45e783d8a5a6f1771776f5d5f658e50656a04b13c50ee954ba5"
+    },
+    {
+      "path": "good_boys_gameplay_loop.js",
+      "size": 17940,
+      "sha256": "179e8794fb18ebb11596210ddc93379b9cef1ea48c6fbd31e50ce60adfa86a44"
+    },
+    {
+      "path": "good_boys_hud_lite.js",
+      "size": 8636,
+      "sha256": "4559138b74a61007cd3c5f3e33fddc15f03d917501bd1bb131805eecae4fba76"
+    },
+    {
+      "path": "good_boys_legacy_hud_filter.js",
+      "size": 6979,
+      "sha256": "7d4ca5ba9498033f6a23ee7603da44d2c2eaf796ca16ab04ca56b1ebad39cfc7"
+    },
+    {
+      "path": "good_boys_mobile_cinematic_polish.js",
+      "size": 5501,
+      "sha256": "fc6bbb4b7519eca24dc8afc8884c4ec8e4052df9f25e7f0049cfa50bba52899d"
+    },
+    {
+      "path": "good_boys_mobile_controls_layout.js",
+      "size": 10514,
+      "sha256": "6d43808b36462ceee0b49c088299563f80e4a8a4a046a6172336e2f744182363"
+    },
+    {
+      "path": "good_boys_mobile_launch_guard.js",
+      "size": 11672,
+      "sha256": "099a1a4df1a5c7a2e179ebb0c7954efd2fc87fe660945a87f3c1339777e4f146"
+    },
+    {
+      "path": "good_boys_prison_cinematic_patch.js",
+      "size": 13938,
+      "sha256": "171c874a6dc80bc6a8f25710414cb2a0b553296cbb0a75cb9251a618ed7cfbc6"
+    },
+    {
+      "path": "good_boys_prison_gameplay_v2.js",
+      "size": 12148,
+      "sha256": "c5b80623fdb6970320894668b670eabc3bfd3db55e038dd16348350d015d71b2"
+    },
+    {
+      "path": "good_boys_progression_authority.js",
+      "size": 21859,
+      "sha256": "01011445e7a6eee923144614c53584b7e4e3edbdc9415c37f3392af5478b078a"
+    },
+    {
+      "path": "good_boys_reference_mechanics.js",
+      "size": 7793,
+      "sha256": "1792950ac525fe00a5eed501e7aaf03a8daf3ebf6920572bcc253b0149991feb"
+    },
+    {
+      "path": "good_boys_reference_ui_v1.js",
+      "size": 11767,
+      "sha256": "305ee9ded4a7b08dc630c607a7a00eb78018ab01c86eaa1c56a652eab2b75a01"
+    },
+    {
+      "path": "good_boys_ship_flight.js",
+      "size": 17522,
+      "sha256": "62ab8b3b24a6ad75b39780be96274dba99f9faae9a427ce992f17ec871788c61"
+    },
+    {
+      "path": "good_boys_visual_polish.js",
+      "size": 7622,
+      "sha256": "b239df80062f85eae54f8a881afff248d42c1542141eb616f4dabd2e382d0364"
+    },
+    {
+      "path": "good_dogs_3d_presentation.js",
+      "size": 2151,
+      "sha256": "e074cb0db059643a83b7ba6a71122a9705621875ffca38dd5ff99776142eeb15"
+    },
+    {
+      "path": "good_dogs_actor_contract.js",
+      "size": 4059,
+      "sha256": "acd8b69e14ce67cbafa65d9daa49389802790cdc122509cb81a11cc6473464f2"
+    },
+    {
+      "path": "good_dogs_cutscene_bridge.js",
+      "size": 8336,
+      "sha256": "9a800c7027a57ab99d7ea3f95c1fe8bcae0331853bd2b12586492d4aded0e5ba"
+    },
+    {
+      "path": "good_dogs_cutscenes_v2_2.js",
+      "size": 16404,
+      "sha256": "51efdd872bb8ac10863b729eb313d4f801472c421739d4107b981e01654a6acd"
+    },
+    {
+      "path": "good_dogs_grounded.js",
+      "size": 3259,
+      "sha256": "ca1d795e28d3bab01c0ff26d09c766ece10d55bef9b398a01f81dfc83e6c4cac"
+    },
+    {
+      "path": "good_dogs_production_runtime.js",
+      "size": 16219,
+      "sha256": "cb7421a770bfa955d31c3e63c4b6f89c74d6cafec0bc9c7bf51b90d2ecb1f5f6"
+    },
+    {
+      "path": "index.html",
+      "size": 17167,
+      "sha256": "9c05828442dfb097f96ea6da7ebf0a6ba76ba6838483bc20d22fec5af4d44735"
+    },
+    {
+      "path": "interiors.atlas.js",
+      "size": 3982,
+      "sha256": "471b335da650755de5276e1dc73adc492ec34638fb82374e2a4b138d2dec6919"
+    },
+    {
+      "path": "interiors.js",
+      "size": 123,
+      "sha256": "bef3e558cc9b180c6d46b73418accd1c8de5109c1c087455826d82179ebb698e"
+    },
+    {
+      "path": "k_action.atlas.js",
+      "size": 716,
+      "sha256": "5199c16ec0018601dea8fb1e204457c7158596403d1dee3e3864deb677167961"
+    },
+    {
+      "path": "k_action.js",
+      "size": 167,
+      "sha256": "7d9f4502c6d63d634c31ab663fe08d57504b5031ce1fccade5c9912a938e61f6"
+    },
+    {
+      "path": "k_full.atlas.js",
+      "size": 1427,
+      "sha256": "e34b05096bb55b5b82ddb133c624a4804515ca4806463e533d65be72a7e610b4"
+    },
+    {
+      "path": "k_studio.atlas.js",
+      "size": 596,
+      "sha256": "fab7bcdb226bcc1ea97a0d6da5e9e911101d27291e13110a57bb049d30bbefef"
+    },
+    {
+      "path": "k_studio.js",
+      "size": 167,
+      "sha256": "8e5d67fd51b6b3d9551effcbc5f6cf145ad7d7548988bbab4e4f392f93815c33"
+    },
+    {
+      "path": "katrin_manchez.atlas.js",
+      "size": 20500,
+      "sha256": "94d614cd1a03e2182d1ca193b2095fb0946b6c60320c7028ef1472e74221546b"
+    },
+    {
+      "path": "manchez_katrin_hits_p1.js",
+      "size": 9109,
+      "sha256": "65e85446791df26950f132076aa51f542ce438197387794b4bed63569fd8db70"
+    },
+    {
+      "path": "manchez_katrin_hits_p2.js",
+      "size": 9109,
+      "sha256": "8c4c3aa6d2a7cfb5eddba1a9e07737a32b1d1013d25740c825f3604436ce262f"
+    },
+    {
+      "path": "manchez_katrin_hits_p3.js",
+      "size": 9109,
+      "sha256": "cae02a5206bb6b244b8713bb9f230732c0be96e3329ae3c7825e6ecef358aec9"
+    },
+    {
+      "path": "manchez_katrin_hits_p4.js",
+      "size": 9109,
+      "sha256": "428e2164418c0ef499ee6307107e7af0a16637912b0d390fbe125172869fff3a"
+    },
+    {
+      "path": "mike_actions.atlas.js",
+      "size": 2709,
+      "sha256": "fec66a44f93da8f5cb079e92237bcd337ef0a64ae21f4e84c6cb9bd37aa2aa90"
+    },
+    {
+      "path": "mike_actions.js",
+      "size": 129,
+      "sha256": "8526247ddc2b2c0205238d4b20e30dc08165325e714d712d1b5b6e1dd5677671"
+    },
+    {
+      "path": "mike_animation_manifest.js",
+      "size": 5937,
+      "sha256": "12ae21832cde737d3ccc44bc4fe1cece83f204c41e50bd5ca1eb1f9be4f9e8f4"
+    },
+    {
+      "path": "night_combat.js",
+      "size": 19927,
+      "sha256": "568fda82a0f82174c178d31f3822f9594889168c072788c69a0d6b18a03d4848"
+    },
+    {
+      "path": "night_combat_input.js",
+      "size": 11855,
+      "sha256": "006ed771dda1454f96015bcf2533811f9cfc8f22d4ea7acebd436328640f98e1"
+    },
+    {
+      "path": "night_hooks.js",
+      "size": 49384,
+      "sha256": "37f313812d1bb7778fde29fb9297dd647d52638aaad5187099171d1642489c5b"
+    },
+    {
+      "path": "night_mobile_visual_cohesion.js",
+      "size": 4036,
+      "sha256": "a3ae746b4dc92b2d903d4041129266b416b02f1f8fa56ee934e879b5bcf5eb16"
+    },
+    {
+      "path": "night_move_atlas.js",
+      "size": 11540,
+      "sha256": "310fadb6b7e329d2aa0ad824a52e2238b4e2c0bb456a5deea414390f86b685b4"
+    },
+    {
+      "path": "night_move_visuals.js",
+      "size": 3146,
+      "sha256": "a4c143ef2be3a4a9fab23ff0f2448a20de1af247d28ff650a72ddfad5d8cabf6"
+    },
+    {
+      "path": "night_production_assets.js",
+      "size": 5113,
+      "sha256": "d20562f2dd558d34a8df5f14d2e147e1aa232fb4b27e2478fe0c567720b25da5"
+    },
+    {
+      "path": "night_walker.atlas.js",
+      "size": 2478,
+      "sha256": "1d584abc6e642c0d16174b6e8abcb602a33a18056118acd79583f7012e314ee1"
+    },
+    {
+      "path": "night_walker_payload_p3.js",
+      "size": 64051,
+      "sha256": "6099b96bd35a4bd01532a351a4724419401c1b9b6d0b5def375517e212db85e5"
+    },
+    {
+      "path": "night_walker_payload_p4.js",
+      "size": 63956,
+      "sha256": "8bcaf7e36644c69cfc7575a282f3cb5fb20986099f474bad2dfb34749cc3d597"
+    },
+    {
+      "path": "night_walker_payload_p5.js",
+      "size": 63930,
+      "sha256": "c357e46320d7070f69149d85adcd3a115aa241074393efd22f1b4ed99c49e9d9"
+    },
+    {
+      "path": "night_walker_payload_p7.js",
+      "size": 36614,
+      "sha256": "2e49162d53a9e6f081a443ad238cc4c6151a371937182e7b4083ea14f5682996"
+    },
+    {
+      "path": "night_walker_reference_v1.js",
+      "size": 43168,
+      "sha256": "89c61bc2b15be99cea3b98380bae2e0a4c434bb69b1b1ec44fcfaab91df8aac3"
+    },
+    {
+      "path": "npcs.js",
+      "size": 468,
+      "sha256": "8120e9aecff14b6c63bf4c984779c16c768728ba87515a9ea60bf958560c0fb5"
+    },
+    {
+      "path": "npcs_p1.js",
+      "size": 2758,
+      "sha256": "a240fec9b2c0b31aa01aa4a33152f9242be8ff0c5f6b4468b2abd23e96dc1b7d"
+    },
+    {
+      "path": "npcs_p10.js",
+      "size": 2760,
+      "sha256": "451d44ac237e11543691ec303154bb688e57d950b57d327799adaf9eb9684c64"
+    },
+    {
+      "path": "npcs_p11.js",
+      "size": 2760,
+      "sha256": "a229af780d209945130671da7309c087a2dd7bdfccb5d2fd416c7285afd46602"
+    },
+    {
+      "path": "npcs_p12.js",
+      "size": 1748,
+      "sha256": "ef7fabaedc12b0e41984f831571449bee151916a6f9ed7f37bebcf5d084c6c8e"
+    },
+    {
+      "path": "npcs_p2.js",
+      "size": 2758,
+      "sha256": "3c44bc7a76579fadf255cd0d8292ee255876f3f568fc0869a9eb423a31aa4eae"
+    },
+    {
+      "path": "npcs_p3.js",
+      "size": 2758,
+      "sha256": "dfd8a18f8e83684deb8c1ae411d63dcac2ca9349ecf3a173637037f98adb30fc"
+    },
+    {
+      "path": "npcs_p4.js",
+      "size": 2758,
+      "sha256": "edaff4c1aa623748939b733e4b9056d56ba6a5a30b4844de1f8efd11b7e9e8d5"
+    },
+    {
+      "path": "npcs_p5.js",
+      "size": 2758,
+      "sha256": "52945f85d69196972630f756561e31a817e6e37734286e8126b0e8b12b0aa7d4"
+    },
+    {
+      "path": "npcs_p6.js",
+      "size": 2758,
+      "sha256": "9844f488bc0ae23461059071bc7993f22cc25854ebcd658b901fa3bf545b8c7b"
+    },
+    {
+      "path": "npcs_p7.js",
+      "size": 2758,
+      "sha256": "cd0d932cad8e424fdb6f130d96cfbf2cfa77c80120237021c232458cbcc2cbe6"
+    },
+    {
+      "path": "npcs_p8.js",
+      "size": 2758,
+      "sha256": "0d82af94e81ca47ec22d5cea964a2e9a8a9e49d0dc1b1c29f390f2edc68cc4be"
+    },
+    {
+      "path": "npcs_p9.js",
+      "size": 2758,
+      "sha256": "3a218ddce7b63bdd8dbc4ef0ddf443b3406f0825c94ea0227becc81d561f1165"
+    },
+    {
+      "path": "null_shepherd.atlas.js",
+      "size": 1876,
+      "sha256": "34493bd6faca34f1118a57e07215545986427187d1caa5908646e9c14a595951"
+    },
+    {
+      "path": "null_shepherd.js",
+      "size": 131,
+      "sha256": "98013d40898711ce5a496f080a3638cc338ac780b2b7654d12fa629de8a07d01"
+    },
+    {
+      "path": "office_hooks.js",
+      "size": 37228,
+      "sha256": "e7ba7e599dfed96268eeaadfbff4b86fd0e5d9c4844fa1ea1ea252d367086bdf"
+    },
+    {
+      "path": "orbital_scene_staging.js",
+      "size": 11342,
+      "sha256": "37630a45902761cb8779d1a6592db199529f5fae9c52a8be0c3a64fd287f5cde"
+    },
+    {
+      "path": "orbital_tiles.atlas.js",
+      "size": 3494,
+      "sha256": "f2c17571829019561eb30f5a7dad97d4b2cb01eee823f7d1ceb2822b584b5376"
+    },
+    {
+      "path": "orbital_tiles.source.js",
+      "size": 9210,
+      "sha256": "17695e28d6d5bc83629c504fdfd0d1c2f726aeecba45607ea5be8f4bbf74b844"
+    },
+    {
+      "path": "org_hooks.js",
+      "size": 15273,
+      "sha256": "92ba1cd3c9450ed65f17703114371b1a67b0d06b2696d655d56a700e929d97d9"
+    },
+    {
+      "path": "panel_p1a.js",
+      "size": 16136,
+      "sha256": "97939d4a0aa0624a4d4360de11ba795915f734bc6b0d87fdf150143e38399d79"
+    },
+    {
+      "path": "panel_p1b.js",
+      "size": 12068,
+      "sha256": "ec68590405f16c02166e83dfe460dc230ca457331907762a04a7dfab1f358247"
+    },
+    {
+      "path": "panel_p2a.js",
+      "size": 16138,
+      "sha256": "1377ded3a324e3edb027df69054cbabdb1063ff5b08ccb435ce24b2f3f89fafd"
+    },
+    {
+      "path": "panel_p2b.js",
+      "size": 14473,
+      "sha256": "22eafaff3d2f47538ecaebcec918e7ab08e1858bfb342ae047ad3e480d9158e7"
+    },
+    {
+      "path": "panel_p3a.js",
+      "size": 8096,
+      "sha256": "2625eceaea390eb7226f8bda5a590f9b77a585a396c1c2a0aeca2c975a0c480b"
+    },
+    {
+      "path": "panel_p3b.js",
+      "size": 8096,
+      "sha256": "a5a4892c45a7b2f147f4f3a824e71c50d10aebcbb30b122d8c44ec8e134f8ee4"
+    },
+    {
+      "path": "panel_p3c.js",
+      "size": 5037,
+      "sha256": "aea71421d2ec212907562af891da364c94639ff31e9981230fc050769550623d"
+    },
+    {
+      "path": "panel_p4a.js",
+      "size": 8096,
+      "sha256": "21fb5e840f5212d09234b0aea1f5a290684ded1a90559fc39c71fda189cb4d56"
+    },
+    {
+      "path": "panel_p4b.js",
+      "size": 8096,
+      "sha256": "8e4ca26ac7dab3a3fb48ed98d4ae17f1c3a5c2c3236ef9d3393efb855023a206"
+    },
+    {
+      "path": "panel_p4c.js",
+      "size": 8096,
+      "sha256": "65a866d197ca85fd242c9f11af2ae6202195de74271dcccff5cd9ef8dfadcd18"
+    },
+    {
+      "path": "panel_p4d.js",
+      "size": 8096,
+      "sha256": "9e48117a7686c8785b2355bcef33d324418ad340c0881b800075c45a45776116"
+    },
+    {
+      "path": "panel_p4e.js",
+      "size": 477,
+      "sha256": "26636d836da5198b38d888af23f5e53b8fe1b5e0b0e4bbc4a8f31be89f646803"
+    },
+    {
+      "path": "panel_p5a.js",
+      "size": 8099,
+      "sha256": "2e01322b8cb7406be56d6dcfd929e30052716a465d81bcd9fe8ca9f4b926e33b"
+    },
+    {
+      "path": "panel_p5b.js",
+      "size": 8099,
+      "sha256": "c3ab7fee6a942341d2bad01032a9b7de58172d02b9634853a91aec1070dc2d46"
+    },
+    {
+      "path": "panel_p5c.js",
+      "size": 4964,
+      "sha256": "2132eb506d22ff658001a33d1e955e4d7e140403d25335d0b7f23a9699210ae9"
+    },
+    {
+      "path": "panel_p6a.js",
+      "size": 8100,
+      "sha256": "7e04d1ff7449993a7db009a1b546cd28b62daa53b180b1ab1edcfe4fb3103353"
+    },
+    {
+      "path": "panel_p6b.js",
+      "size": 8100,
+      "sha256": "22b9f3e171a33d9be02c0950b811fa81eebdb6549dba7ef27822b6f70c429553"
+    },
+    {
+      "path": "panel_p6c.js",
+      "size": 8100,
+      "sha256": "0b9b876fc1178eadbfc28105651353955a05146175c9ba0ea9ed89dd4d14222f"
+    },
+    {
+      "path": "panel_p6d.js",
+      "size": 6375,
+      "sha256": "9f49827afb90cc2c145542acbcd5a83423a18ea88247295a219b8496cdb9ef75"
+    },
+    {
+      "path": "panels.js",
+      "size": 453,
+      "sha256": "6dc93928bdc17de8404490242cc214204bdf7422c99312a5a0bb467fd37637bf"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_music_venue_p001.js",
+      "size": 16036,
+      "sha256": "06e3b421e068ea970d3a1133f3fa17a064ebecfe32b62486e88a15837284f5f0"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_music_venue_p002.js",
+      "size": 16036,
+      "sha256": "2abb2cd245123019dfad515b03ab33120416b24619e018a9d8b6408fd29173bf"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_music_venue_p003.js",
+      "size": 3095,
+      "sha256": "13899ae31250d7cda6a9eee5a186fa80923e7bd151073451d602d3cfa8519854"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_waldo_garage_p001.js",
+      "size": 16037,
+      "sha256": "0c5d0654f70d4da4317968852d4f3a7d426bfc1573f7789d5c68319c72c7c4c7"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_waldo_garage_p002.js",
+      "size": 16037,
+      "sha256": "9d29478d1a9185d6e7efd2d88abb8c167836d6abb3f6e92444a0a8b20e0c8fd6"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_waldo_garage_p003.js",
+      "size": 11484,
+      "sha256": "f33ddf403858de1ae62ebd97d36dfc6374fbefc0c202b466c9bb6b3d8406cc9b"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_waldo_loft_p001.js",
+      "size": 16035,
+      "sha256": "56aa29961f4731dc7c7071d3e9a7c616a0718c9b76761951039e60e8a9f17a87"
+    },
+    {
+      "path": "parts/campaign_bg2_bg_waldo_loft_p002.js",
+      "size": 14882,
+      "sha256": "43cba13097bfb79dab5f7cf14db5e230a8fe28b638c0278c6c0a2479bb0e02c9"
+    },
+    {
+      "path": "parts/campaign_bg_bg_noc_twin_p001.js",
+      "size": 16033,
+      "sha256": "137a142d8ab562dca43e80ec2f78cb32c0b80e10c88a2e4876cefbbc8d434156"
+    },
+    {
+      "path": "parts/campaign_bg_bg_noc_twin_p002.js",
+      "size": 16033,
+      "sha256": "450f900eeaa7d2d0a58f3cc84e46517dd70579616291f68d896eb9f6435a380d"
+    },
+    {
+      "path": "parts/campaign_bg_bg_noc_twin_p003.js",
+      "size": 1640,
+      "sha256": "5be8952f259a01b58af1e6e9dda058c1f146e2db8c4e5c403dbea07c9d7a51bb"
+    },
+    {
+      "path": "parts/campaign_bg_bg_orbital_eye_p001.js",
+      "size": 16036,
+      "sha256": "0ace02a745838e7c1260c61d8f3d2da3d15518ed7c88ceec22f91362379e3cd6"
+    },
+    {
+      "path": "parts/campaign_bg_bg_orbital_eye_p002.js",
+      "size": 16035,
+      "sha256": "6e1184d0d0a193c3d34334011005f14ea1f4f3155268109fc9d34bf3e1f1b45c"
+    },
+    {
+      "path": "parts/campaign_bg_bg_orbital_eye_p003.js",
+      "size": 7782,
+      "sha256": "c4c9838f39d7de14b4aa3e1ea5c28883e87888bf16b0ab2b79ff7dcf3df1574f"
+    },
+    {
+      "path": "parts/campaign_bg_bg_orbital_gate_p001.js",
+      "size": 16036,
+      "sha256": "93eb0e54375efa8c519ecb4eba51b93dabc0e2e2a1485c11a48286742e04d1a8"
+    },
+    {
+      "path": "parts/campaign_bg_bg_orbital_gate_p002.js",
+      "size": 16036,
+      "sha256": "5e261a1df10b7f3c75f55e370d4b50de1357f9e2388ed2f3cb9e04568111e77f"
+    },
+    {
+      "path": "parts/campaign_bg_bg_orbital_gate_p003.js",
+      "size": 1356,
+      "sha256": "d95142d5dfb71c6ad716690141e19295ce1d697f7d1240f1f0506d9790d9f5d7"
+    },
+    {
+      "path": "parts/campaign_bg_bg_suburb_rift_p001.js",
+      "size": 16036,
+      "sha256": "907463c5897e2c738fa7ca09df2cd618a53c74dc148bf8d423698e2b0c5ce30b"
+    },
+    {
+      "path": "parts/campaign_bg_bg_suburb_rift_p002.js",
+      "size": 13655,
+      "sha256": "2112d3999fcc2e7152b0bdd9286972f80769b125a7bdc49aac004dfa453cece2"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p001.js",
+      "size": 16029,
+      "sha256": "97ce04c991aa264f8cb17bcb7155a80652625250a48828495cef25456bb80199"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p002.js",
+      "size": 16029,
+      "sha256": "4d7a887807736ac3bbb374f1ea2406c1e0446feb1a606c1935d2e62e9b28bc92"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p003.js",
+      "size": 16029,
+      "sha256": "88814b94b2e923b65185e01689ceeeafa83ed780415b718999ed8c71359a3bd8"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p004.js",
+      "size": 16029,
+      "sha256": "7c1be4b15a927ac84df32326da1a3e1282109169128e7f2a3e202566ce2c04d5"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p005.js",
+      "size": 16029,
+      "sha256": "73e965587259991bfb9ddb09380fb3176c9a1a1f35165c22e74d66c6fe7f3c12"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p006.js",
+      "size": 16029,
+      "sha256": "6e4c16a89606517a98bf04910bb38695d71a72b1151020a8a896057023f470d1"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p007.js",
+      "size": 16029,
+      "sha256": "81689307748ad46fdea309da8ef336541cf13151d55ea1757cf22c90b0ec3ea5"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p008.js",
+      "size": 16029,
+      "sha256": "9870371c1d10096aa33ee429e8e95ba4467aa4d0e73e105ab028305a4848f031"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p009.js",
+      "size": 16029,
+      "sha256": "09c1ea48fc64054457123d22a8f00236580290edac982f4392e0ae6452191381"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p010.js",
+      "size": 16029,
+      "sha256": "bc8a7e05b169e9dfa6a2980e944397cd59863831726ba2761403e10ba4af6f64"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p011.js",
+      "size": 16029,
+      "sha256": "421e182508276a2adddd8a50d9c77ba701b60de0f0dd0f4fb6dd8e9b84d5574c"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p012.js",
+      "size": 16028,
+      "sha256": "3d787bd8526d9ac4db84ed5364ffb5fef4813bca3379057628c636dfe8504201"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p013.js",
+      "size": 16028,
+      "sha256": "5e134eae946b4ef36fdfdbd474e70f0120f88f1185328b2c9c343fe63ce45336"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p014.js",
+      "size": 16029,
+      "sha256": "24f39ab2097f7664f057e44de61829b8fa531be487020aece2e8581441b195df"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p015.js",
+      "size": 16029,
+      "sha256": "23026a964dee17b33703ca9f8e2eba16571002ac70fb3a5e99d394ae5d93d0d4"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p016.js",
+      "size": 16029,
+      "sha256": "e7534612277a0116de0472f1ccee82372d5f5e84c123f778cfe3f9c1e577fcc4"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p017.js",
+      "size": 16029,
+      "sha256": "3c0fc24356b8ff0995665d79d149ce23d15a708e638612438ec0990c20157299"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p018.js",
+      "size": 16028,
+      "sha256": "01a0d344509a838597f1ed5fd90bddf01e32d15f5e668519efca4120d97099f7"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p019.js",
+      "size": 16029,
+      "sha256": "101fc7a1f4f919d8512fe431f29028ab0c3e86d213c34eef9920a1a74cce5e76"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p020.js",
+      "size": 16029,
+      "sha256": "4e621a1671f5128e1a9163feafb96e417ee5c3b62e7d696fb969dbac4250146a"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p021.js",
+      "size": 16029,
+      "sha256": "96bc6237732183786f2c676c422a7adad77c4477cffdae9aff705d838b014584"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p022.js",
+      "size": 16028,
+      "sha256": "e993128ad5ac66b1d7753e6e56c6fa7739c57752adec1199fee657d5a7a5bb88"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p023.js",
+      "size": 19536,
+      "sha256": "3b158946159ac426b89d7b7ba588379811cefa971df6cced49f83127ad9aeaeb"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p024.js",
+      "size": 16028,
+      "sha256": "9bebf8ae54df7ade9cc37830e4ef5022683706a10a37bf8c696338dc4fae3070"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p025.js",
+      "size": 15987,
+      "sha256": "0e4b24bdbf814616214b8a911db2fd28d88ed968fd730a926e711f8c5260636f"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p026.js",
+      "size": 16029,
+      "sha256": "8954aa9aa4fe997b6c7f5fc8d7445318b7886bce2525894d24bc641eca76e30d"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p027.js",
+      "size": 16029,
+      "sha256": "ba01a9747a7a92695961b2e5630bea8183cba7a9803934c75fd5e7ee47adfdad"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p028.js",
+      "size": 16029,
+      "sha256": "91a9cf275120b97215a00d2a5035ad78c15dc00772c698e080b0e6e3fc7ae53c"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p029.js",
+      "size": 47406,
+      "sha256": "86d02b4527a5ce00317b631d015aac20d67e4747920d32ca32bdb12c35cee336"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p030.js",
+      "size": 16029,
+      "sha256": "21d936b2ee647a48c6e0f167572f3b34f217d6dfefe71742601b8d519449f9bc"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p031.js",
+      "size": 16029,
+      "sha256": "a18b75494806850355a379bb23cf35cd55089936b6ce184c29421d0217e3f861"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p032.js",
+      "size": 16029,
+      "sha256": "4506bd44a685fb77c9491d84a6bf4322819c11aa380bf60f545a3f7e342555ff"
+    },
+    {
+      "path": "parts/campaign_ui_camp_ui_p033.js",
+      "size": 16029,
+      "sha256": "4320564097e80e1ee94d8e2dc21aa4f7c294d3ba22bf1fb350fb8322cc234213"
+    },
+    {
+      "path": "parts/shuttle_q001.js",
+      "size": 5932,
+      "sha256": "4032411ecf33f42a1a215dfa3c073195bdb6594aa52850e2e46d0d7f2d5f847d"
+    },
+    {
+      "path": "player.js",
+      "size": 449,
+      "sha256": "625b0fc4577dd5f57b1da5b9f0236c1a9705cd60f09432318e866c15ca80b08d"
+    },
+    {
+      "path": "player_p1.js",
+      "size": 8563,
+      "sha256": "340c58b9708e1161dbadebf5fce70e2967db06c0bad70336af829a570d7d4d6c"
+    },
+    {
+      "path": "player_p2.js",
+      "size": 8879,
+      "sha256": "9e89221d4dbb4c83e62c6f8be2ff89226295dd1c3792ddc2ac305c2b9095dd09"
+    },
+    {
+      "path": "player_p3.js",
+      "size": 8879,
+      "sha256": "2326193e7f6627232bb37cc6d9ab4212a1fef29bf202000884edb6fe35729eed"
+    },
+    {
+      "path": "player_p4.js",
+      "size": 8879,
+      "sha256": "8ef5ea66691cba9045111213364c351993687c7833dfbdc10fc87585b8542d99"
+    },
+    {
+      "path": "player_p5.js",
+      "size": 8878,
+      "sha256": "fc2b7bfb2f6835937aef4780ab9d23adfc8bed01fea329183d32308c5a7aa435"
+    },
+    {
+      "path": "portraits_ui.atlas.js",
+      "size": 2475,
+      "sha256": "3fc6fde14197d79fd73b55ecbd4a6acd099b01dc0c6bf2e376a3b695590b6e11"
+    },
+    {
+      "path": "portraits_ui.js",
+      "size": 129,
+      "sha256": "1b6a0e184da4eeb384f31f08a820b9c477a8fed234dd113d8c064602608de596"
+    },
+    {
+      "path": "production_asset_registry.js",
+      "size": 10764,
+      "sha256": "2aa235c5ca3b1c141d45b3e223a915be9f28f90e2a587a886925d88523c53e78"
+    },
+    {
+      "path": "production_gameplay_experience.js",
+      "size": 8520,
+      "sha256": "3aecec67dcc594c5c7c28dc701d056ac0f3723cfa3217bd547d02da271bde132"
+    },
+    {
+      "path": "production_mode_router.js",
+      "size": 20542,
+      "sha256": "ffaed36a1fca849acfc444507fbb5c3b67363007a15b85d9345e0dfcaf4f5b95"
+    },
+    {
+      "path": "production_presentation_guard.js",
+      "size": 3973,
+      "sha256": "783b83f51ea02119c2bdd6676c72c6607a3a376b514d82284e513789966062c1"
+    },
+    {
+      "path": "production_runtime_safety.js",
+      "size": 4399,
+      "sha256": "c932d881fb1d6513fb103951f85889de9426220f696ec7ef917887055ba2d7fe"
+    },
+    {
+      "path": "production_title_experience.js",
+      "size": 21230,
+      "sha256": "0a8da10f0f316bd4a315aa73c9ee355a41082b182d59d090c0669b50dcad6c95"
+    },
+    {
+      "path": "production_wrapper_guard.js",
+      "size": 11795,
+      "sha256": "aa5bb3ffcadd2b8346895c4e6c85914de3a7914e83cbd58fbb289292d0780618"
+    },
+    {
+      "path": "props.js",
+      "size": 381,
+      "sha256": "59b7a4bd263634329be0f99b3980b6cc1d4c037823e827150ee3083a6e6c6224"
+    },
+    {
+      "path": "props_c1a.js",
+      "size": 2541,
+      "sha256": "acb417182f49cff3d8ff764f94c1c2197b1a3c2b37d5e77b99074914c2e57296"
+    },
+    {
+      "path": "props_c1b.js",
+      "size": 3096,
+      "sha256": "462b91f453a0f559fc7257535c0b6536279d9d469c99154631038e25f6d4fe15"
+    },
+    {
+      "path": "props_c1c.js",
+      "size": 3095,
+      "sha256": "2232f06508c39429d19b26292a3d44ccb16fe876c54e60ae477ddfce10099659"
+    },
+    {
+      "path": "props_c6a.js",
+      "size": 3070,
+      "sha256": "06bdae8c2f66b88bd9d327990b8372d842d3ff0ffa202bb03e719e8766dc899f"
+    },
+    {
+      "path": "props_c6b.js",
+      "size": 3070,
+      "sha256": "75840bb77e2f5d7e56f98e0738037e26acd80e940b62fb9f131d60d319927eab"
+    },
+    {
+      "path": "props_c6c.js",
+      "size": 3069,
+      "sha256": "d3d0e4c256d3e9d8478651ebdf9206336fbaf34bdaf8460e068da9294c575f56"
+    },
+    {
+      "path": "props_c8a.js",
+      "size": 3070,
+      "sha256": "264b4b128bf49b2a02bd3be98811f9047c3014d8358a1f114c7b41b62e304527"
+    },
+    {
+      "path": "props_c8b.js",
+      "size": 3070,
+      "sha256": "9c8027983914ce4be42fb57362f1012c7bd934fa18b765bc5e06785005c75a3d"
+    },
+    {
+      "path": "props_c8c.js",
+      "size": 3069,
+      "sha256": "6a61505e11293fb5c522826eadc3c5df4b437f69d3af859a66745e01b4f31ec3"
+    },
+    {
+      "path": "props_c9a.js",
+      "size": 3068,
+      "sha256": "d1b515a32c23ffd8ba4f2f1a4310c2f2a28788524c86c0c6a53115fc6674f7ee"
+    },
+    {
+      "path": "props_c9b.js",
+      "size": 3068,
+      "sha256": "23f9f6728cd934c9aa71763459541f722f3c4812068a212657847b1c5e710cf6"
+    },
+    {
+      "path": "props_c9c.js",
+      "size": 3068,
+      "sha256": "17455506f01fc8d1d55ffe3d7198244881a5a972017d45da6833555b6817bc94"
+    },
+    {
+      "path": "props_p2.js",
+      "size": 9055,
+      "sha256": "e77254ed5001990702af96dc3159a6b614754ea6759146482d73a5de67943f77"
+    },
+    {
+      "path": "props_p3.js",
+      "size": 9055,
+      "sha256": "d6ad78fb44435f54d5836075844959371d34a4b3aa1bbe87b4746b56e11767fe"
+    },
+    {
+      "path": "props_p4.js",
+      "size": 9055,
+      "sha256": "2687fccf3ba54744e36a3f4022f13923c2532d6a0fb29b3ee8026795d720241f"
+    },
+    {
+      "path": "props_p5.js",
+      "size": 9055,
+      "sha256": "2e5bd5b7f7eef8486e9bcc6cc22b52e90831b794b0b7237e09f69f94d8a0a0ae"
+    },
+    {
+      "path": "props_p7.js",
+      "size": 9055,
+      "sha256": "c8fe1ec26655c527011c1b1b4f13d417bb2040022822b4720b3b8d2df4929075"
+    },
+    {
+      "path": "recording_world_cohesion.js",
+      "size": 8411,
+      "sha256": "1d33dbbaa9c545d59f49a700ad19b55cba58318f525ea01a6432d49aa6be3233"
+    },
+    {
+      "path": "rooms.js",
+      "size": 681,
+      "sha256": "02ab6ee98422f9bd3d0606839acff27b20dc8c1b404f4b234a6e8bb611dd4ef2"
+    },
+    {
+      "path": "rooms_eng_p1.js",
+      "size": 8315,
+      "sha256": "d4823fba34ffa7ebab1ed1688cd5ddd838166e74fd86da7a19cceea2c5e23307"
+    },
+    {
+      "path": "rooms_eng_p2.js",
+      "size": 8315,
+      "sha256": "3202a7e778ce82742673b620e6ab0b75d9f4477b5c3f916eefa605f64a0e4b12"
+    },
+    {
+      "path": "rooms_eng_p3.js",
+      "size": 8314,
+      "sha256": "284b31e1713183cd8b630849c44ef641c822c404df156b04ee39ae5d13f36709"
+    },
+    {
+      "path": "rooms_factory_p1.js",
+      "size": 7807,
+      "sha256": "2b585155dac5399c6fce80417e047b20d0526b1c3b3a757f53b00ce1ff423ccd"
+    },
+    {
+      "path": "rooms_factory_p2.js",
+      "size": 7862,
+      "sha256": "fd5de28add915ca2d2594a28caca1bb3f5fe92c847115518b2d14e0ace0f301b"
+    },
+    {
+      "path": "rooms_factory_p3.js",
+      "size": 7860,
+      "sha256": "68b630d9cfcfb8c4451cfcf8122179b1e11eefd8d589fb3456abf5e2b2860235"
+    },
+    {
+      "path": "rooms_it_p1.js",
+      "size": 3554,
+      "sha256": "cc41f73557e157ab1d0051117777372435e79b04fffef595db0c7b0be848a9ef"
+    },
+    {
+      "path": "rooms_it_p2.js",
+      "size": 3593,
+      "sha256": "83464edbf80c629a8a494c400949f12ca511fc9814c5322d6944d08f3e483999"
+    },
+    {
+      "path": "rooms_it_p3.js",
+      "size": 3593,
+      "sha256": "0db712068c25de3df84afe47b1f7d48fdb66c26ad1aa9a38a4addc84e558cec8"
+    },
+    {
+      "path": "rooms_it_p4.js",
+      "size": 3593,
+      "sha256": "b1104e44c8ca2b4ef0a1b0cb0b0eda5e827d9666eeb63114efbcfa826fa3fa6d"
+    },
+    {
+      "path": "rooms_it_p5.js",
+      "size": 3593,
+      "sha256": "0a12fc1cc4824a2a9c39c862b0e81a210f1e56a108c1a2b9d7075a4bac6d19de"
+    },
+    {
+      "path": "rooms_it_p6.js",
+      "size": 3593,
+      "sha256": "22f3f19636fb3ccacb72490d60a63ad4dcf97b3d155a41870e0f10230ad6be1e"
+    },
+    {
+      "path": "rooms_it_p7.js",
+      "size": 3593,
+      "sha256": "89c8b5bc9b2059f3f72026f61f3cb44b13e72fdf48240eb2e639a44624bd42bd"
+    },
+    {
+      "path": "rooms_it_p8.js",
+      "size": 3513,
+      "sha256": "801630f0362b6907c1ed3b67cdd2e414535db07521efd45791b449e7f1f23b53"
+    },
+    {
+      "path": "rooms_office_p1.js",
+      "size": 7101,
+      "sha256": "9d6b7434a7ee2dbab0a95ec173e76cd808b0dbf314172c26b351bf4b032781b8"
+    },
+    {
+      "path": "rooms_office_p2.js",
+      "size": 7101,
+      "sha256": "736d5f934d41df9e4933cf6fbcfbd8dd9240012197bd0d1aba7c8ada09cd2367"
+    },
+    {
+      "path": "rooms_office_p3.js",
+      "size": 7099,
+      "sha256": "ba683d472b12ba6fd3c8ad668a26148e9942d511e375364a25c5086d03317950"
+    },
+    {
+      "path": "runtime_arcade.js",
+      "size": 11073,
+      "sha256": "c9a95d6c47d0f7c7604f3d350a5d7a027b89ab6559805a8e0e84bd96b522570f"
+    },
+    {
+      "path": "runtime_combat_audio.js",
+      "size": 13099,
+      "sha256": "dffa712aa2b3277ba6137aac519036dd7d8180fda11d2fc0e9eb51c09fb9721d"
+    },
+    {
+      "path": "runtime_day.css",
+      "size": 20061,
+      "sha256": "4fa52c9ba19f3445fcb71a3fb1318e592236d5c129e6fdc597a62bea09e94572"
+    },
+    {
+      "path": "runtime_day.js",
+      "size": 50722,
+      "sha256": "373c0c6d5fdc499278c05864384479d1c6dbbf37dfd1026f58912230953154f7"
+    },
+    {
+      "path": "runtime_day_audio.js",
+      "size": 15374,
+      "sha256": "7f0966e9a963eb04727f8f59e506261a7ec069b6533c15e89ce3497411990e13"
+    },
+    {
+      "path": "runtime_day_cases.js",
+      "size": 26846,
+      "sha256": "1a130161a36a85636d16f84f0fa90a69449038c04da28ad099a32873ffd1eeeb"
+    },
+    {
+      "path": "runtime_day_world.js",
+      "size": 21683,
+      "sha256": "22e11e2be4189ae187639efd654279a2b3d92822eb64980c0427668f73da105e"
+    },
+    {
+      "path": "runtime_hud.js",
+      "size": 12191,
+      "sha256": "31b5518b2a4eccee66c44056d8f083c77a33eabb54b3a7c2052eacfa8d4b7ef7"
+    },
+    {
+      "path": "runtime_mode_shell.js",
+      "size": 8621,
+      "sha256": "dc3a944d4e7195c17e5da798a38570636855374d7af6a456513390ffdbff53a1"
+    },
+    {
+      "path": "runtime_night.js",
+      "size": 36165,
+      "sha256": "474de014a5a3673306a95a07f586a29acb8e6a4baa2665fb82b3d20778f16a24"
+    },
+    {
+      "path": "runtime_scene_art.js",
+      "size": 6400,
+      "sha256": "826e10574b93fd4678e96479e7d11333b8f4023b68f311a874d801602b5aa002"
+    },
+    {
+      "path": "shuttle.atlas.js",
+      "size": 1191,
+      "sha256": "4f0d671b4ecb5a2c406fae99be87a57c1d18a25aebf7ef2f5f9602dafdffd6ff"
+    },
+    {
+      "path": "skyline.js",
+      "size": 150,
+      "sha256": "69138a1dd566636b1ea762de508b581b2cac82a642de5d2f1421f2c0a2777e09"
+    },
+    {
+      "path": "skyline_p1.js",
+      "size": 6887,
+      "sha256": "6b290b95c8df56e3a796c39842569e5d482b44799f6ec4d21e51d6d766e69425"
+    },
+    {
+      "path": "skyline_p2.js",
+      "size": 6887,
+      "sha256": "e7e753d6e12d2117f2d673c45a530e499e664e554a319d4b3135b0426f3d18bf"
+    },
+    {
+      "path": "skyline_p3.js",
+      "size": 6887,
+      "sha256": "c9a13f24348e17853a93b059a087e1a6d72c2679a8009f770252c6d2c80a1b8f"
+    },
+    {
+      "path": "sp0.js",
+      "size": 6884,
+      "sha256": "54058e66f9f65954e27b8a6c72b1d809bb30f1ee0b6779132f94f30f23f16da0"
+    },
+    {
+      "path": "sp1.js",
+      "size": 6884,
+      "sha256": "68842ca91caa643ebcda8fba23a57a9b741387ac0f2f4bc68ae438989631d23b"
+    },
+    {
+      "path": "sp2.js",
+      "size": 6884,
+      "sha256": "bc8ceaad62bac2c1a37ead8baf3cb8c82756767089f7800bc04e2c1f7a5a0f96"
+    },
+    {
+      "path": "sp3.js",
+      "size": 6884,
+      "sha256": "f20d1f3b7818508b4eb5fe3ffa27c3cf9315f9aef152e0d0f4b1efe1f873485c"
+    },
+    {
+      "path": "sp4.js",
+      "size": 6884,
+      "sha256": "d30782fa451f1883fc217019782345ad0a29ab4db1163f44f22bdda4762673b7"
+    },
+    {
+      "path": "sp5.js",
+      "size": 6884,
+      "sha256": "2ba3defb8394de984535c11fc5ef3c97396ab5d03f6173d2074b42cc90ba8855"
+    },
+    {
+      "path": "sp6.js",
+      "size": 6884,
+      "sha256": "586ad5c57b10de4eb23e2cbe2eda7224f21d51a5203bc6f604c25c3e618da2cf"
+    },
+    {
+      "path": "sp7.js",
+      "size": 6884,
+      "sha256": "bf9a93f6b2ab97094000023955c389b405cc0f7ea71567586e03cf7e3747ae30"
+    },
+    {
+      "path": "sp8.js",
+      "size": 6884,
+      "sha256": "b5ea1a4b7b29b9ac62e34d816567aa2d8f812dfd2cec0c4a97cfaf33ae590719"
+    },
+    {
+      "path": "sprite_hooks.js",
+      "size": 5958,
+      "sha256": "692f8b5cfbfb01cda47e29598e54f62607e20017904cb5468c98cd2bd2b4c843"
+    },
+    {
+      "path": "state_validator.js",
+      "size": 6395,
+      "sha256": "3559e367011f4d85b2f868c5ff9b4fc0958958823ea991fa581120efef141a78"
+    },
+    {
+      "path": "style.css",
+      "size": 44016,
+      "sha256": "98bd0a11a7f5e9b449dce478a381df44a0c7084243be5fd10a51016432160f87"
+    },
+    {
+      "path": "ui_coop.js",
+      "size": 1096,
+      "sha256": "62b28c1335b91d8f7756c62a02508241db72cab997c4cbf16893f4016cc1991c"
+    },
+    {
+      "path": "ui_coop_p1.js",
+      "size": 9097,
+      "sha256": "5944bed5b624e91ef817ce864726ee1f1fe2b0719139e07add69dc45fa1d1b52"
+    },
+    {
+      "path": "ui_coop_p10.js",
+      "size": 9099,
+      "sha256": "70627de5028f477a272b2afa92ca21be2583a76bdf2feda2df3b3aa62468ed56"
+    },
+    {
+      "path": "ui_coop_p11.js",
+      "size": 9099,
+      "sha256": "3c201ec147c6ca6b31446c281df2015e01e55d9c00937c7559ccde936a79a4b9"
+    },
+    {
+      "path": "ui_coop_p12.js",
+      "size": 9099,
+      "sha256": "5df09d1f1c3b0c55a5d87e3dbc0cf9784b41bc426b41183e91466fe22959ddba"
+    },
+    {
+      "path": "ui_coop_p13.js",
+      "size": 9099,
+      "sha256": "38c12ed1c63f2c0ea119e1e76de22c37cfb7f14cea340c88f70506e56151a605"
+    },
+    {
+      "path": "ui_coop_p14.js",
+      "size": 9099,
+      "sha256": "b4cce71fd3a96d425305e47c5dc6b0ff4c35bf0446b68533420dd88a05a95d12"
+    },
+    {
+      "path": "ui_coop_p15.js",
+      "size": 5763,
+      "sha256": "9cf9c80a5226ffc68ba60090fefa5146b97b754b8d2d940189bc99f0bd0422ef"
+    },
+    {
+      "path": "ui_coop_p2.js",
+      "size": 9097,
+      "sha256": "c3b184df41e71907f2e5e81398bbeccd84a5fd4510d9adb2f9cfbc53f61a87e8"
+    },
+    {
+      "path": "ui_coop_p3.js",
+      "size": 9097,
+      "sha256": "1f74affacff7524eccd105f3f8cb3a8319289ceef7c371f937c2c397f56b37ff"
+    },
+    {
+      "path": "ui_coop_p4.js",
+      "size": 9097,
+      "sha256": "7c89fa4d2bf01b26f7bf89d60f4b28c8af139ebfac485849df84d669b3e22de6"
+    },
+    {
+      "path": "ui_coop_p5.js",
+      "size": 9097,
+      "sha256": "faad01447a14b570a67ed227edec4bcb37b19ac0924d15ae08338439a88e84d6"
+    },
+    {
+      "path": "ui_coop_p6.js",
+      "size": 9097,
+      "sha256": "3d79136e1f18a71c8bcf3ba3bb1e3636cb3e98dea6dcf4633fe2667387044d45"
+    },
+    {
+      "path": "ui_coop_p7.js",
+      "size": 9097,
+      "sha256": "143a7f448860cd97dd51c7afac6519ea05c2fd537b7da2d4bb482eea7f362fc0"
+    },
+    {
+      "path": "ui_coop_p8.js",
+      "size": 9097,
+      "sha256": "bec3681cdcc116b02f74a0848a94b87e8c35c7646023c62e6195fa9d17c5f2e2"
+    },
+    {
+      "path": "ui_coop_p9.js",
+      "size": 9097,
+      "sha256": "a0ec5522cdb9366feaffd3774d0cdb9d4427588a6cbbbe06a4cfd2a54eb574d6"
+    },
+    {
+      "path": "ui_kit.atlas.js",
+      "size": 812,
+      "sha256": "2925026992dc308cfcb54955013999654902c6784ee4b9b2e1cacb15f3f1e00b"
+    },
+    {
+      "path": "ui_kit.js",
+      "size": 117,
+      "sha256": "a3bca8c5284a660ce7ddb1bafd72ef2fd8255975d5d9438652fe23b1bc4907ee"
+    },
+    {
+      "path": "ui_lobby.atlas.js",
+      "size": 779,
+      "sha256": "d8965dd22f77b997979d246fc3daefc178c8bb7d074b914e018bf36b38d5d0d2"
+    },
+    {
+      "path": "ui_lobby.js",
+      "size": 120,
+      "sha256": "5630c1920b92ee0df640bf28373ed789f4740c2c6e42342a39e6966ec07d9b3d"
+    },
+    {
+      "path": "v53_hooks.js",
+      "size": 13160,
+      "sha256": "ea57d39348ee61118af2bcf24751327ec1f35f44caa74eaa5490b5bad87e3610"
+    },
+    {
+      "path": "v54_hooks.js",
+      "size": 11526,
+      "sha256": "3b54bc8692b08aa0f1eb29f64f87ef5c78722847071aa4ed454c7c19e765cdef"
+    },
+    {
+      "path": "v55_hooks.js",
+      "size": 10305,
+      "sha256": "7e44e5cd8e7e796125fa8c4f380e494d72077d76a86283adef9e8a4067b30ace"
+    },
+    {
+      "path": "v56_hooks.js",
+      "size": 6487,
+      "sha256": "2293f712cc75ca5b8d48f6c2feaa05101e239de586d17e4f0953f5f859e93a4e"
+    },
+    {
+      "path": "v57_hooks.js",
+      "size": 7063,
+      "sha256": "5406648acc004a8942d77722090d19f22084fc213accbe7e9a758083a516f511"
+    },
+    {
+      "path": "v58_hooks.js",
+      "size": 11942,
+      "sha256": "6ae88d3ef2627506b68e36f0257b7dc05661aa733fdecc83631bfb4c92fc4d98"
+    },
+    {
+      "path": "v59_hooks.js",
+      "size": 5433,
+      "sha256": "391a5ecf95f7f73d262b34021344b191bc48a8d19aa72ff2a474a4cc207440f4"
+    },
+    {
+      "path": "v60_hooks.js",
+      "size": 8009,
+      "sha256": "c7c633709f8a6b216e22372081445293def87d9fc2b9a5e7306c01de9acfeaef"
+    },
+    {
+      "path": "v61_hooks.js",
+      "size": 9698,
+      "sha256": "e1568fa1680cb853e01ad4271c75b58413ce4ca6c138c1338929c6671bddd9e6"
+    },
+    {
+      "path": "v62_hooks.js",
+      "size": 5712,
+      "sha256": "ed0fc940cb0a0b4deda96f7e61286610fff8a6c97022d73c2a37739326c4301c"
+    },
+    {
+      "path": "v63_hooks.js",
+      "size": 7956,
+      "sha256": "d18e6b67813b3702ad79d0632f6e3311701974c54ac26da60ed3c82523d06a99"
+    },
+    {
+      "path": "v64_hooks.js",
+      "size": 27982,
+      "sha256": "9da02b6596e41bc440d868b46a47fd29309dac6d975dbf9b5a32b02af15204bc"
+    },
+    {
+      "path": "v65_hooks.js",
+      "size": 39153,
+      "sha256": "36d27dab6f188fb29513dcd603cfec02348ced97c46b0638de2f07ca8e42cef0"
+    },
+    {
+      "path": "v66_hooks.js",
+      "size": 6886,
+      "sha256": "15501cdb0772c8c6f0e09a94384ecb9a46557c5cc78c2d0b1ea73fa2fa13bddf"
+    },
+    {
+      "path": "v67_hooks.js",
+      "size": 22668,
+      "sha256": "56d56adaa9a1ee240f0a12519c36ab9b169308a2898305c20fba566dac342127"
+    },
+    {
+      "path": "v68_hooks.js",
+      "size": 7961,
+      "sha256": "b36371cf2fd109aba30c9764a44e893f27ce4cfe6cf300b35ce5c83f70b5fd7d"
+    },
+    {
+      "path": "v69_hooks.js",
+      "size": 11735,
+      "sha256": "e4e267032efeae32fc02ba145a1c90fdac812645602f3abb19e65279984cdf5c"
+    },
+    {
+      "path": "v70_hooks.js",
+      "size": 7473,
+      "sha256": "5e5f71271cbb2c80c1da3338110ba5a383b1a499d46d73dcfa56cf91c3ed58bc"
+    },
+    {
+      "path": "v710_hooks.js",
+      "size": 22481,
+      "sha256": "e086fb447b566a0b2f95d6be97a819792373a9c9bddefd1f3854bf08ec3d2a88"
+    },
+    {
+      "path": "v711_hooks.js",
+      "size": 4242,
+      "sha256": "ed57052fee610f0d432809378ca09ec9bd907c07442f79a0f933bd6f6b2f471f"
+    },
+    {
+      "path": "v712_hooks.js",
+      "size": 3869,
+      "sha256": "ab63a179f1f8b3de56189e2a860f314ff244cb6808faf6cc3243167aca805c64"
+    },
+    {
+      "path": "v713_hooks.js",
+      "size": 19699,
+      "sha256": "e23d8df272c40fab65d2731edef92115b5da5ab022e9316d1c510807a072cbe0"
+    },
+    {
+      "path": "v714_hooks.js",
+      "size": 37715,
+      "sha256": "8007b2f8f355602b7207788ac419eb945281066e62da5a51d8975f6ddff95be7"
+    },
+    {
+      "path": "v715_hooks.js",
+      "size": 4384,
+      "sha256": "45795372a5a214fc52ec7984077b71438ef2dcbdc97268ca8a5133da6a088559"
+    },
+    {
+      "path": "v716_hooks.js",
+      "size": 20771,
+      "sha256": "66a6013c5fcf74a5f1f36ab4c65817626e8e7402498a8631b0b8ef026497075b"
+    },
+    {
+      "path": "v717_hooks.js",
+      "size": 5726,
+      "sha256": "3f04b2b517f6782bdf9e67417984a3c0dd24e03ff8f9341c82e74a8b86ba1b68"
+    },
+    {
+      "path": "v718_hooks.js",
+      "size": 5489,
+      "sha256": "e1b49db7620af258ede65507ca70fdd942ef39f4f3c49432535b99f8e0830900"
+    },
+    {
+      "path": "v719_hooks.js",
+      "size": 2650,
+      "sha256": "58a9e33116238950895a8d7369e2dbc2868e10e808fff8e48d1139caaa7cf84b"
+    },
+    {
+      "path": "v71_hooks.js",
+      "size": 6462,
+      "sha256": "2ed3dca0c298469e03f48af9ac3b23b49584bca238bf90fc90ff93a56ffce590"
+    },
+    {
+      "path": "v720_hooks.js",
+      "size": 7269,
+      "sha256": "fa84ceba0f8ea25ad21a65f06cb4515b278c9634478a6a11b894cd32b134d526"
+    },
+    {
+      "path": "v721_hooks.js",
+      "size": 6858,
+      "sha256": "5ddfccad2859b164cbbd077a99c493c8fb57fb672221ded4172ed78fbdc9e017"
+    },
+    {
+      "path": "v722_hooks.js",
+      "size": 26626,
+      "sha256": "0d670485126fe8d47dd617e1feecf4299557e834e127e00a6474cdb354aff10e"
+    },
+    {
+      "path": "v723_hooks.js",
+      "size": 24670,
+      "sha256": "26c8bb27910bad5b7bbb1ae0f5cc59592590061137517275d8384b76f83ebf4d"
+    },
+    {
+      "path": "v724_hooks.js",
+      "size": 28461,
+      "sha256": "31f6f8eed594bb950ea513df25c3f389d6869cdd2b1ed94d8201b7ad8af3c55b"
+    },
+    {
+      "path": "v725_hooks.js",
+      "size": 61570,
+      "sha256": "ecf8fc9f2e3fce8e23a371e8f73f6a078d1c9b6f84d051b08d52a95e0332697a"
+    },
+    {
+      "path": "v726_hooks.js",
+      "size": 32149,
+      "sha256": "90475b4257323fcb6eece06ffe20db7e54d1577d82bd5a160b7ed15fb65feca0"
+    },
+    {
+      "path": "v727_hooks.js",
+      "size": 13858,
+      "sha256": "4c531794eab0430ac2c88c5c53cf2154fdf9505f29efcc36838a93d18abf2b34"
+    },
+    {
+      "path": "v729_hooks.js",
+      "size": 18942,
+      "sha256": "3165a9dcad7784e565f7609b88bfdba9d288667496ba62b3b7d2cc99b0ff00c8"
+    },
+    {
+      "path": "v72_hooks.js",
+      "size": 6300,
+      "sha256": "9304f507dd100b93055d82249da5b04c73eea8fb768e3cd21beafd40b18e7ff1"
+    },
+    {
+      "path": "v730_hooks.js",
+      "size": 24073,
+      "sha256": "de8767ae62e9192983264e1b4b62622a0e097fd54db58ff271f4c141c5ab04af"
+    },
+    {
+      "path": "v732_hooks.js",
+      "size": 5429,
+      "sha256": "06f49bcc58a1666fdd16ffa7c452c5bcd24fe0f90acbcea9f4a8b216a3fd50c5"
+    },
+    {
+      "path": "v733_hooks.js",
+      "size": 53837,
+      "sha256": "86d6a85f8a5bd3858a0632497e13949a4d6c093d2c1ec411ff6ca6657f272428"
+    },
+    {
+      "path": "v734_hooks.js",
+      "size": 35486,
+      "sha256": "4337b6d899a0840b640fa6e458cc53a5b2a89455f7df4f44a511c1106d8524a4"
+    },
+    {
+      "path": "v735_hooks.js",
+      "size": 8598,
+      "sha256": "c273e3f58688a5e29aafe774d2b97af064da43b17b2caa13e8c5d2dc579d2532"
+    },
+    {
+      "path": "v736_hooks.js",
+      "size": 92704,
+      "sha256": "7fb1a6a0b7ec4d87acb499b54aefe43c200ea24131f86a50d007c351476ce36d"
+    },
+    {
+      "path": "v737_hooks.js",
+      "size": 14827,
+      "sha256": "5ae411fb39d4e0d65841d838216ca9edaacf5b148cadbe3589aa580a11793a87"
+    },
+    {
+      "path": "v73_hooks.js",
+      "size": 17269,
+      "sha256": "8d12c65adc89922f31f4dad0f5e53188042ed5e9f2e971dc6373869d9edf6310"
+    },
+    {
+      "path": "v742_hooks.js",
+      "size": 8828,
+      "sha256": "f409351e4eb0d25a774f3ca055420c0a9693aea18fcf1efef1e79ae7aea2efe5"
+    },
+    {
+      "path": "v74_hooks.js",
+      "size": 10438,
+      "sha256": "cb211b74c0c0bc8dd913ccb6f0c73626f05cbfff786e56e3880a5d336876f7fc"
+    },
+    {
+      "path": "v75_hooks.js",
+      "size": 19469,
+      "sha256": "94607e23d8f2a8cf772d720c5b955a72766edf22a5d114a563862824d6f41679"
+    },
+    {
+      "path": "v76_hooks.js",
+      "size": 11508,
+      "sha256": "fba19bd18abbd6c94e19a824bf1c553e1e5aa9aa550165d75949da602413bbec"
+    },
+    {
+      "path": "v77_hooks.js",
+      "size": 4729,
+      "sha256": "79e96ce79a602de0872b401e4538364e5eaa7a8100e1e90c4a4059e8603bec6f"
+    },
+    {
+      "path": "v78_hooks.js",
+      "size": 8101,
+      "sha256": "9087786a9acb824b4423494100ffd97c8b429f602b2dfb1d6fd9077286831f66"
+    },
+    {
+      "path": "visual_cohesion_live_crawl.js",
+      "size": 6150,
+      "sha256": "3a7bbac59c30dfd32aed7317b3833894341c740d0aa0995666aafcdd5e9256bf"
+    },
+    {
+      "path": "waldo_a.atlas.js",
+      "size": 457,
+      "sha256": "fa8bb212224704d2ea54049ce0ea503a2cd14a876875af51c94f7752d7d1297a"
+    },
+    {
+      "path": "waldo_a.js",
+      "size": 454,
+      "sha256": "7515bdd3efb76b4f06b27ace47cbe50ea1d631f3a9d4e0cca58e444251078df6"
+    },
+    {
+      "path": "waldo_b.atlas.js",
+      "size": 1032,
+      "sha256": "6ad5545d1c81e0a87f6bcdef5ea045e17c6374991199e7efdde2fd6af2e40a00"
+    },
+    {
+      "path": "waldo_full.atlas.js",
+      "size": 1479,
+      "sha256": "53ec81844c06fc36925b8a03aa3d9780833d04668761cd51d8d5e2b4c6689348"
+    },
+    {
+      "path": "waldo_ui.atlas.js",
+      "size": 202,
+      "sha256": "a8154c7c1cbb7b5753cce9cdd3939d1d978461dc66cc93ff0fc028dd55aab530"
+    },
+    {
+      "path": "warden.atlas.js",
+      "size": 1426,
+      "sha256": "33156009ba7d1ebafa88c091a7b7e3d7ae8f9a6a263d8810120cdac87026b56f"
+    },
+    {
+      "path": "warden_null.atlas.js",
+      "size": 415,
+      "sha256": "6422398c1e9181091c068f1fa26350148fdc158c6eb525ab9e7b877da15d7f73"
+    },
+    {
+      "path": "warden_null.js",
+      "size": 127,
+      "sha256": "8bdce34f0acdeeb22af84cf1f9f3ff30d063f67ec8ff36e5de5383deec770cfb"
+    },
+    {
+      "path": "weather_ov.atlas.js",
+      "size": 1015,
+      "sha256": "20d076455720a2e2d2b4253ddf786255870664dfb74ab85a732fb1ea5ee723ac"
+    }
+  ]
+}
