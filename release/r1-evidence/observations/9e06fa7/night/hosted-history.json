@@ -1,0 +1,134 @@
+{
+  "historical_webkit_timeout": {
+    "run_id": 38358000737,
+    "job_id": 115165288660,
+    "source_url": "https://github.com/ninja-ops-guy/techops-hero/actions/runs/38358000737/job/115165288660",
+    "associated_pr_head": "6dec7f8d7d333b7f9c73d157e83681bcfe511e3f",
+    "profile": "webkit",
+    "browser_version": "26.0",
+    "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /Users/runner/work/techops-hero/techops-hero/scripts/night_combat_bot.mjs:102:14",
+    "elapsed_checks": [
+      "canonical fresh-save Night launch",
+      "generated move atlas decoded on full production page",
+      "non-occluded touch targets at 320/390 portrait and 844 landscape",
+      "Charger interaction preserved",
+      "direction aliases and hit-stop cannot create accidental dashes"
+    ],
+    "retained_combat_state": {
+      "dash": {
+        "at": 155,
+        "until": 495,
+        "face": 1,
+        "spent": true
+      },
+      "events": [
+        {
+          "id": 1,
+          "type": "dash",
+          "time": 155,
+          "x": 669.652369220413,
+          "y": 396
+        },
+        {
+          "id": 2,
+          "type": "windup",
+          "time": 599,
+          "x": 730.3389829126961,
+          "y": 396,
+          "kind": "jab"
+        },
+        {
+          "id": 3,
+          "type": "jab",
+          "time": 683,
+          "x": 779.2840670076229,
+          "y": 413,
+          "damage": 14,
+          "guarded": false
+        }
+      ]
+    },
+    "margin_ms": -104,
+    "measurement": "combat clock at first punch windup subtracted from the dash deadline",
+    "hosted_artifacts_listed": 0,
+    "tested_checkout": "358308b546320dba577684f9f774b9a3611c3093"
+  },
+  "scheduled_suite_timeouts": [
+    {
+      "run_id": 41602813022,
+      "attempt": 1,
+      "job_id": 125805345374,
+      "source": {
+        "repository": "ninja-ops-guy/techops-hero",
+        "runId": "41602813022",
+        "runAttempt": "1",
+        "event": "schedule",
+        "headSha": "9c8eb0509701026f276c66b9c9a99f529aabfc18",
+        "testedSha": "9c8eb0509701026f276c66b9c9a99f529aabfc18",
+        "prNumber": null,
+        "runUrl": "https://github.com/ninja-ops-guy/techops-hero/actions/runs/41602813022"
+      },
+      "full_artifact_id": 13215863474,
+      "full_artifact_zip_sha256": "19223d295ecca93cad058627ac9928af19861e8f903b840fe0b0062c747df517",
+      "triage_artifact_id": 13215943003,
+      "triage_zip_sha256": "27c6a2d24e7969a2c666b5b5bcbf1b7fce31edb06a49ccab085ed0f0015ae8ce",
+      "night_suite_exit": 124,
+      "wall_clock_limit_s": 180,
+      "other_suites_passed": 8,
+      "night_aggregate_report_present": false,
+      "night_members": {
+        "night-combat-chromium-air-combo.png": "283405253e0fb8a67bff997bee0a911fca29a4028787cea1d0333d178424c56e",
+        "night-combat-chromium-movement-dash-grab.png": "d5b0887a90b545fa784771423e314bd9a53b4bb513645cf1191d7694b4fe7a12",
+        "night-combat-chromium-runtime.json": "35023d759e93df18ab6450f5b261d9a9f3bb2d34d0d0c8750cf74e49498746bd",
+        "night-combat-chromium-stationary-grab.png": "7b3e51e97035bc1b178f3fb80c4b59e8651b38197cc4dff648acdf568a9df6a7",
+        "night-combat-chromium-trace.zip": "c419f5fdeb7bc5f1a3c57e91f36cff534f9f945a43c116ec2d9fcce1763e62b7"
+      },
+      "desktop_chromium_trace": {
+        "grab_predicate": "()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash)",
+        "grab_call_id": "call@1191",
+        "completed_without_error": true,
+        "last_completed_action": "#dlg-options button >> internal:has-text=\"Back to the street\"i",
+        "last_call_id": "call@1385"
+      },
+      "conclusion": "Chromium completed the dash-grab assertion and later Night menu interaction. The aggregate exceeded its wall-clock budget. The remaining stall location and cause are open."
+    },
+    {
+      "run_id": 41692752029,
+      "attempt": 1,
+      "job_id": 126115273771,
+      "source": {
+        "repository": "ninja-ops-guy/techops-hero",
+        "runId": "41692752029",
+        "runAttempt": "1",
+        "event": "schedule",
+        "headSha": "9c8eb0509701026f276c66b9c9a99f529aabfc18",
+        "testedSha": "9c8eb0509701026f276c66b9c9a99f529aabfc18",
+        "prNumber": null,
+        "runUrl": "https://github.com/ninja-ops-guy/techops-hero/actions/runs/41692752029"
+      },
+      "full_artifact_id": 13261780276,
+      "full_artifact_zip_sha256": "50da57bac8b0c04eddddd74122d1983f3247e19d11a249fa6c436e8e5b94cc25",
+      "triage_artifact_id": 13260895500,
+      "triage_zip_sha256": "2718c69d436cb5ab94b98f14501a09ccc25da63f6020811cb03fbe4c55bb5b53",
+      "night_suite_exit": 124,
+      "wall_clock_limit_s": 180,
+      "other_suites_passed": 8,
+      "night_aggregate_report_present": false,
+      "night_members": {
+        "night-combat-chromium-air-combo.png": "f6f3dd0ad069ad851ffe358196a2cfa986b1f9abf89a59059797a5992cb57294",
+        "night-combat-chromium-movement-dash-grab.png": "233aedcb4193ca4ec3cac8f1ec5c21f04732d75d034e3a29850cf67d330b8a8b",
+        "night-combat-chromium-runtime.json": "35023d759e93df18ab6450f5b261d9a9f3bb2d34d0d0c8750cf74e49498746bd",
+        "night-combat-chromium-stationary-grab.png": "f08f38faeee6b860d9284dc1e1c6d633a0926a3e75287b9d4011a52936f6a513",
+        "night-combat-chromium-trace.zip": "2ace0193c68ffe33e71452f4fc454ac2e6c0f799590dfd5689f97fc6e0e6bbf4"
+      },
+      "desktop_chromium_trace": {
+        "grab_predicate": "()=>NM._nightCombat?.events.some(e=>e.type==='grab'&&e.fromDash)",
+        "grab_call_id": "call@1191",
+        "completed_without_error": true,
+        "last_completed_action": "#dlg-options button >> internal:has-text=\"Back to the street\"i",
+        "last_call_id": "call@1385"
+      },
+      "conclusion": "Chromium completed the dash-grab assertion and later Night menu interaction. The aggregate exceeded its wall-clock budget. The remaining stall location and cause are open."
+    }
+  ]
+}

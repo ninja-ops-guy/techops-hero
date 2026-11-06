@@ -1,0 +1,126 @@
+{
+  "source": {
+    "head": "9e06fa74c5aca335b1b471b651dd722d49826fb3",
+    "tree": "049ddd067613c0e119ee6c39e7c9a66cdc0e05c9",
+    "dirty": false,
+    "fingerprint": "124ebe13ce2b8eda2af487833b82d3d6dbe1774085133b2d4f4a0f720583e6ad"
+  },
+  "window_ms": 340,
+  "fixture": true,
+  "native_macos": false,
+  "physical_device": false,
+  "trials": [
+    {
+      "profile": "chromium",
+      "version": "140.0.7339.186",
+      "condition": "baseline",
+      "first_attempts": 10,
+      "failures": 0,
+      "minimum_punch_margin_ms": 140.0,
+      "minimum_confirmed_grab_margin_ms": 140.0,
+      "smallest_margin_ordinals": [
+        16
+      ],
+      "second_tap_to_punch_wall_ms_range": [
+        85.4,
+        193.8
+      ],
+      "raw_results_sha256": "e1c78621875d7bc56f28089455dce33832d867d5df23b42e53ab0f7b6ace7178"
+    },
+    {
+      "profile": "chromium",
+      "version": "140.0.7339.186",
+      "condition": "contention",
+      "first_attempts": 10,
+      "failures": 0,
+      "minimum_punch_margin_ms": 56.7,
+      "minimum_confirmed_grab_margin_ms": 56.7,
+      "smallest_margin_ordinals": [
+        11
+      ],
+      "second_tap_to_punch_wall_ms_range": [
+        100.2,
+        385.1
+      ],
+      "raw_results_sha256": "e1c78621875d7bc56f28089455dce33832d867d5df23b42e53ab0f7b6ace7178"
+    },
+    {
+      "profile": "webkit",
+      "version": "26.0",
+      "condition": "baseline",
+      "first_attempts": 10,
+      "failures": 0,
+      "minimum_punch_margin_ms": 290,
+      "minimum_confirmed_grab_margin_ms": 290,
+      "smallest_margin_ordinals": [
+        1,
+        4,
+        5,
+        8,
+        9,
+        12,
+        13,
+        16,
+        17,
+        20
+      ],
+      "second_tap_to_punch_wall_ms_range": [
+        88,
+        243.0
+      ],
+      "raw_results_sha256": "e9db0bccd82a16ce3c021348d4a93977fa0099995414c47262b6b6dc3296afce"
+    },
+    {
+      "profile": "webkit",
+      "version": "26.0",
+      "condition": "contention",
+      "first_attempts": 10,
+      "failures": 0,
+      "minimum_punch_margin_ms": 290,
+      "minimum_confirmed_grab_margin_ms": 290,
+      "smallest_margin_ordinals": [
+        2,
+        3,
+        6,
+        7,
+        10,
+        11,
+        14,
+        15,
+        18,
+        19
+      ],
+      "second_tap_to_punch_wall_ms_range": [
+        204.0,
+        532
+      ],
+      "raw_results_sha256": "e9db0bccd82a16ce3c021348d4a93977fa0099995414c47262b6b6dc3296afce"
+    }
+  ],
+  "infrastructure": {
+    "original_local_navigation_failures": 20,
+    "dash_sequences_attempted_in_that_batch": 0,
+    "repair": "The server and browser were started under the same supervisor. The served index SHA-256 was checked before each fixed study."
+  },
+  "protocol": {
+    "os": "Debian GNU/Linux 13 (x86_64)",
+    "playwright": "1.55.1",
+    "node": "v24.22.1",
+    "comparison": "Ten paired first attempts per condition per engine. New browser and context per attempt, with order alternating baseline/contention and contention/baseline by pair.",
+    "baseline": "Node and browser descendants limited to logical CPUs 2 and 3, server on 4, no added load workers. CPUs were shared with the host.",
+    "contention": "Identical affinity, with one continuously CPU-bound process on each of CPUs 2 and 3. Worker CPU seconds retained for every trial.",
+    "viewport": "Chromium desktop 1440x900; WebKit WPE headless with Playwright iPhone 13 emulation and touch navigation. The stock combat driver sends browser keyboard input on both profiles.",
+    "scope": "Stock entry, positive and negative preliminary checks, fixture, two real taps, staging deadline and one KeyE. The unchanged fromDash predicate must pass. Focused measurement ends after confirming that grab.",
+    "measurement": "A passive capture-phase listener sampled the trusted key and simulation clock. Margin is the dash deadline minus combat time at KeyE. Each value was independently cross-checked against the fromDash event in that fixture. Wall-clock time is reported separately.",
+    "unchanged_driver_segment_sha256": "a8a5032ca3a5e8028809a0cf75654ffb6213020397fcc8aae3eaf2d9d75a5e9b",
+    "retries": 0,
+    "assertion_timeout_ms": 15000,
+    "per_profile_limit_seconds": 180
+  },
+  "conclusion": "These samples cover the local Linux profiles and load conditions above. Historical macOS/WebKit lateness, the exit-124 suite stall and the separate WebKit lifecycle crash remain open.",
+  "failures_archive": {
+    "file": "TechOps-Hero-R1-Night-Failure-Artifacts.zip",
+    "sha256": "bc170d5cb83e148b20e6c7d3446f50f75d8834fef700234a73993c36b13c316a",
+    "contents": "All original Night-named files in each of the two November hosted archives, both compact triage ZIPs, October WebKit failure observations, and all original pre-game local attempts."
+  }
+}
