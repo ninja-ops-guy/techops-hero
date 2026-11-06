@@ -1,0 +1,104 @@
+/* Loaded when a Day computer is first used. */
+.doors-field, .os-desktop {
+  --doors-wall: radial-gradient(ellipse at 80% 24%, #2a797a 0%, transparent 49%),
+    linear-gradient(125deg, #07383f, #14535d 58%, #112d43);
+}
+.doors-field { height: 100%; background: #102d38; font: 14px/1.45 system-ui, sans-serif; color: #eef7f7; }
+.doors-field button, .os-taskbar button { min-width: 44px; min-height: 44px; }
+.doors-field button:focus-visible, .os-desktop button:focus-visible { outline: 3px solid #ffcf77; outline-offset: -3px; }
+.doors-host, .doors-bar { flex: 0 0 auto; display: flex; gap: 8px; align-items: center; padding: 4px 10px; background: #102731; }
+.doors-host { justify-content: space-between; border-bottom: 1px solid #587681; }
+.doors-host strong { font: 600 13px/1.2 ui-monospace, monospace; overflow-wrap: anywhere; }
+.doors-host nav { display: flex; gap: 4px; flex-shrink: 0; }
+.doors-host button, .doors-bar button { background: #173743; border: 1px solid #48626c; padding: 6px 12px; border-radius: 4px; }
+.doors-workarea, .os-desktop { background: var(--doors-wall); }
+.doors-workarea { position: relative; flex: 1; min-height: 0; isolation: isolate; overflow: hidden; }
+.doors-workarea::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(#e2fcfa20 1px, transparent 1px); background-size: 6px 6px; mask-image: linear-gradient(120deg, transparent 24%, #0008); }
+.doors-wallpaper { pointer-events: none; position: absolute; right: 8%; bottom: 16%; display: grid; justify-items: start; color: #b2ffec; opacity: .63; line-height: 1; }
+.doors-wallpaper b { font: 600 clamp(40px, 6vw, 78px)/1 system-ui, sans-serif; letter-spacing: -.07em; }
+.doors-wallpaper small { margin: 6px 0 0 3px; font: 12px/1.4 ui-monospace, monospace; }
+.doors-mark, .doors-wallpaper i { display: inline-block; width: 17px; height: 21px; border: 2px solid currentColor; border-bottom: 0; position: relative; vertical-align: -.2em; color: #9af1d4; flex: none; }
+.doors-mark::before, .doors-wallpaper i::before { content: ""; position: absolute; inset: 0 14% 0 0; background: currentColor; clip-path: polygon(0 0, 82% 17%, 82% 85%, 0 100%); }
+.doors-wallpaper i { width: 45px; height: 53px; border-width: 3px; margin: 0 0 15px 4px; }
+.doors-shortcuts { position: absolute; inset: 10px auto 10px 8px; width: 116px; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; }
+.doors-field .doors-shortcut { flex: 0 0 auto; display: grid; gap: 5px; justify-items: center; align-content: center; min-height: 77px; padding: 7px; background: transparent; border: 1px solid transparent; text-align: center; font: 600 13px/1.2 system-ui, sans-serif; color: #f0fbfa; text-shadow: 0 1px 3px #02282a; }
+.doors-shortcut svg { width: 30px; height: 30px; color: #c0f3d7; filter: drop-shadow(1px 2px 0 #123c44); }
+.doors-field .doors-shortcut:hover, .doors-field .doors-shortcut:focus-visible { background: #b3f5e51d; border-color: #88d4cd; }
+.doors-window { position: absolute; inset: 6% 5% 6% max(132px, 14%); max-width: 950px; margin-inline: auto; display: flex; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid #b8d4d6; border-radius: 6px; background: #f0f4f1; color: #142f38; box-shadow: 0 16px 48px #05242a99; }
+.doors-field[data-max=true] .doors-window { inset: 0; max-width: none; border-radius: 0; }
+.doors-window > header { display: flex; justify-content: space-between; align-items: center; gap: 5px; padding-left: 12px; background: #183d50; color: #f6fcfd; flex: none; }
+.doors-window header h2 { display: flex; align-items: center; gap: 9px; margin: 0; font-size: 16px; }
+.doors-window header h2 svg { width: 21px; height: 21px; color: #ace2ce; }
+.doors-window header > div { display: flex; }
+.doors-window header button { border: 0; border-radius: 0; background: transparent; padding: 0; color: white; text-align: center; font-size: 20px; }
+.doors-window header button:last-child:hover { background: #8d3a46; }
+.doors-pane { min-height: 0; padding: clamp(14px, 2.6vw, 32px); overflow: auto; overscroll-behavior: contain; color: #21383c; scrollbar-gutter: stable; }
+.doors-pane h3 { margin: 18px 0 8px; }
+.doors-pane p { line-height: 1.5; }
+.doors-pane button { background: #fff; color: #183c42; border: 1px solid #899da0; border-radius: 4px; padding: 8px 12px; margin: 0 5px 6px 0; }
+.doors-pane button:hover { background: #e1efeb; border-color: #39776a; }
+.doors-pane button[aria-pressed=true] { background: #d4eae1; color: #133e38; box-shadow: inset 0 -3px #247861; border-color: #398575; }
+.doors-pane .doors-primary, .doors-pane .day-primary { background: #1b6057; border-color: #154d45; color: #fff; }
+.doors-pane .doors-primary:hover, .doors-pane .day-primary:hover { background: #154e47; }
+.doors-properties { margin: 0 0 18px; border-block: 1px solid #c1cdca; }
+.doors-properties > div, .doors-jobs li { display: grid; grid-template-columns: minmax(95px, .65fr) minmax(0, 2fr); gap: 10px; padding: 8px; overflow-wrap: anywhere; }
+.doors-properties > div:nth-child(odd), .doors-jobs li:nth-child(odd) { background: #e3eae7; }
+.doors-properties dt { font-weight: 600; color: #435f62; }
+.doors-properties dd { margin: 0; font: 13px/1.5 ui-monospace, monospace; }
+.doors-choices { padding: 0; border: 0; margin: 0 0 12px; }
+.doors-choices legend { font-weight: 700; margin: 0 0 7px; }
+.doors-jobs { padding: 0; margin: 0 0 10px; list-style: none; }
+.doors-jobs strong { font-weight: 600; }
+.doors-pane .doors-message { border-left: 3px solid #268169; padding: 10px 12px; margin: 12px 0; background: #ddecdf; color: #194638; }
+.doors-pane .doors-message[data-error=true] { background: #f6e5d5; color: #643412; border-color: #b26724; }
+.doors-pane .day-request { background: #e4ece9; color: #203b40; }
+.doors-pane .day-eyebrow, .doors-pane .day-evidence-item strong { color: #216557; }
+.doors-pane .day-request p, .doors-pane .day-actions p, .doors-pane .day-empty, .doors-pane .day-evidence-item { color: #38565a; }
+.doors-pane .day-progress { margin: 16px 0; }
+.doors-pane .day-progress li { color: #52656b; }
+.doors-pane .day-progress li[data-done=true] { color: #185c48; border-color: #40816e; }
+.doors-pane .day-evidence-item { margin: 6px 0; border-color: #c4d0ce; }
+.doors-pane .day-actions { margin-top: 14px; }
+.doors-bar { border-top: 1px solid #648b8b; }
+.doors-bar button:first-child, .os-taskbar [data-os-home] { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.doors-bar button[aria-pressed=true] { border-bottom: 3px solid #a9e9d4; }
+.doors-bar > span { margin-left: auto; color: #9cc4c5; font: 11px ui-monospace, monospace; }
+.os-show-desktop .os-icons { display: flex; flex-direction: column; }
+.os-desktop .os-task-name { display: block; max-width: 35%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-film-mode .os-task-name { display: none; }
+@media (max-width: 700px) {
+  .doors-host { flex-wrap: wrap; gap: 2px; }
+  .doors-host strong { flex: 1 1 105px; }
+  .doors-host button { padding: 5px 8px; font-size: 12px; }
+  .doors-shortcuts { width: auto; inset: 8px 8px auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .doors-window { inset: 5px; }
+  .doors-field[data-window=true] .doors-shortcuts { display: none; }
+  .doors-window header { padding-left: 8px; }
+  .doors-window header h2 { gap: 5px; font-size: 14px; }
+  .doors-window header h2 svg { width: 16px; }
+  .doors-properties > div, .doors-jobs li { grid-template-columns: minmax(72px, .8fr) minmax(0, 1.5fr); }
+  .os-show-desktop .os-icons { display: grid; inset: 12px 8px auto; width: auto; grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .os-desktop .os-session { display: none; }
+  .os-taskbar [data-os-exit] { margin-left: auto; }
+}
+@media (max-height: 450px) {
+  .doors-host, .doors-bar { padding-block: 0; }
+  .doors-window { top: 3px; bottom: 3px; }
+  .doors-shortcut svg { width: 22px; height: 22px; }
+  .doors-field .doors-shortcut { min-height: 59px; }
+}
+.os-shortcuts { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.doors-terminal { height: 100%; display: flex; flex-direction: column; min-height: 0; font: 14px/1.55 ui-monospace, monospace; color: #b3edcf; }
+.doors-terminal h1 { font: 600 18px system-ui, sans-serif; color: #e1f5ea; }
+.doors-terminal pre { flex: 1; min-height: 45px; margin: 0; padding: 12px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #07191e; }
+.doors-terminal form, .doors-terminal label { display: flex; align-items: center; gap: 8px; }
+.doors-terminal form { background: #0c232b; padding: 6px; }
+.doors-terminal label { flex: 1; min-width: 0; white-space: nowrap; }
+.doors-terminal input { width: 0; min-width: 0; flex: 1; min-height: 44px; font: inherit; background: #07191e; color: white; padding: 4px 6px; border: 1px solid #608578; }
+@media (max-width: 720px) { .os-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.doors-field[data-max=true] .doors-shortcuts { display: none; }
+.doors-next { margin-top: 14px; padding-top: 12px; border-top: 1px solid #c1cdca; }
+.doors-notification { position: absolute; bottom: 18px; right: 16px; max-width: min(320px, 68%); padding: 10px 14px; background: #163039; color: #ddf0e9; border-left: 3px solid #b0e6ca; box-shadow: 0 4px 14px #0b293b55; }
+.doors-notification b { font-size: 12px; color: #a3d4bd; }
+.doors-notification p { margin: 2px 0 0; font-size: 13px; }
+@media (max-height: 450px) { .doors-notification { max-width: 40%; bottom: 6px; } }

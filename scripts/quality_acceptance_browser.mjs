@@ -129,7 +129,7 @@ async function day(page,p){
   assert.equal(deskFixture.rejected,true,'Off-desk workstation must reject entry');
   assert.equal(deskFixture.unchanged,true,'Rejected workstation cannot teleport the player');
   await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent.includes('WORKSTATION'));
-  // AeroDesk presents the real controls; its legacy dialogue options are hidden.
+  // Doors presents the real controls; its legacy dialogue options are hidden.
   const desktop=page.locator('.os-desktop');
   await click(page,desktop.getByRole('button',{name:'MUSIC',exact:true}),p.hasTouch);
   await click(page,desktop.getByRole('button',{name:'Continue with music muted',exact:true}),p.hasTouch);

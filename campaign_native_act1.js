@@ -37,7 +37,7 @@
     },
     plating_workstation_down: {
       title: "PLATING WORKSTATION DOWN",
-      body: "The operator does not have a Windows issue. He has a line that cannot move. The workstation restarted overnight and never came back.",
+      body: "The operator is waiting to run the line. The workstation restarted overnight and never came back.",
       verify: "The operator completes a real production interaction and confirms the line can resume.",
       assetContext: "plating"
     },
@@ -440,6 +440,7 @@
     if (tab === "ALERTS") {
       return callDialog("WORKSTATION // ALERTS", "02:13  SECTOR04-EAST  ACCESS GRANTED<br>05:42  PLATING-WS07  SERVICE RECOVERY FAILED<br>07:18  SHIP-LBL02  QUEUE RETRY LIMIT<br><br>Three alerts, three people waiting to get back to work.", [{ t: "Back to desktop", f: openWorkstation }]);
     }
+    if (tab === "PROMPT" && root.TechOpsDayDesktop) return callDialog("WORKSTATION // PROMPT", "", [{t:"Back to desktop",f:openWorkstation}]);
     if (tab === "MUSIC") return openMusicTab();
     if (tab === "COMPANY") return openCompanyTab();
     return openWorkstation();
@@ -582,10 +583,11 @@
     return callDialog(TICKET_COPY[ticketId].title, TICKET_COPY[ticketId].body + "<br><br><b>VERIFY:</b> " + TICKET_COPY[ticketId].verify, [{ t: "Document closure", f: closeDialog }]);
   }
 
-  function recordAccessEvidence() {
+  function recordAccessEvidence(reviewedOnScreen) {
     if(dayExperience()&&(gameState()&&gameState().room||!(root.TechOpsDayWorld&&root.TechOpsDayWorld.at("security_workstation")))){
       return callDialog("SECURITY OPS","Security has a badge record that needs review against physical presence. The access log is on the Security workstation; review it there before documenting a conclusion.",[{t:"Walk to Security workstation",f:function(){dayExperience().routeTo("security_workstation");}},{t:"Back to floor",f:closeDialog}]);
     }
+    if(dayExperience()&&dayExperience().openDevice&&reviewedOnScreen!==true)return dayExperience().openDevice("security_workstation");
     setAssetContext("access");
     var campaign = withAssignedState();
     if (!campaign.flags.day_work_unlocked) return callDialog("DAY WORK LOCKED", "Mike needs the complete workstation context before he can investigate access control responsibly.", [{ t: deskRouteLabel(), f: routeToDesk }, { t: "Back", f: closeDialog }]);

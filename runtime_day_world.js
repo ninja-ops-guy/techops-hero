@@ -219,7 +219,7 @@
     if (!tickets.plating_workstation_down) {
       var plating = investigations.plating_workstation_down;
       if (plating && /human_verify|workaround_verify/.test(plating.phase)) return objective("plating", "Verify the operator's production task", "Confirm the real production interaction with the operator.", "verify");
-      return objective("plating_workstation", "Inspect the Plating workstation", "Support the assigned owner; distinguish Windows health from the integration dependency.", "investigate");
+      return objective("plating_workstation", "Inspect the Plating workstation", "Support the assigned owner; distinguish Doors health from the integration dependency.", "investigate");
     }
     var sources = c.evidence && c.evidence.ghostIdentityEvidence && c.evidence.ghostIdentityEvidence.sources || [];
     if (!sources.some(function (source) { return source.id === "badge_impossible_access"; })) return objective("security_workstation", "Document the impossible badge record", "Inspect the access record at Security's evidence workstation.", "evidence");

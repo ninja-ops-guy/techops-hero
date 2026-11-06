@@ -23,7 +23,7 @@ function boot(){
   const entries=new Map(),storage={writes:0,fail:false,getItem(k){return entries.get(k)||null;},setItem(k,v){if(this.fail)throw Error('disk full');this.writes++;entries.set(k,String(v));}};
   const ctx=vm.createContext({console,localStorage:storage,setTimeout:null,S:{day:1,px:21,py:16,map:Array.from({length:32},()=>Array(42).fill(0)),meta:{campaignAct1Native:{shipping:{x:8,y:26},plating:{x:18,y:26},standup:{x:34,y:12},access:{x:38,y:12}}},npcs:[],inDialog:false,inBattle:false,nightMode:false},toast(message){ctx.lastToast=message;},save(){ctx.gameSaveCalls++;if(ctx.failGameSave)return false;ctx.gameCheckpoint=JSON.stringify(ctx.S.meta);return true;}});
   ctx.gameSaveCalls=0;ctx.failGameSave=false;
-  for(const file of ['campaign_act1.js','campaign_act1_investigations.js','runtime_day_cases.js','runtime_day_world.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),ctx,{filename:file});
+  for(const file of ['campaign_act1.js','campaign_act1_investigations.js','runtime_day_cases.js','runtime_day_world.js','runtime_day_doors.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),ctx,{filename:file});
   const C=ctx.TechOpsCampaign,I=ctx.TechOpsCampaignInvestigations,W=ctx.TechOpsDayWorld;
   const c=C.createInitialState();C.assignTicket(c,SHIPPING,'mike');C.assignTicket(c,PLATING,'amit');C.assignTicket(c,'impossible_access_event','mike');C.completeStandup(c);C.completeWorkstation(c,{feliciaVideoSkipped:true});C.save(c,storage);
   ctx.document=documentMock();ctx.dlg=function(name,body,options){ctx.dialog={name,body,options};ctx.S.inDialog=true;ctx.document.getElementById('dlg-name').textContent=name;ctx.document.getElementById('dlg-text').innerHTML=body;};ctx.closeDlg=function(){ctx.S.inDialog=false;ctx.dialog=null;};
@@ -67,7 +67,12 @@ test('all eight optional cases complete through the rendered action flow without
     b.open(id);const def=b.cases.definition(id);assert.equal(b.X.transact('repair'),false);
     for(const e of def.evidence){b.surface(e.surface);assert.equal(b.X.transact('observe',e.id),true);}
     assert.equal(b.X.transact('hypothesis',def.correctHypothesis),true);assert.equal(b.X.transact('repair'),false);
-    b.click('authorize');b.surface(def.repairSurface);b.click('repair');b.surface('screen');b.click('technical');assert.equal(b.ctx.S.meta.dayCases[id].requesterVerified,false);b.click('requester');
+    if(b.X.active().surface==='screen')b.click('doors-open','order');
+    b.click('authorize');b.surface(def.repairSurface);
+    if(def.repairSurface==='screen')b.click('doors-open','device');
+    b.click('repair');b.surface('screen');b.click('doors-open','device');b.click('technical');
+    assert.equal(b.ctx.S.meta.dayCases[id].requesterVerified,false);
+    b.click('doors-open','order');b.click('requester');
     assert.equal(b.cases.summary(b.ctx.S.meta.dayCases[id]).status,'VERIFIED / RESTORED');const saved=JSON.stringify(b.ctx.S.meta.dayCases[id]);assert.equal(b.X.transact('requester'),false);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases[id]),saved);
   }
   assert.equal(b.storage.writes,writes);assert.equal(b.storage.getItem(b.C.SAVE_KEY||'techops_hero_campaign_v1'),canon);assert.equal(Object.keys(b.C.load(b.storage).tickets).length,0);
@@ -77,7 +82,42 @@ test('retained buttons cannot operate a replacement modal',()=>{
   const observe=b.button('observe');b.X.exit();observe.onclick();assert.equal(b.ctx.S.meta.dayCases.desktop_restart_window,undefined);
 });
 test('device rendering clears the previous dialogue typewriter click owner',()=>{
-  const b=boot(),text=b.ctx.document.getElementById('dlg-text');text.onclick=function(){text.innerHTML='stale dialogue';};b.open('laptop_dock_link');assert.equal(text.onclick,null);assert.match(text.innerHTML,/PHYSICAL INSPECTION/);b.surface('screen');assert.equal(text.onclick,null);assert.match(text.innerHTML,/AERODESK/);
+  const b=boot(),text=b.ctx.document.getElementById('dlg-text');text.onclick=function(){text.innerHTML='stale dialogue';};b.open('laptop_dock_link');assert.equal(text.onclick,null);assert.match(text.innerHTML,/PHYSICAL INSPECTION/);b.surface('screen');assert.equal(text.onclick,null);assert.match(text.innerHTML,/Doors desktop/);
+});
+test('Doors print jobs respect save failures, stale controls and the identity being verified',()=>{
+  const b=boot();
+  b.open('shipping_printer'); b.click('observe','printer_self_test');
+  b.open('shipping_workstation'); b.surface('screen');
+  const record=()=>b.I.getRecord(b.C.load(b.storage),SHIPPING);
+  const writes=b.storage.writes;
+  b.click('doors-open','print'); b.click('doors-min'); b.click('doors-task');
+  assert.equal(b.storage.writes,writes);
+  b.storage.fail=true; b.click('doors-print');
+  assert.deepEqual(json(record().evidence),['printer_self_test']);
+  assert.equal(b.X.active().doors.jobs.length,0);
+  b.storage.fail=false;
+  const stale=b.button('doors-print');
+  b.click('doors-user','lead'); stale.onclick();
+  assert.equal(b.X.active().doors.jobs.length,0);
+  b.click('doors-print'); b.click('doors-user','clerk'); b.click('doors-print');
+  assert.deepEqual(json(record().evidence),['printer_self_test','compare_user','queue_trace']);
+  b.click('doors-open','order'); b.click('hypothesis','permissions'); b.click('doors-repair-tool');
+  b.click('doors-grant','everyone'); b.click('doors-apply'); assert.equal(record().fixApplied,false);
+  b.click('doors-grant','print'); b.click('doors-apply'); assert.equal(record().fixApplied,true);
+  b.open('shipping_workstation'); b.surface('screen'); b.click('doors-open','print');
+  assert.equal(b.X.active().doors.jobs.length,0);
+  b.click('doors-user','lead'); b.click('doors-print'); assert.equal(record().technicalCheckPassed,false);
+  b.click('doors-user','clerk'); b.click('doors-print'); assert.equal(record().technicalCheckPassed,true);
+  const history=b.C.load(b.storage).history.length;
+  b.click('doors-print'); assert.equal(b.C.load(b.storage).history.length,history);
+  assert.equal(b.C.load(b.storage).tickets[SHIPPING],undefined);
+});
+test('Doors work order reads the recorded outcome of a partially closed ticket',()=>{
+  const b=boot(),state=b.C.load(b.storage);
+  b.C.resolveTicket(state,SHIPPING,{technicalResolution:true,verification:'partial',humanOutcome:'degraded'});
+  b.C.save(state,b.storage); b.open('shipping_workstation'); b.surface('screen'); b.click('doors-open','order');
+  const html=b.ctx.document.getElementById('dlg-text').innerHTML;
+  assert.match(html,/Handoff recorded/); assert.match(html,/degraded/); assert.doesNotMatch(html,/Service restored\. Task verified/);
 });
 test('optional failed-save mutation rolls back and successful replay is idempotent',()=>{
   const b=boot();b.open('laptop_dock_link');const def=b.cases.definition('laptop_dock_link'),e=def.evidence[0];b.ctx.failGameSave=true;
@@ -139,7 +179,9 @@ test('HUD describes the tracked destination instead of contradicting its route b
   const b=boot();b.ctx.S.meta.dayRouteTarget='laptop_dock_link';b.X.syncHud();const hud=b.ctx.document.getElementById('day-route-hud');assert.match(hud.innerHTML,/Destination · Engineering laptop dock/);assert.doesNotMatch(hud.innerHTML,/Inspect the Shipping printer/);b.ctx.S.meta.dayRouteTarget='shipping';b.X.syncHud();assert.match(hud.innerHTML,/Destination · Shipping clerk/);
 });
 test('talking to Security does not read the nearby computer or grant badge evidence',()=>{
-  const b=boot();b.move('security_workstation');b.ctx.S.meta.campaignAct1Native.access={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget='access';let reads=0;b.ctx.TechOpsCampaignNativeAct1.recordAccessEvidence=function(){reads++;return true;};const before=b.storage.writes;b.X.interact();assert.equal(b.ctx.dialog.name,'SECURITY OPS');assert.equal(reads,0);assert.equal(b.storage.writes,before);assert.equal(b.ctx.dialog.options[0].t,'Walk to Security workstation');b.X.exit();b.X.openDevice('security_workstation');assert.equal(reads,1);
+  const b=boot();b.move('security_workstation');b.ctx.S.meta.campaignAct1Native.access={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget='access';let reads=0;b.ctx.TechOpsCampaignNativeAct1.recordAccessEvidence=function(){reads++;return true;};const before=b.storage.writes;b.X.interact();assert.equal(b.ctx.dialog.name,'SECURITY OPS');assert.equal(reads,0);assert.equal(b.storage.writes,before);assert.equal(b.ctx.dialog.options[0].t,'Walk to Security workstation');b.X.exit();b.X.openDevice('security_workstation');assert.equal(reads,0);
+  b.click('doors-open','log');assert.equal(reads,0);
+  b.click('doors-badge');assert.equal(reads,1);
 });
 console.log('Day experience integration: '+count+' tests passed');
 

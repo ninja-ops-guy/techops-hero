@@ -40,7 +40,7 @@
       correctHypothesis:"integration_failure",
       requiredEvidence:"integration_service",
       evidence:Object.freeze([
-        Object.freeze({id:"local_login",label:"Check local workstation health",text:"Windows signs in normally and local applications open. The workstation itself is responsive."}),
+        Object.freeze({id:"local_login",label:"Check local workstation health",text:"Doors signs in normally and local applications open. The workstation itself is responsive."}),
         Object.freeze({id:"controller_reachability",label:"Test line-controller reachability",text:"The line controller responds on the expected network path with stable latency."}),
         Object.freeze({id:"integration_service",label:"Inspect production integration service",text:"The production integration service is stopped after the overnight reboot; its dependency did not restart automatically."})
       ]),

@@ -33,7 +33,7 @@
       remediation:'Reseat the identified external upstream connector once, leaving the dock power and unrelated connections in place.',
       technicalCheck:'Confirm the dock display and Ethernet adapter both reappear and the approved drawing share is reachable.',
       requesterCheck:'The engineer opens the correct drawing revision on the large screen and confirms the review can begin.',
-      notifications:['AeroDesk reports: your peripherals are pursuing independent careers.','One connector. Two symptoms. Zero reasons to reinstall everything.']
+      notifications:['Doors reports: your peripherals are pursuing independent careers.','One connector. Two symptoms. Zero reasons to reinstall everything.']
     },
     desktop_restart_window:{
       id:'desktop_restart_window',repairSurface:'screen',title:'Restart Required. Timing Optional.',deviceKind:'desktop',deviceLabel:'Finance batch workstation',roomId:'office',zoneId:'finance',requester:'Finance analyst',
@@ -53,7 +53,7 @@
       remediation:'At the agreed window, confirm the finished output is saved, close the application with the analyst, and perform the approved restart.',
       technicalCheck:'Confirm the workstation returns to sign-in, the restart requirement clears, and the saved export passes its completion check.',
       requesterCheck:'The analyst signs back in, opens the completed export, and confirms the actual finance handoff is usable.',
-      notifications:['AeroDesk would like to restart at a time convenient to AeroDesk.','Your productivity matters. Please hold while we schedule it.']
+      notifications:['Doors would like to restart at a time convenient to Doors.','Your productivity matters. Please hold while we schedule it.']
     },
     signage_player_session:{
       id:'signage_player_session',repairSurface:'screen',title:'Welcome to Yesterday',deviceKind:'mini_pc',deviceLabel:'Lobby signage mini-PC',roomId:'office',zoneId:'lobby',requester:'Reception coordinator',
@@ -114,7 +114,7 @@
       technicalCheck:'Confirm the HMI dependency stays healthy, read-only telemetry timestamps advance, and the displayed controller identity matches the approved cell.',
       requesterCheck:'The operator checks the readout against the cell, owns the return to operation, and confirms the authorized workflow is usable.',
       safety:{requiresSafeWindow:true,scope:'HMI host communications dependency only',forbiddenChanges:['PLC logic','controller outputs','interlocks','cabinet access']},
-      notifications:['AeroDesk has confidently displayed the last known confidence.','A green screen is not permission to move a machine.']
+      notifications:['Doors has confidently displayed the last known confidence.','A green screen is not permission to move a machine.']
     },
     industrial_scanner_vlan:{
       id:'industrial_scanner_vlan',repairSurface:'screen',title:'Connected to Somewhere',deviceKind:'industrial_scanner',deviceLabel:'Traceability scanner station',roomId:'factory',zoneId:'factory',requester:'Traceability operator',
