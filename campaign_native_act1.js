@@ -126,6 +126,10 @@
     if(nextShift)state.npcs=(state.npcs||[]).filter(function(npc){return npc.id!==CONTACTS.access.id;});
     var used = {}, native = {}, keys = nextShift ? ["standup","shipping","plating"] : Object.keys(CONTACTS);
     (state.npcs || []).forEach(function(npc){if(!Object.keys(CONTACTS).some(function(key){return CONTACTS[key].id === npc.id;}))used[npc.x+","+npc.y]=true;});
+    // Authored office people are rendered separately from state.npcs. Reserve
+    // their tiles too, or a displaced contact can replace their interaction.
+    var coworkers = typeof COWORKERS !== "undefined" && Array.isArray(COWORKERS) ? COWORKERS : [];
+    coworkers.forEach(function(npc){used[npc.x+","+npc.y]=true;});
     keys.forEach(function (key) {
       var contact = CONTACTS[key], existing = (state.npcs || []).find(function(npc){return npc.id === contact.id;});
       var pos = existing ? {x:existing.x,y:existing.y} : findSpot(state.map,contact,used);

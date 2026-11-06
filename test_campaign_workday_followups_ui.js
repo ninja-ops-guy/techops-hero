@@ -5,6 +5,15 @@ let count=0;function test(name,fn){fn();count++;console.log('PASS '+name);}
 function setup(id=SHIPPING,verification='partial',outcome='restored'){const b=boot(),s=shift(b);close(b,s,id,verification,outcome);tuesday(b,s);return {b,s};}
 test('Tuesday contacts are actually placed and repeat placement is idempotent',()=>{const {b}=setup();assert.equal(b.N.ensureWorld(),true);const first=JSON.stringify(b.r.S.meta.campaignAct1Native);b.N.ensureWorld();assert.equal(JSON.stringify(b.r.S.meta.campaignAct1Native),first);assert.equal(b.r.S.npcs.filter(x=>x.id==='campaign_shipping').length,1);assert.equal(b.r.S.npcs.some(x=>x.id==='campaign_access'),false);assert.equal(b.r.S.npcs.find(x=>x.id==='campaign_standup').name,'SHIFT HANDOFF');});
 test('next-shift placement does not overlap existing noncampaign NPCs',()=>{const {b}=setup();b.r.S.npcs=[{id:'other',x:34,y:12}];b.N.ensureWorld();const board=b.r.S.meta.campaignAct1Native.standup;assert.notDeepEqual({x:board.x,y:board.y},{x:34,y:12});});
+test('contact fallback search reserves authored coworker interaction tiles',()=>{
+ const {b}=setup();b.r.COWORKERS=[{id:'amit',name:'AMIT',x:33,y:13}];
+ b.r.S.map[12][33]=2;
+ b.r.S.npcs=[[33,11],[34,11],[35,11],[34,12],[35,12]].map(([x,y])=>({id:'crowd-'+x+'-'+y,x,y}));
+ b.N.ensureWorld();
+ const board=b.r.S.meta.campaignAct1Native.standup;
+ assert.notDeepEqual({x:board.x,y:board.y},{x:33,y:13});
+ assert.equal(b.r.S.npcs.find(n=>n.id==='campaign_standup').x===33&&b.r.S.npcs.find(n=>n.id==='campaign_standup').y===13,false);
+});
 test('actual adjacent interaction reaches the next-shift investigation',()=>{const {b}=setup();b.N.ensureWorld();b.N.install();b.I.install();const p=b.r.S.meta.campaignAct1Native.shipping;b.r.S.px=p.x;b.r.S.py=p.y;b.r.S.inDialog=false;b.r.interact();assert.equal(b.r.dialog.name,'SHIPPING // NEXT SHIFT');assert.match(b.r.dialog.body,/VERIFICATION DUE/);assert.equal(b.r.baseInteractions,undefined);});
 test('Tuesday board opens the workstation, not a replay of Day 1 standup',()=>{const {b}=setup();b.N.ensureWorld();b.N.install();const p=b.r.S.meta.campaignAct1Native.standup;b.r.S.px=p.x;b.r.S.py=p.y;b.r.S.inDialog=false;b.r.interact();assert.equal(b.r.dialog.name,'MIKE // WORKSTATION');click(b,'QUEUE');assert.equal(b.r.dialog.name,'WORKSTATION // SHIFT HANDOFF');});
 test('QUEUE, TEAMS and original casebook all expose the same handoff',()=>{const {b}=setup();b.N.openWorkstationTab('QUEUE');assert.equal(b.r.dialog.name,'WORKSTATION // SHIFT HANDOFF');b.N.openWorkstationTab('TEAMS');click(b,'Review shift handoff');assert.equal(b.r.dialog.name,'WORKSTATION // SHIFT HANDOFF');b.N.openTicketRecord(SHIPPING);click(b,'Next-shift follow-up');assert.equal(b.r.dialog.name,'SHIPPING // NEXT SHIFT');});
