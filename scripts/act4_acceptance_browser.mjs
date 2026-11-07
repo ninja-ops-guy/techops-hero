@@ -51,7 +51,7 @@ try {
     await page.waitForFunction(() => window.S?.npcs?.some(npc => npc.id === "campaign_shipping") && window.TechOpsCampaignNativeAct2);
     await page.evaluate(() => {
       // Bounded fixture: establish Act I–III through the canonical APIs.
-      const c = TechOpsCampaign, a = TechOpsCampaignAct2, state = c.createInitialState();
+      const c = TechOpsCampaign, a = TechOpsCampaignAct2, state = c.load(localStorage);
       for (const [ticket, owner] of [["shipping_cannot_print", "mike"], ["plating_workstation_down", "amit"], ["impossible_access_event", "security"]]) c.assignTicket(state, ticket, owner);
       c.completeStandup(state);
       c.completeWorkstation(state, { redInTheMirrorHeard: true, feliciaVideoSeen: true });
