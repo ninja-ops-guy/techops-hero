@@ -63,6 +63,10 @@ async function bindExisting(){
  const profile=parse(storage.getItem(PROFILE_KEY)),state=originalLoad.call(campaign,storage);
  campaign.validate(state);if(root.TechOpsStateValidator?.validateStory){const v=root.TechOpsStateValidator.validateStory(state);if(v&&v.valid===false)throw Error('Repair the native story save before linking.');}
  const pId=profile.meta?.seeWorldLink,cId=state.seeWorldLink;
+ const live=currentId();
+ if(pId&&(!live||!same(pId,live)))throw Error('Reload and Continue the saved primary before linking; this tab contains a different run.');
+ if(cId&&live&&!same(cId,live))throw Error('Loaded game and campaign identities differ. Nothing was merged.');
+ if((pId||cId)&&storage.getItem(WRITER)&&!ownsWriter())throw Error('Reload and Continue before linking; another native tab owns this run.');
  if(pId&&cId&&!same(pId,cId))throw Error('Conflicting native run identities. No progress was merged.');
  const binding=pId||cId||id();if(!identityOK(binding))throw Error('Unsupported native identity.');
  // An explicit player action adopts only the loaded primary pair, never backups or greatest progress.
