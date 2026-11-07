@@ -134,4 +134,4 @@ assert.strictEqual(refFor("v710_hooks.js"),"v710_hooks.js?v=20260929-day-room-r1
 assert.strictEqual(refFor("v716_hooks.js"),"v716_hooks.js?v=20260929-day-dialogue-r1");
 
 // Linked native owners changed: both parser sources must bypass stale mobile caches.
-for(const src of ["game.js","campaign_act1.js"])assert.strictEqual(refFor(src),src+"?v=20261107-linked1");
+for(const src of ["game.js","campaign_act1.js"])assert.strictEqual(refFor(src),src+"?v=20261107-linked2");

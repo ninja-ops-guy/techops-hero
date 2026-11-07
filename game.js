@@ -2896,6 +2896,7 @@ $("btn-start").addEventListener("click", () => {
   }
   S = newState();
   if (alternateMode === "nightcrawler") S.meta._standaloneMode = "nightcrawler";
+  if (!alternateMode) window.TechOpsUniverse?.initializeNewRun();
   // difficulty select first
   $("title-screen").classList.add("hidden");
   $("hud").classList.remove("hidden");

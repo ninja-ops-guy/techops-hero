@@ -692,6 +692,14 @@ function publish(){
  pending=job;return job;
 }
 function afterSave(){void publish();}
+function initializeNewRun(){
+ if(!eligibleGame())return false;
+ try{
+  const st=storage(),C=root.TechOpsCampaign;
+  if(st.getItem(U.KEYS.campaign)!==null)return false;
+  return C.save(C.createInitialState(),st);
+ }catch(e){return fail(e);}
+}
 function afterReset(st){
  session=null;
  try{st.setItem(U.KEYS.source,JSON.stringify({schema:U.VERSION,rules:U.RULES,status:'reset'}));}catch(e){fail(e);}
@@ -783,7 +791,7 @@ function install(){
  root.addEventListener('storage',event=>{if([U.KEYS.campaign,U.KEYS.game].includes(event.key)){void publish();if(dialogOwner)close();}});
  void module().catch(fail);void publish();
 }
-root.TechOpsUniverse={VERSION:1,beforeCampaign,beforeProfile,afterSave,afterReset,publish,settled:()=>pending,openJournal,playSection,showIonaDisclosure,goSeeWorld,health:()=>({lastError,linked:U.readSource(storage()).status,session:session&&session.playthroughId})};
+root.TechOpsUniverse={VERSION:1,beforeCampaign,beforeProfile,afterSave,afterReset,initializeNewRun,publish,settled:()=>pending,openJournal,playSection,showIonaDisclosure,goSeeWorld,health:()=>({lastError,linked:U.readSource(storage()).status,session:session&&session.playthroughId})};
 if(root.document){if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',install,{once:true});else install();}
 })(typeof globalThis!=='undefined'?globalThis:this);
 
