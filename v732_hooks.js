@@ -58,23 +58,17 @@
   const _getItem = LS.getItem.bind(LS);
   let healing732 = false;
   LS.setItem = function (k, v) {
-    // This legacy instance wrapper captured the original native setter before
-    // the optional linked adapter loaded. Guard here as well, before that
-    // captured setter can bypass a later Storage.prototype ownership check.
-    if (k === "techops_save" || k === "techops_hero_campaign_v1") {
-      const activeRaw = _getItem("techops:linked:active:v1");
-      if (activeRaw) {
-        const active = JSON.parse(activeRaw), payload = JSON.parse(String(v));
-        const binding = k === "techops_save" ? payload.meta && payload.meta.seeWorldLink : payload.seeWorldLink;
-        const owns = window.TechOpsLinked && window.TechOpsLinked.health().selected;
-        if (!owns || !binding || binding.profileId !== active.profileId || binding.runId !== active.runId)
-          throw new Error("Linked save refused: reload and Continue the active run before writing from this tab.");
-      }
-    }
+    // Ownership is native and remains available if the optional companion is down.
+    // Run this before rotating backups or using the captured native setter.
+    if (window.TechOpsLinkedSaveCore) window.TechOpsLinkedSaveCore.guardWrite(k, v);
+    else if ((k === "techops_save" || k === "techops_hero_campaign_v1") && _getItem("techops:linked:active:v1"))
+      throw new Error("Native save ownership is not initialized. Reload before saving.");
     if (k === "techops_save" && !healing732) {
       try { const prev = _getItem("techops_save"); if (prev && prev !== v) _setItem("techops_save_bak", prev); } catch (e) { }
     }
-    return _setItem(k, v);
+    const result = _setItem(k, v);
+    if (window.TechOpsLinkedSaveCore) window.TechOpsLinkedSaveCore.saved(k);
+    return result;
   };
   LS.getItem = function (k) {
     if (k !== "techops_save") return _getItem(k);
