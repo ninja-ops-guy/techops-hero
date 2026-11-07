@@ -17,7 +17,7 @@ const profiles = [
 ].filter(p => !process.env.DAY_CONTACT_PROFILES || process.env.DAY_CONTACT_PROFILES.split(',').includes(p.id));
 const report = {
   status: 'running', fixture: true,
-  scope: 'Real New Day/Standard/Clock in and all four authored standup speakers plus real assignment. Declared fixtures: office scene entry, floor coordinate placement, synchronous legacy step stress with a temporary NPC list and scoped random control after the real 2600ms wander interval, then an old-checkpoint contact overlap passed to the production ensureWorld repair. No campaign progression flags are manufactured. Browser emulation, not physical-device certification.',
+  scope: 'Real New Day/Standard/Clock in, authored standup, assignment and Continue. Declared fixtures: office entry, floor position, scoped NPC list and randomness for the legacy wander step, injected board overlap in live state and a saved checkpoint, and a controlled clock for early Skip. Campaign progression comes from player-facing choices. Browser emulation.',
   profiles: []
 };
 let browser, server;
@@ -46,13 +46,16 @@ async function state(page) {
   }));
 }
 
-async function authoredStandup(page, result) {
+async function openShift(page) {
   await page.goto(base, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.TechOpsProductionTitleExperience?.state().ready, null, { timeout: 30000 });
   await page.locator('#btn-start').click();
   await page.locator('#dlg-options button').filter({ hasText: 'Standard' }).click();
   await page.locator('#dlg-options button').filter({ hasText: 'Clock in' }).click();
   await page.waitForFunction(() => window.S?.map && window.TechOpsDayExperience && window.TechOpsCampaignNativeAct1);
+}
+
+async function enterStandup(page) {
   await page.evaluate(() => {
     if (S.inDialog) closeDlg();
     if (S.room) v69ExitRoom();
@@ -61,6 +64,11 @@ async function authoredStandup(page, result) {
     S.room = { id: 'itdept', key: ROOM_OF_BIOME.itdept, x: .12, door: 'left', back: { px: S.px, py: S.py } };
     TechOpsDayExperience.syncHud();
   });
+}
+
+async function authoredStandup(page, result) {
+  await openShift(page);
+  await enterStandup(page);
   result.standup = [];
   for (const [index, speaker] of ['NICK', 'AMIT', 'BRANDON', 'DANIEL'].entries()) {
     const title = await page.locator('#dlg-name').textContent();
@@ -77,6 +85,131 @@ async function authoredStandup(page, result) {
   result.assignment = campaign.assignments;
   await page.evaluate(() => { closeDlg(); if (S.room) v69ExitRoom(); });
   result.checks.push('All four authored standup speakers and real ownership assignment preserved');
+}
+
+async function dialogue(page) {
+  return page.evaluate(() => ({
+    open: S.inDialog && !document.getElementById('dialogue').classList.contains('hidden'),
+    title: document.getElementById('dlg-name').textContent,
+    body: document.getElementById('dlg-text').textContent
+  }));
+}
+
+async function campaignState(page) {
+  return page.evaluate(() => TechOpsCampaign.load(localStorage));
+}
+
+async function openFromFloor(page, x, y) {
+  await page.evaluate(({ x, y }) => {
+    if (S.inDialog) closeDlg();
+    if (S.room) v69ExitRoom();
+    if (S.map[y]?.[x] !== 0) throw Error('Interaction fixture is not on floor');
+    S.px = x; S.py = y;
+    interact();
+  }, { x, y });
+}
+
+function assertAmit(view) {
+  assert.equal(view.open, true);
+  assert.match(view.title, / AMIT — IT DEPT$/);
+  assert.match(view.body, /I own the Plating incident/);
+}
+
+async function verifyChooser(page, result, assigned) {
+  // Amit (33,13) and the board (34,12) share this approach tile.
+  await openFromFloor(page, 34, 13);
+  assert.equal((await dialogue(page)).title, 'NEARBY / CHOOSE AN INTERACTION');
+  const options = await page.locator('#dlg-options button').allTextContents();
+  assert.ok(options.includes('Talk to AMIT'));
+  assert.ok(options.includes('Read Morning standup board'));
+  await click(page, 'Talk to AMIT');
+  const amit = await dialogue(page);
+  assertAmit(amit);
+  assert.deepEqual(await campaignState(page), assigned);
+
+  await openFromFloor(page, 34, 13);
+  await click(page, 'Read Morning standup board');
+  const board = await dialogue(page);
+  assert.equal(board.open, true);
+  assert.equal(board.title, 'CAMPAIGN STANDUP');
+  assert.match(board.body, /Shipping -> Mike.*Plating -> Amit.*Impossible Access -> Mike/s);
+  assert.deepEqual(await campaignState(page), assigned);
+  result.chooser = { options, amit, board };
+  result.checks.push('Amit and the completed board remain separately selectable without changing campaign state');
+}
+
+async function verifyContinue(page, result, assigned) {
+  const saved = await page.evaluate(() => {
+    if (S.inDialog) closeDlg();
+    if (S.room) v69ExitRoom();
+    S.px = 33; S.py = 14;
+    if (!save()) throw Error('Could not save Day checkpoint');
+    const key = TechOpsSaveKeys.dayCheckpoint;
+    const checkpoint = JSON.parse(localStorage.getItem(key));
+    if (checkpoint?.savedAt !== S._saveRevision) throw Error('Missing current Day checkpoint');
+    const amit = COWORKERS.find(n => n.id === 'amit');
+    const board = checkpoint.state.npcs.find(n => n.id === 'campaign_standup');
+    board.x = amit.x; board.y = amit.y;
+    localStorage.setItem(key, JSON.stringify(checkpoint));
+    return { revision: checkpoint.savedAt, position: { x: S.px, y: S.py } };
+  });
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.TechOpsProductionTitleExperience?.state().ready, null, { timeout: 30000 });
+  const resumed = await page.locator('#btn-continue').evaluate(button => {
+    if (!button.getClientRects().length || button.disabled) throw Error('Continue is unavailable');
+    // Observe synchronously so a later world refresh cannot repair a missed load-time overlap.
+    button.click();
+    const boards = S.npcs.filter(n => n.id === 'campaign_standup');
+    const board = boards[0];
+    return {
+      revision: S._saveRevision, position: { x: S.px, y: S.py },
+      titleHidden: document.getElementById('title-screen').classList.contains('hidden'),
+      count: boards.length, board: board && { x: board.x, y: board.y },
+      native: S.meta.campaignAct1Native?.standup,
+      floor: board && S.map[board.y]?.[board.x],
+      onCoworker: board && COWORKERS.some(n => n.x === board.x && n.y === board.y)
+    };
+  });
+  result.resume = { saved, resumed };
+  assert.equal(resumed.titleHidden, true);
+  assert.equal(resumed.revision, saved.revision);
+  assert.deepEqual(resumed.position, saved.position, 'Continue must restore the saved floor position');
+  assert.equal(resumed.count, 1);
+  assert.equal(resumed.onCoworker, false);
+  assert.equal(resumed.floor, 0);
+  assert.deepEqual(resumed.native, resumed.board);
+  await page.evaluate(() => interact());
+  assertAmit(await dialogue(page));
+  assert.deepEqual(await campaignState(page), assigned);
+  result.checks.push('Continue restores a real checkpoint, repairs the overlap before interaction and preserves assignments');
+}
+
+async function verifyEarlySkip(page, result) {
+  await openShift(page);
+  const now = Date.now();
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now + 1000);
+  await enterStandup(page);
+  assert.equal((await dialogue(page)).title, 'STANDUP SCENE // NICK');
+  await page.clock.fastForward(5500);
+  assert.equal((await dialogue(page)).title, 'STANDUP SCENE // AMIT', 'The timer must advance the live scene');
+  await page.getByRole('button', { name: 'Skip to assignments', exact: true }).dispatchEvent('click');
+  assert.equal((await dialogue(page)).title, 'MORNING STANDUP');
+  await page.getByRole('button', { name: 'Delegate Impossible Access to Security', exact: true }).dispatchEvent('click');
+  const assigned = await campaignState(page);
+  assert.equal(assigned.flags.standup_completed, true);
+  assert.deepEqual(assigned.assignments, { shipping_cannot_print: 'mike', plating_workstation_down: 'amit', impossible_access_event: 'security' });
+  await openFromFloor(page, 33, 14);
+  const before = await dialogue(page);
+  assertAmit(before);
+  await page.clock.fastForward(5700);
+  const after = await dialogue(page);
+  assert.deepEqual(after, before, 'The pending standup beat must leave Amit’s dialogue intact');
+  assert.deepEqual(await campaignState(page), assigned);
+  result.earlySkip = { before, after, assignment: assigned.assignments };
+  result.checks.push('Early Skip retires an active standup timer and preserves Amit’s dialogue and delegated assignment');
+  await page.clock.resume();
 }
 
 async function coworkers(page, result, label) {
@@ -167,6 +300,14 @@ async function savedOverlap(page) {
   });
 }
 
+async function profilePage(profile, result) {
+  const context = await browser.newContext({ viewport: result.viewport, hasTouch: profile.touch, isMobile: profile.touch, reducedMotion: 'reduce' });
+  await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
+  const page = await context.newPage();
+  page.on('pageerror', error => result.pageErrors.push(String(error.stack || error)));
+  return { context, page };
+}
+
 try {
   if (!profiles.length) throw Error('DAY_CONTACT_PROFILES selected no profiles');
   if (!process.env.DAY_CONTACT_BASE_URL) server = spawn('python3', ['scripts/media_http_server.py', '--port', String(port), '--bind', '127.0.0.1'], { stdio: 'ignore' });
@@ -177,12 +318,10 @@ try {
   for (const profile of profiles) {
     const result = { id: profile.id, viewport: { width: profile.width, height: profile.height }, status: 'running', checks: [], pageErrors: [] };
     report.profiles.push(result);
-    const context = await browser.newContext({ viewport: result.viewport, hasTouch: profile.touch, isMobile: profile.touch, reducedMotion: 'reduce' });
-    await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
-    const page = await context.newPage();
-    page.on('pageerror', error => result.pageErrors.push(String(error.stack || error)));
+    const { context, page } = await profilePage(profile, result);
     try {
       await authoredStandup(page, result);
+      const assigned = await campaignState(page);
       await coworkers(page, result, 'before-wander');
       // Real dialogue ownership blocks ambient wandering during this wait.
       // Closing it inside forcedWander immediately exercises the elapsed hook.
@@ -213,6 +352,15 @@ try {
       result.delayedOwner = { waitMs: 5700, before: beforeDelay.title, after: afterDelay.title };
       await capture(page, result.id, 'delayed-owner');
       result.checks.push('Coworker dialogue remains owned after the 5500ms standup timer boundary');
+      if (profile.id === 'portrait') {
+        await verifyChooser(page, result, assigned);
+        await verifyContinue(page, result, assigned);
+        const early = await profilePage(profile, result);
+        try {
+          await verifyEarlySkip(early.page, result);
+          await capture(early.page, result.id, 'early-skip');
+        } finally { await early.context.close(); }
+      }
       assert.deepEqual(result.pageErrors, []);
       result.status = 'passed';
     } catch (error) {
