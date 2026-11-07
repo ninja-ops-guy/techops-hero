@@ -5,6 +5,22 @@ const vm = require("vm");
 const world = require("./runtime_day_world.js");
 const gameSource = fs.readFileSync(require.resolve("./game.js"), "utf8");
 const mapSource = gameSource.slice(gameSource.indexOf("const SRV ="), gameSource.indexOf("function freeSpot("));
+// Exercise the legacy step wrapper that used to let the standup board wander.
+const legacyHooks = fs.readFileSync(require.resolve("./v67_hooks.js"), "utf8");
+const wanderHook = legacyHooks.slice(legacyHooks.indexOf("  // ambient NPC wander"), legacyHooks.indexOf("  // ================= night parallax depth"));
+const board = { x: 34, y: 12, ambient: true, campaignAct1: "campaign_standup" };
+const ambient = { x: 25, y: 12, ambient: true };
+const wanderContext = vm.createContext({
+  S: { map: Array.from({ length: 20 }, () => Array(42).fill(0)), npcs: [board, ambient] },
+  step() {}, performance: { now: () => 3000 }, pick: items => items[0], R: (() => {
+    const offsets = [-1, 1];
+    return () => offsets.shift();
+  })()
+});
+vm.runInContext("Math.random = () => 0.1;\n" + wanderHook + "\nstep(0);", wanderContext);
+assert.deepStrictEqual([board.x, board.y], [34, 12]);
+assert.deepStrictEqual([ambient.x, ambient.y], [24, 13]);
+
 let campaign = { flags: {}, tickets: {}, investigations: {}, evidence: {} };
 global.TechOpsCampaign = { load() { return campaign; } };
 function makeMap(seed) {

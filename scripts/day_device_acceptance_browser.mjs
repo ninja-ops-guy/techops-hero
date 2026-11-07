@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
+import { openApp, inspectDesktop, traceLabels, repairQueue } from './lib/doors_workstation.mjs';
 
 const port = Number(process.env.DAY_DEVICE_PORT || 4187);
 const base = process.env.DAY_DEVICE_BASE_URL || `http://127.0.0.1:${port}/`;
@@ -183,8 +184,17 @@ async function morningOpening(page, result) {
   assert.equal(await page.locator('.os-window.os-maximized').count(),1);
   await click(page, 'Minimize window');
   assert.equal(await page.locator('.os-window').isVisible(),false);
+  await click(page, 'Restore current application');
+  assert.equal(await page.locator('.os-window').isVisible(), true);
   await click(page, 'Show desktop');
-  await click(page, 'MUSIC');
+  await click(page, 'PROMPT');
+  const command = page.getByRole('textbox', { name: 'Command', exact: true });
+  await command.fill('hostname'); await command.press('Enter');
+  await page.getByRole('log').getByText(/MIKE-WS/).waitFor();
+  await command.fill('<img src=x onerror=alert(1)>'); await click(page, 'Run');
+  assert.equal(await page.locator('.doors-terminal img').count(), 0);
+  await command.fill('open music'); await command.press('Enter');
+  await page.getByRole('button', {name:'Play Red in the Mirror', exact:true}).waitFor();
   // Red in the Mirror mapping, metadata level: external soundtrack requests
   // are blocked, so drive the real MUSIC flow against a stub widget whose
   // playlist carries a decoy track before the real entry. The capture asserts
@@ -428,17 +438,21 @@ try {
       assert.equal(await page.evaluate(() => TechOpsDayExperience.openDevice('shipping_workstation')), true, 'open the workstation from the walked arrival tile');
       assert.deepEqual(await position(page), walkedArrival, 'opening the workstation cannot teleport after actual walking');
       result.checks.push(result.workstationWalk.alreadyAdjacent ? 'Printer exit was already adjacent to the workstation; no walking or teleportation claimed' : 'Marked printer-to-workstation route traversed with actual keyboard movement and collision checks');
-      await click(page, '02 · Use local screen');
-      result.desktopLayout = await assertConsole(page, `${profile.id} desktop`);
-      assert.equal(await page.locator('.day-desktop').count(), 1);
-      for (const id of ['queue_trace', 'compare_user']) await page.locator(`.day-app-grid [data-day-action="observe"][data-value="${id}"]`).click();
+      await click(page, '02 · Open Doors');
+      result.desktopLayout = await inspectDesktop(page);
+      await openApp(page, 'Print Center');
+      await click(page, 'Maximize window');
+      assert.equal(await page.locator('.doors-field[data-max=true]').count(), 1);
+      await click(page, 'Minimize window');
+      await click(page, 'Restore Print Center');
+      await click(page, 'Close window');
+      assert.equal((await caseState(page)).investigations.shipping_cannot_print.evidence.length, 1, 'window management records no evidence');
+      await traceLabels(page);
       result.screenEvidence = await caseState(page);
       assert.deepEqual(result.screenEvidence.investigations.shipping_cannot_print.evidence, ['printer_self_test', 'queue_trace', 'compare_user']);
       assert.equal(result.screenEvidence.active.surface, 'screen');
       await screenshot(page, profile.id, 'workstation-diagnostics');
-      await page.locator('[data-day-action="hypothesis"][data-value="permissions"]').click();
-      await click(page, 'Apply the supported repair');
-      await click(page, 'Run the technical verification');
+      await repairQueue(page);
       result.technicalOnly = await caseState(page);
       assert.equal(result.technicalOnly.investigations.shipping_cannot_print.technicalCheckPassed, true);
       assert.equal(!!result.technicalOnly.tickets.shipping_cannot_print, false, 'technical success cannot close the human task');
@@ -451,19 +465,23 @@ try {
       const canonicalBefore = await page.evaluate(() => TechOpsCampaign.load(localStorage));
       result.laptopFixture = await fixtureAtStation(page, 'laptop_dock_link');
       for (const id of ['dock_power', 'upstream_cable']) await page.locator(`.day-hotspot[data-value="${id}"]`).click();
-      await click(page, '02 · Use local screen');
-      await page.locator('.day-app-grid [data-value="device_inventory"]').click();
+      await click(page, '02 · Open Doors');
+      await openApp(page, 'Device Manager');
+      await click(page, 'Open connected devices');
+      await openApp(page, 'Work Order');
       await page.locator('[data-day-action="hypothesis"][data-value="display_failure"]').click();
       assert.equal((await caseState(page)).ordinary.laptop_dock_link.fixApplied, false, 'wrong explanation does not repair the device');
       await page.locator('[data-day-action="hypothesis"][data-value="upstream_disconnected"]').click();
-      await click(page, '01 · Inspect equipment');
+      await click(page, 'Inspect equipment');
       await click(page, 'Confirm the agreed change window');
       await click(page, 'Apply the supported repair');
-      await click(page, '02 · Use local screen');
-      await click(page, 'Run the technical verification');
+      await click(page, '02 · Open Doors');
+      await openApp(page, 'Device Manager');
+      await click(page, 'Rescan dock and test drawing share');
       result.optionalTechnicalOnly = (await caseState(page)).ordinary.laptop_dock_link;
       assert.equal(result.optionalTechnicalOnly.requesterVerified, false);
       assert.equal(result.optionalTechnicalOnly.phase, 'requester');
+      await openApp(page, 'Work Order');
       await click(page, 'Ask Design engineer to perform the task here');
       result.optionalComplete = (await caseState(page)).ordinary.laptop_dock_link;
       assert.equal(result.optionalComplete.phase, 'complete');
@@ -474,6 +492,31 @@ try {
       assert.deepEqual(await position(page), laptopExit);
       assert.equal(await page.evaluate(() => TechOpsDayExperience.active()), null);
       result.checks.push('Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes');
+      await fixtureAtStation(page, 'plating_workstation');
+      await click(page, '02 · Open Doors');
+      await openApp(page, 'Connection Test');
+      await click(page, 'Ping line controller');
+      await openApp(page, 'Services');
+      await click(page, 'Inspect dependency chain');
+      await click(page, 'Open work order');
+      await click(page, 'integration failure');
+      await openApp(page, 'Services');
+      await click(page, 'Automatic');
+      await click(page, 'Apply startup and start service');
+      assert.equal((await caseState(page)).investigations.plating_workstation_down.fixApplied, false, 'the operator hold gates a supported repair');
+      await click(page, 'Open work order');
+      await click(page, 'Coordinate operator hold with Amit');
+      await click(page, 'Open repair tool');
+      await click(page, 'Manual');
+      await click(page, 'Apply startup and start service');
+      assert.equal((await caseState(page)).investigations.plating_workstation_down.fixApplied, false, 'a one-off manual start is not the persistent repair');
+      await click(page, 'Automatic');
+      await click(page, 'Apply startup and start service');
+      await openApp(page, 'Connection Test');
+      await click(page, 'Reconnect and test session');
+      assert.equal((await caseState(page)).investigations.plating_workstation_down.technicalCheckPassed, true);
+      await click(page, 'Return to floor');
+      result.checks.push('Doors Prompt accepts keyboard commands; Plating requires an operator hold, automatic startup and a controller session test');
       assert.deepEqual(result.pageErrors, []);
       result.status = 'passed';
     } catch (error) {
@@ -496,9 +539,9 @@ try {
     ['shipping-stage','P1 · Authored staging','The clerk is anchored to hand-authored scene coordinates (spot x 150/768, feet on the y 400/432 floor line) inside the art window, clear of the forklift and crate stack, with the label printer on the desk front edge occluding the monitor base. Capture asserts the rendered feet and spot against the authored fractions every run; sprite transparent padding is compensated by measured alpha-bbox anchors. Remaining: the clerk portrait artwork does not match the floor sprite set (mismatched character art stays open).'],
     ['side-room-desk','P1 · Spatial affordance','Desk is visible, keyboard approach opens the workstation, and the "use workstation" prompt now rides a dark pill that stays legible on bright backdrops and portrait crops. Remaining: the foreground desk is a canvas-drawn stand-in whose detail level differs from the backdrop furniture; replacing it with a matching furniture asset stays open.'],
     ['requester-conversation','P1 · Dialogue specificity','Questions must concern this incident and department. Answers must remain visible and already-discussed topics must not repeat.'],
-    ['simulated-desktop','P1 · Interface hierarchy','Local desktop only at the physical desk; working window controls and readable touch targets.'],
+    ['simulated-desktop','P1 · Interface hierarchy','Mike’s physical workstation runs Doors. Minimize, taskbar restore and typed Prompt commands are exercised on every viewport.'],
     ['company-cutscene','P2 · Texture / art direction','Review photoreal media versus pixel characters. Functional capture is not art approval; visual consistency remains an authored asset task.'],
-    ['printer-inspection','P1 · Evidence before action','Inspection targets should lie on components and reveal supported observations. Diagram style versus world texture needs art review. Fixed this round: the console taskbar is sticky and opaque (runtime_day.css), so "LOCAL TOOLS · CASE NOTES | DIAGNOSTIC SESSION" can never straddle the workspace fold and read as overlapping the console footer at 390px; verified in the portrait capture.'],
+    ['printer-inspection','P1 · Evidence before action','Physical printer inspection supplies the self-test. The separate dispatch workstation runs Doors Print Center and Queue Security.'],
     ['floor','P2 · World texture consistency','Fixed this round: NPC status markers are vector badges (gold ticket / pulsing red diamond / green check) instead of emoji glyphs, so the HUD stats row no longer picks up tofu boxes under the scrim in captures; the $80 / Tickets / Output row spacing is verified clean at 390px. Observed still open: top-down props, flat desk tiles and detailed side-room art have different pixel density and lighting. Next: choose one pixel grid, palette and light direction, then replace inconsistent props in both views.']
   ];
   report.visualReview={standard:'docs/production/PRODUCTION-BIBLE-R1.md',automaticVerdict:report.status,aestheticCertification:false,priorities:reviews.map(([scene,priority,note])=>({scene,priority,note}))};

@@ -52,7 +52,7 @@
     var record=s.meta.dayCases[station.caseId]||api.create(station.caseId);
     return {canonical:false,record:record,complete:record.phase==='complete',def:api.definition(station.caseId)};
   }
-  function transact(action,value){
+  function transact(action,value,refresh=true){
     if(!active)return false;var station=stationById(active.stationId);if(!gs().inDialog||!guard(station)){exit();return false;}
     var data=snapshot(station),rec=data.record,def=data.def,feedback='',sound='inspect';
     if(data.complete)return false;
@@ -61,7 +61,6 @@
       if(action==='technical'&&active.surface!=='screen')throw new Error('Use the local diagnostic screen to verify the technical path.');
       if(action==='repair'&&active.surface!==(data.canonical?'screen':def.repairSurface||'screen'))throw new Error('Use the '+(data.canonical?'screen':def.repairSurface||'screen')+' view for this repair.');
       if(action==='observe'){
-        active.app=value;
         var e=def.evidence.find(function(item){return item.id===value;});
         if(!e||e.surface!==active.surface)throw new Error('Use the correct physical or screen view to make that observation.');
         if(station.ticketId==='shipping_cannot_print'&&((e.surface==='physical'&&station.id!=='shipping_printer')||(e.surface==='screen'&&station.id!=='shipping_workstation')))throw new Error('This observation belongs to the other device. Follow its floor route.');
@@ -95,8 +94,8 @@
         var old=gs().meta.dayCases[station.caseId];gs().meta.dayCases[station.caseId]=copy;
         try{saveGame();}catch(err){if(old)gs().meta.dayCases[station.caseId]=old;else delete gs().meta.dayCases[station.caseId];throw err;}
       }
-      active.notice=feedback||'Observation recorded.';active.error=false;cue(sound);render();return true;
-    }catch(e){active.notice=e.message||String(e);active.error=true;cue('reject');render();return false;}
+      active.notice=feedback||'Observation recorded.';active.error=false;cue(sound);if(refresh)render();return true;
+    }catch(e){active.notice=e.message||String(e);active.error=true;cue('reject');if(refresh)render();return false;}
   }
   function button(label,action,value,extra){return '<button type="button" data-day-action="'+action+'"'+(value?' data-value="'+escape(value)+'"':'')+(extra||'')+'>'+label+'</button>';}
   function diagram(kind,repaired){
@@ -121,39 +120,101 @@
     }
     return '<svg viewBox="0 0 600 300" role="img" aria-label="'+escape(kind||'equipment')+' inspection diagram"><ellipse cx="302" cy="279" rx="235" ry="10" fill="#06121b"/>'+body+'</svg>';
   }
+  var doorsScript=null, doorsLoadFailed=false;
+  function doorsScreen(station, data, notes){
+    root.TechOpsDayDesktop.loadTheme();
+    if(root.TechOpsDayDoors)return root.TechOpsDayDoors.view(station,data,active,notes);
+    if(!doorsScript&&!doorsLoadFailed){
+      doorsScript=root.document.createElement('script');
+      doorsScript.src='runtime_day_doors.js?v=20261105-doors-r1';
+      doorsScript.onload=doorsScript.onerror=function(){
+        doorsLoadFailed=!root.TechOpsDayDoors;
+        if(doorsLoadFailed){doorsScript.remove();doorsScript=null;}
+        if(active&&active.surface==='screen'&&gs().inDialog)render();
+      };
+      root.document.head.appendChild(doorsScript);
+    }
+    return '<section class="day-console"><header class="day-console-header"><h2 id="day-device-title">Doors</h2>'+
+      button('Return to floor','exit')+'</header><main class="day-main"><p role="status">'+
+      (doorsLoadFailed?'The desktop could not start.':'Starting the local desktop…')+'</p>'+
+      (doorsLoadFailed?button('Restart Doors','doors-retry'):'')+'</main></section>';
+  }
   function render(){
     if(!active)return;var st=stationById(active.stationId);if(!near(st)){exit();return;}
+    if(st.id==='security_workstation')return display(st,doorsScreen(st,null,''),null,false);
     var data=snapshot(st),def=data.def,rec=data.record,surface=active.surface,done=data.complete;
     var all=def.evidence,items=all.filter(function(e){if(e.surface!==surface)return false;if(st.ticketId==='shipping_cannot_print')return st.id==='shipping_printer'?e.surface==='physical':e.surface==='screen';return true;});
     var title=st.label||def.title,kind=st.deviceType||def.deviceKind||'desktop';
     var physical=surface==='physical',canScreen=st.id!=='shipping_printer'&&st.surface!=='physical';
     var visual=physical?'<div class="day-device-stage">'+diagram(kind,rec.fixApplied||done)+items.map(function(e,i){return button(rec.evidence.includes(e.id)?'✓':String(i+1),'observe',e.id,' class="day-hotspot" aria-label="'+escape(e.label)+'" data-seen="'+rec.evidence.includes(e.id)+'" style="left:calc('+Math.max(8,Math.min(85,e.hotspot?e.hotspot.x:25+i*24))+'% - 22px);top:calc('+Math.max(15,Math.min(76,e.hotspot?e.hotspot.y:45))+'% - 22px)"');}).join('')+'<div class="day-stage-caption">'+escape(title)+' · PHYSICAL INSPECTION</div></div><div class="day-hotspot-labels">'+items.map(function(e,i){return button('<b>'+(rec.evidence.includes(e.id)?'✓':i+1)+'</b>'+escape(e.label),'observe',e.id);}).join('')+'</div>':
-      '<div class="day-desktop"><div class="day-os-bar"><span>AERODESK // '+escape(st.supportComputer?st.supportComputer.label:'LOCAL SESSION')+'</span><span>'+escape(title)+'</span></div><div class="day-app-grid">'+items.map(function(e){return button(escape(e.label)+'<small>'+(rec.evidence.includes(e.id)?'Observation saved':'Open diagnostic view')+'</small>','observe',e.id);}).join('')+'</div>'+(active.app&&active.notice?'<section class="day-diagnostic-window"><header>◈ '+escape((items.find(function(e){return e.id===active.app;})||{}).label||'Diagnostic result')+'</header><div class="day-diagnostic-body"><span>LOCAL RESULT / READ ONLY</span><p>'+escape(active.notice)+'</p></div></section>':'')+'<div class="day-notification">'+escape(done?'Service restored. The requester can get back to work.':(def.notifications||[])[0]||def.symptom)+'</div><div class="day-taskbar"><span>LOCAL TOOLS · CASE NOTES</span><span>'+(done?'VERIFIED':'DIAGNOSTIC SESSION')+'</span></div></div>';
+      '';
     if(physical&&!items.length)visual+='<p class="day-empty">The enclosure is intact. Read the front-panel status, then use the local screen to investigate the software path.</p>';
     var actions='';
-    if(done)actions='<div class="day-observation day-success"><h3>Service restored. Task verified.</h3><p>'+escape(def.requesterCheck)+'</p></div>';
+    if(done){
+      var ticket=data.canonical&&data.state.tickets[st.ticketId];
+      var witnessed=!ticket||ticket.verification==='strong'&&ticket.humanOutcome==='restored';
+      actions='<div class="day-observation'+(witnessed?' day-success':'')+'"><h3>'+(witnessed?'Service restored. Task verified.':'Handoff recorded')+'</h3><p>'+
+        escape(witnessed?def.requesterCheck:'Recorded outcome: '+(ticket.humanOutcome||'unrecorded')+' · verification: '+(ticket.verification||'unrecorded'))+'</p></div>';
+    }
     else if(data.canonical&&rec.phase==='workaround_verify'){
       actions='<p>The temporary workaround is ready. The requester must confirm the limited workflow before a partial handoff.</p>'+button('Return to requester to verify limited service','requester-route',st.ticketId);
     }else if(rec.technicalCheckPassed||rec.technicalVerified){
       actions='<p>Technical checks passed. The requester still needs to perform the real task.</p>'+(data.canonical?button('Return to requester for verification','requester-route',st.ticketId):button('Ask '+escape(def.requester)+' to perform the task here','requester'));
-    }else if(rec.fixApplied){actions='<p>'+escape(def.technicalCheck)+'</p>'+button(surface==='screen'?'Run the technical verification':canScreen?'Use the local screen for verification':'Walk to the workstation for verification',surface==='screen'?'technical':canScreen?'screen':'route',canScreen?null:canonicalStation(st.ticketId,true),' class="day-primary"');}
+    }else if(rec.fixApplied){actions='<p>'+escape(def.technicalCheck)+'</p>'+button(surface==='screen'?'Open verification tool':canScreen?'Use the local screen for verification':'Walk to the workstation for verification',surface==='screen'?'doors-test-tool':canScreen?'screen':'route',canScreen?null:canonicalStation(st.ticketId,true),' class="day-primary"');}
     else if(rec.hypothesis){
       var needsHold=data.canonical?st.ticketId==='plating_workstation_down'&&!(gs().meta.dayOperatorHolds||{})[st.ticketId]:!rec.authorized;
       var repairView=data.canonical?'screen':def.repairSurface||'screen';
-      actions='<p>'+escape(def.remediation)+'</p>'+(needsHold?button(escape(data.canonical?'Coordinate operator hold with Amit':'Confirm the agreed change window'),'authorize',null,' class="day-primary"'):surface!==repairView?button(repairView==='physical'?'Inspect the external connector to apply the repair':canScreen?'Use the local screen to apply the repair':'Walk to the workstation to apply the repair',repairView==='screen'&&!canScreen?'route':repairView,repairView==='screen'&&!canScreen?canonicalStation(st.ticketId,true):null):button('Apply the supported repair','repair',null,' class="day-primary"'));
+      actions='<p>'+escape(def.remediation)+'</p>'+(needsHold?button(escape(data.canonical?'Coordinate operator hold with Amit':'Confirm the agreed change window'),'authorize',null,' class="day-primary"'):surface!==repairView?button(repairView==='physical'?'Inspect the external connector to apply the repair':canScreen?'Use the local screen to apply the repair':'Walk to the workstation to apply the repair',repairView==='screen'&&!canScreen?'route':repairView,repairView==='screen'&&!canScreen?canonicalStation(st.ticketId,true):null):button(physical?'Apply the supported repair':'Open repair tool',physical?'repair':'doors-repair-tool',null,' class="day-primary"'));
     }else actions='<p>Which explanation accounts for the observations?</p>'+def.hypotheses.map(function(h){return button(escape(h.label),'hypothesis',h.id);}).join('');
     if(st.ticketId==='shipping_cannot_print')actions+=button(st.id==='shipping_printer'?'Walk to Shipping workstation':'Walk to label printer','route',st.id==='shipping_printer'?'shipping_workstation':'shipping_printer');
     var count=rec.evidence.length,phases=[count>0,!!rec.hypothesis,!!rec.fixApplied,done];
-    var html='<section class="day-console" aria-labelledby="day-device-title"><header class="day-console-header"><div><span class="day-eyebrow">DAY SHIFT / '+escape(st.roomName||st.roomId||st.zoneId||'FIELD SERVICE')+'</span><h2 id="day-device-title">'+escape(title)+'</h2></div>'+button('Return to floor','exit',null,' class="day-close"')+'</header><nav class="day-stage-nav" aria-label="Device views">'+button('01 · Inspect equipment','physical',null,' aria-pressed="'+physical+'"')+(canScreen?button('02 · Use local screen','screen',null,' aria-pressed="'+!physical+'"'):'')+'<span class="day-stage-note">'+escape(def.title)+'</span></nav><div class="day-workspace"><main class="day-main"><div class="day-request"><span class="day-eyebrow">'+escape(def.requester)+'</span><h3>'+escape(def.symptom)+'</h3><p>'+escape(def.humanNeed)+'</p></div>'+visual+(active.notice?'<div class="day-observation" role="status" aria-live="polite"><strong>'+(active.error?'Review the evidence':'Field note')+'</strong><p>'+escape(active.notice)+'</p></div>':'')+'</main><aside class="day-evidence"><ol class="day-progress">'+['Observe','Diagnose','Repair','Verify'].map(function(p,i){return '<li data-done="'+phases[i]+'">'+p+'</li>';}).join('')+'</ol><h3>Evidence · '+count+' / '+all.length+'</h3>'+(count?rec.evidence.map(function(id){var e=all.find(function(x){return x.id===id;});return e?'<div class="day-evidence-item"><strong>'+escape(e.label)+'</strong>'+escape(e.text)+'</div>':'';}).join(''):'<p class="day-empty">Click an inspection point or a diagnostic tool. Every conclusion needs an observation.</p>')+'<div class="day-actions">'+actions+'</div></aside></div><footer class="day-console-footer"><span>Floor → Equipment → Local session → Verified work</span><span>Progress saves after each accepted action · Esc to leave</span></footer></section>';
-    var owner=active,box=root.document.getElementById('dlg-text');box.onclick=null;box.innerHTML=html;
-    box.querySelectorAll('[data-day-action]').forEach(function(b){b.onclick=function(){unlock();var a=b.dataset.dayAction,v=b.dataset.value;
-      if(active!==owner||!gs().inDialog||!near(st))return false;
-      if(a==='exit')return exit();if(a==='route')return routeTo(v);
+    var request='<div class="day-request"><span class="day-eyebrow">'+escape(def.requester)+'</span><h3>'+escape(def.symptom)+'</h3><p>'+escape(def.humanNeed)+'</p></div>';
+    var notes='<ol class="day-progress">'+['Observe','Diagnose','Repair','Verify'].map(function(p,i){return '<li data-done="'+phases[i]+'">'+p+'</li>';}).join('')+'</ol><h3>Evidence · '+count+' / '+all.length+'</h3>'+
+      (count?rec.evidence.map(function(id){var e=all.find(function(x){return x.id===id;});return e?'<div class="day-evidence-item"><strong>'+escape(e.label)+'</strong>'+escape(e.text)+'</div>':'';}).join(''):'<p class="day-empty">Inspect the equipment or run a diagnostic to record an observation.</p>')+'<div class="day-actions">'+actions+'</div>';
+    if(!physical)return display(st,doorsScreen(st,data,request+notes),data,canScreen);
+    var html='<section class="day-console" aria-labelledby="day-device-title"><header class="day-console-header"><div><span class="day-eyebrow">DAY SHIFT / '+escape(st.roomName||st.roomId||st.zoneId||'FIELD SERVICE')+'</span><h2 id="day-device-title">'+escape(title)+'</h2></div>'+button('Return to floor','exit',null,' class="day-close"')+'</header>'+
+      '<nav class="day-stage-nav" aria-label="Device views">'+button('01 · Inspect equipment','physical',null,' aria-pressed="true"')+(canScreen?button('02 · Open Doors','screen'):'')+'<span class="day-stage-note">'+escape(def.title)+'</span></nav>'+
+      '<div class="day-workspace"><main class="day-main">'+request+visual+(active.notice?'<div class="day-observation" role="status"><strong>'+(active.error?'Review the evidence':'Field note')+'</strong><p>'+escape(active.notice)+'</p></div>':'')+'</main><aside class="day-evidence">'+notes+'</aside></div><footer class="day-console-footer"><span>Progress saves after each accepted action · Esc to leave</span></footer></section>';
+    display(st,html,data,canScreen);
+  }
+  function display(st,html,data,canScreen){
+    var owner=active,version=++owner.view,box=root.document.getElementById('dlg-text');
+    var previous=root.document.activeElement,inside=box.contains&&box.contains(previous);
+    var pane=inside&&box.querySelector('.doors-pane'),scroll=pane&&pane.scrollTop;
+    var previousWindow=pane&&pane.parentElement.getAttribute('aria-label');
+    box.onclick=null;box.innerHTML=html;
+    var buttons=Array.from(box.querySelectorAll('[data-day-action]'));
+    buttons.forEach(function(b){b.onclick=function(){
+      if(active!==owner||owner.view!==version||!gs().inDialog||!guard(st))return false;
+      unlock();var a=b.dataset.dayAction,v=b.dataset.value;
+      if(a==='exit')return exit();
+      if(a==='route')return routeTo(v);
       if(a==='requester-route')return goRequester(v);
-      if(a==='physical'||a==='screen'){if(a==='screen'&&!canScreen)return;active.surface=a;active.notice='';gs().dayInteraction=a==='screen'?'workstation':'inspect';if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext(a==='screen'?'desktop':'inspection');cue('transition');render();return;}
+      if(a==='physical'||a==='screen'){
+        if(a==='screen'&&!canScreen)return;
+        active.surface=a;active.notice='';active.error=false;active.doors=null;
+        if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext(a==='screen'?'desktop':'inspection');
+        cue('transition');render();return;
+      }
+      if(a==='doors-retry'){doorsLoadFailed=false;render();return;}
+      if(a.startsWith('doors-')&&active.surface==='screen'&&root.TechOpsDayDoors){
+        root.TechOpsDayDoors.handle(a,v,st,data,owner,function(type,id){return transact(type,id,false);},
+          function(){root.TechOpsCampaignNativeAct1.recordAccessEvidence(true);});
+        if(active===owner&&gs().inDialog)render();
+        return;
+      }
       transact(a,v);
     };});
-    gs().dayInteraction=surface==='screen'?'workstation':'inspect';
+    gs().dayInteraction=owner.surface==='screen'?'workstation':'inspect';
+    if(inside){
+      var nextPane=box.querySelector('.doors-pane');
+      if(nextPane&&previousWindow===nextPane.parentElement.getAttribute('aria-label'))nextPane.scrollTop=scroll;
+      var visible=buttons.filter(b=>b.getClientRects().length);
+      var same=visible.find(function(b){return b.dataset.dayAction===previous.dataset.dayAction&&b.dataset.value===previous.dataset.value;});
+      if(nextPane&&previousWindow!==nextPane.parentElement.getAttribute('aria-label'))same=null;
+      var next=same||box.querySelector('[data-doors-heading]')||visible.find(b=>b.dataset.dayAction==='doors-task')||visible.find(b=>b.dataset.dayAction==='doors-open')||visible[0];
+      if(next)next.focus();
+    }
   }
   function openDevice(station){
     station=stationById(typeof station==='string'?station:station&&station.id);
@@ -163,11 +224,10 @@
       var state=campaign(),followup=state.flags.tuesday_morning_reached&&root.TechOpsCampaign.workdayHandoff(state).find(function(item){return item.ticketId===station.ticketId;});
       if(followup&&followup.kind!=='carryover')return root.TechOpsCampaignNativeAct1.openWorkdayFollowup(station.ticketId);
     }
-    if(station.id==='security_workstation')return root.TechOpsCampaignNativeAct1.recordAccessEvidence();
-    if(station.ticketId&&!root.TechOpsCampaignInvestigations){notify('Diagnostic tools are still loading. Try again in a moment.');return false;}
+    if(CANON[station.ticketId]&&!root.TechOpsCampaignInvestigations){notify('Diagnostic tools are still loading. Try again in a moment.');return false;}
     returnFocus=root.document.activeElement;unlock();root.dlg('FIELD SERVICE','',[]);
-    active={stationId:station.id,surface:'physical',notice:'',error:false};var d=root.document.getElementById('dialogue');d.classList.add('day-device-mode');d.setAttribute('aria-labelledby','day-device-title');root.document.body.classList.add('day-device-open');
-    if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext('inspection');cue('transition');render();d.querySelector('button').focus();clearRouteMark(station.id);return true;
+    active={stationId:station.id,surface:station.id==='security_workstation'?'screen':'physical',notice:'',error:false,view:0};var d=root.document.getElementById('dialogue');d.classList.add('day-device-mode');d.setAttribute('aria-labelledby','day-device-title');root.document.body.classList.add('day-device-open');
+    if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext(active.surface==='screen'?'desktop':'inspection');cue('transition');render();d.querySelector('button').focus();clearRouteMark(station.id);return true;
   }
   function goRequester(ticketId){var s=gs(),key=ticketId==='shipping_cannot_print'?'shipping':'plating';s.meta.dayRouteTarget=key;if(world())world().route(key);exit();notify('Return to the '+(key==='shipping'?'Shipping clerk':'Plating operator')+' to verify the actual task.');syncHud();}
   function requesterNearby(ticketId){
@@ -268,7 +328,19 @@
     if(c.flags.day_work_unlocked)world().stations().filter(function(st){return st.caseId;}).forEach(function(st){var r=(gs().meta.dayCases||{})[st.caseId];options.push({t:(r&&r.phase==='complete'?'✓ ':'')+st.label,f:function(){routeTo(st.id);}});});
     options.push({t:'Back to floor',f:root.closeDlg});root.dlg('FIELD SERVICE BOARD','The story work stays first. Optional service calls develop your investigation skills and keep the factory running. Choose a destination to mark its walking route.',options);
   }
-  function keydown(e){if(!active)return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();exit();return;}if(e.key==='Tab'){var list=Array.from(root.document.querySelectorAll('#dialogue.day-device-mode button:not(:disabled)'));if(!list.length)return;var first=list[0],last=list[list.length-1];if(e.shiftKey&&root.document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&root.document.activeElement===last){e.preventDefault();first.focus();}}if(/^(Arrow| |Enter$|[wasdemv]$)/i.test(e.key))e.stopPropagation();}
+  function keydown(e){
+    var desk=root.TechOpsDayDesktop&&root.TechOpsDayDesktop.active();
+    if(!active&&!desk)return;
+    if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();exit();return;}
+    if(e.key==='Tab'){
+      var list=Array.from(root.document.querySelectorAll('#dlg-text button:not(:disabled), #dlg-text input:not(:disabled)')).filter(b=>b.getClientRects().length);
+      var first=list[0],last=list[list.length-1],focus=root.document.activeElement;
+      if(!first)return;
+      if(!list.includes(focus)||e.shiftKey&&focus===first){e.preventDefault();(e.shiftKey?last:first).focus();}
+      else if(!e.shiftKey&&focus===last){e.preventDefault();first.focus();}
+    }
+    if(e.target.tagName==='INPUT'||/^(Arrow| |Enter$|[wasdemv]$)/i.test(e.key))e.stopPropagation();
+  }
   if(root.document)root.document.addEventListener('keydown',keydown,true);
   root.TechOpsDayExperience={VERSION:1,standupScene:standupScene,sideDeskNearby:sideDeskNearby,openDevice:openDevice,talk:talk,interact:interact,routeTo:routeTo,clearRoute:clearRouteMark,requireDesk:requireDesk,desktopNearby:desktopNearby,release:release,exit:exit,render:render,syncHud:syncHud,workstationSkin:workstationSkin,transact:transact,active:function(){return active;},openBoard:openBoard};
 })(typeof globalThis!=='undefined'?globalThis:this);
@@ -278,29 +350,72 @@
 (function(root){
   'use strict';
   var serial=0,timer=null,current=null;
-  var apps=[['QUEUE','▤','Service queue'],['TEAMS','◉','Team messages'],['ALERTS','△','Event viewer'],['COMPANY','◈','Company intranet'],['MUSIC','♫','Music']];
+  var apps=[['QUEUE','▤','Service queue'],['TEAMS','◉','Team messages'],['ALERTS','△','Event viewer'],['COMPANY','◈','Company intranet'],['MUSIC','♫','Music'],['PROMPT','›_','Command prompt']];
   function esc(x){return String(x||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function release(){serial++;if(timer)root.clearTimeout(timer);timer=null;current=null;var d=root.document&&root.document.getElementById('dialogue');if(d)d.classList.remove('day-os-mode','day-film-mode');if(root.document)root.document.body.classList.remove('day-os-open');if(root.TechOpsDayAudio)root.TechOpsDayAudio.resume('opening-film');}
-  function valid(token){return token===serial&&root.S&&root.S.inDialog&&root.TechOpsDayExperience.desktopNearby();}
+  function loadTheme(){
+    var doc=root.document;
+    if(!doc||!doc.head||doc.getElementById('day-doors-theme'))return;
+    var link=doc.createElement('link');link.id='day-doors-theme';link.rel='stylesheet';link.href='runtime_day_doors.css?v=20261105-doors-r1';
+    link.onerror=function(){link.remove();};doc.head.appendChild(link);
+  }
+  function valid(token){return token===serial&&root.S&&root.S.inDialog&&!root.S.inBattle&&root.TechOpsDayExperience.desktopNearby();}
   function present(name,body,options){
     if(!root.document||!root.TechOpsDayExperience||!root.TechOpsDayExperience.desktopNearby())return false;
     if(!/WORKSTATION|COMPANY|PEOPLE BEHIND THE FLIGHT|MORNING LISTENING|09:00 \/\/ DAY SHIFT/.test(name))return false;
     release();var token=serial,d=root.document.getElementById('dialogue'),box=root.document.getElementById('dlg-text');if(!d||!box)return false;
-    current={name:name};d.classList.add('day-os-mode');root.document.body.classList.add('day-os-open');root.S.dayInteraction='workstation';box.onclick=null;
+    loadTheme();current={name:name};d.classList.add('day-os-mode');root.document.body.classList.add('day-os-open');root.S.dayInteraction='workstation';box.onclick=null;
     var home=name==='MIKE // WORKSTATION',film=name==='PEOPLE BEHIND THE FLIGHT'||name==='MORNING LISTENING'||name==='09:00 // DAY SHIFT';
     var native=root.TechOpsCampaignNativeAct1;
     var app=name.split(' // ').pop(),icons=apps.map(function(a){return '<button type="button" class="os-icon" data-os-app="'+a[0]+'" aria-label="'+a[0]+'"><span aria-hidden="true">'+a[1]+'</span><b>'+a[0]+'</b><small>'+a[2]+'</small></button>';}).join('');
-    box.innerHTML='<section class="os-desktop" aria-label="Mike’s simulated computer"><div class="os-wallpaper"><span>AEROTECH</span><p>NEW HAVEN · OPERATIONS</p></div><nav class="os-icons" '+(home?'hidden':'')+' aria-label="Desktop applications">'+icons+'</nav><section class="os-window '+(home?'os-welcome':'')+'" aria-label="'+esc(app)+'"><header class="os-titlebar"><span>◈ &nbsp; '+esc(home?'MIKE / WORKSPACE':app)+'</span><div><button type="button" data-os-min aria-label="Minimize window">—</button><button type="button" data-os-max aria-label="Maximize window">□</button><button type="button" data-os-close aria-label="Close application">×</button></div></header><div class="os-address">'+esc(home?'aerodesk://mike/home':'aerodesk://'+app.toLowerCase().replace(/ /g,'-'))+'</div><div class="os-content">'+(home?'<span class="os-kicker">DAY '+esc(root.S.day)+' / MORNING SHIFT</span><h1>Good morning, Mike.</h1><p>Your tools. Your team. One shift at a time.</p><div class="os-shortcuts">'+icons+'</div>': '<h1>'+esc(app)+'</h1>')+'<div class="os-copy">'+body+'</div></div><div class="os-actions"></div></section><footer class="os-taskbar"><button type="button" data-os-home aria-label="Show desktop">▦ <span>AeroDesk</span></button><span class="os-task-name">'+esc(home?'Workspace':app)+'</span><span class="os-session">MIKE · LOCAL SESSION</span><button type="button" data-os-exit>Leave computer</button></footer></section>';
+    box.innerHTML='<section class="os-desktop" aria-label="Doors desktop at Mike’s workstation"><div class="os-wallpaper"><span>Doors</span><p>AEROTECH · NEW HAVEN</p></div><nav class="os-icons" '+(home?'hidden':'')+' aria-label="Desktop applications">'+icons+'</nav><section class="os-window '+(home?'os-welcome':'')+'" aria-label="'+esc(app)+'"><header class="os-titlebar"><span>◈ &nbsp; '+esc(home?'MIKE / WORKSPACE':app)+'</span><div><button type="button" data-os-min aria-label="Minimize window">—</button><button type="button" data-os-max aria-label="Maximize window">□</button><button type="button" data-os-close aria-label="Close application">×</button></div></header><div class="os-address">'+esc(home?'doors://mike/home':'doors://'+app.toLowerCase().replace(/ /g,'-'))+'</div><div class="os-content">'+(home?'<span class="os-kicker">DAY '+esc(root.S.day)+' / MORNING SHIFT</span><h1>Good morning, Mike.</h1><p>Doors Workstation Edition</p><div class="os-shortcuts">'+icons+'</div>': '<h1>'+esc(app)+'</h1>')+'<div class="os-copy">'+body+'</div></div><div class="os-actions"></div></section><footer class="os-taskbar"><button type="button" data-os-home aria-label="Show desktop"><i class="doors-mark" aria-hidden="true"></i> <span>Doors</span></button><button type="button" class="os-task-name" data-os-task aria-label="Minimize current application">'+esc(home?'Workspace':app)+'</button><span class="os-session">MIKE · LOCAL SESSION</span><button type="button" data-os-exit>Leave computer</button></footer></section>';
     function bind(selector,fn){box.querySelectorAll(selector).forEach(function(el){el.onclick=function(){if(!valid(token))return false;if(root.TechOpsDayAudio)root.TechOpsDayAudio.emit('inspect');return fn(el);};});}
     bind('[data-os-app]',function(el){return native.openWorkstationTab(el.dataset.osApp);});
-    bind('[data-os-home]',function(){native.openWorkstation();});bind('[data-os-close]',function(){native.openWorkstation();});
+    function minimize(value){
+      var win=box.querySelector('.os-window'),task=box.querySelector('[data-os-task]');
+      win.classList.toggle('os-minimized',value);box.querySelector('.os-desktop').classList.toggle('os-show-desktop',value);
+      box.querySelector('.os-icons').hidden=home&&!value;
+      task.setAttribute('aria-label',value?'Restore current application':'Minimize current application');
+      (value?task:box.querySelector('[data-os-min]')).focus();
+    }
+    bind('[data-os-home]',function(){if(film)return native.openWorkstation();minimize(true);});
+    bind('[data-os-close]',function(){if(home)minimize(true);else native.openWorkstation();});
     bind('[data-os-exit]',function(){root.closeDlg();});
-    bind('[data-os-min]',function(){box.querySelector('.os-window').classList.toggle('os-minimized');});
+    bind('[data-os-min]',function(){minimize(true);});
+    bind('[data-os-task]',function(){minimize(!box.querySelector('.os-window').classList.contains('os-minimized'));});
     bind('[data-os-max]',function(){box.querySelector('.os-window').classList.toggle('os-maximized');});
     var actions=box.querySelector('.os-actions');
     (options||[]).forEach(function(option){if(home&&apps.some(function(a){return a[0]===option.t;}))return;var b=root.document.createElement('button');b.type='button';b.textContent=option.t==='Combat sound & captions'?'Sound & captions':option.t;b.onclick=function(){if(valid(token))return option.f();};actions.appendChild(b);});
+    if(app==='PROMPT'){startPrompt(box,token);return true;}
     if(film)startFilm(name,box,actions,token);
+    var focus=box.querySelector(film?'.os-actions button:not(:disabled)':home?'.os-shortcuts button':'.os-actions button');if(focus)focus.focus();
     return true;
+  }
+  function startPrompt(box,token){
+    var content=box.querySelector('.os-content');
+    content.innerHTML='<section class="doors-terminal"><h1>Doors Command Prompt</h1><pre role="log" aria-label="Command output"></pre><form><label>D:&#92;Mike&gt; <input aria-label="Command" maxlength="96" autocomplete="off" autocapitalize="none" spellcheck="false"></label><button type="submit">Run</button></form></section>';
+    var form=content.querySelector('form'),input=form.querySelector('input'),output=content.querySelector('pre');
+    var names=apps.filter(a=>a[0]!=='PROMPT').map(a=>a[0].toLowerCase());
+    var help='help   dir   hostname   whoami   ver   cls   exit\nopen <app>   Launch an installed application.';
+    output.textContent='Doors Workstation Edition\n'+help;
+    form.onsubmit=function(event){
+      event.preventDefault();
+      if(!valid(token))return;
+      var line=input.value.trim(),parts=line.toLowerCase().split(/\s+/),name=parts[0],reply;
+      input.value='';
+      if(!line)return;
+      if(name==='open'&&parts.length===2&&names.includes(parts[1]))return root.TechOpsCampaignNativeAct1.openWorkstationTab(parts[1].toUpperCase());
+      if(line.toLowerCase()==='exit')return root.TechOpsCampaignNativeAct1.openWorkstation();
+      if(line.toLowerCase()==='cls')output.textContent='';
+      else {
+        var commands={help:help,dir:names.join('   '),hostname:'MIKE-WS',whoami:'AEROTECH / Mike',ver:'Doors Workstation Edition'};
+        reply=parts.length===1&&Object.hasOwn(commands,name)?commands[name]:name==='open'?'Installed apps: '+names.join(', '):'Unknown command. Type help for local commands.';
+        var history=(output.textContent+'\n> '+line+'\n'+reply).split('\n');
+        output.textContent=history.slice(-50).join('\n');
+      }
+      output.scrollTop=output.scrollHeight;input.focus();
+    };
+    input.focus();
   }
   function startFilm(name,box,actions,token){
     root.document.getElementById('dialogue').classList.add('day-film-mode');
@@ -321,5 +436,5 @@
     function shot(){if(!valid(token))return;var s=shots[i];content.innerHTML='<div class="day-film-shot '+s[3]+'"><img src="'+s[2]+'" alt="'+esc(s[0])+'"><div class="day-film-shade"></div><div class="day-film-caption" aria-live="polite"><small>'+esc(s[0])+'</small><h2>'+esc(s[1])+'</h2></div><div class="day-film-progress">'+shots.map(function(_,n){return '<i class="'+(n<=i?'seen':'')+'"></i>';}).join('')+'</div></div>';if(i<shots.length-1)timer=root.setTimeout(function(){i++;shot();},s[3]==='signal'?650:4200);else{if(finish)finish.disabled=false;next.textContent='Replay scene';}}
     var next=root.document.createElement('button');next.type='button';next.textContent='Next shot';next.onclick=function(){if(!valid(token))return;root.clearTimeout(timer);i=i<shots.length-1?i+1:0;shot();};actions.appendChild(next);shot();
   }
-  root.TechOpsDayDesktop={present:present,release:release,active:function(){return current;}};
+  root.TechOpsDayDesktop={present:present,release:release,loadTheme:loadTheme,active:function(){return current;}};
 })(typeof globalThis!=='undefined'?globalThis:this);

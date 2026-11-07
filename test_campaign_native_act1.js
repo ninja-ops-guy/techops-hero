@@ -49,6 +49,21 @@ function choose(text) {
 
 resetGame();
 const native = require("./campaign_native_act1.js");
+// Older checkpoints can contain a campaign contact moved by ambient wandering.
+global.COWORKERS = [{ name: "AMIT", x: 33, y: 13 }];
+const savedBoard = { id: "campaign_standup", x: 33, y: 13, campaignAct1: "campaign_standup" };
+const savedClerk = { id: "campaign_shipping", x: 33, y: 11, campaignAct1: "shipping_cannot_print" };
+global.S.npcs.push(savedBoard, savedClerk);
+global.S.map[12][34] = 2;
+assert.strictEqual(native.ensureWorld(), true);
+assert.notDeepStrictEqual({ x: savedBoard.x, y: savedBoard.y }, { x: 33, y: 13 });
+assert.deepStrictEqual(global.S.meta.campaignAct1Native.standup, { x: savedBoard.x, y: savedBoard.y });
+assert.strictEqual(global.S.map[savedBoard.y][savedBoard.x], 0);
+assert.strictEqual(global.S.map[12][34], 2, "repositioning must preserve the prop on the original board tile");
+assert.deepStrictEqual(global.S.meta.campaignAct1Native.shipping, { x: 33, y: 11 });
+assert.strictEqual(global.S.npcs.filter(n => n.id === savedBoard.id).length, 1);
+delete global.COWORKERS;
+resetGame();
 assert.strictEqual(native.ensureWorld(), true);
 assert.deepStrictEqual(native.WORKSTATION_TABS, ["QUEUE", "TEAMS", "ALERTS", "COMPANY", "MUSIC"]);
 assert.ok(global.S.meta.campaignAct1Native);

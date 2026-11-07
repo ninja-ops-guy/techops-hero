@@ -32,15 +32,6 @@ body.day-device-open #touch-ui,body.day-device-open #quest-tracker,body.day-devi
 .day-empty{color:var(--day-dim);font-size:14px}.day-evidence-item{border-bottom:1px solid #294352;padding:0 0 12px;font-size:13px;color:#bcd1dc}.day-evidence-item strong{display:block;font-size:14px;color:var(--day-green);margin-bottom:3px}
 .day-progress{display:flex;gap:4px;list-style:none;padding:0;margin:0}.day-progress li{flex:1;padding:7px 3px;text-align:center;border-bottom:2px solid #345568;color:var(--day-dim);font-size:11px}.day-progress li[data-done=true]{border-color:var(--day-green);color:var(--day-green)}
 .day-actions{display:grid;gap:8px}.day-actions p{font-size:14px;color:#bcd1dc;margin-bottom:4px}
-.day-desktop{border:1px solid #557086;border-radius:9px;background:linear-gradient(145deg,#234563,#0d2034 66%);overflow:clip;min-height:265px;box-shadow:0 15px 28px #0004}
-.day-os-bar{padding:8px 12px;font:12px/1.4 ui-monospace,monospace;background:#091b2c;color:#addced;display:flex;justify-content:space-between}
-.day-app-grid{padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.day-app-grid button{min-height:75px;background:#0b203ee0;border-color:#496780;display:flex;flex-direction:column;gap:6px}.day-app-grid button small{font-weight:400;color:#b5c8d9;font-size:12px}
-.day-notification{margin:0 16px 16px;padding:11px 14px;border-left:3px solid #e7bf78;border-radius:3px;background:#152434;color:#e7d6b9;font-size:13px;animation:day-pin-in .3s ease-out}
-/* Sticky so the session state can never straddle the workspace fold and read
-   as overlapping the console footer on small screens; opaque so scrolled
-   content never ghosts through. overflow:clip above keeps .day-desktop from
-   becoming a scroll container, which would trap the stickiness. */
-.day-taskbar{position:sticky;bottom:0;z-index:1;padding:9px 12px;background:#091b2c;border-top:1px solid #294455;display:flex;justify-content:space-between;font:12px monospace;color:#a7c6d6}
 .day-console-footer{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px 24px;border-top:1px solid var(--day-line);font-size:12px;color:var(--day-dim);background:#091822}
 .day-success{border-color:var(--day-green);background:#153c34;color:#bbf8d9}.day-success h3{color:var(--day-green)}
 #day-route-hud{position:fixed;left:16px;top:92px;width:min(350px,calc(100vw - 32px));z-index:9;border:1px solid #416174;border-radius:9px;background:#0b1a27ed;box-shadow:0 8px 24px #0005;font:13px/1.45 system-ui,sans-serif;color:#e5eff5;overflow:hidden;pointer-events:auto}
@@ -54,7 +45,7 @@ body.day-device-open #touch-ui,body.day-device-open #quest-tracker,body.day-devi
 body.day-route-visible #quest-tracker{visibility:hidden!important;pointer-events:none!important}
 .day-evidence,.day-actions,.day-evidence-item{min-width:0;overflow-wrap:break-word}
 .day-progress>li{min-width:0;overflow-wrap:normal;word-break:normal}
-@media(max-width:360px){.day-console-header{align-items:flex-start}.day-console h2{font-size:16px}.day-close{max-width:105px;padding:8px!important}.day-main,.day-evidence{padding:11px}.day-hotspot-labels{grid-template-columns:1fr}.day-app-grid{padding:11px;gap:8px}.day-app-grid button{padding:9px}}
+@media(max-width:360px){.day-console-header{align-items:flex-start}.day-console h2{font-size:16px}.day-close{max-width:105px;padding:8px!important}.day-main,.day-evidence{padding:11px}.day-hotspot-labels{grid-template-columns:1fr}}
 /* Department entry cards belong to room presentation, never to field controls. */
 body.day-device-open #v710-card,body.day-route-visible #v710-card{display:none!important}
 @media(max-width:720px){#day-route-hud{top:142px;width:calc(100vw - 24px);max-width:330px;display:grid;grid-template-columns:1fr 1fr}#day-route-hud header,#day-route-hud .day-objective small{display:none}#day-route-hud .day-objective{grid-column:1/-1;padding:8px 11px}#day-route-hud .day-objective strong{font-size:13px;line-height:1.3}#day-route-hud .day-nearby{grid-column:1/-1}#day-route-hud button{font-size:12px}#day-route-hud [data-day-jobs]{border-left:1px solid #345669}}
@@ -79,7 +70,6 @@ body.act1-scene-open #quest-tracker{visibility:hidden!important}
 @media(max-height:500px){.os-window,.day-film-mode .os-window{top:5px;bottom:54px}.os-taskbar{height:48px}.os-content{padding:14px}.os-shortcuts{margin:12px 0}.os-actions{padding:7px 12px}.day-film-caption h2{font-size:18px;margin:5px 0}.day-film-caption small{font-size:10px}.day-film-mode .os-titlebar{display:none}}
 @media(prefers-reduced-motion:reduce){.os-desktop *{animation:none!important;transition:none!important}}
 .os-icons[hidden]{display:none!important}
-.day-diagnostic-window{margin:0 16px 16px;border:1px solid #7699b3;border-radius:7px;background:#112333;box-shadow:0 12px 28px #0005;overflow:hidden;animation:day-focus-in .18s ease-out}.day-diagnostic-window header{padding:10px 14px;background:#30495f;font:600 13px system-ui,sans-serif}.day-diagnostic-body{padding:18px}.day-diagnostic-body>span{font:10px ui-monospace,monospace;letter-spacing:.12em;color:#8fb9cc}.day-diagnostic-body p{margin-top:10px;font:14px/1.6 ui-monospace,monospace;color:#d7e9f6}
 body.day-room-visible #quest-tracker{visibility:hidden!important;pointer-events:none!important}
 .os-taskbar>button{white-space:nowrap;flex-shrink:0}.os-titlebar>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.os-titlebar>div{flex-shrink:0}.os-titlebar button{min-width:44px}
 @media(max-width:360px){.os-session{display:none}.os-taskbar>button:last-child{margin-left:auto}.os-titlebar button{padding:8px 12px}}

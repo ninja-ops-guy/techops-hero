@@ -12,6 +12,14 @@ Shipping remains a queue-authorization failure, not a stuck spooler. Plating rem
 
 ## Player experience
 
+### Doors workstations
+
+After standup, walk to Mike’s desk and press **E**. His Doors desktop includes the shift apps and **Prompt**. Type `dir` to list the apps or `open music` to launch one. In the field, interact with the equipment and choose **Open Doors**. The taskbar switches between the desktop and the running application.
+
+At Shipping, send a test label under each test identity in **Print Center**. Record the cause in **Work Order**, use **Queue Security** to apply the approved Print grant, and test the clerk’s path again. Return to the clerk to witness the actual shipment label. At Plating, **Services** and **Connection Test** let Mike inspect the stopped dependency, coordinate the hold with Amit, set its startup mode, and verify the controller session.
+
+Window state and the local spooler’s test-job history last for the computer session. Evidence, repairs and verification persist in the existing case record.
+
 - Top-down exploration locates people, equipment, and the route between them. Equipment exists before diagnosis.
 - Talk establishes the human need. Mike must walk to a real device to inspect or use it. Standup and blocked work mark a route rather than opening his computer remotely.
 - An explicit device interaction opens a close-up with physical inspection points. Each point records a concrete observation; clicking a part does not silently repair it.

@@ -13,6 +13,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
+import { traceLabels, repairQueue } from './lib/doors_workstation.mjs';
 
 const port = Number(process.env.DAY_PLAYTHROUGH_PORT || 4195);
 const base = process.env.DAY_PLAYTHROUGH_BASE_URL || `http://127.0.0.1:${port}/`;
@@ -89,11 +90,11 @@ async function consoleDiag(page) {
     const hit = (a, b) => a && b && !(a.right <= b.x || b.right <= a.x || a.bottom <= b.y || b.bottom <= a.y);
     const consoleEl = document.querySelector('.day-console');
     const dlgText = document.getElementById('dlg-text');
-    const taskbar = sel('.day-taskbar'), footer = sel('.day-console-footer');
+    const taskbar = sel('.doors-bar'), footer = sel('.day-console-footer');
     return {
       dialogue: r(document.getElementById('dialogue')), dlgText: { ...r(dlgText), scrollH: dlgText.scrollHeight },
       console: consoleEl ? { ...r(consoleEl), children: [...consoleEl.children].map(r) } : null,
-      workspace: sel('.day-workspace'), desktop: sel('.day-desktop'), taskbar, footer,
+      workspace: sel('.day-workspace'), desktop: sel('.doors-field'), taskbar, footer,
       taskbarOverlapsFooter: hit(taskbar, footer)
     };
   });
@@ -110,12 +111,23 @@ async function walkTo(page, id, kind) {
       const atContact = key => { const p = S.meta.campaignAct1Native && S.meta.campaignAct1Native[key]; return !!p && Math.abs(S.px - p.x) + Math.abs(S.py - p.y) <= 1; };
       if (kind === 'station' ? TechOpsDayWorld.at(id) : atContact(id)) return { stop: 'arrived', at: { px: S.px, py: S.py } };
       const route = TechOpsDayWorld.currentRoute();
+      if (route?.status === 'unreachable' && route.target?.id === id) return { blocked: true, at: { px: S.px, py: S.py }, tile: S.map[S.py]?.[S.px] };
       if (!route || !route.ok || !route.target || route.target.id !== id || !route.path || !route.path[1]) throw Error('No marked route step toward ' + id + ': ' + JSON.stringify(route && { ok: route.ok, target: route.target && route.target.id, status: route.status }));
       const to = route.path[1], dx = to.x - S.px, dy = to.y - S.py;
       if (Math.abs(dx) + Math.abs(dy) !== 1 || S.map[to.y][to.x] !== 0 || S.npcs.some(n => n.x === to.x && n.y === to.y)) throw Error('Route step is not a clear adjacent floor tile toward ' + id);
       return { to, key: dx === 1 ? 'ArrowRight' : dx === -1 ? 'ArrowLeft' : dy === 1 ? 'ArrowDown' : 'ArrowUp' };
     }, { id, kind });
     if (next.stop) { evidence.stop = next; return evidence; }
+    if (next.blocked) {
+      // The in-game route explicitly asks the player to wait for a blocked
+      // aisle. Keep the marker and require the same route to actually reopen.
+      evidence.transientOccupancy.push(next);
+      await page.waitForFunction(target => {
+        const route = TechOpsDayWorld.currentRoute();
+        return route?.ok && route.target?.id === target && !S.inDialog && !S.room;
+      }, id, { timeout: 6000 });
+      continue;
+    }
     await page.keyboard.down(next.key);
     let movementError;
     try { await page.waitForFunction(({ x, y }) => S.px === x && S.py === y, next.to, { timeout: 1800 }); }
@@ -260,16 +272,14 @@ try {
   assert.equal(report.walkToWorkstation.stop.stop, 'arrived');
   await pressEAndResolveChoose(page, /Shipping workstation/);
   await page.locator('.day-console').waitFor({ state: 'visible', timeout: 8000 });
-  await click(page, '02 · Use local screen');
+  await click(page, '02 · Open Doors');
   await beat('workstation-screen-opened');
   report.consoleDiagWorkstation = await consoleDiag(page);
   await screenshot(page, '10-workstation-diagnostics');
-  for (const id of ['queue_trace', 'compare_user']) await page.locator(`.day-app-grid [data-day-action="observe"][data-value="${id}"]`).click();
+  await traceLabels(page);
   report.screenEvidence = await state(page);
   assert.deepEqual(report.screenEvidence.investigations.shipping_cannot_print.evidence, ['printer_self_test', 'queue_trace', 'compare_user']);
-  await page.locator('[data-day-action="hypothesis"][data-value="permissions"]').click();
-  await click(page, 'Apply the supported repair');
-  await click(page, 'Run the technical verification');
+  await repairQueue(page);
   report.technical = await state(page);
   assert.equal(report.technical.investigations.shipping_cannot_print.technicalCheckPassed, true);
   assert.equal(!!report.technical.tickets.shipping_cannot_print, false, 'technical success cannot close the human task');
