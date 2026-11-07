@@ -1,5 +1,5 @@
-"""Apply an authored, hash-bound source recipe and create an UNATTACHED commit.
-No branch, PR, main, release, deployment, or repository settings are changed here.
+"""Apply a hash-bound source recipe and create an UNATTACHED commit.
+No branch, main, release, deployment, or repository setting is changed here.
 Temporary preparation inputs are removed from the candidate tree.
 """
 import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
@@ -23,8 +23,20 @@ for name,change in data['changes'].items():
         for start,end,replacement in reversed(change['edits']):lines[start:end]=[replacement]
         text=''.join(lines)
     p.write_text(text)
-if data['assemble']:subprocess.run(['node','scripts/assemble-linked-runtime.js'],check=True)
+if data['assemble']:
+    # The recipe removed the marker but retained its leading newline.
+    p=P('campaign_act1.js');p.write_text(p.read_text().removesuffix('\n'))
+    subprocess.run(['node','scripts/assemble-linked-runtime.js'],check=True)
 for name,proof in data['files'].items():assert hashlib.sha256(P(name).read_bytes()).hexdigest()==proof['after'],f'Output mismatch: {name}'
+# Canon review: Waldo's authored opening names K, so native K discovery is also required.
+p=P('see-world/universe-core.js');text=p.read_text()
+old="if(!m.ozKnown)return denied('Continue the orbital investigation in TechOps Hero.');"
+new="if(!m.ozKnown||!m.kSeen)return denied('Continue the orbital investigation in TechOps Hero.');"
+assert text.count(old)==1;p.write_text(text.replace(old,new))
+subprocess.run(['node','scripts/assemble-linked-runtime.js'],check=True)
+for name,digest in {'see-world/universe-core.js':'f1e5998dfac145fe8a1c41cf3917ea34e1a2079fa9e2e4fe6d351a8b622cc69f','campaign_act1.js':'cdad0acc8526b5543d6e4c5293c42198c12ed37a1804bb37b9a91453d5d25f9e'}.items():
+    assert hashlib.sha256(P(name).read_bytes()).hexdigest()==digest,'Hardening output mismatch'
+    data['files'][name]['after']=digest
 subprocess.run(['node','scripts/assemble-linked-runtime.js','--check'],check=True)
 for name in data['files']:
     if name.endswith(('.js','.mjs')):subprocess.run(['node','--check',name],check=True)
@@ -41,5 +53,5 @@ for name in subprocess.check_output(['git','ls-files','.candidate','.github/work
 t=api('git/trees',{'base_tree':tree,'tree':entries})
 c=api('git/commits',{'message':'Implement canon-gated See World bridge and seven native Night Walker sections','tree':t['sha'],'parents':[head]})
 P('candidate-evidence').mkdir(exist_ok=True)
-P('candidate-evidence/candidate.json').write_text(json.dumps({'status':'UNATTACHED_CANDIDATE_NOT_RELEASE_QUALIFIED','repository':repo,'parent':head,'commit':c['sha'],'tree':t['sha'],'recipe_sha256':hashlib.sha256(raw).hexdigest(),'files':data['files'],'verification':['all before and after SHA-256 values matched','generated bundle check passed','changed JavaScript syntax checks passed'],'branch_mutated':False},indent=2))
+P('candidate-evidence/candidate.json').write_text(json.dumps({'status':'UNATTACHED_CANDIDATE_NOT_RELEASE_QUALIFIED','repository':repo,'parent':head,'commit':c['sha'],'tree':t['sha'],'recipe_sha256':hashlib.sha256(raw).hexdigest(),'files':data['files'],'verification':['all before and final after SHA-256 values matched','generated bundle check passed','changed JavaScript syntax checks passed'],'branch_mutated':False},indent=2))
 print('Unattached candidate:',c['sha'])
