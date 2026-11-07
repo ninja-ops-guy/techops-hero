@@ -58,10 +58,17 @@
   const _getItem = LS.getItem.bind(LS);
   let healing732 = false;
   LS.setItem = function (k, v) {
+    // Ownership is native and remains available if the optional companion is down.
+    // Run this before rotating backups or using the captured native setter.
+    if (window.TechOpsLinkedSaveCore) window.TechOpsLinkedSaveCore.guardWrite(k, v);
+    else if ((k === "techops_save" || k === "techops_hero_campaign_v1") && _getItem("techops:linked:active:v1"))
+      throw new Error("Native save ownership is not initialized. Reload before saving.");
     if (k === "techops_save" && !healing732) {
       try { const prev = _getItem("techops_save"); if (prev && prev !== v) _setItem("techops_save_bak", prev); } catch (e) { }
     }
-    return _setItem(k, v);
+    const result = _setItem(k, v);
+    if (window.TechOpsLinkedSaveCore) window.TechOpsLinkedSaveCore.saved(k);
+    return result;
   };
   LS.getItem = function (k) {
     if (k !== "techops_save") return _getItem(k);
