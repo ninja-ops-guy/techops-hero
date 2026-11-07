@@ -386,6 +386,8 @@ function canonicalCampaignMilestone(actId, requiredFacts) {
 window.TechOpsStoryAuthority = Object.freeze({
   VERSION: "1.2",
   canonical: true,
+  // v1.7: solo POV opens at The Violinist; shared free roam remains Duet-gated.
+  canPlayFeliciaSolo: () => canonicalCampaignMilestone("act_3", ["violinist_revealed"]),
   canPlayFelicia: () => canonicalCampaignMilestone("act_6", ["duet_protocol_complete", "felicia_playable"])
 });
 function newState() {
@@ -429,6 +431,7 @@ const save = () => {
       window.__techopsSaveError = "state validation rejected save";
       return false;
     }
+    if (window.TechOpsUniverse) window.TechOpsUniverse.beforeProfile(S, localStorage);
     const saveRevision = Math.max(Date.now(), Number(S._saveRevision || 0) + 1);
     S._saveRevision = saveRevision;
     const payload = JSON.stringify({ _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
@@ -479,6 +482,7 @@ const save = () => {
     }
     window.__techopsSaveError = null;
     window.__techopsSaveFailureNotified = false;
+    if (window.TechOpsUniverse) window.TechOpsUniverse.afterSave();
     return true;
   } catch (e) {
     window.__techopsSaveError = String(e && e.stack || e);
