@@ -441,7 +441,7 @@
     const tm = performance.now();
     if (S && S.npcs && tm - _wanderT > 2600 && !S.inBattle && !S.inDialog) {
       _wanderT = tm;
-      const amb = S.npcs.filter(n => n.ambient);
+      const amb = S.npcs.filter(n => n.ambient && !n.campaignAct1);
       const n = pick(amb);
       if (n && Math.random() < .6) {
         const dx = R(-1, 1), dy = R(-1, 1);

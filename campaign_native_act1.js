@@ -97,7 +97,7 @@
     }
     if (!pos || !openTile(map, pos)) pos = { x: contact.fallback.x, y: contact.fallback.y };
     var key = pos.x + "," + pos.y;
-    if (used[key]) {
+    if (used[key] || !openTile(map, pos)) {
       var found = null;
       for (var radius=1;radius<Math.max(map.length,map[0].length)&&!found;radius++) {
         for (var dy=-radius;dy<=radius&&!found;dy++) for(var dx=-radius;dx<=radius;dx++) {
@@ -109,7 +109,6 @@
       pos=found;key=pos.x+","+pos.y;
     }
     used[key] = true;
-    if (map && map[pos.y]) map[pos.y][pos.x] = 0;
     return pos;
   }
   function addContact(state, contact, pos) {
@@ -125,15 +124,21 @@
     if ((state.day === 1 && campaign.flags.tuesday_morning_reached) || (state.day === 2 && !nextShift)) return false;
     if(nextShift)state.npcs=(state.npcs||[]).filter(function(npc){return npc.id!==CONTACTS.access.id;});
     var used = {}, native = {}, keys = nextShift ? ["standup","shipping","plating"] : Object.keys(CONTACTS);
-    (state.npcs || []).forEach(function(npc){if(!Object.keys(CONTACTS).some(function(key){return CONTACTS[key].id === npc.id;}))used[npc.x+","+npc.y]=true;});
+    (state.npcs || []).forEach(function(npc){used[npc.x+","+npc.y]=true;});
     // Authored office people are rendered separately from state.npcs. Reserve
     // their tiles too, or a displaced contact can replace their interaction.
     var coworkers = typeof COWORKERS !== "undefined" && Array.isArray(COWORKERS) ? COWORKERS : [];
-    coworkers.forEach(function(npc){used[npc.x+","+npc.y]=true;});
+    var coworkerTiles = new Set(coworkers.map(function(npc){return npc.x+","+npc.y;}));
+    coworkerTiles.forEach(function(tile){used[tile]=true;});
     keys.forEach(function (key) {
       var contact = CONTACTS[key], existing = (state.npcs || []).find(function(npc){return npc.id === contact.id;});
-      var pos = existing ? {x:existing.x,y:existing.y} : findSpot(state.map,contact,used);
-      used[pos.x+","+pos.y]=true; native[key]=pos; addContact(state,contact,pos);
+      var pos = existing && {x:existing.x,y:existing.y};
+      if (!pos || coworkerTiles.has(pos.x+","+pos.y)) {
+        pos = findSpot(state.map,contact,used);
+        if (existing) { existing.x = pos.x; existing.y = pos.y; }
+        else addContact(state,contact,pos);
+      }
+      native[key]=pos;
       if(key === "standup"){var board=state.npcs.find(function(npc){return npc.id === contact.id;});if(board)board.name=nextShift?"SHIFT HANDOFF":contact.name;}
     });
     native.sector04Door = state._nightObjs && state._nightObjs.door ? { x: state._nightObjs.door.x, y: state._nightObjs.door.y } : { x: 20, y: 28 };
