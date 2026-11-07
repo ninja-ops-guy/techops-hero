@@ -21,5 +21,5 @@
   if(!root.TechOpsGoodDogsMobileVisualPolish)load("good_dogs_mobile_visual_polish.js?v=20260920-quality-r1","__techopsGoodDogsMobileVisualPolishLoader");
   if(!root.TechOpsWorkstationClarityPatch||Number(root.TechOpsWorkstationClarityPatch.VERSION||0)<2)load("workstation_cinematic_clarity_patch.js?v=20260904-workstation-retired-v2","__techopsWorkstationClarityPatchLoaderV2");
   if(!root.TechOpsCampaignBibleGapPass)load("campaign_bible_gap_pass.js","__techopsBibleGapLoader");
-  if(!root.TechOpsLateGameBootstrap)load("campaign_late_game_bootstrap.js?v=20260920-revision-r1","__techopsLateGameBootstrapLoader");
+  if(!root.TechOpsLateGameBootstrap)load("campaign_late_game_bootstrap.js?v=20261107-linked-r1","__techopsLateGameBootstrapLoader");
 })(typeof globalThis!=="undefined"?globalThis:this);

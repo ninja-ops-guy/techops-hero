@@ -208,6 +208,30 @@
     });
   }
   function dialog(title,text,options){if(!root.dlg)return false;const box=el('dialogue');if(box){box.style.removeProperty('display');box.style.removeProperty('visibility');}root.dlg(title,text,options);return true;}
+  async function openLinkedTimeline(){
+    const owner = state(), scene = world();
+    const escape = value => String(value).replace(/[&<>"']/g, char =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
+    const back = [{t:'Back to the campaign journal',f:openCampaign}];
+    const box = el('dialogue');
+    dialog('STORY TIMELINE','Checking the active linked playthrough…',back);
+    const title = el('dlg-name');
+    let linked;
+    try {
+      const consumer = await import('./see_world_night.mjs');
+      linked = await consumer.inspect(owner, root.localStorage);
+    } catch (_) {}
+    if (owner !== state() || scene !== world() || !owner?.inDialog || box?.classList.contains('hidden') ||
+      title?.textContent !== 'STORY TIMELINE') return false;
+    if (!linked) return dialog('STORY TIMELINE','Linked progress is unavailable for this playthrough.',back);
+    const rows = linked.timeline.map(entry => [entry.title, entry.placement, entry.chapter, entry.state, entry.next]
+      .filter(Boolean).map(escape).join(' · '));
+    for (const section of linked.sections) rows.push(
+      escape(section.title) + ' · checkpoint earned · ' +
+      (section.nativeReady ? '' : 'native prerequisites pending · ') +
+      'awaiting content: ' + escape(section.missing));
+    return dialog('STORY TIMELINE',rows.join('<br><br>'),back);
+  }
   function openCampaign(){
     if(!active(world())||transition)return false;
     if(standalone(state()))return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. Return to the title to continue the Day campaign; this free roam run cannot change its story objectives.',[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}]);
@@ -220,6 +244,7 @@
       if(root.TechOpsSector04Runtime)options.push({t:world()._sector04?'Continue Sector 04 investigation':'Enter Sector 04 — story campaign',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsSector04Runtime.enterBrowser();}});
       options.push({t:'Return to daytime investigation',f:resumeDay});
     }
+    if(state()?._linked)options.push({t:'Open linked Story Timeline',f:openLinkedTimeline});
     options.push({t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
   }
   function openHome(){

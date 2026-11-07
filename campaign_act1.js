@@ -3,10 +3,10 @@
  * Canonical opening state is snake_case; camelCase aliases remain for legacy hooks/saves.
  */
 (function (root, factory) {
-  var api = factory();
+  var api = factory(root);
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.TechOpsCampaign = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+})(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
   var VERSION = 2;
@@ -417,7 +417,17 @@
     syncLegacyFlags(state); validate(state);
     storage = storage || (typeof localStorage !== "undefined" ? localStorage : null);
     assert(storage && storage.setItem, "A storage adapter is required");
-    storage.setItem(SAVE_KEY, JSON.stringify(state)); return true;
+    var bridge = root.document && storage === root.localStorage && root.TechOpsLinkedProgression;
+    var link = bridge && bridge.stampCampaign(storage, state);
+    var next = link ? Object.assign({}, link, { revision: link.revision + 1 }) : undefined;
+    var raw = JSON.stringify(next ? Object.assign({}, state, { _linked: next }) : state);
+    storage.setItem(SAVE_KEY, raw);
+    if (link) {
+      assert(storage.getItem(SAVE_KEY) === raw, "Campaign save could not be verified");
+      state._linked = next;
+      bridge.publish(storage);
+    }
+    return true;
   }
   function load(storage) {
     storage = storage || (typeof localStorage !== "undefined" ? localStorage : null);
@@ -429,6 +439,8 @@
     storage = storage || (typeof localStorage !== "undefined" ? localStorage : null);
     assert(storage && typeof storage.removeItem === "function", "A storage adapter with removeItem is required");
     storage.removeItem(SAVE_KEY);
+    if (root.document && storage === root.localStorage && root.TechOpsLinkedProgression)
+      storage.removeItem(root.TechOpsLinkedProgression.SNAPSHOT);
     return initialState();
   }
 

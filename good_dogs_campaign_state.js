@@ -54,6 +54,11 @@
     if(from===5&&to===6)writeMany({mike_index_defeated:true,k_identity_status:"K",cell_1984_route_open:true});
     if(from===6&&to===7)writeMany({waldo_seen:true,waldo_freed:true,waldo_relationship_k:"accepted",release_expected_seen:true,orpheus_prediction_seeded:true,warden_null_active:true});
     if(from===7&&to===8){writeMany({shuttle_bay_reached:true,warden_null_defeated:true,orbital_custody_broken:true});watchReturn();}
+    var linkedEvents={
+      "1:2":["cell_118_known","cell_1984_known"],"3:4":["cell_118_reached"],"4:5":["k_freed"],
+      "6:7":["waldo_seen","waldo_freed","warden_null_active"],"7:8":["warden_null_defeated"]
+    };
+    if(root.TechOpsLinkedProgression)root.TechOpsLinkedProgression.recordDogs(root.S,linkedEvents[from+":"+to]||[]);
     var persisted=persist();root.__goodDogsSemanticTransition={from:from,to:to,at:Date.now(),state:snapshot(),persisted:persisted};return true;
   }
   // Older saves already passed rescue checkpoints before named facts existed.
@@ -85,6 +90,7 @@
       warden_null_defeated:true,orbital_custody_broken:true,crew_returned_to_earth:true,
       watchdog_k_available:true,watchdog_waldo_available:true,watchdog_good_dogs_available:true
     });
+    if(root.TechOpsLinkedProgression)root.TechOpsLinkedProgression.recordDogs(root.S,["crew_returned_to_earth"]);
     var canonicalImported=stampCanonicalInterlude(),story=root.S&&root.S.story;
     g.completedAt=g.completedAt||Date.now();root.__goodDogsMainCampaignBridge={complete:true,canonicalImported:canonicalImported,origin:campaignOrigin(),at:g.completedAt,facts:story&&story.facts||{}};persist();return snapshot();
   }

@@ -31,7 +31,7 @@ requiredElement("tb-menu");
 requiredElement("dialogue");
 
 const lastHistoricalHook = scriptIndex("v737_hooks.js");
-const campaignAct1 = scriptIndex("campaign_act1.js?v=20260920-revision-r1");
+const campaignAct1 = scriptIndex("campaign_act1.js?v=20261107-linked-r1");
 const campaignAssets = scriptIndex("campaign_assets.js");
 const campaignRuntime = scriptIndex("campaign_runtime.js");
 const sector04 = scriptIndex("campaign_sector04.js");

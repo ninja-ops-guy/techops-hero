@@ -133,7 +133,7 @@
     if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
     window.__techopsAct1VisualLoader = true;
     var script = window.document.createElement("script");
-    script.src = "campaign_native_act1_visuals.js?v=20261105-doors-r1";
+    script.src = "campaign_native_act1_visuals.js?v=20261107-linked-r1";
     script.async = false;
     window.document.head.appendChild(script);
     return true;
@@ -144,3 +144,192 @@
   if (typeof window !== "undefined" && window.addEventListener) window.dispatchEvent(new CustomEvent("techops:story-ready", { detail: { version: VERSION, api: api } }));
   return api;
 });
+
+/* Native save authority for the same-origin See World link. */
+(function (root) {
+  "use strict";
+  const ACTIVE = "techops:linked:active:v1";
+  const SNAPSHOT = "techops:linked:snapshot:v1";
+  const PROFILE = "techops_save";
+  const CAMPAIGN = "techops_hero_campaign_v1";
+  const SOURCE = "techops-hero/native-milestones/1";
+  const dogOrder = ["cell_118_known", "cell_1984_known", "cell_118_reached", "k_seen", "k_freed",
+    "waldo_seen", "waldo_freed", "warden_null_active",
+    "warden_null_defeated", "crew_returned_to_earth"];
+
+  const read = (storage, key) => JSON.parse(storage.getItem(key));
+  const write = (storage, key, value) => {
+    const raw = JSON.stringify(value);
+    storage.setItem(key, raw);
+    if (storage.getItem(key) !== raw) throw new Error("Linked save was not persisted.");
+  };
+  const id = value => typeof value === "string" && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(value);
+  const sameRun = (a, b) => !!(a && b && a.version === 1 && b.version === 1 &&
+    id(a.profileId) && id(a.playthroughId) && a.profileId === b.profileId && a.playthroughId === b.playthroughId);
+  const runtime = () => typeof S !== "undefined" ? S : root.S;
+  const excluded = state => !!(state?.meta?._standaloneMode || state?.meta?._linkedQA ||
+    state?.meta?._v736?.campaignOrigin === "standalone" || state?.campaignOrigin === "standalone");
+  const debug = () => {
+    const query = new URLSearchParams(root.location?.search);
+    return ["dev", "qa", "test", "preview"].some(key => query.has(key));
+  };
+
+  function begin(storage) {
+    const previous = read(storage, ACTIVE);
+    const binding = { version: 1, profileId: id(previous?.profileId) ? previous.profileId : root.crypto.randomUUID(),
+      playthroughId: root.crypto.randomUUID() };
+    write(storage, ACTIVE, binding);
+    return { ...binding, revision: 0 };
+  }
+
+  function invalidate(storage) {
+    try { storage.removeItem(SNAPSHOT); } catch (_) {}
+  }
+
+  function requireCurrent(storage, state, key) {
+    const saved = read(storage, key);
+    const active = read(storage, ACTIVE);
+    const link = state?._linked;
+    if (!sameRun(active, link)) {
+      if (link || sameRun(active, saved?._linked)) throw new Error("This native save belongs to a different playthrough.");
+      return null;
+    }
+    const revision = sameRun(active, saved?._linked) ? saved._linked.revision : 0;
+    if (!Number.isSafeInteger(revision) || link.revision !== revision)
+      throw new Error("This native save is stale. Reload the current playthrough.");
+    return link;
+  }
+
+  function stampCampaign(storage, state) {
+    const live = runtime();
+    if (!state._linked && live?._linked && !storage.getItem(CAMPAIGN) && !excluded(live) && !debug())
+      state._linked = { ...live._linked, revision: 0 };
+    if (!state._linked && !live?._linked) return null;
+    if (!sameRun(live?._linked, state._linked) || excluded(live) || debug())
+      throw new Error("Campaign writer is outside the active native playthrough.");
+    return requireCurrent(storage, state, CAMPAIGN);
+  }
+
+  function milestones(campaign, profile) {
+    const result = [];
+    if (profile.meta?._v733met === true) result.push("waldo_introduced");
+    if (!campaign || !root.TechOpsStory) return result;
+    const copy = JSON.parse(JSON.stringify(campaign));
+    root.TechOpsStory.syncAct1State(copy);
+    const { completedActs, facts } = copy.story;
+    let returned = false;
+    for (const act of root.TechOpsStory.ACTS) {
+      if (act.id === "interlude") {
+        // These events come from the native Good Dogs route, independently of
+        // the dedicated campaign's late-game import and legacy rescue repairs.
+        const events = profile.meta?._linkedDogs;
+        if (sameRun(profile._linked, events)) {
+          for (const [index, event] of dogOrder.entries()) {
+            if (events.facts?.[index] !== event) break;
+            result.push(event);
+          }
+        }
+        returned = result.includes("crew_returned_to_earth");
+        if (!returned) break;
+      }
+      if (!completedActs.includes(act.id) || ![...act.requires, ...act.produces,
+        ...(act.completionRequires || [])].every(fact => facts[fact] === true)) break;
+      result.push(act.id, ...act.produces.filter(fact => !result.includes(fact)));
+    }
+    return result.sort();
+  }
+
+  function publish(storage) {
+    try {
+      const active = read(storage, ACTIVE), profile = read(storage, PROFILE);
+      const campaign = read(storage, CAMPAIGN);
+      if (debug()) return null;
+      if (!sameRun(active, profile?._linked) || excluded(profile) ||
+        (campaign && !sameRun(active, campaign._linked))) {
+        invalidate(storage);
+        return null;
+      }
+      const previous = read(storage, SNAPSHOT);
+      const sourceRevision = { profile: profile._linked.revision, campaign: campaign?._linked.revision ?? 0 };
+      const facts = milestones(campaign, profile);
+      const current = sameRun(active, previous) && previous.source === SOURCE ? previous : null;
+      const floor = active.sourceRevision;
+      if (floor && (sourceRevision.profile < floor.profile || sourceRevision.campaign < floor.campaign)) {
+        invalidate(storage);
+        return null;
+      }
+      if (current && (sourceRevision.profile < current.sourceRevision.profile ||
+        sourceRevision.campaign < current.sourceRevision.campaign ||
+        !current.milestones.every(fact => facts.includes(fact)))) {
+        // An older native save must never expose the newer snapshot.
+        storage.removeItem(SNAPSHOT);
+        write(storage, ACTIVE, { ...active, disabled: true });
+        return null;
+      }
+      if (active.disabled) return null;
+      if (current && current.sequence === active.sequence && current.sourceRevision.profile === sourceRevision.profile &&
+        current.sourceRevision.campaign === sourceRevision.campaign) return current;
+      const snapshot = { version: 1, source: SOURCE, profileId: active.profileId, playthroughId: active.playthroughId,
+        sequence: (active.sequence ?? 0) + 1, sourceRevision, milestones: facts };
+      write(storage, SNAPSHOT, snapshot);
+      const latest = read(storage, ACTIVE);
+      if (!sameRun(active, latest) || latest.sequence !== active.sequence) return null;
+      write(storage, ACTIVE, { ...active, sequence: snapshot.sequence, sourceRevision });
+      return snapshot;
+    } catch (error) {
+      root.__techopsLinkedProgressionError = String(error);
+      try { storage.removeItem(SNAPSHOT); } catch (_) {}
+      return null;
+    }
+  }
+
+  function current(storage) {
+    const active = read(storage, ACTIVE), snapshot = read(storage, SNAPSHOT);
+    const profile = read(storage, PROFILE), campaign = read(storage, CAMPAIGN);
+    if (!sameRun(active, snapshot) || active.disabled || snapshot.source !== SOURCE ||
+      active.sequence !== snapshot.sequence || active.sourceRevision?.profile !== snapshot.sourceRevision?.profile ||
+      active.sourceRevision?.campaign !== snapshot.sourceRevision?.campaign ||
+      !sameRun(active, profile?._linked) || excluded(profile) ||
+      (campaign && !sameRun(active, campaign._linked)) ||
+      snapshot.sourceRevision.profile !== profile._linked.revision ||
+      snapshot.sourceRevision.campaign !== (campaign?._linked.revision ?? 0)) return null;
+    const facts = milestones(campaign, profile);
+    return JSON.stringify(facts) === JSON.stringify(snapshot.milestones) ? snapshot : null;
+  }
+
+  function canStartDogs(state, storage) {
+    if (!state?._linked || excluded(state) || debug()) return false;
+    let snapshot;
+    try { snapshot = current(storage); } catch (_) { return false; }
+    return sameRun(state._linked, snapshot) && snapshot.milestones.includes("orbital_signal_found");
+  }
+
+  function startDogs(state, storage) {
+    if (!canStartDogs(state, storage)) return false;
+    if (sameRun(state._linked, state.meta._linkedDogs)) return true;
+    const dogs = state.meta._v736;
+    if (!dogs || dogs.m !== 1 || dogs.k || dogs.waldo || dogs.done) return false;
+    dogs.campaignOrigin = "linked-main";
+    state.meta._linkedDogs = { ...state._linked, facts: [] };
+    return true;
+  }
+
+  function recordDogs(state, facts) {
+    const events = state?.meta?._linkedDogs;
+    if (!sameRun(state?._linked, events) || state.meta._v736?.campaignOrigin !== "linked-main" || excluded(state) || debug()) return false;
+    for (const fact of facts) {
+      if (dogOrder[events.facts.length] === fact) events.facts.push(fact);
+    }
+    return true;
+  }
+
+  function canImportDogs(state, campaign) {
+    if (!state?._linked && !campaign?._linked) return true; // existing native legacy route
+    const events = state?.meta?._linkedDogs;
+    return !excluded(state) && sameRun(state?._linked, campaign?._linked) &&
+      sameRun(state._linked, events) && events.facts.at(-1) === "crew_returned_to_earth";
+  }
+
+  const api = { ACTIVE, SNAPSHOT, SOURCE, begin, invalidate, requireCurrent, stampCampaign, publish, current, canStartDogs, startDogs, recordDogs, canImportDogs, sameRun, excluded, debug };
+  root.TechOpsLinkedProgression = Object.freeze(api);
+})(globalThis);

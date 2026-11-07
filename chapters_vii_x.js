@@ -28,6 +28,7 @@
   function syncGoodBoysFacts(){
     var s=campaign(),m=goodBoysMeta();if(!s||!m)return false;
     if(standaloneGoodBoys(m)||!canonicalInterludeEligible(s))return false;
+    if(root.TechOpsLinkedProgression&&!root.TechOpsLinkedProgression.canImportDogs(root.S,s))return false;
     s.lateGame=s.lateGame||{};
     if(s.lateGame.goodDogsImported)return true;
     if(m.done&&m.k&&m.waldo&&tryCompleteAct(s,"interlude")){markFacts(s,["k_freed","waldo_freed","warden_null_defeated","crew_returned_to_earth"]);s.lateGame.goodDogsImported=true;record(s,"good_dogs_interlude_imported",{mission:m.m||8});return true;}

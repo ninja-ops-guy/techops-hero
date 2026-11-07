@@ -993,6 +993,9 @@
           const found = cs.evidence.filter(e => e.found).length;
           if (found >= 3 && NM.x > NMW736() - 260) {
             cs.cellOpened = true;
+            if (window.TechOpsLinkedProgression?.recordDogs(S, ["k_seen"])) {
+              try { save(); } catch (e) { }
+            }
             const mt = meta736(); if (mt) { mt.k = true; }
             try { sfx("promote"); } catch (e) { }
             dlg("⌘ CELL 118 — THE PRISONER", "The restraints answer K's cipher before you touch them. He stands, and for one frame his shadow is someone else.<br><br><i>\"I found out they were printing him. So they printed a cell for me. Freeing me is how you reach Cell 1984 — I'm the only route key left.\"</i><br><br><b>K JOINS AS TACTICAL SUPPORT — press Q in combat.</b>", [
@@ -1392,9 +1395,14 @@
         try {
           const s = (typeof S !== "undefined") ? S : null;
           if (s && s.meta && s.meta._v733ghost && !(s.meta._v736 && s.meta._v736.done) && typeof NM !== "undefined" && NM && !NM._v736) {
+            const link = window.TechOpsLinkedProgression;
+            if (s._linked && !link?.canStartDogs(s, localStorage)) return _nmCarMenu736();
             const mt = meta736();
             return dlg("🚗 THE CHARGER — where to?", "The engine idles. Katrin's intercepted burst repeats on the police band: <b>CELL 118 · CELL 1984</b>.<br><small>Side story: progress is saved between missions.</small>", [
-              { t: `🛰 GOOD DOGS PROTOCOL <small>· co-op side story${mt && mt.m > 1 ? " · resume M" + mt.m : ""}</small>`, f: () => { closeDlg(); try { s.nightMode = null; NM = null; } catch (e) { } start736(); } },
+              { t: `🛰 GOOD DOGS PROTOCOL <small>· co-op side story${mt && mt.m > 1 ? " · resume M" + mt.m : ""}</small>`, f: () => {
+                if (s._linked && !link?.startDogs(s, localStorage)) return;
+                closeDlg(); s.nightMode = null; NM = null; start736();
+              } },
               { t: "Regular district map…", f: () => { closeDlg(); _nmCarMenu736(); } },
             ]);
           }

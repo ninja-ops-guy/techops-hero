@@ -32,13 +32,13 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   const bootstrap=fs.readFileSync("campaign_late_game_bootstrap.js","utf8");
   assert.doesNotThrow(()=>new Function(bootstrap),"late-game browser bootstrap must parse");
   ["morningstar_build.js","swarm_doctrine.js","morningstar_swarm_runtime.js","chapters_vii_x.js","felicia_first_office.js","campaign_completion_runtime.js"].forEach(file=>assert.ok(bootstrap.includes(file),`late-game bootstrap must load ${file}`));
-  assert.ok(bootstrap.includes('def.src+"?v=20260920-revision-r1"'),"late-game progression repairs must bypass stale browser caches");
+  assert.ok(bootstrap.includes('def.src+"?v=20261107-linked-r1"'),"late-game progression repairs must bypass stale browser caches");
   assert.ok(bootstrap.includes("TechOpsCampaignNativeAct2"),"Felicia office wrapper must wait until native Act II owns interaction");
   assert.ok(bootstrap.indexOf("swarm_doctrine.js")<bootstrap.indexOf("morningstar_swarm_runtime.js"),"swarm doctrine must load before its gameplay bridge");
   assert.ok(bootstrap.indexOf("morningstar_swarm_runtime.js")<bootstrap.indexOf("campaign_completion_runtime.js"),"gameplay bridge must exist before shared maintenance owner runs");
   assert.ok(!bootstrap.includes("TechOpsGoodBoysCampaignState.transition"),"late-game bootstrap must never mutate Good Boys mission authority");
   const entry=fs.readFileSync("campaign_native_act1_visuals.js","utf8");
-  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20260920-revision-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
+  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20261107-linked-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
 }
 
 // Player-facing MORNINGSTAR/swarm bridge: shared HUD + Felicia Watchdog actions remain authority-routed.

@@ -431,7 +431,10 @@ const save = () => {
     }
     const saveRevision = Math.max(Date.now(), Number(S._saveRevision || 0) + 1);
     S._saveRevision = saveRevision;
-    const payload = JSON.stringify({ _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
+    const linked = window.TechOpsLinkedProgression;
+    const nativeLink = linked && !linked.excluded(S) && !linked.debug() && linked.requireCurrent(localStorage, S, "techops_save");
+    const nextLink = nativeLink ? { ...nativeLink, revision: nativeLink.revision + 1 } : undefined;
+    const payload = JSON.stringify({ _linked: nextLink, _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
     const standaloneMode = S.meta && S.meta._standaloneMode;
     const standaloneNight = standaloneMode === "nightcrawler";
     const standaloneGoodDogs = standaloneMode === "gooddogs";
@@ -463,6 +466,12 @@ const save = () => {
     }
 
     writeVerified(targetKey, payload);
+    if (nativeLink) {
+      S._linked = nextLink;
+      linked.publish(localStorage);
+    } else if (targetKey === "techops_save" && linked) {
+      localStorage.removeItem(linked.SNAPSHOT);
+    }
 
     // The profile save remains backwards-compatible while a separate, plain-
     // data checkpoint makes CONTINUE resume the actual workday scene.
@@ -588,6 +597,8 @@ function loadDayCheckpoint(profile) {
     const state = envelope && (envelope.version === 1 || envelope.version === 2) && envelope.state;
     if (!state || !state.map || !Array.isArray(state.npcs) || !Array.isArray(state.tickets) || Number(state.day) !== Number(profile && profile.day)) return null;
     if (state.nightMode || state.inBattle || state.gameOver) return null;
+    if (profile?._linked && (!window.TechOpsLinkedProgression?.sameRun(profile._linked, state._linked) ||
+      profile._linked.revision !== state._linked.revision)) return null;
     const checkpointRevision = Number(envelope.savedAt || state._saveRevision || 0);
     const profileRevision = Number(profile && profile._saveRevision || 0);
     if (profileRevision && checkpointRevision < profileRevision) return null;
@@ -2568,7 +2579,7 @@ function showEnding(win) {
     const box = $("eod-rewards"); box.innerHTML = "";
     const again = document.createElement("button");
     again.innerHTML = `<span class="rw-icon">▶</span><b>CLOCK BACK IN</b><br>Fresh run, day 1.`;
-    again.onclick = () => { $("eod").classList.add("hidden"); localStorage.removeItem("techops_save"); location.reload(); };
+    again.onclick = () => { $("eod").classList.add("hidden"); localStorage.removeItem("techops_save"); window.TechOpsLinkedProgression?.invalidate(localStorage); location.reload(); };
     box.appendChild(again);
     $("eod").classList.remove("hidden");
   }
@@ -2581,7 +2592,7 @@ function showCredits(stats) {
   const box = $("eod-rewards"); box.innerHTML = "";
   const again = document.createElement("button");
   again.innerHTML = `<span class="rw-icon">▶</span><b>PLAY AGAIN</b><br>`;
-  again.onclick = () => { localStorage.removeItem("techops_save"); location.reload(); };
+  again.onclick = () => { localStorage.removeItem("techops_save"); window.TechOpsLinkedProgression?.invalidate(localStorage); location.reload(); };
   box.appendChild(again);
 }
 
@@ -2878,7 +2889,17 @@ function showTouchUI() {
 }
 $("btn-start").addEventListener("click", () => {
   const alternateMode = window.__techopsAlternateStartMode || window.__productionDesiredMode || null;
+  let binding;
   if (!alternateMode) {
+    const linked = window.TechOpsLinkedProgression;
+    if (linked && !linked.debug()) {
+      try { binding = linked.begin(localStorage); }
+      catch (error) {
+        window.__techopsLinkedProgressionError = String(error);
+        toast("Save storage is unavailable. The previous playthrough was preserved.");
+        return;
+      }
+    }
     localStorage.removeItem("techops_save");
     localStorage.removeItem("techops_save_bak");
     localStorage.removeItem(DAY_CHECKPOINT_KEY);
@@ -2891,6 +2912,7 @@ $("btn-start").addEventListener("click", () => {
     }
   }
   S = newState();
+  if (binding) S._linked = binding;
   if (alternateMode === "nightcrawler") S.meta._standaloneMode = "nightcrawler";
   // difficulty select first
   $("title-screen").classList.add("hidden");
@@ -2916,6 +2938,8 @@ $("btn-continue").addEventListener("click", () => {
   const d = load(); if (!d) return;
   const checkpoint = loadDayCheckpoint(d);
   S = newState(); Object.assign(S, checkpoint || d);
+  if (d._linked) window.TechOpsLinkedProgression?.publish(localStorage);
+  else window.TechOpsLinkedProgression?.invalidate(localStorage);
   if (!checkpoint) { setupDay(); S.day = d.day; }
   else {
     try { if (window.TechOpsCampaignNativeAct1) window.TechOpsCampaignNativeAct1.ensureWorld(); } catch (e) { }
