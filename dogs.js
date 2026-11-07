@@ -23,3 +23,10 @@ window.TO_DOGS = (function(){ try { return window.__GK_DOGS || undefined; } catc
   try{root.__techopsPreProductionStepNM=(typeof stepNM==="function"?stepNM:null);}catch(e){}
   root.__techopsLexicalBridgeVersion=4;
 })(window);
+
+// Optional linked-story companion. Load after parser-owned campaign authorities.
+(function(root){
+  if(!root.document)return;
+  function loadLinked(){import('./see_world_linked_native.mjs').catch(function(error){root.__seeWorldLinkedLoadError=String(error&&error.message||error);});}
+  if(root.document.readyState==='loading')root.addEventListener('DOMContentLoaded',loadLinked,{once:true});else loadLinked();
+})(window);
