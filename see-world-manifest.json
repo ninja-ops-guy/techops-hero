@@ -1,0 +1,20 @@
+{
+  "portfolio_base": "a3e5499eb3205484fcc5e379c44dababe2f825fe",
+  "note": "Origin routing patch applied to this pinned reader; no save schema changes. Matching candidate hashes below.",
+  "files": {
+    "app.mjs": "2dc48bfe8ee1e7d967dddc1c44bf700ea8fd414eef616c831b8697a762a1c3da",
+    "campaigns.mjs": "41e7bcc88a8e23c122c5c6763642774937ef80ac1bbb4e71590d4ca40c146765",
+    "engine.mjs": "38cd4537638dfef14d7fd32546ead07a6165231d390396648b291476f7d30be6",
+    "index.html": "b40798dbb7cc0b66c3b3a09d4753686904d3e7145fef56e01080f6b57e166b3a",
+    "linked-app.mjs": "ca98102b7d894fe0cc26330d1c421346aaf2355ad5174cc4d87b305460395c78",
+    "linked.css": "c40990b59b6717a4adea2a56fea83211f564832c35a20e35cfbc3ba300a90e9b",
+    "linked.mjs": "8e81b8514a960f79fbabb4a78451bbac8f3bd13c287d63c5fed13815dbd07dce",
+    "origin-routes.mjs": "e8605d43bd12376f55ffaf43ba27bc79780417db18f2af64b6f457253d0d0106",
+    "player.mjs": "3078d2cb654f36fe8372c2dcb48655b1f6da42122843b054df99dcc337c506bc",
+    "presentation-base.css": "12a07ec2a9deb2474178085b152fd5072c24f0ef16146a1f289d060d3361ff8a",
+    "presentation.css": "2970820fe58a3c7d80b1d3cacfeec0c35fd14f70972a71ee2a32f416abb0d9ee",
+    "presentation.mjs": "a12dbc5fd9ad14b029a9a08e39c42de58f4d1049f80bb0bd2245843174a0897a",
+    "preview.html": "78a49f4aecb679ef3e1685fcf658a7b766110bf4ceff678865261d582b16f88e",
+    "styles.css": "0892b357dda17de85e913532f2d3e059c281cbaa981d3f66209b44ae0d4b2de9"
+  }
+}

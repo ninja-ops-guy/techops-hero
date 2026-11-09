@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1115"><meta name="description" content="See World: unrestricted review preview. Does not award linked native progress.">
+<title>SEE WORLD — Review preview</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to story</a>
+<div id="world-stage" hidden><div id="world-note" role="status">Opening the existing 3D world…</div></div>
+<header class="topbar"><button id="home" class="brand" aria-label="See World campaigns"><span class="mark" aria-hidden="true">◈</span> SEE<span>WORLD</span></button><nav aria-label="Primary"><button id="campaigns-nav">Campaigns</button><button id="collection-nav">Collection</button><button id="world-nav">Explore 3D</button><button id="comic-nav">Read the comic ↗</button></nav></header>
+<div class="notice"><span class="live-dot" aria-hidden="true"></span> UNLINKED REVIEW PREVIEW — NO NATIVE UNLOCKS <span class="notice-detail">Branching game fiction. The numbered comic remains separate.</span></div>
+<div id="storage-status" role="status" aria-live="polite"></div>
+<main id="content" tabindex="-1"></main>
+<footer id="footer"><span>THE EMRLD / NINJAOPSGUY</span><div><button id="export">Export progress</button><label class="import-label" for="import">Import progress<input type="file" id="import" accept="application/json,.json"></label><button id="links-nav">Media links</button><button id="portfolio-nav">Portfolio ↗</button></div><small>Preview progress only. Does not synchronize with TechOps Hero.</small></footer>
+<div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+<dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title"></h2><p id="confirm-body"></p><div class="dialog-actions"><button id="cancel" autofocus>Keep playing</button><button id="confirm" class="primary">Confirm</button></div></dialog>
+<noscript><p>This playable draft needs JavaScript. The comic remains available from the portfolio’s comic link.</p></noscript>
+<script type="module" src="./app.mjs"></script>
+</body></html>
