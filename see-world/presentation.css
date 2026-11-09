@@ -1,0 +1,5 @@
+@import url('./presentation-base.css');
+/* Keep decorative geometry inside small viewports without clipping real content. */
+.hero .world-emblem{right:50px}
+#player-help{position:fixed;inset:0;margin:auto;height:fit-content;width:min(680px,calc(100% - 24px));max-width:calc(100% - 24px);max-height:calc(100dvh - 24px)}
+@media(max-width:700px){.hero .world-emblem{display:none}.topbar nav button{font-size:10px;padding:10px 3px}.hero>div{min-width:0}.help-title{min-width:0}.help-title .eyebrow{overflow-wrap:anywhere}}

@@ -1,4 +1,4 @@
-import {CONTRACT,NATIVE_KEY,PROFILE_KEY,CAMPAIGN_KEY,LOCK,context,makeSnapshot,parse,same,identityOK,locked,loadProgress,sections,nightKey,timeline,snapshotValid,retainRecovery,loadNight,makeNightReceipt} from '/theemrld-portfolio/see-world/linked.mjs';
+import {CONTRACT,NATIVE_KEY,PROFILE_KEY,CAMPAIGN_KEY,LOCK,context,makeSnapshot,parse,same,identityOK,locked,loadProgress,sections,nightKey,timeline,snapshotValid,retainRecovery,loadNight,makeNightReceipt} from './see-world/linked.mjs';
 const root=window,ACTIVE='techops:linked:active:v1',WRITER='techops:linked:writer:v1',storage=localStorage;
 const campaign=root.TechOpsCampaign,rawSet=Storage.prototype.setItem;
 const core=root.TechOpsLinkedSaveCore;
@@ -61,7 +61,7 @@ function renderJournal(){
  if(!c.ok||!selectedRun()){dialog.append(make('p','Your main-story profile and campaign must belong to one linked playthrough. Old preview completions do not grant rewards.'),button('Link this loaded main-story run',async()=>{await bindExisting();renderJournal();}));return;}
  const s=c.snapshot,p=loadProgress(storage,s),night=getNight(s,p);dialog.append(make('p','One local playthrough. Completing a section never marks an unrelated main-story act complete.'));
  for(const row of timeline(s,p)){const box=make('section');box.append(make('h3',row.title),make('p',row.state+' — '+row.placement));dialog.append(box);}
- const a=make('a','Continue in See World ↗');a.href='/theemrld-portfolio/see-world/index.html';a.target='_blank';a.rel='noopener';dialog.append(a);
+ const a=make('a','Continue in See World ↗');a.href='/techops-hero/see-world/index.html';a.target='_blank';a.rel='noopener';dialog.append(a);
  if(s.milestones.ghostFork&&!s.milestones.ionaAccount)dialog.append(button('Read an earlier perspective',()=>{
   dialog.replaceChildren(make('h2','EARLIER INTERLUDE / PLAYER ACCOUNT'),make('p','This account takes place after Red’s arrest and before Iona’s later voice-window contact. Red is absent. The story concerns Iona’s response and the people still within reach. The exact interval remains unspecified.'),make('p','This is information for the player, not an unshown transfer of knowledge to Mike.'),button('Record this account and reveal the interlude',async()=>{const live=nativeContext();if(!live.milestones.ghostFork)throw Error('Story prerequisite changed.');const st=campaign.load(storage);st.seeWorldDisclosures={...st.seeWorldDisclosures,redArrestAccount:{version:1,audience:'player',at:new Date().toISOString()}};campaign.save(st,storage);await publish();renderJournal();}),button('Leave unread',renderJournal));
  }));

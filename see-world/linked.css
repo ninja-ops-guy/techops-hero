@@ -1,0 +1,8 @@
+/* Linked-hub additions; do not alter the isolated anthology preview. */
+a.primary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;line-height:1.4;text-align:center;text-decoration:none;max-width:100%;white-space:normal}
+.sidebar>a.primary,.sidebar>button{display:flex;width:100%;margin-top:12px;justify-content:center;text-align:center}
+.hero h1{font-size:clamp(2.2rem,6.2vw,5.5rem);line-height:1.03;overflow-wrap:anywhere}
+.card-body h2{font-size:1.65rem;line-height:1.15;overflow-wrap:anywhere;margin-bottom:20px}
+.card-art strong{font-size:clamp(1.1rem,1.7vw,1.5rem)}
+.result{--tone:var(--accent);margin-bottom:24px}
+@media(max-width:650px){.hero h1{font-size:clamp(2.1rem,9vw,3.8rem)}.card-art strong{font-size:18px}.card-body h2{font-size:23px}}
