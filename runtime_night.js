@@ -210,11 +210,15 @@
   function dialog(title,text,options){if(!root.dlg)return false;const box=el('dialogue');if(box){box.style.removeProperty('display');box.style.removeProperty('visibility');}root.dlg(title,text,options);return true;}
   function openCampaign(){
     if(!active(world())||transition)return false;
-    if(world()._nightwalker&&root.TechOpsNightwalkerRuntime)return root.TechOpsNightwalkerRuntime.openJournal();
+    if(world()._nightwalker){
+      const runtime=world()._nightwalker.runtimeId==='deadAir'?root.TechOpsDeadAirRuntime:root.TechOpsNightwalkerRuntime;
+      if(runtime)return runtime.openJournal();
+    }
     if(standalone(state())){
       const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}];
       if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
-      return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. West Annex has its own field-report save; neither route can change Day-campaign story objectives.',options);
+      if(root.TechOpsDeadAirRuntime)options.unshift({t:'NIGHTWALKER — Dead Air at Pier 7',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsDeadAirRuntime.enterBrowser();}});
+      return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. Each field report has its own save; neither route can change Day-campaign story objectives.',options);
     }
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
     const f=c.flags,options=[],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
