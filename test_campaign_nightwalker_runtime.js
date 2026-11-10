@@ -123,7 +123,7 @@ for (const filename of ["campaign_nightwalker.js", "campaign_nightwalker_runtime
 const nightHooks = fs.readFileSync("night_hooks.js", "utf8");
 assert.ok(/NM\._sector04 \|\| NM\._nightwalker/.test(nightHooks), "authored mission must own its exit");
 assert.ok(/!NM \|\| NM\._v736 \|\| NM\._sector04 \|\| NM\._nightwalker\) return false/.test(nightHooks), "Charger travel must stay outside the authored mission");
-assert.ok(/name: "WEST ANNEX"/.test(nightHooks));
+assert.ok(/districtName \|\| "WEST ANNEX"/.test(nightHooks), "HUD must preserve West Annex as the default mission district");
 const nightRuntime = fs.readFileSync("runtime_night.js", "utf8");
 assert.ok(/NIGHTWALKER — West Annex field report/.test(nightRuntime));
 assert.ok(/n\._nightwalker/.test(nightRuntime));

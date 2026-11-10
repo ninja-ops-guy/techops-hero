@@ -24,10 +24,13 @@ assert.ok(styleBytes < 160 * 1024, `style.css exceeds 160 KiB structural budget:
 // See docs/DAY_FIELD_EXPERIENCE_2026-09-28.md. West Annex adds two bounded
 // Nightwalker concern modules. These structural allowances are not measured
 // startup certification; the exact-head performance gate still applies.
-assert.ok(local.length <= 271, `startup script count ${local.length} exceeds reviewed Nightwalker ceiling 271`);
+assert.ok(local.length <= 273, `startup script count ${local.length} exceeds reviewed Nightwalker ceiling 273`);
 const nightwalkerModules = ['campaign_nightwalker.js','campaign_nightwalker_runtime.js'];
 for (const file of nightwalkerModules) assert.strictEqual(localFiles.filter(f=>f===file).length,1,`${file} must load once`);
 assert.ok(nightwalkerModules.reduce((total,file)=>total+fs.statSync(file).size,0) < 64*1024, 'Nightwalker mission layers exceed the reviewed 64 KiB combined budget');
+const deadAirModules = ['campaign_dead_air.js','campaign_dead_air_runtime.js'];
+for (const file of deadAirModules) assert.strictEqual(localFiles.filter(f=>f===file).length,1,`${file} must load once`);
+assert.ok(deadAirModules.reduce((total,file)=>total+fs.statSync(file).size,0) < 64*1024, 'Dead Air mission layers exceed the reviewed 64 KiB combined budget');
 const dayModules = ['runtime_day_cases.js','runtime_day_world.js','runtime_day_audio.js','runtime_day.js'];
 for (const file of dayModules) assert.strictEqual(localFiles.filter(f=>f===file).length,1,`${file} must load once`);
 assert.ok(dayModules.reduce((total,file)=>total+fs.statSync(file).size,0) < 120*1024, 'Day concern layers exceed the reviewed 120 KiB combined budget');

@@ -94,6 +94,8 @@ const tests = [
   "test_campaign_sector04_runtime.js",
   "test_campaign_nightwalker.js",
   "test_campaign_nightwalker_runtime.js",
+  "test_dead_air.js",
+  "test_dead_air_runtime.js",
   "test_campaign_save_reload.js",
   "test_campaign_browser_entrypoint.js",
   "test_static_entrypoint_integrity.js",
