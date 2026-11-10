@@ -824,7 +824,7 @@ function drawNM() {
   // ---------- sheet-style HUD ----------
   // Screen-space presentation consumes the same state. World coordinates and
   // Good Dogs / Sector 04 retain their existing render owners and fallback.
-  const hudDistrict = NM._nightwalker ? Object.assign({}, D, { name: "WEST ANNEX", streets: 1, accent: "#38bdf8" }) : D;
+  const hudDistrict = NM._nightwalker ? Object.assign({}, D, { name: NM._nightwalker.districtName || "WEST ANNEX", streets: 1, accent: NM._nightwalker.accent || "#38bdf8" }) : D;
   if (window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawNight(ctx, NM, { district:hudDistrict, clock:fmtClock(S.clock), now })) {
     ctx.textAlign = "center";
     return;
