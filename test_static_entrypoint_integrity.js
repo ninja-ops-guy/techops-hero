@@ -15,9 +15,9 @@ const duplicateScripts=localScripts.filter((src,index)=>localScripts.indexOf(src
 assert.deepStrictEqual(duplicateScripts,[],"index.html must not load duplicate local scripts");
 const refFor=src=>localScriptRefs.find(ref=>localPath(ref)===src)||"";
 for(const src of ["good_boys_bible_world.js","good_boys_access_core_authority.js"]){assert.strictEqual(refFor(src),src+"?v=20260913-grounded-r1");}
-for(const src of ["v64_hooks.js","v70_hooks.js","v73_hooks.js","v74_hooks.js","v726_hooks.js","v727_hooks.js","v729_hooks.js","v730_hooks.js","v736_hooks.js","campaign_act1.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-revision-r1");}
+for(const src of ["v64_hooks.js","v70_hooks.js","v73_hooks.js","v74_hooks.js","v726_hooks.js","v727_hooks.js","v729_hooks.js","v730_hooks.js","v736_hooks.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-revision-r1");}
 for(const src of ["good_boys_progression_authority.js","katrin_manchez.atlas.js"]){assert.strictEqual(refFor(src),src+"?v=20260912-local-coop-r3");}
-for(const src of ["game.js","campaign_world_visuals.js","v66_hooks.js","runtime_day_audio.js"])assert.strictEqual(refFor(src),src+"?v=20260928-day-field-r3");
+for(const src of ["campaign_world_visuals.js","v66_hooks.js","runtime_day_audio.js"])assert.strictEqual(refFor(src),src+"?v=20260928-day-field-r3");
 for(const src of ["runtime_day.js","runtime_day_world.js","runtime_day_cases.js"])assert.strictEqual(refFor(src),src+"?v=20261105-doors-r1");
 for(const src of ["campaign_native_act1.js","v67_hooks.js"])assert.strictEqual(refFor(src),src+"?v=20261107-fixed-contacts-r1");
 for(const asset of ["runtime_day_doors.js","runtime_day_doors.css"]){
@@ -132,3 +132,6 @@ for(const src of ["v733_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260
 
 assert.strictEqual(refFor("v710_hooks.js"),"v710_hooks.js?v=20260929-day-room-r1");
 assert.strictEqual(refFor("v716_hooks.js"),"v716_hooks.js?v=20260929-day-dialogue-r1");
+
+// Linked native owners changed: both parser sources must bypass stale mobile caches.
+for(const src of ["game.js","campaign_act1.js"])assert.strictEqual(refFor(src),src+"?v=20261107-linked2");

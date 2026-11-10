@@ -83,7 +83,7 @@ async function sharedSceneControls(page){
 }
 async function returnScene(page){await page.waitForFunction(()=>window.v725?.active()||!window.S?.nightMode);if(await page.evaluate(()=>!!window.v725?.active()))await (await sharedSceneControls(page)).skip.click();await page.waitForFunction(()=>!S.nightMode);}
 async function prepareStory(page){return page.evaluate(()=>{
- const C=TechOpsCampaign,c=C.createInitialState();for(const[id,owner]of [['shipping_cannot_print','mike'],['plating_workstation_down','amit'],['impossible_access_event','mike']])C.assignTicket(c,id,owner);
+ const C=TechOpsCampaign,c=C.load(localStorage);for(const[id,owner]of [['shipping_cannot_print','mike'],['plating_workstation_down','amit'],['impossible_access_event','mike']])C.assignTicket(c,id,owner);
  C.completeStandup(c);C.completeWorkstation(c,{redInTheMirrorHeard:true,feliciaVideoSeen:true});
  for(const id of ['shipping_cannot_print','plating_workstation_down'])C.resolveTicket(c,id,{technicalResolution:true,verification:'strong',humanOutcome:'restored'});
  C.recordGhostEvidence(c,{id:'badge_impossible_access',perspective:'firsthand',discoveredBy:'mike'});C.save(c,localStorage);return JSON.stringify(c.evidence);

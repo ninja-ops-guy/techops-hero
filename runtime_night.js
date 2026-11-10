@@ -220,6 +220,7 @@
       if(root.TechOpsSector04Runtime)options.push({t:world()._sector04?'Continue Sector 04 investigation':'Enter Sector 04 — story campaign',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsSector04Runtime.enterBrowser();}});
       options.push({t:'Return to daytime investigation',f:resumeDay});
     }
+    if(root.TechOpsUniverse)options.push({t:'Linked Story Timeline / See World sections',f:root.TechOpsUniverse.openJournal});
     options.push({t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
   }
   function openHome(){
