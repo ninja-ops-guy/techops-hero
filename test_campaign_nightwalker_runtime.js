@@ -122,6 +122,7 @@ assert.ok(index.indexOf("campaign_nightwalker_runtime.js") > index.indexOf("camp
 for (const filename of ["campaign_nightwalker.js", "campaign_nightwalker_runtime.js"]) assert.ok(fs.existsSync(filename));
 const nightHooks = fs.readFileSync("night_hooks.js", "utf8");
 assert.ok(/NM\._sector04 \|\| NM\._nightwalker/.test(nightHooks), "authored mission must own its exit");
+assert.ok(/!NM \|\| NM\._v736 \|\| NM\._sector04 \|\| NM\._nightwalker\) return false/.test(nightHooks), "Charger travel must stay outside the authored mission");
 assert.ok(/name: "WEST ANNEX"/.test(nightHooks));
 const nightRuntime = fs.readFileSync("runtime_night.js", "utf8");
 assert.ok(/NIGHTWALKER — West Annex field report/.test(nightRuntime));

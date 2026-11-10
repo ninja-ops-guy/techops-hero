@@ -187,7 +187,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM._sector04 && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -311,7 +311,7 @@ function enterNight() {
 // the Charger: drive the district map
 function nmCarMenu() {
   // Campaign encounters borrow Night physics, not the Earth travel hub.
-  if (!NM || NM._v736 || NM._sector04) return false;
+  if (!NM || NM._v736 || NM._sector04 || NM._nightwalker) return false;
   const s = S;
   const opts = NM_ORDER.filter(id => !NM.done[id]).map(id => {
     const D = NM_DISTRICTS[id];
@@ -331,7 +331,7 @@ function nmNextStage() {
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
   if (NM.district === "home") return window.TechOpsNightRuntime && window.TechOpsNightRuntime.openHome();
-  if (NM._sector04) return; // The authored terminal owns this encounter's exit.
+  if (NM._sector04 || NM._nightwalker) return; // Authored encounters own their exits.
   if (!window.TechOpsNightRuntime) advanceClock(20); // compatibility without the continuous clock
   const st = NM.street + 1;
   if (st > D.streets) {
@@ -572,7 +572,7 @@ function stepNM(dt) {
     reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
   });
   NM.cam = cameraResult ? cameraResult.x : clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
-  if (NM.clear && NM.district !== "home" && !NM._sector04 && NM.x > NM_W - 110) nmNextStage();
+  if (NM.clear && NM.district !== "home" && !NM._sector04 && !NM._nightwalker && NM.x > NM_W - 110) nmNextStage();
   // Home is an explicit interaction, not an invisible end-of-map trigger.
 }
 
@@ -731,7 +731,7 @@ function drawNM() {
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
-  if (!NM._v736 && !NM._sector04) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
+  if (!NM._v736 && !NM._sector04 && !NM._nightwalker) for (let i = 0; i < 14; i++) ctx.fillRect(((i * 130 - NM.cam) % (NM_W + 130)) - 60, NM_FLOOR + 22, 46, 4);
   if(!domestic) for (let i = 0; i < 7; i++) {
     const lx = ((i * 300 - NM.cam) % (NM_W + 300)) - 150;
     ctx.fillStyle = "#2a3350"; ctx.fillRect(lx, NM_FLOOR - 96, 4, 96); // lamp post
@@ -748,7 +748,7 @@ function drawNM() {
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   }
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
-  if (!NM._v736 && !NM._sector04) {
+  if (!NM._v736 && !NM._sector04 && !NM._nightwalker) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
     if (NM.x < NM_CAR_X + 150) {
     ctx.save(); ctx.globalAlpha = .7 + Math.sin(now / 260) * .3;
@@ -824,7 +824,8 @@ function drawNM() {
   // ---------- sheet-style HUD ----------
   // Screen-space presentation consumes the same state. World coordinates and
   // Good Dogs / Sector 04 retain their existing render owners and fallback.
-  if (window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawNight(ctx, NM, { district:D, clock:fmtClock(S.clock), now })) {
+  const hudDistrict = NM._nightwalker ? Object.assign({}, D, { name: "WEST ANNEX", streets: 1, accent: "#38bdf8" }) : D;
+  if (window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawNight(ctx, NM, { district:hudDistrict, clock:fmtClock(S.clock), now })) {
     ctx.textAlign = "center";
     return;
   }
