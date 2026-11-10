@@ -50,7 +50,7 @@
   }
   function validCheckpoint(s){
     const n=s&&s.nightMode;
-    if(!standalone(s)||!n||n._v736||n._sector04||n._nightSettled||![...districts,'waldo'].includes(n.district)||!finite(n.street,1,['home','waldo'].includes(n.district)?1:2)||!Number.isInteger(n.street))return false;
+    if(!standalone(s)||!n||n._v736||n._sector04||n._nightwalker||n._nightSettled||![...districts,'waldo'].includes(n.district)||!finite(n.street,1,['home','waldo'].includes(n.district)?1:2)||!Number.isInteger(n.street))return false;
     if(!finite(s.day,1,100000)||!finite(s.clock,1080,10000000)||![.7,1,1.3].includes(s.diff)||!Array.isArray(s.map)||!s.map.length||s.gameOver||s.inBattle)return false;
     if(!finite(n.x,-100,1900)||!finite(n.y,-2000,900)||!finite(n.w,1,200)||!finite(n.h,1,200)||!finite(n.hp,.001,10000)||!finite(n.cash,0,100000000)||!Number.isInteger(n.kills)||n.kills<0)return false;
     if(!finite(n.vx,-1000,1000)||!finite(n.vy,-1000,1000)||![-1,1].includes(n.face)||!finite(n.cam,-100,1900))return false;
@@ -110,7 +110,7 @@
     root.__nightCheckpointResumed={savedAt:record.savedAt,district:n.district,street:n.street};return true;
   }
   function checkpointFrame(dt){
-    const s=state(),n=world();if(!standalone(s)||!checkpointEligible(n)||n._sector04||blocked())return;
+    const s=state(),n=world();if(!standalone(s)||!checkpointEligible(n)||n._sector04||n._nightwalker||blocked())return;
     checkpointAge+=Math.min(.1,Math.max(0,Number(dt)||0));
     const mark=[n.district,n.street,n.cash,n.kills,Object.keys(n.done||{}).join(','),n.drive&&n.drive.to||''].join('|');
     if(checkpointAge>=5||mark!==checkpointMark){saveCheckpoint(s);checkpointAge=0;checkpointMark=mark;}
@@ -163,7 +163,7 @@
     while(rt.seconds+1e-9>=MINUTE_SECONDS){rt.seconds=Math.max(0,rt.seconds-MINUTE_SECONDS);advance(1);if(Math.floor(s.clock)%12===0)saveGame();}
     return true;
   }
-  function atHome(){const n=world();return !!(active(n)&&!n._sector04&&n.district==='home'&&!n.drive&&Math.abs(n.x+n.w/2-HOME_X)<=86&&Math.abs(n.y+n.h-FLOOR)<=22);}
+  function atHome(){const n=world();return !!(active(n)&&!n._sector04&&!n._nightwalker&&n.district==='home'&&!n.drive&&Math.abs(n.x+n.w/2-HOME_X)<=86&&Math.abs(n.y+n.h-FLOOR)<=22);}
   function clearNightSelection(){
     const s=state(),router=root.TechOpsProductionModeRouter;
     if(router&&router.setDesired)router.setDesired(null);
@@ -210,7 +210,12 @@
   function dialog(title,text,options){if(!root.dlg)return false;const box=el('dialogue');if(box){box.style.removeProperty('display');box.style.removeProperty('visibility');}root.dlg(title,text,options);return true;}
   function openCampaign(){
     if(!active(world())||transition)return false;
-    if(standalone(state()))return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. Return to the title to continue the Day campaign; this free roam run cannot change its story objectives.',[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}]);
+    if(world()._nightwalker&&root.TechOpsNightwalkerRuntime)return root.TechOpsNightwalkerRuntime.openJournal();
+    if(standalone(state())){
+      const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}];
+      if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
+      return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. West Annex has its own field-report save; neither route can change Day-campaign story objectives.',options);
+    }
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
     const f=c.flags,options=[],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
     if(f.tuesday_morning_reached){text='<b>AFTER HOURS — COMPLETE</b><br>The next campaign beat continues in the day shift. Your evidence and choices are preserved.';options.push({t:'Return to the day campaign',f:resumeDay});}
@@ -343,9 +348,10 @@
       if(view.campaign.getAttribute('data-readable-hud')!=='false')view.campaign.setAttribute('data-readable-hud','false');
       ['left','top','right'].forEach(key=>{if(view.campaign.style[key])view.campaign.style.removeProperty(key);});
     }
-    view.checkpoint.hidden=!checkpointError||!standalone(state());view.checkpoint.textContent=checkpointError||'';
+    view.checkpoint.hidden=!checkpointError||!standalone(state())||!!(world()&&world()._nightwalker);view.checkpoint.textContent=world()&&world()._nightwalker?'':checkpointError||'';
     if(!active(n))return;
-    const key=n.district+':'+n.street;if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+' / STREET '+n.street;}
+    view.chapter.style.display=n._nightwalker?'none':'';
+    const key=n.district+':'+n.street;if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._nightwalker?'NIGHTWALKER / WEST ANNEX':n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+' / STREET '+n.street;}
     if(shown)chapterAge+=Math.min(.1,Math.max(0,Number(dt)||0));view.chapter.style.opacity=chapterAge<2.6?'1':'0';
     if(el('v55-nmbtns'))el('v55-nmbtns').classList.toggle('on',shown);
     if(root.TechOpsNightInput)root.TechOpsNightInput.sync();
@@ -385,7 +391,7 @@
       if(standalone(state())&&!completeCheckpoint(state())){const homeSafe=arguments[0];dialog('NIGHT RESULT NOT SAVED',checkpointError,[{t:'Retry saving this result',f:()=>{if(root.closeDlg)root.closeDlg();root.exitNight(homeSafe);}}]);return false;}
       n._nightLifecycle.exitCommitted=true;clearNightSelection();return oldExit.apply(this,arguments);
     };
-    const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
+    const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&!world()._nightwalker&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
     if(root.document)root.document.addEventListener('keydown',e=>{if(!active(world()))return;if(transition&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(root.v725)root.v725.skip();return;}if(blocked())return;if(e.key.toLowerCase()==='c'){e.preventDefault();e.stopImmediatePropagation();openCampaign();}else if(atHome()&&e.key.toLowerCase()==='e'){e.preventDefault();e.stopImmediatePropagation();openHome();}},true);
     if(root.addEventListener)root.addEventListener('pagehide',()=>{if(standalone(state())&&checkpointEligible(world()))saveCheckpoint();});
     if(root.document)root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden&&standalone(state())&&checkpointEligible(world()))saveCheckpoint();});
