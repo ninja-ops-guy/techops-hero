@@ -18,7 +18,6 @@ const tests = [
   "test_vertical_slice_evidence.mjs",
   "test_release_asset_manifest.mjs",
   "test_browser_geometry.mjs",
-  "test_cold_start_reliability.mjs",
   "test_runtime_hud.js",
   "test_good_dogs_hud_readability.js",
   "test_campaign_act1.js",
@@ -128,9 +127,12 @@ const tests = [
 
 // Keep the release gate honest as the layered runtime evolves: every root
 // contract suite must be named exactly once, and every named suite must exist.
+// Browser-only acceptance lives in the dedicated browser workflow, not the
+// Node-only aggregate used by contract workflows without a browser install.
+const browserOnlySuites = new Set(["test_cold_start_reliability.mjs"]);
 const inventory = fs.readdirSync(process.cwd()).filter(file => /^test_.*\.(?:js|mjs)$/.test(file)).sort();
 const duplicates = tests.filter((file, index) => tests.indexOf(file) !== index);
-const omitted = inventory.filter(file => !tests.includes(file));
+const omitted = inventory.filter(file => !tests.includes(file) && !browserOnlySuites.has(file));
 const missing = tests.filter(file => !inventory.includes(file));
 if (duplicates.length || omitted.length || missing.length) {
   if (duplicates.length) console.error("Duplicate release suites:", duplicates.join(", "));
