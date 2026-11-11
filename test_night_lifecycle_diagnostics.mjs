@@ -9,8 +9,8 @@ test('retains native termination evidence and failure exit without retaining cre
  const dir=await mkdtemp(join(tmpdir(),'night-diagnostics-'));
  try{
   const script=join(dir,'fixture.cjs');
-  await writeFile(script,`process.stderr.write('pw:browser [pid=123] <process did exit: exitCode=null, signal=SIGSEGV>\nAuthorization: Bear');
-setTimeout(()=>{process.stderr.write('er secret-value\nhttps://user:password@example.test/path?token=private-value&v=49\n"password": "private-json"\n');process.exit(23);},10);`);
+  await writeFile(script,`process.stderr.write('pw:browser [pid=123] <process did exit: exitCode=null, signal=SIGSEGV>\\nAuthorization: Bear');
+setTimeout(()=>{process.stderr.write('er secret-value\\nhttps://user:password@example.test/path?token=private-value&v=49\\n"password": "private-json"\\n');process.exit(23);},10);`);
   const result=await runNightDiagnostics({out:dir,script,forwardStdout:false});
   assert.equal(result.code,23);
   assert.equal(result.signal,null);
@@ -27,7 +27,7 @@ test('bounds stderr retention while preserving the final crash signature',async(
  const dir=await mkdtemp(join(tmpdir(),'night-log-bound-'));
  try{
   const script=join(dir,'fixture.cjs');
-  await writeFile(script,`process.stderr.end(('x'.repeat(600)+'\n').repeat(5000)+'oversized-secret'.repeat(5000)+'\nlast native crash: SIGABRT\n',()=>process.exit(19));`);
+  await writeFile(script,`process.stderr.end(('x'.repeat(600)+'\\n').repeat(5000)+'oversized-secret'.repeat(5000)+'\\nlast native crash: SIGABRT\\n',()=>process.exit(19));`);
   const result=await runNightDiagnostics({out:dir,script,forwardStdout:false});
   const log=await readFile(join(dir,'browser-process.log'),'utf8');
   assert.equal(result.code,19);assert.ok(Buffer.byteLength(log)<=2*1024*1024);
@@ -41,7 +41,7 @@ test('persists sanitized evidence while acceptance is still running',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'night-live-evidence-')),release=join(dir,'release');let running;
  try{
   const script=join(dir,'fixture.cjs');
-  await writeFile(script,`process.stderr.write('native marker before crash\npassword=must-redact\n');setInterval(()=>{if(require('node:fs').existsSync(${JSON.stringify(release)}))process.exit(23);},20);`);
+  await writeFile(script,`process.stderr.write('native marker before crash\\npassword=must-redact\\n');setInterval(()=>{if(require('node:fs').existsSync(${JSON.stringify(release)}))process.exit(23);},20);`);
   running=runNightDiagnostics({out:dir,script,forwardStdout:false});
   let log='',deadline=Date.now()+3000;
   while(Date.now()<deadline){log=await readFile(join(dir,'browser-process.log'),'utf8').catch(()=>'');if(log.includes('native marker'))break;await new Promise(r=>setTimeout(r,25));}
@@ -81,7 +81,7 @@ test('samples only the launched browser descendants and records available OOM ev
   const script=join(dir,'fixture.cjs');
   await writeFile(script,`const {spawn}=require('node:child_process');
 const child=spawn(process.execPath,['-e','setTimeout(()=>{},2000)','--','--secret-canary'],{stdio:'ignore',env:{...process.env,SECRET_CANARY:'must-not-be-collected'}});
-process.stderr.write('pw:browser <launched> pid=1\npw:browser <launched> pid='+child.pid+'\n');
+process.stderr.write('pw:browser <launched> pid=1\\npw:browser <launched> pid='+child.pid+'\\n');
 child.on('close',()=>process.exit(0));`);
   const result=await runNightDiagnostics({out:dir,script,forwardStdout:false});
   assert.equal(result.code,0);
