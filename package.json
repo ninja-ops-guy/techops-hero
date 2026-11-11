@@ -8,6 +8,7 @@
     "review:guide": "node scripts/generate_review_guide.js",
     "review:check": "node scripts/generate_review_guide.js --check && node test_review_contracts.js",
     "test:browser:revision": "node scripts/revision_acceptance_browser.mjs",
+    "test:browser:coldstart": "node test_cold_start_reliability.mjs",
     "test:browser:quality": "node scripts/quality_acceptance_browser.mjs",
     "test:browser:presentation": "node scripts/presentation_quality_browser.mjs",
     "test:browser:act4": "node scripts/act4_acceptance_browser.mjs",
