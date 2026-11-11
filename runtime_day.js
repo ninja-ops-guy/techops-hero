@@ -3,7 +3,7 @@
  * One existing dialogue owner, no polling, frame loop, teleport or music player. */
 (function(root){
   'use strict';
-  var active=null,returnFocus=null,lastHud='',hud=null,targetMenuOwner=0;
+  var active=null,returnFocus=null,lastHud='',hud=null,hudStatus=null,lastAnnounce='',lastRouteId=null,arrivedFor=null,targetMenuOwner=0;
   var CANON={shipping_cannot_print:{requester:'SHIPPING CLERK',need:'Print accurate customs labels before the outbound shipment leaves.',symptom:'The printer says Ready. The clerk’s labels disappear.',notification:'Your printer is ready. Your label has chosen a different career.'},plating_workstation_down:{requester:'PLATING OPERATOR / AMIT',need:'Restore the operator’s production session without disturbing the controlled process.',symptom:'The workstation is responsive. The production application cannot reconnect.',notification:'Restart complete. Your dependencies have elected to remain asleep.'}};
   function gs(){try{return typeof S!=='undefined'?S:root.S;}catch(_){return null;}}
   function world(){return root.TechOpsDayWorld;}
@@ -36,7 +36,7 @@
     if(standupTimer)root.clearTimeout(standupTimer);standupTimer=null;
     if(root.TechOpsDayDesktop)root.TechOpsDayDesktop.release();
     targetMenuOwner++;
-    var d=root.document&&root.document.getElementById('dialogue');if(d){d.classList.remove('day-device-mode','day-workstation');d.removeAttribute('aria-labelledby');}
+    var d=root.document&&root.document.getElementById('dialogue');if(d){d.classList.remove('day-device-mode','day-workstation');d.setAttribute('aria-labelledby','dlg-name');d.setAttribute('aria-describedby','dlg-text');}
     if(root.document)root.document.body.classList.remove('day-device-open');
     var s=gs();if(s)s.dayInteraction=null;
     if(active&&root.TechOpsDayAudio)root.TechOpsDayAudio.onContext('field');active=null;
@@ -313,11 +313,24 @@
     if(root.document)checkOfficeEntry();
     if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
     if(!hud){hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);}
-    hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';return;}
+    if(!hudStatus){hudStatus=root.document.createElement('div');hudStatus.id='day-route-status';hudStatus.setAttribute('role','status');hudStatus.setAttribute('aria-live','polite');hudStatus.className='sr-only';root.document.body.appendChild(hudStatus);}
+    hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';lastAnnounce='';lastRouteId=null;arrivedFor=null;return;}
     var w=world();if(!w)return;w.ensureWorld();var objective=w.nextObjective()||{},resolution=targetResolution(),nearby=resolution.target;
     var target=s.meta.dayRouteTarget||objective.stationId||objective.targetId||objective.id;
     var data={title:objective.title||objective.label||'Day shift',detail:objective.detail||objective.description||'Follow the workday. Inspect before making changes.',target:target,near:nearby&&nearby.id,choices:resolution.choose};var key=JSON.stringify(data);if(key===lastHud)return;lastHud=key;
     if(s.meta.dayRouteTarget){var tracked=stationById(target),contactNames={shipping:'Shipping clerk',plating:'Plating operator',standup:s.day>=2?'Shift handoff board':'Morning standup board',access:'Security Ops',sector04Door:'Sector 04 entrance'};data.title='Destination · '+(tracked?tracked.label:contactNames[target]||'Marked location');data.detail='Follow the floor route. '+(tracked?'Use this equipment when Mike reaches it.':'Meet the requester or inspect the marked destination.');}
+    // Objective/destination text is the wayfinding signal; announce only when it
+    // actually changes so proximity updates never spam the live region.
+    var announcement=data.title+'. '+data.detail;
+    if(announcement!==lastAnnounce){lastAnnounce=announcement;if(hudStatus)hudStatus.textContent=announcement;}
+    // Route completion feedback: the first frame the marked destination becomes
+    // an adjacent interaction, say so once instead of leaving the player reading the HUD.
+    var routeId=s.meta.dayRouteTarget||null;
+    if(routeId!==lastRouteId){lastRouteId=routeId;arrivedFor=null;}
+    if(routeId&&arrivedFor!==routeId){
+      var reached=resolution.options.find(function(item){return item.id===routeId;});
+      if(reached){arrivedFor=routeId;notify('Arrived — '+targetLabel(reached)+' (E / A).');}
+    }
     hud.innerHTML='<header>AEROTECH / FIELD OPERATIONS</header><div class="day-objective"><strong>'+escape(data.title)+'</strong><small>'+escape(data.detail)+'</small></div>'+(nearby||resolution.choose?'<button type="button" class="day-nearby" data-day-interact>E / A · '+escape(resolution.choose?'Choose nearby interaction':targetLabel(nearby))+'</button>':'')+'<button type="button" data-day-route>Show floor route</button><button type="button" data-day-jobs>Field service board</button>';
     hud.querySelector('[data-day-route]').onclick=function(){routeTo(target||'mike_desk');};hud.querySelector('[data-day-jobs]').onclick=openBoard;
     var nearbyButton=hud.querySelector('[data-day-interact]');if(nearbyButton)nearbyButton.onclick=interact;
@@ -330,10 +343,16 @@
   }
   function keydown(e){
     var desk=root.TechOpsDayDesktop&&root.TechOpsDayDesktop.active();
-    if(!active&&!desk)return;
-    if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();exit();return;}
+    var dayOwns=!!(active||desk);
+    if(!dayOwns){
+      // Generic modal dialogs (talk, board, standup, night menus) still owe the
+      // keyboard user a focus trap; without one Tab escapes behind the modal.
+      var s=gs(),d=root.document&&root.document.getElementById('dialogue');
+      if(!(s&&s.inDialog&&d&&!d.classList.contains('hidden')))return;
+    }
+    if(e.key==='Escape'){if(dayOwns){e.preventDefault();e.stopImmediatePropagation();exit();}return;}
     if(e.key==='Tab'){
-      var list=Array.from(root.document.querySelectorAll('#dlg-text button:not(:disabled), #dlg-text input:not(:disabled)')).filter(b=>b.getClientRects().length);
+      var list=Array.from(root.document.querySelectorAll('#dlg-text button:not(:disabled), #dlg-text input:not(:disabled), #dlg-options button:not(:disabled)')).filter(b=>b.getClientRects().length);
       var first=list[0],last=list[list.length-1],focus=root.document.activeElement;
       if(!first)return;
       if(!list.includes(focus)||e.shiftKey&&focus===first){e.preventDefault();(e.shiftKey?last:first).focus();}
