@@ -4,7 +4,8 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
-import { chromium } from "playwright";
+import { createRequire } from "node:module";
+const { chromium } = createRequire(import.meta.url)("playwright");
 
 const port = Number(process.env.REVISION_PORT || 4187);
 const base = process.env.REVISION_BASE_URL || `http://127.0.0.1:${port}/`;
@@ -112,6 +113,8 @@ try {
   report.checks.push("Continue restores exact scene state with canonical NPC/ticket identity and no hidden blocker");
   await page.screenshot({ path: `${out}/day-resumed.png`, fullPage: true });
 
+  await import("../test_cold_start_reliability.mjs");
+  report.checks.push("cold-start reliability passed 4 Chromium and 4 WebKit fresh contexts");
   assert.deepEqual(report.pageErrors, []);
   report.status = "passed";
   await context.close();

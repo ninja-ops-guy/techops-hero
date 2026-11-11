@@ -181,6 +181,22 @@ function nightDoorDialog() {
   ]);
 }
 
+// ---------- standalone Night dispatch ----------
+const __origStartRunV50 = startRun;
+startRun = function () {
+  if (S && S.meta && S.meta._standaloneMode === "nightcrawler") {
+    setupDay();
+    $("title-screen").classList.add("hidden");
+    $("hud").classList.remove("hidden");
+    showTouchUI();
+    initMusic();
+    save();
+    dlg("🌃 After Hours Dispatch", `New Haven after dark. Take the Charger into the city.<br><br>Start with <b>Downtown Street 1</b>. Learn movement, jumps, and contact timing, then open <b>Run Menu [C]</b> for authored field reports.<br><br>Every fight is a symptom. Investigate what is driving it.`, [{ t: "Take the Charger ▶", f: closeDlg }]);
+    return;
+  }
+  return __origStartRunV50.apply(this, arguments);
+};
+
 // ---------- interaction routing ----------
 const __origInteractV50 = interact;
 interact = function () {
@@ -255,7 +271,8 @@ function nmSpawnEnemies(st, dist) {
   const D = NM_DISTRICTS[dist || "downtown"];
   if (!D.roster.length) return [];
   const profile = window.TechOpsDifficulty && window.TechOpsDifficulty.profile ? window.TechOpsDifficulty.profile(S && S.diff) : { enemyHp: 1, damage: 1 };
-  const n = 2 + st + (D.danger >= 1.45 ? 1 : 0), out = [];
+  const onboardingIntern = st === 1 && dist === "downtown" && S && S.diff === .7;
+  const n = onboardingIntern ? 2 : 2 + st + (D.danger >= 1.45 ? 1 : 0), out = [];
   for (let i = 0; i < n; i++) {
     const kind = D.roster[Math.min(i, D.roster.length - 1)];
     const k = NM_KINDS[kind];
@@ -304,7 +321,7 @@ function enterNight() {
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
   if (qt) { NM._qtHidden = qt.classList.contains("hidden"); qt.classList.add("hidden"); }
-  toast("Double-tap ← / → to dash · Attack after dash to grab · ↑ / ↓ aim · Jump to follow launches", 5200);
+  toast("Move: WASD / arrows · E: punch / interact · J: kick · Space: jump · K: block · C: field reports", 5200);
   updateHUD();
 }
 

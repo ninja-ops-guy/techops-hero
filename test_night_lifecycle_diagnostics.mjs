@@ -80,7 +80,7 @@ test('samples only the launched browser descendants and records available OOM ev
  try{
   const script=join(dir,'fixture.cjs');
   await writeFile(script,`const {spawn}=require('node:child_process');
-const child=spawn(process.execPath,['-e','setTimeout(()=>{},600)','--','--secret-canary'],{stdio:'ignore',env:{...process.env,SECRET_CANARY:'must-not-be-collected'}});
+const child=spawn(process.execPath,['-e','setTimeout(()=>{},2000)','--','--secret-canary'],{stdio:'ignore',env:{...process.env,SECRET_CANARY:'must-not-be-collected'}});
 process.stderr.write('pw:browser <launched> pid=1\\npw:browser <launched> pid='+child.pid+'\\n');
 child.on('close',()=>process.exit(0));`);
   const result=await runNightDiagnostics({out:dir,script,forwardStdout:false});
