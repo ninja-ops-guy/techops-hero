@@ -110,8 +110,10 @@ export async function solvePairPuzzleSolo(page,mission,{onEvent=()=>{}}={}){
   if(!await page.evaluate(()=>window.TechOpsGoodDogsCoop.aiHolding()))await page.keyboard.press('KeyE');
   await page.waitForFunction(()=>window.TechOpsGoodDogsCoop.aiHolding(),null,{timeout:2000});
   await moveDogTo(page,d.b-11);
-  await page.waitForFunction(x=>Math.abs(window.NM._v736.partner.x+11-x)<40,d.a,{timeout:6000});
-  if(d.kind==='power-console')await page.keyboard.press('KeyE');
+  // The dual-pad latch releases the partner as soon as it records completion.
+  await page.waitForFunction(({mission,firstPad})=>window.TechOpsGoodDogsCoop.complete(mission)||
+    Math.abs(window.NM._v736.partner.x+11-firstPad)<40,{mission,firstPad:d.a},{timeout:6000});
+  if(d.kind==='power-console'&&!await page.evaluate(m=>window.TechOpsGoodDogsCoop.complete(m),mission))await page.keyboard.press('KeyE');
   await page.waitForFunction(m=>window.TechOpsGoodDogsCoop.complete(m),mission,{timeout:5000});
   onEvent('pair-puzzle-complete',await page.evaluate(()=>({mission:window.NM._v736.m,mode:window.TechOpsGoodDogsCoop.mode(),puzzles:window.S.meta._v736.pairPuzzles})));
 }
