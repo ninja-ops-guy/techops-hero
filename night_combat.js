@@ -63,7 +63,14 @@
     face=face<0?-1:1;n.face=face;n.dashT=10;n.dashCD=42;n.ifr=Math.max(n.ifr||0,12);n.vx=face*9.5;
     c.dash={at:c.time,until:c.time+RULES.dashGrabWindow,face,spent:false};event(n,'dash');sound('dash');return true;
   }
-  function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
+  // Impact weight: heavy hits freeze the world longer, an on-beat hit adds a
+  // frame, and a knockout lands the longest stop. Hit-stop is the feel of the
+  // fight, and a shorter stop never truncates a longer one already running.
+  const IMPACT_HEAVY={throw:1,launcher:1,uppercut:1,'rising-kick':1,kick:1,'air-slam':1,slam:1,wall:1,collision:1};
+  function impactStop(kind,flags,ko){return ko?8:Math.min(8,(IMPACT_HEAVY[kind]?5:3)+(flags&&flags.beat?1:0));}
+  // A chained count divisible by five is a milestone worth celebrating.
+  function milestone(n,c,e){if(c.hits>0&&c.hits%5===0){event(n,'combo-milestone',e,{hits:c.hits});return true;}return false;}
+  function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,impactStop(kind,flags,e.hp<=0));event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
   function lift(n,e,vx,vy,thrown){const c=state(n),ec=enemy(e);ec.held=false;ec.air=true;ec.airHits=0;ec.locked=false;ec.vx=vx;ec.vy=vy;ec.thrown=thrown;ec.flightHits=[];ec.wallHit=false;ec.stunUntil=c.time+450;e.launch=0;e.down=0;e.kb=0;c.follow={enemy:e,engaged:false};}
   function throwHeld(n,dir){
     const c=state(n),g=c.grab;if(!g)return false;
@@ -77,7 +84,8 @@
     damage(n,e,dir==='up'?16:dir==='down'?22:24,'throw');
     c.attack={kind:dir==='up'?'throw-up':dir==='down'?'throw-down':'throw',at:c.time,hit:true,connected:true,launch:dir!=='down',stage:0,duration:270,face:sign};
     n.jabAnim=17;c.hits++;c.lastHit=c.time;n.combo=c.hits;n.comboT=wallClock()+RULES.chainLife;
-    say(n,dir==='up'?'LAUNCH · JUMP + ATTACK':dir==='down'?'SLAM':'THROW · LINE THEM UP');return true;
+    const ms=milestone(n,c,e);
+    say(n,ms?'COMBO ×'+c.hits+' · KEEP THE PRESSURE':dir==='up'?'LAUNCH · JUMP + ATTACK':dir==='down'?'SLAM':'THROW · LINE THEM UP');return true;
   }
   // Legacy callers retain their walk-in grab shortcut. The explicit input
   // adapter dispatches punch/kick/grab, so a directional punch is never a grab.
@@ -145,8 +153,9 @@
     const shield=e.blocks&&a.kind==='jab'&&!a.beat&&!ec.air&&ec.stunUntil<=c.time;
     if(shield){value=5;clearChain(n);event(n,'guard',e);say(n,'GUARD · GRAB OR AIM LOW');}
     else{c.hits++;c.stage=a.stage;c.beat=a.beat;c.lastHit=c.time;n.combo=c.hits;n.comboT=wallClock()+RULES.chainLife;if(a.beat)n.perfectT=wallClock()+550;}
+    const ms=!shield&&milestone(n,c,e);
     if(eq.includes('orbital')&&(ec.air||move.launch)){e.marked=true;value+=4;}
-    a.connected=damage(n,e,value,a.kind,{guarded:!!shield})&&!shield;
+    a.connected=damage(n,e,value,a.kind,{guarded:!!shield,beat:!!a.beat})&&!shield;
     if(a.connected&&c.follow&&c.follow.enemy===e)c.follow=null;
     if(!e.alive)return;
     // Air reactions come FIRST: a second uppercut must not reset the juggle cap.
@@ -171,6 +180,7 @@
     if(eq.includes('telemetry')&&c.hits>=5)e.showHp=wallClock()+4000;
     if(a.beat&&eq.includes('intercept'))e.exposed=wallClock()+2500;
     c.relay=a.beat?(c.relay||0)+1:0;if(eq.includes('relay')&&c.relay>=3){n.dashCD=0;c.relay=0;say(n,'LOW-ORBIT RELAY · DASH READY');}
+    if(ms)say(n,'COMBO ×'+c.hits+' · KEEP THE PRESSURE');
   }
   function tick(n,dt,k){if(!active(n))return {locked:false};if(n.drive||inputBlocked())return {locked:true};const c=state(n);k=readInput(k);c.time+=(Number.isFinite(dt)?Math.min(Math.max(dt,0),.05):0)*1000;
     if(c.grab){const g=c.grab,ec=enemy(g.enemy),dir=direction(k);if(!g.enemy.alive||!n.enemies.includes(g.enemy)||c.time-g.at>RULES.grabLife){ec.held=false;ec.stunUntil=c.time+180;c.grab=null;event(n,'escape',g.enemy);}else{g.enemy.x=clamp(n.x+(n.face>0?n.w+3:-g.enemy.w-3),0,1800-g.enemy.w);g.enemy.y=n.y+n.h-g.enemy.h;ec.stunUntil=c.time+180;if(!dir)g.armed=true;if(g.pending)throwHeld(n,g.pending);else if(dir&&(g.armed||dir!==g.entry))throwHeld(n,dir);}}
@@ -203,7 +213,7 @@
   }
   function draw(ctx,n){if(!active(n))return;const c=state(n),W=ctx.canvas.width,calm=root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches,hud=root.TechOpsRuntimeHud;ctx.save();ctx.font='bold '+(hud?13*hud.viewport(ctx.canvas).scaleY:11)+'px monospace';ctx.textAlign='center';
     for(const e of n.enemies||[]){const ec=enemy(e);if(!e.alive)continue;const x=e.x+e.w/2-(n.cam||0),y=e.y-60;if(ec.held){ctx.fillStyle='#ffd166';ctx.fillText('GRAB',x,y);}else if(ec.stunUntil>c.time&&!ec.air){ctx.fillStyle='#ffd166';for(let i=0;i<3;i++)ctx.fillRect(x-12+i*10,y+(calm?0:Math.sin(c.time/100+i)*3),4,4);}}
-    for(const e of c.fx){const age=c.time-e.time;if(!['jab','cross','launcher','uppercut','low','kick','rising-kick','sweep','air','air-kick','air-slam','throw','collision','slam','wall','ko'].includes(e.type))continue;ctx.globalAlpha=Math.max(0,1-age/450);ctx.fillStyle=e.type==='ko'?'#ffd166':'#fff2cd';ctx.fillText(e.type==='ko'?'KO':String(e.damage||''),e.x-(n.cam||0),e.y-45-(calm?0:age/25));}ctx.globalAlpha=1;
+    for(const e of c.fx){const age=c.time-e.time;if(!['jab','cross','launcher','uppercut','low','kick','rising-kick','sweep','air','air-kick','air-slam','throw','collision','slam','wall','ko','combo-milestone'].includes(e.type))continue;ctx.globalAlpha=Math.max(0,1-age/450);ctx.fillStyle=e.type==='ko'||e.type==='combo-milestone'||e.beat?'#ffd166':'#fff2cd';ctx.fillText(e.type==='ko'?'KO':e.type==='combo-milestone'?'COMBO ×'+e.hits:String(e.damage||''),e.x-(n.cam||0),e.y-45-(calm?0:age/25));}ctx.globalAlpha=1;
     // The passive screen-space HUD draws the rhythm bar with status/captions.
     // World-attached grab and damage feedback above keep their world anchors.
     if(hud&&hud.handles(n)){ctx.restore();return;}
@@ -212,5 +222,5 @@
     const width=Math.min(290,W-20),x=(W-width)/2,y=91;ctx.fillStyle='#08111de8';ctx.fillRect(x,y,width,42);ctx.fillStyle='#a9c4d9';ctx.fillText(c.grab?'← / → THROW   ↑ LAUNCH   ↓ SLAM':c.stunUntil>c.time?'RECOVER':dashReady?'DASH → ATTACK TO GRAB':c.attack?.kind?.startsWith('air')?'AIR COMBO · THREE HITS MAX':'↑ / ↓ AIM · JUMP TO FOLLOW',W/2,y+14);
     const age=c.time-c.lastInput,barW=width-24;ctx.fillStyle='#27354b';ctx.fillRect(x+12,y+25,barW,6);ctx.fillStyle='#b18b39';ctx.fillRect(x+12+barW*RULES.beatMin/700,y+25,barW*(RULES.beatMax-RULES.beatMin)/700,6);if(c.lastHit>=0&&age<700){ctx.fillStyle=age>=RULES.beatMin&&age<=RULES.beatMax?'#ffe39a':'#8dc6fa';ctx.fillRect(x+12+barW*age/700-2,y+23,4,10);}ctx.restore();
   }
-  root.TechOpsNightCombat={VERSION:3,RULES,MOVES,active,state,attack,dash,tick,stepEnemy,blocked:blockedContact,hurt,cancel,pose,draw,target,normalizeInput,readInput,jumpCancel,grab:(n,k)=>attack(n,k,'grab'),kick:(n,k)=>attack(n,k,'kick')};
+  root.TechOpsNightCombat={VERSION:4,RULES,MOVES,active,state,attack,dash,tick,stepEnemy,blocked:blockedContact,hurt,cancel,pose,draw,target,normalizeInput,readInput,jumpCancel,grab:(n,k)=>attack(n,k,'grab'),kick:(n,k)=>attack(n,k,'kick')};
 })(typeof globalThis!=='undefined'?globalThis:this);

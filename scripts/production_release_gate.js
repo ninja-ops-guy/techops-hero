@@ -109,6 +109,7 @@ const tests = [
   "test_night_directional_integration.js",
   "test_night_movement_combos.js",
   "test_night_input_assists.js",
+  "test_night_combat_impact.js",
   "test_visual_combat_assets.js",
   "test_night_combat.js",
   "test_runtime_combat_audio.js",
