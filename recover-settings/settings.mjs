@@ -1,9 +1,12 @@
 // Exact allowlist: never accept game identities, snapshots, milestones or story grants.
 export const KEYS = Object.freeze({
-  'techops-hero:volume-xiii:revised:page': 'Volume XIII bookmark',
-  'techops-hero:revision-f:waldo-continuity:page': 'Revision F bookmark',
-  'techops-hero:revision-f:page': 'Earlier Revision F bookmark',
-  'techops-hero:r11:page': 'Legacy comic bookmark',
+  'techops-hero:g:corrected-c18407af88e9:page': 'Full collection bookmark',
+  'techops-hero:xiii-r:corrected-85c2fbd8c80b:page': 'Volume XIII current bookmark',
+  'techops-hero:xiv:corrected-97f16edf9df0:page': 'Volume XIV bookmark',
+  'techops-hero:volume-xiii:revised:page': 'Historical Volume XIII bookmark',
+  'techops-hero:revision-f:waldo-continuity:page': 'Historical Revision F bookmark',
+  'techops-hero:revision-f:page': 'Historical Earlier Revision F bookmark',
+  'techops-hero:r11:page': 'Historical Legacy comic bookmark',
   'k-terminal:tracks:v3': 'Terminal playlist',
   'k-terminal:audio-settings:v1': 'Terminal preferences',
   'k-world:library:v6': 'K World playlist',
@@ -23,7 +26,8 @@ function trackURL(value) {
 }
 function valueOK(key, value) {
   if (typeof value !== 'string' || value.length > 300_000) return false;
-  const pages = { 'techops-hero:volume-xiii:revised:page': 40, 'techops-hero:revision-f:waldo-continuity:page': 316, 'techops-hero:revision-f:page': 315, 'techops-hero:r11:page': 161 };
+  // Historical editions retain their own bounds; never remap pages during recovery.
+  const pages = { 'techops-hero:g:corrected-c18407af88e9:page': 316, 'techops-hero:xiii-r:corrected-85c2fbd8c80b:page': 49, 'techops-hero:xiv:corrected-97f16edf9df0:page': 133, 'techops-hero:volume-xiii:revised:page': 40, 'techops-hero:revision-f:waldo-continuity:page': 316, 'techops-hero:revision-f:page': 315, 'techops-hero:r11:page': 161 };
   if (key.endsWith(':page')) return /^[1-9]\d{0,3}$/.test(value) && Number(value) <= pages[key];
   // The editor retains unfinished JSON as plain text; restore it to its textarea only.
   if (key === 'k-world:guided-score:draft:v1') return value.length <= 150_000;
