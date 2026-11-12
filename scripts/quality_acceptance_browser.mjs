@@ -171,13 +171,10 @@ async function night(page,p){
     assert.equal(difficultyWait.initialized,false,'waiting cannot choose on behalf of the player');
     assert.equal(difficultyWait.inDialog,true);assert.equal(difficultyWait.titleVisible,false);
   }
-  const deadline=Date.now()+30000;
-  while(Date.now()<deadline){
-    if(await page.evaluate(()=>!!window.S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode))break;
-    if(await page.evaluate(()=>!!window.v722?.active()))await page.keyboard.press('Escape');
-    else {const choices=page.locator('#dlg-options button');if(await choices.first().isVisible().catch(()=>false)){const standard=choices.filter({hasText:/Standard/}).first();await click(page,await standard.isVisible()?standard:choices.first(),p.hasTouch);}}
-    await page.waitForTimeout(100);
-  }
+  await click(page,option(page,/Standard/),p.hasTouch);
+  await click(page,option(page,/Take the Charger/),p.hasTouch);
+  await page.locator('#v722-cine').waitFor({state:'visible'});
+  await page.keyboard.press('Escape');
   await page.waitForFunction(()=>window.S?.nightMode&&!S.inDialog&&!window.__productionDesiredMode);
   const start=await page.evaluate(()=>NM.x);await page.keyboard.down('ArrowRight');
   try{await page.waitForFunction(x=>NM.x>x+20,start,{timeout:4000});}finally{await page.keyboard.up('ArrowRight');}

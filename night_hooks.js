@@ -185,13 +185,19 @@ function nightDoorDialog() {
 const __origStartRunV50 = startRun;
 startRun = function () {
   if (S && S.meta && S.meta._standaloneMode === "nightcrawler") {
+    const run = S;
+    const router = window.TechOpsProductionModeRouter;
     setupDay();
     $("title-screen").classList.add("hidden");
     $("hud").classList.remove("hidden");
     showTouchUI();
     initMusic();
-    save();
-    dlg("🌃 After Hours Dispatch", `New Haven after dark. Take the Charger into the city.<br><br>Start with <b>Downtown Street 1</b>. Learn movement, jumps, and contact timing, then open <b>Run Menu [C]</b> for authored field reports.<br><br>Every fight is a symptom. Investigate what is driving it.`, [{ t: "Take the Charger ▶", f: closeDlg }]);
+    dlg("🌃 After Hours Dispatch", `New Haven after dark. Take the Charger into the city.<br><br>Start with <b>Downtown Street 1</b>. Learn movement, jumps, and contact timing, then open <b>Run Menu [C]</b> for authored field reports.<br><br>Every fight is a symptom. Investigate what is driving it.`, [{
+      t: "Take the Charger ▶",
+      f: event => { if (!router?.confirmNightDispatch || router.confirmNightDispatch(run, event?.currentTarget)) closeDlg(); },
+    }]);
+    const button = $("dlg-options").firstElementChild;
+    if (router?.offerNightDispatch?.(run, button)) button.focus({ preventScroll: true });
     return;
   }
   return __origStartRunV50.apply(this, arguments);

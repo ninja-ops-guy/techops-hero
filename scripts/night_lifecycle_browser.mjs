@@ -60,19 +60,13 @@ async function sectorMenuProbe(page){
  });
 }
 async function enterNight(page,touch){
- const button=page.locator('#btn-nightcrawler');
- if(touch)await button.tap();else await button.click();
- const deadline=Date.now()+20000;
- while(Date.now()<deadline){
-  if(await page.evaluate(()=>!!(window.S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode)))return;
-  const options=page.locator('#dlg-options button');
-  if(await page.evaluate(()=>!window.S?.nightMode&&!window.v722?.active()&&!document.querySelector('#dialogue')?.classList.contains('hidden'))&&await options.count()){
-    const first=options.first();if(await first.isVisible()){if(touch)await first.tap();else await first.click();}
-  }
-  if(await page.evaluate(()=>!!window.v722?.active()))await page.keyboard.press('Escape');
-  await page.waitForTimeout(100);
- }
- throw new Error('Night launch did not reach a playable state: '+JSON.stringify(await snapshot(page)));
+ const activate=locator=>touch?locator.tap():locator.click();
+ await activate(page.locator('#btn-nightcrawler'));
+ await activate(page.getByRole('button',{name:/Intern/}));
+ await activate(page.getByRole('button',{name:/Take the Charger/}));
+ await page.locator('#v722-cine').waitFor({state:'visible'});
+ await page.keyboard.press('Escape');
+ await page.waitForFunction(()=>window.S?.nightMode&&!S.inDialog&&!window.v722?.active()&&!window.__productionDesiredMode);
 }
 async function sharedSceneControls(page){
  const scene=page.locator('#v725-cine'),pause=scene.locator('.day-cine-pause'),skip=scene.locator('.day-cine-skip');

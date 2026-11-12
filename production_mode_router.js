@@ -1,4 +1,4 @@
-/* TechOps Hero — production mode router v11.
+/* TechOps Hero — production mode router v12.
  * Owns alternate-mode convergence and clears legacy dialogue state before
  * handing input to the Night engine. Production wrapper installation is a
  * one-shot bootstrap concern; this router only refreshes mode state/UI and
@@ -6,16 +6,17 @@
  * v10 keeps the v8 serialized Night Crawler transaction, but restores the
  * canonical title initialization boundary: the router capture owner invokes
  * #btn-start exactly once so newState()/difficulty selection create S before
- * any enterNight request. The canonical difficulty dialogue remains visible
- * until startRun() has populated S.map. The router defers authored Good Boys title-button launches to the campaign director.
+ * any enterNight request. Fresh title launches wait for difficulty selection
+ * and the player's dispatch confirmation. The router defers authored Good Boys title-button launches to the campaign director.
  */
 (function(root){
   "use strict";
   if(!root)return;
   try{if(root.TechOpsProductionModeRouter&&root.TechOpsProductionModeRouter.timer)root.clearInterval(root.TechOpsProductionModeRouter.timer);}catch(e){}
-  var VERSION=11,desired=null,timer=null,introAutomationAt=0,
+  var VERSION=12,desired=null,timer=null,introAutomationAt=0,
       nightLaunchPhase="idle",nightLaunchIssued=false,nightPollActive=false,
-      nightCallbacks=[],nightTraceSeq=0,nightTitleStartIssued=false;
+      nightCallbacks=[],nightTraceSeq=0,nightTitleStartIssued=false,
+      nightDispatch=null,nightDispatchApproved=null;
 
   function textOf(node){try{return String(node&&node.textContent||"").toUpperCase();}catch(e){return"";}}
   function setDesired(mode){desired=mode||null;root.__productionDesiredMode=desired;return desired;}
@@ -43,7 +44,7 @@
   function nightSnapshot(event,extra){var s=state(),n=world(),o={seq:++nightTraceSeq,at:(root.performance&&typeof root.performance.now==="function")?root.performance.now():(Date.now?Date.now():0),event:event||"snapshot",phase:nightLaunchPhase,desired:desired,inDialog:!!(s&&s.inDialog),nightMode:!!(s&&s.nightMode),hasS:!!s,hasNM:!!n,runInitialized:runInitialized(),cinematic:nightCinematicVisible(),runtimeMounted:nightRuntimeMounted()};if(extra)for(var k in extra)if(Object.prototype.hasOwnProperty.call(extra,k))o[k]=extra[k];return o;}
   function nightTrace(event,extra){var a=root.__productionNightLaunchTrace||(root.__productionNightLaunchTrace=[]),o=nightSnapshot(event,extra);a.push(o);if(a.length>160)a.splice(0,a.length-160);root.__productionNightLaunchPhase=nightLaunchPhase;return o;}
   function setNightPhase(phase,event,extra){nightLaunchPhase=phase;root.__productionNightLaunchPhase=phase;return nightTrace(event||("phase."+phase),extra);}
-  function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
+  function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightDispatch=null;nightDispatchApproved=null;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
   function runNightCallbacks(){var cbs=nightCallbacks.splice(0);for(var i=0;i<cbs.length;i++)try{cbs[i]();}catch(e){}}
   function finishNightLaunch(){clearBlockingDialog();forceNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionNightLaunchOk=true;root.__productionActiveMode="nightcrawler";setNightPhase("ready","router.ready");runNightCallbacks();}
   function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];setDesired(null);root.__techopsAlternateStartMode=null;root.__productionActiveMode=null;clearNightIdentity();try{var screen=root.document&&root.document.getElementById("title-screen");if(screen)screen.classList.remove("hidden");var title=root.TechOpsProductionTitleExperience;if(title&&typeof title.routeFailed==="function")title.routeFailed("nightcrawler",root.__productionModeRouterError);}catch(e){}}
@@ -61,8 +62,8 @@
     try{if(root.TechOpsProductionWrapperGuard)root.TechOpsProductionWrapperGuard.enforce();}catch(e){}
   }
 
-  function issueCanonicalTitleStart(){
-    if(state()||nightTitleStartIssued)return !!state();
+  function issueCanonicalTitleStart(restart){
+    if((state()&&!restart)||nightTitleStartIssued)return !!state();
     nightTitleStartIssued=true;
     root.__techopsAlternateStartMode="nightcrawler";
     var b=null;try{b=root.document&&root.document.getElementById("btn-start");}catch(e){}
@@ -86,9 +87,30 @@
     root.__productionModeRouterNightStartError="canonical_start_missing";nightTrace("startRun.missing");return false;
   }
 
+  function dispatchVisible(){
+    var run=state();
+    return !!(nightDispatch&&nightDispatch.run===run&&run.inDialog&&nightDispatch.button.isConnected&&visibleId("dialogue"));
+  }
+
+  function offerNightDispatch(run,button){
+    if(desired!=="nightcrawler"||!nightTitleStartIssued||run!==state()||!runInitialized()||nightDispatchApproved||!button)return false;
+    nightDispatch={run:run,button:button};
+    setNightPhase("dispatch","dispatch.awaiting-confirmation");
+    return true;
+  }
+
+  function confirmNightDispatch(run,button){
+    if(desired!=="nightcrawler"||nightLaunchPhase!=="dispatch"||!dispatchVisible()||nightDispatch.run!==run||nightDispatch.button!==button)return false;
+    nightDispatchApproved=run;
+    nightDispatch=null;
+    setNightPhase("start-run","dispatch.confirmed");
+    return true;
+  }
+
   function issueNightEnter(){
     if(nightLaunchIssued||nightCinematicVisible()||goodBoysCinematicVisible()||nightRuntimeMounted())return false;
     var s=state(),f=enterNightFn();if(!s||!runInitialized()||s.nightMode||!f)return false;
+    if(nightTitleStartIssued&&nightDispatchApproved!==s)return false;
     nightLaunchIssued=true;setNightPhase("enter-requested","enterNight.request");
     try{clearBlockingDialog();f();if(nightCinematicVisible())setNightPhase("cinematic","v722.begin");else if(nightRuntimeMounted())setNightPhase("mounting","runtime.attached");else nightTrace("enterNight.return",{mounted:false});return true;}
     catch(e){root.__productionModeRouterEnterNightError=String(e&&e.stack||e);nightTrace("enterNight.error",{error:root.__productionModeRouterEnterNightError});return false;}
@@ -110,11 +132,10 @@
       if(!cine&&!nightRuntimeMounted()&&!nightLaunchIssued)issueNightEnter();
       if(nightRuntimeMounted()&&!cine){clearBlockingDialog();if(nightWorldReady()){nightPollActive=false;finishNightLaunch();return;}}
       // This budget measures engine convergence, not the player's reading time.
-      // Keep canonical difficulty and authored cinema under their existing owners;
-      // an absent/hidden chooser still consumes the bounded runtime deadline.
+      // An absent/hidden player choice still consumes the bounded deadline.
       var waitingForChoice=nightTitleStartIssued&&!runInitialized()&&state()&&state().inDialog&&visibleId("dialogue");
       var suspended=!!(root.document&&root.document.hidden);
-      if(!waitingForChoice&&!cine&&!suspended&&++tries>=max){failNightLaunch("night_runtime_timeout",{tries:tries});return;}
+      if(!waitingForChoice&&!dispatchVisible()&&!cine&&!suspended&&++tries>=max){failNightLaunch("night_runtime_timeout",{tries:tries});return;}
       (root.setTimeout||setTimeout)(poll,25);
     }
     (root.setTimeout||setTimeout)(poll,25);return true;
@@ -137,7 +158,8 @@
   function enterNightReliably(done){return desired==="nightcrawler"?enterNightCrawlerReliably(done):primeNightRuntime(done);}
 
   function launchNightCrawler(fromCapture,options){
-    if((nightLaunchPhase==="launch"||nightLaunchPhase==="start-run"||nightLaunchPhase==="enter-requested"||nightLaunchPhase==="cinematic"||nightLaunchPhase==="mounting")&&desired==="nightcrawler"){nightTrace("launch.coalesced");enterNightCrawlerReliably();return true;}
+    if((nightLaunchPhase==="launch"||nightLaunchPhase==="start-run"||nightLaunchPhase==="dispatch"||nightLaunchPhase==="enter-requested"||nightLaunchPhase==="cinematic"||nightLaunchPhase==="mounting")&&desired==="nightcrawler"){nightTrace("launch.coalesced");enterNightCrawlerReliably();return true;}
+    var previous=state(),restart=nightLaunchPhase==="failed"&&previous&&!previous.nightMode&&previous.meta&&previous.meta._standaloneMode==="nightcrawler";
     var recovery=root.TechOpsNightRuntime,record=recovery&&recovery.checkpointStatus?recovery.checkpointStatus():{status:"empty"};
     if(!(options&&options.fresh)&&!state()&&record.status==="invalid"){
       failNightLaunch(record.message);
@@ -150,7 +172,7 @@
     }
     try{
       var s=state();
-      if(!s){issueCanonicalTitleStart();s=state();}
+      if(!s||restart){issueCanonicalTitleStart(restart);s=state();}
       if(s&&runInitialized()&&!s.nightMode&&!nightCinematicVisible()&&!nightRuntimeMounted())issueNightEnter();
       else if(s&&!runInitialized())nightTrace("startRun.awaiting-difficulty");
     }catch(e){root.__productionModeRouterNightStartError=String(e&&e.stack||e);nightTrace("launch.error",{error:root.__productionModeRouterNightStartError});}
@@ -187,12 +209,12 @@
     if(goodButton||t.indexOf("118/1984")>=0||t.indexOf("BREAKOUT")>=0||t.indexOf("GOOD BOYS")>=0||t.indexOf("GOOD DOGS")>=0){root.__techopsAlternateStartMode=null;setDesired("goodboys");clearNightIdentity();var director=root.TechOpsGoodBoysCampaignDirector;if(director&&typeof director.showOpening==="function"){root.__productionGoodBoysLaunchOwner="campaign_director";return;}(root.setTimeout||setTimeout)(launchGoodBoys,0);}
   }
   function healthTick(){
-    if(desired==="nightcrawler"){forceNightIdentity();hideLegacyShell(!runInitialized());if(nightWorldReady()){if(nightLaunchPhase!=="ready")finishNightLaunch();}else{if(!state())issueCanonicalTitleStart();enterNightCrawlerReliably();}}
+    if(desired==="nightcrawler"){forceNightIdentity();hideLegacyShell(!runInitialized()||dispatchVisible());if(nightWorldReady()){if(nightLaunchPhase!=="ready")finishNightLaunch();}else{if(!state())issueCanonicalTitleStart();enterNightCrawlerReliably();}}
     else if(desired==="goodboys"){hideLegacyShell();if(goodBoysCinematicVisible()){confirmAutomationIntro();return;}if(nightRuntimeMounted()&&pairReady())finishGoodBoys();}
     else if(root.__productionActiveMode==="nightcrawler"&&nightWorldReady()){clearBlockingDialog();clearErrors();}
     else if(root.__productionActiveMode==="goodboys"&&nightRuntimeMounted()&&pairReady()){clearBlockingDialog();clearErrors();}
   }
   try{root.document&&root.document.addEventListener("click",captureIntent,true);}catch(e){}
   timer=root.setInterval?root.setInterval(healthTick,100):null;
-  root.TechOpsProductionModeRouter={VERSION:VERSION,setDesired:setDesired,state:state,world:world,runInitialized:runInitialized,nightRuntimeMounted:nightRuntimeMounted,nightWorldReady:nightWorldReady,nightCinematicVisible:nightCinematicVisible,pairReady:pairReady,clearErrors:clearErrors,clearBlockingDialog:clearBlockingDialog,hideLegacyShell:hideLegacyShell,restoreRuntimeUi:restoreRuntimeUi,launchNightCrawler:launchNightCrawler,launchGoodBoys:launchGoodBoys,enterNightReliably:enterNightReliably,goodBoysIntroVisible:goodBoysIntroVisible,goodBoysCinematicVisible:goodBoysCinematicVisible,confirmAutomationIntro:confirmAutomationIntro,healthTick:healthTick,timer:timer};
+  root.TechOpsProductionModeRouter={VERSION:VERSION,setDesired:setDesired,state:state,world:world,runInitialized:runInitialized,nightRuntimeMounted:nightRuntimeMounted,nightWorldReady:nightWorldReady,nightCinematicVisible:nightCinematicVisible,pairReady:pairReady,clearErrors:clearErrors,clearBlockingDialog:clearBlockingDialog,hideLegacyShell:hideLegacyShell,restoreRuntimeUi:restoreRuntimeUi,launchNightCrawler:launchNightCrawler,offerNightDispatch:offerNightDispatch,confirmNightDispatch:confirmNightDispatch,launchGoodBoys:launchGoodBoys,enterNightReliably:enterNightReliably,goodBoysIntroVisible:goodBoysIntroVisible,goodBoysCinematicVisible:goodBoysCinematicVisible,confirmAutomationIntro:confirmAutomationIntro,healthTick:healthTick,timer:timer};
 })(typeof globalThis!=="undefined"?globalThis:this);
