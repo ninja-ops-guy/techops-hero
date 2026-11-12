@@ -30,6 +30,7 @@ for(const [asset,version] of [["runtime_day_doors.js","20261105-doors-r1"],["run
 }
 const bootstrapBuild=fs.readFileSync("production_bootstrap.js","utf8").match(/BUILD="([A-Za-z0-9._-]+)"/);
 for(const src of ["v725_hooks.js","good_boys_hud_lite.js"]){assert.strictEqual(refFor(src),src+"?v=20260921-presentation-r1");}
+assert.strictEqual(refFor("v737_hooks.js"),"v737_hooks.js?v="+bootstrapBuild[1]);
 assert.ok(fs.readFileSync("campaign_story.js","utf8").includes("campaign_native_act1_visuals.js?v=20261105-doors-r1"));
 assert.ok(fs.readFileSync("campaign_native_act1_visuals.js","utf8").includes("campaign_native_act1_visuals_impl.js?v=20261102-stage-mount-r2"));
 for(const src of ["campaign_act2.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","cinematic_systems.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}

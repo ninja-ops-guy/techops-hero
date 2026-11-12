@@ -28,7 +28,7 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
    const until=Date.now()+10000;
    while(Date.now()<until){
     if(await page.evaluate(()=>!!(window.NM&&window.S?.nightMode&&!window.S.inDialog)))break;
-    for(const name of [/Standard/i,/BEGIN THE INCIDENT/i]){
+    for(const name of [/Standard/i,/Take the Charger/i,/BEGIN THE INCIDENT/i]){
      const button=page.getByRole('button',{name}).first();
      if(await button.isVisible().catch(()=>false))await button.click();
     }

@@ -157,7 +157,7 @@ function event(target, type = "click") {
 
 assert.match(
   INDEX,
-  /v737_hooks\.js"><\/script><script src="production_title_experience\.js\?v=20260920-quality-r2"><\/script><script src="v742_hooks\.js/,
+  /v737_hooks\.js\?v=[\w-]+"><\/script><script src="production_title_experience\.js\?v=20260920-quality-r2"><\/script><script src="v742_hooks\.js/,
   "title authority must load immediately after v737 and before later wrappers"
 );
 assert.match(INDEX, /style\.css\?v=20260920-quality-r2/, "shared control CSS must bypass stale interaction styles");
