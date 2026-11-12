@@ -119,6 +119,7 @@ const tests = [
   "test_night_danger_warning.js",
   "test_day_stress_warning.js",
   "test_day_tech_debt_warning.js",
+  "test_day_rep_milestone.js",
   "test_visual_combat_assets.js",
   "test_night_combat.js",
   "test_runtime_combat_audio.js",
