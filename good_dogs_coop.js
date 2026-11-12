@@ -99,10 +99,37 @@
     n.x-=dir*over*a/total;p.x+=dir*over*b/total;if(a)n.vx=0;if(b)p.vx=0;
   }
   function cameraTarget(n,width){if(!active())return n.x;return (n.x+n._v736.partner.x)/2+(width||960)*(1/2.4-.5);}
+  function drawBayContacts(ctx,n,d,q,F,cam){
+    var solved=complete(2),available=n._gbShipRevealed;
+    var accent=solved?'#91e0b3':available?'#82d9dc':'#8f7858';
+    var pad=d.a-cam,console=d.b-cam;
+    ctx.fillStyle='#152125';
+    ctx.fillRect(pad,F+5,console-pad,4);
+    ctx.fillStyle=accent;
+    ctx.fillRect(pad,F+6,Math.round((console-pad)*(solved?1:q.charge/d.seconds)),2);
+    [pad,console].forEach(function(x,i){
+      if(x<-75||x>ctx.canvas.width+75)return;
+      var occupied=solved||(i?q.b:q.a);
+      ctx.fillStyle='#10191d';
+      ctx.fillRect(x-26,F-2,52,9);
+      ctx.fillStyle=occupied?accent:'#445054';
+      ctx.fillRect(x-24,F-1,48,3);
+      ctx.fillStyle=accent;
+      ctx.fillRect(x-24,F+3,6,2);
+      ctx.fillRect(x+18,F+3,6,2);
+      if(available&&!solved){
+        ctx.fillStyle='#0e191d';
+        ctx.fillRect(x-50,F+15,100,17);
+        ctx.fillStyle=accent;
+        ctx.fillText(i?'POWER CONSOLE':'PARTNER PAD',x,F+27);
+      }
+    });
+  }
   function draw(ctx,n){
     var c=n&&n._v736;if(!c||c.ending)return;var d=definition(n),q=d&&progress(n),F=floor(),cam=n.cam||0;
     ctx.save();ctx.font='bold 10px monospace';ctx.textAlign='center';
-    if(d){
+    if(d&&c.m===2&&n._gbHiddenBayArtDrawn)drawBayContacts(ctx,n,d,q,F,cam);
+    else if(d){
       var solved=complete(c.m),col=solved?'#8de5ac':c.m===1?'#ffd18b':'#72dfff';
       ctx.strokeStyle=col;ctx.globalAlpha=.45;ctx.beginPath();ctx.moveTo(d.a-cam,F+7);ctx.lineTo(d.b-cam,F+7);ctx.stroke();ctx.globalAlpha=1;
       [d.a,d.b].forEach(function(x,i){var sx=x-cam,on=solved||(i?q.b:q.a);ctx.fillStyle=on?col:'#122029';ctx.fillRect(sx-33,F-4,66,7);ctx.strokeStyle=col;ctx.strokeRect(sx-33.5,F-4.5,67,8);ctx.fillStyle='#061018';ctx.fillRect(sx-43,F+14,86,17);ctx.fillStyle=col;ctx.fillText(i&&d.kind==='power-console'?'CONSOLE':'PAD '+(i+1),sx,F+26);});

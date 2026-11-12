@@ -22,7 +22,32 @@ test('M6 zero decrypt alone cannot imply final wave or release completion',()=>{
 test('M6 lost or uninitialized uplink does not look like success',()=>{const r=boot(),n=scene(r,6);assert.equal(guide(r).phase,'initializing');n._v736.uplink={hp:0};assert.equal(guide(r).phase,'failed');});
 test('M7 empty boss roster and walking to shuttle cannot bypass tandem guidance',()=>{const r=boot(),n=scene(r,7);n.x=1700;assert.equal(guide(r).phase,'warden');n._v736.sync=100;assert.match(guide(r).detail,/SYNC READY/);n._v736._gbWardenTandemDefeated=true;assert.equal(guide(r).targetX,1580);assert.match(guide(r).detail,/LEFT/);assert.equal(n._v736._gbShuttleReached,undefined);});
 test('M3 reads native relay and exit coordinates and phase without invoking mutating helpers',()=>{const r=boot(),n=scene(r,3);r.TechOpsGoodBoysPrisonGameplayV2={RELAY_X:931,EXIT_X:1381};n._v736.prisonOpsV2={phase:'terminal'};assert.equal(guide(r).targetX,931);n._v736.prisonOpsV2.phase='exfil';assert.equal(guide(r).targetX,1381);});
-test('M2 pending wave is not an empty-room victory',()=>{const r=boot(),n=scene(r,2);n._v736.pendingSpawn={};assert.match(guide(r).text,/INBOUND/);n._v736.pendingSpawn=null;n._v736.pairPuzzle={solved:false};assert.equal(guide(r).phase,'interlock');});
+test('M2 waits for the ship reveal even between waves',()=>{
+  const r=boot(),n=scene(r,2),c=n._v736;
+  assert.equal(guide(r).text,'SECURITY INBOUND');
+  n.enemies=[{hp:10,alive:true}];
+  assert.equal(guide(r).detail,'1 HOSTILE');
+  n.enemies=[];c.wave=1;c.pendingSpawn={};
+  assert.equal(guide(r).text,'REINFORCEMENTS INBOUND');
+  c.pendingSpawn=null;c.pairPuzzle={solved:false};
+  assert.equal(guide(r).phase,'security');
+});
+test('M2 guides solo interlock steps and reads persisted power before boarding',()=>{
+  const r=boot(),n=scene(r,2),c=n._v736,pair=r.TechOpsLevelRegistry.goodDogsMission(2).pairPuzzle;
+  let held=false,solved=false;
+  r.TechOpsGoodDogsCoop={complete:()=>solved,active:()=>false,aiHolding:()=>held};
+  n._gbShipRevealed=true;
+  assert.equal(guide(r).targetX,pair.a);
+  held=true;
+  assert.equal(guide(r).targetX,pair.b);
+  c.pairPuzzle={engaged:true,solved:false};
+  assert.match(guide(r).detail,/Hold both contacts/);
+  solved=true;
+  r.TechOpsGoodBoysBoardShipAction={BOARD_X:1230};
+  assert.equal(guide(r).targetX,1230);
+  n.x=1230;
+  assert.equal(guide(r).text,'BOARD THE SHIP');
+});
 test('M1 points to Hidden Bay only after trail state exists',()=>{const r=boot(),n=scene(r,1);assert.equal(guide(r).targetX,null);n._gbWaldoTrailComplete=true;assert.equal(guide(r).targetX,1460);});
 test('M8 does not manufacture campaign completion',()=>{const r=boot(),n=scene(r,8);assert.equal(guide(r).phase,'home');assert.equal(r.S.meta._v736.done,undefined);});
 test('dialog, battle, driving, ending, hidden and presentation-owned surfaces suppress guidance',()=>{for(const cause of ['dialog','battle','drive','ending','hidden','presentation','modal','title']){const r=boot(),n=scene(r,4);if(cause==='dialog')r.S.inDialog=true;if(cause==='battle')r.S.inBattle=true;if(cause==='drive')n.drive={};if(cause==='ending')n._v736.ending=true;if(cause==='hidden')r.document={hidden:true};if(cause==='presentation')r.TechOpsPresentationDirector={isBlocking:()=>true};if(cause==='modal')r.TechOpsProductionWrapperGuard={hasBlockingModal:()=>true};if(cause==='title')r.document={getElementById:()=>({classList:{contains:()=>false},style:{display:'block',visibility:'visible'}})};assert.equal(guide(r),null,cause);}});
