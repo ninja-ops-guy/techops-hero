@@ -159,6 +159,12 @@ assert.ok(
   ctx.drawImageArgs.some(args => args.length === 5 && args[0]._src.endsWith("sector04.access_guard.attack.png")),
   "attack-state guard must draw the attack asset instead of idle"
 );
+night.cam = 840;
+ctx = fakeCtx();
+Runtime.drawOverlay(ctx, night, 960);
+assert.ok(!ctx.drawImageArgs.some(args => args[0]._src.endsWith("sector04.terminal.symptoms.png")),
+  "the terminal text stays hidden until inspected");
+night.cam = 0;
 
 night.enemies[0].alive = false;
 night._sector04.respawnFxUntil = 500;
@@ -199,12 +205,21 @@ assert.strictEqual(controller.id, "identity_controller");
 assert.strictEqual(controller.severed, true);
 assert.strictEqual(global.TechOpsSector04.snapshot(campaign).resolved, true);
 assert.strictEqual(night.enemies.some(e => e.campaignSector04Guard && e.alive), false);
+night.cam = 840;
+night._sector04.assets = readyResolver;
+ctx = fakeCtx();
+Runtime.drawOverlay(ctx, night, 960);
+assert.ok(ctx.drawImageArgs.some(args => args[0]._src.endsWith("sector04.identity_controller.severed.png")));
 
 let terminal = Runtime.inspectNearest(campaign, night, 1660, 372);
 assert.strictEqual(terminal.message, "YOU ARE FIXING THE SYMPTOMS.");
 assert.strictEqual(terminal.mikeResponse, "Then show me the problem.");
 assert.strictEqual(campaign.flags.tuesdayMorningReached, true);
 assert.strictEqual(night._sector04.completed, true);
+assert.strictEqual(night._sector04.progress.controllerSevered, true);
+const completionEvents = campaign.history.length;
+assert.deepStrictEqual(Runtime.inspectNearest(campaign, night, 1660, 372), terminal);
+assert.strictEqual(campaign.history.length, completionEvents, "reopening the completed terminal adds no campaign events");
 
 campaign = prepare(true);
 night = nightState();

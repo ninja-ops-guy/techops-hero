@@ -51,7 +51,9 @@ for(const [name,type,options] of [['chromium',chromium,{viewport:{width:1280,hei
    await page.waitForFunction(id=>window.__techOpsLayerEvidence?.level===id,scene,{timeout:10000});
    await page.keyboard.down('ArrowRight');
    try{
-    await page.waitForFunction(()=>window.__techOpsArtLastActor?.state==='run'&&window.TechOpsArtHandoff.health().atlases.some(a=>a.id==='prison'&&a.status==='ready'),null,{timeout:5000});
+    await page.waitForFunction(id=>window.__techOpsArtLastActor?.state==='run'&&
+      (id==='sector04' ? window.__techOpsLayerEvidence?.asset==='sector04_hangar' :
+        window.TechOpsArtHandoff.health().atlases.some(a=>a.id==='prison'&&a.status==='ready')),scene,{timeout:5000});
     await page.screenshot({path:path.join(out,'slice-'+name+'-'+scene+'.png')});
    }finally{await page.keyboard.up('ArrowRight');}
    const evidence=await page.evaluate(()=>new Promise(resolve=>{

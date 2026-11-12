@@ -137,7 +137,7 @@
       {id:"day.office",mode:"day",kind:"space",ordinal:2,name:"OFFICE",cameraProfile:"day.grid",presentationProfile:"workday",animationProfile:"mike.day",environment:{light:"office",palette:"day_office"}},
       {id:"day.engineering",mode:"day",kind:"space",ordinal:3,name:"ENGINEERING",cameraProfile:"day.grid",presentationProfile:"workday",animationProfile:"mike.day",environment:{light:"engineering",palette:"day_engineering"}},
       {id:"day.it",mode:"day",kind:"space",ordinal:4,name:"IT ROOM",cameraProfile:"day.grid",presentationProfile:"workday",animationProfile:"mike.day",environment:{light:"it",palette:"day_it"}},
-      {id:"day.sector04",mode:"sector04",kind:"set_piece",ordinal:5,name:"SECTOR 04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",animationProfile:"mike.day",environment:{light:"sector04",palette:"sector04",assetClass:"props_without_backplate"},districtConfig:{name:"SECTOR 04",streets:1,danger:1.5,accent:"#a855f7",sky:"#090611",far:"#171022",mid:"#22162f",signs:["SECTOR 04","IDENTITY CONTROL"],roster:[]}}
+      {id:"day.sector04",mode:"sector04",kind:"set_piece",ordinal:5,name:"SECTOR 04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",animationProfile:"mike.day",environment:{light:"sector04",palette:"sector04",assetClass:"pixel_hangar"},districtConfig:{name:"SECTOR 04",streets:1,danger:1.5,accent:"#a855f7",sky:"#090611",far:"#171022",mid:"#22162f",signs:["SECTOR 04"],roster:[]}}
     ]);
     var BY_ID={};GOOD_DOGS.concat(DAY_SPACES).forEach(function(row){BY_ID[row.id]=row;});
     var cell118Coordinates=null,cell118Record=null;
@@ -168,7 +168,7 @@
     function goodBoysDistricts(){var out={};GOOD_DOGS.forEach(function(row){out[row.environment.district]=clone(row.districtConfig);out[row.environment.district].name=row.zone;out[row.environment.district].accent=row.environment.accent;});return out;}
     function resolveRuntimeContext(state,world){
       if(world&&world._v736){var m=Number(world._v736.m||state&&state.meta&&state.meta._v736&&state.meta._v736.m||1),r=goodDogsMission(m);return r?{mode:"gooddogs",levelId:r.id,stageId:"m"+m,cameraProfile:r.cameraProfile,presentationProfile:r.presentationProfile,paletteProfile:r.environment.palette,assetProfile:r.environment.assetClass}:null;}
-      if(world&&world._sector04)return{mode:"sector04",levelId:"day.sector04",stageId:"sector04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",paletteProfile:"sector04",assetProfile:"props_without_backplate"};
+      if(world&&world._sector04)return{mode:"sector04",levelId:"day.sector04",stageId:"sector04",cameraProfile:"day.grid",presentationProfile:"sector04_investigation",paletteProfile:"sector04",assetProfile:"pixel_hangar"};
       if(state&&state.nightMode&&world){var id="nightcrawler."+(world.district||"downtown")+"."+(Number(world.street)||1),n=get(id);return n?{mode:"nightcrawler",levelId:id,stageId:String(n.street),cameraProfile:n.cameraProfile,presentationProfile:n.presentationProfile,paletteProfile:n.environment.palette,assetProfile:n.environment.assetClass}:null;}
       return{mode:"day",levelId:"day."+((state&&state.room)||"factory"),stageId:String(state&&state.day||1),cameraProfile:"day.grid",presentationProfile:"workday",paletteProfile:"day_default",assetProfile:"procedural"};
     }
@@ -327,6 +327,10 @@
   };
   function level(n){return n&&n._v736?'gooddogs.m'+n._v736.m:n&&n._sector04?'sector04':n&&n.district==='industrial'?'night.industrial':null;}
   function drawEnvironment(ctx,n,pass,at){
+    if(n&&n._sector04&&n._sector04.hangarDrawn){
+      root.__techOpsLayerEvidence={level:'sector04',pass:'world',asset:'sector04_hangar',collisionOwned:false};
+      return true;
+    }
     var id=level(n),spec=layers[id];if(!spec)return false;var floor=typeof root.NM_FLOOR==='number'?root.NM_FLOOR:430,W=ctx.canvas.width,calm=reduced();
     ctx.save();ctx.beginPath();ctx.rect(0,115,W,Math.max(0,ctx.canvas.height-155));ctx.clip();
     var staged=false;try{if(root.TechOpsOrbitalStaging)staged=root.TechOpsOrbitalStaging.draw(ctx,n,pass,at,drawFrame);}catch(e){root.__orbitalStagingError=String(e);}
@@ -341,7 +345,7 @@
       var c=n._v736,meta=root.S&&root.S.meta&&root.S.meta._v736;
       if(c&&Number(c.m)>=6&&Number(c.m)<=7&&meta&&meta.waldo){drawFrame(ctx,'waldo',12,n.x-(n.cam||0)-85,floor+2,85,false,.92);}
     }
-    ctx.restore();root.__techOpsLayerEvidence={level:id,pass:pass,asset:'prison',collisionOwned:false};return true;
+    ctx.restore();root.__techOpsLayerEvidence={level:id,pass:pass,asset:'prison',collisionOwned:false};if(id==='sector04')root.__techOpsLayerEvidence.fallback=true;return true;
   }
   function surveillance(n,at){var center=1010+Math.sin(at/1900)*470,radius=88,x=Number(n.x)+(Number(n.w)||22)/2;var sheltered=(n.platforms||[]).some(function(p){return x>p.x&&x<p.x+p.w&&Number(n.y)>p.y+14;});return{center:center,radius:radius,observed:Math.abs(x-center)<radius&&!sheltered,sheltered:sheltered};}
   if(root.TechOpsAnimationController)root.TechOpsAnimationController.resolveHandoff=select;
