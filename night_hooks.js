@@ -559,7 +559,11 @@ function stepNM(dt) {
         NM.msg = chip ? "🛡️ blocked!" : `💥 ${e.name} hits you!`; NM.msgT = now + 900;
         if (NM.hp <= 0) return exitNight(false);
       }
-    } else e.windup = 0;
+    } else {
+      // Dashing through a charged swing earns a readable reward beat.
+      if (e.windup >= 13 && NM.dashT > 0 && NM.ifr > 0) { NM.dodges = (NM.dodges || 0) + 1; NM.msg = "💨 DODGED!"; NM.msgT = now + 700; }
+      e.windup = 0;
+    }
     // drone operator: ranged zap at mid distance
     if (sameLane && e.hover && e.cd <= 0 && adx >= 130 && adx < 280) {
       e.windup += f * 1.2;
@@ -807,7 +811,15 @@ function drawNM() {
     }
     ctx.restore();
     if (e.down > 0) { ctx.save(); ctx.translate(ex + e.w / 2, e.y + e.h / 2); ctx.rotate(.35 * Math.sign(e.kb || 1)); ctx.globalAlpha = .7; ctx.restore(); }
-    if (e.windup > 8) { ctx.fillStyle = "#ff5252"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center"; ctx.fillText("!", ex + e.w / 2, e.y - 12); }
+    // Telegraph escalates as the attack charges: amber while the windup
+    // starts, red with a body flash in the instant before it fires.
+    if (e.windup > 8) {
+      const charge = Math.min(1, e.windup / (e.hover ? 36 : 26));
+      ctx.fillStyle = charge >= .8 ? "#ff5252" : "#ffd166";
+      ctx.font = "bold " + Math.round(12 + charge * 7) + "px monospace"; ctx.textAlign = "center";
+      ctx.fillText("!", ex + e.w / 2, e.y - 12);
+      if (charge >= .8) { ctx.globalAlpha = .3; ctx.fillRect(ex - 3, e.y - 3, e.w + 6, e.h + 6); ctx.globalAlpha = 1; }
+    }
     // hp pip
     ctx.fillStyle = "#222"; ctx.fillRect(ex, e.y - 7, e.w, 3);
     ctx.fillStyle = e.tint; ctx.fillRect(ex, e.y - 7, e.w * Math.max(0, e.hp) / e.maxHp, 3);
