@@ -956,11 +956,173 @@ resize();
 // ---------- pixel art ----------
 let pxCtx = null; // v7.28: retargetable so the tile layer can render into its cache
 function px(c, X, Y, w, h) { const c2 = pxCtx || ctx; c2.fillStyle = c; c2.fillRect(X, Y, w, h); }
-function drawTile(t, x, y, tm) {
+// The Day Shift uses architectural surfaces for wayfinding. This art is
+// painted into the existing tile cache and never changes the collision map.
+const DAY_FLOORS = {
+  concourse: { base: ["#777b75", "#7c8078"], seam: "#6c716e", edge: "#898c82", accent: "#afc8b8" },
+  lobby: { base: ["#547076", "#59757a"], seam: "#456067", edge: "#66838a", accent: "#91bbbc" },
+  office: { base: ["#666964", "#6a6d68"], seam: "#5e635f", edge: "#75796e", accent: "#a6afa1" },
+  itdept: { base: ["#4e636b", "#526971"], seam: "#43575f", edge: "#657e85", accent: "#a1cccf" },
+  security: { base: ["#4a6066", "#4e656b"], seam: "#40575d", edge: "#5c747b", accent: "#88bdbb" },
+  server: { base: ["#404e59", "#45545f"], seam: "#35434d", edge: "#576b74", accent: "#83b7be" },
+  eng: { base: ["#677273", "#6b7677"], seam: "#5c686a", edge: "#7b8582", accent: "#d2a677" },
+  factory: { base: ["#6a706b", "#6e746e"], seam: "#5a635f", edge: "#7a8177", accent: "#bba169" },
+  shipping: { base: ["#73766a", "#777a6d"], seam: "#666b60", edge: "#858577", accent: "#e3bc76" },
+  plating: { base: ["#57666a", "#5b6a6d"], seam: "#4c5a5e", edge: "#67777a", accent: "#d5a672" },
+  exec: { base: ["#6b5d5b", "#70615f"], seam: "#5d5152", edge: "#7e6e68", accent: "#b9a58a" },
+  finance: { base: ["#606e61", "#657367"], seam: "#536155", edge: "#748275", accent: "#afbf99" },
+  sales: { base: ["#576a76", "#5b6e7a"], seam: "#485d69", edge: "#687d89", accent: "#9bbccc" },
+  hr: { base: ["#736862", "#786d67"], seam: "#625a55", edge: "#84766f", accent: "#c1a99d" },
+  marketing: { base: ["#655968", "#6a5d6c"], seam: "#544b5b", edge: "#786a7d", accent: "#bda7c1" }
+};
+function dayFloorArt(map, contacts, stationData) {
+  const stations = new Map();
+  if (Array.isArray(stationData?.items)) {
+    for (const item of stationData.items) {
+      if (item?.available) stations.set(item.y * MAPW + item.x, item.id);
+    }
+  }
+  const signs = [];
+  function addSign(label, x, y, width, trim) {
+    const nearbyRows = [y + 1, y - 1, y + 2, y - 2, y];
+    for (const row of nearbyRows) {
+      for (const col of [x, x - 1, x + 1, x - 2, x + 2]) {
+        if (!map[row] || [col - 1, col, col + 1].some(tile => map[row][tile] !== 0)) continue;
+        if (signs.some(sign => sign.row === row && Math.abs(sign.col - col) < 3)) continue;
+        signs.push({ label, col, row, width, trim });
+        return;
+      }
+    }
+  }
+  contacts = contacts || {};
+  addSign("AEROTECH / BUILDING 7", LOBBY.x0 + 4, LOBBY.y1 - 2, 94, "#b6ccbf");
+  for (const [key, label, width] of [["shipping", "SHIPPING DOCK", 88], ["plating", "PLATING LINE", 82], ["access", "SECURITY OPS", 82]]) {
+    const contact = contacts[key];
+    if (contact) addSign(label, contact.x, contact.y, width, DAY_FLOORS[key === "access" ? "security" : key].accent);
+  }
+  return { contacts, stations, signs };
+}
+function floorDistrict(zone, x, y, contacts) {
+  const near = (contact, range) => contact && Math.abs(contact.x - x) + Math.abs(contact.y - y) <= range;
+  if (zone === "factory") {
+    const shipping = contacts.shipping, plating = contacts.plating;
+    if (near(shipping, 4) && (!near(plating, 4) || Math.abs(shipping.x - x) + Math.abs(shipping.y - y) <= Math.abs(plating.x - x) + Math.abs(plating.y - y))) return "shipping";
+    if (near(plating, 4)) return "plating";
+  }
+  if ((zone === "office" || zone === "itdept") && near(contacts.access, 3)) return "security";
+  if (zone === "office" && y >= LOBBY.y1 && y < FACTORY_Y) return "concourse";
+  return zone;
+}
+function paintDayFloor(district, zone, tile, x, y) {
+  const X = x * TILE, Y = y * TILE, colors = DAY_FLOORS[district] || DAY_FLOORS.office;
+  px(colors.base[(x * 3 + y * 7) % 5 < 2 ? 0 : 1], X, Y, TILE, TILE);
+  if (zone === "factory" || district === "eng" || district === "concourse") {
+    px(colors.seam, X, Y + TILE - 1, TILE, 1);
+    px(colors.edge, X + 4, Y + 8 + (x * 9 + y * 13) % 12, 5, 1);
+    if ((x + y) % 3 === 0) px(colors.seam, X + 19, Y + 18, 7, 1);
+    if (district === "concourse" && y === FACTORY_Y - 2) {
+      px("#8e958a", X, Y + 12, TILE, 2);
+      px("#5e6863", X, Y + 15, TILE, 1);
+    }
+  } else {
+    px(colors.seam, X, Y, TILE, 1); px(colors.seam, X, Y, 1, TILE);
+    px(colors.edge, X + 2, Y + 2, TILE - 4, 1);
+    if (district === "server" || district === "security") {
+      px(colors.seam, X + 6, Y + 26, TILE - 12, 2);
+      for (let i = 6; i <= 24; i += 6) px(colors.edge, X + i, Y + 26, 2, 1);
+    }
+  }
+  if (zone === "factory" && (y === FACTORY_Y || y === MAPH - 2)) {
+    px("#484e49", X, Y + 1, TILE, 5);
+    for (let i = 1; i < TILE; i += 8) {
+      px(colors.accent, X + i, Y + 2, 4, 2);
+      px(colors.accent, X + i + 1, Y + 4, 4, 1);
+    }
+  }
+  if (tile === 0 && (district === "shipping" || district === "plating") && y > FACTORY_Y) {
+    // Ground-level loading and machine clearance markings leave the aisles open.
+    const tint = district === "shipping" ? "#a38e60" : "#8c7a5c";
+    if (y % 2 === 0) px(tint, X, Y + TILE - 5, TILE, 2);
+    if ((x + y) % 4 === 0) px(tint, X + 4, Y + TILE - 12, 2, 7);
+  }
+}
+function paintDayWall(district, zone, x, y) {
+  const X = x * TILE, Y = y * TILE, industrial = zone === "factory";
+  const face = industrial ? "#657175" : "#798484";
+  px("#25383d", X, Y, TILE, TILE);
+  px("#a2a8a2", X, Y, TILE, 4);
+  px("#59676b", X, Y + 4, TILE, 3);
+  px(face, X, Y + 7, TILE, 18);
+  px("#536368", X, Y + 8, 1, 16);
+  px("#91a2a2", X + 2, Y + 9, TILE - 4, 1);
+  px("#3f5359", X, Y + 25, TILE, 4);
+  px("#1f3339", X, Y + 29, TILE, 3);
+  if (industrial) {
+    // Ribbed loading doors along the shop perimeter and amber dock indicators.
+    for (let i = 12; i < 25; i += 4) px("#515f62", X + 3, Y + i, TILE - 6, 1);
+    if (x % 3 === 0) {
+      px("#38494d", X + 25, Y + 10, 4, 7);
+      px("#d9ae62", X + 26, Y + 11, 2, 3);
+    }
+  } else if ((district === "itdept" || district === "security" || district === "server") && (x + y) % 3 !== 0) {
+    px("#2b4750", X + 4, Y + 11, 24, 11);
+    px("#5e8890", X + 5, Y + 12, 22, 1);
+    px("#4a6d76", X + 15, Y + 13, 1, 8);
+    if (district === "security") px("#85b3aa", X + 8, Y + 16, 5, 1);
+  }
+}
+function paintDayStation(id, district, x, y, tm) {
+  const X = x * TILE, Y = y * TILE;
+  const trim = (DAY_FLOORS[district] || DAY_FLOORS.office).accent;
+  const shipping = id === "shipping_printer", finance = id === "printer_queue_blocked";
+  if (shipping || finance) {
+    px("#303d41", X + 3, Y + 15, 26, 13);
+    px("#85918d", X + 4, Y + 9, 24, 10);
+    px("#bcc4b9", X + 6, Y + 8, 20, 4);
+    px("#39484b", X + 7, Y + 16, 18, 3);
+    px("#eee5c9", X + 10, Y + 19, 12, 6);
+    px("#687773", X + 12, Y + 21, 8, 1);
+    px(trim, X + 24, Y + 12, 2, 2);
+    return;
+  }
+  const industrial = district === "shipping" || district === "plating" || district === "factory";
+  const screen = district === "security" ? "#639a9a" : industrial ? "#879f86" : "#77a7ad";
+  px("#354347", X + 1, Y + 17, 30, 11);
+  px(industrial ? "#8f927f" : "#a4997c", X + 1, Y + 16, 30, 5);
+  px("#c0b395", X + 2, Y + 16, 28, 1);
+  px("#303c3f", X + 3, Y + 27, 3, 4); px("#303c3f", X + 26, Y + 27, 3, 4);
+  px("#293a40", X + 8, Y + 3, 16, 12);
+  px(screen, X + 9, Y + 4, 14, 9);
+  px("#3e6670", X + 10, Y + 5, 12, 1);
+  px("#c4ded2", X + 11, Y + 7, Math.floor(tm / 900) % 2 ? 9 : 7, 1);
+  px("#d6dfc6", X + 11, Y + 9, 6, 1);
+  px("#536568", X + 14, Y + 14, 4, 3);
+  px("#39464a", X + 10, Y + 19, 12, 3);
+  px(trim, X + 26, Y + 18, 2, 2);
+  if (id === "security_workstation") {
+    px("#293a40", X + 1, Y + 6, 7, 9); px("#769a98", X + 2, Y + 7, 5, 6);
+    px("#293a40", X + 24, Y + 6, 7, 9); px("#769a98", X + 25, Y + 7, 5, 6);
+  }
+}
+function paintDayFloorSigns(c, signs) {
+  c.save(); c.textAlign = "center"; c.textBaseline = "middle"; c.font = "bold 9px monospace";
+  for (const { label, col, row, width, trim } of signs) {
+    const x = col * TILE + TILE / 2, y = row * TILE + 23;
+    c.fillStyle = "#263a3d"; c.fillRect(x - width / 2, y - 7, width, 15);
+    c.fillStyle = "#182c31"; c.fillRect(x - width / 2, y + 7, width, 2);
+    c.fillStyle = trim; c.fillRect(x - width / 2 + 3, y - 4, 2, 8);
+    c.fillText(label, x + 2, y + 1, width - 12);
+  }
+  c.restore();
+}
+function drawTile(t, x, y, tm, dayArt) {
   const X = x * TILE, Y = y * TILE, z = zoneAt(x, y);
   const b = biomeAt(x, y);
+  const district = dayArt && floorDistrict(z, x, y, dayArt.contacts);
   // floors by biome / zone
-  if (b) {
+  if (dayArt) {
+    paintDayFloor(district, z, t, x, y);
+  } else if (b) {
     px((x + y) % 2 ? b.f1 : b.f2, X, Y, TILE, TILE);
     // biome trim: accent line on the edges of the biome
     if (y === b.y0) px(b.line, X, Y, TILE, 2);
@@ -985,6 +1147,13 @@ function drawTile(t, x, y, tm) {
     px("#c08a4a", X + ((y % 2) ? 10 : 22), Y, 1, TILE);
   }
   if (t === 0) return;
+  if (dayArt) {
+    if (t === 1) return paintDayWall(district, z, x, y);
+    const station = dayArt.stations.get(y * MAPW + x);
+    if ((t === 2 && (station || district === "itdept")) || (t === 14 && (station === "shipping_printer" || station === "printer_queue_blocked"))) {
+      return paintDayStation(station, district, x, y, tm);
+    }
+  }
   switch (t) {
     case 1: // white wall with baseboard
       px("#e8e8e4", X, Y, TILE, TILE); px("#f6f6f2", X, Y, TILE, 10);
@@ -1023,11 +1192,36 @@ function drawTile(t, x, y, tm) {
       break;
     }
     case 6: // CNC machine
+      if (dayArt && z === "factory") {
+        px("#303f43", X + 1, Y + 5, 30, 26);
+        px("#83918e", X + 2, Y + 3, 28, 3);
+        px("#697a79", X + 2, Y + 6, 28, 19);
+        px("#344c54", X + 5, Y + 8, 15, 13);
+        px("#507078", X + 6, Y + 9, 13, 10);
+        px("#8ca6a1", X + 8, Y + 10, 9, 1);
+        px("#33474b", X + 22, Y + 8, 6, 13);
+        px("#a5b7a2", X + 23, Y + 10, 4, 3);
+        px("#d4a86e", X + 24, Y + 16, 2, 2);
+        for (let i = 5; i < 28; i += 6) px("#566565", X + i, Y + 27, 4, 1);
+        break;
+      }
       px("#9aaeb8", X + 2, Y + 4, 28, 26); px("#b8ccd6", X + 2, Y + 4, 28, 3);
       px("#28404e", X + 6, Y + 8, 20, 10);
       px("#3af", X + 8, Y + 10, 6, 3);
       px("#3f6", X + 24, Y + 14, 4, 4); px("#c33", X + 24, Y + 20, 4, 4); break;
     case 7: // crate / pallet
+      if (dayArt && z === "factory") {
+        px("#4d4b3f", X + 2, Y + 8, 28, 23);
+        px("#a68c66", X + 3, Y + 7, 26, 19);
+        px("#c8aa7c", X + 3, Y + 7, 26, 2);
+        px("#8f7858", X + 3, Y + 17, 26, 1);
+        px("#b99c73", X + 4, Y + 22, 24, 1);
+        px("#69675a", X + 7, Y + 7, 2, 20); px("#69675a", X + 23, Y + 7, 2, 20);
+        px("#d9cbb0", X + 13, Y + 11, 7, 5);
+        px("#8b8774", X + 14, Y + 13, 4, 1);
+        px("#9a825e", X + 3, Y + 28, 5, 2); px("#9a825e", X + 24, Y + 28, 5, 2);
+        break;
+      }
       px("#c89a5a", X + 3, Y + 8, 26, 22); px("#a87c42", X + 3, Y + 8, 26, 3);
       px("#a87c42", X + 14, Y + 8, 3, 22); px("#a87c42", X + 3, Y + 27, 26, 3); break;
     case 8: // water cooler
@@ -1182,7 +1376,10 @@ function draw() {
   const s = S; if (!s || !s.map) return;
   const tm = performance.now();
   const ts = cv.height / 14; // tiles visible vertically
-  ctx.fillStyle = "#dfe3e8"; ctx.fillRect(0, 0, cv.width, cv.height);
+  const dayFloor = !s.nightMode && !s.room && !(s.meta && s.meta._standaloneMode);
+  const contacts = dayFloor && s.meta && s.meta.campaignAct1Native;
+  const stations = dayFloor && s.meta && s.meta.dayStations;
+  ctx.fillStyle = dayFloor ? "#26383b" : "#dfe3e8"; ctx.fillRect(0, 0, cv.width, cv.height);
   const sc = ts / TILE;
   // visible world size (in px) — the camera must pan across the WHOLE map
   const viewW = cv.width / sc, viewH = cv.height / sc;
@@ -1205,18 +1402,24 @@ function draw() {
     draw._tlMap = null; draw._tlQ = -1; draw._tlConv = []; draw._tlAnim = [];
   }
   const tlQ = Math.floor(tm / 400);
-  if (draw._tlMap !== s.map || draw._tlQ !== tlQ) {
+  const artChanged = draw._tlMap !== s.map || draw._tlDay !== dayFloor || draw._tlContacts !== contacts || draw._tlStations !== stations;
+  if (artChanged) {
+    draw._tlDay = dayFloor; draw._tlContacts = contacts; draw._tlStations = stations;
+    draw._tlArt = dayFloor ? dayFloorArt(s.map, contacts, stations) : null;
+  }
+  const dayArt = draw._tlArt;
+  if (artChanged || draw._tlQ !== tlQ) {
     const tc = draw._tlCv.getContext("2d");
     pxCtx = tc;
-    if (draw._tlMap !== s.map) {
-      // full rebuild: new day, new map
+    if (artChanged) {
+      // Full rebuild for a new map or changed physical contact/station placement.
       tc.clearRect(0, 0, draw._tlCv.width, draw._tlCv.height);
       draw._tlConv = []; draw._tlAnim = [];
-      for (let y = 0; y < MAPH; y++) { const row = s.map[y]; if (!row) continue; for (let x = 0; x < MAPW; x++) { const t = row[x] || 0; if (t === 5) { draw._tlConv.push([x, y]); continue; } if (t === 2 || t === 3 || t === 21) draw._tlAnim.push([x, y]); drawTile(t, x, y, tm); } }
+      for (let y = 0; y < MAPH; y++) { const row = s.map[y]; if (!row) continue; for (let x = 0; x < MAPW; x++) { const t = row[x] || 0; if (t === 5) { draw._tlConv.push([x, y]); continue; } if (t === 2 || t === 3 || t === 21) draw._tlAnim.push([x, y]); drawTile(t, x, y, tm, dayArt); } }
       draw._tlMap = s.map;
     } else {
       // blink tick: repaint just the animated cells (their floors are deterministic)
-      for (const [ax, ay] of draw._tlAnim) { tc.clearRect(ax * TILE, ay * TILE, TILE, TILE); drawTile(s.map[ay][ax], ax, ay, tm); }
+      for (const [ax, ay] of draw._tlAnim) { tc.clearRect(ax * TILE, ay * TILE, TILE, TILE); drawTile(s.map[ay][ax], ax, ay, tm, dayArt); }
     }
     pxCtx = null;
     draw._tlQ = tlQ;
@@ -1224,7 +1427,8 @@ function draw() {
   ctx.save(); ctx.imageSmoothingEnabled = false; // pixel-perfect: the cache is 1:1 pixel art, never blur it
   ctx.drawImage(draw._tlCv, 0, 0);
   ctx.restore();
-  for (const [cx5, cy5] of draw._tlConv) if (cx5 >= x0 && cx5 <= x1 && cy5 >= y0 && cy5 <= y1) drawTile(5, cx5, cy5, tm);
+  for (const [cx5, cy5] of draw._tlConv) if (cx5 >= x0 && cx5 <= x1 && cy5 >= y0 && cy5 <= y1) drawTile(5, cx5, cy5, tm, dayArt);
+  if (dayArt) paintDayFloorSigns(ctx, dayArt.signs);
   // biome floor labels
   ctx.font = "bold 9px monospace"; ctx.globalAlpha = .55;
   for (const b of BIOMES) {
@@ -1235,6 +1439,9 @@ function draw() {
     ctx.fillText(b.name, lx, ly);
   }
   ctx.globalAlpha = 1;
+  // Scenery stays behind actors and physical interaction overlays.
+  if (!s.nightMode && window.v63?.drawScenery) window.v63.drawScenery(s, tm, x0, x1, y0, y1);
+  if (!s.nightMode && typeof drawDayTravelProps === "function") drawDayTravelProps(s);
   // coffee machines
   for (const c of s.coffeeMachines) { ctx.font = "24px serif"; ctx.globalAlpha = c.used ? .35 : 1; ctx.fillText("☕", c.x * TILE + 16, c.y * TILE + 17); ctx.globalAlpha = 1; }
   // lore
@@ -1348,17 +1555,25 @@ function draw() {
   }
   ctx.restore();
   // minimap (screen-space, bottom right)
-  const mm = 2, mw = MAPW * mm, mh = MAPH * mm;
-  const mx0 = Math.max(190, cv.width - mw - 92), my0 = cv.height - mh - 12;
+  const compactDayMap = dayFloor && cv.width < cv.height * .75;
+  const mm = compactDayMap ? 1 : 2, mw = MAPW * mm, mh = MAPH * mm;
+  const mx0 = compactDayMap ? cv.width - mw - 12 : Math.max(190, cv.width - mw - 92);
+  const my0 = cv.height - mh - (compactDayMap ? Math.round(cv.height * .20) : 12);
   const ZONE_COLORS = { factory: "#b0b0a8", server: "#3a4a6a", lobby: "#5a7a9a", office: "#d9a05e", exec: "#5a3a44", finance: "#4a5a48", sales: "#4a5a6a", eng: "#8a8a92", hr: "#a08060" };
   // v7.28: static map layer cached — was 1,344 fillRects every frame, now one
   // drawImage; cache rebuilds only when the map object changes (new day).
-  if (!draw._mmCv) { draw._mmCv = document.createElement("canvas"); draw._mmCv.width = mw; draw._mmCv.height = mh; draw._mmMap = null; }
-  if (draw._mmMap !== s.map) {
+  if (!draw._mmCv) draw._mmCv = document.createElement("canvas");
+  if (draw._mmCv.width !== mw || draw._mmCv.height !== mh) {
+    draw._mmCv.width = mw; draw._mmCv.height = mh; draw._mmMap = null;
+  }
+  if (draw._mmMap !== s.map || artChanged) {
     const mc = draw._mmCv.getContext("2d");
     for (let y = 0; y < MAPH; y++) for (let x = 0; x < MAPW; x++) {
       const t = s.map[y][x];
-      mc.fillStyle = t === 1 ? "#8a8a96" : ZONE_COLORS[zoneAt(x, y)] || "#d9a05e";
+      const zone = zoneAt(x, y);
+      const district = dayArt && floorDistrict(zone, x, y, dayArt.contacts);
+      const dayColor = DAY_FLOORS[district] && DAY_FLOORS[district].base[0];
+      mc.fillStyle = t === 1 ? "#8a8a96" : dayColor || ZONE_COLORS[zone] || "#d9a05e";
       mc.fillRect(x * mm, y * mm, mm, mm);
     }
     draw._mmMap = s.map;

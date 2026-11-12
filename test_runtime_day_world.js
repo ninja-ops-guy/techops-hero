@@ -86,6 +86,54 @@ const visibleCopies = world.stations(); visibleCopies[0].x = -100;
 assert.notStrictEqual(world.stations()[0].x, -100, "UI cannot mutate stored locations");
 assert.strictEqual(world.route("missing_device").status, "unavailable");
 
+// A marked field route that crosses an automatic side-room boundary keeps its
+// floor scene. Walking the same tiles for the standup retains native room entry.
+{
+  const original = s;
+  const field = setup(10); world.ensureWorld();
+  const toSecurity = world.route("access"); assertPath(toSecurity);
+  const [start, next] = toSecurity.path;
+  assert(next, "fixture crosses a biome boundary along its active floor route");
+  const detour = [[0, 1], [-1, 0], [1, 0], [0, -1]].map(([dx, dy]) => ({ x: start.x + dx, y: start.y + dy })).find(p =>
+    field.map[p.y]?.[p.x] === 0 && (p.x !== next.x || p.y !== next.y) && !field.npcs.some(n => n.x === p.x && n.y === p.y));
+  assert(detour, "fixture also has a non-route doorway step");
+  const roomScript = fs.readFileSync(require.resolve("./v69_hooks.js"), "utf8");
+  const roomStep = roomScript.slice(roomScript.indexOf("// ---------- enter/exit detection"), roomScript.indexOf("// ---------- interaction ----------"));
+  let move = null;
+  const settings = {};
+  const roomContext = vm.createContext({ S: field, SIDE_BIOMES: ["itdept"], V67SET: settings, window: { V67SET: settings, TechOpsDayWorld: world },
+    biomeAt: (x, y) => [next, detour].some(p => x === p.x && y === p.y) ? { id: "itdept" } : null,
+    enterRoom: room => { field.room = room; }, nearClueOrFel: () => false,
+    step: () => { if (move) { field.px = move.x; field.py = move.y; } } });
+  vm.runInContext(roomStep, roomContext);
+  roomContext.step(0);
+  // The outer movement owner can arrive before this wrapper observes the entry.
+  field.px = next.x; field.py = next.y;
+  roomContext.step(0);
+  assert.strictEqual(field.room, undefined, "follow the marked Security route across the floor");
+  assert(world.followsFloorRoute(start.x, start.y));
+  assert(!world.followsFloorRoute(next.x, next.y), "standing still cannot suppress auto-entry");
+  move = start; roomContext.step(0);
+  move = detour; roomContext.step(0);
+  assert.strictEqual(field.room.id, "itdept", "a route marker does not block a deliberate detour");
+  delete field.room;
+  move = start; roomContext.step(0);
+  world.route("standup");
+  move = next; roomContext.step(0);
+  assert.strictEqual(field.room.id, "itdept", "keep the authored standup approach through the IT side room");
+  delete field.room;
+  move = start; roomContext.step(0);
+  world.route(null);
+  field.day = 2;
+  field.map = field.map.map(row => row.slice());
+  move = next; roomContext.step(0);
+  assert.strictEqual(field.room, undefined, "a new Tuesday map seeds its own spawn biome without entering a side room");
+  move = start; roomContext.step(0);
+  move = next; roomContext.step(0);
+  assert.strictEqual(field.room.id, "itdept", "a later walk into a side room still works on Tuesday");
+  global.S = original;
+}
+
 // Checkpoint restoration retains exact physical positions and occupied props.
 const saved = JSON.parse(JSON.stringify(s)); global.S = saved;
 assert(world.ensureWorld());
@@ -126,20 +174,74 @@ campaign = { flags: {}, tickets: {}, investigations: {}, evidence: {} };
 assert.strictEqual(world.nextObjective().target, "standup");
 campaign.flags.standup_completed = true;
 assert.strictEqual(world.nextObjective().target, "mike_desk");
+assert.strictEqual(world.ticketObjective("shipping_cannot_print", campaign), null);
+campaign.flags.workstation_checked = true;
+assert.strictEqual(world.nextObjective().phase, "music");
+campaign.flags.red_in_mirror_heard = true;
+assert.strictEqual(world.nextObjective().phase, "company");
+campaign.flags.felicia_video_watched = true;
+assert.strictEqual(world.nextObjective().phase, "clock_in");
 campaign.flags.day_work_unlocked = true;
+assert.strictEqual(world.nextObjective().target, "shipping");
+const beforeBriefings = JSON.stringify(campaign);
+assert(world.markBriefed("plating"));
+assert(!world.markBriefed("plating"), "repeated briefing is idempotent");
+assert(!world.markBriefed("unknown"));
+assert.strictEqual(world.nextObjective().target, "plating_workstation", "existing field work takes priority over unanswered intake");
+assert(world.markBriefed("shipping"));
+assert.strictEqual(JSON.stringify(campaign), beforeBriefings, "briefing and guidance do not change campaign evidence or gates");
 assert.strictEqual(world.nextObjective().target, "shipping_printer");
 campaign.investigations.shipping_cannot_print = { phase: "gather", evidence: ["printer_self_test"] };
 assert.strictEqual(world.nextObjective().target, "shipping_workstation");
+campaign.investigations.shipping_cannot_print.evidence = ["queue_trace", "compare_user"];
+assert.strictEqual(world.nextObjective().phase, "diagnose", "sufficient screen evidence does not require a redundant printer test");
+campaign.investigations.shipping_cannot_print.phase = "remediate";
+assert.strictEqual(world.nextObjective().phase, "repair");
+campaign.investigations.shipping_cannot_print.phase = "technical_check";
+assert.strictEqual(world.nextObjective().phase, "technical");
 campaign.investigations.shipping_cannot_print.phase = "human_verify";
 assert.strictEqual(world.nextObjective().target, "shipping");
+s.room = { id: "itdept" };
+assert.strictEqual(world.ticketObjective("shipping_cannot_print", campaign).target, "shipping", "Doors can read a ticket route from the side-view desk");
+s.room = null;
 campaign.tickets.shipping_cannot_print = { status: "resolved" };
+assert.strictEqual(world.ticketObjective("shipping_cannot_print", campaign), null);
 assert.strictEqual(world.nextObjective().target, "plating_workstation");
+campaign.investigations.plating_workstation_down = { phase: "remediate", evidence: ["local_login", "integration_service"] };
+assert.strictEqual(world.nextObjective().phase, "coordinate");
+s.meta.dayOperatorHolds = { plating_workstation_down: true };
+assert.strictEqual(world.nextObjective().phase, "repair");
 campaign.tickets.plating_workstation_down = { status: "resolved" };
+assert.strictEqual(world.nextObjective().target, "access");
+assert(world.markBriefed("access"));
 assert.strictEqual(world.nextObjective().target, "security_workstation");
+campaign.assignments = { impossible_access_event: "security" };
+assert.match(world.nextObjective().detail, /Security’s findings/);
 campaign.evidence.ghostIdentityEvidence = { sources: [{ id: "badge_impossible_access" }] };
 assert.strictEqual(world.nextObjective().target, "sector04Door");
 campaign.flags.tuesday_morning_reached = true;
+s.day = 2;
 assert.strictEqual(world.nextObjective().target, "mike_desk");
+const nextShiftShipping = { ticketId: "shipping_cannot_print", kind: "stable", phase: "complete", evidence: [] };
+const nextShiftPlating = { ticketId: "plating_workstation_down", kind: "restore", phase: "gather", evidence: [] };
+global.TechOpsCampaign.workdayHandoff = () => [nextShiftShipping, nextShiftPlating];
+assert.strictEqual(world.nextObjective().target, "plating");
+nextShiftPlating.evidence.push("requester");
+assert.strictEqual(world.nextObjective().target, "plating_workstation");
+nextShiftPlating.evidence.push("technical");
+assert.strictEqual(world.nextObjective().phase, "diagnose");
+nextShiftPlating.phase = "technical_check";
+assert.strictEqual(world.nextObjective().phase, "technical");
+nextShiftPlating.phase = "human_verify";
+assert.strictEqual(world.nextObjective().target, "plating");
+nextShiftPlating.phase = "complete";
+assert.strictEqual(world.nextObjective().target, "mike_desk");
+nextShiftShipping.kind = "carryover";
+nextShiftShipping.phase = "carryover";
+assert.strictEqual(world.nextObjective().target, "mike_desk", "the original incident cannot be reopened after a later closure");
+delete campaign.tickets.shipping_cannot_print;
+delete campaign.investigations.shipping_cannot_print;
+assert.strictEqual(world.nextObjective().phase, "briefing", "yesterday’s briefing does not count as this morning’s intake");
 
 // Real native contact placement can put a requester in a one-tile service bay.
 // Reproduce that full map/contact/world stack; geometry-only checks missed it.
@@ -158,7 +260,19 @@ for (let seed = 1; seed <= 60; seed++) {
   vm.runInContext("S={day:1,map:genMap(),px:21,py:16,npcs:[],meta:{}};", context);
   nativeSources.forEach(source => vm.runInContext(source, context));
   const n = context.TechOpsCampaignNativeAct1, w = context.TechOpsDayWorld, game = context.S;
+  if (game.map[26][8] === 0 && seed % 2 === 0) game.devices = [{ x: 8, y: 26 }];
+  if (game.map[26][8] === 0 && seed % 2 === 1) game._nightObjs = { ramps: [{ id: "dock", x: 8, y: 26 }] };
+  if (game.map[26][18] === 0 && seed % 3 === 0) game.npcs.push({ id: "production-coworker", x: 18, y: 26 });
   n.ensureWorld();
+  for (const [id, x, y, district] of [["shipping", 8, 26, "factory"], ["plating", 18, 26, "factory"], ["access", 38, 12, "office"]]) {
+    const p = game.meta.campaignAct1Native[id];
+    assert.strictEqual(context.zoneAt(p.x, p.y), district, `native seed ${seed}: ${id} belongs in ${district}`);
+    assert(Math.abs(p.x - x) + Math.abs(p.y - y) <= 3, `native seed ${seed}: ${id} lost its work area`);
+    assert(w.route(id).ok, `native seed ${seed}: ${id} unreachable from arrival`);
+    assert(!(game.devices || []).some(device => device.x === p.x && device.y === p.y), `${id} overlaps a device`);
+    assert(!game._nightObjs?.ramps.some(ramp => ramp.x === p.x && ramp.y === p.y), `${id} overlaps a ramp`);
+    assert.strictEqual(game.npcs.filter(npc => npc.x === p.x && npc.y === p.y).length, 1, `${id} overlaps another person`);
+  }
   const initiallyReachable = ["standup", "shipping", "plating", "access"].filter(id => w.route(id).ok);
   assert(w.ensureWorld());
   initiallyReachable.forEach(id => assert(w.route(id).ok, `native seed ${seed}: station placement blocked ${id}`));

@@ -54,12 +54,13 @@
     if (!S.room) return;
     S.px = S.room.back.px; S.py = S.room.back.py;
     _lastBiome = S.room.id; // don't retrigger while still standing inside
+    _lastFloorX = S.px; _lastFloorY = S.py;
     S.room = null;
   }
   window.v69ExitRoom = exitRoom; window.v69InRoom = inRoom;
 
   // ---------- enter/exit detection (transitions on biome ENTRY, not presence) ----------
-  let _lastBiome = undefined;
+  let _lastBiome, _lastFloorMap, _lastFloorX, _lastFloorY;
   const __origStep69 = step;
   step = function (dt) {
     const s = S;
@@ -82,9 +83,16 @@
       if (typeof isFel === "function" && isFel()) return r;
       const b = biomeAt(s.px, s.py);
       const id = b ? b.id : null;
-      if (_lastBiome === undefined) { _lastBiome = id; return r; } // seed without triggering
+      const previousX = _lastFloorX, previousY = _lastFloorY;
+      _lastFloorX = s.px; _lastFloorY = s.py;
+      if (_lastBiome === undefined || _lastFloorMap !== s.map) {
+        _lastFloorMap = s.map; _lastBiome = id;
+        return r; // A new shift or checkpoint spawns without entering a room.
+      }
       if (id !== _lastBiome) {
-        if (id && SIDE_BIOMES.includes(id) && !nearClueOrFel(s)) enterRoom(b);
+        const world = window.TechOpsDayWorld;
+        if (id && SIDE_BIOMES.includes(id) && !nearClueOrFel(s) &&
+          !(world && typeof world.followsFloorRoute === "function" && world.followsFloorRoute(previousX, previousY))) enterRoom(b);
         _lastBiome = id;
       }
     }

@@ -23,8 +23,8 @@
 
   var CONTACTS = {
     standup: { id: "campaign_standup", name: "STANDUP BOARD", face: "BOARD", assetSlot: "ui.standup.board", fallback: { x: 34, y: 12 } },
-    shipping: { id: "campaign_shipping", ticketId: "shipping_cannot_print", name: "SHIPPING CLERK", dept: "Shipping", face: "SHIP", biome: "factory", assetSlot: "shipping.clerk.idle", backgroundAssetSlot: "shipping.dock_background", fallback: { x: 8, y: 34 } },
-    plating: { id: "campaign_plating", ticketId: "plating_workstation_down", name: "PLATING OPERATOR", dept: "Manufacturing", face: "LINE", biome: "factory", assetSlot: "plating.operator.idle", backgroundAssetSlot: "plating.line_background", fallback: { x: 18, y: 35 } },
+    shipping: { id: "campaign_shipping", ticketId: "shipping_cannot_print", name: "SHIPPING CLERK", dept: "Shipping", face: "SHIP", biome: "factory", assetSlot: "shipping.clerk.idle", backgroundAssetSlot: "shipping.dock_background", fallback: { x: 8, y: 26 } },
+    plating: { id: "campaign_plating", ticketId: "plating_workstation_down", name: "PLATING OPERATOR", dept: "Manufacturing", face: "LINE", biome: "factory", assetSlot: "plating.operator.idle", backgroundAssetSlot: "plating.line_background", fallback: { x: 18, y: 26 } },
     access: { id: "campaign_access", ticketId: "impossible_access_event", name: "SECURITY OPS", dept: "Security", face: "SEC", biome: "office", assetSlot: "ui.standup.owner_badge", fallback: { x: 38, y: 12 } }
   };
 
@@ -92,7 +92,9 @@
   function openTile(map, pos) { return !!(map && map[pos.y] && map[pos.y][pos.x] === 0); }
   function findSpot(map, contact, used) {
     var pos = null;
-    if (contact.biome && typeof root.spotInBiome === "function") {
+    var world = root.TechOpsDayWorld;
+    if (contact.biome && world && typeof world.contactSpot === "function") pos = world.contactSpot(contact.fallback, contact.biome);
+    if (!pos && contact.biome && typeof root.spotInBiome === "function") {
       try { pos = root.spotInBiome(map, contact.biome); } catch (e) { pos = null; }
     }
     if (!pos || !openTile(map, pos)) pos = { x: contact.fallback.x, y: contact.fallback.y };
@@ -415,6 +417,81 @@
     return item;
   }
 
+  var QUEUE_STAGES = {
+    briefing: "Awaiting briefing", inspect: "Inspection due", investigate: "Investigating",
+    evidence: "Evidence review", diagnose: "Diagnosis due", coordinate: "Awaiting operator hold",
+    repair: "Repair due", technical: "Technical check due",
+    verify: "Requester verification due"
+  };
+  var QUEUE_NAMES = { shipping_cannot_print: "Shipping", plating_workstation_down: "Plating", impossible_access_event: "Security" };
+
+  function dayQueue(state) {
+    var world = root.TechOpsDayWorld, flags = state.flags || {}, unlocked = flags.day_work_unlocked;
+    return Object.keys(TICKET_COPY).map(function (id) {
+      var item = currentServiceRecord(state, id), access = id === "impossible_access_event";
+      var investigation = (state.investigations || {})[id] || {};
+      var objective = unlocked && world && world.ticketObjective && world.ticketObjective(id, state);
+      var status = "Queued", tone = "pending", verification = "Requester task pending.", next = "Clock in at Mike’s desk to begin.", detail = "";
+      if (unlocked) {
+        status = objective && QUEUE_STAGES[objective.phase] || "Open";
+        next = objective && objective.label || item.next;
+        detail = objective && objective.detail || "";
+        tone = "active";
+      }
+      if (investigation.technicalCheckPassed) verification = "Technical check passed. Requester task pending.";
+      if (investigation.workaroundTestPassed) verification = "Workaround tested. Limited service awaits requester confirmation.";
+      if (item.status === "VERIFIED / RESTORED") {
+        status = "Verified / restored"; tone = "verified"; verification = "Requester task verified.";
+      } else if (item.status === "FOLLOW-UP NEEDED") {
+        if (flags.tuesday_morning_reached && objective) {
+          var followup = shiftRecord(state, id);
+          verification = followup && followup.technicalCheckPassed ? "Next-shift technical check passed. Requester task pending." : "Next-shift verification pending.";
+        } else {
+          status = "Follow-up needed"; tone = "attention";
+          verification = item.conflict ? "The recorded outcomes disagree." : "Recorded verification was " + item.verification + ". Service was " + item.humanOutcome + ".";
+        }
+      }
+      if (access) {
+        verification = "Badge evidence pending review.";
+        if (item.sources.length) {
+          var source = item.sources[0];
+          var sourceLabel = source.perspective.indexOf("delegated_") === 0 ? "Delegated badge report from " : "Badge report recorded by ";
+          status = "Documented / unresolved"; tone = "attention";
+          verification = sourceLabel + source.discoveredBy + ". Physical presence remains unverified.";
+          detail = item.symptom;
+        }
+      }
+      return { id: id, title: item.title, requester: item.requester, owner: item.assignedOwner, impact: item.humanNeed,
+        status: status, tone: tone, verification: verification, nextAction: next, detail: detail,
+        target: objective && objective.target || null };
+    });
+  }
+
+  function markQueueRoute(id, target) {
+    var state = readCasebook(); if (!state) return false;
+    var experience = dayExperience();
+    if (!experience || !requireDesk()) return false;
+    var current = dayQueue(state).find(function (item) { return item.id === id; });
+    if (state.flags.tuesday_morning_reached || !current || current.target !== target) return openWorkstationTab("QUEUE");
+    return experience.routeTo(target);
+  }
+
+  function openDayQueue(state) {
+    var esc = casebookEscape, experience = dayExperience(), options = [];
+    var cards = dayQueue(state).map(function (item) {
+      var route = item.target && experience;
+      if (route) options.push({ t: "Mark " + QUEUE_NAMES[item.id] + " route", slot: item.id, f: function () { return markQueueRoute(item.id, item.target); } });
+      return '<li class="doors-queue__card" data-tone="' + item.tone + '"><header><p class="doors-queue__status">' + esc(item.status) + '</p><h2>' + esc(item.title) + '</h2><p class="doors-queue__owner">' +
+        esc(item.requester) + ' · Assigned to ' + esc(item.owner) + '</p></header><p class="doors-queue__impact">' + esc(item.impact) + '</p><dl>' +
+        '<div><dt>Next action</dt><dd>' + esc(item.nextAction) + (item.detail ? '<span>' + esc(item.detail) + '</span>' : '') + '</dd></div>' +
+        '<div><dt>Verification</dt><dd>' + esc(item.verification) + '</dd></div></dl>' +
+        (route ? '<div class="doors-queue__route" data-os-action-slot="' + item.id + '"></div>' : '') + '</li>';
+    });
+    options.push({ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation });
+    return callDialog("WORKSTATION // QUEUE", '<section class="doors-queue" aria-label="Day 1 service queue"><p class="doors-queue__clock"><span>Day 1</span><strong>' +
+      (state.flags.day_work_unlocked ? "Ticket clocks running" : "Ticket clocks paused until clock-in") + '</strong></p><ul>' + cards.join("") + '</ul></section>', options);
+  }
+
   function workstationOptions() {
     return WORKSTATION_TABS.map(function (tab) { return { t: tab, f: function () { openWorkstationTab(tab); } }; }).concat(root.TechOpsCombatAudio ? [{t:"Combat sound & captions",f:function(){root.TechOpsCombatAudio.openSettings(openWorkstation);}}] : []).concat([{ t: "Exit workstation", f: closeDialog }]);
   }
@@ -435,9 +512,7 @@
     setAssetContext("workstation");
     var state = ensureWorkstationChecked(loadState());
     if (tab === "QUEUE" && state.flags.tuesday_morning_reached) return openWorkdayHandoff();
-    if (tab === "QUEUE") {
-      return callDialog("WORKSTATION // QUEUE", "<b>DAY 1 OWNERSHIP</b><br><br>Shipping Cannot Print -> " + casebookEscape(casebookOwner(state.assignments.shipping_cannot_print)) + "<br>Plating Workstation Down -> " + casebookEscape(casebookOwner(state.assignments.plating_workstation_down)) + "<br>Impossible Access Event -> " + casebookEscape(casebookOwner(state.assignments.impossible_access_event)) + "<br><br>Ticket clocks: <b>" + (state.flags.day_work_unlocked ? "RUNNING" : "PAUSED UNTIL CLOCK-IN") + "</b>", [{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]);
-    }
+    if (tab === "QUEUE") return openDayQueue(state);
     if (tab === "TEAMS") {
       var messages = Object.keys(TICKET_COPY).map(function (id) { return casebookEscape(ticketFollowUp(state, id)); }).join("<br><br>");
       return callDialog("WORKSTATION // TEAMS", messages, (state.flags.tuesday_morning_reached ? [{t:"Review shift handoff",f:openWorkdayHandoff}] : []).concat([{ t: "Review ticket history", f: function () { openTicketHistory(); } }, { t: "Back to desktop", f: openWorkstation }]));
@@ -759,6 +834,7 @@
     openStandup: openStandup,
     openWorkstation: openWorkstation,
     openWorkstationTab: openWorkstationTab,
+    dayQueue: dayQueue,
     ticketRecord: ticketRecord,
     currentServiceRecord: currentServiceRecord,
     openWorkdayHandoff: openWorkdayHandoff,

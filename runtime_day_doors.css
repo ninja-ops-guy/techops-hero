@@ -102,3 +102,69 @@
 .doors-notification b { font-size: 12px; color: #a3d4bd; }
 .doors-notification p { margin: 2px 0 0; font-size: 13px; }
 @media (max-height: 450px) { .doors-notification { max-width: 40%; bottom: 6px; } }
+
+.os-content:has(.doors-queue) { padding: clamp(10px, 2vw, 22px); }
+.os-content:has(.doors-queue) > h1 { display: none; }
+.os-copy:has(.doors-queue) { max-width: none; }
+.doors-queue { line-height: 1.45; }
+.doors-queue .doors-queue__clock {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  background: #0b1926;
+  border: 1px solid #355367;
+  color: #cae0ed;
+  font-size: 13px;
+}
+.doors-queue__clock strong { color: #afe5d2; }
+.doors-queue > ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.doors-queue__card {
+  --queue-accent: #b3c6da;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  padding: 12px;
+  background: #0e1f2e;
+  border: 1px solid #355367;
+  border-top: 2px solid var(--queue-accent);
+  overflow-wrap: anywhere;
+}
+.doors-queue__card[data-tone="active"] { --queue-accent: #a8e2ed; }
+.doors-queue__card[data-tone="verified"] { --queue-accent: #b0e4bf; }
+.doors-queue__card[data-tone="attention"] { --queue-accent: #f2cf94; }
+.doors-queue .doors-queue__status {
+  margin: 0 0 7px;
+  color: var(--queue-accent);
+  font: 600 12px/1.4 ui-monospace, monospace;
+}
+.doors-queue__card h2 { margin: 0; color: #f0f8ff; font-size: 15px; line-height: 1.3; }
+.doors-queue .doors-queue__owner { margin: 5px 0 0; font-size: 12px; }
+.doors-queue .doors-queue__impact { margin: 10px 0 12px; color: #e0edf5; font-size: 13px; }
+.doors-queue__card dl { margin: 0; padding: 8px 0 0; border-top: 1px solid #324b60; }
+.doors-queue__card dl > div + div { margin-top: 9px; }
+.doors-queue__card dt { color: #a1bed2; font-size: 12px; }
+.doors-queue__card dd { margin: 2px 0 0; color: #e0edf5; font-size: 13px; }
+.doors-queue__card dd span { display: block; margin-top: 3px; color: #b6ccda; }
+.doors-queue__route { margin-top: auto; padding-top: 12px; }
+.doors-queue__route button { width: 100%; min-height: 44px; background: #193747; border-color: #628ba0; }
+.doors-queue__route button:hover, .doors-queue__route button:focus-visible { background: #254b5c; }
+@media (max-height: 620px) {
+  .os-window:has(.doors-queue) .os-address { display: none; }
+  .doors-queue .doors-queue__clock { margin-bottom: 8px; }
+}
+@media (max-width: 380px) {
+  .os-window:has(.doors-queue) .os-actions { padding: 6px 8px; }
+  .os-window:has(.doors-queue) .os-actions button { min-height: 44px; padding: 6px; font-size: 12px; }
+  .doors-queue__card { padding: 10px; }
+}
