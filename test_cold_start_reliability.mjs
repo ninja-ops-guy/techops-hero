@@ -30,12 +30,62 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 const thirdParty = value => /sndcdn|soundcloud|google|gstatic|doubleclick|googlesyndication|recaptcha/i.test(String(value || ""));
 const failures = [];
 
+async function checkNightOnboarding(page, touch) {
+  const activate = locator => touch ? locator.tap() : locator.click();
+  await page.evaluate(() => {
+    window.__nightOnboardingEntries = 0;
+    window.addEventListener("techops:night-entered", () => window.__nightOnboardingEntries++);
+  });
+  await activate(page.locator("#btn-nightcrawler"));
+  await activate(page.getByRole("button", { name: /Intern/ }));
+
+  const dispatch = page.locator("#dialogue");
+  const takeCharger = dispatch.getByRole("button", { name: /Take the Charger/ });
+  // Allow multiple router polls to run without activating the dispatch.
+  await page.waitForTimeout(1000);
+  assert.ok(await dispatch.isVisible(), "After Hours Dispatch should wait for the player");
+  assert.match(await dispatch.innerText(), /After Hours Dispatch[\s\S]*Downtown Street 1/);
+  assert.ok(await takeCharger.isVisible(), "The Charger action should remain visible");
+  assert.deepEqual(await page.evaluate(() => ({
+    entries: window.__nightOnboardingEntries,
+    drive: window.v722.active(),
+    night: !!window.S?.nightMode,
+    checkpoint: window.TechOpsNightRuntime.checkpointStatus().status
+  })), { entries: 0, drive: false, night: false, checkpoint: "empty" });
+
+  if (touch) await takeCharger.tap();
+  else {
+    assert.ok(await takeCharger.evaluate(button => document.activeElement === button), "Night dispatch must focus its action for keyboard players");
+    await page.keyboard.press("Enter");
+  }
+  const drive = page.locator("#v722-cine");
+  await drive.waitFor({ state: "visible" });
+  await activate(drive);
+  await page.waitForFunction(() =>
+    window.__productionNightLaunchOk &&
+    window.S?.nightMode?.district === "downtown" &&
+    window.S.nightMode.street === 1 &&
+    !window.S.inDialog &&
+    !window.v722.active() &&
+    window.TechOpsNightRuntime.checkpointStatus().status === "ready"
+  );
+  assert.equal(await dispatch.isVisible(), false);
+  assert.deepEqual(await page.evaluate(() => ({
+    entries: window.__nightOnboardingEntries,
+    enemies: window.S.nightMode.enemies.length
+  })), { entries: 1, enemies: 2 });
+}
+
 for (const [name, launcher] of [["chromium", chromium], ["webkit", webkit]]) {
   let browser;
   try {
     browser = await launcher.launch({ headless: true });
     for (let run = 1; run <= 4; run++) {
-      const context = await browser.newContext();
+      const checkOnboarding = run === 4;
+      const touch = checkOnboarding && name === "webkit";
+      const context = await browser.newContext(touch ? {
+        viewport: { width: 844, height: 390 }, hasTouch: true
+      } : {});
       const page = await context.newPage();
       const pageErrors = [], failedRequests = [], crashes = [];
       page.on("pageerror", error => { if (!thirdParty(error.stack || error.message)) pageErrors.push(error.message); });
@@ -51,13 +101,22 @@ for (const [name, launcher] of [["chromium", chromium], ["webkit", webkit]]) {
       const problems = [];
       if (result.safePaused) problems.push("Safe Startup remained paused");
       if (result.modes.length !== 3 || result.modes.some(mode => mode.disabled || mode.hidden)) problems.push(`mode buttons not ready: ${JSON.stringify(result.modes)}`);
+      if (checkOnboarding && !problems.length) {
+        try {
+          await checkNightOnboarding(page, touch);
+        } catch (error) {
+          problems.push(`Night onboarding: ${error.message}`);
+        }
+      }
       if (pageErrors.length) problems.push(`first-party page errors: ${pageErrors.join(" | ")}`);
       if (failedRequests.length) problems.push(`first-party request failures: ${failedRequests.join(" | ")}`);
       if (crashes.length) problems.push("browser page crashed");
       if (problems.length) failures.push(`${name} cold start ${run}: ${problems.join("; ")}`);
       await context.close();
     }
-    console.log(`${name}: 4/4 cold starts ready`);
+    if (!failures.some(failure => failure.startsWith(`${name} `))) {
+      console.log(`${name}: 4/4 cold starts ready and Night onboarding passed`);
+    }
   } catch (error) {
     failures.push(`${name} runner error: ${error.stack || error}`);
   } finally {
@@ -66,4 +125,4 @@ for (const [name, launcher] of [["chromium", chromium], ["webkit", webkit]]) {
 }
 server.close();
 assert.deepStrictEqual(failures, [], failures.join("\n"));
-console.log("Cold-start reliability: PASS (8 fresh contexts, zero first-party errors or failed requests)");
+console.log("Cold-start reliability: PASS (8 fresh contexts, Night onboarding in both browsers, zero first-party errors or failed requests)");

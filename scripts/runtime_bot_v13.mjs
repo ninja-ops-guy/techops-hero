@@ -353,6 +353,7 @@ async function settleNight(page){
     if(await authored.count()){await authored.first().evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(150);continue;}
     const txt=await page.locator('body').innerText().catch(()=>'');
     if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickByRegex(page,/Standard/i);await page.waitForTimeout(120);continue;}
+    if(/After Hours Dispatch/i.test(txt)){await clickByRegex(page,/Take the Charger/i);await page.waitForTimeout(120);continue;}
     if(/BEGIN THE INCIDENT/i.test(txt)){await clickByRegex(page,/BEGIN THE INCIDENT/i);await page.waitForTimeout(120);continue;}
     const active=await page.evaluate(()=>!!(window.v722&&typeof window.v722.active==='function'&&window.v722.active())).catch(()=>false);
     if(active){await page.evaluate(()=>window.v722.skip()).catch(()=>{});await page.waitForTimeout(150);continue;}

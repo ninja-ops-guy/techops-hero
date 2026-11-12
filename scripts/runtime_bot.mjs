@@ -93,6 +93,7 @@ async function settle(page,ms=5000){
     if(await authored.count()){await authored.first().evaluate(el=>el.click()).catch(()=>{});await page.waitForTimeout(120);continue;}
     const txt=await page.locator('body').innerText().catch(()=>'');
     if(/SELECT SHIFT DIFFICULTY/i.test(txt)){await clickByRegex(page,/Standard/i,500).catch(()=>{});continue;}
+    if(/After Hours Dispatch/i.test(txt)){await clickByRegex(page,/Take the Charger/i,500).catch(()=>{});continue;}
     if(/BEGIN THE INCIDENT/i.test(txt)){await clickByRegex(page,/BEGIN THE INCIDENT/i,500).catch(()=>{});continue;}
     if(/E\s*\/\s*CLICK\s*[—-]\s*SKIP|CLICK\s*[—-]\s*SKIP/i.test(txt)){await page.keyboard.press('KeyE').catch(()=>{});await page.waitForTimeout(250);continue;}
     const introBusy=await page.evaluate(()=>!!(window.TechOpsGoodBoysIntroRepair&&window.TechOpsGoodBoysIntroRepair.launching)).catch(()=>false);

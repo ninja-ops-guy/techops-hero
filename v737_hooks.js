@@ -230,7 +230,7 @@
     const __origStartRun737 = startRun;
     startRun = function () {
       __origStartRun737();
-      try { if (isNC()) ncEnterNight(S); } catch (e) { }
+      try { if (isNC() && window.__productionDesiredMode !== "nightcrawler") ncEnterNight(S); } catch (e) { }
     };
     try {
       const bc = document.getElementById("btn-continue");
