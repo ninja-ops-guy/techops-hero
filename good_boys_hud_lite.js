@@ -25,6 +25,10 @@
     if(!ownsMessage(world))return "";
     var repeated={4:"VERIFY THE PRISONER IN CELL 118",6:"WALDO IS IN CELL 1984",7:"REACH THE MAINTENANCE SHUTTLE"};
     if(guide&&Number(guide.mission)===mission()&&(world.msg===guide.text||world.msg===repeated[mission()]))return "";
+    if(guide&&guide.mission===2){
+      if(String(world.msg).includes("M2 — THE HIDDEN BAY"))return "THE HIDDEN BAY";
+      if(/^(HANGAR CLEAR|LAUNCH POWER LINKED|POWER LINK ARMED|PARTNER: HOLD THE FIRST PAD|INTERACT$)/.test(world.msg))return "";
+    }
     return String(world.msg||"");
   }
   function wrap(x,text,width){

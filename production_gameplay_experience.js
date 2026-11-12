@@ -41,9 +41,24 @@
       if(n._gbWaldoTrailComplete){g.text='REGROUP AT THE HIDDEN BAY';mark=find(row,'door');if(mark)target(g,n,mark.x,mark.label);}
       else {g.text='SEARCH THE PROPERTY · FOLLOW THE TRAIL';g.detail='Explore the yard, porch and garage';}
     }else if(m===2){
-      if(alive||queued){g.text=alive?'CLEAR HANGAR SECURITY':'REINFORCEMENTS INBOUND';g.detail=alive+' HOSTILES';g.phase='security';}
-      else if(c.pairPuzzle&&!c.pairPuzzle.solved){g.text='LINK THE BAY POWER INTERLOCK';g.detail='Work with your partner';g.phase='interlock';}
-      else {g.text='REACH THE SECRET SHIP';g.detail='Boarding remains an explicit interaction';mark=find(row,'shuttle');if(mark)target(g,n,mark.x,mark.label);}
+      var pair=row.pairPuzzle,coop=root.TechOpsGoodDogsCoop,q=c.pairPuzzle||{};
+      if(alive||queued||!n._gbShipRevealed){
+        g.phase='security';
+        g.text=alive?'CLEAR HANGAR SECURITY':Number(c.wave)>0?'REINFORCEMENTS INBOUND':'SECURITY INBOUND';
+        if(alive)g.detail=alive+' HOSTILE'+(alive===1?'':'S');
+      }else if(!(coop?coop.complete(2):q.solved)){
+        g.phase='interlock';
+        g.text='LINK BAY POWER';
+        if(q.engaged)g.detail='Hold both contacts until the link completes.';
+        else if(coop&&coop.active())g.detail='One dog on each contact. Use the console.';
+        else if(coop&&coop.aiHolding())target(g,n,pair.b,'USE POWER CONSOLE');
+        else target(g,n,pair.a,'USE PAD TO STATION PARTNER');
+      }else{
+        var boardX=root.TechOpsGoodBoysBoardShipAction?.BOARD_X??pair.b;
+        g.phase='boarding';
+        if(n.x>=boardX)g.text='BOARD THE SHIP';
+        else {g.text='REACH THE BOARDING POINT';target(g,n,boardX,'LAUNCH CRADLE');}
+      }
     }else if(m===3){
       var o=c.prisonOpsV2;g.phase=o&&o.phase||'breach';
       if(g.phase==='terminal'){g.text='OVERRIDE THE SECURITY RELAY';var a=root.TechOpsGoodBoysPrisonGameplayV2;if(a)target(g,n,a.RELAY_X,'RELAY');}

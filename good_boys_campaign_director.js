@@ -6,13 +6,22 @@
   "use strict";
   if(!root)return;
   try{var old=root.TechOpsGoodBoysCampaignDirector;if(old&&old.timer&&root.clearInterval)root.clearInterval(old.timer);if(old&&old.observer)old.observer.disconnect();}catch(_){}
-  var VERSION=7,style=null,observer=null,shipImg=null,combo={step:0,last:0};
+  var VERSION=7,style=null,observer=null,shipImg=null,bayShipImg=null,combo={step:0,last:0};
   function cs(){try{return root.NM&&root.NM._v736?root.NM._v736:null;}catch(e){return null;}}
   function active(){return !!cs();}
   function mission(){try{var a=root.TechOpsGoodBoysCampaignState;if(a&&typeof a.mission==="function")return Number(a.mission())||1;var m=root.S&&root.S.meta&&root.S.meta._v736;return Math.max(1,Math.min(8,Number(m&&m.m||1)));}catch(e){return 1;}}
   function now(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
   function setMsg(t,ms){try{if(root.NM){root.NM.msg=t;root.NM.msgT=now()+(ms||1200);}}catch(e){}}
-  function installStyle(){if(!root.document)return;style=root.document.getElementById("good-boys-director-style");if(!style){style=root.document.createElement("style");style.id="good-boys-director-style";(root.document.head||root.document.documentElement).appendChild(style);}style.textContent="#good-boys-director-controls{display:none!important;visibility:hidden!important;pointer-events:none!important}body.good-boys-cinematic #good-dogs-touch,body.good-boys-cinematic #good-boys-loop-controls,body.good-boys-cinematic #touch-buttons{display:none!important;visibility:hidden!important;pointer-events:none!important}";}
+  function installStyle(){
+    if(!root.document)return;
+    style=root.document.getElementById("good-boys-director-style");
+    if(!style){style=root.document.createElement("style");style.id="good-boys-director-style";(root.document.head||root.document.documentElement).appendChild(style);}
+    style.textContent=[
+      "#good-boys-director-controls{display:none!important;visibility:hidden!important;pointer-events:none!important}",
+      "body.good-boys-cinematic #good-dogs-touch,body.good-boys-cinematic #good-boys-loop-controls,body.good-boys-cinematic #touch-buttons{display:none!important;visibility:hidden!important;pointer-events:none!important}",
+      "@media(max-width:700px){body.good-boys-directed #good-boys-board-ship{top:max(180px,calc(env(safe-area-inset-top) + 172px))!important}}"
+    ].join("");
+  }
   function elementVisible(id){try{var el=root.document&&root.document.getElementById(id);if(!el)return false;if(el.classList&&el.classList.contains("hidden"))return false;var s=root.getComputedStyle?root.getComputedStyle(el):el.style;return !s||s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity||1)!==0;}catch(e){return false;}}
   function cinematicVisible(){try{var d=root.TechOpsPresentationDirector;if(d&&typeof d.isBlocking==="function"&&d.isBlocking("gooddogs"))return true;return elementVisible("good-dogs-cutscene-overlay")||elementVisible("good-boys-ship-interlude")||elementVisible("gb-prison-cine")||elementVisible("good-boys-campaign-intro")||elementVisible("good-boys-earthfall-cine")||elementVisible("dialogue")||elementVisible("v725-cine");}catch(e){return false;}}
   function removeDirectorPads(){try{if(!root.document)return;var xs=root.document.querySelectorAll("#good-boys-director-controls");for(var i=0;i<xs.length;i++)xs[i].remove();}catch(e){}}
@@ -25,8 +34,71 @@
   function syncMissionDefinitions(){try{var w=root.TechOpsGoodBoysBibleWorld;if(w&&w.syncDefinitions)return w.syncDefinitions();fallbackDefinitions();return true;}catch(e){root.__goodBoysDirectorMissionError=String(e&&e.stack||e);return false;}}
   function shuttleAtlas(){try{return root.SHUTTLE&&root.SHUTTLE.src&&root.SHUTTLE.frames?root.SHUTTLE:null;}catch(e){return null;}}
   function shuttleImage(){try{var A=shuttleAtlas();if(!A)return null;if(!shipImg||shipImg.src!==A.src){shipImg=new root.Image();shipImg.src=A.src;}return shipImg.complete&&shipImg.naturalWidth?shipImg:null;}catch(e){return null;}}
+  // The approved large frame contains two neighboring sprite fragments on the
+  // right. Keep the full ship silhouette while excluding those atlas pixels.
+  var parkedShipClip = [[0,20,197],[20,59,285],[79,35,221]];
+  function drawParkedShip(ctx, frame, x, y, width, height) {
+    ctx.save();
+    ctx.beginPath();
+    parkedShipClip.forEach(function(band){
+      var top=Math.round(band[0]*height/frame[3]);
+      var bottom=Math.round((band[0]+band[1])*height/frame[3]);
+      ctx.rect(x,y+top,Math.ceil(band[2]*width/frame[2]),bottom-top);
+    });
+    ctx.clip();
+    ctx.drawImage(bayShipImg,frame[0],frame[1],frame[2],frame[3],x,y,width,height);
+    ctx.restore();
+  }
+  function drawHiddenBayProps(ctx, night, floor) {
+    night._gbHiddenBayShipDrawn = false;
+    var atlas = root.GOOD_BOYS_SHIP_ARCADE;
+    if (!bayShipImg && atlas && root.Image) {
+      bayShipImg = new root.Image();
+      bayShipImg.src = atlas.src;
+    }
+    var cam = Math.round(night.cam || 0), width = ctx.canvas.width;
+    var left = 1288 - cam, top = floor - 192, shutterWidth = 318;
+    if (left > width || left + shutterWidth < 0) return;
+    var revealed = night._gbShipRevealed;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    if (revealed) {
+      var frame = atlas && atlas.frames.ship_large;
+      if (frame && bayShipImg && bayShipImg.complete && bayShipImg.naturalWidth) {
+        var shipWidth = 246, shipHeight = Math.round(shipWidth * frame[3] / frame[2]);
+        ctx.fillStyle = "#0d191a";
+        ctx.fillRect(left + 25, floor - 21, 262, 12);
+        drawParkedShip(ctx, frame, left + 9, floor - 18 - shipHeight, shipWidth, shipHeight);
+        night._gbHiddenBayShipDrawn = true;
+      }
+      ctx.fillStyle = "#6bd3c4";
+      ctx.fillRect(left + 8, top + 10, 6, 3);
+      ctx.fillRect(left + shutterWidth - 14, top + 10, 6, 3);
+    } else {
+      ctx.fillStyle = "#152327";
+      ctx.fillRect(left, top, shutterWidth, 192);
+      for (var y = top + 16; y < floor - 5; y += 14) {
+        ctx.fillStyle = "#0d181b";
+        ctx.fillRect(left, y, shutterWidth, 3);
+        ctx.fillStyle = "#344347";
+        ctx.fillRect(left + 5, y + 3, shutterWidth - 10, 2);
+      }
+      ctx.fillStyle = "#0c1619";
+      ctx.fillRect(left + shutterWidth / 2 - 3, top, 6, 192);
+      ctx.fillRect(left + 116, top + 76, 86, 25);
+      ctx.fillStyle = "#d4a467";
+      ctx.font = "bold 12px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("SECURED", left + shutterWidth / 2, top + 93);
+    }
+    ctx.fillStyle = "#38494b";
+    ctx.fillRect(left, top - 4, shutterWidth, 7);
+    ctx.fillRect(left, top, 6, 192);
+    ctx.fillRect(left + shutterWidth - 6, top, 6, 192);
+    ctx.restore();
+  }
   function drawShip(x){try{var n=root.NM,A=shuttleAtlas(),im=shuttleImage();if(!n||mission()!==2||!n._gbShipRevealed||!A||!im)return;var fr=A.frames.sh_land||A.frames.sh_side0;if(!fr)return;var worldX=1390,screenX=worldX-(Number(n.cam)||0),base=(typeof root.NM_FLOOR==="number"?root.NM_FLOOR:430)-6,w=190,h=w*(fr[3]/fr[2]);if(screenX<-220||screenX>x.canvas.width+220)return;x.save();x.imageSmoothingEnabled=false;x.globalAlpha=.28;x.fillStyle="#38bdf8";x.beginPath();x.ellipse(screenX,base+5,92,12,0,0,Math.PI*2);x.fill();x.globalAlpha=1;x.drawImage(im,fr[0],fr[1],fr[2],fr[3],screenX-w/2,base-h,w,h);x.strokeStyle="#69d6ff";x.lineWidth=2;x.strokeRect(screenX-72,base-h-36,144,25);x.fillStyle="rgba(2,8,14,.9)";x.fillRect(screenX-71,base-h-35,142,23);x.fillStyle="#dff8ff";x.font="bold 9px monospace";x.textAlign="center";x.fillText("SECRET SHIP · BOARD",screenX,base-h-19);x.restore();}catch(e){root.__goodBoysShipDrawError=String(e&&e.stack||e);}}
-  function installShipDraw(){try{var g=root.TechOpsGoodBoysGameplayLoop;if(!g||g.__directorShipDrawInstalled||typeof g.drawStageAccents!=="function")return false;var base=g.drawStageAccents;g.drawStageAccents=function(ctx){var r=base&&base.apply(this,arguments);drawShip(ctx);return r;};g.__directorShipDrawInstalled=true;return true;}catch(e){return false;}}
+  function installShipDraw(){try{var g=root.TechOpsGoodBoysGameplayLoop;if(!g||g.__directorShipDrawInstalled||typeof g.drawStageAccents!=="function")return false;var base=g.drawStageAccents;g.drawStageAccents=function(ctx){var r=base&&base.apply(this,arguments);if(!root.NM?._gbHiddenBayArtDrawn)drawShip(ctx);return r;};g.__directorShipDrawInstalled=true;return true;}catch(e){return false;}}
   function calmFrames(){try{var A=root.KATRIN_MANCHEZ;if(!A||!A.frames)return;var ks=A.frames.kat_stand||A.frames.kat_idle0,ms=A.frames.man_idle0;if(ks){A.frames.kat_idle0=ks;A.frames.kat_idle1=ks;}if(ms)A.frames.man_idle1=ms;}catch(e){}}
   function showOpening(done){try{var intro=root.TechOpsGoodBoysButtonHardFix;if(intro&&typeof intro.launch==="function"&&!intro.launching)intro.launch("campaign-director");}catch(e){root.__goodBoysDirectorOpeningDelegateError=String(e&&e.stack||e);}if(done)done();return false;}
   function showCinematic(scenes,done){if(done)done();return false;}
@@ -34,5 +106,5 @@
   function installObserver(){try{if(root.__productionSingleCompositor){if(observer){observer.disconnect();observer=null;}root.__goodBoysDirectorObserverSuppressed=true;return false;}if(observer||!root.MutationObserver||!root.document)return false;observer=new root.MutationObserver(function(){if(active())handoffControls();});observer.observe(root.document.documentElement,{subtree:true,childList:true});return true;}catch(e){return false;}}
   function tick(){try{installStyle();syncMissionDefinitions();installShipDraw();calmFrames();installObserver();var on=active();if(root.document&&root.document.body){root.document.body.classList.toggle("good-boys-directed",on);root.document.body.classList.toggle("good-boys-cinematic",on&&cinematicVisible());}removeDirectorPads();if(on)handoffControls();}catch(e){root.__goodBoysDirectorError=String(e&&e.stack||e);}}
   tick();var timer=root.setInterval?root.setInterval(tick,150):null;
-  root.TechOpsGoodBoysCampaignDirector={VERSION:VERSION,tick:tick,showOpening:showOpening,showCinematic:showCinematic,duoAttack:duoAttack,reliableThrow:reliableThrow,handoffControls:handoffControls,syncMissionDefinitions:syncMissionDefinitions,drawShip:drawShip,progressionWatch:progressionWatch,observer:observer,timer:timer,openingOwner:"TechOpsGoodBoysButtonHardFix"};
+  root.TechOpsGoodBoysCampaignDirector={VERSION:VERSION,tick:tick,showOpening:showOpening,showCinematic:showCinematic,duoAttack:duoAttack,reliableThrow:reliableThrow,handoffControls:handoffControls,syncMissionDefinitions:syncMissionDefinitions,drawShip:drawShip,drawHiddenBayProps:drawHiddenBayProps,progressionWatch:progressionWatch,observer:observer,timer:timer,openingOwner:"TechOpsGoodBoysButtonHardFix"};
 })(typeof globalThis!=="undefined"?globalThis:this);

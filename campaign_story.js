@@ -133,7 +133,7 @@
     if (typeof window === "undefined" || !window.document || window.TechOpsCampaignNativeAct1Visuals || window.__techopsAct1VisualLoader) return false;
     window.__techopsAct1VisualLoader = true;
     var script = window.document.createElement("script");
-    script.src = "campaign_native_act1_visuals.js?v=20261105-doors-r1";
+    script.src = "campaign_native_act1_visuals.js?v=20261112-hidden-bay-r1";
     script.async = false;
     window.document.head.appendChild(script);
     return true;

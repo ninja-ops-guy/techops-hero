@@ -33,7 +33,34 @@
       root.addEventListener("keydown",down,true);root.addEventListener("keyup",up,true);root.addEventListener("blur",blur,true);root.__productionNightKeyBridgeHandlers={down:down,up:up,blur:blur};root.__productionNightKeyBridgeVersion=1;root.__productionNightKeyBridgeError=null;return true;
     }catch(e){root.__productionNightKeyBridgeError=String(e&&e.stack||e);return false;}
   }
-  function drawFeatureLayers(threeD){var x=root.ctx,n=world();if(!x||!n)return;var art=root.TechOpsArtHandoff;if(art&&!threeD){art.drawEnvironment(x,n,"front",clock());art.drawImpacts(x,n,clock());}try{var gd=root.TechOpsGoodDogsProduction,lite=root.TechOpsGoodBoysHudLite;if(lite&&n._v736&&typeof lite.drawHud==="function")lite.drawHud(x,n);else if(gd&&typeof gd.drawReferenceHUD==="function")gd.drawReferenceHUD(x,n);}catch(e){root.__productionGoodDogsDrawError=String(e&&e.stack||e);}try{var gb=root.TechOpsGoodBoysGameplayLoop;if(gb&&!threeD){if(typeof gb.drawStageAccents==="function")gb.drawStageAccents(x);if(!root.TechOpsGoodBoysHudLite&&typeof gb.drawLoopOverlay==="function")gb.drawLoopOverlay(x);}}catch(e){root.__productionGoodBoysDrawError=String(e&&e.stack||e);}try{var gc=root.TechOpsGoodBoysCanon;if(gc&&!root.TechOpsGoodBoysHudLite&&typeof gc.drawHud==="function")gc.drawHud(x);}catch(e){root.__productionGoodBoysCanonDrawError=String(e&&e.stack||e);}if(root.TechOpsGoodDogsCoop&&!threeD)root.TechOpsGoodDogsCoop.draw(x,n);}
+  function drawFeatureLayers(threeD){
+    var x=root.ctx,n=world();
+    if(!x||!n)return;
+    var art=root.TechOpsArtHandoff;
+    if(art&&!threeD){
+      art.drawEnvironment(x,n,"front",clock());
+      art.drawImpacts(x,n,clock());
+    }
+    var lite=root.TechOpsGoodBoysHudLite;
+    try{
+      var gd=root.TechOpsGoodDogsProduction;
+      if(lite&&n._v736&&typeof lite.drawHud==="function")lite.drawHud(x,n);
+      else if(gd&&typeof gd.drawReferenceHUD==="function")gd.drawReferenceHUD(x,n);
+    }catch(e){root.__productionGoodDogsDrawError=String(e&&e.stack||e);}
+    try{
+      var gb=root.TechOpsGoodBoysGameplayLoop;
+      if(gb&&!threeD){
+        var authoredBay=Number(n._v736?.m)===2&&n._gbHiddenBayArtDrawn;
+        if(!authoredBay&&typeof gb.drawStageAccents==="function")gb.drawStageAccents(x);
+        if(!lite&&typeof gb.drawLoopOverlay==="function")gb.drawLoopOverlay(x);
+      }
+    }catch(e){root.__productionGoodBoysDrawError=String(e&&e.stack||e);}
+    try{
+      var gc=root.TechOpsGoodBoysCanon;
+      if(gc&&!lite&&typeof gc.drawHud==="function")gc.drawHud(x);
+    }catch(e){root.__productionGoodBoysCanonDrawError=String(e&&e.stack||e);}
+    if(root.TechOpsGoodDogsCoop&&!threeD)root.TechOpsGoodDogsCoop.draw(x,n);
+  }
   function goodBoysActive(){try{var n=world();return !!(n&&n._v736);}catch(e){return false;}}
   function clock(){try{return root.performance&&root.performance.now?root.performance.now():Date.now();}catch(e){return Date.now();}}
   function due(key,period){if(!period)return true;var t=clock(),last=Number(authorityLast[key])||0;if(t-last<period)return false;authorityLast[key]=t;return true;}

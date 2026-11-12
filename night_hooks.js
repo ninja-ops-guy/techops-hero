@@ -692,7 +692,10 @@ function drawNM() {
   // v7.34: painted district backdrop (payload-loaded) replaces the procedural
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
-  const sceneArt=window.TechOpsSceneArt,paintedBackdrop=sceneArt&&sceneArt.drawBackdrop(ctx,NM,NM_FLOOR);
+  const sceneArt = window.TechOpsSceneArt;
+  const hiddenBayDrawn = !!sceneArt?.drawHiddenBay?.(ctx, NM, NM_FLOOR);
+  if (NM._v736 && Number(NM._v736.m) === 2) NM._gbHiddenBayArtDrawn = hiddenBayDrawn;
+  const paintedBackdrop = hiddenBayDrawn || sceneArt&&sceneArt.drawBackdrop(ctx,NM,NM_FLOOR);
   const domestic = NM._v736 && Number(NM._v736.m)===1 && (paintedBackdrop || window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR));
   const stagedBackdrop = window.TechOpsOrbitalStaging && window.TechOpsOrbitalStaging.drawBackdrop(ctx,NM);
   if(paintedBackdrop||stagedBackdrop) { /* Decoded, scene-specific production art owns this layer. */ } else if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
@@ -744,7 +747,7 @@ function drawNM() {
   ctx.strokeStyle = "#2c3652"; ctx.beginPath(); ctx.moveTo(0, horizon - 20); ctx.lineTo(W, horizon - 20); ctx.stroke();
   }
   // street: asphalt, lane marks, wet sheen under lamps
-  if(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
+  if(!hiddenBayDrawn&&(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR))){
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
@@ -760,10 +763,11 @@ function drawNM() {
   if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.drawHome(ctx, NM);
   // platforms
-  if(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR)){
+  if(!hiddenBayDrawn&&(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR))){
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   }
+  if (hiddenBayDrawn) window.TechOpsGoodBoysCampaignDirector?.drawHiddenBayProps?.(ctx, NM, NM_FLOOR);
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
   if (!NM._v736 && !NM._sector04 && !NM._nightwalker) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);

@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=49,BUILD="20260921-presentation-r1",started=false,done=false;
+  var VERSION=49,BUILD="20261112-hidden-bay-r1",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",

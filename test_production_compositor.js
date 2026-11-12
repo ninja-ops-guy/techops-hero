@@ -42,6 +42,24 @@ assert.strictEqual(context.stepNM,stableStep,"enforce must restore stable global
 assert.strictEqual(guard.health().globalDrawAligned,true);
 assert.strictEqual(guard.health().globalStepAligned,true);
 
+const drawn=[];
+context.TechOpsGoodBoysGameplayLoop={drawStageAccents(){drawn.push("legacy accents");}};
+context.TechOpsGoodDogsCoop={draw(){drawn.push("pair contacts");}};
+context.NM._v736={m:2};
+context.NM._gbHiddenBayArtDrawn=true;
+stableDraw();
+assert.deepStrictEqual(drawn,["pair contacts"],"authored Hidden Bay owns stage art while pair contacts still render");
+drawn.length=0;
+context.NM._gbHiddenBayArtDrawn=false;
+stableDraw();
+assert.deepStrictEqual(drawn,["legacy accents","pair contacts"],"Hidden Bay retains its stage fallback");
+drawn.length=0;
+context.NM._v736.m=3;
+context.NM._gbHiddenBayArtDrawn=true;
+stableDraw();
+assert.deepStrictEqual(drawn,["legacy accents","pair contacts"],"the Hidden Bay guard does not affect the prison");
+delete context.NM._v736;
+
 console.log("Production immutable parser compositor: PASS");
 
 context.document={getElementById(id){return id==='dialogue'?{classList:{contains(){return false;}},style:{display:'block',visibility:'visible',opacity:'0'}}:null;}};
