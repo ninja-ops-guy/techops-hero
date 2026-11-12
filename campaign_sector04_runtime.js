@@ -9,13 +9,12 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var WIDTH = 1800;
   var FLOOR = 430;
   var INTERACT_RANGE = 56;
   var DEFAULT_ASSET_BASE = "assets/campaign/";
 
   var POINTS = [
-    { id: "purple_damage", x: 610, y: FLOOR - 24, label: "Purple damage", requiresController: false, assetSlot: "sector04.purple_damage.enemy" },
+    { id: "purple_damage", x: 610, y: FLOOR - 24, label: "Damaged enemy", requiresController: false, assetSlot: "sector04.purple_damage.enemy" },
     { id: "identity_controller", x: 1180, y: 292, label: "Identity controller", requiresController: true, assetSlot: "sector04.identity_controller.active" },
     { id: "locked_violin_door", x: 1570, y: FLOOR - 42, label: "Locked door", requiresController: false, assetSlot: "sector04.locked_violin_door" },
     { id: "symptoms_terminal", x: 1660, y: FLOOR - 58, label: "Terminal", requiresController: true, assetSlot: "sector04.terminal.symptoms" }
@@ -121,16 +120,39 @@
   function accessGuard() {
     return { name: "Access Guard", kind: "access_guard", campaignSector04Guard: true, assetSlot: "sector04.access_guard.idle", attackAssetSlot: "sector04.access_guard.attack", suppressedAssetSlot: "sector04.access_guard.suppressed", respawnAssetSlot: "sector04.access_guard.respawn", x: 780, y: FLOOR - 38, w: 30, h: 38, hp: 72, maxHp: 72, spd: 1.05, dmg: 12, tint: "#8b5cf6", cash: [0, 0], vx: 0, windup: 0, hitT: 0, kb: 0, launch: 0, down: 0, alive: true, cd: 0, dashes: true };
   }
-  function platformLayout() { return [{ x: 260, y: 342, w: 150, h: 14 }, { x: 560, y: 286, w: 130, h: 14 }, { x: 930, y: 336, w: 150, h: 14 }, { x: 1130, y: 320, w: 160, h: 14 }, { x: 1410, y: 352, w: 150, h: 14 }]; }
+  function platformLayout() {
+    return [
+      { x: 260, y: 342, w: 150, h: 14 },
+      { x: 560, y: 342, w: 130, h: 14 },
+      // Each rise is reachable with a single jump. The controller remains
+      // above ground-level interaction range.
+      { x: 935, y: 372, w: 130, h: 14 },
+      { x: 1065, y: 320, w: 210, h: 14 },
+      { x: 1350, y: 368, w: 150, h: 14 }
+    ];
+  }
   function ensureNight(night) {
     if (!night) throw new Error("A Night mode state is required");
-    night._sector04 = night._sector04 || { active: true, prompt: "", lastInteraction: null, completed: false };
-    night._sector04.active = true; night._sector04.assets = night._sector04.assets || createAssetResolver(); preloadPresentationAssets(night._sector04.assets);
-    night._sector04.inspectables = POINTS.map(function (p) { return { id: p.id, x: p.x, y: p.y, label: p.label, requiresController: p.requiresController, assetSlot: p.assetSlot }; });
-    night._sector04.inspectables.forEach(function (p) { night._sector04.assets.requestSlot(p.assetSlot); }); return night._sector04;
+    var encounter = night._sector04;
+    if (!encounter) {
+      encounter = night._sector04 = { active: true, lastInteraction: null, completed: false, assets: createAssetResolver() };
+      preloadPresentationAssets(encounter.assets);
+      encounter.inspectables = POINTS.map(function (point) { return Object.assign({}, point); });
+    }
+    return encounter;
   }
   function createEncounter(campaign, night) {
-    sectorApi().enter(campaign); var rt = ensureNight(night); night.district = "sector04"; night.street = 1; night.done = night.done || {}; night.drive = null; night.x = 120; night.y = FLOOR - (night.h || 34); night.vx = 0; night.vy = 0; night.face = 1; night.platforms = platformLayout(); night.enemies = [accessGuard()]; rt.assets.requestSlot(night.enemies[0].assetSlot); rt.assets.requestSlot(night.enemies[0].suppressedAssetSlot); night.clear = false; night.cam = 0; message(night, "SECTOR 04 - damage suppresses; understanding defeats.", 4200); rt.lastInteraction = "entered"; return rt;
+    sectorApi().enter(campaign);
+    var rt = ensureNight(night);
+    rt.active = true; rt.completed = false; rt.respawnFxUntil = 0; rt.terminalResult = null;
+    rt.progress = sectorApi().snapshot(campaign);
+    night.district = "sector04"; night.street = 1; night.done = night.done || {}; night.drive = null;
+    night.x = 120; night.y = FLOOR - (night.h || 34); night.vx = 0; night.vy = 0; night.face = 1;
+    night.platforms = platformLayout(); night.enemies = [accessGuard()];
+    night.clear = false; night.cam = 0;
+    rt.lastInteraction = "entered";
+    night.msg = ""; night.msgT = 0;
+    return rt;
   }
   function guard(night) { if (!night || !night.enemies) return null; for (var i = 0; i < night.enemies.length; i++) if (night.enemies[i].campaignSector04Guard) return night.enemies[i]; return null; }
   function aliveGuard(night) { var g = guard(night); return g && g.alive ? g : null; }
@@ -138,9 +160,17 @@
   function spawnGuardIfMissing(night) { if (aliveGuard(night)) return aliveGuard(night); var g = accessGuard(); night.enemies = (night.enemies || []).filter(function (enemy) { return !enemy.campaignSector04Guard; }); night.enemies.push(g); ensureNight(night).assets.requestSlot(g.assetSlot); night.clear = false; return g; }
   function distance(a, b) { var dx = a.x - b.x, dy = a.y - b.y; return Math.sqrt(dx * dx + dy * dy); }
   function nearestInspectable(night, x, y) {
-    var pos = { x: x, y: y }, best = null;
-    ensureNight(night).inspectables.forEach(function (p) { var d = distance(pos, p); if (d <= INTERACT_RANGE && (!best || d < best.distance)) best = { id: p.id, x: p.x, y: p.y, label: p.label, requiresController: p.requiresController, distance: d }; });
-    return best;
+    var pos = { x: x, y: y }, best = null, bestDistance = Infinity;
+    ensureNight(night).inspectables.forEach(function (point) {
+      var d = distance(pos, point);
+      if (d <= INTERACT_RANGE && d < bestDistance) { best = point; bestDistance = d; }
+    });
+    return best && Object.assign({ distance: bestDistance }, best);
+  }
+  function currentTarget(night) {
+    if (!night || !night._sector04 || !night._sector04.active) return null;
+    var point = nearestInspectable(night, night.x + (night.w || 22) / 2, night.y + (night.h || 34) / 2);
+    return night._sector04.completed && point && point.id !== "symptoms_terminal" ? null : point;
   }
   function hitGuard(campaign, night, damage, atMs) {
     var g = aliveGuard(night); if (!g) return { hit: false }; g.hp -= Math.max(1, damage || 12); g.hitT = Math.max(g.hitT || 0, 8); if (g.hp > 0) return { hit: true, suppressed: false, health: g.hp };
@@ -153,6 +183,7 @@
   }
   function tick(campaign, night, atMs) {
     var before = sectorApi().snapshot(campaign), sector = sectorApi().tick(campaign, atMs), after = sectorApi().snapshot(campaign);
+    ensureNight(night).progress = after;
     if (after.resolved || after.permanentlyDefeated) { removeGuard(night); night.clear = true; ensureNight(night).respawnFxUntil = 0; }
     else if (!before.spawned && after.spawned) { spawnGuardIfMissing(night); ensureNight(night).respawnFxUntil = 0; message(night, "Access Guard reconstituted. Find the controller.", 2600); }
     return sector;
@@ -170,23 +201,148 @@
     return { changed: true, advice: advice };
   }
   function inspectNearest(campaign, night, x, y) {
-    var p = nearestInspectable(night, x, y); if (!p) return null; var snap = sectorApi().snapshot(campaign);
+    var p = nearestInspectable(night, x, y);
+    if (!p) return null;
+    var encounter = night._sector04;
+    if (encounter.completed) return p.id === "symptoms_terminal" ? encounter.terminalResult : null;
+    var snap = sectorApi().snapshot(campaign);
     if (p.requiresController && !snap.controllerRevealed) { var insight = sectorApi().insight(campaign); if (!insight.success) { var advice = recoveryAdvice(campaign); message(night, advice.message, 4200); return { id: p.id, blocked: true, message: advice.message, recovery: advice }; } }
-    if (p.id === "identity_controller") { sectorApi().severController(campaign); removeGuard(night); message(night, "Identity controller severed. The Access Guard cannot re-form.", 3600); return { id: p.id, severed: true }; }
-    if (p.id === "symptoms_terminal") { var terminal = sectorApi().terminal(campaign); if (terminal.canTransition) { sectorApi().inspect(campaign, "locked_violin_door"); sectorApi().complete(campaign); night._sector04.completed = true; night.clear = true; message(night, terminal.message + " Mike: " + terminal.mikeResponse, 5200); } else message(night, terminal.message, 3600); return terminal; }
-    var inspected = sectorApi().inspect(campaign, p.id); if (p.id === "purple_damage") sectorApi().insight(campaign); message(night, inspected.text, 4200); return inspected;
+    var result;
+    if (p.id === "identity_controller") {
+      if (!snap.controllerSevered) sectorApi().severController(campaign);
+      removeGuard(night);
+      message(night, "Identity controller severed. The Access Guard cannot re-form.", 3600);
+      result = { id: p.id, severed: true };
+    } else if (p.id === "symptoms_terminal") {
+      result = sectorApi().terminal(campaign);
+      if (result.canTransition) {
+        if (!snap.violinNoteHeard) sectorApi().inspect(campaign, "locked_violin_door");
+        encounter.progress = sectorApi().snapshot(campaign);
+        sectorApi().complete(campaign);
+        encounter.completed = true;
+        encounter.terminalResult = result;
+        night.clear = true;
+      }
+      message(night, result.canTransition ? result.message + " Mike: " + result.mikeResponse : result.message, 5200);
+    } else {
+      result = sectorApi().inspect(campaign, p.id);
+      if (p.id === "purple_damage") sectorApi().insight(campaign);
+      message(night, result.text, 4200);
+    }
+    if (!encounter.completed) encounter.progress = sectorApi().snapshot(campaign);
+    return result;
+  }
+
+  function drawSlot(ctx, night, slotId, x, anchorY) {
+    var size = PRESENTATION[slotId], record = night._sector04.assets.requestSlot(slotId);
+    var top = Math.round(anchorY - (size.anchor === "center" ? size.height / 2 : size.height));
+    var left = Math.round(x - size.width / 2);
+    if (!record || record.status !== "ready" || !record.image) {
+      drawGeneratedAsset(ctx, slotId, x, top + size.height, size.width, size.height);
+      return;
+    }
+    var frame = frameForSlot(slotId, nowMs());
+    if (frame) ctx.drawImage(record.image, frame.x, frame.y, frame.w, frame.h, left, top, size.width, size.height);
+    else ctx.drawImage(record.image, left, top, size.width, size.height);
+  }
+
+  function drawGuard(ctx, night, g, x) {
+    var slot = g.assetSlot;
+    if (g.hitT > 0 || g.down > 0) slot = g.suppressedAssetSlot;
+    else if (g.windup > 0 || g.jabAnim > 0 || g.cd > 0) slot = g.attackAssetSlot;
+    drawSlot(ctx, night, slot, x + g.w / 2, g.y + g.h);
+    return true;
+  }
+
+  function pointSlot(point, progress) {
+    return point.id === "identity_controller" && progress.controllerSevered
+      ? "sector04.identity_controller.severed" : point.assetSlot;
   }
 
   function drawOverlay(ctx, night, width) {
-    if (!ctx || !night || !night._sector04) return false; var cam = night.cam || 0, W = width || ctx.canvas && ctx.canvas.width || 960, resolver = night._sector04.assets || createAssetResolver(); night._sector04.assets = resolver;
-    function drawAsset(slotId, sx, sy, w, h) { var record = resolver.requestSlot(slotId); if (!record || record.status !== "ready" || !record.image) return false; var presentation = presentationForSlot(slotId) || {}, y = presentation.anchor === "center" ? sy - h / 2 : sy - h, frame = frameForSlot(slotId, nowMs()); if (frame) ctx.drawImage(record.image, frame.x, frame.y, frame.w, frame.h, sx - w / 2, y, w, h); else ctx.drawImage(record.image, sx - w / 2, y, w, h); return true; }
-    function activeGuardAsset(g) { if (!g) return "sector04.access_guard.idle"; if (g.hitT > 0 || g.down > 0) return g.suppressedAssetSlot || "sector04.access_guard.suppressed"; if (g.windup > 0 || g.jabAnim > 0 || g.cd > 0) return g.attackAssetSlot || "sector04.access_guard.attack"; return g.assetSlot || "sector04.access_guard.idle"; }
-    function inspectableSize(id) { var point = POINTS.find(function (p) { return p.id === id; }), presentation = point && presentationForSlot(point.assetSlot); return presentation ? { w: presentation.width, h: presentation.height } : { w: 76, h: 54 }; }
-    ctx.save(); ctx.font = "12px monospace"; ctx.textAlign = "center"; var g = guard(night);
-    if (g && g.alive) { var guardX = g.x + (g.w || 30) / 2 - cam, guardY = g.y + (g.h || 38), guardSlot = activeGuardAsset(g), guardPresentation = presentationForSlot(guardSlot) || { width: 54, height: 70 }; if (guardX >= -80 && guardX <= W + 80 && !drawAsset(guardSlot, guardX, guardY, guardPresentation.width, guardPresentation.height)) drawGeneratedAsset(ctx, guardSlot, guardX, guardY, guardPresentation.width, guardPresentation.height); }
-    else if (night._sector04.respawnFxUntil && night._sector04.respawnFxUntil > nowMs()) { var fxSlot = "sector04.access_guard.respawn", fxPresentation = presentationForSlot(fxSlot) || { width: 72, height: 72 }, fxX = 795 - cam, fxY = FLOOR - 18; if (!drawAsset(fxSlot, fxX, fxY, fxPresentation.width, fxPresentation.height)) drawGeneratedAsset(ctx, fxSlot, fxX, fxY, fxPresentation.width, fxPresentation.height); }
-    night._sector04.inspectables.forEach(function (p) { var sx = p.x - cam; if (sx < -60 || sx > W + 60) return; var color = p.id === "purple_damage" ? "#a78bfa" : p.id === "identity_controller" ? "#38bdf8" : "#f8fafc", size = inspectableSize(p.id); if (!drawAsset(p.assetSlot, sx, p.y + size.h / 2, size.w, size.h) && !drawGeneratedAsset(ctx, p.assetSlot, sx, p.y + size.h / 2, size.w, size.h)) { ctx.fillStyle = color; ctx.globalAlpha = 0.85; ctx.fillRect(sx - 8, p.y - 8, 16, 16); ctx.globalAlpha = 1; } ctx.fillStyle = "#e5e7eb"; ctx.fillText(p.label, sx, p.y - 14); });
-    ctx.restore(); return true;
+    if (!ctx || !night || !night._sector04) return false;
+    var encounter = night._sector04, cam = night.cam || 0, W = width || ctx.canvas.width;
+    var progress = encounter.progress;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    var g = guard(night);
+    if (g && g.alive && g.x - cam >= -80 && g.x - cam <= W + 80) drawGuard(ctx, night, g, g.x - cam);
+    else if (encounter.respawnFxUntil > nowMs()) {
+      drawSlot(ctx, night, "sector04.access_guard.respawn", 795 - cam, FLOOR - 18);
+    }
+    encounter.inspectables.forEach(function (point) {
+      var x = point.x - cam;
+      if (x < -70 || x > W + 70) return;
+      var slot = pointSlot(point, progress), size = PRESENTATION[slot];
+      if (point.id === "symptoms_terminal" && !progress.terminalViewed) {
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "#0c161c";
+        ctx.fillRect(Math.round(x - 44), point.y - 24, 88, 48);
+        ctx.strokeStyle = "#506468";
+        ctx.strokeRect(Math.round(x - 42) + 0.5, point.y - 22.5, 84, 43);
+        ctx.fillStyle = "#9b7851";
+        ctx.fillRect(Math.round(x + 32), point.y + 14, 4, 3);
+        return;
+      }
+      ctx.globalAlpha = point.id === "identity_controller" && !progress.controllerRevealed ? 0.55 : 1;
+      drawSlot(ctx, night, slot, x, size.anchor === "feet" ? FLOOR : point.y);
+    });
+    ctx.restore();
+    return true;
+  }
+
+  function drawPrompt(ctx, night, width) {
+    var point = currentTarget(night);
+    if (!point) return;
+    var progress = night._sector04.progress, slot = pointSlot(point, progress), size = PRESENTATION[slot];
+    var x = Math.round(point.x - (night.cam || 0));
+    var y = Math.round((size.anchor === "feet" ? FLOOR : point.y + size.height / 2) - size.height);
+    var color = point.id === "purple_damage" ? "#e0b8ff" : "#a4eef3";
+    var label = point.id === "identity_controller" && !progress.controllerRevealed ? "Access hardware" : point.label;
+    var touch = root.matchMedia && root.matchMedia("(pointer: coarse)").matches;
+    var text = (touch ? "A · Inspect " : "E · Inspect ") + label;
+    ctx.save();
+    ctx.font = "bold 14px monospace";
+    var boxWidth = Math.min(width - 16, Math.ceil(ctx.measureText(text).width) + 20);
+    var center = Math.max(boxWidth / 2 + 8, Math.min(width - boxWidth / 2 - 8, x));
+    ctx.fillStyle = "#081219";
+    ctx.fillRect(Math.round(center - boxWidth / 2), y - 30, boxWidth, 24);
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 3, y - 5, 6, 2);
+    ctx.fillRect(x - 2, y - 3, 4, 2);
+    ctx.textAlign = "center";
+    ctx.fillText(text, center, y - 13, boxWidth - 14);
+    ctx.restore();
+  }
+
+  function drawHud(ctx, night, width) {
+    var encounter = night._sector04, progress = encounter.progress;
+    var objective = "Inspect the damaged enemy.";
+    if (encounter.completed) objective = "Continue to Tuesday morning.";
+    else if (progress.controllerSevered) objective = progress.violinNoteHeard ? "Read the terminal." : "Check the locked door.";
+    else if (progress.controllerRevealed) objective = "Climb the maintenance catwalk.";
+    else if (progress.purpleDamageInspected) objective = "Check the daytime access record.";
+    var w = Math.min(358, width - 24), compact = width < 620, h = compact ? 50 : 65;
+    ctx.save();
+    ctx.fillStyle = "#081219";
+    ctx.fillRect(12, 12, w, h);
+    ctx.fillStyle = "#3f6e78";
+    ctx.fillRect(12, 12, 3, h);
+    ctx.fillStyle = "#a4eef3";
+    ctx.font = "bold 14px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText("SECTOR 04", 24, 34);
+    ctx.fillStyle = "#cadcde";
+    ctx.font = "12px monospace";
+    ctx.fillText("HP", w - 79, 33);
+    ctx.fillStyle = "#293a42";
+    ctx.fillRect(w - 56, 24, 56, 9);
+    ctx.fillStyle = night.hp > 35 ? "#7bdbe0" : "#ff9e85";
+    ctx.fillRect(w - 56, 24, 56 * Math.max(0, Math.min(100, night.hp)) / 100, 9);
+    ctx.fillStyle = "#f1f5ef";
+    ctx.font = "14px monospace";
+    ctx.fillText(objective, 24, compact ? 52 : 61, w - 24);
+    ctx.restore();
   }
 
   function browserNight() { return root && root.S && root.S.nightMode ? root.S.nightMode : null; }
@@ -196,7 +352,8 @@
     if (night._sector04 && night._sector04.active) return night._sector04;
     var campaign = loadCampaign();
     createEncounter(campaign, night); saveCampaign(campaign);
-    if (root.toast) root.toast("SECTOR 04 — E to inspect. Damage suppresses; understanding defeats.", 4200);
+    var toast = root.document && root.document.getElementById("toast");
+    if (toast) toast.classList.add("hidden");
     return night._sector04;
   }
   function enterBrowser() {
@@ -219,21 +376,40 @@
     attachBrowserEncounter(event && event.detail && event.detail.night || browserNight());
   }
   function browserInteract() {
-    var night = browserNight(); if (!night || !night._sector04 || !night._sector04.active) return false; var campaign = loadCampaign(), result = inspectNearest(campaign, night, night.x + night.w / 2, night.y + night.h / 2); if (!result) return false; saveCampaign(campaign);
-    if (result.message && root.dlg && (result.id === "symptoms_terminal" || result.canTransition || result.blocked)) { var options = [{ t: "Continue", f: root.closeDlg }]; if (night._sector04.completed && root.TechOpsNightRuntime) options.unshift({ t: "Continue to Tuesday morning", f: root.TechOpsNightRuntime.resumeDay }); if (result.blocked && result.recovery && result.recovery.required) options.unshift({ t: "Return to daytime investigation", f: function () { var freshCampaign = loadCampaign(), freshNight = browserNight(); retreatToDayInvestigation(freshCampaign, freshNight); saveCampaign(freshCampaign); if (root.TechOpsNightRuntime) root.TechOpsNightRuntime.resumeDay(); else { if (root.S) root.S.nightMode = null; if (root.closeDlg) root.closeDlg(); } } }); root.dlg("SECTOR 04", result.message, options); }
+    var night = browserNight();
+    if (!currentTarget(night) || root.S.inDialog) return false;
+    var campaign = loadCampaign(), result = inspectNearest(campaign, night, night.x + night.w / 2, night.y + night.h / 2);
+    if (!result) return false;
+    saveCampaign(campaign);
+    if (result.message && root.dlg && (result.id === "symptoms_terminal" || result.blocked)) {
+      var options = [{ t: "Continue", f: root.closeDlg }];
+      if (night._sector04.completed && root.TechOpsNightRuntime) {
+        options.unshift({ t: "Continue to Tuesday morning", f: root.TechOpsNightRuntime.resumeDay });
+      }
+      if (result.blocked && result.recovery && result.recovery.required) {
+        options.unshift({ t: "Return to daytime investigation", f: function () {
+          var freshCampaign = loadCampaign(), freshNight = browserNight();
+          retreatToDayInvestigation(freshCampaign, freshNight);
+          saveCampaign(freshCampaign);
+          if (root.TechOpsNightRuntime) root.TechOpsNightRuntime.resumeDay();
+          else { if (root.S) root.S.nightMode = null; if (root.closeDlg) root.closeDlg(); }
+        } });
+      }
+      var content = result.canTransition ? result.message + "<br><br><b>Mike:</b> " + result.mikeResponse : result.message;
+      root.dlg("SECTOR 04", content, options);
+    }
     return true;
   }
   function install() {
     if (!root || root.__techopsSector04RuntimeInstalled) return false; root.__techopsSector04RuntimeInstalled = true;
     if (root.addEventListener) root.addEventListener("techops:night-entered", onNightEntered);
     if (typeof root.nmJab === "function") { var originalJab = root.nmJab; root.nmJab = function () { var result = originalJab.apply(this, arguments), night = browserNight(); if (night && night._sector04) { var campaign = loadCampaign(); syncCombat(campaign, night, nowMs()); saveCampaign(campaign); } return result; }; }
-    if (typeof root.stepNM === "function") { var originalStep = root.stepNM; root.stepNM = function () { var result = originalStep.apply(this, arguments), night = browserNight(); if (night && night._sector04) { var campaign = loadCampaign(); tick(campaign, night, nowMs()); saveCampaign(campaign); } return result; }; }
-    if (typeof root.drawNM === "function") { var originalDraw = root.drawNM; root.drawNM = function () { var result = originalDraw.apply(this, arguments), night = browserNight(); if (night && night._sector04 && root.ctx) drawOverlay(root.ctx, night, root.cv && root.cv.width); return result; }; }
+    if (typeof root.stepNM === "function") { var originalStep = root.stepNM; root.stepNM = function () { var result = originalStep.apply(this, arguments), night = browserNight(); if (night && night._sector04 && !night._sector04.completed) { var campaign = loadCampaign(); tick(campaign, night, nowMs()); saveCampaign(campaign); } return result; }; }
     if (typeof root.interact === "function") { var originalInteract = root.interact; root.interact = function () { if (browserInteract()) return; return originalInteract.apply(this, arguments); }; }
     return true;
   }
 
-  var api = { POINTS: POINTS, PRESENTATION: PRESENTATION, createEncounter: createEncounter, accessGuard: accessGuard, assetFilename: assetFilename, assetUrl: assetUrl, atlasUrl: atlasUrl, presentationForSlot: presentationForSlot, requiredPresentationSlots: requiredPresentationSlots, createAssetResolver: createAssetResolver, preloadPresentationAssets: preloadPresentationAssets, generatedAssetSpec: generatedAssetSpec, frameForSlot: frameForSlot, drawGeneratedAsset: drawGeneratedAsset, nearestInspectable: nearestInspectable, hitGuard: hitGuard, syncCombat: syncCombat, tick: tick, recoveryAdvice: recoveryAdvice, retreatToDayInvestigation: retreatToDayInvestigation, inspectNearest: inspectNearest, drawOverlay: drawOverlay, enterBrowser: enterBrowser, install: install };
+  var api = { POINTS: POINTS, PRESENTATION: PRESENTATION, createEncounter: createEncounter, accessGuard: accessGuard, assetFilename: assetFilename, assetUrl: assetUrl, atlasUrl: atlasUrl, presentationForSlot: presentationForSlot, requiredPresentationSlots: requiredPresentationSlots, createAssetResolver: createAssetResolver, preloadPresentationAssets: preloadPresentationAssets, generatedAssetSpec: generatedAssetSpec, frameForSlot: frameForSlot, drawGeneratedAsset: drawGeneratedAsset, nearestInspectable: nearestInspectable, currentTarget: currentTarget, hitGuard: hitGuard, syncCombat: syncCombat, tick: tick, recoveryAdvice: recoveryAdvice, retreatToDayInvestigation: retreatToDayInvestigation, inspectNearest: inspectNearest, drawOverlay: drawOverlay, drawPrompt: drawPrompt, drawHud: drawHud, enterBrowser: enterBrowser, install: install };
   if (root && root.document) { if (root.document.readyState === "loading" && root.document.addEventListener) root.document.addEventListener("DOMContentLoaded", install); else install(); }
   return api;
 });

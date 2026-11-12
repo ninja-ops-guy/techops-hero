@@ -160,7 +160,7 @@ assert.match(
   /v737_hooks\.js"><\/script><script src="production_title_experience\.js\?v=20260920-quality-r2"><\/script><script src="v742_hooks\.js/,
   "title authority must load immediately after v737 and before later wrappers"
 );
-assert.match(INDEX, /style\.css\?v=20260920-quality-r2/, "shared control CSS must bypass stale interaction styles");
+assert.match(INDEX, /style\.css\?v=20261112-sector04-r1/, "shared control CSS must bypass stale interaction styles");
 assert.match(SOURCE, /BUILD = "20260920-quality-r2"/, "runtime build marker must match the entrypoint");
 assert.doesNotMatch(INDEX, /<script src="good_boys_mobile_launch_guard\.js/, "readiness gating must retire the duplicate parser-time mobile launch guard");
 assert.match(BOOTSTRAP, /"good_boys_mobile_launch_guard\.js"/, "the mobile launch guard must remain in the production bootstrap before readiness");

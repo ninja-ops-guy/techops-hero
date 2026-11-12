@@ -159,12 +159,31 @@
     if(!more){more=doc.createElement('button');more.id='night-input-assists';more.type='button';more.className='v55-nbtn night-input-action';more.textContent='MORE';more.setAttribute('aria-label','Show optional dash and grab buttons');more.addEventListener('click',()=>{assistControls=!assistControls;sync();});box.appendChild(more);}
     more.hidden=!active;more.disabled=!enabled;more.setAttribute('aria-expanded',String(assistControls));
     const punch=doc.getElementById('tb-interact');bindButton(punch,'punch',true);
-    if(active&&punch){
+    const night=runtime();
+    if(night?._sector04&&punch){
+      const inspect=!!root.TechOpsSector04Runtime?.currentTarget(night);
+      const action=inspect?'Inspect':'Attack';
+      if(punch.dataset.sector04Action!==action){
+        punch.dataset.sector04Action=action;
+        punch.textContent=inspect?'A':'👊';
+        punch.setAttribute('aria-label',action);
+        punch.title=inspect?'E / A to inspect':'E / A to attack';
+      }
+    }else if(active&&punch){
       const context=contextAction();punch.textContent=context?'A':'PUNCH';
       punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':'Directional punch');
       punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E punch / J kick / Space jump. More: optional dash and grab buttons.';
     }
-    else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
+    else if(punch&&punch.dataset.nightCombatPunch==='true'){
+      if(punch.dataset.sector04Action)punch.textContent=game()?.nightMode?'👊':'A';
+      punch.removeAttribute('aria-label');punch.removeAttribute('title');
+    }
+    if(night?._sector04){
+      if(!box.hasAttribute('data-sector04-controls'))box.setAttribute('data-sector04-controls','');
+    }else{
+      if(punch)delete punch.dataset.sector04Action;
+      box.removeAttribute('data-sector04-controls');
+    }
     if(!enabled)reset();
   }
   root.TechOpsNightInput={VERSION:4,owns,ready,contextAction,snapshot,dispatch,runStep,sync,reset};

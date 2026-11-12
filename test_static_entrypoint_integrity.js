@@ -26,10 +26,11 @@ for(const asset of ["runtime_day_doors.js","runtime_day_doors.css"]){
   assert.ok(fs.readFileSync("runtime_day.js","utf8").includes(asset+"?v=20261105-doors-r1"));
 }
 const bootstrapBuild=fs.readFileSync("production_bootstrap.js","utf8").match(/BUILD="([A-Za-z0-9._-]+)"/);
-for(const src of ["night_hooks.js","v725_hooks.js","good_boys_hud_lite.js"]){assert.strictEqual(refFor(src),src+"?v=20260921-presentation-r1");}
+for(const src of ["v725_hooks.js","good_boys_hud_lite.js"]){assert.strictEqual(refFor(src),src+"?v=20260921-presentation-r1");}
+for(const src of ["night_hooks.js","cinematic_systems.js","campaign_sector04_runtime.js","v733_hooks.js"]){assert.strictEqual(refFor(src),src+"?v=20261112-sector04-r1");}
 assert.ok(fs.readFileSync("campaign_story.js","utf8").includes("campaign_native_act1_visuals.js?v=20261105-doors-r1"));
 assert.ok(fs.readFileSync("campaign_native_act1_visuals.js","utf8").includes("campaign_native_act1_visuals_impl.js?v=20261102-stage-mount-r2"));
-for(const src of ["campaign_act2.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","cinematic_systems.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}
+for(const src of ["campaign_act2.js","campaign_native_act2.js","good_boys_earthfall_ending.js","good_dogs_cutscenes_v2_2.js","campaign_visual_direction.js"]){assert.strictEqual(refFor(src),src+"?v=20260920-quality-r1");}
 assert.strictEqual(refFor("production_title_experience.js"),"production_title_experience.js?v=20260920-quality-r2","title gesture ownership must bypass stale caches");
 assert.strictEqual(refFor("campaign_story.js"),"campaign_story.js?v=20261105-doors-r1","campaign presentation loader must bypass stale caches");
 assert.ok(fs.readFileSync("campaign_native_act1_visuals.js","utf8").includes("good_boys_button_hard_fix.js?v=20260920-quality-r2"),"lazy title fallback must load the gesture ownership fix");
@@ -125,10 +126,8 @@ assert.ok(prisonGameplay.includes('PACK CHAIN')&&prisonGameplay.includes('PACK B
 console.log("Static entrypoint integrity: PASS");
 
 // Every changed parser-time lifecycle dependency bypasses the old mobile cache.
-for(const src of ["v57_hooks.js", "v69_hooks.js", "v735_hooks.js", "campaign_sector04_runtime.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
+for(const src of ["v57_hooks.js", "v69_hooks.js", "v735_hooks.js", "good_boys_canon_runtime.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-night-reviewed-r1");
 for(const src of ["v55_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260912-directional-integrated-r2");
-
-for(const src of ["v733_hooks.js"]) assert.strictEqual(refFor(src),src+"?v=20260913-production-v38-visual-combat-r2");
 
 assert.strictEqual(refFor("v710_hooks.js"),"v710_hooks.js?v=20260929-day-room-r1");
 assert.strictEqual(refFor("v716_hooks.js"),"v716_hooks.js?v=20260929-day-dialogue-r1");

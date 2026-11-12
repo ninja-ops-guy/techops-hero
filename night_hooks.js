@@ -321,7 +321,7 @@ function enterNight() {
   // the day shift is over — its tracker leaves the screen until morning
   const qt = document.getElementById("quest-tracker");
   if (qt) { NM._qtHidden = qt.classList.contains("hidden"); qt.classList.add("hidden"); }
-  toast("Move: WASD / arrows · E: punch / interact · J: kick · Space: jump · K: block · C: field reports", 5200);
+  if (!NM._sector04) toast("Move: WASD / arrows · E: punch / interact · J: kick · Space: jump · K: block · C: field reports", 5200);
   updateHUD();
 }
 
@@ -692,7 +692,11 @@ function drawNM() {
   // v7.34: painted district backdrop (payload-loaded) replaces the procedural
   // sky layers when present; the street/railing/HUD stay procedural either way
   const __bg734 = (typeof NM_BG734 !== "undefined") && NM_BG734[NM.district];
-  const sceneArt=window.TechOpsSceneArt,paintedBackdrop=sceneArt&&sceneArt.drawBackdrop(ctx,NM,NM_FLOOR);
+  const sectorRuntime = NM._sector04 && window.TechOpsSector04Runtime;
+  const sceneArt = window.TechOpsSceneArt;
+  const sectorHangar = NM._sector04 && sceneArt?.drawSector04?.(ctx, NM, NM_FLOOR);
+  if (NM._sector04) NM._sector04.hangarDrawn = !!sectorHangar;
+  const paintedBackdrop = sectorHangar || sceneArt&&sceneArt.drawBackdrop(ctx,NM,NM_FLOOR);
   const domestic = NM._v736 && Number(NM._v736.m)===1 && (paintedBackdrop || window.TechOpsGoodDogsHomeScene && window.TechOpsGoodDogsHomeScene.drawWorldBack(ctx,NM,NM_FLOOR));
   const stagedBackdrop = window.TechOpsOrbitalStaging && window.TechOpsOrbitalStaging.drawBackdrop(ctx,NM);
   if(paintedBackdrop||stagedBackdrop) { /* Decoded, scene-specific production art owns this layer. */ } else if(domestic) { /* Domestic scene rendered by the same source as the prologue. */ } else if (__bg734 && __bg734.complete && __bg734.naturalWidth) {
@@ -744,7 +748,7 @@ function drawNM() {
   ctx.strokeStyle = "#2c3652"; ctx.beginPath(); ctx.moveTo(0, horizon - 20); ctx.lineTo(W, horizon - 20); ctx.stroke();
   }
   // street: asphalt, lane marks, wet sheen under lamps
-  if(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
+  if(!sectorHangar&&(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR))){
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
@@ -760,10 +764,11 @@ function drawNM() {
   if(window.TechOpsArtHandoff)window.TechOpsArtHandoff.drawEnvironment(ctx,NM,"back",now);
   if (window.TechOpsNightRuntime) window.TechOpsNightRuntime.drawHome(ctx, NM);
   // platforms
-  if(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR)){
+  if(!sectorHangar&&(!sceneArt||!sceneArt.drawPlatforms(ctx,NM,NM_FLOOR))){
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   }
+  if (sectorRuntime) sectorRuntime.drawOverlay(ctx, NM, W);
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
   if (!NM._v736 && !NM._sector04 && !NM._nightwalker) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
@@ -775,7 +780,7 @@ function drawNM() {
     }
   }
   // exit marker
-  if (NM.clear) {
+  if (NM.clear && !NM._sector04) {
     ctx.font = "22px serif"; ctx.textAlign = "center";
     ctx.globalAlpha = .6 + Math.sin(now / 200) * .4;
     ctx.fillText("➡️", NM_W - 70 - NM.cam, NM_FLOOR - 50);
@@ -791,7 +796,7 @@ function drawNM() {
     ctx.save();
     const ec=e._nightCombat;
     if(ec&&ec.air&&!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)){const ax=ex+e.w/2,ay=e.y+e.h/2;ctx.translate(ax,ay);ctx.rotate(Math.max(-.5,Math.min(.5,ec.vy*.035))*Math.sign(ec.vx||1));ctx.translate(-ax,-ay);}
-    if (!drawNightEnemyAtlas(ctx, e, ex, now)) {
+    if (!(sectorRuntime && e.campaignSector04Guard) && !drawNightEnemyAtlas(ctx, e, ex, now)) {
       const flick = e.hitT > 0 || (e.kind === "hunter" && Math.floor(now / 140 + e.x) % 7 === 0);
       ctx.fillStyle = flick ? "#ffffff" : "#2a3a56";
       ctx.beginPath(); ctx.roundRect(ex, e.y, e.w, e.h, 6); ctx.fill();
@@ -841,12 +846,15 @@ function drawNM() {
   // ---------- sheet-style HUD ----------
   // Screen-space presentation consumes the same state. World coordinates and
   // Good Dogs / Sector 04 retain their existing render owners and fallback.
+  const compactHud = W < 620;
   const hudDistrict = NM._nightwalker ? Object.assign({}, D, { name: NM._nightwalker.districtName || "WEST ANNEX", streets: 1, accent: NM._nightwalker.accent || "#38bdf8" }) : D;
-  if (window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawNight(ctx, NM, { district:hudDistrict, clock:fmtClock(S.clock), now })) {
+  if (sectorRuntime) {
+    sectorRuntime.drawPrompt(ctx, NM, W);
+    sectorRuntime.drawHud(ctx, NM, W);
+  } else if (window.TechOpsRuntimeHud && window.TechOpsRuntimeHud.drawNight(ctx, NM, { district:hudDistrict, clock:fmtClock(S.clock), now })) {
     ctx.textAlign = "center";
     return;
-  }
-  const compactHud = W < 620;
+  } else {
   const leftX = compactHud ? 6 : 10, leftY = compactHud ? 6 : 10;
   const leftW = compactHud ? Math.max(142, Math.floor(W * .49) - 9) : 250, leftH = compactHud ? 66 : 76;
   const rightX = compactHud ? leftX + leftW + 6 : W - 262;
@@ -887,15 +895,17 @@ function drawNM() {
   const encounter = guidance && guidance.streetStatus(NM);
   const status = encounter ? encounter.replace('REINFORCEMENTS INBOUND', 'INBOUND').replace('STREET SECURED · CONTINUE OR RETURN TO CHARGER', 'STREET SECURED').replace('CHECK THE STREET', 'CHECK STREET') : `💀 ${NM.kills}`;
   ctx.textAlign = "right"; ctx.fillText(status, rightX + rightW - 8, leftY + 56);
+  }
   // center message
   if (NM.msgT > now) {
     const msgW = Math.min(520, W - 16), msgFont = compactHud ? 10 : 13, words = String(NM.msg || "").split(/\s+/), lines = [];
     ctx.font = msgFont + "px monospace";
     for (const word of words) { const last = lines.length - 1, trial = last < 0 ? word : lines[last] + " " + word; if (last < 0 || ctx.measureText(trial).width > msgW - 18) lines.push(word); else lines[last] = trial; }
     if (lines.length > 3) { lines.length = 3; lines[2] = lines[2].replace(/[.…]*$/, "…"); }
-    const msgH = 12 + lines.length * (msgFont + 4),msgY=window.TechOpsNightCombat&&window.TechOpsNightCombat.active(NM)?(window.TechOpsCombatAudio&&window.TechOpsCombatAudio.settings().captions?170:142):96;
+    const msgH = 12 + lines.length * (msgFont + 4);
+    const msgY = sectorRuntime && compactHud ? 155 : window.TechOpsNightCombat&&window.TechOpsNightCombat.active(NM)?(window.TechOpsCombatAudio&&window.TechOpsCombatAudio.settings().captions?170:142):96;
     ctx.fillStyle = "#000a"; ctx.fillRect((W - msgW) / 2, msgY, msgW, msgH);
-    ctx.fillStyle = "#ffd24a"; ctx.textAlign = "center";
+    ctx.fillStyle = sectorRuntime ? "#e6f1f0" : "#ffd24a"; ctx.textAlign = "center";
     lines.forEach((line, i) => ctx.fillText(line, W / 2, msgY+10 + (i + 1) * (msgFont + 3)));
   }
   ctx.textAlign = "center";

@@ -40,7 +40,8 @@ button:focus-visible{outline:3px solid #f8e49b;outline-offset:3px}
 #quest-tracker .done{color:#6f6;text-decoration:line-through}
 
 /* Toast */
-#toast{position:absolute;top:22%;left:50%;transform:translateX(-50%);background:#111e;border:2px solid #ffd24a;color:#ffd24a;padding:10px 18px;border-radius:8px;font-size:14px;text-align:center;z-index:40;max-width:85%;animation:tpop .3s}
+#toast{position:absolute;top:22%;left:50%;transform:translateX(-50%);background:#111e;border:2px solid #ffd24a;color:#ffd24a;padding:10px 18px;border-radius:8px;font-size:14px;text-align:center;z-index:40;max-width:85%;animation:tpop .3s;pointer-events:none}
+@media (pointer:fine){#v55-nmbtns[data-sector04-controls]{display:none!important}}
 @keyframes tpop{from{transform:translateX(-50%) scale(.7);opacity:0}}
 
 /* Dialogue */
