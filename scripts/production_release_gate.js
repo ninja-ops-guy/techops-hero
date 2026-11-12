@@ -114,6 +114,7 @@ const tests = [
   "test_save_background_guard.js",
   "test_night_combo_rewards.js",
   "test_night_onboarding_coach.js",
+  "test_day_perfect_shift.js",
   "test_visual_combat_assets.js",
   "test_night_combat.js",
   "test_runtime_combat_audio.js",
