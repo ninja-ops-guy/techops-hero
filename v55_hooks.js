@@ -123,6 +123,9 @@ draw = function () {
   __origDrawV55.apply(this, arguments);
   const s = S;
   if (!s || s.nightMode || !s.weather || (s.weather !== "rain" && s.weather !== "storm")) return;
+  // The top-down campaign map is inside AeroTech. Weather still affects the
+  // shift and keeps its own presentation wherever it is shown outdoors.
+  if (s.map && !s.room && !s.meta?._standaloneMode) return;
   const tm = performance.now();
   const heavy = s.weather === "storm";
   ctx.save();
