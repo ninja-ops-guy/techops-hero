@@ -67,6 +67,9 @@ try {
   });
   await page.locator("#btn-start").click();
   await page.locator("#dlg-options button").filter({ hasText: "Standard" }).click();
+  const focusInDialog = await page.evaluate(() => document.getElementById("dlg-options")?.contains(document.activeElement));
+  assert.ok(focusInDialog, "an opened dialog must move keyboard focus to its first action");
+  report.checks.push("modal dialogs take keyboard focus on open");
   await page.locator("#dlg-options button").filter({ hasText: "Clock in" }).click();
   await page.waitForFunction(() => {
     const campaign = TechOpsCampaign.load(localStorage);
@@ -80,6 +83,32 @@ try {
     backup: (() => { try { return JSON.parse(localStorage.getItem("techops_save_bak")); } catch (_) { return null; } })(),
     contacts: S.npcs.filter(npc => String(npc.id).startsWith("campaign_")).map(npc => npc.id).sort()
   }));
+  await page.evaluate(() => { if (S.inDialog) closeDlg(); });
+  await page.waitForFunction(() => {
+    const el = document.getElementById("day-route-status");
+    return !!(el && el.textContent && el.textContent.length > 0);
+  }, null, { timeout: 8000 });
+  const a11y = await page.evaluate(() => {
+    const dialog = document.getElementById("dialogue");
+    const status = document.getElementById("day-route-status");
+    const hud = document.getElementById("day-route-hud");
+    return {
+      labelledby: dialog.getAttribute("aria-labelledby"),
+      describedby: dialog.getAttribute("aria-describedby"),
+      statusRole: status && status.getAttribute("role"),
+      statusLive: status && status.getAttribute("aria-live"),
+      statusHidden: !!status && getComputedStyle(status).height === "1px",
+      hudVisible: !!(hud && !hud.hidden)
+    };
+  });
+  assert.equal(a11y.labelledby, "dlg-name");
+  assert.equal(a11y.describedby, "dlg-text");
+  assert.equal(a11y.statusRole, "status");
+  assert.equal(a11y.statusLive, "polite");
+  assert.ok(a11y.statusHidden, "the live region must be visually hidden, not display:none");
+  assert.ok(a11y.hudVisible, "objective HUD must be visible on the day floor");
+  report.checks.push("objective HUD announces through a polite visually-hidden live region and the dialog stays labelled");
+
   assert.equal(fresh.campaignDay, 1);
   assert.notEqual(fresh.backup?.meta?.marker, "stale-backup", "New Game cannot leave the old recovery shadow eligible for restoration");
   if (fresh.backup) assert.equal(fresh.backup.day, 1, "any newly created recovery shadow must belong to the fresh run");
