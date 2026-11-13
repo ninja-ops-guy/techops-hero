@@ -8,7 +8,13 @@
 const fs = require("fs");
 const vm = require("vm");
 
-const src = fs.readFileSync("save_background_guard.js", "utf8");
+const gameSource = fs.readFileSync("game.js", "utf8");
+const beginMarker = "// background-save:begin";
+const endMarker = "// background-save:end";
+const begin = gameSource.indexOf(beginMarker);
+const end = gameSource.indexOf(endMarker);
+if (begin < 0 || end <= begin) throw new Error("background save guard not present in game.js");
+const src = gameSource.slice(begin, end + endMarker.length);
 let passed = 0, failed = 0;
 function check(name, ok) {
   if (ok) { passed++; console.log("PASS", name); }

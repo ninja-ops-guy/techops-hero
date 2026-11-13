@@ -489,6 +489,37 @@ const save = () => {
     return false;
   }
 };
+// background-save:begin
+// Use the existing synchronous save() contract; one successful flush per
+// background interval prevents duplicate backup rotation. Failed saves retry
+// at the next lifecycle signal (pagehide often follows visibilitychange).
+(function installBackgroundSaveGuard() {
+  if (typeof window === 'undefined' || !window.addEventListener) return;
+  let flushing = false;
+  let savedForBackground = false;
+  function flush() {
+    if (flushing || savedForBackground || typeof save !== 'function') return;
+    flushing = true;
+    try {
+      // save() returns false for rejected writes, unavailable storage, or no S.
+      if (save() === true) savedForBackground = true;
+    } catch (error) {
+      window.__techopsSaveError = String(error && error.stack || error);
+    } finally {
+      flushing = false;
+    }
+  }
+  window.addEventListener('pagehide', flush);
+  // Recovered back/forward-cache pages are eligible for future saves.
+  window.addEventListener('pageshow', function () { savedForBackground = false; });
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') flush();
+      else if (document.visibilityState === 'visible') savedForBackground = false;
+    });
+  }
+})();
+// background-save:end
 const normalizeLoadedProfile = d => {
   if (!d || typeof d !== "object" || Array.isArray(d)) throw new Error("invalid profile save envelope");
   const fromVersion = Number.isInteger(d._profileSchemaVersion) ? d._profileSchemaVersion : 0;
