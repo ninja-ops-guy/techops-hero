@@ -1,0 +1,33 @@
+{
+  "base_commit": "0fea6e76010697a7003e60894bd84b22054476d9",
+  "production_gate": {
+    "suites": 121,
+    "status": "PASS",
+    "javascript_syntax_files": 624
+  },
+  "living_world_domain_groups": 13,
+  "chapters_completed": 14,
+  "optional_quests_completed": 6,
+  "browser_errors": [],
+  "source_sha256": {
+    "bg_noc.js": "232e4593f9b4def2817550bfb4bd8d72eb1c5a58ea5ae7715018498bc377855e",
+    "campaign_living_world.js": "e9f9db52fc2aa890462b488dfae5771b2781e98c5e78ac698998810858f57121",
+    "campaign_living_world_data.js": "4f68382e68372f7fb67cb12dd1f9266e1ad18e5da6b8e835f0db6b3d3b686ccd",
+    "campaign_living_world_runtime.js": "860f01a94a46ff192b02681bfe8f855eabd10759239e8c65c3f116ec90281f47",
+    "index.html": "48045942396ff59b22bb0a3744433aca4f35413c4374a7b53bd6d05542e6d92a",
+    "night_combat_input.js": "dede2ac18bbf3706ea118191bff15511c7f2187e35849c7e06013fc22eba1e36",
+    "night_hooks.js": "5ef271eba685ab988a0697d8c926403ded27c6c0ac550de8f8d0e0f41c658784",
+    "production_bootstrap.js": "b99bd0eecc415474f9404534f834ec651857f9fdae5f563764a01b90b1895962",
+    "production_wrapper_guard.js": "a59e19f6b64bf09296881cec4447752765e0c391a5fb3c96ffcc2ccbc04d3c9a",
+    "runtime_hud.js": "f3f4fbb743e8cbbed719bc0e71f21b07d11cca647cb8af8baa851dd0aac6bc82",
+    "runtime_night.js": "9dce5edea4a65d318c4be0d0ec60ce45fb9c91c6f57077e81f759803070cba3b",
+    "scripts/living_world_browser.mjs": "3c7f0e2019e36b02b1734a1fa896fa3e2f1de0ea336796ef7b74a7f8b9529a40",
+    "scripts/living_world_recovery_browser.mjs": "4f1ac907af1f0bf66580404d9ab94e60cf335d85cca9f734502cd81c50412c48",
+    "scripts/living_world_visual_browser.mjs": "a2b958f8436a10a6298a187a6a75449fa13f1493b5f94695848fd6f22fbb5130",
+    "scripts/production_release_gate.js": "43ca873a9917c8c62a83d783beae890bc0adf8aa3887bce7a063dbd67939a98a",
+    "test_campaign_nightwalker_runtime.js": "d8af1c8000a8c77828b8e579ff41a6547851d3c48a18a67cfbb3f1619dadc159",
+    "test_living_world.js": "b721178a315e0384390ee22339f7937ca990f3faad1386e48e1e837974d2b04a",
+    "test_night_recovery.js": "63544c506c59353a324077a1c0d9cce7e584060d7c91e5673b1dfbeb85e648d5"
+  },
+  "qualification": "Cumulative normal-control playthrough across development revisions, resumed from its own checkpoints after test-driver and gameplay corrections. This is not an uninterrupted all-chapter run on one frozen revision. Final-source domain, recovery, scene-render and production checks are separately recorded. No story flags or objective completions were injected into the playthrough. Recovery and store tests disclose damage, budget/stock and storage-failure fixtures. Physical iOS is not qualified."
+}

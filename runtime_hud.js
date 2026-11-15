@@ -87,7 +87,7 @@
     options = options || {};
     const view = viewport(ctx.canvas), l = layout(view), d = options.district || {}, now = Number(options.now) || 0;
     const guide = root.TechOpsGameplayExperience;
-    const status = guide && guide.streetStatus(n) || (n.clear ? 'STREET SECURED' : 'HOSTILES ' + (n.enemies || []).filter(e => e.alive).length);
+    const status = options.status || guide && guide.streetStatus(n) || (n.clear ? 'STREET SECURED' : 'HOSTILES ' + (n.enemies || []).filter(e => e.alive).length);
     const combat = combatModel(n), audio = root.TechOpsCombatAudio;
     const caption = audio && typeof audio.caption === 'function' ? audio.caption(n) : '';
     const receipt = { mode:'night', viewport:view, bodyFont:BODY, headingFont:HEADING, panels:[], text:[], menu:l.menu, blocked:false };

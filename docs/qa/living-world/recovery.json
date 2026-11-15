@@ -1,0 +1,152 @@
+{
+  "reports": [
+    {
+      "profile": "desktop",
+      "pass": true,
+      "bounds": {
+        "objective": {
+          "x": 12,
+          "y": 124,
+          "w": 520,
+          "h": 52.78125
+        },
+        "interact": {
+          "x": 544.5234375,
+          "y": 606,
+          "w": 190.953125,
+          "h": 44
+        },
+        "controls": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "actions": {
+          "x": 1150,
+          "y": 540,
+          "w": 120,
+          "h": 96
+        },
+        "menu": {
+          "x": 1144,
+          "y": 11,
+          "w": 122,
+          "h": 44
+        },
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        "objective rollback",
+        "purchase rollback",
+        "full-health retention",
+        "purchase and use",
+        "chapter and health reload",
+        "journal pause",
+        "HUD layout"
+      ]
+    },
+    {
+      "profile": "portrait",
+      "pass": true,
+      "bounds": {
+        "objective": {
+          "x": 12,
+          "y": 173,
+          "w": 366,
+          "h": 52.78125
+        },
+        "interact": {
+          "x": 12,
+          "y": 586.40625,
+          "w": 185,
+          "h": 55.59375
+        },
+        "controls": {
+          "x": 16,
+          "y": 660,
+          "w": 164,
+          "h": 164
+        },
+        "actions": {
+          "x": 260,
+          "y": 584,
+          "w": 120,
+          "h": 96
+        },
+        "menu": {
+          "x": 256,
+          "y": 11,
+          "w": 122,
+          "h": 44
+        },
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        "objective rollback",
+        "purchase rollback",
+        "full-health retention",
+        "purchase and use",
+        "chapter and health reload",
+        "journal pause",
+        "HUD layout",
+        "real touch movement"
+      ]
+    },
+    {
+      "profile": "landscape",
+      "pass": true,
+      "bounds": {
+        "objective": {
+          "x": 12,
+          "y": 124,
+          "w": 390,
+          "h": 43.875
+        },
+        "interact": {
+          "x": 326.5234375,
+          "y": 276,
+          "w": 190.953125,
+          "h": 44
+        },
+        "controls": {
+          "x": 8,
+          "y": 338,
+          "w": 194,
+          "h": 44
+        },
+        "actions": {
+          "x": 512,
+          "y": 338,
+          "w": 218,
+          "h": 44
+        },
+        "menu": {
+          "x": 708,
+          "y": 11,
+          "w": 122,
+          "h": 44
+        },
+        "width": 844,
+        "height": 390
+      },
+      "checks": [
+        "objective rollback",
+        "purchase rollback",
+        "full-health retention",
+        "purchase and use",
+        "chapter and health reload",
+        "journal pause",
+        "HUD layout",
+        "real touch movement"
+      ]
+    }
+  ],
+  "fixtures": [
+    "40 HP for supply test",
+    "quota exception for rollback tests"
+  ],
+  "injectedStoryProgress": false
+}

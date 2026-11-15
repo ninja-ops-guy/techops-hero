@@ -208,7 +208,7 @@ test('a standalone run cannot enter or mutate the campaign through its run menu'
   const {c,api,data,start}=fixture();start();c.TechOpsCampaign={load(){throw new Error('standalone touched campaign');}};
   assert.equal(api.resumeDay(),false,'standalone cannot bypass isolation through the runtime return API');
   assert.equal(api.openCampaign(),true);assert.match(c.dialog.title,/STANDALONE/);assert.equal(c.dialog.options.some(o=>/Sector/.test(o.t)),false);
-  c.dialog.options[0].f();assert.equal(c.reloads,1);assert.equal(api.checkpointStatus().status,'ready');assert.equal(data.get('techops_hero_campaign_v1'),'campaign-bytes');
+  c.dialog.options.find(o=>o.t==='Save Night and return to title').f();assert.equal(c.reloads,1);assert.equal(api.checkpointStatus().status,'ready');assert.equal(data.get('techops_hero_campaign_v1'),'campaign-bytes');
 });
 test('completion retires the saved run before paying rewards and retries failed storage explicitly',()=>{
   const {c,api,start}=fixture();start();api.saveCheckpoint();c.quota=true;

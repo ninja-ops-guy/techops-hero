@@ -192,7 +192,7 @@ startRun = function () {
     $("hud").classList.remove("hidden");
     showTouchUI();
     initMusic();
-    dlg("🌃 After Hours Dispatch", `New Haven after dark. Take the Charger into the city.<br><br>Start with <b>Downtown Street 1</b>. Learn movement, jumps, and contact timing, then open <b>Run Menu [C]</b> for authored field reports.<br><br>Every fight is a symptom. Investigate what is driving it.`, [{
+    dlg("🌃 After Hours Dispatch", `New Haven after dark. Take the Charger into the city.<br><br>Learn movement, jumps, and contact timing on <b>Downtown Street 1</b>, then choose <b>Run Menu [C] → Living World</b> for the authored campaign. Exploration grows into fighting, transport, and survival horror as the story advances.<br><br>Every fight is a symptom. Investigate what is driving it.`, [{
       t: "Take the Charger ▶",
       f: event => { if (!router?.confirmNightDispatch || router.confirmNightDispatch(run, event?.currentTarget)) closeDlg(); },
     }]);
@@ -209,7 +209,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM._livingWorld && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -334,7 +334,7 @@ function enterNight() {
 // the Charger: drive the district map
 function nmCarMenu() {
   // Campaign encounters borrow Night physics, not the Earth travel hub.
-  if (!NM || NM._v736 || NM._sector04 || NM._nightwalker) return false;
+  if (!NM || NM._v736 || NM._sector04 || NM._nightwalker || NM._livingWorld) return false;
   const s = S;
   const opts = NM_ORDER.filter(id => !NM.done[id]).map(id => {
     const D = NM_DISTRICTS[id];
@@ -354,7 +354,7 @@ function nmNextStage() {
   if(window.TechOpsNightCombat){window.TechOpsNightCombat.cancel(NM);delete NM._nightCombat;}
   const s = S, D = NM_DISTRICTS[NM.district];
   if (NM.district === "home") return window.TechOpsNightRuntime && window.TechOpsNightRuntime.openHome();
-  if (NM._sector04 || NM._nightwalker) return; // Authored encounters own their exits.
+  if (NM._sector04 || NM._nightwalker || NM._livingWorld) return; // Authored encounters own their exits.
   if (!window.TechOpsNightRuntime) advanceClock(20); // compatibility without the continuous clock
   const st = NM.street + 1;
   if (st > D.streets) {
@@ -452,6 +452,7 @@ function nmJab() {
   nmCheckClear();
 }
 function nmCheckClear() {
+  if (NM && NM._livingWorld) { NM.clear=false; return; }
   if (!NM.clear && NM.enemies.length && NM.enemies.every(e => !e.alive)) {
     NM.clear = true;
     NM.msg = "✅ STREET CLEAR — head right →"; NM.msgT = performance.now() + 3000;
@@ -595,7 +596,7 @@ function stepNM(dt) {
     reducedMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
   });
   NM.cam = cameraResult ? cameraResult.x : clamp(NM.x - cv.width / 2.4, 0, NM_W - cv.width);
-  if (NM.clear && NM.district !== "home" && !NM._sector04 && !NM._nightwalker && NM.x > NM_W - 110) nmNextStage();
+  if (NM.clear && NM.district !== "home" && !NM._sector04 && !NM._nightwalker && !NM._livingWorld && NM.x > NM_W - 110) nmNextStage();
   // Home is an explicit interaction, not an invisible end-of-map trigger.
 }
 

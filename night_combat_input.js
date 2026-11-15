@@ -26,6 +26,7 @@
   function contextAction(){
     if(!ready())return null;
     const n=runtime(),lifecycle=root.TechOpsNightRuntime;
+    if(n._livingWorld)return root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.nearest()?'expedition':null;
     if(lifecycle&&lifecycle.atHome())return 'home';
     const car=typeof NM_CAR_X==='number'?NM_CAR_X:26;
     if(n.x<car+150&&!(n.enemies||[]).some(e=>e.alive&&Math.abs(e.x-n.x)<90))return 'charger';
@@ -37,6 +38,7 @@
   function dispatch(action,k){
     if(!ready())return false;
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
+    if(root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.input(action))return true;
     if(action==='punch'&&contextAction()&&typeof root.interact==='function'){root.interact();return true;}
     if(action==='jump'){jumpQueued=true;return true;}
     if(action==='dash')return root.TechOpsNightCombat.dash(runtime(),runtime().face||1);

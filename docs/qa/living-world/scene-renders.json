@@ -1,0 +1,90 @@
+{
+  "reports": [
+    {
+      "chapter": "service_ring",
+      "room": "bay",
+      "actor": "mike",
+      "health": 24
+    },
+    {
+      "chapter": "annex",
+      "room": "lobby",
+      "actor": "mike",
+      "health": 24
+    },
+    {
+      "chapter": "pier",
+      "room": "receiver",
+      "actor": "mike",
+      "health": 24
+    },
+    {
+      "chapter": "rooftops",
+      "room": "east",
+      "actor": "felicia",
+      "health": 24
+    },
+    {
+      "chapter": "hangar",
+      "room": "bench",
+      "actor": "felicia",
+      "health": 24
+    },
+    {
+      "chapter": "prison",
+      "room": "vent",
+      "actor": "katrin",
+      "health": 24
+    },
+    {
+      "chapter": "home",
+      "room": "garage",
+      "actor": "mike",
+      "health": 24
+    },
+    {
+      "chapter": "low_quarter",
+      "room": "workshop",
+      "actor": "iona",
+      "health": 24
+    },
+    {
+      "chapter": "dock",
+      "room": "checkpoint",
+      "actor": "iona",
+      "health": 24
+    },
+    {
+      "chapter": "archive",
+      "room": "room",
+      "actor": "k",
+      "health": 24
+    },
+    {
+      "chapter": "factory_heist",
+      "room": "receiving",
+      "actor": "kali",
+      "health": 24
+    },
+    {
+      "chapter": "fracture",
+      "room": "building",
+      "actor": "mike",
+      "health": 24
+    },
+    {
+      "chapter": "factory_return",
+      "room": "receiving",
+      "actor": "mike",
+      "health": 24
+    },
+    {
+      "chapter": "low_return",
+      "room": "workshop",
+      "actor": "k",
+      "health": 24
+    }
+  ],
+  "errors": [],
+  "method": "Revisit UI from completed playthrough; normal keyboard movement; no story or position injection."
+}

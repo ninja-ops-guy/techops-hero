@@ -1,0 +1,98 @@
+[
+  {
+    "profile": "desktop",
+    "passed": true,
+    "fixture": "Set Night HP to 40 while the supplies menu is open. Mission briefing dismissal uses closeDlg after the normal mission launch.",
+    "checks": [
+      "purchase",
+      "sold stock",
+      "full health",
+      "use",
+      "reload",
+      "keyboard menu",
+      "field report use and return",
+      "Day isolation"
+    ],
+    "errors": []
+  },
+  {
+    "profile": "portrait",
+    "passed": true,
+    "fixture": "Set Night HP to 40 while the supplies menu is open. Mission briefing dismissal uses closeDlg after the normal mission launch.",
+    "checks": [
+      "purchase",
+      "sold stock",
+      "full health",
+      "use",
+      "reload",
+      "keyboard menu",
+      "field report use and return",
+      "Day isolation"
+    ],
+    "errors": []
+  },
+  {
+    "profile": "landscape",
+    "passed": true,
+    "fixture": "Set Night HP to 40 while the supplies menu is open. Mission briefing dismissal uses closeDlg after the normal mission launch.",
+    "checks": [
+      "purchase",
+      "sold stock",
+      "full health",
+      "use",
+      "reload",
+      "keyboard menu",
+      "field report use and return",
+      "Day isolation"
+    ],
+    "errors": []
+  },
+  {
+    "profile": "day-desktop",
+    "passed": true,
+    "fixture": "Prepared budget, daily stock and HP. Opened the normal south-exit dialogue at 18:00, with Night HP set to 60.",
+    "checks": [
+      "menu button",
+      "bike purchase",
+      "book purchase",
+      "lab upgrade",
+      "unknown saved stock",
+      "Day item use",
+      "Day to Night carryover",
+      "profile save"
+    ],
+    "errors": []
+  },
+  {
+    "profile": "day-portrait",
+    "passed": true,
+    "fixture": "Prepared budget, daily stock and HP. Opened the normal south-exit dialogue at 18:00, with Night HP set to 60.",
+    "checks": [
+      "menu button",
+      "bike purchase",
+      "book purchase",
+      "lab upgrade",
+      "unknown saved stock",
+      "Day item use",
+      "Day to Night carryover",
+      "profile save"
+    ],
+    "errors": []
+  },
+  {
+    "profile": "day-landscape",
+    "passed": true,
+    "fixture": "Prepared budget, daily stock and HP. Opened the normal south-exit dialogue at 18:00, with Night HP set to 60.",
+    "checks": [
+      "menu button",
+      "bike purchase",
+      "book purchase",
+      "lab upgrade",
+      "unknown saved stock",
+      "Day item use",
+      "Day to Night carryover",
+      "profile save"
+    ],
+    "errors": []
+  }
+]
