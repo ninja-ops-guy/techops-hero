@@ -27,11 +27,16 @@
     assert(Number.isFinite(a.elapsed)&&a.elapsed>=0&&Number.isFinite(a.hold)&&a.hold>=0,'Invalid clock');
     assert(a.encounters&&typeof a.encounters==='object'&&!Array.isArray(a.encounters),'Invalid encounter state');
     for(const v of Object.values(a.encounters))assert(v&&Number.isFinite(v.hp)&&v.hp>=0&&typeof v.cleared==='boolean','Invalid saved encounter');
+    const parent=e.goals[a.step];
+    if(a.sceneIndex!==undefined)assert(Number.isInteger(a.sceneIndex)&&a.sceneIndex>=0&&(!parent||a.sceneIndex<(parent.lines?parent.lines.length:1)),'Invalid dialogue cursor');
+    if(a.task)assert(parent&&parent.tasks&&parent.tasks.some(t=>t.id===a.task),'Invalid selected call');
+    if(a.tasks!==undefined)assert(Array.isArray(a.tasks)&&new Set(a.tasks).size===a.tasks.length&&a.tasks.every(id=>parent&&parent.tasks&&parent.tasks.some(t=>t.id===id))&&!a.tasks.includes(a.task),'Invalid completed calls');
     if(a.escort)assert(typeof a.escort.id==='string'&&typeof a.escort.name==='string'&&e.rooms.some(r=>r.id===a.escort.room)&&Number.isFinite(a.escort.x)&&a.escort.x>=0&&a.escort.x<=1800,'Invalid escort');
   }
   function gate(s,id,native){
     const e=episode(id);if(!e)return {open:false,reason:'Unknown chapter'};
-    const missing=e.after.filter(id=>!s.done.includes(id));
+    if(e.requiresVisit&&(!s.flags.waldo_invited||!s.flags.waldo_visit_received))return {open:false,reason:'Hear Waldo’s later porch invitation, then visit him at the garage.'};
+    const missing=s.done.includes(id)?[]:e.after.filter(id=>!s.done.includes(id));
     if(missing.length)return {open:false,reason:'Complete '+episode(missing[0]).title+' first.'};
     if(s.scope==='campaign'){
       const facts=native&&native.facts||{};
@@ -49,13 +54,26 @@
     s.active=!restart&&old&&!old.finished?clone(old):{id,room:e.rooms[0].id,actor:e.actor,step:0,x:150,y:396,elapsed:0,hold:0,holding:false,escort:null,encounters:{},variant:old?(old.variant+1)%2:(Data.episodes.indexOf(e)%2),finished:false};
     return s.active;
   }
-  function current(s){const a=active(s);return a&&episode(a.id).goals[a.step]||null;}
+  function parentGoal(s){const a=active(s);return a&&episode(a.id).goals[a.step]||null;}
+  function current(s){const g=parentGoal(s),a=s.active;return g&&g.tasks&&a.task?g.tasks.find(t=>t.id===a.task)||g:g;}
+  function holdSeconds(s,g){return g.assistChoice&&s.choices[g.assistChoice[0]]===g.assistChoice[1]?g.assistChoice[2]:g.seconds;}
+  function sceneLine(s){const g=current(s);return g&&g.lines&&g.lines[s.active.sceneIndex||0];}
+  function sideLocation(s,q){return q.stages?q.stages[Math.min(s.side[q.id]||0,q.stages.length-1)]:{episode:q.episode,room:q.room,x:q.points&&q.points[s.side[q.id]||0]||q.x};}
+  function consequences(s){const rows=[];for(const q of Data.sidequests)if(s.flags[q.reward])rows.push(q.title+': '+q.steps.at(-1)[1]);return rows.length?rows.join('\n\n'):'The receiving desk is open again. Optional work can still be revisited; nobody’s missing side quest erases the main rescue.';}
+
   function record(s,text){const a=s.active,k=a.actor;s.knowledge[k]=s.knowledge[k]||[];if(!s.knowledge[k].includes(text))s.knowledge[k].push(text);}
   function advance(s,choice){
     const a=s.active,e=episode(a.id),g=current(s);assert(g,'No current objective');
     (g.sets||[]).forEach(f=>s.flags[f]=true);
     if(g.choiceKey)s.choices[g.choiceKey]=choice;
-    record(s,g.text);a.step++;a.hold=0;a.holding=false;
+    record(s,g.kind==='consequence'?consequences(s):g.text);a.hold=0;a.holding=false;a.sceneIndex=0;
+    const parent=parentGoal(s);
+    if(parent.tasks&&a.task){
+      a.tasks=a.tasks||[];a.tasks.push(a.task);a.task=null;
+      if(a.tasks.length<parent.tasks.length)return {ok:true,advanced:true,text:g.text};
+      a.tasks=[];
+    }
+    a.step++;
     if(a.step===e.goals.length){a.finished=true;if(!s.done.includes(e.id))s.done.push(e.id);s.runs[e.id]=clone(a);}
     return {ok:true,advanced:true,finished:a.finished,text:a.finished?e.ending:g.text};
   }
@@ -63,6 +81,16 @@
     validate(s);const a=s.active,g=current(s);assert(a&&g,'No active objective');
     if(a.room!==g.room||Math.abs(a.x+11-g.x)>92||Math.abs(a.y+17-g.y)>96)return {ok:false,text:'Move close to '+g.label+'.'};
     if(g.actor&&g.actor!==a.actor)return {ok:false,text:'This action belongs to '+g.actor+'. Switch operator at the field controls.'};
+    if(g.requires&&g.requires.some(f=>!s.flags[f]))return {ok:false,text:'Complete the local support and receiving checks first.'};
+    if(g.kind==='dispatch'){
+      const task=g.tasks.find(t=>t.id===choice);if(!task||(a.tasks||[]).includes(choice))return {ok:false,choose:true,text:'Choose an unfinished call.'};
+      a.task=choice;if(g.choiceKey&&!s.choices[g.choiceKey])s.choices[g.choiceKey]=choice;
+      return {ok:true,advanced:true,text:task.text};
+    }
+    if(g.kind==='scene'){
+      a.sceneIndex=(a.sceneIndex||0)+1;
+      if(a.sceneIndex<g.lines.length)return {ok:true,scene:true,text:g.lines[a.sceneIndex][1]};
+    }
     if(g.kind==='hold'){a.holding=true;return {ok:true,holding:true,text:'Stay beside the station. Movement or damage pauses work.'};}
     if(g.options){const option=g.options.find(o=>o[0]===choice);if(!option)return {ok:false,choose:true,text:g.text};if(g.answer&&choice!==g.answer)return {ok:false,text:option[2]};const r=advance(s,choice);r.text=option[2];return r;}
     if(g.kind==='escort'){a.escort={id:g.escort,name:g.escortName,room:a.room,x:a.x-45};return advance(s);}
@@ -75,6 +103,8 @@
   function routes(s){const a=s.active,e=episode(a.id);return e.routes.filter(r=>r.from===a.room||r.to===a.room).map(r=>{
     const to=r.from===a.room?r.to:r.from;let reason='';
     if(r.requires&&!s.flags[r.requires])reason=r.requires==='never_open'?'Physically blocked despite the displayed route.':'This route has not been established.';
+    if(r.choice&&s.choices[r.choice[0]]!==r.choice[1])reason='This earlier response did not establish the shortcut.';
+    if(r.actor&&r.actor!==a.actor)reason='Switch to '+r.actor+' at the field controls.';
     if(r.power&&!s.flags[r.power])reason='Local support is not ready.';
     if(r.width==='dog'&&!['katrin','manchez'].includes(a.actor))reason='Only the dogs fit this passage.';
     if(r.width==='person'&&(e.vehicle||a.escort))reason='The group or transport needs the wide route.';
@@ -95,19 +125,26 @@
     const g=current(s);if(!a.holding||!g||g.kind!=='hold')return {changed:false};
     const near=g.room===a.room&&Math.abs(a.x+11-g.x)<=92&&Math.abs(a.y+17-g.y)<=96;
     if(!near||frame.hurt||Math.abs(frame.vx||0)>.6){a.holding=false;return {changed:true,paused:true};}
-    a.hold+=dt;if(a.hold>=g.seconds)return Object.assign(advance(s),{changed:true});
+    a.hold+=dt;if(a.hold>=holdSeconds(s,g))return Object.assign(advance(s),{changed:true});
     return {changed:false};
   }
-  function switchActor(s){const a=s.active,e=episode(a.id),actors=e.actors||[e.actor];assert(actors.length>1,'This chapter has one viewpoint');a.actor=actors[(actors.indexOf(a.actor)+1)%actors.length];a.holding=false;return a.actor;}
-  function sidequest(s,id,targetX){const q=Data.sidequests.find(q=>q.id===id),a=s.active;assert(q&&a&&q.episode===a.id&&q.room===a.room&&Math.abs(a.x+11-(targetX===undefined?q.x:targetX))<95,'Approach the person or object first');const step=s.side[id]||0;if(step>=q.steps.length)return {complete:true,text:'This shared moment is already part of the world.'};s.side[id]=step+1;if(s.side[id]===q.steps.length)s.flags[q.reward]=true;record(s,q.steps[step][1]);return {complete:s.side[id]===q.steps.length,text:q.steps[step][1]};}
+  function switchActor(s){const a=s.active,e=episode(a.id),actors=e.actors||[e.actor];assert(actors.length>1,'This chapter has one viewpoint');a.actor=actors[(actors.indexOf(a.actor)+1)%actors.length];a.holding=false;if(e.remoteRooms){a.room=a.actor==='iona'?'iona':'earth';a.x=150;a.y=396;}return a.actor;}
+  function sidequest(s,id){
+    const q=Data.sidequests.find(q=>q.id===id),a=s.active;assert(q&&a,'Unknown side quest');
+    const loc=sideLocation(s,q),step=s.side[id]||0;
+    assert(loc.episode===a.id&&loc.room===a.room&&Math.abs(a.x+11-loc.x)<95&&Math.abs(a.y+17-413)<96,'Approach the person or object first');
+    if(step>=q.steps.length)return {complete:true,text:'This shared moment is already part of the world.'};
+    s.side[id]=step+1;if(s.side[id]===q.steps.length)s.flags[q.reward]=true;
+    record(s,q.steps[step][1]);return {complete:s.side[id]===q.steps.length,text:q.steps[step][1]};
+  }
   function leave(s){if(!s.active)return false;s.active.holding=false;s.runs[s.active.id]=clone(s.active);s.active=null;return true;}
   function retry(s){const a=s.active;assert(a,'No active chapter');a.x=150;a.y=396;a.holding=false;a.hold=0;if(a.escort){a.escort.room=a.room;a.escort.x=105;}return a;}
   function cycle(s){const a=s.active,e=episode(a.id),room=e.rooms.findIndex(r=>r.id===a.room),phase=(a.elapsed+room*2+a.variant*3)%10;return {on:phase>5&&phase<8.5,warning:phase>4&&phase<=5,x:1070+Math.sin(phase)*90,phase};}
   function facts(c){const f=Object.assign({},c&&c.flags||{},c&&c.story&&c.story.facts||{});if(f.tuesday_morning_reached)f.tuesday_morning=true;return {facts:f,day:c&&c.campaign&&c.campaign.day||0};}
   function validateData(){
-    const seen=new Set();for(const e of Data.episodes){assert(!seen.has(e.id),'Duplicate episode');for(const p of e.after)assert(seen.has(p),'Out-of-order chapter');seen.add(e.id);const rooms=new Set(e.rooms.map(r=>r.id));assert(rooms.size===e.rooms.length,'Duplicate room');for(const g of e.goals){assert(rooms.has(g.room)&&g.x>200&&g.x<1500,'Unreachable goal');assert(!g.options||!g.answer||g.options.some(o=>o[0]===g.answer),'Missing supported choice');}for(const r of e.routes)assert(rooms.has(r.from)&&rooms.has(r.to),'Unknown route');assert(e.goals.at(-1).kind==='finish','Missing authored ending');}
+    const seen=new Set();for(const e of Data.episodes){assert(!seen.has(e.id),'Duplicate episode');for(const p of e.after)assert(seen.has(p),'Out-of-order chapter');seen.add(e.id);const rooms=new Set(e.rooms.map(r=>r.id));assert(rooms.size===e.rooms.length,'Duplicate room');for(const g of e.goals.flatMap(g=>[g,...g.tasks||[]])){assert(rooms.has(g.room)&&g.x>200&&g.x<1500,'Unreachable goal');assert(!g.options||!g.answer||g.options.some(o=>o[0]===g.answer),'Missing supported choice');}for(const r of e.routes)assert(rooms.has(r.from)&&rooms.has(r.to),'Unknown route');assert(e.goals.at(-1).kind==='finish','Missing authored ending');}
     return true;
   }
   validateData();
-  return {VERSION:1,Data,clone,initial,validate,episode,gate,start,current,interact,routes,travel,tick,switchActor,sidequest,leave,retry,cycle,facts};
+  return {VERSION:1,Data,clone,initial,validate,episode,gate,start,current,holdSeconds,sceneLine,sideLocation,consequences,interact,routes,travel,tick,switchActor,sidequest,leave,retry,cycle,facts};
 });

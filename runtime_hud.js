@@ -79,7 +79,7 @@
     if (!c) return null;
     const dashReady = c.dash && !c.dash.spent && c.time <= c.dash.until;
     if (!c.grab && !c.attack && !c.hits && !dashReady && c.stunUntil <= c.time) return null;
-    return { hint:c.grab ? '← / → THROW · ↑ LAUNCH · ↓ SLAM' : c.stunUntil > c.time ? 'RECOVER' : dashReady ? 'DASH → ATTACK TO GRAB' : c.attack && c.attack.kind && c.attack.kind.startsWith('air') ? 'AIR COMBO · THREE HITS MAX' : '↑ / ↓ AIM · JUMP TO FOLLOW', age:c.time - c.lastInput, lastHit:c.lastHit };
+    return { hint:c.grab ? '← / → THROW · ↑ LAUNCH · ↓ SLAM' : c.stunUntil > c.time ? 'RECOVER' : dashReady ? 'DASH → ATTACK TO GRAB' : c.attack?.kind==='bicycle-kick'?'BICYCLE · THREE AIR HITS MAX':c.attack?.kind==='air-down'?'DOWN LIGHT · AIM BELOW':c.attack && c.attack.kind && c.attack.kind.startsWith('air') ? 'AIR COMBO · THREE HITS MAX' : '↑ / ↓ AIM · JUMP TO FOLLOW', age:c.time - c.lastInput, lastHit:c.lastHit };
   }
   function drawNight(ctx, n, options) {
     if (!handles(n)) return false;

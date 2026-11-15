@@ -228,11 +228,19 @@
     if(!expeditionLoad){
       const scripts=['campaign_living_world_data.js','campaign_living_world.js','campaign_living_world_runtime.js'];
       expeditionLoad=scripts.reduce((prior,src)=>prior.then(()=>new Promise((resolve,reject)=>{
-        const script=root.document.createElement('script');script.src=src+'?v=20261115-expeditions-1';script.async=false;
+        const script=root.document.createElement('script');script.src=src+'?v=20261115-expeditions-2';script.async=false;
         script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('Could not load '+src));};root.document.head.appendChild(script);
       })),Promise.resolve()).catch(e=>{expeditionLoad=null;throw e;});
     }
     const expected=state();return expeditionLoad.then(()=>{if(state()===expected&&active(world()))return root.TechOpsLivingWorldRuntime.openBoard();}).catch(e=>dialog('EXPEDITIONS UNAVAILABLE',String(e.message)+'. Your saved progress is unchanged.',[{t:'Retry',f:openExpeditions},{t:'Back',f:root.closeDlg}]));
+  }
+  function combatGuide(){
+    const iona=root.TechOpsNightCombat&&root.TechOpsNightCombat.actor(world())==='iona';
+    return dialog('NIGHT WALKER // DIRECTIONAL COMBOS',
+      '<b>LIGHT / E</b> · neutral: jab → cross → launcher on the gold beat; ↑: uppercut; ↓: low strike.<br><b>KICK / J</b> · neutral: kick launch; ↑: rising kick; ↓: sweep.<br><br><b>AIR</b> · Light: punch; ↓ + Light: quick downward strike at enemies below; Kick: air kick; ↓ + Kick: heavy slam.'+
+      (iona?'<br><b>IONA</b> · ↑ + Kick in the air: bicycle kick. Each kick spends one of the three air contacts.':'')+
+      '<br><br><b>CHAIN IT</b> · Land an ↑ attack, press Jump / Space to follow, then Light → '+(iona?'↑ + Kick for the bicycle finish.':'Kick → Light.')+'<br>Jump above the enemy, then ↓ + Light to drive them toward the ground. Aim toward the target. Three aerial contacts end the juggle; a missed launcher cannot cancel into a follow-up jump.',
+      [{t:'Back to the run menu',f:openCampaign},{t:'Back to the street',f:root.closeDlg}]);
   }
   function openCampaign(){
     if(!active(world())||transition)return false;
@@ -242,7 +250,7 @@
       if(runtime)return runtime.openJournal();
     }
     if(standalone(state())){
-      const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}];
+      const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Combat moves & combos',f:combatGuide},{t:'Back to the street',f:root.closeDlg}];
       if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
       if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
       if(root.TechOpsDeadAirRuntime)options.unshift({t:'NIGHTWALKER — Dead Air at Pier 7',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsDeadAirRuntime.enterBrowser();}});
@@ -258,7 +266,7 @@
       if(root.TechOpsSector04Runtime)options.push({t:world()._sector04?'Continue Sector 04 investigation':'Enter Sector 04 — story campaign',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsSector04Runtime.enterBrowser();}});
       options.push({t:'Return to daytime investigation',f:resumeDay});
     }
-    options.push({t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
+    options.push({t:'Combat moves & combos',f:combatGuide},{t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
   }
   function openHome(){
     const n=world();if(!atHome()||transition||n._nightLifecycle&&n._nightLifecycle.exitCommitted)return false;

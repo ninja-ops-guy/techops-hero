@@ -6,7 +6,8 @@
   let origin=null,saveAge=0,lastHP=100,ui=null,images={},saveError=null;
   const game=()=>typeof S!=='undefined'?S:root.S;
   const world=()=>game()&&game().nightMode;
-  const active=n=>!!(n&&n._livingWorld);
+  const active=n=>!!(n&&n===world()&&n._livingWorld&&n._livingWorld.active);
+  function viewpoint(n){if(!active(n))return null;const s=state();if(!s||!s.active)return null;const e=A.episode(s.active.id);return e&&(!e.requiresVisit||s.flags.waldo_invited&&s.flags.waldo_visit_received)&&!e.vehicle?s.active.actor:null;}
   const state=()=>game().meta.livingWorld;
   const now=()=>root.performance?root.performance.now():Date.now();
   const html=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -83,12 +84,12 @@
   function nearby(){
     if(!active(world()))return [];const n=world(),s=state(),a=s.active,g=A.current(s),c=[];
     if(g&&g.room===a.room)c.push({type:'goal',x:g.x,y:g.y,label:g.label});
-    for(const q of D.sidequests){if(q.episode===a.id&&q.room===a.room&&(s.side[q.id]||0)<q.steps.length)c.push({type:'side',id:q.id,x:sideX(q,s),y:413,label:q.title});}
+    for(const q of D.sidequests){if(A.sideLocation(s,q).episode===a.id&&A.sideLocation(s,q).room===a.room&&(s.side[q.id]||0)<q.steps.length)c.push({type:'side',id:q.id,x:sideX(q,s),y:413,label:q.title});}
     if(n.x<180||n.x>1490)c.push({type:'exit',x:n.x+11,y:n.y+17,label:'Choose a physical route'});
     return c.map(p=>Object.assign(p,{distance:Math.hypot(n.x+n.w/2-p.x,n.y+n.h/2-p.y)})).filter(p=>p.distance<=96).sort((a,b)=>a.distance-b.distance);
   }
   function nearest(){return nearby()[0]||null;}
-  function sideX(q,s){return q.points[s.side[q.id]||0]||q.x;}
+  function sideX(q,s){return A.sideLocation(s,q).x;}
   function interact(selection){
     if(!active(world())||game().inDialog)return false;
     const points=nearby(),chosen=selection&&['goal','side','exit'].includes(selection.type)?points.find(p=>p.type===selection.type&&p.id===selection.id):null;
@@ -98,21 +99,24 @@
     const p=chosen||points[0];if(!p)return false;
     const s=state(),g=A.current(s);s.active.x=Math.max(0,Math.min(1760,world().x));s.active.y=world().y;
     if(p.type==='exit'){openRoutes();return true;}
-    if(p.type==='side'){const q=D.sidequests.find(q=>q.id===p.id),step=s.side[q.id]||0;dialog(q.title,html(q.steps[step][1]),[{t:q.steps[step][0],f:()=>{const r=commit(st=>A.sidequest(st,q.id,sideX(q,st)));if(r){dialog(q.title,html(r.text),[{t:r.complete?'Keep this moment':'Continue in the room',f:close}]);announce();}}},{t:'Another time',f:close}]);return true;}
-    const choices=g.options?g.options.map(o=>({t:o[1],f:()=>action(o[0])})):[{t:g.kind==='hold'?'Begin working at the station':g.label,f:()=>action()}];choices.push({t:'Step back',f:close});dialog(g.label,html(g.text),choices);return true;
+    if(p.type==='side'){const q=D.sidequests.find(q=>q.id===p.id),step=s.side[q.id]||0;dialog(q.title,html(q.steps[step][1]),[{t:q.steps[step][0],f:()=>{const r=commit(st=>A.sidequest(st,q.id,sideX(q,st)));if(r){const next=A.sideLocation(state(),q);const follow=q.stages&&!r.complete?'<br><br>Next: '+html(A.episode(next.episode).title)+' — '+html(A.episode(next.episode).rooms.find(room=>room.id===next.room).name):'';dialog(q.title,html(r.text)+follow,[{t:r.complete||q.stages?'Keep this moment':'Continue in the room',f:close}]);announce();}}},{t:'Another time',f:close}]);return true;}
+    if(g.kind==='scene'){showScene();return true;}
+    if(g.kind==='dispatch'){dialog(g.label,html(g.text),g.tasks.filter(t=>!(s.active.tasks||[]).includes(t.id)).map(t=>({t:t.label,f:()=>action(t.id)})).concat({t:'Step back',f:close}));return true;}
+    const choices=g.options?g.options.map(o=>({t:o[1],f:()=>action(o[0])})):[{t:g.kind==='hold'?'Begin working at the station':g.label,f:()=>action()}];choices.push({t:'Step back',f:close});dialog(g.label,html(g.kind==='consequence'?A.consequences(s):g.text),choices);return true;
   }
-  function action(choice){const r=commit(s=>A.interact(s,choice));if(!r)return;if(!r.ok){dialog('CHECK THE OBSERVATION',html(r.text),[{t:'Try again',f:()=>{close();interact();}},{t:'Return to the room',f:close}]);return;}close();if(r.finished)completion();else if(r.advanced){world().enemies=[];spawn(world());announce();}}
+  function showScene(){const line=A.sceneLine(state()),g=A.current(state());if(!line)return;dialog(line[0],html(line[1]),[{t:(state().active.sceneIndex||0)+1===g.lines.length?'Finish the conversation':'Continue',f:()=>action()},{t:'Pause the conversation',f:close}]);}
+  function action(choice){const r=commit(s=>A.interact(s,choice));if(!r)return;if(!r.ok){dialog('CHECK THE OBSERVATION',html(r.text),[{t:'Try again',f:()=>{close();interact();}},{t:'Return to the room',f:close}]);return;}if(r.scene){showScene();return;}close();if(r.finished)completion();else if(r.advanced){world().enemies=[];spawn(world());announce();}}
   function completion(){resetInput();dialog('CHAPTER COMPLETE',html(A.episode(state().active.id).ending)+'<br><br><b>Saved.</b> You can explore the quiet aftermath or return to the expedition board.',[{t:'Stay for the aftermath',f:close},{t:'Return to expeditions',f:()=>leave(true)}]);}
   function openRoutes(){
     const s=state(),a=s.active,e=A.episode(a.id),rs=A.routes(s),atExit=world().x<210||world().x>1470;
     const text='<b>'+html(e.rooms.find(r=>r.id===a.room).name)+'</b><br>'+rs.map(r=>html(e.rooms.find(x=>x.id===r.to).name)+' — '+html(r.open?r.status:r.reason)).join('<br>')+'<br><br>Routes depend on physical access, group width, local power, and what has actually been checked.';
-    const options=rs.filter(r=>r.open&&atExit).map(r=>({t:'Travel — '+e.rooms.find(x=>x.id===r.to).name,f:()=>{const result=commit(s=>{s.active.x=Math.min(1760,world().x);return A.travel(s,r.to);});if(result){loadRoom();close();}}}));
+    const options=rs.filter(r=>r.open&&atExit).map(r=>({t:(e.remoteRooms?'Viewpoint — ':'Travel — ')+e.rooms.find(x=>x.id===r.to).name,f:()=>{const result=commit(s=>{s.active.x=Math.min(1760,world().x);return A.travel(s,r.to);});if(result){loadRoom();close();}}}));
     if(!atExit)options.push({t:'Return to a marked room exit',f:close});else options.push({t:'Stay here',f:close});return dialog('ROUTES / VERIFIED AND REPORTED',text,options);
   }
   function openJournal(){
     if(!active(world()))return openBoard();const s=state(),a=s.active,e=A.episode(a.id),g=A.current(s);
     const options=[{t:'Resume — '+(g?g.label:'quiet aftermath'),f:close},{t:'Routes and current conditions',f:openRoutes}];
-    if(e.actors)options.push({t:'Switch operator — '+e.actors.find(x=>x!==a.actor),f:()=>{const r=commit(s=>A.switchActor(s));if(r){resetInput();announce();close();}}});
+    if(e.actors)options.push({t:'Switch operator — '+e.actors.find(x=>x!==a.actor),f:()=>{const r=commit(s=>A.switchActor(s));if(r){delete world()._nightCombat;if(e.remoteRooms)loadRoom();resetInput();announce();close();}}});
     if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
     options.push({t:'Save chapter and return to the street',f:()=>leave(false)});
     const knowledge=(s.knowledge[a.actor]||[]).slice(-4).map(html).join('<br><br>');
@@ -156,6 +160,7 @@
   function actor(ctx,n,t){
     const a=state().active,e=A.episode(a.id),x=n.x-n.cam,y=n.y,cx=x+n.w/2,feet=y+n.h;
     if(e.vehicle){ctx.fillStyle='#071219';ctx.fillRect(x-8,407,n.w+16,14);ctx.fillStyle=e.vehicle==='cradle'?'#c3d6cc':'#525d65';ctx.fillRect(x,384,n.w,24);ctx.strokeStyle='#7edde0';ctx.strokeRect(x,384,n.w,24);if(e.vehicle==='cradle'){ctx.fillStyle='#719c93';ctx.fillRect(x+12,374,45,12);ctx.fillStyle='#afe6bf';ctx.fillRect(x+50,382,4,19);}else{ctx.fillStyle='#1c303f';ctx.fillRect(x+10,373,42,13);}for(const xx of [x+10,x+n.w-13]){ctx.fillStyle='#080c13';ctx.fillRect(xx,416,12,12);ctx.fillStyle='#768494';ctx.fillRect(xx+4,420,4,4);}return;}
+    if(a.actor==='iona'&&root.TechOpsIonaNightwalker&&root.TechOpsIonaNightwalker.draw(ctx,n,x,y,t,75))return;
     if(a.actor==='mike'&&root.drawNightPlayerAtlas&&root.drawNightPlayerAtlas(ctx,n,x,y,t))return;
     if(['katrin','manchez'].includes(a.actor)&&root.TechOpsArtHandoff&&root.TechOpsArtHandoff.drawActor(ctx,a.actor==='katrin'?'kat':'man',n,cx,feet,65,t))return;
     if(a.actor==='k'){const atlas=root.K_ACTION,im=atlas&&image(atlas.src);if(im){const frame=atlas.frames[Math.abs(n.vx)>.2?'action'+Math.floor(t/120)%4:'action28'],w=68*atlas.cell/atlas.cellH;ctx.save();ctx.translate(cx,feet);if(n.face<0)ctx.scale(-1,1);ctx.drawImage(im,frame[0]*atlas.cell,frame[1]*atlas.cellH,atlas.cell,atlas.cellH,-w/2,-68,w,68);ctx.restore();return;}}
@@ -196,7 +201,7 @@
       for(const x of [640-n.cam,1140-n.cam]){ctx.fillStyle='#8c7959';ctx.fillRect(x,352,180,12);ctx.fillStyle='#344c51';ctx.fillRect(x+12,364,8,66);ctx.fillRect(x+158,364,8,66);ctx.fillStyle='#151f29';ctx.fillRect(x+60,312,65,40);ctx.fillStyle='#80b9a5';ctx.fillRect(x+67,319,51,24);ctx.fillStyle='#b2bec1';ctx.fillRect(x+16,344,30,6);}
     }
     if(quarter){for(let i=0;i<5;i++){const x=i*390-n.cam;ctx.fillStyle=r.theme==='quarter_ruin'?'#363a33':'#70513d';ctx.fillRect(x,250,280,180);ctx.fillStyle='#122525';ctx.fillRect(x+115,320,55,110);ctx.fillStyle=accent;ctx.fillRect(x+105,300,75,8);if(r.theme==='quarter_ruin'){ctx.fillStyle='#77716a';ctx.fillRect(x+30,405,65,25);ctx.fillRect(x+170,393,80,37);}}}
-    if(quiet){const x=550-n.cam;ctx.fillStyle='#746d54';ctx.fillRect(x,355,230,60);ctx.fillStyle='#a8a285';ctx.fillRect(x+12,350,205,20);ctx.fillStyle='#ad8863';ctx.fillRect(x+320,385,95,9);ctx.fillRect(x+330,394,5,36);ctx.fillRect(x+400,394,5,36);if(state().flags.two_cups){ctx.fillStyle='#bbddd2';ctx.fillRect(x+341,369,11,16);ctx.fillRect(x+368,369,11,16);}}
+    if(quiet){const x=550-n.cam;ctx.fillStyle='#746d54';ctx.fillRect(x,355,230,60);ctx.fillStyle='#a8a285';ctx.fillRect(x+12,350,205,20);ctx.fillStyle='#ad8863';ctx.fillRect(x+320,385,95,9);ctx.fillRect(x+330,394,5,36);ctx.fillRect(x+400,394,5,36);if(e.id==='home'&&state().flags.two_cups){ctx.fillStyle='#bbddd2';ctx.fillRect(x+341,369,11,16);ctx.fillRect(x+368,369,11,16);}}
     if(e.id==='home'&&r.id==='porch'&&state().flags.separate_record){ctx.fillStyle='#dab87e';ctx.fillRect(490-n.cam,245,80,40);ctx.fillStyle='#1c2a27';ctx.font='bold 20px monospace';ctx.fillText('K',520-n.cam,273);}
     if(e.id==='home'&&r.id==='garage'&&state().flags.soundcheck){for(let i=0;i<4;i++){ctx.fillStyle=Math.floor(t/500)%4===i?'#e4c886':'#466466';ctx.fillRect(920+i*22-n.cam,280,14,14);}}
     if(e.id==='service_ring'&&r.id==='bay'&&state().flags.ordinary_delivery){ctx.fillStyle='#b9d9b2';ctx.font='13px monospace';ctx.fillText('RECEIVER: IN USE',650-n.cam,290);}
@@ -211,7 +216,7 @@
     if(!active(n))return false;const s=state(),a=s.active,e=A.episode(a.id),g=A.current(s),accent=backdrop(ctx,n,W,H,t);
     if(['horror','rescue','stealth'].includes(e.mode)&&!a.finished){const light=ctx.createRadialGradient(n.x-n.cam+n.w/2,n.y+10,80,n.x-n.cam+n.w/2,n.y+10,360);light.addColorStop(0,'#02071100');light.addColorStop(1,'#02071199');ctx.fillStyle=light;ctx.fillRect(0,145,W,H-145);}
     if(g&&g.room===a.room)marker(ctx,g.x-n.cam,g.y+17,g.label,accent,'goal');
-    for(const q of D.sidequests)if(q.episode===a.id&&q.room===a.room&&(s.side[q.id]||0)<q.steps.length)marker(ctx,sideX(q,s)-n.cam,FLOOR,q.title,'#dfbd83','side');
+    for(const q of D.sidequests)if(A.sideLocation(s,q).episode===a.id&&A.sideLocation(s,q).room===a.room&&(s.side[q.id]||0)<q.steps.length)marker(ctx,sideX(q,s)-n.cam,FLOOR,q.title,'#dfbd83','side');
     if(a.escort&&a.escort.room===a.room){const x=a.escort.x-n.cam;ctx.fillStyle='#98b7ac';ctx.fillRect(x,386,20,44);ctx.fillStyle='#f0d49e';ctx.fillRect(x+3,374,14,15);ctx.fillStyle='#dbf2e7';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText(a.escort.name,x+10,365);}
     if(!a.finished&&e.danger&&['horror','rescue','stealth'].includes(e.mode)){const h=A.cycle(s),x=h.x-n.cam;ctx.fillStyle=h.on?'#dba16a':'#435657';ctx.fillRect(x-30,355,60,68);ctx.fillStyle='#172731';ctx.fillRect(x-14,369,28,30);ctx.strokeStyle=h.on||h.warning?'#ffbb72':'#8caaa7';ctx.strokeRect(x-30,355,60,68);ctx.font='11px monospace';ctx.textAlign='center';ctx.fillStyle='#ebd7bd';ctx.fillText(h.on?'WORK CYCLE / KEEP CLEAR':h.warning?'WORK CYCLE / STARTING':'WORK CYCLE / PAUSED',x,340);}
     for(const enemy of n.enemies||[]){if(!enemy.alive)continue;if(root.drawNightEnemyAtlas)root.drawNightEnemyAtlas(ctx,enemy,enemy.x-n.cam,t);ctx.fillStyle='#8b69aa';ctx.fillRect(enemy.x-n.cam,enemy.y-9,30*enemy.hp/enemy.maxHp,4);if(enemy.windup>8){ctx.fillStyle='#ffd596';ctx.font='bold 20px monospace';ctx.fillText('!',enemy.x-n.cam,enemy.y-18);}}
@@ -224,10 +229,10 @@
       card.style.top=((receipt&&receipt.bottom||100)+8)+'px';
       card.querySelector('b').textContent=Math.min(a.step+1,e.goals.length)+' / '+e.goals.length+' · '+(g?g.label:'Quiet aftermath');
       card.querySelector('.living-world-location').textContent=a.escort&&Math.abs(a.escort.x-n.x)>240?a.escort.name+' is waiting behind. Return and stay close.':g?'Next: '+e.rooms.find(r=>r.id===g.room).name:'Optional moments remain. C opens the field journal.';
-      const progress=card.querySelector('#living-world-progress');progress.hidden=!(a.holding&&g);progress.style.width=a.holding&&g?Math.min(100,a.hold/g.seconds*100)+'%':'0%';
+      const progress=card.querySelector('#living-world-progress');progress.hidden=!(a.holding&&g);progress.style.width=a.holding&&g?Math.min(100,a.hold/A.holdSeconds(s,g)*100)+'%':'0%';
     }
     return true;
   }
   function hideUI(){if(ui)ui.hidden=true;if(root.document)root.document.body.classList.remove('living-world-active');}
-  root.TechOpsLivingWorldRuntime={VERSION:1,active,openBoard,openJournal,openRoutes,enter,interact,nearest,input,beforeStep,afterStep,drawScene,checkpointNight,onDefeat,hideUI,leave,health:()=>({active:active(world()),saveError,chapter:game()&&game().meta&&game().meta.livingWorld&&game().meta.livingWorld.active&&game().meta.livingWorld.active.id})};
+  root.TechOpsLivingWorldRuntime={VERSION:2,active,viewpoint,openBoard,openJournal,openRoutes,enter,interact,nearest,input,beforeStep,afterStep,drawScene,checkpointNight,onDefeat,hideUI,leave,health:()=>({active:active(world()),saveError,chapter:game()&&game().meta.livingWorld.active.id})};
 })(typeof globalThis!=='undefined'?globalThis:this);

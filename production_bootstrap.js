@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=50,BUILD="20261115-living-world-r1",started=false,done=false;
+  var VERSION=50,BUILD="20261115-living-world-r2",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",
@@ -19,6 +19,7 @@
     "night_combat.js",
     "night_move_atlas.js",
     "night_move_visuals.js",
+    "iona_nightwalker.js",
     "runtime_scene_art.js",
     "night_combat_input.js",
     "night_mobile_visual_cohesion.js",

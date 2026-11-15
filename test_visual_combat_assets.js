@@ -6,7 +6,7 @@ const bytes=fs.readFileSync(manifest.src);assert.equal(hash(bytes),manifest.sha2
 assert.equal(bytes.readUInt32BE(16),704);assert.equal(bytes.readUInt32BE(20),2880);assert.equal(bytes[25],6,'RGBA atlas');
 const r={console,performance:{now:()=>0}};r.globalThis=r;
 for(const f of ['night_combat.js','night_move_atlas.js','night_move_visuals.js'])vm.runInNewContext(read(f),r);
-const expected=[...Object.keys(r.TechOpsNightCombat.MOVES),'grab','throw','throw-up','throw-down','dash','block','hurt','down','get-up'];
+const expected=[...Object.keys(r.TechOpsNightCombat.MOVES).filter(kind=>!r.TechOpsNightCombat.MOVES[kind].visual),'grab','throw','throw-up','throw-down','dash','block','hurt','down','get-up'];
 assert.deepEqual(Object.keys(manifest.moves).sort(),expected.sort());assert.equal(manifest.frameCount,80);
 const positions=new Set();
 for(const [name,move] of Object.entries(manifest.moves)){

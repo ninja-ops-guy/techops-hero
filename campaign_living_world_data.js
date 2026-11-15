@@ -111,5 +111,116 @@
   ];
   const points={worker_route:[350,900,1300],two_cups:[850,550,1050],name_door:[500,1100,500],soundcheck:[1350,800,1350],delivery:[700,1200,700],receiving_end:[350,1050,350]};
   sidequests.forEach(q=>{q.points=points[q.id];});
-  return {version:1,episodes,sidequests};
+
+  // Phase two: original game scenes. These do not replace protected comic pages.
+  const scene=(id,label,r,x,lines,sets)=>goal(id,label,r,x,'scene',lines.map(l=>l[0]+': '+l[1]).join('\n'),{lines,sets:sets||[]});
+  const add=(id,title,chapter,mode,actor,after,rooms,goals,extra={})=>episodes.push(Object.assign({id,title,chapter,mode,actor,after,native:['campaign_complete'],rooms,routes:[route(rooms[0].id,rooms[1].id,'Local service route'),route(rooms[1].id,rooms[2].id,'Marked return route')],goals,danger:['rest','exploration','navigation'].includes(mode)?0:1,premise:title+' · '+rooms.map(r=>r.name).join(' / ')+'. Follow the people and verify each handoff.',ending:goals.at(-1).text},extra));
+  add('three_calls','Three Calls, One Night','After Hours / Dispatch','exploration','mike',['service_ring'],[
+    room('board','Evening dispatch','garage','THREE REQUESTERS / CHOOSE THE ORDER'),room('floor','Service floor','service','POWER / PEOPLE / ACCESS'),room('receiver','Receiving desk','shelter','A PERSON CAN CONFIRM')],[
+    goal('dispatch','Choose the next call','board',350,'dispatch','Three callers need help. Choose the order; the first responder will be available to help during the later shutdown.',{tasks:[
+      goal('power','Restore the work light','floor',700,'hold','The electrician checks the light under load.',{seconds:3,sets:['call_power']}),
+      goal('access','Free the sticky latch','floor',1350,'hold','The access technician tests the latch from both sides.',{seconds:3,sets:['call_access']}),
+      goal('people','Reconnect the receiving desk','receiver',800,'inspect','The dispatcher reads back the meeting point.',{sets:['call_people']})],choiceKey:'first_call'}),
+    goal('close','Read back all three outcomes','board',350,'finish','All three requesters confirm. Call order is recorded; nobody was silently abandoned.')],{native:['day_work_unlocked']});
+  add('waldo_visit','No Broken Computer Required','After the Later Porch Conversation','rest','mike',['home'],[
+    room('porch','Mike’s covered back porch','home','A LATER EVENING / WALDO VISITS MIKE'),room('street','The walk over','home','THE INVITATION IS NOT THE VISIT'),room('garage','Waldo’s garage','garage','COME AS A FRIEND')],[
+    scene('invite','Talk with Waldo on the porch','porch',650,[['Waldo','Come by the garage tomorrow. No broken computer required.'],['Mike','Just to hang out?'],['Waldo','That was the idea.'],['Mike','Okay. I’ll come by.']],['waldo_invited']),
+    goal('walk','Follow the invitation','street',900,'inspect','The following day, Mike walks to Waldo’s garage. Hearing the invitation was not the same as showing up.'),
+    scene('visit','Spend time with Waldo','garage',850,[['Waldo','Made it. Put the work phone away for a minute.'],['Mike','I’m trying.'],['Waldo','I know. That’s why I asked.'],['Mike','Thanks for asking.']],['waldo_visit_received']),
+    goal('stay','Stay without taking a job','garage',1250,'finish','Mike stays as a friend. Iona’s viewpoints are now available to the player; Waldo has not disclosed her private life to Mike.')],{
+    bridge:'Original game continuation after the later Volume XIV porch conversation, followed by a next-day visit. The protected Chapter 39 reunion remains intact and offscreen. No new housing decision for K and Iona is established.'});
+  add('iona_local','Her Own Bearings','Iona / Finding Her Feet','exploration','iona',['dock'],[
+    room('bench','Borrowed workbench','studio','IONA / HER OWN PLAN'),room('street','Neighborhood passage','quarter','ASK BEFORE ASSUMING'),room('room','Rehearsal room','studio','GHOST BENDS / A PLACE TO RETURN')],[
+    scene('plan','Decide what Iona needs today','bench',450,[['Iona','A clear route. People who know I’m coming. One thing I can finish today.'],['Iona','The rest can wait.']]),
+    goal('route','Check the passage on foot','street',750,'choice','A familiar sign points at a locked door.',{answer:'ask',options:[['assume','Trust the sign','The door remains locked.'],['ask','Ask the person using the passage','A local worker shows Iona the usable entrance.']],sets:['iona_local_route']}),
+    goal('kit','Carry the rehearsal case','street',1300,'escort','The stagehand walks with Iona and the case.',{escort:'stagehand',escortName:'Stagehand'}),
+    goal('receive','Meet the receiving musician','room',1200,'handoff','The stagehand and musician confirm the case is here.'),
+    goal('end','Keep one plan for herself','bench',450,'finish','Iona records her route privately. A useful afternoon does not settle where she and K will live.')],{bridge:'After the established reunion and follow-up. Iona remains a separate playable viewpoint. This chapter does not invent a move-in decision.'});
+  add('iona_pressure','Countermeasure','Iona / The Fighter','fighter','iona',['iona_local'],[
+    room('court','Service courtyard','quarter','DIRECTIONAL ATTACKS / SPACE TO MOVE'),room('switch','Shutter controls','service','MACHINES GUARD THE SWITCH'),room('exit','Workshop entrance','garage','CLEAR A WAY THROUGH')],[
+    goal('read','Read the machine’s reach','court',350,'inspect','Unoccupied security constructs patrol the shutter. Jump, use upward attacks to launch, then chain aerial light attacks or Iona’s bicycle kick. Down + Light in the air strikes below.'),
+    goal('isolate','Isolate the shutter drive','switch',1300,'hold','Create room to work. Defeating the construct alone will not open the shutter.',{seconds:5,sets:['iona_shutter']}),
+    goal('crew','Collect the workshop crew','court',600,'escort','The crew waits until Iona reaches them.',{escort:'workshop_crew',escortName:'Workshop crew'}),
+    goal('handoff','Receive the crew inside','exit',1200,'handoff','The workshop attendant checks that the whole group arrived.'),
+    goal('end','Close the physical shutter','exit',1400,'finish','The workshop is reachable and occupied by its crew. Iona keeps the route, not a kill quota.')],{routes:[route('court','switch','Maintenance steps'),route('switch','exit','Shutter passage',{power:'iona_shutter'})]});
+  add('last_shift','The Last Shift','The First Shutdown','survival','mike',['factory_heist'],[
+    room('dispatch','AeroTech dispatch','factory','NO ONE LEFT ON THE FLOOR'),room('floor','Known service floor','service','ORDINARY KNOWLEDGE / NEW PRESSURE'),room('muster','Staff muster point','shelter','CHECK THE PEOPLE')],[
+    goal('brief','Read the shutdown roster','dispatch',350,'inspect','The floor is losing support. The roster is a starting point; confirm people in person.'),
+    goal('stop','Stop the unattended process','floor',1300,'hold','Use the local stop while support remains available.',{seconds:6,assistChoice:['first_call','power',3],sets:['shutdown_safe']}),
+    goal('staff','Meet the late-shift coworkers','floor',600,'escort','The coworkers leave together, at the pace of the slowest walker.',{escort:'late_shift',escortName:'Late-shift coworkers'}),
+    goal('muster','Confirm the staff handoff','muster',1200,'handoff','The receiving lead accounts for the people who arrived.'),
+    goal('end','Leave a bounded shutdown report','muster',1400,'finish','The local floor is stopped and the coworkers are received. This does not establish what is happening elsewhere.')],{routes:[route('dispatch','floor','Remembered service route'),route('floor','muster','Wide muster lane',{power:'shutdown_safe'}),route('dispatch','muster','Access technician’s shortcut',{choice:['first_call','access']})]});
+  add('moving_safehouse','A Moving Safehouse','Survival / Transport','survival','mike',['last_shift'],[
+    room('load','Transport loading point','dock','PEOPLE BEFORE DEPARTURE'),room('stop','Roadside service stop','garage','STOP / REPAIR / CHECK'),room('shelter','Staffed destination','shelter','ARRIVAL NEEDS A RECEIVER')],[
+    goal('board','Confirm passengers and destination','load',500,'inspect','The driver checks the passenger count and a staffed destination.'),
+    goal('repair','Stabilize the cooling pump','stop',1300,'hold','Park at the service stop. A rushed repair cannot replace a load test.',{seconds:6,sets:['safehouse_cooling']}),
+    goal('needs','Ask what the passengers need','stop',600,'choice','The next leg can wait for a practical check.',{answer:'check',options:[['rush','Leave immediately','A passenger has not been checked.'],['check','Check water, seating and support','The passengers confirm they can travel.']],sets:['passengers_ready']}),
+    goal('arrival','Wait for the receiving callback','shelter',1000,'hold','Hold the line until the staffed destination reads back the passenger count.',{seconds:4,assistChoice:['first_call','people',2]}),
+    goal('end','Confirm everyone has somewhere to go','shelter',1400,'finish','The vehicle is an intermediate refuge. The receiving team accepts responsibility for the passengers.')],{vehicle:'service_car',routes:[route('load','stop','Roadside lane'),route('stop','shelter','Supported departure',{power:'safehouse_cooling',requires:'passengers_ready'})]});
+  add('iona_blackout','Keep Time in the Dark','Iona / Survival Horror','horror','iona',['fracture','iona_pressure'],[
+    room('foyer','Dark rehearsal foyer','studio','LISTEN BEFORE MOVING'),room('plant','Occupied support plant','darkfactory','TASK CYCLES / PEOPLE STILL HERE'),room('refuge','Protected waiting room','shelter','KEEP SUPPORT ALIVE')],[
+    goal('listen','Observe one complete work cycle','foyer',400,'hold','Iona waits and listens. Rhythmic machinery reveals its operating cycle; her music is not a supernatural access key.',{seconds:5}),
+    goal('support','Protect independent support','plant',1350,'hold','Occupied infrastructure may contain conscious people. Preserve local support before isolating a dependency.',{seconds:5,sets:['iona_support']}),
+    goal('find','Reach the waiting crew','plant',550,'escort','The crew follows through quiet gaps in the work cycle.',{escort:'waiting_crew',escortName:'Waiting crew'}),
+    goal('safe','Transfer care at the refuge','refuge',1250,'handoff','A receiving attendant takes over. Silence alone would not prove safety.'),
+    goal('end','Record what Iona actually saw','refuge',1400,'finish','Iona records the local cycle and the people received. She has not learned the Chorus’s full extent.')],{routes:[route('foyer','plant','Side passage'),route('plant','refuge','Supported refuge route',{power:'iona_support'})]});
+  add('borrowed_skill','The Borrowed Skill','Chorus / Administrative Necrosis','horror','mike',['iona_blackout'],[
+    room('observation','Observation gallery','darkfactory','A FAMILIAR PROCEDURE'),room('support','Independent support room','service','PRESERVE THE PERSON'),room('return','Isolated return bay','shelter','LOCAL CHANGE / LIMITED CLAIM')],[
+    goal('observe','Watch the repeated procedure','observation',450,'inspect','An occupied frame repeats a skilled maintenance gesture. A retained skill is not proof of intact memory or consent.'),
+    goal('support','Maintain the separate support circuit','support',1300,'hold','Keep support powered while isolating the task dependency.',{seconds:6,sets:['borrowed_support']}),
+    goal('isolate','Choose the dependency to interrupt','observation',1300,'choice','The task circuit and support circuit are distinct.',{answer:'task',options:[['all','Cut all power','That would also remove support.'],['task','Interrupt only the task circuit','The local procedure stops. The support circuit remains active.']],sets:['task_isolated']}),
+    goal('check','Wait for the care team’s assessment','return',800,'hold','The care team verifies this local transfer. A stopped task is not a cure.',{seconds:4}),
+    goal('end','Report without claiming recovery','return',1400,'finish','The procedure is interrupted and local support maintained. Identity and consciousness remain separate unanswered questions.')],{routes:[route('observation','support','Service gallery'),route('support','return','Care-team return',{power:'borrowed_support',requires:'task_isolated'})]});
+  add('morrow_array','Morrow Array: First Contact','Bellwether / Separate Viewpoint','stealth','bellwether',['borrowed_skill'],[
+    room('dock','Bellwether probe dock','dock','REMOTE PROBE / CREW VIEWPOINT'),room('array','Morrow Array service spine','darkfactory','NO SHARED EARTH CHANNEL'),room('return','Probe recovery cradle','dock','A RETURN PATH IS PART OF THE MISSION')],[
+    goal('scope','Agree the probe’s limits','dock',350,'inspect','The Bellwether crew sends a service probe. This is a separate deep-space viewpoint, not Mike visiting through a menu.'),
+    goal('tether','Test the return tether','array',650,'hold','Test the physical return before moving deeper.',{seconds:4,sets:['probe_return']}),
+    goal('sample','Record the bounded observation','array',1350,'tune','The trace contains a repeating interval and an unrelated reflection.',{answer:'interval',options:[['whole','Treat the whole trace as one sender','The reflection does not establish a shared sender.'],['interval','Keep the interval and uncertainty','The crew retains the observation with its limits.']]}),
+    goal('recover','Recover the probe','return',1000,'hold','Secure the probe in the recovery cradle.',{seconds:4}),
+    goal('end','Keep the crew’s local record','return',1400,'finish','Bellwether retains its observation. Mike, Iona and Felicia do not automatically receive it.')],{vehicle:'probe',routes:[route('dock','array','Probe service approach'),route('array','return','Verified tether return',{power:'probe_return'})]});
+  add('no_common_channel','No Common Channel','Separated Teams / Delayed Relay','cooperation','mike',['factory_return'],[
+    room('earth','Mike’s local station','service','MIKE / LOCAL EVIDENCE'),room('relay','Delayed relay desk','garage','READ BACK / DELIVER'),room('iona','Iona’s receiving station','studio','IONA / SEPARATE ENDPOINT')],[
+    goal('sender','Mike: test the local bypass','earth',1300,'hold','Mike tests only the Earth-side bypass.',{actor:'mike',seconds:4,sets:['relay_earth']}),
+    goal('post','Mike: leave the bounded message','relay',800,'inspect','Mike leaves the measured status and the uncertainty. Sending is not delivery.',{actor:'mike',sets:['relay_queued']}),
+    goal('receive','Iona: receive the delayed message','iona',650,'relay','The relay delivers Mike’s local bypass status to Iona, with its timestamp and limits.',{actor:'iona',requires:['relay_queued'],sets:['relay_delivered']}),
+    goal('local','Iona: test her own endpoint','iona',1300,'hold','A delivered message does not prove Iona’s endpoint works. She tests it locally.',{actor:'iona',seconds:4,sets:['relay_iona']}),
+    goal('end','Iona: acknowledge the two local tests','relay',1200,'finish','The relay holds two bounded results. It does not merge either person’s private record.',{actor:'iona',requires:['relay_delivered','relay_iona']})],{actors:['mike','iona'],requiresVisit:true,remoteRooms:true,routes:[route('earth','relay','Mike’s local relay approach',{actor:'mike'}),route('relay','iona','Switch to Iona’s endpoint',{actor:'iona',requires:'relay_queued'})],bridge:'Endpoint changes are explicit viewpoint cuts, not physical travel between realms. Only the delivered message becomes shared information.'});
+  add('hold_receiving','Hold the Receiving End','Late Campaign / Prepared Arrival','rescue','mike',['no_common_channel'],[
+    room('desk','Receiving desk','shelter','CAPACITY BEFORE ARRIVAL'),room('plant','Shelter support plant','service','KEEP THE DESTINATION WORKING'),room('arrival','Arrival lane','dock','THE GROUP MUST REACH YOU')],[
+    goal('capacity','Confirm staffed capacity','desk',450,'inspect','The receiving lead confirms places and a care handoff.',{sets:['receiving_capacity']}),
+    goal('power','Maintain shelter support','plant',1300,'hold','Maintain the destination through the operating cycle.',{seconds:6,sets:['receiving_power']}),
+    goal('arrive','Meet the arriving group','arrival',500,'escort','Mike meets the arriving group at the marked lane.',{escort:'arrivals',escortName:'Arriving group',requires:['receiving_capacity','receiving_power']}),
+    goal('receive','Bring the group to the receiving lead','desk',1250,'handoff','The receiving lead confirms the complete group.'),
+    goal('end','Transfer responsibility explicitly','desk',1400,'finish','The destination holds because people and support are here. The arrival is confirmed, not assumed.')]);
+  add('iona_receiving','Her Side of the Door','Iona / Cooperation and Aftercare','rest','iona',['hold_receiving'],[
+    room('entry','Iona’s arrival point','quarter','A RETURN IS NOT AN ENDING'),room('care','Receiving room','shelter','ASK WHAT IS NEEDED'),room('bench','Quiet workbench','studio','LEAVE ROOM FOR TOMORROW')],[
+    goal('expect','Check who is expecting the group','entry',450,'inspect','Iona asks for a person who can receive the group, not merely an unlocked room.'),
+    goal('group','Walk with the last arrivals','entry',1200,'escort','The last arrivals set the walking pace.',{escort:'last_arrivals',escortName:'Last arrivals'}),
+    goal('handoff','Confirm the care handoff','care',1200,'handoff','The receiving attendant accepts the group and reads back the remaining needs.'),
+    scene('plan','Keep a plan beyond the emergency','bench',800,[['Iona','Tomorrow I want to hear the room with the lights on.'],['Iona','And decide what I want to do in it.']]),
+    goal('end','Keep Iona’s next step open','bench',1300,'finish','Iona has people to return to and a plan of her own. This does not resolve her future with K on their behalf.')]);
+  add('queue_afterward','The Queue Afterward','Aftermath / Ordinary Work','rest','mike',['low_return'],[
+    room('desk','Reopened service desk','garage','THE WORK CONTINUES DIFFERENTLY'),room('floor','Changed service floor','service','PEOPLE REMEMBER WHAT HELD'),room('home','Evening return','home','A DAY CAN END')],[
+    goal('queue','Hear the first ordinary request','desk',350,'inspect','A coworker needs a working station. The request matters without hiding a new antagonist.'),
+    goal('repair','Repair it with the person who uses it','floor',1300,'hold','Run the actual task together, then leave a clear handoff.',{seconds:4}),
+    goal('remember','Read the consequences people kept','desk',1000,'consequence','The service desk keeps a record of routes, shared work and places made ready.'),
+    goal('end','Go home when the handoff is accepted','home',1200,'finish','Someone else owns tomorrow’s queue. Mike can leave. Ordinary life has changed, and it remains worth returning to.')]);
+  // Insert the expansions at their dramatic transitions, preserving old completion records.
+  const order=['service_ring','three_calls','annex','pier','rooftops','hangar','prison','home','waldo_visit','low_quarter','dock','iona_local','iona_pressure','archive','factory_heist','last_shift','moving_safehouse','fracture','iona_blackout','borrowed_skill','morrow_array','factory_return','no_common_channel','hold_receiving','iona_receiving','low_return','queue_afterward'];
+  const prerequisites={annex:['three_calls'],low_quarter:['waldo_visit'],archive:['iona_pressure'],fracture:['moving_safehouse'],factory_return:['morrow_array'],low_return:['iona_receiving']};
+  episodes.forEach(e=>{if(prerequisites[e.id])e.after=prerequisites[e.id];if(e.actor==='iona')e.requiresVisit=true;});
+  episodes.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+  const chain=(id,title,stages,reward)=>sidequests.push({id,title,episode:stages[0][0],room:stages[0][1],x:stages[0][2],stages:stages.map(s=>({episode:s[0],room:s[1],x:s[2]})),steps:stages.map(s=>[s[3],s[4]]),reward});
+  chain('spare_key','The Spare Key',[
+    ['service_ring','service',350,'Ask who may keep the spare','The maintenance worker agrees to limited access.'],['last_shift','floor',350,'Use the agreed spare during shutdown','The key opens the agreed local cupboard. Trust did not grant unrestricted access.'],['queue_afterward','desk',650,'Return and account for the key','The worker knows who used it and why.']], 'spare_key_kept');
+  chain('repair_held','The Repair That Held',[
+    ['service_ring','bay',350,'Check the refuge work light','The receiver tests the light under load.'],['moving_safehouse','shelter',350,'Check the light again after arrival','The ordinary repair still supports a usable room.'],['queue_afterward','floor',650,'Ask what the repair enabled','People used the light to receive one another.']], 'repair_held');
+  chain('unfinished_song','An Unfinished Song',[
+    ['iona_local','room',350,'Keep an unfinished rehearsal take','Iona keeps the imperfect take because the people are in it.'],['iona_receiving','bench',350,'Listen again in a quiet room','The same four beats carry a different evening. They grant no combat advantage.'],['queue_afterward','home',650,'Listen to the recording Iona chose to share','Only this recording was shared. Mike receives no private memories with it.']], 'song_shared');
+  chain('takes_over','Who Takes Over?',[
+    ['three_calls','receiver',350,'Explain the callback procedure','A coworker practices and reads the procedure back.'],['last_shift','dispatch',650,'Let the coworker own the callback','The coworker independently verifies the local receiving point.'],['queue_afterward','desk',1300,'Accept the handoff back','The queue can continue without Mike remaining on call.']], 'coworker_ready');
+  chain('place_ready','A Place Kept Ready',[
+    ['pier','receiver',650,'Agree a staffed receiving place','The contact records capacity and a callback.'],['hold_receiving','desk',800,'Recheck the place with its attendant','The place remains useful because someone is actually here.'],['queue_afterward','home',1000,'Remember who kept the place ready','A receiving place is work people keep doing.']], 'place_kept');
+
+  return {version:2,episodes,sidequests};
 });

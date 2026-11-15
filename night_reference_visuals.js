@@ -37,6 +37,7 @@
 
   function drawReferenceNightWalker(x, NM, px, py, now) {
     var h=Math.round(Math.max(70,Math.min(82,(Number(NM&&NM.h)||34)*2.2)));
+    if(root.TechOpsIonaNightwalker&&root.TechOpsIonaNightwalker.draw(x,NM,px,py,now,h))return true;
     if(root.TechOpsNightMoves&&root.TechOpsNightMoves.draw(x,NM,px,py,now,h))return true;
     var art=root.TechOpsArtHandoff,combatPose=root.TechOpsNightCombat&&root.TechOpsNightCombat.pose(NM);
     if(!combatPose&&art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+3,h,now||0))return true;

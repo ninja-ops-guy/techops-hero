@@ -1,10 +1,44 @@
 # Living World expansion
 
-This candidate turns the comic review into a playable sequence of 14 authored chapters across eight map families, with home and Archive interludes and six optional quests. It uses the existing Night movement, fighting, store, save system, and in-repository character artwork.
+This candidate turns the comic review into a playable sequence of 27 authored chapters, with home and Archive interludes and 11 optional quest chains. It uses the existing Night movement, fighting, store, save system, and in-repository character artwork.
 
 Start **Night Walker → Run Menu [C] → Living World — story expeditions**. The standalone companion introduces exploration, then arcade combat, signal work, paired operators, transport, and objective-led horror. Its later chapters contain comic spoilers. The native campaign uses the same chapters with additional story and day gates.
 
 This is a source candidate, not a deployment or final visual-art signoff. New environments use code-drawn scenery and existing background art. Transport chapters control a service car, supported cradle, or carrier from the named viewpoint; they do not substitute another character's sprite for Iona or Kali. Named companions currently use simple readable accompaniment markers. The inherited K action atlas depicts dark lenses and needs a later likeness pass against the current clear-glasses reference. Bespoke illustrated scenery, additional character animation, voice performances, and music stems remain a separate art-production pass.
+
+## Waldo and Iona progression
+
+The player hears **Waldo’s later invitation on Mike’s covered back porch**, then physically visits Waldo’s garage. Both conversations persist their current line. The invitation flag is written only after its final line; the visit flag only after its final line. Opening, pausing, reloading or failing to save a conversation cannot silently complete it. Existing saves with old Iona chapters complete still require this gate before replaying them.
+
+The new dialogue is an original game continuation, not a claimed quotation from the comic. The next-day garage visit follows the later porch conversation; it does not rewrite the protected Chapter 39 reunion or decide whether K and Iona move in together.
+
+> Waldo: “Come by the garage tomorrow. No broken computer required.”
+>
+> Mike: “Just to hang out?”
+>
+> Waldo: “That was the idea.”
+
+The visit unlocks Iona viewpoints for the player. Mike does not thereby learn Iona’s private events. The earlier Low Quarter and cargo-dock missions remain explicitly historical interludes.
+
+| New chapter | Position / mechanic |
+| --- | --- |
+| Three Calls, One Night | After the service ring: choose call order; all three need verification. First call grants later power assistance, an access shortcut, or callback assistance. |
+| No Broken Computer Required | After the later porch conversation: invitation, next-day walk, garage conversation, time as friends. |
+| Her Own Bearings | Iona explores on foot, checks a real entrance, and accompanies a rehearsal delivery. |
+| Countermeasure | Iona creates working space against constructs, repairs the shutter, and escorts the workshop crew. |
+| The Last Shift | Mike uses familiar service routes to stop a process and receive the late-shift coworkers. |
+| A Moving Safehouse | Vehicle segment with a cooling repair, passenger check and receiving callback before arrival. |
+| Keep Time in the Dark | Iona observes work cycles, protects support and escorts a waiting crew through horror spaces. |
+| The Borrowed Skill | Preserve support while interrupting an occupied frame’s task dependency; no presumed cure or restored identity. |
+| Morrow Array: First Contact | Bellwether crew operates a service probe, verifies return, records a bounded trace and recovers the probe. Separate viewpoint and location. |
+| No Common Channel | Mike sends a bounded report; Iona must receive it and independently test her endpoint. Explicit viewpoint cuts, no shared private-memory journal. |
+| Hold the Receiving End | Prepare staffed capacity and power, meet arrivals, then escort them to the receiving lead. |
+| Her Side of the Door | Iona receives the last arrivals and keeps a personal next step beyond the emergency. |
+| The Queue Afterward | Ordinary work returns; a consequence record acknowledges completed optional chains. |
+
+Iona’s foot missions use the imported band-reference sprite candidate and directional combat, including aerial down-light and the three-contact bicycle kick. Source commits: `367978e` and `789e51b` from the existing Iona worktree. Artwork and provenance are retained under `art-review/iona-nightwalker`; integration does not imply final creator art approval. Vehicle missions continue to render their actual transport.
+
+Five new optional chains span separate chapters: **The Spare Key**, **The Repair That Held**, **An Unfinished Song**, **Who Takes Over?**, and **A Place Kept Ready**. Each step must be visited at its own location. Their final acknowledgments appear in the aftermath; the song grants no combat power. Missed steps remain available through revisits.
 
 ## Chapters and maps
 
@@ -27,11 +61,11 @@ Every chapter has three named spaces with an explicit adjacency graph. Revisited
 | A Different Occupancy | Same factory, later visit / Mike | Verify the roster, support the rescue route, receive Tarin | Main campaign complete |
 | The Streets We Remember | Changed Low Quarter / K and Iona | Compare accounts, check both endpoints, make the bounded return | Main campaign complete; Mike has met K |
 
-Each row also requires the preceding expedition. Chronological bridge briefings explicitly identify intervening comic events. These playable episodes do not replace or silently grant the main game's established acts, the Warden encounter, the six-month crossing, Chapter 39, Chapters 40–51, or the intervening Chorus travel and rescue events.
+The full dependency order is in the chapter data; phase-two chapters sit between these original chapters. Previously completed chapters retain their completion records, while every Iona-owned chapter additionally requires the new invitation and visit. Chronological bridge briefings explicitly identify intervening comic events. These playable episodes do not replace or silently grant the main game's established acts, the Warden encounter, the six-month crossing, Chapter 39, Chapters 40–51, or the intervening Chorus travel and rescue events.
 
 ## Navigation and variation
 
-Routes are physical connections between rooms. A reported-open route can still be blocked. Traversal records verification, but a power dependency or width limit still decides whether the route works now. Route selection is available only at a marked exit; opening the journal elsewhere provides information without teleporting the actor.
+Routes are physical connections between rooms except the explicitly labeled viewpoint cuts in No Common Channel. A reported-open route can still be blocked. Traversal records verification, but a power dependency or width limit still decides whether the route works now. Route selection is available only at a marked exit; opening the journal elsewhere provides information without teleporting the actor.
 
 Medical and vehicle transfers require wide routes. Escorts follow at their own speed, stop when abandoned, and cannot cross a room boundary until nearby. A receiving objective checks the companion's actual position. The field card tells the player when someone is waiting behind.
 
@@ -52,7 +86,7 @@ Combat uses the existing directional attacks, kicks, launches, and recovery. Dis
 | Someone Is Expecting This | Ask what the device enables, test with its owner, return instructions | The receiving bay shows the unit in use |
 | The Receiving End | Meet a contact, check the entrance, test a callback | The later shelter acknowledges the familiar callback procedure, while still requiring a present receiving person |
 
-All six are optional and idempotent. Each step is tied to a physical point. They add routes, relationships, and remembered details rather than repeat cash payouts. Source sharing, the household work handoff, and Archive privacy also retain the player's choices.
+All 11 are optional and idempotent. Each step is tied to a physical point. They add routes, relationships, and remembered details rather than repeat cash payouts. Source sharing, the household work handoff, and Archive privacy also retain the player's choices.
 
 ## Canon and knowledge boundaries
 
@@ -80,7 +114,7 @@ Standalone saves contain a validated street return together with expedition stat
 
 Run `node scripts/production_release_gate.js` for the complete registered production checks. The added domain suite covers the complete chapter graph, gates, actor authority, escort distance, transport width, work interruption, bounded variations, optional persistence, and corrupt-save rejection.
 
-`node scripts/living_world_browser.mjs` follows the real title, movement, combat, double jump, mission dialogues, routes, and chapter completion. It also revisits the relevant chapters to complete all six optional quests. `LIVING_RESUME` accepts the script's own saved browser state for a continued playthrough; it does not inject story progress. `LIVING_PROFILE` selects desktop, portrait, or landscape.
+`node scripts/living_world_browser.mjs` follows the real title, movement, combat, double jump, mission dialogues, routes, and chapter completion. It also revisits the relevant chapters to complete all 11 optional quest chains. `LIVING_RESUME` accepts the script's own saved browser state for a continued playthrough; it does not inject story progress. `LIVING_PROFILE` selects desktop, portrait, or landscape.
 
 `node scripts/living_world_recovery_browser.mjs` checks objective and purchase rollback, item retention at full health, healing and reload, chapter resume, paused journals, HUD bounds, and actual touch movement across three viewport sizes. Its explicitly disclosed fixtures are a storage quota exception and setting health to 40 to isolate healing from combat randomness.
 

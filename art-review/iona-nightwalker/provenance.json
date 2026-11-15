@@ -1,0 +1,534 @@
+{
+  "state": "GENERATED_AND_VISUALLY_CHECKED_REVIEW_CANDIDATE",
+  "creator_direction": "Use the band reference for Iona as her nightwalker sprite",
+  "source_repository": "ninja-ops-guy/theemrld-portfolio",
+  "source_commit": "6de7fe7499d496ac5297ee1472fd48b4471f1f90",
+  "original_source_path": "public/assets/iona-drums-fast.webp",
+  "native_tool_called": true,
+  "output_original_path": "/workspace/scratch/b073acd8b235/generated_images/exec-5bb8af07-b36d-42ec-b961-54f0f4f3d5a7.png",
+  "files": [
+    {
+      "path": "assets/iona-nightwalker/source/band-reference.webp",
+      "bytes": 208954,
+      "sha256": "50e996af4ac7f2e0d961f5287739ae0770384aca27954212a87bde9a6cbb66c0"
+    },
+    {
+      "path": "art-review/iona-nightwalker/iona-band-v1-source.png",
+      "bytes": 2079774,
+      "sha256": "7eb5b23bde2fbb0262a1c278ce2fa11f7b01042c64522d56226b63dd7769b64a"
+    },
+    {
+      "path": "assets/iona-nightwalker/iona-band-v1.webp",
+      "bytes": 865482,
+      "sha256": "8928d0df6c9cc1bc2f8903cc36c7fa8f207f903cb622c39d65c4797294afd9cc"
+    },
+    {
+      "path": "art-review/iona-nightwalker/image-request.json",
+      "bytes": 3164,
+      "sha256": "6d6b1f39e993296f13a083afe8068f459193a4072cf9bf3d1eef6dc36e2c1625"
+    },
+    {
+      "path": "art-review/iona-nightwalker/bicycle-image-request.json",
+      "bytes": 2394,
+      "sha256": "d78e657461cc9370e71b3b400e60b3cb196088fe9c0da97aa17f841081d05a5d"
+    },
+    {
+      "path": "art-review/iona-nightwalker/iona-bicycle-v1-source.png",
+      "bytes": 832860,
+      "sha256": "2f60ea76a348a8a03c8e19cbae520d61a0b63e0546694e521f666571798b046f"
+    },
+    {
+      "path": "assets/iona-nightwalker/iona-bicycle-v1.webp",
+      "bytes": 590476,
+      "sha256": "99435bf437470bccb31010d4ce5f128716deebb30bf940aba27dc73ac8717bd3"
+    }
+  ],
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "transparent_pixels": 1084887,
+  "frames": [
+    {
+      "cell": 0,
+      "sourceRect": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        93,
+        19,
+        196,
+        240
+      ]
+    },
+    {
+      "cell": 1,
+      "sourceRect": [
+        256,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        77,
+        22,
+        208,
+        237
+      ]
+    },
+    {
+      "cell": 2,
+      "sourceRect": [
+        512,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        99,
+        21,
+        185,
+        240
+      ]
+    },
+    {
+      "cell": 3,
+      "sourceRect": [
+        768,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        72,
+        22,
+        198,
+        238
+      ]
+    },
+    {
+      "cell": 4,
+      "sourceRect": [
+        1024,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        92,
+        20,
+        176,
+        240
+      ]
+    },
+    {
+      "cell": 5,
+      "sourceRect": [
+        1280,
+        0,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        64,
+        17,
+        192,
+        205
+      ]
+    },
+    {
+      "cell": 6,
+      "sourceRect": [
+        0,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        65,
+        19,
+        187,
+        239
+      ]
+    },
+    {
+      "cell": 7,
+      "sourceRect": [
+        256,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        50,
+        19,
+        217,
+        239
+      ]
+    },
+    {
+      "cell": 8,
+      "sourceRect": [
+        512,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        57,
+        20,
+        224,
+        239
+      ]
+    },
+    {
+      "cell": 9,
+      "sourceRect": [
+        768,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        63,
+        20,
+        186,
+        239
+      ]
+    },
+    {
+      "cell": 10,
+      "sourceRect": [
+        1024,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        35,
+        65,
+        213,
+        238
+      ]
+    },
+    {
+      "cell": 11,
+      "sourceRect": [
+        1280,
+        256,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        45,
+        11,
+        218,
+        239
+      ]
+    },
+    {
+      "cell": 12,
+      "sourceRect": [
+        0,
+        512,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        52,
+        14,
+        203,
+        238
+      ]
+    },
+    {
+      "cell": 13,
+      "sourceRect": [
+        256,
+        512,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        18,
+        81,
+        232,
+        237
+      ]
+    },
+    {
+      "cell": 14,
+      "sourceRect": [
+        512,
+        512,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        60,
+        14,
+        172,
+        239
+      ]
+    },
+    {
+      "cell": 15,
+      "sourceRect": [
+        768,
+        512,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        42,
+        15,
+        207,
+        212
+      ]
+    },
+    {
+      "cell": 16,
+      "sourceRect": [
+        1024,
+        512,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        21,
+        14,
+        218,
+        197
+      ]
+    },
+    {
+      "cell": 17,
+      "sourceRect": [
+        1280,
+        512,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        50,
+        18,
+        212,
+        219
+      ]
+    },
+    {
+      "cell": 18,
+      "sourceRect": [
+        0,
+        768,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        19,
+        41,
+        212,
+        232
+      ]
+    },
+    {
+      "cell": 19,
+      "sourceRect": [
+        256,
+        768,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        28,
+        24,
+        198,
+        235
+      ]
+    },
+    {
+      "cell": 20,
+      "sourceRect": [
+        512,
+        768,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        15,
+        27,
+        209,
+        235
+      ]
+    },
+    {
+      "cell": 21,
+      "sourceRect": [
+        768,
+        768,
+        256,
+        256
+      ],
+      "pivot": [
+        128,
+        240
+      ],
+      "visibleBounds": [
+        31,
+        7,
+        201,
+        235
+      ]
+    },
+    {
+      "cell": 22,
+      "sourceRect": [
+        1008,
+        768,
+        240,
+        256
+      ],
+      "pivot": [
+        144,
+        240
+      ],
+      "visibleBounds": [
+        16,
+        33,
+        207,
+        235
+      ]
+    },
+    {
+      "cell": 23,
+      "sourceRect": [
+        1248,
+        768,
+        288,
+        256
+      ],
+      "pivot": [
+        160,
+        224
+      ],
+      "visibleBounds": [
+        18,
+        144,
+        267,
+        224
+      ]
+    }
+  ],
+  "limits": [
+    "Single action key poses with guard windup/recovery; not a new multi-frame animation for each attack.",
+    "Lower-body poses are new adaptations of the original band identity.",
+    "Output is not separately creator-approved.",
+    "Bicycle kick has four new animation frames; its three damage contacts use the shared three-hit aerial budget. Down-light reuses the downward palm pose."
+  ],
+  "bicycle": {
+    "tool": "image_gen__imagegen",
+    "output_original_path": "/workspace/scratch/b073acd8b235/generated_images/exec-bc15a863-40a9-4f82-8ef3-aedb529d9f7b.png",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "cell": [
+      627,
+      627
+    ],
+    "standingHeight": 520,
+    "pivot": [
+      260,
+      596
+    ],
+    "original_band_identity_anchor": "50e996af4ac7f2e0d961f5287739ae0770384aca27954212a87bde9a6cbb66c0",
+    "review": "All four poses inspected against original band source, on light background and at gameplay scale. Distinct near/far leg extension; no overlapping cells. Source proportions retained."
+  }
+}

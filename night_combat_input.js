@@ -164,7 +164,7 @@
     if(active&&punch){
       const context=contextAction();punch.textContent=context?'A':'PUNCH';
       punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':'Directional punch');
-      punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E punch / J kick / Space jump. More: optional dash and grab buttons.';
+      punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E light / J kick / Space jump. In air: down + E light, down + J slam; Iona up + J bicycle. Run menu: combo guide. More: optional dash and grab buttons.';
     }
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
     if(!enabled)reset();

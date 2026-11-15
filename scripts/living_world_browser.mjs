@@ -48,7 +48,7 @@ async function route(to){
     if(v.a.escort)await page.waitForFunction(()=>Math.abs(S.meta.livingWorld.active.escort.x-NM.x)<130);
     await press(page.locator('#living-world-interact'));
     const name=await page.evaluate(id=>TechOpsLivingWorld.episode(S.meta.livingWorld.active.id).rooms.find(r=>r.id===id).name,path[0]);
-    await press(option(exact('Travel — '+name)));await page.waitForTimeout(200);
+    const remote=await page.evaluate(()=>TechOpsLivingWorld.episode(S.meta.livingWorld.active.id).remoteRooms);await press(option(exact((remote?'Viewpoint — ':'Travel — ')+name)));await page.waitForTimeout(200);
   }throw Error('Route loop');
 }
 async function reach(g){
@@ -74,20 +74,22 @@ try{
     await press(option(new RegExp('^(Begin|Resume) — '+spec.title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')));await press(option(/^(Enter|Resume) this chapter$/));
     await page.waitForFunction(()=>!!S.nightMode._livingWorld&&!S.inDialog);
     if(id==='service_ring')await page.screenshot({path:`${out}/${profile}-service.png`});
-    for(let step=(await view()).a.step;step<spec.goals.length;step++){
+    while(!(await view()).a.finished){
+      const step=(await view()).a.step;
       const v=await view(),g=v.g;console.log('OBJECTIVE',id,g.id);
-      await reach(g);
       if(g.actor&&(await view()).a.actor!==g.actor){await press(page.locator('#night-campaign'));await press(option(exact('Switch operator — '+g.actor)));}
+      await reach(g);
       if(g.kind==='handoff')await page.waitForFunction(x=>Math.abs(S.meta.livingWorld.active.escort.x-x)<130,g.x);
       await press(page.locator('#living-world-interact'));
       if((await view()).dialogTitle==='AT THIS LOCATION')await press(option(exact(g.label)));
-      const label=g.options?g.options.find(o=>o[0]===(g.answer||g.options[0][0]))[1]:g.kind==='hold'?'Begin working at the station':g.label;
+      const label=g.kind==='scene'?((v.a.sceneIndex||0)+1===g.lines.length?'Finish the conversation':'Continue'):g.kind==='dispatch'?g.tasks.find(t=>!(v.a.tasks||[]).includes(t.id)).label:g.options?g.options.find(o=>o[0]===(g.answer||g.options[0][0]))[1]:g.kind==='hold'?'Begin working at the station':g.label;
       await press(option(exact(label)));
+      if(g.kind==='scene'){while((await view()).dialog&&(await view()).g?.id===g.id){await press(option(/^(Continue|Finish the conversation)$/));}}
       if(g.kind==='hold'){
         const deadline=Date.now()+90000;
-        while((await view()).a.step===step&&Date.now()<deadline){
+        while((await view()).g?.id===g.id&&Date.now()<deadline){
           await page.waitForTimeout(350);const work=await view();
-          if(work.a.step>step)break;
+          if(work.g?.id!==g.id)break;
           if(work.dialog&&work.dialogTitle==='FALL BACK TO THE CHECKPOINT')await press(option(/^Recover at the room entry$/));
           if(!work.a.holding){
             await reach(g);
@@ -95,29 +97,29 @@ try{
             await press(page.locator('#living-world-interact'));await press(option(/^Begin working at the station$/));
           }
         }
-        assert((await view()).a.step>step,'Work must finish after responding to interruptions');
+        assert((await view()).g?.id!==g.id,'Work must finish after responding to interruptions');
       }
       if(g.kind==='finish'){
-        await option(exact('Return to expeditions')).waitFor();await page.screenshot({path:`${out}/${profile}-${id}-complete.png`});await press(option(exact('Return to expeditions')));
+        await option(exact('Return to expeditions')).waitFor();await page.screenshot({path:`${out}/${profile}-${id}-complete.png`});await press(option(exact('Return to expeditions')));break;
       }else await page.waitForFunction(()=>!S.inDialog);
     }
     reports.push({id,completed:true});
     await context.storageState({path:`${out}/${profile}-storage.json`});
   }
   assert.equal(await page.evaluate(()=>S.meta.livingWorld.done.length),limit);
-  if(limit===ids.length){
+  if(limit===ids.length&&!process.env.LIVING_SKIP_OPTIONAL){
     const quests=await page.evaluate(()=>TechOpsLivingWorldData.sidequests);
-    for(const id of [...new Set(quests.map(q=>q.episode))]){
-      const spec=await page.evaluate(id=>TechOpsLivingWorld.episode(id),id);
-      await press(option(new RegExp('^(Revisit|Resume) — '+spec.title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')));await press(option(/^(Enter|Resume) this chapter$/));
-      for(const q of quests.filter(q=>q.episode===id)){
-        console.log('SIDE QUEST',q.id);await route(q.room);
-        for(let step=await page.evaluate(id=>S.meta.livingWorld.side[id]||0,q.id);step<q.steps.length;step++){
-          await walk(q.points[step]-11);await press(page.locator('#living-world-interact'));if((await view()).dialogTitle==='AT THIS LOCATION')await press(option(exact(q.title)));await press(option(exact(q.steps[step][0])));await press(option(/^(Keep this moment|Continue in the room)$/));
-        }
-        assert.equal(await page.evaluate(id=>S.meta.livingWorld.side[id],q.id),q.steps.length);reports.push({sideQuest:q.id,completed:true});
+    for(const q of quests){
+      for(let step=await page.evaluate(id=>S.meta.livingWorld.side[id]||0,q.id);step<q.steps.length;step++){
+        const loc=q.stages?q.stages[step]:{episode:q.episode,room:q.room,x:q.points[step]};
+        const spec=await page.evaluate(id=>TechOpsLivingWorld.episode(id),loc.episode);
+        await press(option(exact('Revisit — '+spec.title)).or(option(exact('Resume — '+spec.title))));await press(option(/^(Enter|Resume) this chapter$/));
+        console.log('SIDE QUEST',q.id,step);await route(loc.room);await walk(loc.x-11);
+        await press(page.locator('#living-world-interact'));if((await view()).dialogTitle==='AT THIS LOCATION')await press(option(exact(q.title)));
+        await press(option(exact(q.steps[step][0])));await press(option(/^(Keep this moment|Continue in the room)$/));
+        await press(page.locator('#night-campaign'));await press(option(/^Save chapter and return to the street$/));await press(page.locator('#night-campaign'));await press(option(/Living World/));
       }
-      await page.screenshot({path:`${out}/${profile}-${id}-optional.png`});await press(page.locator('#night-campaign'));await press(option(/^Save chapter and return to the street$/));await press(page.locator('#night-campaign'));await press(option(/Living World/));
+      assert.equal(await page.evaluate(id=>S.meta.livingWorld.side[id],q.id),q.steps.length);reports.push({sideQuest:q.id,completed:true});
     }
     await context.storageState({path:`${out}/${profile}-storage.json`});
   }
