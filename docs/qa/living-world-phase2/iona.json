@@ -1,0 +1,44 @@
+[
+  {
+    "name": "desktop",
+    "fixture": "Later-story prerequisites and legal Iona workshop history; enemies cleared for sprite review",
+    "checks": [
+      "real earned-section launch selects and renders Iona",
+      "keyboard movement retains Iona",
+      "real attack input reaches Iona combat pose",
+      "launcher → jump → light → two bicycle contacts reaches the three-hit cap with actual sprite rendering",
+      "air light → repositioning jump → downward light contacts the target below",
+      "leaving restores ordinary actor rendering"
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "name": "portrait",
+    "fixture": "Later-story prerequisites and legal Iona workshop history; enemies cleared for sprite review",
+    "checks": [
+      "real earned-section launch selects and renders Iona",
+      "keyboard movement retains Iona",
+      "real attack input reaches Iona combat pose",
+      "launcher → jump → light → two bicycle contacts reaches the three-hit cap with actual sprite rendering",
+      "air light → repositioning jump → downward light contacts the target below",
+      "leaving restores ordinary actor rendering"
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "name": "landscape",
+    "fixture": "Later-story prerequisites and legal Iona workshop history; enemies cleared for sprite review",
+    "checks": [
+      "real earned-section launch selects and renders Iona",
+      "keyboard movement retains Iona",
+      "real attack input reaches Iona combat pose",
+      "launcher → jump → light → two bicycle contacts reaches the three-hit cap with actual sprite rendering",
+      "air light → repositioning jump → downward light contacts the target below",
+      "leaving restores ordinary actor rendering"
+    ],
+    "errors": [],
+    "pass": true
+  }
+]

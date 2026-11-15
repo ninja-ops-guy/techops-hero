@@ -1,0 +1,24 @@
+{
+  "source_commit": "60ad448995c709eeb40e2d804a44c0b3d8a07a57",
+  "source_tree": "d2f6375ed0132954f2aeab7e10fd4475f07c08cc",
+  "production_suites": 124,
+  "syntax_files": 630,
+  "domain_groups": 22,
+  "aerial_combat_groups": 20,
+  "source_sha256": {
+    "campaign_living_world_data.js": "7ddaa314b6bcea610b202e40ff7b225c725f9daa6a83cb7fb343ff17abd4a4e9",
+    "campaign_living_world.js": "ab80e2b523063a6cfde35383fdd0698d74863a406a487c15c62bd1fac72e5e1e",
+    "campaign_living_world_runtime.js": "cd86c1d72574363aa45012d5dad70add9a88041fa16ea90713a69aad1c05899d",
+    "night_combat.js": "cf48f71f4c7d1e290d215791d090d55c739880fefda07f5fa80596b29e4e184d",
+    "iona_nightwalker.js": "19c464f4ea5fb8f1f76e787e6669ce6a1db3d097a104aeddcf4877976ba20392",
+    "runtime_night.js": "c652b5e86b0e198258531c0d9bf7a554a929aa668fb71cf41512604eb9b2551c"
+  },
+  "status": "local candidate; not deployed",
+  "cumulative_completed_chapters": 27,
+  "new_chapters_played": 13,
+  "new_optional_chains_played": 5,
+  "new_optional_steps_played": 15,
+  "retained_prior_optional_chains": 6,
+  "final_source_scene_renders": 27,
+  "final_source_hosted_checks": 4
+}

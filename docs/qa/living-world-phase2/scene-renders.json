@@ -1,0 +1,168 @@
+{
+  "reports": [
+    {
+      "chapter": "service_ring",
+      "room": "bay",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "three_calls",
+      "room": "board",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "annex",
+      "room": "lobby",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "pier",
+      "room": "receiver",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "rooftops",
+      "room": "east",
+      "actor": "felicia",
+      "health": 40
+    },
+    {
+      "chapter": "hangar",
+      "room": "bench",
+      "actor": "felicia",
+      "health": 40
+    },
+    {
+      "chapter": "prison",
+      "room": "vent",
+      "actor": "katrin",
+      "health": 40
+    },
+    {
+      "chapter": "home",
+      "room": "garage",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "waldo_visit",
+      "room": "porch",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "low_quarter",
+      "room": "workshop",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "dock",
+      "room": "checkpoint",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "iona_local",
+      "room": "bench",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "iona_pressure",
+      "room": "court",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "archive",
+      "room": "room",
+      "actor": "k",
+      "health": 40
+    },
+    {
+      "chapter": "factory_heist",
+      "room": "receiving",
+      "actor": "kali",
+      "health": 40
+    },
+    {
+      "chapter": "last_shift",
+      "room": "dispatch",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "moving_safehouse",
+      "room": "load",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "fracture",
+      "room": "building",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "iona_blackout",
+      "room": "foyer",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "borrowed_skill",
+      "room": "observation",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "morrow_array",
+      "room": "dock",
+      "actor": "bellwether",
+      "health": 40
+    },
+    {
+      "chapter": "factory_return",
+      "room": "receiving",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "no_common_channel",
+      "room": "earth",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "hold_receiving",
+      "room": "desk",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "iona_receiving",
+      "room": "entry",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "low_return",
+      "room": "workshop",
+      "actor": "k",
+      "health": 40
+    },
+    {
+      "chapter": "queue_afterward",
+      "room": "desk",
+      "actor": "mike",
+      "health": 40
+    }
+  ],
+  "errors": [],
+  "method": "Revisit UI from completed playthrough; normal keyboard movement; no story or position injection."
+}
