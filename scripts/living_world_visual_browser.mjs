@@ -16,7 +16,7 @@ try{
   await page.goto(base);await page.waitForFunction(()=>window.__productionTitleReadiness?.ready&&!document.querySelector('#btn-start')?.disabled);
   await page.locator('#btn-nightcrawler').click();await page.waitForFunction(()=>!!window.__nightCheckpointResumed&&!!S.nightMode);
   await page.locator('#night-campaign').click();await option(/Living World/).click();await page.waitForFunction(()=>!!window.TechOpsLivingWorld);
-  const episodes=await page.evaluate(()=>TechOpsLivingWorldData.episodes);assert.equal(await page.evaluate(()=>S.meta.livingWorld.done.length),14,'requires completed gameplay, not an unlock fixture');
+  const episodes=await page.evaluate(()=>TechOpsLivingWorldData.episodes);assert.equal(await page.evaluate(()=>S.meta.livingWorld.done.length),episodes.length,'requires completed gameplay, not an unlock fixture');
   for(const e of episodes){
     const re=new RegExp('^(Revisit|Resume) — '+e.title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$');await option(re).click();await option(/^(Enter|Resume) this chapter$/).click();
     // A partial optional visit can resume in another room. Record the actual

@@ -22,7 +22,7 @@ async function view(){return page.evaluate(()=>({n:{x:NM.x,y:NM.y,vx:NM.vx,hp:NM
 async function fight(){
   const deadline=Date.now()+45000;
   while(Date.now()<deadline){const v=await view(),enemy=v.n.enemies[0];if(!enemy)return;
-    if(v.dialog)throw new Error('Unexpected dialog in combat: '+v.dialogTitle);
+    if(v.dialog){if(v.dialogTitle==='FALL BACK TO THE CHECKPOINT'){await press(option(/^Recover at the room entry$/));continue;}throw new Error('Unexpected dialog in combat: '+v.dialogTitle);}
     const dx=enemy.x-v.n.x,key=dx>0?'ArrowRight':'ArrowLeft';
     const escort=v.a.escort;if(escort&&Math.abs(v.n.x-escort.x)>210){await walk(escort.x+150);continue;}
     await page.keyboard.down(key);await page.waitForTimeout(Math.abs(dx)>80?180:25);await page.keyboard.up(key);
@@ -31,7 +31,7 @@ async function fight(){
 }
 async function walk(target){
   const deadline=Date.now()+35000;let held=null;
-  while(Date.now()<deadline){const v=await view();if(v.dialog)throw new Error('Unexpected dialog while moving: '+v.dialogTitle);
+  while(Date.now()<deadline){const v=await view();if(v.dialog){if(held){await page.keyboard.up(held);held=null;}if(v.dialogTitle==='FALL BACK TO THE CHECKPOINT'){await press(option(/^Recover at the room entry$/));continue;}throw new Error('Unexpected dialog while moving: '+v.dialogTitle);}
     const e=v.a?.escort,gap=e&&e.room===v.a.room?Math.abs(v.n.x-e.x):0;
     const delta=(gap>290?e.x+170:target)-v.n.x;if(Math.abs(delta)<20){if(held)await page.keyboard.up(held);await page.waitForTimeout(350);return;}
     const behind=gap>190&&gap<=290;

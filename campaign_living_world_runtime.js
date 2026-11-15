@@ -26,7 +26,7 @@
       result=fn(state());const a=state().active;
       if(a&&a.finished&&!before.done.includes(a.id)){
         const e=A.episode(a.id);
-        if(e.actor==='mike'||e.actors&&e.actors.includes('mike'))game().journal=journal.concat({day:game().day,title:'Field report — '+e.title,body:e.ending});
+        if(!e.privateCompletion&&(e.actor==='mike'||e.actors&&e.actors.includes('mike')))game().journal=journal.concat({day:game().day,title:'Field report — '+e.title,body:e.ending});
       }
       if(!persist()){game().meta.livingWorld=before;game().journal=journal;failed();return null;}
       return result;

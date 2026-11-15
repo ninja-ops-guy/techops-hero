@@ -39,6 +39,7 @@ test('multi-chapter optional chains cannot advance from the old location or a su
  A.start(s,'last_shift',{},true);s.active.room='floor';s.active.x=339;A.sidequest(s,q.id);assert.equal(s.side[q.id],2);
 });
 test('delayed relay requires delivery and never copies private records',()=>{
+ assert.equal(A.episode('no_common_channel').privateCompletion,true,'Iona’s final relay entry is not automatically delivered back into Mike’s general journal');
  const s=ready();s.flags.waldo_invited=s.flags.waldo_visit_received=true;s.knowledge.mike=['Private memory'];
  A.start(s,'no_common_channel',{},true);s.active.step=2;A.switchActor(s);at(s,A.current(s));assert.equal(A.interact(s).ok,false);
  s.flags.relay_queued=true;assert.equal(s.knowledge.iona,undefined);A.interact(s);
@@ -54,6 +55,17 @@ test('runtime Iona combat ownership requires the current authorized expedition v
  r.TechOpsLivingWorldRuntime={viewpoint:world=>world===n?view:null};
  assert.equal(r.TechOpsNightCombat.actor(n),'mike');view='iona';assert.equal(r.TechOpsNightCombat.actor(n),'iona');
  assert.equal(r.TechOpsNightCombat.actor({...n}),'mike');n.drive={};assert.equal(r.TechOpsNightCombat.actor(n),'mike');delete n.drive;view='mike';assert.equal(r.TechOpsNightCombat.actor(n),'mike');
+});
+test('browser bridge keeps an undelivered Iona completion out of Mike’s general journal',()=>{
+ function finish(id){
+  const s=ready();s.done=s.done.filter(x=>x!==id);s.flags.waldo_invited=s.flags.waldo_visit_received=s.flags.relay_delivered=s.flags.relay_iona=true;
+  A.start(s,id,{},true);s.active.step=A.episode(id).goals.length-1;const g=A.current(s);s.active.actor=g.actor||A.episode(id).actor;at(s,g);
+  const n={x:s.active.x,y:s.active.y,w:22,h:34,enemies:[],_livingWorld:{active:true}},journal=[{title:'Existing personal record'}];let options,saves=0;
+  const r={TechOpsLivingWorld:A,TechOpsLivingWorldData:A.Data,S:{meta:{livingWorld:s},nightMode:n,journal,day:1},document:{getElementById:()=>null},save:()=>{saves++;return true;},dlg:(title,body,choices)=>{options=choices;},closeDlg:()=>{}};r.globalThis=r;
+  vm.runInNewContext(fs.readFileSync('campaign_living_world_runtime.js','utf8'),r);r.TechOpsLivingWorldRuntime.interact();options[0].f();
+  assert.equal(s.active.finished,true);assert.equal(saves,1);return r.S.journal;
+ }
+ assert.equal(finish('no_common_channel').length,1);assert.equal(finish('service_ring').length,2);
 });
 test('aftermath reports only completed consequences',()=>{
  const s=A.initial();assert(!A.consequences(s).includes('An Unfinished Song:'));s.flags.song_shared=true;
