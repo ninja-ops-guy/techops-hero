@@ -1,0 +1,49 @@
+name: Iona sprite integration
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'iona_nightwalker.js'
+      - 'night_combat.js'
+      - 'night_move_visuals.js'
+      - 'runtime_night.js'
+      - 'test_night_aerial_combos.js'
+      - 'assets/iona-nightwalker/**'
+      - 'night_reference_visuals.js'
+      - 'scripts/iona_nightwalker_browser.mjs'
+      - '.github/workflows/iona-sprite-validation.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Check actual Iona section and renderer on three viewports
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-bot-artifacts
+          git rev-parse HEAD > runtime-bot-artifacts/tested-commit.txt
+          python3 scripts/media_http_server.py --port 4173 --bind 127.0.0.1 > runtime-bot-artifacts/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/iona_nightwalker_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iona-sprite-${{ github.event.pull_request.head.sha }}
+          path: runtime-bot-artifacts/
+          retention-days: 7

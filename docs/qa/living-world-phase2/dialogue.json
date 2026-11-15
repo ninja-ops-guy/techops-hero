@@ -1,0 +1,29 @@
+{
+  "reports": [
+    {
+      "profile": "desktop",
+      "dialogueResume": true,
+      "failedFinalLineRollback": true,
+      "invitationDoesNotUnlock": true,
+      "touchDialogs": false,
+      "errors": []
+    },
+    {
+      "profile": "portrait",
+      "dialogueResume": true,
+      "failedFinalLineRollback": true,
+      "invitationDoesNotUnlock": true,
+      "touchDialogs": true,
+      "errors": []
+    },
+    {
+      "profile": "landscape",
+      "dialogueResume": true,
+      "failedFinalLineRollback": true,
+      "invitationDoesNotUnlock": true,
+      "touchDialogs": true,
+      "errors": []
+    }
+  ],
+  "method": "Authentic phase-one save prerequisites, normal movement and dialogue controls. Injected storage failure only; no new story flags or positions injected."
+}

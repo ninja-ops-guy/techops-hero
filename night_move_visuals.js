@@ -28,7 +28,8 @@
     if(kind!==prior?.kind){prior={kind,at:time,clock:n._nightCombat};entries.set(n,prior);}
     prior.lastTime=time;
     if(['down','block','get-up'].includes(kind)){age=time-prior.at;frame=kind==='block'?Math.min(2,Math.floor(age/55)):Math.min(3,Math.floor(age/65));}
-    const move=atlas()?.moves[kind];return move?{kind,frame,face,age,source:move.frames[Math.max(0,frame)]}:null;
+    const visual=root.TechOpsNightCombat?.MOVES[kind]?.visual||kind;
+    const move=atlas()?.moves[visual];return move?{kind,frame,face,age,source:move.frames[Math.max(0,frame)]}:null;
   }
   function draw(ctx,n,px,py,now,height){
     const im=warm(),a=atlas();if(!im||!a)return false;const choice=sample(n,now);if(!choice)return false;

@@ -79,7 +79,7 @@
     if (!c) return null;
     const dashReady = c.dash && !c.dash.spent && c.time <= c.dash.until;
     if (!c.grab && !c.attack && !c.hits && !dashReady && c.stunUntil <= c.time) return null;
-    return { hint:c.grab ? '← / → THROW · ↑ LAUNCH · ↓ SLAM' : c.stunUntil > c.time ? 'RECOVER' : dashReady ? 'DASH → ATTACK TO GRAB' : c.attack && c.attack.kind && c.attack.kind.startsWith('air') ? 'AIR COMBO · THREE HITS MAX' : '↑ / ↓ AIM · JUMP TO FOLLOW', age:c.time - c.lastInput, lastHit:c.lastHit };
+    return { hint:c.grab ? '← / → THROW · ↑ LAUNCH · ↓ SLAM' : c.stunUntil > c.time ? 'RECOVER' : dashReady ? 'DASH → ATTACK TO GRAB' : c.attack?.kind==='bicycle-kick'?'BICYCLE · THREE AIR HITS MAX':c.attack?.kind==='air-down'?'DOWN LIGHT · AIM BELOW':c.attack && c.attack.kind && c.attack.kind.startsWith('air') ? 'AIR COMBO · THREE HITS MAX' : '↑ / ↓ AIM · JUMP TO FOLLOW', age:c.time - c.lastInput, lastHit:c.lastHit };
   }
   function drawNight(ctx, n, options) {
     if (!handles(n)) return false;
@@ -87,7 +87,7 @@
     options = options || {};
     const view = viewport(ctx.canvas), l = layout(view), d = options.district || {}, now = Number(options.now) || 0;
     const guide = root.TechOpsGameplayExperience;
-    const status = guide && guide.streetStatus(n) || (n.clear ? 'STREET SECURED' : 'HOSTILES ' + (n.enemies || []).filter(e => e.alive).length);
+    const status = options.status || guide && guide.streetStatus(n) || (n.clear ? 'STREET SECURED' : 'HOSTILES ' + (n.enemies || []).filter(e => e.alive).length);
     const combat = combatModel(n), audio = root.TechOpsCombatAudio;
     const caption = audio && typeof audio.caption === 'function' ? audio.caption(n) : '';
     const receipt = { mode:'night', viewport:view, bodyFont:BODY, headingFont:HEADING, panels:[], text:[], menu:l.menu, blocked:false };

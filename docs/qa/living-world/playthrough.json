@@ -1,0 +1,105 @@
+{
+  "profile": "desktop",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "reports": [
+    {
+      "id": "service_ring",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "annex",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "pier",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "rooftops",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "hangar",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "prison",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "home",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "low_quarter",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "dock",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "archive",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "factory_heist",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "fracture",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "factory_return",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "id": "low_return",
+      "completed": true,
+      "restoredFromPriorRun": true
+    },
+    {
+      "sideQuest": "worker_route",
+      "completed": true
+    },
+    {
+      "sideQuest": "delivery",
+      "completed": true
+    },
+    {
+      "sideQuest": "two_cups",
+      "completed": true
+    },
+    {
+      "sideQuest": "name_door",
+      "completed": true
+    },
+    {
+      "sideQuest": "soundcheck",
+      "completed": true
+    },
+    {
+      "sideQuest": "receiving_end",
+      "completed": true
+    }
+  ],
+  "errors": [],
+  "method": "Normal title and expedition UI; keyboard movement and platform jumps. No story flags, health, positions, or objective completions injected."
+}

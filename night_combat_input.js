@@ -26,6 +26,7 @@
   function contextAction(){
     if(!ready())return null;
     const n=runtime(),lifecycle=root.TechOpsNightRuntime;
+    if(n._livingWorld)return root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.nearest()?'expedition':null;
     if(lifecycle&&lifecycle.atHome())return 'home';
     const car=typeof NM_CAR_X==='number'?NM_CAR_X:26;
     if(n.x<car+150&&!(n.enemies||[]).some(e=>e.alive&&Math.abs(e.x-n.x)<90))return 'charger';
@@ -37,6 +38,7 @@
   function dispatch(action,k){
     if(!ready())return false;
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
+    if(root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.input(action))return true;
     if(action==='punch'&&contextAction()&&typeof root.interact==='function'){root.interact();return true;}
     if(action==='jump'){jumpQueued=true;return true;}
     if(action==='dash')return root.TechOpsNightCombat.dash(runtime(),runtime().face||1);
@@ -162,7 +164,7 @@
     if(active&&punch){
       const context=contextAction();punch.textContent=context?'A':'PUNCH';
       punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':'Directional punch');
-      punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E punch / J kick / Space jump. More: optional dash and grab buttons.';
+      punch.title=context?'E / A interacts':'Double-tap left/right to dash; attack after dash to grab. Up/down aims attacks and throws. E light / J kick / Space jump. In air: down + E light, down + J slam; Iona up + J bicycle. Run menu: combo guide. More: optional dash and grab buttons.';
     }
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
     if(!enabled)reset();

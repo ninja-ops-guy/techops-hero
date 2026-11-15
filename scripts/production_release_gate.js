@@ -4,6 +4,8 @@ const { spawnSync } = require("child_process");
 const fs = require("fs");
 
 const tests = [
+  "test_living_world.js",
+  "test_living_world_progression.js",
   "test_store_supplies.js",
   "test_day_dialogue_variance.js",
   "test_campaign_day_spatial_music.js",
@@ -110,6 +112,8 @@ const tests = [
   "test_night_directional_integration.js",
   "test_night_movement_combos.js",
   "test_visual_combat_assets.js",
+  "test_iona_nightwalker.js",
+  "test_night_aerial_combos.js",
   "test_night_combat.js",
   "test_runtime_combat_audio.js",
   "test_quality_integration.js",

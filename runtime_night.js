@@ -50,7 +50,7 @@
   }
   function validCheckpoint(s){
     const n=s&&s.nightMode;
-    if(!standalone(s)||!n||n._v736||n._sector04||n._nightwalker||n._nightSettled||![...districts,'waldo'].includes(n.district)||!finite(n.street,1,['home','waldo'].includes(n.district)?1:2)||!Number.isInteger(n.street))return false;
+    if(!standalone(s)||!n||n._v736||n._sector04||n._nightwalker||n._livingWorld||n._nightSettled||![...districts,'waldo'].includes(n.district)||!finite(n.street,1,['home','waldo'].includes(n.district)?1:2)||!Number.isInteger(n.street))return false;
     if(!finite(s.day,1,100000)||!finite(s.clock,1080,10000000)||![.7,1,1.3].includes(s.diff)||!Array.isArray(s.map)||!s.map.length||s.gameOver||s.inBattle)return false;
     if(!finite(n.x,-100,1900)||!finite(n.y,-2000,900)||!finite(n.w,1,200)||!finite(n.h,1,200)||!finite(n.hp,.001,10000)||!finite(n.cash,0,100000000)||!Number.isInteger(n.kills)||n.kills<0)return false;
     if(!finite(n.vx,-1000,1000)||!finite(n.vy,-1000,1000)||![-1,1].includes(n.face)||!finite(n.cam,-100,1900))return false;
@@ -98,6 +98,11 @@
     if(!s.nightMode){if(s.meta.nightVisit&&s.meta.nightVisit.active===false)return completeCheckpoint(s);return false;}
     // Field reports keep their own objective saves. Persist the street return
     // point together with the current health, purchases and remaining supplies.
+    if(s.nightMode._livingWorld){
+      const expedition=root.TechOpsLivingWorldRuntime;
+      const returnNight=expedition&&expedition.checkpointNight();
+      if(returnNight)s=Object.assign({},s,{nightMode:returnNight});
+    }
     if(s.nightMode._nightwalker){
       const mission=s.nightMode._nightwalker.runtimeId==='deadAir'?root.TechOpsDeadAirRuntime:root.TechOpsNightwalkerRuntime;
       const returnNight=mission&&mission.checkpointNight&&mission.checkpointNight();
@@ -117,7 +122,7 @@
     root.__nightCheckpointResumed={savedAt:record.savedAt,district:n.district,street:n.street};return true;
   }
   function checkpointFrame(dt){
-    const s=state(),n=world();if(!standalone(s)||!checkpointEligible(n)||n._sector04||n._nightwalker||blocked())return;
+    const s=state(),n=world();if(!standalone(s)||!checkpointEligible(n)||n._sector04||n._nightwalker||n._livingWorld||blocked())return;
     checkpointAge+=Math.min(.1,Math.max(0,Number(dt)||0));
     const mark=[n.district,n.street,n.cash,n.kills,Object.keys(n.done||{}).join(','),n.drive&&n.drive.to||''].join('|');
     if(checkpointAge>=5||mark!==checkpointMark){saveCheckpoint(s);checkpointAge=0;checkpointMark=mark;}
@@ -215,21 +220,45 @@
     });
   }
   function dialog(title,text,options){if(!root.dlg)return false;const box=el('dialogue');if(box){box.style.removeProperty('display');box.style.removeProperty('visibility');}root.dlg(title,text,options);return true;}
+  let expeditionLoad=null;
+  function openExpeditions(){
+    if(!active(world())||world()._sector04||world()._nightwalker||transition)return false;
+    if(root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.openBoard();
+    dialog('LIVING WORLD','Opening the expedition casebook…',[{t:'Back',f:root.closeDlg}]);
+    if(!expeditionLoad){
+      const scripts=['campaign_living_world_data.js','campaign_living_world.js','campaign_living_world_runtime.js'];
+      expeditionLoad=scripts.reduce((prior,src)=>prior.then(()=>new Promise((resolve,reject)=>{
+        const script=root.document.createElement('script');script.src=src+'?v=20261115-expeditions-2';script.async=false;
+        script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('Could not load '+src));};root.document.head.appendChild(script);
+      })),Promise.resolve()).catch(e=>{expeditionLoad=null;throw e;});
+    }
+    const expected=state();return expeditionLoad.then(()=>{if(state()===expected&&active(world()))return root.TechOpsLivingWorldRuntime.openBoard();}).catch(e=>dialog('EXPEDITIONS UNAVAILABLE',String(e.message)+'. Your saved progress is unchanged.',[{t:'Retry',f:openExpeditions},{t:'Back',f:root.closeDlg}]));
+  }
+  function combatGuide(){
+    const iona=root.TechOpsNightCombat&&root.TechOpsNightCombat.actor(world())==='iona';
+    return dialog('NIGHT WALKER // DIRECTIONAL COMBOS',
+      '<b>LIGHT / E</b> · neutral: jab → cross → launcher on the gold beat; ↑: uppercut; ↓: low strike.<br><b>KICK / J</b> · neutral: kick launch; ↑: rising kick; ↓: sweep.<br><br><b>AIR</b> · Light: punch; ↓ + Light: quick downward strike at enemies below; Kick: air kick; ↓ + Kick: heavy slam.'+
+      (iona?'<br><b>IONA</b> · ↑ + Kick in the air: bicycle kick. Each kick spends one of the three air contacts.':'')+
+      '<br><br><b>CHAIN IT</b> · Land an ↑ attack, press Jump / Space to follow, then Light → '+(iona?'↑ + Kick for the bicycle finish.':'Kick → Light.')+'<br>Jump above the enemy, then ↓ + Light to drive them toward the ground. Aim toward the target. Three aerial contacts end the juggle; a missed launcher cannot cancel into a follow-up jump.',
+      [{t:'Back to the run menu',f:openCampaign},{t:'Back to the street',f:root.closeDlg}]);
+  }
   function openCampaign(){
     if(!active(world())||transition)return false;
+    if(world()._livingWorld&&root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.openJournal();
     if(world()._nightwalker){
       const runtime=world()._nightwalker.runtimeId==='deadAir'?root.TechOpsDeadAirRuntime:root.TechOpsNightwalkerRuntime;
       if(runtime)return runtime.openJournal();
     }
     if(standalone(state())){
-      const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}];
+      const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Combat moves & combos',f:combatGuide},{t:'Back to the street',f:root.closeDlg}];
       if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
       if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
       if(root.TechOpsDeadAirRuntime)options.unshift({t:'NIGHTWALKER — Dead Air at Pier 7',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsDeadAirRuntime.enterBrowser();}});
-      return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. Each field report has its own save; neither route can change Day-campaign story objectives.',options);
+      options.unshift({t:'Living World — story expeditions',f:openExpeditions});
+      return dialog('AFTER HOURS — STANDALONE RUN','<b>Living World</b> follows exploration into fighting, signal work, transport, and survival horror. Start its first chapter or resume your current one.<br><br>Your Night route and field reports save separately from the Day campaign.',options);
     }
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
-    const f=c.flags,options=[{t:'Supplies and store',f:()=>root.openNightSupplies()}],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
+    const f=c.flags,options=[{t:'Living World — story expeditions',f:openExpeditions},{t:'Supplies and store',f:()=>root.openNightSupplies()}],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
     if(f.tuesday_morning_reached){text='<b>AFTER HOURS — COMPLETE</b><br>The next campaign beat continues in the day shift. Your evidence and choices are preserved.';options.push({t:'Return to the day campaign',f:resumeDay});}
     else if(!f.day_work_unlocked){text='<b>CHAPTER I — AFTER HOURS</b><br>Complete the Day 1 standup and workstation opening to unlock Sector 04. Free roam is not the story campaign.';options.push({t:'Resume the daytime opening',f:resumeDay});}
     else{
@@ -237,7 +266,7 @@
       if(root.TechOpsSector04Runtime)options.push({t:world()._sector04?'Continue Sector 04 investigation':'Enter Sector 04 — story campaign',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsSector04Runtime.enterBrowser();}});
       options.push({t:'Return to daytime investigation',f:resumeDay});
     }
-    options.push({t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
+    options.push({t:'Combat moves & combos',f:combatGuide},{t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
   }
   function openHome(){
     const n=world();if(!atHome()||transition||n._nightLifecycle&&n._nightLifecycle.exitCommitted)return false;
@@ -362,7 +391,7 @@
     }
     view.checkpoint.hidden=!checkpointError||!standalone(state())||!!(world()&&world()._nightwalker);view.checkpoint.textContent=world()&&world()._nightwalker?'':checkpointError||'';
     if(!active(n))return;
-    view.chapter.style.display=n._nightwalker?'none':'';
+    view.chapter.style.display=n._nightwalker||n._livingWorld?'none':'';
     const key=n.district+':'+n.street;if(key!==chapterKey){chapterKey=key;chapterAge=0;const d=root.TechOpsNightDistricts&&root.TechOpsNightDistricts[n.district];view.chapter.textContent=n._nightwalker?'NIGHTWALKER / WEST ANNEX':n._sector04?'CHAPTER I — AFTER HOURS / SECTOR 04':n.district==='home'?"HOME STREET / MIKE'S HOUSE":(d&&d.name||n.district.toUpperCase())+' / STREET '+n.street;}
     if(shown)chapterAge+=Math.min(.1,Math.max(0,Number(dt)||0));view.chapter.style.opacity=chapterAge<2.6?'1':'0';
     if(el('v55-nmbtns'))el('v55-nmbtns').classList.toggle('on',shown);
@@ -396,20 +425,20 @@
     if(root.fmtClock)root.fmtClock=clockLabel;
     const oldInteract=root.interact;if(oldInteract)root.interact=function(){if(atHome()&&!blocked())return openHome();return oldInteract.apply(this,arguments);};
     const oldExit=root.exitNight;if(oldExit)root.exitNight=function(){
-      const n=world();if(!active(n))return n?oldExit.apply(this,arguments):false;
+      const n=world();if(n&&n._livingWorld&&root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.onDefeat();if(!active(n))return n?oldExit.apply(this,arguments):false;
       n._nightLifecycle=n._nightLifecycle||{};if(n._nightLifecycle.exitCommitted)return false;
       // Retire the recovery snapshot before reward settlement. If storage fails,
       // no completed-run claim is made and a reload cannot pay the same run twice.
       if(standalone(state())&&!completeCheckpoint(state())){const homeSafe=arguments[0];dialog('NIGHT RESULT NOT SAVED',checkpointError,[{t:'Retry saving this result',f:()=>{if(root.closeDlg)root.closeDlg();root.exitNight(homeSafe);}}]);return false;}
       n._nightLifecycle.exitCommitted=true;clearNightSelection();return oldExit.apply(this,arguments);
     };
-    const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&!world()._nightwalker&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
+    const oldCar=root.nmCarMenu;if(oldCar)root.nmCarMenu=function(){const result=oldCar.apply(this,arguments),options=el('dlg-options');if(active(world())&&!world()._sector04&&!world()._nightwalker&&!world()._livingWorld&&options&&!el('night-campaign-route')){const b=root.document.createElement('button');b.id='night-campaign-route';b.textContent='CAMPAIGN — After Hours / Sector 04';b.onclick=openCampaign;options.prepend(b);}return result;};
     if(root.document)root.document.addEventListener('keydown',e=>{if(!active(world()))return;if(transition&&e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(root.v725)root.v725.skip();return;}if(blocked())return;if(e.key.toLowerCase()==='c'){e.preventDefault();e.stopImmediatePropagation();openCampaign();}else if(atHome()&&e.key.toLowerCase()==='e'){e.preventDefault();e.stopImmediatePropagation();openHome();}},true);
     if(root.addEventListener)root.addEventListener('pagehide',()=>{if(standalone(state())&&checkpointEligible(world()))saveCheckpoint();});
     if(root.document)root.document.addEventListener('visibilitychange',()=>{if(root.document.hidden&&standalone(state())&&checkpointEligible(world()))saveCheckpoint();});
     registerScenes();ensureUI();
   }
-  root.TechOpsNightRuntime={VERSION:3,MINUTE_SECONDS,HOME_X,CHECKPOINT_KEY,CHECKPOINT_VERSION,checkpointStatus,saveCheckpoint,resumeCheckpoint,saveAndReturn,active,state,world,beforeEnter,onEntered,advance,clockLabel,tick,frame,blocked,atHome,openHome,sleep,openCampaign,resumeDay,restoreDayShell,endVisit,drawHome,registerScenes,install,health:()=>({active:active(world()),transitioning:!!transition,clock:state()&&state().clock,returnDay:state()&&state().meta&&state().meta.nightVisit&&state().meta.nightVisit.day,checkpointError})};
+  root.TechOpsNightRuntime={VERSION:3,MINUTE_SECONDS,HOME_X,CHECKPOINT_KEY,CHECKPOINT_VERSION,checkpointStatus,saveCheckpoint,resumeCheckpoint,saveAndReturn,active,state,world,beforeEnter,onEntered,advance,clockLabel,tick,frame,blocked,atHome,openHome,sleep,openCampaign,openExpeditions,resumeDay,restoreDayShell,endVisit,drawHome,registerScenes,install,health:()=>({active:active(world()),transitioning:!!transition,clock:state()&&state().clock,returnDay:state()&&state().meta&&state().meta.nightVisit&&state().meta.nightVisit.day,checkpointError})};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.TechOpsNightRuntime;
   if(root.document&&root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })(typeof globalThis!=='undefined'?globalThis:this);
