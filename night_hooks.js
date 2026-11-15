@@ -22,7 +22,7 @@
 //    pips, COMBO, DISTRICT · time · DANGER, cash).
 
 // ---------- speed: the car is 3x, and there's a bike now ----------
-try { SHOP.push({ id: "lab_bike", name: "Fixie Bike", icon: "🚲", cost: 550, type: "lab", effect: "+60% move speed — beat New Haven traffic", key: "bike", vendor: "procurement" }); } catch (e) { }
+try { STORE_STOCK.push({ id: "lab_bike", name: "Fixie Bike", icon: "🚲", cost: 550, type: "lab", effect: "+60% move speed — beat New Haven traffic", key: "bike", vendor: "procurement" }); } catch (e) { }
 
 // ---------- production sprite bridges ----------
 // Night mode was originally authored with procedural debug silhouettes. Keep

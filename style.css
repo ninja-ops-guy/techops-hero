@@ -491,6 +491,8 @@ body #dlg-options button:focus-visible,body .hud-btn:focus-visible,body #panel b
 body #panel{inset:max(12px,env(safe-area-inset-top)) var(--ops-safe-right) var(--ops-safe-bottom) var(--ops-safe-left);max-width:1000px;margin-inline:auto;border:1px solid var(--ops-line);background:var(--ops-panel)}
 body #panel-close,body #panel-tabs button{min-height:44px;min-width:44px}
 body #panel-body{font-size:14px}
+body #panel-body button[data-buy],body #panel-body button[data-use]{min-height:44px;min-width:64px}
+body:has(#panel:not(.hidden)) #see-world-linked-button,body:has(#dialogue:not(.hidden)) #see-world-linked-button{display:none}
 body #toast{font:13px/1.5 "Courier New",monospace;border:1px solid #d7b571;background:#101d2bf5;border-radius:8px;box-shadow:0 8px 24px #0007;max-width:min(620px,84vw)}
 @keyframes v66-pop{from{transform:translateX(-50%) translateY(5px);opacity:0}to{transform:translateX(-50%);opacity:1}}
 
