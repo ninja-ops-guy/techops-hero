@@ -1,0 +1,13 @@
+✔ fixed-step replay is deterministic and match stats are normalized (7.629867ms)
+✔ actual contacts, front-facing blocks, misses and bounded held attacks (0.599322ms)
+✔ simultaneous attacks trade symmetrically (0.191999ms)
+✔ jump bound, round votes prerequisite and match victory (0.335024ms)
+✔ server isolates rooms, rejects forged/stale input and resolves disconnect (53.19172ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 219.872904
