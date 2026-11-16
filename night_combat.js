@@ -83,14 +83,23 @@
   function focus(n){return clamp(Number(state(n).focus)||0,0,100);}
   function has(n,id){return !!root.TechOpsNightProgression?.has(n,id);}
   function gainFocus(n,amount){state(n).focus=clamp(focus(n)+amount,0,100);}
-  function special(n,slot,k={}){
+  function special(n,slot,k={},buffered=false){
     if(!active(n)||inputBlocked()||n.drive||n.hp<=0||n.block||![1,2].includes(slot))return false;
-    const c=state(n);if(c.attack||c.grab||c.slide||c.gravity||n.dashT>0||c.stunUntil>c.time)return false;
+    const c=state(n);if(c.grab||n.dashT>0||c.stunUntil>c.time)return false;
+    if(c.attack){
+      const a=c.attack,entry=root.TechOpsNightProgression?.selected(n,slot);
+      if(c.time-a.at>=a.duration-RULES.buffer&&!a.buffer&&entry&&has(n,entry[0]))
+        a.buffer={specialSlot:slot,keys:Object.assign({},readInput(k)),actor:actor(n),skill:entry[0]};
+      return false;
+    }
     const entry=root.TechOpsNightProgression?.selected(n,slot);
     if(!entry||!has(n,entry[0])){say(n,'LEARN THIS MOVE · STATS & SKILLS');return false;}
     const move=MOVES[entry[1].move];if(move.groundOnly&&!n.onGround||move.playerAirOnly&&n.onGround){say(n,move.groundOnly?'GROUND MOVE · LAND FIRST':'AIR MOVE · JUMP FIRST');return false;}
     if(focus(n)<move.focus){say(n,'NEED '+move.focus+' FOCUS · LAND ATTACKS');return false;}
-    faceInput(n,readInput(k));gainFocus(n,-move.focus);c.dash=null;c.lastInput=c.time;
+    // Failed prerequisites must not consume the slide or gravity window.
+    if(c.slide&&!cancelSlide(n))return false;
+    if(c.gravity)c.gravity=null;
+    faceInput(n,buffered?k:readInput(k));gainFocus(n,-move.focus);c.dash=null;c.lastInput=c.time;
     c.attack={kind:entry[1].move,stage:0,beat:false,at:c.time,hit:false,contactIndex:0,connected:false,launch:!!move.launch,windup:move.windup,duration:Math.max((move.contacts?.at(-1)||move.windup)+45,move.recovery*(root.TechOpsNightProgression?.modifiers(n).recovery||1)),face:n.face||1};
     if(move.missile){const e=target(n,{},false,{face:n.face,reach:move.reach});c.attack.impactX=clamp(e?e.x+e.w/2:n.x+n.w/2+(n.face||1)*220,30,1770);c.attack.impactY=e?e.y+e.h/2:n.y+n.h-17;}
     if(move.evade)n.ifr=Math.max(n.ifr||0,move.evade);n.jabAnim=20;event(n,'special',null,{kind:entry[1].move});say(n,entry[1].name+' · −'+move.focus+' FOCUS');return true;
@@ -117,7 +126,7 @@
     if(!active(n)||inputBlocked()||n.onGround)return false;
     const c=state(n),a=c.attack,move=a&&MOVES[a.kind];
     if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.slide||c.gravity||c.gravityUsed||c.stunUntil>c.time)return false;
-    if(a&&(!a.connected||(move?.contacts&&a.contactIndex<move.contacts.length)))return false;
+    if(a&&(!a.connected||(move?.contacts&&!a.finished&&a.contactIndex<move.contacts.length)))return false;
     if(a){c.attack=null;n.jabAnim=0;}c.dash=null;c.gravityUsed=true;c.gravity={at:c.time,until:c.time+180};n.dashCD=60;n.vy=0;n.vx=clamp(n.vx||0,-3.4,3.4);event(n,'gravity-cancel');say(n,'GRAVITY CANCEL · ATTACK NOW');return true;
   }
   function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;value*=root.TechOpsNightProgression?.modifiers(n).damage||1;if(kind==='throw'&&has(n,'mikeGrip'))value*=1.1;if(!n.onGround&&has(n,'kAir'))value*=1.12;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});if(root.TechOpsNightProgression)root.TechOpsNightProgression.defeat(n,e);say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
@@ -223,6 +232,10 @@
     if(a.target&&(!a.target.alive||!n.enemies.includes(a.target)||enemy(a.target).locked)){a.finished=true;return;}
     const e=target(n,{},false,Object.assign({face:a.face,onlyEnemy:a.target},move));
     if(!e){a.finished=true;if(!a.contactIndex){clearChain(n);event(n,'whiff');sound('ping');}return;}
+    // A horizontal burst cannot pass through a platform at muzzle height.
+    // Check every contact so a moving target or newly intervening cover matters.
+    if(move.ranged){const from=n.x+n.w/2,to=e.x+e.w/2,y=n.y+n.h-20,lo=Math.min(from,to),hi=Math.max(from,to);
+      if((n.platforms||[]).some(p=>y>=p.y&&y<=p.y+(p.h||12)&&p.x+p.w>lo&&p.x<hi)){a.finished=true;if(!a.contactIndex){clearChain(n);event(n,'whiff');sound('ping');}return;}}
     const ec=enemy(e);if(ec.air&&ec.locked){clearChain(n);event(n,'whiff');return;}
     if(move.contacts)a.target=e;
     const eq=root.v733&&root.v733.equipped?root.v733.equipped():[];
@@ -266,7 +279,7 @@
     if(c.slide&&c.time>=c.slide.until)c.slide=null;
     if(n.onGround){c.gravity=null;c.gravityUsed=false;}else if(c.gravity&&c.time>=c.gravity.until)c.gravity=null;
     if(c.grab){const g=c.grab,ec=enemy(g.enemy),dir=direction(k);if(!g.enemy.alive||!n.enemies.includes(g.enemy)||c.time-g.at>RULES.grabLife){ec.held=false;ec.stunUntil=c.time+180;c.grab=null;event(n,'escape',g.enemy);}else{g.enemy.x=clamp(n.x+(n.face>0?n.w+3:-g.enemy.w-3),0,1800-g.enemy.w);g.enemy.y=n.y+n.h-g.enemy.h;ec.stunUntil=c.time+180;if(!dir)g.armed=true;if(g.pending)throwHeld(n,g.pending);else if(dir&&(g.armed||dir!==g.entry))throwHeld(n,dir);}}
-    if(c.attack){const a=c.attack,age=c.time-a.at;n.jabAnim=Math.max(1,(a.duration-age)/16);const move=MOVES[a.kind]||{};if(move.actor&&actor(n)!==move.actor)a.finished=true;const contacts=a.hit&&a.contactIndex===undefined?[]:move.contacts||[a.windup||RULES.windup];while(!a.finished&&(a.contactIndex||0)<contacts.length&&age>=contacts[a.contactIndex||0]){a.hit=true;strike(n,a);a.contactIndex=(a.contactIndex||0)+1;}if(age>=a.duration){const queued=a.buffer;c.attack=null;n.jabAnim=0;if(queued&&c.stunUntil<=c.time)begin(n,queued.keys,queued.at,queued.action);}}
+    if(c.attack){const a=c.attack,age=c.time-a.at;n.jabAnim=Math.max(1,(a.duration-age)/16);const move=MOVES[a.kind]||{};if(move.actor&&actor(n)!==move.actor)a.finished=true;const contacts=a.hit&&a.contactIndex===undefined?[]:move.contacts||[a.windup||RULES.windup];while(!a.finished&&(a.contactIndex||0)<contacts.length&&age>=contacts[a.contactIndex||0]){a.hit=true;strike(n,a);a.contactIndex=(a.contactIndex||0)+1;}if(age>=a.duration){const queued=a.buffer;c.attack=null;n.jabAnim=0;if(queued&&c.stunUntil<=c.time){if(queued.specialSlot){if(actor(n)===queued.actor&&root.TechOpsNightProgression?.selected(n,queued.specialSlot)?.[0]===queued.skill)special(n,queued.specialSlot,queued.keys,true);}else begin(n,queued.keys,queued.at,queued.action);}}}
     tickNotes(n,dt);
     followAir(n,dt,k);
     if(c.time-c.lastHit>RULES.chainLife)clearChain(n);c.fx=c.fx.filter(e=>c.time-e.time<650);

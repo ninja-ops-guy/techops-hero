@@ -1,0 +1,14 @@
+# Night Walker combat review follow-up
+
+This branch addresses the confirmed multi-contact gravity-cancel defect, allows posture-valid specials from the existing slide and gravity windows, and checks existing platform rectangles at Uzi muzzle height on each contact. It does not change move damage, Focus costs or range. Focus and posture failures leave the slide or gravity window intact. A confirmed multi-hit attack terminated early by the aerial cap may cancel; it does not unlock the target or restore the airtime allowance.
+
+The Uzi remains direct horizontal contact, not a traveling projectile. Platform collision is a bounded use of existing geometry, not a destructible-cover or PvP defense system. Specials can be buffered during the existing final 65 ms of another attack, with one pending input; facing is captured when pressed. At execution, character, equipment, Focus, posture and interruption are checked again. The offline Arena guard's narrow existing behavior does not establish player-versus-player block or parry counterplay.
+
+## Remaining release work
+
+- Correct K's action atlas: replace dark lenses with clear glasses and remove the opaque white area between the legs, preserving the silhouette, transparency and recognized character features. Review every affected frame at native and in-game scales, facing both directions over light and dark backgrounds. No artwork is changed or approved by this branch.
+- Produce and review dedicated attack and recovery animation for all four fighters. Check believable hand and limb anatomy, weapon grips, contact timing and silhouette continuity. Iona's nunchucks and Uzi and Felicia's violin, notes, Kali and missile need legible startup, contact and recovery at actual phone scale, in both facing directions.
+- Execute focused browser acceptance on the exact revision, including special slide-cancel thresholds, gravity cancel after an air-cap finish, Uzi cover, keyboard and emulated touch. The local Chromium launch was blocked by socket permissions; previous revision receipts do not certify this branch.
+- Test on a physical iPhone, including multi-touch direction plus special, slide/gravity cancels, rotation, safe areas and interruptions. Complete an uninterrupted campaign run covering learning, equipping, saving, reloading, combat and transitions.
+- Measure attack startup, whiff punishment, Focus generation and damage by distance and opponent behavior before adjusting balance. Test block/parry and counterplay against actual players after those systems exist. Competitive stats require normalization independently of campaign progression and equipment.
+- Complete multiplayer simulation, network, independent-client and authoritative-server qualification separately. This branch targets the offline skills base and does not modify the separate Arena PvP prototype.

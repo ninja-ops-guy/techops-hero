@@ -21,9 +21,11 @@ Damage is before existing progression/preset modifiers. These names describe gam
 
 Focus starts at zero, caps at 100, and lives in the current combat state. Ordinary confirmed strikes earn eight focus; on-beat strikes earn four more. Guarded incoming contacts earn four. Unblocked hurt removes 25. Specials cannot refund their own focus through hits. Whiffing still spends the cost. Failed unlock, posture, pause or insufficient-focus checks spend nothing. Recovery prevents concurrent specials.
 
+Special inputs can also be buffered in the final 65 ms of an attack. The first buffered action wins; Focus is spent only when the special starts, and actor, equipped move and all activation requirements are rechecked. Hurt cancels the queued action. The paused combat clock does not advance the buffer.
+
 The HUD shows the numeric meter and six proportional pips. Focus resets when the combat state is replaced and is not persisted in a save checkpoint. It is not Day XP or a source of story unlocks.
 
-All eight moves use the existing target, damage, pause clock and reaction systems. Multi-contact attacks stay on one target and stop on defeat, lost range, actor change or the existing three-hit aerial cap. Uzi is a bounded, horizontal same-height attack; it cannot hit behind, above another floor or beyond its reach. It is not a simulated projectile or an added destructible-wall/line-of-sight system. Its short tracer follows confirmed contacts. K's slam knocks down a grounded target or terminates an airborne juggle. Evasive sweep's startup invulnerability is short and uses the existing physics timer.
+The original eight moves use the existing target, damage, pause clock and reaction systems. Multi-contact attacks stay on one target and stop on defeat, lost range, actor change or the existing three-hit aerial cap. A confirmed multi-contact attack terminated by that cap can gravity-cancel; the target remains locked and the once-per-airtime limit still applies. Posture-valid specials can cancel a slide after 100 ms or use an active gravity-cancel window; unsuccessful prerequisite checks preserve the window and focus. Uzi remains a bounded, horizontal same-height contact attack, not a simulated projectile. Each contact checks existing platform rectangles at muzzle height for cover. Its short tracer follows confirmed contacts. K's slam knocks down a grounded target or terminates an airborne juggle. Evasive sweep's startup invulnerability is short and uses the existing physics timer.
 
 ## Practice and presentation
 
