@@ -1,0 +1,60 @@
+{
+  "profile": "desktop",
+  "checks": [
+    "fresh title entry and physical movement reach a saved local scan",
+    "optional notes record a real interaction without revealing future sites or private viewpoints",
+    "task isolation changes the hazard without granting shelter support",
+    "journal pauses the task clock",
+    "route kit adds a physical raised crossing",
+    "failed preference save rolls back and reports the failure",
+    "explicit audio gesture starts the adaptive score",
+    "audio silences during dialogue and resumes without a burst",
+    "existing master audio toggle controls field score",
+    "action remap works and the freed legacy key cannot open dialogue",
+    "chapter return restores equipment, comfort, raised route and viewpoint recap",
+    "full page reload restores remapping and room changes without audio autoplay",
+    "field controls retain 44px targets and clear movement/combat controls",
+    "directional Light beside an objective preserves combat",
+    "gentle combat halves a real incoming melee hit before defeat handling",
+    "a local security construct follows the motor rather than the player",
+    "rehearsal plays back the private pattern while background music remains paused",
+    "optional rehearsal persists privately with no quest reward",
+    "failed live-cycle bypass opens the alternate walkway",
+    "service recovery retains the chapter and creates a playable raised approach"
+  ],
+  "errors": [],
+  "pass": true,
+  "fixtures": "Later-chapter prerequisites, chapter/room/objective positions, and one stationary combat opponent. No claim of native-story unlock or physical-device coverage.",
+  "bounds": {
+    "field-tools": {
+      "x": 12,
+      "y": 546,
+      "w": 100.453125,
+      "h": 44
+    },
+    "living-world-interact": {
+      "x": 526.4609375,
+      "y": 606,
+      "w": 227.078125,
+      "h": 44
+    },
+    "living-world-objective": {
+      "x": 12,
+      "y": 124,
+      "w": 520,
+      "h": 88.9375
+    },
+    "dpad": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
+    },
+    "v55-nmbtns": {
+      "x": 1150,
+      "y": 540,
+      "w": 120,
+      "h": 96
+    }
+  }
+}

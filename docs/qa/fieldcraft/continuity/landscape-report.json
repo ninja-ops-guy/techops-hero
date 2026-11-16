@@ -1,0 +1,53 @@
+{
+  "profile": "landscape",
+  "viewport": {
+    "width": 844,
+    "height": 390
+  },
+  "reports": [
+    {
+      "chapter": "morrow_array",
+      "room": "dock",
+      "actor": "bellwether",
+      "health": 40
+    },
+    {
+      "chapter": "factory_return",
+      "room": "receiving",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "no_common_channel",
+      "room": "earth",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "hold_receiving",
+      "room": "desk",
+      "actor": "mike",
+      "health": 40
+    },
+    {
+      "chapter": "iona_receiving",
+      "room": "bench",
+      "actor": "iona",
+      "health": 40
+    },
+    {
+      "chapter": "low_return",
+      "room": "workshop",
+      "actor": "k",
+      "health": 40
+    },
+    {
+      "chapter": "queue_afterward",
+      "room": "home",
+      "actor": "mike",
+      "health": 40
+    }
+  ],
+  "errors": [],
+  "method": "Revisit UI from completed playthrough; normal keyboard movement; no story or position injection."
+}

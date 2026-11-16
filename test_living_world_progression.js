@@ -71,4 +71,17 @@ test('aftermath reports only completed consequences',()=>{
  const s=A.initial();assert(!A.consequences(s).includes('An Unfinished Song:'));s.flags.song_shared=true;
  assert(A.consequences(s).includes('An Unfinished Song:'));assert(!A.consequences(s).includes('The Spare Key:'));
 });
+test('earlier viewpoints are explicit and never imply a physical return from space to Earth',()=>{
+ for(const id of ['morrow_array','no_common_channel','hold_receiving','iona_receiving']){const e=A.episode(id);assert.match(e.chapter,/Earlier/);assert.match(e.bridge,/Earlier/);}
+ assert.match(A.episode('no_common_channel').bridge,/before the pier convergence and departure/);
+ assert.match(A.episode('morrow_array').bridge,/before the Earth fracture/);
+});
+test('shipboard coda preserves existing save IDs and distinguishes carried records from live Earth reports',()=>{
+ const e=A.episode('queue_afterward');assert.deepEqual(e.rooms.map(r=>r.id),['desk','floor','home']);assert.deepEqual(e.goals.map(g=>g.id),['queue','repair','remember','end']);assert.deepEqual(e.after,['low_return']);assert.match(e.bridge,/existing crew/);assert.match(e.goals.at(-1).text,/rests aboard/);
+ for(const id of ['spare_key','repair_held','takes_over','place_ready']){const q=A.Data.sidequests.find(q=>q.id===id);assert.match(q.steps.at(-1)[1],/Earth/);assert.equal(q.stages.at(-1).episode,'queue_afterward');}
+ const s=ready();s.flags.waldo_invited=s.flags.waldo_visit_received=true;A.start(s,e.id,{});s.active.room='home';s.active.step=3;const old=A.validate(JSON.parse(JSON.stringify(s)));A.start(old,e.id,{});assert.equal(old.active.room,'home');assert.equal(old.active.step,3);
+});
+test('bounded return preserves two travelers, unequal clocks and the care watch',()=>{
+ const e=A.episode('low_return');assert.match(e.bridge,/Only K and Iona/);assert.match(e.bridge,/six ship-side hours, twenty-four Low Quarter hours/);assert.match(e.bridge,/explicit care watch/);assert.match(e.bridge,/spare is consumed/);assert.match(A.episode('factory_return').bridge,/one living body remains under care/);
+});
 console.log(JSON.stringify({suite:'living-world-progression',checks}));

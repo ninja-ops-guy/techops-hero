@@ -1,0 +1,193 @@
+CHAPTER service_ring
+OBJECTIVE service_ring request
+OBJECTIVE service_ring power
+OBJECTIVE service_ring verify
+OBJECTIVE service_ring return
+CHAPTER three_calls
+OBJECTIVE three_calls dispatch
+OBJECTIVE three_calls power
+OBJECTIVE three_calls dispatch
+OBJECTIVE three_calls access
+OBJECTIVE three_calls dispatch
+OBJECTIVE three_calls people
+OBJECTIVE three_calls close
+CHAPTER annex
+OBJECTIVE annex audit
+OBJECTIVE annex door
+OBJECTIVE annex bypass
+OBJECTIVE annex collect
+OBJECTIVE annex receive
+OBJECTIVE annex report
+CHAPTER pier
+OBJECTIVE pier carrier
+OBJECTIVE pier crane_signal
+OBJECTIVE pier seal
+OBJECTIVE pier protect
+OBJECTIVE pier receive
+OBJECTIVE pier handoff
+CHAPTER rooftops
+OBJECTIVE rooftops east
+OBJECTIVE rooftops west
+OBJECTIVE rooftops module
+OBJECTIVE rooftops qualify
+OBJECTIVE rooftops return
+CHAPTER hangar
+OBJECTIVE hangar scope
+OBJECTIVE hangar power
+OBJECTIVE hangar arm
+OBJECTIVE hangar stop
+OBJECTIVE hangar verify
+CHAPTER prison
+OBJECTIVE prison find
+OBJECTIVE prison talk
+OBJECTIVE prison contact
+OBJECTIVE prison free_k
+OBJECTIVE prison free_oz
+OBJECTIVE prison leave
+CHAPTER home
+OBJECTIVE home bed
+OBJECTIVE home tool
+OBJECTIVE home handoff
+OBJECTIVE home rest
+CHAPTER waldo_visit
+OBJECTIVE waldo_visit invite
+OBJECTIVE waldo_visit walk
+OBJECTIVE waldo_visit visit
+OBJECTIVE waldo_visit stay
+CHAPTER low_quarter
+OBJECTIVE low_quarter lead
+OBJECTIVE low_quarter capacity
+OBJECTIVE low_quarter names
+OBJECTIVE low_quarter decision
+CHAPTER dock
+OBJECTIVE dock support
+OBJECTIVE dock whole
+OBJECTIVE dock ramp
+OBJECTIVE dock receive
+OBJECTIVE dock last
+CHAPTER iona_local
+OBJECTIVE iona_local plan
+OBJECTIVE iona_local route
+OBJECTIVE iona_local kit
+OBJECTIVE iona_local receive
+OBJECTIVE iona_local end
+CHAPTER iona_pressure
+OBJECTIVE iona_pressure read
+OBJECTIVE iona_pressure isolate
+OBJECTIVE iona_pressure crew
+OBJECTIVE iona_pressure handoff
+OBJECTIVE iona_pressure end
+CHAPTER archive
+OBJECTIVE archive notebook
+OBJECTIVE archive compare
+OBJECTIVE archive privacy
+OBJECTIVE archive new_take
+CHAPTER factory_heist
+OBJECTIVE factory_heist observe
+OBJECTIVE factory_heist return_lane
+OBJECTIVE factory_heist designs
+OBJECTIVE factory_heist extract
+CHAPTER last_shift
+OBJECTIVE last_shift brief
+OBJECTIVE last_shift stop
+OBJECTIVE last_shift staff
+OBJECTIVE last_shift muster
+OBJECTIVE last_shift end
+CHAPTER moving_safehouse
+OBJECTIVE moving_safehouse board
+OBJECTIVE moving_safehouse repair
+OBJECTIVE moving_safehouse needs
+OBJECTIVE moving_safehouse arrival
+OBJECTIVE moving_safehouse end
+CHAPTER fracture
+OBJECTIVE fracture check
+OBJECTIVE fracture support
+OBJECTIVE fracture neighbors
+OBJECTIVE fracture receive
+OBJECTIVE fracture corner
+CHAPTER iona_blackout
+OBJECTIVE iona_blackout listen
+OBJECTIVE iona_blackout support
+OBJECTIVE iona_blackout find
+OBJECTIVE iona_blackout safe
+OBJECTIVE iona_blackout end
+CHAPTER borrowed_skill
+OBJECTIVE borrowed_skill observe
+OBJECTIVE borrowed_skill support
+OBJECTIVE borrowed_skill isolate
+OBJECTIVE borrowed_skill check
+OBJECTIVE borrowed_skill end
+CHAPTER morrow_array
+OBJECTIVE morrow_array scope
+OBJECTIVE morrow_array tether
+OBJECTIVE morrow_array sample
+OBJECTIVE morrow_array recover
+OBJECTIVE morrow_array end
+CHAPTER factory_return
+OBJECTIVE factory_return roster
+OBJECTIVE factory_return support
+OBJECTIVE factory_return tarin
+OBJECTIVE factory_return handoff
+OBJECTIVE factory_return record
+CHAPTER no_common_channel
+OBJECTIVE no_common_channel sender
+OBJECTIVE no_common_channel post
+OBJECTIVE no_common_channel receive
+OBJECTIVE no_common_channel local
+OBJECTIVE no_common_channel end
+CHAPTER hold_receiving
+OBJECTIVE hold_receiving capacity
+OBJECTIVE hold_receiving power
+OBJECTIVE hold_receiving arrive
+OBJECTIVE hold_receiving receive
+OBJECTIVE hold_receiving end
+CHAPTER iona_receiving
+OBJECTIVE iona_receiving expect
+OBJECTIVE iona_receiving group
+OBJECTIVE iona_receiving handoff
+OBJECTIVE iona_receiving plan
+OBJECTIVE iona_receiving end
+CHAPTER low_return
+OBJECTIVE low_return landmark
+OBJECTIVE low_return testimony
+OBJECTIVE low_return endpoint
+OBJECTIVE low_return together
+CHAPTER queue_afterward
+OBJECTIVE queue_afterward queue
+OBJECTIVE queue_afterward repair
+OBJECTIVE queue_afterward remember
+OBJECTIVE queue_afterward end
+SIDE QUEST worker_route 0
+SIDE QUEST worker_route 1
+SIDE QUEST worker_route 2
+SIDE QUEST two_cups 0
+SIDE QUEST two_cups 1
+SIDE QUEST two_cups 2
+SIDE QUEST name_door 0
+SIDE QUEST name_door 1
+SIDE QUEST name_door 2
+SIDE QUEST soundcheck 0
+SIDE QUEST soundcheck 1
+SIDE QUEST soundcheck 2
+SIDE QUEST delivery 0
+SIDE QUEST delivery 1
+SIDE QUEST delivery 2
+SIDE QUEST receiving_end 0
+SIDE QUEST receiving_end 1
+SIDE QUEST receiving_end 2
+SIDE QUEST spare_key 0
+SIDE QUEST spare_key 1
+SIDE QUEST spare_key 2
+SIDE QUEST repair_held 0
+SIDE QUEST repair_held 1
+SIDE QUEST repair_held 2
+SIDE QUEST unfinished_song 0
+SIDE QUEST unfinished_song 1
+SIDE QUEST unfinished_song 2
+SIDE QUEST takes_over 0
+SIDE QUEST takes_over 1
+SIDE QUEST takes_over 2
+SIDE QUEST place_ready 0
+SIDE QUEST place_ready 1
+SIDE QUEST place_ready 2
+PASS desktop 27 chapters, 11 optional quests
