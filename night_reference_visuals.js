@@ -12,6 +12,15 @@
   var atlas = root.NIGHT_WALKER_REFERENCE_V1 || null;
   var image = null;
   var portraitObserver = null;
+  var labImages = {};
+  function labImage(src){if(!src||typeof root.Image!=="function")return null;if(!labImages[src]){labImages[src]=new root.Image();labImages[src].src=src;}var im=labImages[src];return im.complete&&im.naturalWidth?im:null;}
+  function drawLabActor(ctx,n,px,py,now){
+    var id=n&&n._combatLab&&n._combatLab.actor;if(id!=="k"&&id!=="felicia")return false;
+    var cx=px+(n.w||22)/2,feet=py+(n.h||34),im,atlas,frame;
+    if(id==="k"){atlas=root.K_ACTION;im=atlas&&labImage(atlas.src);frame=atlas&&atlas.frames[Math.abs(n.vx||0)>.2?"action"+Math.floor(now/120)%4:"action28"];if(im&&frame){ctx.save();ctx.translate(cx,feet);if(n.face<0)ctx.scale(-1,1);var w=68*atlas.cell/atlas.cellH;ctx.drawImage(im,frame[0]*atlas.cell,frame[1]*atlas.cellH,atlas.cell,atlas.cellH,-w/2,-68,w,68);ctx.restore();return true;}}
+    else{var src;try{src=typeof TO_FELICIA!=="undefined"?TO_FELICIA:null;}catch(_){}im=labImage(src);if(im){ctx.save();ctx.translate(cx,feet);if(n.face<0)ctx.scale(-1,1);ctx.drawImage(im,128,0,128,128,-37,-74,74,74);ctx.restore();return true;}}
+    ctx.save();ctx.fillStyle="#d9eee7";ctx.font="11px monospace";ctx.textAlign="center";ctx.fillText(id.toUpperCase()+" · loading",cx,feet-40);ctx.restore();return true;
+  }
 
   function imageReady() {
     if (!atlas || !atlas.src || typeof root.Image !== "function") return null;
@@ -38,6 +47,7 @@
   function drawReferenceNightWalker(x, NM, px, py, now) {
     var h=Math.round(Math.max(70,Math.min(82,(Number(NM&&NM.h)||34)*2.2)));
     if(root.TechOpsIonaNightwalker&&root.TechOpsIonaNightwalker.draw(x,NM,px,py,now,h))return true;
+    if(drawLabActor(x,NM,px,py,now||0))return true;
     if(root.TechOpsNightMoves&&root.TechOpsNightMoves.draw(x,NM,px,py,now,h))return true;
     var art=root.TechOpsArtHandoff,combatPose=root.TechOpsNightCombat&&root.TechOpsNightCombat.pose(NM);
     if(!combatPose&&art&&art.drawActor(x,"mike",NM,px+(NM.w||22)/2,py+(NM.h||34)+3,h,now||0))return true;

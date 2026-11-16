@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=50,BUILD="20261115-living-world-r2",started=false,done=false;
+  var VERSION=50,BUILD="20261116-combat-lab-r2",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",

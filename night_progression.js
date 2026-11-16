@@ -28,7 +28,7 @@ function bonuses(p){validate(p);return {damage:1+.06*p.stats.strength+(p.skills.
 const game=()=>typeof S!=='undefined'?S:root.S;
 function eligible(n){const s=game();return !!(s&&s.nightMode===n&&n&&!n.drive&&!n._combatLab&&!n._v736&&!n._sector04&&n.district!=='waldo'&&(!n._livingWorld||['mike','k','iona','felicia'].includes(root.TechOpsLivingWorldRuntime?.viewpoint(n))));}
 function record(){const s=game();if(!s)throw Error('Start a Night run first');s.meta=s.meta||{};if(!s.meta.nightTraining)s.meta.nightTraining=fresh();return validate(s.meta.nightTraining);}
-function modifiers(n){try{return eligible(n)?bonuses(record()):bonuses(fresh());}catch(_){return bonuses(fresh());}}
+function modifiers(n){try{if(n?._combatLab&&root.TechOpsCombatLab)return root.TechOpsCombatLab.modifiers(n);return eligible(n)?bonuses(record()):bonuses(fresh());}catch(_){return bonuses(fresh());}}
 function persist(){const f=typeof save==='function'?save:root.save;if(!f||!f())throw Error('Training could not be saved. No points were spent; retry when storage is available.');}
 function transact(fn){const p=record(),before=JSON.stringify(p);try{const result=fn(p);if(result)persist();return result;}catch(e){game().meta.nightTraining=JSON.parse(before);throw e;}}
 function notify(text){if(root.toast)root.toast(text,3500);}

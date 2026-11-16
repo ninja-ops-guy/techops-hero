@@ -1,8 +1,8 @@
 # Night Walker competitive modes — implementation scope
 
 This is a design and engineering backlog, not a claim that multiplayer exists.
-The current Combat Lab is offline, single-player Mike against a stationary target
-or one existing AI guard. It uses the existing Night combat loop. There is no
+The current Combat Lab is offline, single-player K, Iona, Mike or Felicia against
+a stationary target or one existing AI opponent (guard, skimmer or hunter). It uses the existing Night combat loop. There is no
 online connection, player-versus-player hit detection, team setup, character
 selection, loadout, pickup or unlock in the current slice.
 
@@ -15,9 +15,9 @@ selection, loadout, pickup or unlock in the current slice.
   Cameras, lasers, disable/repair, alarms and pickups must be visible to the
   affected players and support counterplay, not merely change labels.
 * Arena: fighting-focused 1v1 and 2v2, with round wins, rematch and no breach
-  objectives. The present one-guard offline fight is an early practice slice.
+  objectives. The present single-opponent offline fight is an early practice slice.
 * Training: movement, strikes, blocking, combos, resets, and eventually opponent
-  behavior and character/tool drills. The present target is stationary.
+  behavior and character/tool drills. The present target is stationary, with a damage counter and reset.
 
 ## Character and loadout direction
 

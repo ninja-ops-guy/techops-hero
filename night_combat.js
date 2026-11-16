@@ -9,6 +9,7 @@
   function actor(n){
     const s=typeof S!=='undefined'?S:root.S,linked=root.TechOpsLinked;
     const expedition=root.TechOpsLivingWorldRuntime;
+    if(active(n)&&s&&s.nightMode===n&&n._combatLab&&root.TechOpsCombatLab?.ROSTER[n._combatLab.actor])return n._combatLab.actor;
     if(active(n)&&!n.drive&&s&&s.nightMode===n&&expedition&&expedition.viewpoint(n)==='iona')return 'iona';
     if(!active(n)||n.drive||!s||s.nightMode!==n||!linked)return 'mike';
     const op=linked.mission(),id=s.meta&&s.meta.seeWorldLink;
