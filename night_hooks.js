@@ -455,6 +455,7 @@ function nmCheckClear() {
   if (NM && NM._livingWorld) { NM.clear=false; return; }
   if (!NM.clear && NM.enemies.length && NM.enemies.every(e => !e.alive)) {
     NM.clear = true;
+    if(window.TechOpsNightProgression)window.TechOpsNightProgression.clear(NM);
     NM.msg = "✅ STREET CLEAR — head right →"; NM.msgT = performance.now() + 3000;
     sfx("promote");
   }
@@ -486,19 +487,20 @@ function stepNM(dt) {
   if(grounded)NM.vx=corridorAxis*3.4;
   // run
   if (!NM.block && !grounded) {
-    const acc = NM.onGround ? .62 : .4;
+    const training=window.TechOpsNightProgression?.modifiers(NM);
+    const acc = (NM.onGround ? .62 : .4*(training?.air||1))*(training?.speed||1);
     if (L) { NM.vx -= acc * f; NM.face = -1; }
     if (R) { NM.vx += acc * f; NM.face = 1; }
   }
-  const maxV = NM.dashT > 0 ? 9.5 : 4.8;
+  const maxV = NM.dashT > 0 ? 9.5 : 4.8*(window.TechOpsNightProgression?.modifiers(NM).speed||1);
   NM.vx = clamp(NM.vx, -maxV, maxV);
   if (!L && !R && NM.onGround) NM.vx *= Math.pow(.76, f);
   // jump / double jump (flip)
   if (NM._livingWorld && window.TechOpsFieldcraft) {
-    if(window.TechOpsFieldcraft.jump(NM,dt,J,pairDown))sfx('jump');
+    if(window.TechOpsFieldcraft.jump(NM,dt,J,pairDown,window.TechOpsNightProgression?.modifiers(NM).jumps||2))sfx('jump');
   } else if (J && !NM.jHeld) {
     if (NM.onGround) { NM.vy = -10.4; NM.onGround = false; NM.jumps = 1; sfx("jump"); }
-    else if (NM.jumps < 2) { NM.vy = -8.8; NM.jumps = 2; NM.flip = 16; sfx("jump"); }
+    else if (NM.jumps < (window.TechOpsNightProgression?.modifiers(NM).jumps||2)) { NM.vy = -8.8; NM.jumps=Math.max(1,NM.jumps)+1; NM.flip = 16; sfx("jump"); }
   }
   NM.jHeld = !!J;
   // dash

@@ -29,6 +29,7 @@
         if(!e.privateCompletion&&(e.actor==='mike'||e.actors&&e.actors.includes('mike')))game().journal=journal.concat({day:game().day,title:'Field report — '+e.title,body:e.ending});
       }
       if(!persist()){game().meta.livingWorld=before;game().journal=journal;failed();return null;}
+      if(state().active?.finished&&root.TechOpsNightProgression)root.TechOpsNightProgression.chapter(state().active.id);
       return result;
     }catch(e){game().meta.livingWorld=before;game().journal=journal;dialog('ROUTE NOT AVAILABLE',html(e.message),[{t:'Back',f:close}]);return null;}
   }
@@ -127,6 +128,7 @@
     const options=[{t:'Resume — '+(g?g.label:'quiet aftermath'),f:close},{t:'Routes and current conditions',f:openRoutes},{t:'Optional quest notes',f:openOptionalNotes}];
     if(e.actors)options.push({t:'Switch operator — '+e.actors.find(x=>x!==a.actor),f:()=>{const r=commit(s=>A.switchActor(s));if(r){delete world()._nightCombat;if(e.remoteRooms)loadRoom();resetInput();announce();close();}}});
     if(X)options.push({t:'Field equipment and approaches',f:X.tools},{t:'Comfort, controls and audio',f:X.settings});
+    if(root.TechOpsNightProgression)options.push({t:'Stats & skills',f:()=>root.TechOpsNightProgression.open(openJournal)});
     if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
     options.push({t:'Save chapter and return to the street',f:()=>leave(false)});
     const knowledge=(s.knowledge[a.actor]||[]).slice(-4).map(html).join('<br><br>');
@@ -155,7 +157,7 @@
     if(X)X.afterStep(dt);
     lastHP=n.hp;saveAge+=Math.min(.05,dt||0);
     if(result.changed||saveAge>=4){saveAge=0;if(!persist()){game().meta.livingWorld=before;failed();return;}}
-    if(result.advanced){n.enemies=[];spawn(n);announce();if(result.finished)completion();}
+    if(result.advanced){n.enemies=[];spawn(n);announce();if(result.finished){if(root.TechOpsNightProgression)root.TechOpsNightProgression.chapter(state().active.id);completion();}}
     if(ui){ui.hidden=false;const p=nearest();ui.querySelector('button').disabled=!p;ui.querySelector('button').textContent=p?'INTERACT · '+p.label:'Move to a marked point';}
   }
   function recover(walkway){const oldHP=world().hp;world().hp=40;const result=commit(s=>{A.retry(s);const pos=F.recover(s,A.episode(s.active.id),walkway);Object.assign(s.active,pos);return true;});if(result){loadRoom();close();}else world().hp=oldHP;}

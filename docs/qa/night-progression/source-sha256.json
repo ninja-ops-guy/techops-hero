@@ -1,0 +1,15 @@
+{
+  "docs/production/NIGHT-PROGRESSION.md": "c24df60407da271698ed72302756fa3f68118c60934dbd0ffe5a1ea5febd32d3",
+  "night_progression.js": "c06dbb9ddccacc618a3039e0f4d7a7ab3148293f174bdcfdee56479f7646d88c",
+  "scripts/night_progression_browser.mjs": "d0e327f7eff941dbeac0650e9a17b7085d2737c846075acda564bf7dcfea2c44",
+  "test_night_progression.js": "ac9afbc2a817d37c7529a9bbdcd7557564abc4196e3ca7e951f32e1dce19115c",
+  "campaign_dead_air_runtime.js": "c4ac3a5368b5db5779271ff860f90a9eae503a74913a845472203691396a43ac",
+  "campaign_fieldcraft.js": "2a70ff6d9f0f4ce6359f5528f17df796be29f70d2cf53406b09eede53c3f8803",
+  "campaign_living_world_runtime.js": "64ceb057dd4022cdee11dc3f31893c887c2e8e4813e404c652b61e4b8b712a8a",
+  "campaign_nightwalker_runtime.js": "f3a94ee48c5ea7ec10ae53277f58d404830c5826a0d8a20367ab2bdec413536f",
+  "night_combat.js": "b4d076c83db89a9ecad9ddac076b2deb03c932de09f66ebaf6c564c0c751ec5b",
+  "night_hooks.js": "5d1d2f20957b05054e08a1777df0b8b727769f9dc9d61d1faf4b8832f6686ad9",
+  "production_bootstrap.js": "6bc502efee5b9ce8a758eea56e283cbaccdacf16cff61c95586e8c500e91d771",
+  "runtime_night.js": "f77e34d50dfb6e545c44669f7a01f9902976422c4c4e062cdc6b527e11f1315b",
+  "scripts/production_release_gate.js": "0a75e82a730fdace702ec927e0cdaf0eaded5e566d69cf434593f2af914cb237"
+}

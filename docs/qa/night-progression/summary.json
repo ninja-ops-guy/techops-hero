@@ -1,0 +1,47 @@
+[
+  {
+    "profile": "desktop",
+    "checks": [
+      "fresh run begins at level one with baseline double jump and no free points",
+      "UI rejects unearned upgrades",
+      "all five stats and a prerequisite-gated skill can be learned through UI",
+      "training controls retain 44-pixel touch targets",
+      "reset cancellation preserves the build",
+      "full reload restores XP, stats, skills and reward deduplication",
+      "real jump input permits exactly three jumps and rejects a fourth",
+      "free respec refunds allocations while preserving XP and level"
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "profile": "portrait",
+    "checks": [
+      "fresh run begins at level one with baseline double jump and no free points",
+      "UI rejects unearned upgrades",
+      "all five stats and a prerequisite-gated skill can be learned through UI",
+      "training controls retain 44-pixel touch targets",
+      "reset cancellation preserves the build",
+      "full reload restores XP, stats, skills and reward deduplication",
+      "real jump input permits exactly three jumps and rejects a fourth",
+      "free respec refunds allocations while preserving XP and level"
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "profile": "landscape",
+    "checks": [
+      "fresh run begins at level one with baseline double jump and no free points",
+      "UI rejects unearned upgrades",
+      "all five stats and a prerequisite-gated skill can be learned through UI",
+      "training controls retain 44-pixel touch targets",
+      "reset cancellation preserves the build",
+      "full reload restores XP, stats, skills and reward deduplication",
+      "real jump input permits exactly three jumps and rejects a fourth",
+      "free respec refunds allocations while preserving XP and level"
+    ],
+    "errors": [],
+    "pass": true
+  }
+]

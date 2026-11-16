@@ -251,6 +251,7 @@
     }
     if(standalone(state())){
       const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Combat moves & combos',f:combatGuide},{t:'Back to the street',f:root.closeDlg}];
+      if(root.TechOpsNightProgression)options.push({t:'Stats & skills',f:()=>root.TechOpsNightProgression.open(openCampaign)});
       if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
       if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
       if(root.TechOpsDeadAirRuntime)options.unshift({t:'NIGHTWALKER — Dead Air at Pier 7',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsDeadAirRuntime.enterBrowser();}});
@@ -266,6 +267,7 @@
       if(root.TechOpsSector04Runtime)options.push({t:world()._sector04?'Continue Sector 04 investigation':'Enter Sector 04 — story campaign',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsSector04Runtime.enterBrowser();}});
       options.push({t:'Return to daytime investigation',f:resumeDay});
     }
+    if(root.TechOpsNightProgression&&root.TechOpsNightProgression.eligible(world()))options.push({t:'Stats & skills',f:()=>root.TechOpsNightProgression.open(openCampaign)});
     options.push({t:'Combat moves & combos',f:combatGuide},{t:'Back to Night Walker',f:root.closeDlg});return dialog('NIGHT WALKER // CAMPAIGN',text,options);
   }
   function openHome(){
