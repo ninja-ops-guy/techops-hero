@@ -85,11 +85,14 @@
   function gainFocus(n,amount){state(n).focus=clamp(focus(n)+amount,0,100);}
   function special(n,slot,k={}){
     if(!active(n)||inputBlocked()||n.drive||n.hp<=0||n.block||![1,2].includes(slot))return false;
-    const c=state(n);if(c.attack||c.grab||c.slide||c.gravity||n.dashT>0||c.stunUntil>c.time)return false;
+    const c=state(n);if(c.attack||c.grab||n.dashT>0||c.stunUntil>c.time)return false;
     const entry=root.TechOpsNightProgression?.selected(n,slot);
     if(!entry||!has(n,entry[0])){say(n,'LEARN THIS MOVE · STATS & SKILLS');return false;}
     const move=MOVES[entry[1].move];if(move.groundOnly&&!n.onGround||move.playerAirOnly&&n.onGround){say(n,move.groundOnly?'GROUND MOVE · LAND FIRST':'AIR MOVE · JUMP FIRST');return false;}
     if(focus(n)<move.focus){say(n,'NEED '+move.focus+' FOCUS · LAND ATTACKS');return false;}
+    // Failed prerequisites must not consume the slide or gravity window.
+    if(c.slide&&!cancelSlide(n))return false;
+    if(c.gravity)c.gravity=null;
     faceInput(n,readInput(k));gainFocus(n,-move.focus);c.dash=null;c.lastInput=c.time;
     c.attack={kind:entry[1].move,stage:0,beat:false,at:c.time,hit:false,contactIndex:0,connected:false,launch:!!move.launch,windup:move.windup,duration:Math.max((move.contacts?.at(-1)||move.windup)+45,move.recovery*(root.TechOpsNightProgression?.modifiers(n).recovery||1)),face:n.face||1};
     if(move.missile){const e=target(n,{},false,{face:n.face,reach:move.reach});c.attack.impactX=clamp(e?e.x+e.w/2:n.x+n.w/2+(n.face||1)*220,30,1770);c.attack.impactY=e?e.y+e.h/2:n.y+n.h-17;}
@@ -117,7 +120,7 @@
     if(!active(n)||inputBlocked()||n.onGround)return false;
     const c=state(n),a=c.attack,move=a&&MOVES[a.kind];
     if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.slide||c.gravity||c.gravityUsed||c.stunUntil>c.time)return false;
-    if(a&&(!a.connected||(move?.contacts&&a.contactIndex<move.contacts.length)))return false;
+    if(a&&(!a.connected||(move?.contacts&&!a.finished&&a.contactIndex<move.contacts.length)))return false;
     if(a){c.attack=null;n.jabAnim=0;}c.dash=null;c.gravityUsed=true;c.gravity={at:c.time,until:c.time+180};n.dashCD=60;n.vy=0;n.vx=clamp(n.vx||0,-3.4,3.4);event(n,'gravity-cancel');say(n,'GRAVITY CANCEL · ATTACK NOW');return true;
   }
   function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;value*=root.TechOpsNightProgression?.modifiers(n).damage||1;if(kind==='throw'&&has(n,'mikeGrip'))value*=1.1;if(!n.onGround&&has(n,'kAir'))value*=1.12;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});if(root.TechOpsNightProgression)root.TechOpsNightProgression.defeat(n,e);say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
@@ -223,6 +226,10 @@
     if(a.target&&(!a.target.alive||!n.enemies.includes(a.target)||enemy(a.target).locked)){a.finished=true;return;}
     const e=target(n,{},false,Object.assign({face:a.face,onlyEnemy:a.target},move));
     if(!e){a.finished=true;if(!a.contactIndex){clearChain(n);event(n,'whiff');sound('ping');}return;}
+    // A horizontal burst cannot pass through a platform at muzzle height.
+    // Check every contact so a moving target or newly intervening cover matters.
+    if(move.ranged){const from=n.x+n.w/2,to=e.x+e.w/2,y=n.y+n.h-20,lo=Math.min(from,to),hi=Math.max(from,to);
+      if((n.platforms||[]).some(p=>y>=p.y&&y<=p.y+(p.h||12)&&p.x+p.w>lo&&p.x<hi)){a.finished=true;if(!a.contactIndex){clearChain(n);event(n,'whiff');sound('ping');}return;}}
     const ec=enemy(e);if(ec.air&&ec.locked){clearChain(n);event(n,'whiff');return;}
     if(move.contacts)a.target=e;
     const eq=root.v733&&root.v733.equipped?root.v733.equipped():[];
