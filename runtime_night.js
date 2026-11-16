@@ -79,7 +79,7 @@
   function normalizedSnapshot(s){
     // Combat targets are object references. Persist the world once, clear queued
     // player actions, and retain enemy reaction timers/damage without replaying a hit.
-    const snapshot=JSON.parse(JSON.stringify(s,(key,value)=>key==='_nightCombat'&&value&&Array.isArray(value.events)?Object.assign({},value,{attack:null,grab:null,dash:null,follow:null,events:[],fx:[],hits:0,stage:0,beat:false}):value));
+    const snapshot=JSON.parse(JSON.stringify(s,(key,value)=>key==='_nightCombat'&&value&&Array.isArray(value.events)?Object.assign({},value,{attack:null,grab:null,dash:null,slide:null,follow:null,events:[],fx:[],hits:0,stage:0,beat:false}):value));
     const n=snapshot.nightMode;
     snapshot.inDialog=false;snapshot.inBattle=false;snapshot.paused=false;snapshot.moving=false;
     n.block=false;n.jHeld=false;n._737sHeld=false;n.dashT=0;n.vx=0;n.jabAnim=0;n.combo=0;n.hitStop=0;

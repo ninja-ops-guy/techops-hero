@@ -14,6 +14,12 @@ function fixture(dt=.016){
 function test(name,fn){fn();passed++;console.log('PASS '+name);}
 function tap(f,dir){f.r.keys[dir]=true;f.frame();f.r.keys[dir]=false;f.frame();}
 function events(f,type){return f.n._nightCombat.events.filter(e=>e.type===type);}
+test('slide has startup, grounded movement, cancel window and shared cooldown',()=>{
+ const f=fixture();f.n.enemies=[];const x=f.n.x;f.r.keys.s=true;f.r.keys.shift=true;f.frame();assert.equal(events(f,'slide').length,1);assert.equal(f.n.ifr,0);assert(f.n.x>x);assert.equal(f.input.dispatch('jump'),false);for(let i=0;i<8;i++)f.frame();assert(f.input.dispatch('jump'));f.frame();assert(!f.n._nightCombat.slide);assert(!f.n.onGround);assert(f.n.dashCD>0);assert.equal(f.api.slide(f.n,1),false);
+});
+test('slide can cancel into a deliberate attack and interruption ends it',()=>{
+ const f=fixture();f.n.enemies=[];assert(f.api.slide(f.n,1));for(let i=0;i<8;i++)f.frame();assert(f.api.attack(f.n,{},'punch'));assert(!f.n._nightCombat.slide);assert.equal(events(f,'slide-cancel').length,1);f.api.hurt(f.n);assert(!f.n._nightCombat.slide);
+});
 test('double-tap both keyboard directions, with no repeat while held',()=>{
  for(const dir of ['a','d','arrowleft','arrowright']){const f=fixture();f.n.enemies=[];tap(f,dir);tap(f,dir);assert.equal(events(f,'dash').length,1);assert.equal(f.n.face,/left|^a$/.test(dir)?-1:1);f.r.keys[dir]=true;for(let i=0;i<90;i++)f.frame();assert.equal(events(f,'dash').length,1);}
 });

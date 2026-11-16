@@ -486,15 +486,17 @@ function stepNM(dt) {
   // Grounded M5 uses a normalized horizontal plane; the same loop owns combat.
   if(grounded)NM.vx=corridorAxis*3.4;
   // run
-  if (!NM.block && !grounded) {
+  const sliding=!!(NM._nightCombat && NM._nightCombat.slide);
+  if (!NM.block && !grounded && !sliding) {
     const training=window.TechOpsNightProgression?.modifiers(NM);
     const acc = (NM.onGround ? .62 : .4*(training?.air||1))*(training?.speed||1);
     if (L) { NM.vx -= acc * f; NM.face = -1; }
     if (R) { NM.vx += acc * f; NM.face = 1; }
   }
-  const maxV = NM.dashT > 0 ? 9.5 : 4.8*(window.TechOpsNightProgression?.modifiers(NM).speed||1);
+  const maxV = NM.dashT > 0 ? 9.5 : sliding ? 7.2 : 4.8*(window.TechOpsNightProgression?.modifiers(NM).speed||1);
   NM.vx = clamp(NM.vx, -maxV, maxV);
-  if (!L && !R && NM.onGround) NM.vx *= Math.pow(.76, f);
+  if (sliding) NM.vx *= Math.pow(.96, f);
+  else if (!L && !R && NM.onGround) NM.vx *= Math.pow(.76, f);
   // jump / double jump (flip)
   if (NM._livingWorld && window.TechOpsFieldcraft) {
     if(window.TechOpsFieldcraft.jump(NM,dt,J,pairDown,window.TechOpsNightProgression?.modifiers(NM).jumps||2))sfx('jump');
