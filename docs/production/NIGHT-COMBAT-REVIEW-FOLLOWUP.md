@@ -2,7 +2,7 @@
 
 This branch addresses the confirmed multi-contact gravity-cancel defect, allows posture-valid specials from the existing slide and gravity windows, and checks existing platform rectangles at Uzi muzzle height on each contact. It does not change move damage, Focus costs or range. Focus and posture failures leave the slide or gravity window intact. A confirmed multi-hit attack terminated early by the aerial cap may cancel; it does not unlock the target or restore the airtime allowance.
 
-The Uzi remains direct horizontal contact, not a traveling projectile. Platform collision is a bounded use of existing geometry, not a destructible-cover or PvP defense system. Specials do not gain a late-recovery input buffer in this revision. The offline Arena guard's narrow existing behavior does not establish player-versus-player block or parry counterplay.
+The Uzi remains direct horizontal contact, not a traveling projectile. Platform collision is a bounded use of existing geometry, not a destructible-cover or PvP defense system. Specials can be buffered during the existing final 65 ms of another attack, with one pending input; facing is captured when pressed. At execution, character, equipment, Focus, posture and interruption are checked again. The offline Arena guard's narrow existing behavior does not establish player-versus-player block or parry counterplay.
 
 ## Remaining release work
 

@@ -83,9 +83,15 @@
   function focus(n){return clamp(Number(state(n).focus)||0,0,100);}
   function has(n,id){return !!root.TechOpsNightProgression?.has(n,id);}
   function gainFocus(n,amount){state(n).focus=clamp(focus(n)+amount,0,100);}
-  function special(n,slot,k={}){
+  function special(n,slot,k={},buffered=false){
     if(!active(n)||inputBlocked()||n.drive||n.hp<=0||n.block||![1,2].includes(slot))return false;
-    const c=state(n);if(c.attack||c.grab||n.dashT>0||c.stunUntil>c.time)return false;
+    const c=state(n);if(c.grab||n.dashT>0||c.stunUntil>c.time)return false;
+    if(c.attack){
+      const a=c.attack,entry=root.TechOpsNightProgression?.selected(n,slot);
+      if(c.time-a.at>=a.duration-RULES.buffer&&!a.buffer&&entry&&has(n,entry[0]))
+        a.buffer={specialSlot:slot,keys:Object.assign({},readInput(k)),actor:actor(n),skill:entry[0]};
+      return false;
+    }
     const entry=root.TechOpsNightProgression?.selected(n,slot);
     if(!entry||!has(n,entry[0])){say(n,'LEARN THIS MOVE · STATS & SKILLS');return false;}
     const move=MOVES[entry[1].move];if(move.groundOnly&&!n.onGround||move.playerAirOnly&&n.onGround){say(n,move.groundOnly?'GROUND MOVE · LAND FIRST':'AIR MOVE · JUMP FIRST');return false;}
@@ -93,7 +99,7 @@
     // Failed prerequisites must not consume the slide or gravity window.
     if(c.slide&&!cancelSlide(n))return false;
     if(c.gravity)c.gravity=null;
-    faceInput(n,readInput(k));gainFocus(n,-move.focus);c.dash=null;c.lastInput=c.time;
+    faceInput(n,buffered?k:readInput(k));gainFocus(n,-move.focus);c.dash=null;c.lastInput=c.time;
     c.attack={kind:entry[1].move,stage:0,beat:false,at:c.time,hit:false,contactIndex:0,connected:false,launch:!!move.launch,windup:move.windup,duration:Math.max((move.contacts?.at(-1)||move.windup)+45,move.recovery*(root.TechOpsNightProgression?.modifiers(n).recovery||1)),face:n.face||1};
     if(move.missile){const e=target(n,{},false,{face:n.face,reach:move.reach});c.attack.impactX=clamp(e?e.x+e.w/2:n.x+n.w/2+(n.face||1)*220,30,1770);c.attack.impactY=e?e.y+e.h/2:n.y+n.h-17;}
     if(move.evade)n.ifr=Math.max(n.ifr||0,move.evade);n.jabAnim=20;event(n,'special',null,{kind:entry[1].move});say(n,entry[1].name+' · −'+move.focus+' FOCUS');return true;
@@ -273,7 +279,7 @@
     if(c.slide&&c.time>=c.slide.until)c.slide=null;
     if(n.onGround){c.gravity=null;c.gravityUsed=false;}else if(c.gravity&&c.time>=c.gravity.until)c.gravity=null;
     if(c.grab){const g=c.grab,ec=enemy(g.enemy),dir=direction(k);if(!g.enemy.alive||!n.enemies.includes(g.enemy)||c.time-g.at>RULES.grabLife){ec.held=false;ec.stunUntil=c.time+180;c.grab=null;event(n,'escape',g.enemy);}else{g.enemy.x=clamp(n.x+(n.face>0?n.w+3:-g.enemy.w-3),0,1800-g.enemy.w);g.enemy.y=n.y+n.h-g.enemy.h;ec.stunUntil=c.time+180;if(!dir)g.armed=true;if(g.pending)throwHeld(n,g.pending);else if(dir&&(g.armed||dir!==g.entry))throwHeld(n,dir);}}
-    if(c.attack){const a=c.attack,age=c.time-a.at;n.jabAnim=Math.max(1,(a.duration-age)/16);const move=MOVES[a.kind]||{};if(move.actor&&actor(n)!==move.actor)a.finished=true;const contacts=a.hit&&a.contactIndex===undefined?[]:move.contacts||[a.windup||RULES.windup];while(!a.finished&&(a.contactIndex||0)<contacts.length&&age>=contacts[a.contactIndex||0]){a.hit=true;strike(n,a);a.contactIndex=(a.contactIndex||0)+1;}if(age>=a.duration){const queued=a.buffer;c.attack=null;n.jabAnim=0;if(queued&&c.stunUntil<=c.time)begin(n,queued.keys,queued.at,queued.action);}}
+    if(c.attack){const a=c.attack,age=c.time-a.at;n.jabAnim=Math.max(1,(a.duration-age)/16);const move=MOVES[a.kind]||{};if(move.actor&&actor(n)!==move.actor)a.finished=true;const contacts=a.hit&&a.contactIndex===undefined?[]:move.contacts||[a.windup||RULES.windup];while(!a.finished&&(a.contactIndex||0)<contacts.length&&age>=contacts[a.contactIndex||0]){a.hit=true;strike(n,a);a.contactIndex=(a.contactIndex||0)+1;}if(age>=a.duration){const queued=a.buffer;c.attack=null;n.jabAnim=0;if(queued&&c.stunUntil<=c.time){if(queued.specialSlot){if(actor(n)===queued.actor&&root.TechOpsNightProgression?.selected(n,queued.specialSlot)?.[0]===queued.skill)special(n,queued.specialSlot,queued.keys,true);}else begin(n,queued.keys,queued.at,queued.action);}}}
     tickNotes(n,dt);
     followAir(n,dt,k);
     if(c.time-c.lastHit>RULES.chainLife)clearChain(n);c.fx=c.fx.filter(e=>c.time-e.time<650);
