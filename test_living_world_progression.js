@@ -76,6 +76,32 @@ test('earlier viewpoints are explicit and never imply a physical return from spa
  assert.match(A.episode('no_common_channel').bridge,/before the pier convergence and departure/);
  assert.match(A.episode('morrow_array').bridge,/before the Earth fracture/);
 });
+test('Iona comic interlude unlocks from Night Walker progress and preserves comic chronology',()=>{
+ const s=A.initial('campaign');
+ s.flags.waldo_invited=s.flags.waldo_visit_received=true;
+ s.done=['iona_local'];
+ assert.equal(A.gate(s,'iona_pressure',{facts:{campaign_complete:true}}).open,true);
+ s.done.push('iona_pressure');
+ assert.equal(A.gate(s,'iona_world_left_running',{facts:{campaign_complete:false}}).open,false);
+ assert.equal(A.gate(s,'iona_world_left_running',{facts:{campaign_complete:true}}).open,true);
+ assert.equal(A.gate(s,'iona_freight_name',{facts:{campaign_complete:true}}).open,false);
+ s.done.push('iona_world_left_running');
+ assert.equal(A.gate(s,'iona_freight_name',{facts:{campaign_complete:true}}).open,true);
+ assert.equal(A.gate(s,'archive',{facts:{campaign_complete:true}}).open,false);
+ s.done.push('iona_freight_name');
+ assert.equal(A.gate(s,'archive',{facts:{campaign_complete:true,mike_meets_k:true}}).open,true);
+ assert.match(A.episode('iona_world_left_running').bridge,/after Red’s arrest and before Iona contacts K/);
+ const revenge=A.episode('iona_world_left_running');
+ assert.deepEqual(revenge.goals.slice(revenge.goals.findIndex(g=>g.id==='first_count'),revenge.goals.findIndex(g=>g.id==='sandbag')+1).map(g=>g.id),['first_count','position','draw_guard','sandbag']);
+ assert(revenge.goals.findIndex(g=>g.id==='send_medics')<revenge.goals.findIndex(g=>g.id==='cut'));
+ assert(revenge.goals.findIndex(g=>g.id==='lift_rescue')<revenge.goals.findIndex(g=>g.id==='free'));
+ assert.match(revenge.goals.find(g=>g.id==='draw_guard').text,/closed security grille/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/first guard is already across/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/does not end the pursuit/);
+ assert(revenge.goals.findIndex(g=>g.id==='all_clear')<revenge.goals.findIndex(g=>g.id==='burn'));
+ assert.match(revenge.goals.find(g=>g.id==='burn').text,/only after the verified all-clear/);
+ assert.match(A.episode('iona_freight_name').goals[1].options[1][2],/authorizer’s identity remains unresolved/);
+});
 test('shipboard coda preserves existing save IDs and distinguishes carried records from live Earth reports',()=>{
  const e=A.episode('queue_afterward');assert.deepEqual(e.rooms.map(r=>r.id),['desk','floor','home']);assert.deepEqual(e.goals.map(g=>g.id),['queue','repair','remember','end']);assert.deepEqual(e.after,['low_return']);assert.match(e.bridge,/existing crew/);assert.match(e.goals.at(-1).text,/rests aboard/);
  for(const id of ['spare_key','repair_held','takes_over','place_ready']){const q=A.Data.sidequests.find(q=>q.id===id);assert.match(q.steps.at(-1)[1],/Earth/);assert.equal(q.stages.at(-1).episode,'queue_afterward');}

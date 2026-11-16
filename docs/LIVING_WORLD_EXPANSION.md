@@ -26,6 +26,8 @@ The visit unlocks Iona viewpoints for the player. Mike does not thereby learn Io
 | No Broken Computer Required | After the later porch conversation: invitation, next-day walk, garage conversation, time as friends. |
 | Her Own Bearings | Iona explores on foot, checks a real entrance, and accompanies a rehearsal delivery. |
 | Countermeasure | Iona creates working space against constructs, repairs the shutter, and escorts the workshop crew. |
+| The World He Left Running | Historical Iona interlude: intercept the transfer, free the crew, recover the custody ledger, and burn the cleared depot. |
+| The Name in the Freight Book | Follow the ledger to North Intake, confirm the address, and lead into the comic's closing soundcheck. |
 | The Last Shift | Mike uses familiar service routes to stop a process and receive the late-shift coworkers. |
 | A Moving Safehouse | Vehicle segment with a cooling repair, passenger check and receiving callback before arrival. |
 | Keep Time in the Dark | Iona observes work cycles, protects support and escorts a waiting crew through horror spaces. |
@@ -35,6 +37,8 @@ The visit unlocks Iona viewpoints for the player. Mike does not thereby learn Io
 | Hold the Receiving End | Prepare staffed capacity and power, meet arrivals, then escort them to the receiving lead. |
 | Her Side of the Door | Iona receives the last arrivals and keeps a personal next step beyond the emergency. |
 | The Queue Afterward | Ordinary work returns; a consequence record acknowledges completed optional chains. |
+
+Iona’s historical depot mission follows the approved interlude sequence rather than the later playable “Countermeasure” scene. The early transport recall breaks its escort onto the freight gantry; Iona sends medics, losing the spotter at the west line, then cuts the shared freight corridor when the vans are about to unload. The blackout puts a resident in danger, and Iona rescues her. The two crew members Iona frees first cross the public line, then choose to return by the exterior stair. A closed security grille and one-person gate isolate the first guard who reaches Iona; the freed pair drop a sandbag behind him to impede the officers still pressing through. This buys seconds, leaves the pursuit active, and gives Iona a clear reason to continue. Mara keeps the public exit open, receives the ledger, and independently counts the director and injured final officer out before the local depot burn.
 
 Iona’s foot missions use the imported band-reference sprite candidate and directional combat, including aerial down-light and the three-contact bicycle kick. Source commits: `367978e` and `789e51b` from the existing Iona worktree. Artwork and provenance are retained under `art-review/iona-nightwalker`; integration does not imply final creator art approval. Vehicle missions continue to render their actual transport.
 
@@ -61,7 +65,7 @@ Every chapter has three named spaces with an explicit adjacency graph. Revisited
 | A Different Occupancy | Same factory, later visit / Mike | Verify the roster, support the rescue route, receive Tarin | Main campaign complete |
 | The Streets We Remember | Changed Low Quarter / K and Iona | Compare accounts, check both endpoints, make the bounded return | Main campaign complete; Mike has met K |
 
-The full dependency order is in the chapter data; phase-two chapters sit between these original chapters. Previously completed chapters retain their completion records, while every Iona-owned chapter additionally requires the new invitation and visit. Chronological bridge briefings explicitly identify intervening comic events. These playable episodes do not replace or silently grant the main game's established acts, the Warden encounter, the six-month crossing, Chapter 39, Chapters 40–51, or the intervening Chorus travel and rescue events.
+The full dependency order is in the chapter data; phase-two chapters sit between these original chapters. Iona's two new historical missions unlock after **Countermeasure**, the later Iona visit, and completion of the Night Walker main campaign. Their story bridge places the depot operation after Red's arrest and before Iona contacts K, matching the comic. The follow-up remains gated behind the depot mission; the later Archive chapter now follows it in the playable trail. Previously completed chapters retain their completion records. Chronological bridge briefings explicitly identify intervening comic events. These playable episodes do not replace or silently grant the main game's established acts, the Warden encounter, the six-month crossing, Chapter 39, Chapters 40–51, or the intervening Chorus travel and rescue events.
 
 ## Navigation and variation
 

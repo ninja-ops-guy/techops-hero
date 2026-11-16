@@ -21,7 +21,7 @@ function fixture(){
  await test('rehearsal auditions survive only their own menu, then stop on other menus or blur',async()=>{const f=fixture();await f.score.start();assert.equal(f.score.playPattern([0,1,2,3]),true);assert.equal(f.score.diagnostics().auditions,4);f.score.update({blocked:true,rehearsal:true});assert.equal(f.score.diagnostics().auditions,4);f.score.update({blocked:true});assert.equal(f.score.diagnostics().voices,0);f.score.tap(0);f.events.blur({type:'blur'});assert.equal(f.score.diagnostics().voices,0);assert.equal(f.score.playPattern(Array(17).fill(0)),false);});
  await test('existing master toggle routes exclusively to the active field score',async()=>{const source=fs.readFileSync('game.js','utf8'),start=source.indexOf('function setMusic(on)'),end=source.indexOf('$("btn-music").addEventListener',start);let toggled,applied=0;const button={};const r={musicRequested:true,musicOn:true,sfxMuted:false,$:()=>button,applyMusicRequest:()=>applied++,TechOpsFieldScore:{engaged:()=>true,setMuted:v=>toggled=v}};r.window=r;vm.runInNewContext(source.slice(start,end),r);r.setMusic(false);assert.equal(toggled,true);assert.equal(r.musicRequested,false);assert.equal(r.sfxMuted,true);r.setMusic(true);assert.equal(toggled,false);assert.equal(r.musicRequested,false);assert.equal(r.musicOn,true);assert.equal(applied,2);});
  const manifest=()=>JSON.parse(fs.readFileSync('assets/music/field-score.json','utf8'));
- const ctx={episode:'iona_pressure',actor:'iona',moment:'countermeasure'};
+ const ctx={episode:'iona_world_left_running',actor:'iona',moment:'depot-heist'};
  const drain=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
  const artist=()=>({approved:true,bpm:96,bars:4,meter:[4,4],phraseBars:2,percussionLayer:'pulse',layers:{bed:'assets/music/fixture_bed.wav',pulse:'assets/music/fixture_pulse.wav'}});
  function serve(f,m){const requests=[];f.root.fetch=async path=>{requests.push(path);return {ok:true,json:async()=>m,arrayBuffer:async()=>new ArrayBuffer(16)};};return requests;}
@@ -100,7 +100,7 @@ function fixture(){
    vm.runInNewContext(fs.readFileSync('campaign_fieldcraft_runtime.js','utf8'),r);const x=r.TechOpsFieldcraftRuntime;
    x.attach({state:()=>st,world:()=>w,A,game:()=>game,active:()=>true});
    A.start(st,'dock',{});assert.equal(x.scoreContext().moment,null);st.active.step=A.episode('dock').goals.length;st.active.finished=true;assert.equal(x.scoreContext().moment,'departure-aftermath');
-   A.start(st,'iona_pressure',{});st.active.step=1;assert.equal(x.scoreContext().moment,'countermeasure');
+   A.start(st,'iona_world_left_running',{});st.active.step=1;assert.equal(x.scoreContext().moment,'depot-heist');
    w.enemies=[{alive:true,hp:100,x:-20,windup:3}];assert.equal(x.scoreContext().danger,false);
    w.enemies[0].x=250;assert.equal(x.scoreContext().danger,true);assert.equal(x.scoreContext().combat,true);
    w.enemies=[];st.active.elapsed=1;assert.equal(x.scoreContext().recovery,true);st.active.elapsed=6;assert.equal(x.scoreContext().recovery,false);

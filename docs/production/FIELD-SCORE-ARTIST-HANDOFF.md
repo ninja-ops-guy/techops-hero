@@ -8,7 +8,7 @@ These are campaign soundtrack placements for review and production. They do not 
 
 | Song | Established narrative association | Living World scene | Proposed use |
 | --- | --- | --- | --- |
-| AGAMEMNON | Iona's revenge / violent beats; published cue: Revision G pages 117–121, Iona stair fight | `iona_pressure` — “Countermeasure” | Iona's active combat passage. Keep the performance identity and drum part intact. |
+| AGAMEMNON | Iona's revenge / violent beats; approved Iona interlude: “The World He Left Running” | `iona_world_left_running` — “The World He Left Running” | The historical depot heist after Red’s arrest and before Iona contacts K. Approach, pursuit, rescue and controlled violence belong to this cue; preserve Iona’s performance identity and drum part. |
 | Time Crumbles | Escape | `prison` — “Through the Walls” | Sector 4 escape movement. Let danger rise during the route and recede at the safe handoff. |
 | Somewhere Deep Down Below | Escape / flight | `dock` — “Not Until They Answer” | Launch and evacuation departure. Let the pulse carry movement; reserve the threat layer for actual danger. |
 | The Mercy I Buried | Demolition / “watch this” | No current PR #130 match | Hold for a future approved demolition scene; do not force it onto a generic combat or factory scene. |
@@ -65,7 +65,7 @@ The runtime cue scopes are explicit:
 
 | Cue | Active moment |
 | --- | --- |
-| AGAMEMNON / `iona_pressure` / Iona | After the initial machine-reach observation, through the encounter and its recovery/aftermath. |
+| AGAMEMNON / `iona_world_left_running` / Iona | From the depot mission’s second objective through its all-clear and exit. No song cue is inferred for the separate later “Countermeasure” workshop mission. |
 | Time Crumbles / `prison` / Katrin or Manchez | After K’s cell has opened, during the return for Oz and approach to the escape corridor. No shuttle-flight gameplay is implied. |
 | Somewhere Deep Down Below / `dock` / Iona | Only after the final evacuation report has completed. The existing “Stay for the aftermath” action can expose the quiet departure aftermath; support verification and medical transfer remain outside this cue. The draft contains no playable flight sequence. |
 | The Mercy I Buried | Reserved; no runtime cue. |

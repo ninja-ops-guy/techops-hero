@@ -83,7 +83,7 @@
     const combat=!a.finished&&enemies.length>0&&!!(w._nightCombat?.attack||w._nightCombat?.grab||enemies.some(x=>x.windup>0)||previousHP!==null&&w.hp<previousHP);
     if(!blocked&&danger)lastDangerAt=a.elapsed;
     const recovery=!a.finished&&!danger&&lastDangerAt!==null&&a.elapsed-lastDangerAt<4;
-    const moment=a.id==='iona_pressure'&&(a.finished||goal&&goal.id!=='read')?'countermeasure':
+    const moment=a.id==='iona_world_left_running'&&(a.finished||goal&&goal.id!=='verify')?'depot-heist':
       a.id==='prison'&&(a.finished||goal&&['free_oz','leave'].includes(goal.id))?'escape-corridor':
       a.id==='dock'&&a.finished?'departure-aftermath':null;
     return {blocked,rehearsal:!!game.inDialog&&!game.paused&&!game.gameOver&&!root.document.hidden&&root.document.getElementById('dialogue')?.dataset.fieldActivity==='rhythm',
