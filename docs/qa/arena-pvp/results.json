@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "desktop",
+    "passed": true,
+    "checks": [
+      "independent rooms and character selection",
+      "real movement and repeated attacks win round",
+      "both-player ready advances and resets health",
+      "disconnect notified",
+      "campaign sentinel preserved",
+      "no browser errors"
+    ]
+  },
+  {
+    "profile": "portrait",
+    "passed": true,
+    "checks": [
+      "independent rooms and character selection",
+      "real movement and repeated attacks win round",
+      "both-player ready advances and resets health",
+      "disconnect notified",
+      "campaign sentinel preserved",
+      "no browser errors"
+    ]
+  }
+]
