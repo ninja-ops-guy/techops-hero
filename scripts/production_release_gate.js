@@ -5,6 +5,7 @@ const fs = require("fs");
 
 const tests = [
   "test_night_progression.js",
+  "test_night_combat_lab.js",
   "test_fieldcraft.js",
   "test_field_score.js",
   "test_living_world.js",

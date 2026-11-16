@@ -98,6 +98,11 @@
     if(!s.nightMode){if(s.meta.nightVisit&&s.meta.nightVisit.active===false)return completeCheckpoint(s);return false;}
     // Field reports keep their own objective saves. Persist the street return
     // point together with the current health, purchases and remaining supplies.
+    if(s.nightMode._combatLab){
+      const returnNight=root.TechOpsCombatLab&&root.TechOpsCombatLab.checkpointNight();
+      if(!returnNight)return false;
+      s=Object.assign({},s,{nightMode:returnNight});
+    }
     if(s.nightMode._livingWorld){
       const expedition=root.TechOpsLivingWorldRuntime;
       const returnNight=expedition&&expedition.checkpointNight();
@@ -169,6 +174,7 @@
   }
   function tick(dt){
     const s=state(),n=world();if(!s||!active(n)||blocked())return false;
+    if(n._combatLab)return true; // practice does not advance campaign time
     if(!n._nightLifecycle)onEntered(s,n);
     const raw=Number(dt),delta=Number.isFinite(raw)?Math.min(.1,Math.max(0,raw)):0,rt=n._nightLifecycle;
     rt.seconds+=delta;
@@ -244,6 +250,7 @@
   }
   function openCampaign(){
     if(!active(world())||transition)return false;
+    if(world()._combatLab&&root.TechOpsCombatLab)return root.TechOpsCombatLab.sessionMenu();
     if(world()._livingWorld&&root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.openJournal();
     if(world()._nightwalker){
       const runtime=world()._nightwalker.runtimeId==='deadAir'?root.TechOpsDeadAirRuntime:root.TechOpsNightwalkerRuntime;
@@ -255,11 +262,13 @@
       if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
       if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
       if(root.TechOpsDeadAirRuntime)options.unshift({t:'NIGHTWALKER — Dead Air at Pier 7',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsDeadAirRuntime.enterBrowser();}});
+      if(root.TechOpsCombatLab)options.unshift({t:'Combat Lab — training & arena',f:()=>root.TechOpsCombatLab.menu(openCampaign)});
       options.unshift({t:'Living World — story expeditions',f:openExpeditions});
       return dialog('AFTER HOURS — STANDALONE RUN','<b>Living World</b> follows exploration into fighting, signal work, transport, and survival horror. Start its first chapter or resume your current one.<br><br>Your Night route and field reports save separately from the Day campaign.',options);
     }
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
     const f=c.flags,options=[{t:'Living World — story expeditions',f:openExpeditions},{t:'Supplies and store',f:()=>root.openNightSupplies()}],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
+    if(root.TechOpsCombatLab)options.push({t:'Combat Lab — training & arena',f:()=>root.TechOpsCombatLab.menu(openCampaign)});
     if(f.tuesday_morning_reached){text='<b>AFTER HOURS — COMPLETE</b><br>The next campaign beat continues in the day shift. Your evidence and choices are preserved.';options.push({t:'Return to the day campaign',f:resumeDay});}
     else if(!f.day_work_unlocked){text='<b>CHAPTER I — AFTER HOURS</b><br>Complete the Day 1 standup and workstation opening to unlock Sector 04. Free roam is not the story campaign.';options.push({t:'Resume the daytime opening',f:resumeDay});}
     else{
@@ -409,7 +418,7 @@
     // Repair only a flag with no visible modal/claim before deciding to pause.
     // The older dispatch paused before the guard could perform this repair.
     const guard=root.TechOpsProductionWrapperGuard;if(guard&&guard.repairStaleDialog)guard.repairStaleDialog();
-    if(tick(dt)&&root.stepNM)root.stepNM(dt);
+    if(tick(dt)&&root.stepNM){root.stepNM(dt);if(root.TechOpsCombatLab)root.TechOpsCombatLab.afterStep(world());}
     if(active(world())){
       ensureUI(); // Resolve safe-area padding before the first canvas HUD draw.
       if(root.drawNM)root.drawNM();
@@ -427,7 +436,7 @@
     if(root.fmtClock)root.fmtClock=clockLabel;
     const oldInteract=root.interact;if(oldInteract)root.interact=function(){if(atHome()&&!blocked())return openHome();return oldInteract.apply(this,arguments);};
     const oldExit=root.exitNight;if(oldExit)root.exitNight=function(){
-      const n=world();if(n&&n._livingWorld&&root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.onDefeat();if(!active(n))return n?oldExit.apply(this,arguments):false;
+      const n=world();if(n&&n._combatLab&&root.TechOpsCombatLab)return root.TechOpsCombatLab.finish(false);if(n&&n._livingWorld&&root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.onDefeat();if(!active(n))return n?oldExit.apply(this,arguments):false;
       n._nightLifecycle=n._nightLifecycle||{};if(n._nightLifecycle.exitCommitted)return false;
       // Retire the recovery snapshot before reward settlement. If storage fails,
       // no completed-run claim is made and a reload cannot pay the same run twice.

@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {chromium} from 'playwright';
+const port=4239,base=`http://127.0.0.1:${port}/`,server=spawn('python3',['scripts/media_http_server.py','--port',String(port),'--bind','127.0.0.1'],{stdio:'ignore'});
+const browser=await chromium.launch({headless:true});
+try{
+ for(let i=0;i<60;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
+ for(const [profile,viewport,touch] of [['desktop',{width:1280,height:800},false],['portrait',{width:390,height:844},true],['landscape',{width:844,height:390},true]]){
+  const context=await browser.newContext({viewport,hasTouch:touch,isMobile:touch}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(20000);await context.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
+  const option=t=>page.locator('#dlg-options button').filter({hasText:t}).first(),press=async l=>{await l.scrollIntoViewIfNeeded();touch?await l.tap():await l.click();};
+  await page.goto(base);await page.waitForFunction(()=>window.__productionTitleReadiness?.ready&&!document.querySelector('#btn-start')?.disabled);
+  await press(page.locator('#btn-nightcrawler'));await press(option(/Standard/));await press(option(/Take the Charger/));await page.locator('#v722-cine').waitFor({state:'visible'});await page.keyboard.press('Escape');await page.waitForFunction(()=>window.S?.nightMode&&!S.inDialog&&!window.__productionDesiredMode);
+  // A declared safe-street fixture prevents real enemies from interrupting menu access.
+  await page.evaluate(()=>{NM.enemies=[];NM.x=600;NM.hp=73;NM.cash=17;NM.kills=2;NM.vx=NM.vy=0;NM.onGround=true;});
+  const before=await page.evaluate(()=>({xp:TechOpsNightProgression.record().xp,clock:S.clock}));
+  await press(page.locator('#night-campaign'));await press(option(/Combat Lab/));await press(option(/Training —/));
+  assert.equal(await page.evaluate(()=>NM._combatLab.mode),'training');assert.equal(await page.evaluate(()=>NM.hp),100);
+  await page.evaluate(()=>{NM.x=650;NM.enemies[0].x=700;NM.face=1;});await page.keyboard.press('e');await page.waitForTimeout(700);assert((await page.evaluate(()=>NM.enemies[0].hp))<100000,'real attack hits practice target');
+  assert.equal(await page.evaluate(()=>TechOpsNightProgression.record().xp),before.xp);assert.equal(await page.evaluate(()=>S.clock),before.clock);
+  assert(await page.evaluate(()=>TechOpsNightRuntime.saveCheckpoint()));const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem(TechOpsNightRuntime.CHECKPOINT_KEY)).state.nightMode);assert.equal(saved.hp,73);assert.equal(saved.cash,17);assert.equal(saved._combatLab,undefined);
+  await press(page.locator('#night-campaign'));await press(option(/Return to the street/));assert.equal(await page.evaluate(()=>NM.hp),73);assert.equal(await page.evaluate(()=>NM.cash),17);assert.equal(await page.evaluate(()=>NM.kills),2);
+  await press(page.locator('#night-campaign'));await press(option(/Combat Lab/));await press(option(/Arena —/));
+  // Lower only the opponent HP for a short deterministic completion test; attack still uses real input.
+  await page.evaluate(()=>{NM.x=650;NM.enemies[0].x=700;NM.enemies[0].hp=1;NM.face=1;});await page.keyboard.press('e');await option(/Return to the street/).waitFor();assert.match(await page.locator('#dlg-name').innerText(),/VICTORY/);await press(option(/Fight again/));assert.equal(await page.evaluate(()=>NM._combatLab.mode),'arena');await page.evaluate(()=>{NM.x=690;NM.hp=1;NM.ifr=0;NM.enemies[0].x=700;NM.enemies[0].windup=26;});await page.waitForFunction(()=>document.querySelector('#dlg-name')?.textContent.includes('DEFEAT'));await press(option(/Return to the street/));assert.equal(await page.evaluate(()=>NM.hp),73);assert.equal(await page.evaluate(()=>NM.cash),17);assert.equal(await page.evaluate(()=>NM.kills),2);assert.equal(await page.evaluate(()=>TechOpsNightProgression.record().xp),before.xp);assert.deepEqual(errors,[]);console.log(profile+' training, actual combat, checkpoint, victory, retry, defeat and restoration passed');await context.close();
+ }
+}finally{await browser.close();server.kill();}

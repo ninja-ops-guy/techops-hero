@@ -17,6 +17,7 @@
     "runtime_combat_audio.js",
     "runtime_hud.js",
     "night_progression.js",
+    "night_combat_lab.js",
     "night_combat.js",
     "night_move_atlas.js",
     "night_move_visuals.js",

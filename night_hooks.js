@@ -209,7 +209,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM._livingWorld && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM._livingWorld && !NM._combatLab && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -452,7 +452,7 @@ function nmJab() {
   nmCheckClear();
 }
 function nmCheckClear() {
-  if (NM && NM._livingWorld) { NM.clear=false; return; }
+  if (NM && (NM._livingWorld || NM._combatLab)) { NM.clear=false; return; }
   if (!NM.clear && NM.enemies.length && NM.enemies.every(e => !e.alive)) {
     NM.clear = true;
     if(window.TechOpsNightProgression)window.TechOpsNightProgression.clear(NM);
@@ -541,6 +541,7 @@ function stepNM(dt) {
     if (!e.alive) continue;
     if (streetCombat && streetCombat.stepEnemy(NM,e,dt)) continue;
     if(NM._livingWorld&&window.TechOpsFieldcraftRuntime&&window.TechOpsFieldcraftRuntime.redirectEnemy(NM,e,dt))continue;
+    if (e._labDummy) continue; // combat reaction timers are handled above; no AI attack.
     // launch / downed states first
     if (e.launch > 0) { e.launch -= f; e.y -= 3.2 * f; e.x += (e.kb || 0) * f; if (e.launch <= 0) e.kb = 0; continue; }
     if (e.down > 0) { e.down -= f; e.y = NM_FLOOR - e.h; continue; }
