@@ -68,7 +68,7 @@
     return make([[420,350,180],[810,320,210],[1080,350,190]]);
   }
   function loadRoom(){
-    const n=world(),a=state().active,e=A.episode(a.id);n._livingWorld={active:true};n.district='industrial';n.street=1;n.drive=null;n.x=a.x;n.y=a.y;n.vx=0;n.vy=0;n.w=e.vehicle==='cradle'?76:e.vehicle?68:22;n.h=34;n.cam=0;n.face=1;n.clear=false;n.platforms=platforms(e,a);n.enemies=[];delete n._nightCombat;n.hitStop=0;n.jHeld=false;n.onGround=true;n.dashCD=0;n.dashT=0;lastHP=n.hp;spawn(n);resetInput();announce();if(X)X.loaded();
+    const n=world(),a=state().active,e=A.episode(a.id);n._livingWorld={active:true};n.district='industrial';n.street=1;n.drive=null;n.x=a.x;n.y=a.y;n.vx=0;n.vy=0;n.w=e.vehicle==='cradle'?76:e.vehicle?68:22;n.h=34;n.cam=0;n.face=1;n.clear=false;n.platforms=platforms(e,a);n.enemies=[];delete n._nightCombat;n.hitStop=0;n.jHeld=false;n.onGround=true;n.dashCD=0;n.dashT=0;lastHP=n.hp;if(a.id==='low_return')n._livingWorld.staging={x:Math.max(25,n.x-60),vx:0,face:n.face};spawn(n);resetInput();announce();if(X)X.loaded();
   }
   function resetInput(){if(world())delete world()._fieldFeel;if(root.TechOpsNightInput)root.TechOpsNightInput.reset();try{for(const k of Object.keys(keys))keys[k]=false;}catch(_){} }
   function spawn(n){
@@ -86,6 +86,7 @@
     if(g&&g.room===a.room)c.push({type:'goal',x:g.x,y:g.y,label:g.label});
     for(const q of D.sidequests){if(A.sideLocation(s,q).episode===a.id&&A.sideLocation(s,q).room===a.room&&(s.side[q.id]||0)<q.steps.length)c.push({type:'side',id:q.id,x:sideX(q,s),y:413,label:q.title});}
     if(X)c.push(...X.nearby());
+    if(a.id==='factory_return'&&a.room==='return'&&a.step>=3)c.push({type:'staging',id:'billy-care',x:670,y:413,label:'Check Billy’s care watch'});
     if(n.x<180||n.x>1490)c.push({type:'exit',x:n.x+11,y:n.y+17,label:'Choose a physical route'});
     return c.map(p=>Object.assign(p,{distance:Math.hypot(n.x+n.w/2-p.x,n.y+n.h/2-p.y)})).filter(p=>p.distance<=96).sort((a,b)=>a.distance-b.distance);
   }
@@ -93,13 +94,14 @@
   function sideX(q,s){return A.sideLocation(s,q).x;}
   function interact(selection){
     if(!active(world())||game().inDialog)return false;
-    const points=nearby(),chosen=selection&&['goal','side','exit','field','moment'].includes(selection.type)?points.find(p=>p.type===selection.type&&p.id===selection.id):null;
+    const points=nearby(),chosen=selection&&['goal','side','exit','field','moment','staging'].includes(selection.type)?points.find(p=>p.type===selection.type&&p.id===selection.id):null;
     if(!chosen&&points.filter(p=>p.type!=='exit').length>1){
       dialog('AT THIS LOCATION','Choose the person or task you want to spend time with.',points.filter(p=>p.type!=='exit').map(p=>({t:p.label,f:()=>{close();interact(p);}})).concat({t:'Step back',f:close}));return true;
     }
     const p=chosen||points[0];if(!p)return false;
     const s=state(),g=A.current(s);s.active.x=Math.max(0,Math.min(1760,world().x));s.active.y=world().y;
     if(X&&['field','moment'].includes(p.type))return X.handle(p);
+    if(p.type==='staging'){dialog('BILLY / CARE WATCH','A crewmate stays beside Billy’s supported stretcher. His living body remains here under care while Tarin’s receiving handoff is recorded separately. There is one Billy, with one place in the care plan.',[{t:'Return to the room',f:close}]);return true;}
     if(p.type==='exit'){openRoutes();return true;}
     if(p.type==='side'){const q=D.sidequests.find(q=>q.id===p.id),step=s.side[q.id]||0;dialog(q.title,html(q.steps[step][1]),[{t:q.steps[step][0],f:()=>{const r=commit(st=>A.sidequest(st,q.id,sideX(q,st)));if(r){const note=A.optionalNotes(state()).find(n=>n.id===q.id);const follow=q.stages&&!r.complete?'<br><br>'+html(note&&note.next?'Next: '+note.next:'The next lead is not known to this viewpoint yet. You can continue the main chapter.'):'';dialog(q.title,html(r.text)+follow,[{t:r.complete||q.stages?'Keep this moment':'Continue in the room',f:close}]);announce();}}},{t:'Another time',f:close}]);return true;}
     if(g.kind==='scene'){showScene();return true;}
@@ -148,6 +150,8 @@
       if(ui)ui.querySelector('[role=status]').textContent=n.msg;
       result.changed=true;
     }
+    const companion=n._livingWorld.staging;
+    if(a.id==='low_return'&&companion){const dx=n.x-60-companion.x,step=Math.sign(dx)*Math.min(Math.abs(dx),205*Math.min(.05,dt||0));companion.vx=Math.abs(dx)>10?step:0;if(companion.vx){companion.x=Math.max(25,Math.min(1720,companion.x+step));companion.face=step<0?-1:1;}}
     if(X)X.afterStep(dt);
     lastHP=n.hp;saveAge+=Math.min(.05,dt||0);
     if(result.changed||saveAge>=4){saveAge=0;if(!persist()){game().meta.livingWorld=before;failed();return;}}
@@ -167,13 +171,32 @@
   }
   function announce(){ensureUI();const g=A.current(state()),a=state().active;const text=a.actor.toUpperCase()+' — '+(g?g.label:'Chapter complete');ui.querySelector('[role=status]').textContent=text;world().msg=text;world().msgT=now()+2800;}
   function image(src){if(!src)return null;if(!images[src]){const im=new root.Image();im.src=src;images[src]=im;}return images[src].complete&&images[src].naturalWidth?images[src]:null;}
+  function drawK(ctx,cx,feet,face,vx,t){const atlas=root.K_ACTION,im=atlas&&image(atlas.src);if(!im)return false;const frame=atlas.frames[Math.abs(vx)>.2?'action'+Math.floor(t/120)%4:'action28'],w=68*atlas.cell/atlas.cellH;ctx.save();ctx.translate(cx,feet);if(face<0)ctx.scale(-1,1);ctx.drawImage(im,frame[0]*atlas.cell,frame[1]*atlas.cellH,atlas.cell,atlas.cellH,-w/2,-68,w,68);ctx.restore();return true;}
+  function drawStaging(ctx,n,t){
+    const a=state().active;ctx.save();ctx.font='11px monospace';ctx.textAlign='center';ctx.fillStyle='#d7e9e1';
+    const companion=n._livingWorld.staging;
+    if(a.id==='low_return'&&companion){
+      const x=companion.x-n.cam,renderer=root.TechOpsIonaNightwalker,still=game().inDialog||game().paused||root.document.hidden;
+      if(renderer&&renderer.drawCompanion)renderer.drawCompanion(ctx,{x,face:companion.face,vx:still?0:companion.vx},t,75);
+      else ctx.fillText('Iona · loading',x+11,400);
+      ctx.fillStyle='#d7e9e1';ctx.fillText('IONA · WITH K',x+11,338);
+    }
+    if(a.id==='factory_return'&&a.room==='compute'&&a.step>=2){const x=1340-n.cam;drawK(ctx,x,430,1,0,t);ctx.fillStyle='#d7e9e1';ctx.fillText('K · RESCUE ROUTE',x,344);}
+    if(a.id==='factory_return'&&a.room==='return'&&a.step>=3){
+      const x=600-n.cam;ctx.fillStyle='#829b9e';ctx.fillRect(x,394,145,8);ctx.fillRect(x+10,402,5,23);ctx.fillRect(x+130,402,5,23);ctx.fillStyle='#0a121b';ctx.fillRect(x+6,422,14,8);ctx.fillRect(x+125,422,14,8);
+      ctx.fillStyle='#b8c4bc';ctx.fillRect(x+10,381,23,13);ctx.fillStyle='#54716e';ctx.fillRect(x+34,380,100,14);ctx.fillStyle='#cad6ce';ctx.fillRect(x+3,372,32,8);
+      const watch=x+230;ctx.fillStyle='#af947b';ctx.fillRect(watch+4,369,14,16);ctx.fillStyle='#687f87';ctx.fillRect(watch,385,22,27);ctx.fillStyle='#253842';ctx.fillRect(watch+2,412,7,18);ctx.fillRect(watch+13,412,7,18);
+      ctx.fillStyle='#d7e9e1';ctx.fillText('BILLY · SUPPORTED',x+72,355);ctx.fillText('CARE WATCH',watch+11,350);
+    }
+    ctx.restore();
+  }
   function actor(ctx,n,t){
     const a=state().active,e=A.episode(a.id),x=n.x-n.cam,y=n.y,cx=x+n.w/2,feet=y+n.h;
     if(e.vehicle){ctx.fillStyle='#071219';ctx.fillRect(x-8,407,n.w+16,14);ctx.fillStyle=e.vehicle==='cradle'?'#c3d6cc':'#525d65';ctx.fillRect(x,384,n.w,24);ctx.strokeStyle='#7edde0';ctx.strokeRect(x,384,n.w,24);if(e.vehicle==='cradle'){ctx.fillStyle='#719c93';ctx.fillRect(x+12,374,45,12);ctx.fillStyle='#afe6bf';ctx.fillRect(x+50,382,4,19);}else{ctx.fillStyle='#1c303f';ctx.fillRect(x+10,373,42,13);}for(const xx of [x+10,x+n.w-13]){ctx.fillStyle='#080c13';ctx.fillRect(xx,416,12,12);ctx.fillStyle='#768494';ctx.fillRect(xx+4,420,4,4);}return;}
     if(a.actor==='iona'&&root.TechOpsIonaNightwalker&&root.TechOpsIonaNightwalker.draw(ctx,n,x,y,t,75))return;
     if(a.actor==='mike'&&root.drawNightPlayerAtlas&&root.drawNightPlayerAtlas(ctx,n,x,y,t))return;
     if(['katrin','manchez'].includes(a.actor)&&root.TechOpsArtHandoff&&root.TechOpsArtHandoff.drawActor(ctx,a.actor==='katrin'?'kat':'man',n,cx,feet,65,t))return;
-    if(a.actor==='k'){const atlas=root.K_ACTION,im=atlas&&image(atlas.src);if(im){const frame=atlas.frames[Math.abs(n.vx)>.2?'action'+Math.floor(t/120)%4:'action28'],w=68*atlas.cell/atlas.cellH;ctx.save();ctx.translate(cx,feet);if(n.face<0)ctx.scale(-1,1);ctx.drawImage(im,frame[0]*atlas.cell,frame[1]*atlas.cellH,atlas.cell,atlas.cellH,-w/2,-68,w,68);ctx.restore();return;}}
+    if(a.actor==='k'&&drawK(ctx,cx,feet,n.face,n.vx,t))return;
     if(a.actor==='felicia'){let src;try{src=typeof TO_FELICIA!=='undefined'?TO_FELICIA:null;}catch(_){}const im=image(src);if(im){ctx.save();if(n.face<0){ctx.translate(cx,0);ctx.scale(-1,1);}ctx.drawImage(im,128,0,128,128,n.face<0?-37:cx-37,feet-74,74,74);ctx.restore();return;}}
     // Keep identity explicit if an existing atlas has not decoded. This is a
     // loading marker, never a different cast member substituted as the actor.
@@ -235,7 +258,7 @@
     if(!a.finished&&e.danger&&['horror','rescue','stealth'].includes(e.mode)){const h=A.cycle(s),x=h.x-n.cam;ctx.fillStyle=h.on?'#dba16a':'#435657';ctx.fillRect(x-30,355,60,68);ctx.fillStyle='#172731';ctx.fillRect(x-14,369,28,30);ctx.strokeStyle=h.on||h.warning?'#ffbb72':'#8caaa7';ctx.strokeRect(x-30,355,60,68);ctx.font='11px monospace';ctx.textAlign='center';ctx.fillStyle='#ebd7bd';ctx.fillText(h.on?'WORK CYCLE / KEEP CLEAR':h.warning?'WORK CYCLE / STARTING':'WORK CYCLE / PAUSED',x,340);}
     for(const enemy of n.enemies||[]){if(!enemy.alive)continue;if(root.drawNightEnemyAtlas)root.drawNightEnemyAtlas(ctx,enemy,enemy.x-n.cam,t);ctx.fillStyle='#8b69aa';ctx.fillRect(enemy.x-n.cam,enemy.y-9,30*enemy.hp/enemy.maxHp,4);if(enemy.windup>8){ctx.fillStyle='#ffd596';ctx.font='bold 20px monospace';ctx.fillText('!',enemy.x-n.cam,enemy.y-18);}}
     if(X)X.draw(ctx,n,t);
-    actor(ctx,n,t);if(root.TechOpsNightCombat)root.TechOpsNightCombat.draw(ctx,n);
+    drawStaging(ctx,n,t);actor(ctx,n,t);if(root.TechOpsNightCombat)root.TechOpsNightCombat.draw(ctx,n);
     const hud=root.TechOpsRuntimeHud;if(hud)hud.drawNight(ctx,n,{district:{name:e.title,streets:1,accent,danger:e.danger},clock:a.actor.toUpperCase(),status:a.finished?'QUIET AFTERMATH':e.mode.toUpperCase(),now:t});
     if(ui){
       ui.hidden=!!game().inDialog||!!game().paused;root.document.body.classList.add('living-world-active');

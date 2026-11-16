@@ -67,3 +67,7 @@ Final qualification receipts and source hashes belong in `docs/qa/fieldcraft/`. 
 ## Continuity follow-up
 
 See [the continuity pass](FIELDCRAFT-CONTINUITY.md) for the owner-selected shipboard coda, historical viewpoint labels, receiving-group accounting and bounded care/return bridges. Those edits supersede the earlier statement that the coda location and explicit Earth-return ordering conflict were still untouched. Dramatic and visual adaptation work remains open.
+
+## Companion staging follow-up
+
+[Companion and care staging](FIELDCRAFT-STAGING.md) now adds Iona alongside K in the Low Quarter, K at the factory rescue route, and a visible/inspectable Billy care station. These use existing candidate sprites and code-drawn care markers. Dedicated poses and final likeness/motion approval remain outstanding.
