@@ -1,0 +1,8 @@
+{
+  "docs/production/GUIDED-COMBAT-PRACTICE.md": "ab7fa79b1b9bf3267704e0ac8f0d459b5b1e7fc2848bce4c9930963bef5618fa",
+  "scripts/combat_drills_browser.mjs": "2398346ad5619c42d2c58cd0f48c3764ec60816d26c2ec331d7f2f8d842078e2",
+  "test_combat_drills.js": "bbc08bc950cd0bc92e6ec0fd1d4a39be8eca5f7adcc0626df56bf2cb7079c989",
+  "night_combat.js": "4cc8f854cf45f4a8888db10d60a892eb17a05693f88c50a1caa6c3c3dd9c8285",
+  "night_combat_lab.js": "19b2301fe76320894c91865568cc2055b618de84a5e9cb69df40c3feabec3363",
+  "scripts/production_release_gate.js": "b4b1461822867d96c860a6a304dfa64ed000727f1ac97e792d684aa092fb9e10"
+}

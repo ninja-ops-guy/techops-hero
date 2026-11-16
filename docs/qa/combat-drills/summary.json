@@ -1,0 +1,38 @@
+[
+  {
+    "profile": "desktop",
+    "checks": [
+      "six drills are reachable from the actual Training menu",
+      "real light attack completes the contact drill",
+      "next drill resets evidence and explains combo timing",
+      "real character special contact completes the focus-funded drill",
+      "leaving guided practice preserves street state and grants no XP"
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "profile": "portrait",
+    "checks": [
+      "six drills are reachable from the actual Training menu",
+      "real light attack completes the contact drill",
+      "next drill resets evidence and explains combo timing",
+      "real character special contact completes the focus-funded drill",
+      "leaving guided practice preserves street state and grants no XP"
+    ],
+    "errors": [],
+    "pass": true
+  },
+  {
+    "profile": "landscape",
+    "checks": [
+      "six drills are reachable from the actual Training menu",
+      "real light attack completes the contact drill",
+      "next drill resets evidence and explains combo timing",
+      "real character special contact completes the focus-funded drill",
+      "leaving guided practice preserves street state and grants no XP"
+    ],
+    "errors": [],
+    "pass": true
+  }
+]
