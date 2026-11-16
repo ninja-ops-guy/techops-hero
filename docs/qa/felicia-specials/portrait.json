@@ -1,0 +1,12 @@
+{
+  "profile": "portrait",
+  "checks": [
+    "Felicia special 1 uses real touch input, hits and spends focus",
+    "missile countdown and damage pause with the menu",
+    "Felicia special 2 uses real touch input, hits and spends focus",
+    "all character practice presets restore the street and leave XP and skills unchanged",
+    "character unlock survives reload without giving Mike Felicia’s move"
+  ],
+  "errors": [],
+  "pass": true
+}

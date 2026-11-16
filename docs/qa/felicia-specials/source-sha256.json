@@ -1,0 +1,11 @@
+{
+  "docs/production/FELICIA-KALI-VIOLIN.md": "abfbba3b5c87dd86b5d17428e24cfe5375a18dea937df897762f0bbbfb81669e",
+  "scripts/felicia_specials_browser.mjs": "a8e6ba232280ee72b1405acdfd1845b9206f87f937b080521d66f99d730edf97",
+  "test_felicia_specials.js": "dec6a851c3d30d6055f0850778b4bd8873f44064ef3e09fdc4fe012cbbe64e19",
+  "night_combat.js": "8309bde5d27d1b51278b45184f0e77e2f9db2ba6282b1038e340a858d25c7c5f",
+  "night_progression.js": "367410e066f29bf1a297b397340ef109ddec8d3ff747b8f55b95b6c6d3bf3b3b",
+  "scripts/night_character_skills_browser.mjs": "7815033c20b217ae7fae3993e20782c355fed5a3d826650d6a3df3247e038d0c",
+  "scripts/production_release_gate.js": "5dbc6c4b6037ec2cff3ec4be613eb9ed823f95440d5afc2712810b47a01cfe27",
+  "test_night_character_skills.js": "b25aad6c26b75befefb5602dea3524d934d78acc200bd307ec67fe2256794a93",
+  "docs/production/NIGHT-CHARACTER-SKILLS.md": "ac8903983581b8aaca61ead4194cff7d7c38338dc04845f0ea4e4e8d2a7a6061"
+}

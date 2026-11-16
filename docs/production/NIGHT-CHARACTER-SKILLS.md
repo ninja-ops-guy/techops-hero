@@ -34,3 +34,7 @@ Moves reuse existing animation poses; Iona's weapon silhouettes and contact trac
 ## Validation
 
 `test_night_character_skills.js` covers all eight moves, bounded contacts/costs, ownership, persistence, locks, posture, pause, range, meter gain/loss, passives, finite juggles and practice isolation. Production-page browser tests exercise all specials with keyboard on desktop and touch on portrait/landscape, inspect the practice catalog, restore the street, learn Iona's Uzi through the actual menu and reload its saved unlock. XP, target positions and K's airborne position are declared fixtures. Physical-iPhone acceptance, full campaign traversal and long-term balance testing remain open.
+
+## Felicia loadout extension
+
+Felicia additionally has **Violin volley** (Special 1) and **Mr. Kali missile call** (Special 2). These are selectable alternatives to her original two moves; existing saves retain their original defaults. Learning an active move equips it, and learned alternatives can be swapped in the character menu. See [Felicia / Mr. Kali / violin](FELICIA-KALI-VIOLIN.md) for projectile physics, warning timing, unlocks and final follow-up validation.
