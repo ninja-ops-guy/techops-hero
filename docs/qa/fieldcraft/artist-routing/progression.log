@@ -1,0 +1,13 @@
+PASS later invitation and physical visit are independently required, including legacy completed Iona saves
+PASS dialogue resumes on the exact unread line without completion flags
+PASS all three dispatch orders preserve first-call consequences and cannot repeat completed calls
+PASS multi-chapter optional chains cannot advance from the old location or a supplied coordinate
+PASS delayed relay requires delivery and never copies private records
+PASS old completed records remain replayable without inventing new completion or visit facts
+PASS runtime Iona combat ownership requires the current authorized expedition viewpoint
+PASS browser bridge keeps an undelivered Iona completion out of Mike’s general journal
+PASS aftermath reports only completed consequences
+PASS earlier viewpoints are explicit and never imply a physical return from space to Earth
+PASS shipboard coda preserves existing save IDs and distinguishes carried records from live Earth reports
+PASS bounded return preserves two travelers, unequal clocks and the care watch
+{"suite":"living-world-progression","checks":12}

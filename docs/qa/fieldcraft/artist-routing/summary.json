@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-16",
+  "parentRevision": "0c7b983dd618aab06faff753b0b009de202cd330",
+  "suites": [
+    {
+      "suite": "field-score",
+      "checks": 25
+    },
+    {
+      "suite": "fieldcraft",
+      "checks": 27
+    },
+    {
+      "suite": "living-world",
+      "checks": 13,
+      "chapters": 27,
+      "sidequests": 11
+    },
+    {
+      "suite": "living-world-progression",
+      "checks": 12
+    }
+  ],
+  "totalChecks": 77,
+  "browser": {
+    "browser": "140.0.7339.186",
+    "scope": "Synthetic Web Audio fixtures; not artist listening acceptance or physical iPhone qualification",
+    "reports": [
+      {
+        "profile": "desktop",
+        "pass": true,
+        "sharedClock": true,
+        "layers": 4,
+        "decodedBytes": 2822368,
+        "checks": "gesture gate, pending fallback, real WAV decode, synchronized starts, pause, mute, rehearsal, blur, buffer release, initial missing-file fallback"
+      },
+      {
+        "profile": "portrait-touch",
+        "pass": true,
+        "sharedClock": true,
+        "layers": 4,
+        "decodedBytes": 2822368,
+        "checks": "gesture gate, pending fallback, real WAV decode, synchronized starts, pause, mute, rehearsal, blur, buffer release, initial missing-file fallback"
+      }
+    ]
+  },
+  "scope": "Targeted code and synthetic audio validation. No artist stems, full campaign playthrough, WebKit, physical iPhone or release certification."
+}

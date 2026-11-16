@@ -61,6 +61,14 @@
   }
   function draw(ctx, n, px, py, now, height) {
     if (!owns(n)) return false;
+    return drawFigure(ctx,n,px,py,now,height,sample(n,now));
+  }
+  function drawCompanion(ctx, position, now, height) {
+    const n={x:position.x,y:396,w:22,h:34,face:position.face<0?-1:1,vx:position.vx||0,onGround:true,ifr:0};
+    const cell=Math.abs(n.vx)>.45?1+Math.floor((now||0)/125)%4:0;
+    return drawFigure(ctx,n,n.x,396,now,height,{face:n.face,...frame(cell)});
+  }
+  function drawFigure(ctx,n,px,py,now,height,selectedPose) {
     const img = warm(), cx = px + (n.w || 22) / 2, base = py + (n.h || 34) + 3;
     if (!img) {
       // Never silently substitute Mike while an Iona asset is unavailable.
@@ -68,7 +76,7 @@
       ctx.fillText(failed ? 'Iona · sprite unavailable' : 'Iona · loading', cx - 42, base - 45);
       ctx.restore(); return true;
     }
-    let pose = sample(n, now), drawnImage = img;
+    let pose = selectedPose, drawnImage = img;
     if (pose.bicycle) {
       const bicycle = warmBicycle();
       if (bicycle) drawnImage = bicycle;
@@ -85,6 +93,6 @@
     ctx.drawImage(drawnImage, ...pose.rect, -pose.pivot[0] * scale, -pose.pivot[1] * scale, pose.rect[2] * scale, pose.rect[3] * scale);
     ctx.restore(); return true;
   }
-  root.TechOpsIonaNightwalker = {VERSION: 2, SRC, BICYCLE_SRC, CELLS, owns, warm, warmBicycle, frame, sample, draw};
+  root.TechOpsIonaNightwalker = {VERSION: 2, SRC, BICYCLE_SRC, CELLS, owns, warm, warmBicycle, frame, sample, draw, drawCompanion};
   warm(); warmBicycle();
 })(typeof globalThis !== 'undefined' ? globalThis : this);

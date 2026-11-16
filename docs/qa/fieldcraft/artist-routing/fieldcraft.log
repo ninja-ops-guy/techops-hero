@@ -1,0 +1,28 @@
+PASS legacy saves remain valid; optional data is lazily added without story grants
+PASS equipment changes require a quiet room or clear entry; no purchase or healing side effects
+PASS physical proximity, kit ownership and living guards gate tool use
+PASS isolation stops only the local task, warns before restoration and cannot be spammed
+PASS diversion moves the work zone without clearing the hazard or resolving objectives
+PASS a mistimed bypass creates a persisted alternate approach without changing survivors
+PASS raised crossing persists in its room, never opens a story route or teleports an escort
+PASS all 27 chapters support valid field state without making equipment mandatory
+PASS pause, huge frame gaps, leave and reload do not fast-forward machinery
+PASS relaxed timing adds warning time while the ten-second cycle stays stable
+PASS quiet activities are location and progression gated, optional and unscored
+PASS Iona rehearsal stays private, bounded and survives save/load
+PASS recap contains only the current viewpoint’s established records
+PASS service recovery preserves group position and objectives; no named death or reward
+PASS control remapping swaps conflicts and rejects movement/menu keys
+PASS malformed optional saves fail closed rather than deleting old progress
+PASS jump grace preserves a first jump after walking off and does not grant infinite jumps
+PASS pre-landing jump buffer expires, never auto-repeats and clears under interruption
+PASS hangar support cannot open the unrelated fracture shelter; completed local saves migrate
+PASS an already-active legacy chapter migrates its own completed support check on resume
+PASS complete cycle observation requires ten seconds and restarts after movement
+PASS real input adapter preserves directional combat beside objectives and uses explicit interact
+PASS optional notes hide future destinations and retain the actual last interaction
+PASS optional notes hide undiscovered chains and never copy Iona’s private take into Mike’s record
+PASS a later shared step does not erase Iona’s own last interaction or reveal Mike’s receipt
+PASS completed optional notes survive reload without offering duplicate rewards
+PASS optional journal is reachable through the real runtime menu and preserves progress
+{"suite":"fieldcraft","checks":27}
