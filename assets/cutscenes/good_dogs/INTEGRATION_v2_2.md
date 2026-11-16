@@ -1,6 +1,8 @@
 # TechOps Hero — Good Dogs Cutscene Integration v2.2
 
 ## Status
+This is a historical integration note. The production baseline, current player,
+and current acceptance tests control when this note differs from the runtime.
 The MP4s in this package are the actual campaign footage with an offline retro-pixel treatment.
 No images were regenerated.
 
@@ -34,13 +36,16 @@ game pixels without changing scene content or audio.
 The supplied GD_CUT_01 already depicts the dogs aboard the ship. It is not a title-screen prologue. Playable Waldo property/garage discovery and Hidden Bay hangar clearance must precede BOARD → GD_CUT_01 → pilot interaction → GD_CUT_02 → flight → authored crash → M3. The M2 boarding authority owns this order and a durable `ship_establishing_seen` boundary; a legacy early `GD_CUT_01.seen` bit is insufficient.
 
 ## Runtime safety
-- skip button and Escape/Enter support
-- media error auto-skips rather than soft-locking progression
+- explicit Skip button and Escape support; playback errors offer retry or skip
+- only completed playback or an explicit skip advances the story; media errors do not
+- movies start muted for autoplay; the player can enable audio on clips with an audio track
 - saves `S.meta.goodDogsCutscenes[id]` when `window.S` exists
 - mobile `playsinline`
 - no silent character-art fallback because these are fixed pre-rendered clips
 - the opening no longer plays `GD_CUT_03`; crash is owned by `09_prison_crash_selected_pixel.mp4`
 
-## Live repo note
-This package is prepared for direct integration, but the GitHub connector was unavailable during
-this pass, so no claim is made that these files have already been committed to the repository.
+## Review limits
+Audio is a per-clip choice and starts muted again for each movie. GD_CUT_02 has
+no audio stream. Captions, portrait reframing, music mixing, physical-device
+playback and creator review require separate verification; this note does not
+certify the visual or narrative quality of the movies.
