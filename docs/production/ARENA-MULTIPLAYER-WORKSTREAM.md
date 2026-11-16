@@ -15,14 +15,15 @@ GitHub inspection established:
   `codex/night-character-skills`.
 - Draft #136 `bde9909f789fd8d24229d16d01c6681bc6757903`, branch
   `codex/arena-pvp-prototype`, already stacked on that #135 head.
-- Fresh follow-up found sibling draft #137 at `3e1ce6aadc4783094d093906ff17bfbb1ff3c417`,
+- Fresh follow-up found sibling draft #137 at `db996700171acf904c28964620faecb2768b4056`,
   based on #135. Its seven changed files cover campaign special cancels/Uzi
   cover, cache references and documentation/tests; none overlap this Arena-owned
   foundation. It is not included here. Future move ports must reconcile those
   fixes and independently qualify the selected combined source.
 - Both PRs had no GitHub assignees or discussion comments at inspection. That is
   not proof that the author has no local work. Existing branches are therefore
-  preserved. This successor uses `codex/arena-wave1-foundation` and only
+  preserved. Draft #138 at `2b886ed14cf5086546e16cf1559425acb1b35274` is preserved.
+  This follow-up uses `codex/arena-core-contract` and only
   Arena-owned source, tests, qualification tooling and documentation.
 - Open PRs #128–#135 and the separate #131/#134 lanes retain their existing
   source ownership. Campaign modules, save schema, story flags and approved
@@ -53,30 +54,45 @@ dispatch, not claims of active agents.
 
 | ID | Wave / role | Scope and required evidence | State |
 | --- | --- | --- | --- |
-| 1 | W1 integrator + simulation | Pure fixed-step, multi-fighter rules shared through reviewed adapters; replay and campaign regression coverage | Arena core exists; slot-symmetry repaired; campaign/shared adapter remains proposed |
+| 1 | W1 integrator + simulation | Pure fixed-step, multi-fighter rules shared through reviewed adapters; replay and campaign regression coverage | Versioned Node/browser Arena core and strict checkpoints implemented; campaign adapter remains separate |
 | 2 | W2 moves | Directional light/heavy punches and kicks, aerials, launchers, grabs/throws, bounded juggles; both-slot parity/no infinite stun | Blocked on #1 interface and authored move data |
 | 3 | W2 movement | Slides/cancels, gravity cancel, dash and aerial recovery; server-owned timing/resources | Blocked on #1; campaign behavior remains separate |
 | 4 | W2 specials | Mike/K, Iona nunchucks/Uzi, Felicia violin/Kali; costs/ownership/collision/counterplay | Reference values inspected; PvP port awaits #1 |
-| 5 | W2 network | Buffered frames, transport replacement, prediction/reconciliation/interpolation; evaluate rollback using impairment measurements | HTTP polling remains; versioned frame contract proposed |
+| 5 | W2 network | Buffered frames, transport replacement, prediction/reconciliation/interpolation; evaluate rollback using impairment measurements | HTTP polling remains; versioned seven-control frame contract implemented; prediction/transport pending |
 | 6 | W1 sessions, then W2 recovery | Leave/timeout outcomes, bounded cleanup, no duplicate seats; reconnect/seat recovery | Foundation repaired; authenticated reconnect still absent |
 | 7 | W1 security, then W3 review | Validate actions/controls, origins/tokens/rates/replay; public admission and abuse limits | Local controls tested; public occupancy/load qualification open |
 | 8 | W2 lobby | Selection/loadouts/readiness/private invites/results/rematches without developer tools | Prototype flow present; loadout and full flow qualification await #4/#6 |
 | 9 | W1 baseline then W2 balance | Damage/reach/recovery/Focus/mobility/matchups; normalize campaign stats; Uzi vs Flurry | Equal-stat numerical baseline recorded; specials matchup data missing |
 | 10 | W1 visual plan then art lane | Replace geometric fighters, readable windups/hits/block/warnings/player IDs; K clear glasses | Acceptance and asset plan only; creator visual approval required |
 | 11 | W3 device/accessibility | Simultaneous touch, orientations, controller and HUD; physical iPhone separate | Input-source repair; full device/controller qualification open |
-| 12 | W3 independent QA | Full matches/rematches, latency/jitter/loss/server stalls/room churn | Local deterministic/protocol checks; real network/endurance outstanding |
+| 12 | W3 independent QA | Full matches/rematches, latency/jitter/loss/server stalls/room churn | Deterministic checkpoint/protocol checks plus Node/browser parity harness; real network/endurance outstanding |
 | 13 | W3 operations | Packaging/TLS/origins/health/logs/capacity/costs/rollback | Local origin configuration and CI only; deployment not authorized |
-| 14 | Integration + independent QA | One exact candidate, full regressions and preserved campaign saves | Foundation successor only; full multiplayer release remains HOLD |
+| 14 | Integration + independent QA | One exact candidate, full regressions and preserved campaign saves | Core successor to draft #138 only; full multiplayer release remains HOLD |
 
 ## Next bounded dispatch
 
-After foundation review, the integrator freezes the versioned input/state/event
-contract described in `ARENA-COMBAT-MIGRATION.md`. The next implementation is the
-pure rules adapter and serialization/replay tests; no campaign import with
-rewards, storage, globals or randomness. Independent moves/movement/specials
-lanes may author data and tests against that interface, but only the integrator
-combines shared runtime edits. Session-recovery design and visual asset planning
-can continue independently.
+The bounded core contract in `ARENA-CORE-CONTRACT-V1.md` was independently
+reviewed and frozen before implementation. It supersedes the broader migration
+proposal for this extraction only. The current continuation has isolated owners:
+
+| Lane | Exclusive files | Dependency / result |
+| --- | --- | --- |
+| Integration | `arena/simulation.cjs`, explicit server module routes, package/workflow, workstream | Same physics for legacy server and strict portable core; atomic checkpoints and deterministic events |
+| Input | `arena/input-contract.js`, `arena/input-contract.test.cjs` | Frozen seven-key current-tick frame contract; both frames validate before normalization |
+| Checkpoint review | `arena/core-checkpoint.test.cjs` | Independent malformed-data, clone, terminal and edge-history regressions |
+| Replay review | `arena/core-replay.test.cjs` | Legacy/strict value parity, event identities and replay checkpoints |
+| Browser parity | `scripts/arena_core_browser.mjs`, `arena/core-parity-fixtures.cjs` | Real Node/Chromium/WebKit execution of the same modules; no copied physics |
+| Independent review | Read-only source and test review | Exact integrated candidate reviewed after authors finish |
+
+No new campaign controls, specials, prediction, reconnect credentials or public
+hosting are included. The raw HTTP render snapshot is deliberately not a restore
+checkpoint. Strict restore validates data but grants no room/session authority.
+
+Next: qualify this exact core successor, then reconcile #137's changed combat
+source with authored move requirements before dispatching move/movement/special
+ports. Session recovery and presentation planning remain independently assignable
+only with exclusive files and current ownership checks. Campaign save/reward
+code must stay outside portable rules. Integration owns shared runtime changes.
 
 Every dispatch records: exact base/head, owned files, input/output contract,
 acceptance command, reviewer, blocked dependency and next checkpoint. No ACK or

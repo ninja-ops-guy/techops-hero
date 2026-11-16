@@ -18,7 +18,8 @@
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs",
     "arena:prototype": "node arena/server.cjs",
     "test:arena": "node --test arena/test.cjs arena/*.test.cjs",
-    "test:browser:arena": "node scripts/arena_pvp_browser.mjs"
+    "test:browser:arena": "node scripts/arena_pvp_browser.mjs",
+    "test:browser:arena-core": "node scripts/arena_core_browser.mjs"
   },
   "devDependencies": {
     "playwright": "1.55.1"
