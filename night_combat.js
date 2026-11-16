@@ -72,10 +72,10 @@
   function dash(n,face){
     if(!active(n)||inputBlocked())return false;
     const c=state(n);if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.attack||c.stunUntil>c.time)return false;
-    face=face<0?-1:1;n.face=face;n.dashT=10;n.dashCD=42;n.ifr=Math.max(n.ifr||0,12);n.vx=face*9.5;
+    face=face<0?-1:1;n.face=face;n.dashT=10;n.dashCD=42*(root.TechOpsNightProgression?.modifiers(n).dash||1);n.ifr=Math.max(n.ifr||0,12);n.vx=face*9.5;
     c.dash={at:c.time,until:c.time+RULES.dashGrabWindow,face,spent:false};event(n,'dash');sound('dash');return true;
   }
-  function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
+  function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;value*=root.TechOpsNightProgression?.modifiers(n).damage||1;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});if(root.TechOpsNightProgression)root.TechOpsNightProgression.defeat(n,e);say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
   function lift(n,e,vx,vy,thrown){const c=state(n),ec=enemy(e);ec.held=false;ec.air=true;ec.airHits=0;ec.locked=false;ec.vx=vx;ec.vy=vy;ec.thrown=thrown;ec.flightHits=[];ec.wallHit=false;ec.stunUntil=c.time+450;e.launch=0;e.down=0;e.kb=0;c.follow={enemy:e,engaged:false};}
   function throwHeld(n,dir){
     const c=state(n),g=c.grab;if(!g)return false;
@@ -113,7 +113,7 @@
     }
     if(action==='grab'){clearChain(n);event(n,'grab-miss');say(n,'GRAB · GET CLOSE TO A GROUNDED ENEMY');return false;}
     const gap=pressedAt-c.lastInput,connected=c.lastHit>=0&&c.time-c.lastHit<RULES.chainLife;
-    const beat=connected&&gap>=RULES.beatMin&&gap<=RULES.beatMax;
+    const beat=connected&&gap>=RULES.beatMin&&gap<=RULES.beatMax+(root.TechOpsNightProgression?.modifiers(n).combo||0);
     const eq=root.v733&&root.v733.equipped?root.v733.equipped():[];
     const stage=beat?(c.stage+1)%3:0;
     const f=c.follow,fe=f&&f.enemy,fec=fe&&enemy(fe);
@@ -123,7 +123,7 @@
     else if(action==='kick')kind=dir==='up'?'rising-kick':dir==='down'?'sweep':'kick';
     else kind=dir==='up'?'uppercut':dir==='down'?'low':stage===2||stage===1&&eq.includes('pivot')?'launcher':stage===1?'cross':'jab';
     const move=MOVES[kind];c.lastInput=pressedAt;
-    c.attack={kind,stage,beat,at:c.time,hit:false,contactIndex:0,connected:false,launch:!!move.launch,windup:move.windup,duration:move.recovery,face:n.face||1};
+    c.attack={kind,stage,beat,at:c.time,hit:false,contactIndex:0,connected:false,launch:!!move.launch,windup:move.windup,duration:Math.max((move.contacts?.at(-1)||move.windup)+45,move.recovery*(root.TechOpsNightProgression?.modifiers(n).recovery||1)),face:n.face||1};
     n.jabAnim=16;n.jabStage=stage+1;n.lastJab=wallClock();event(n,'windup',null,{kind});return true;
   }
   // A confirmed launcher may cancel recovery into a player-requested jump.

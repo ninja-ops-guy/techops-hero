@@ -367,6 +367,7 @@ var seen = state.evidence.indexOf(id) >= 0;
 return (seen ? "✓ " : "○ ") + missionApi().EVIDENCE[id].label;
 }).join("<br>");
 var options = [{ t: "Resume the field report", f: closeDialog }];
+if (root.TechOpsNightProgression) options.push({t:"Stats & skills",f:function(){root.TechOpsNightProgression.open(openJournal);}});
 if (state.completed) options.push({ t: "Return to free roam", f: exitToFreeRoam });
 else options.push({ t: "Save progress and return to free roam", f: exitToFreeRoam });
 if (root.openNightSupplies) options.push({ t: "Supplies and store", f: function () { root.openNightSupplies(); } });

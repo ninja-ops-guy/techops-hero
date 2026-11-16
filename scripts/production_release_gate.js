@@ -4,6 +4,7 @@ const { spawnSync } = require("child_process");
 const fs = require("fs");
 
 const tests = [
+  "test_night_progression.js",
   "test_fieldcraft.js",
   "test_field_score.js",
   "test_living_world.js",

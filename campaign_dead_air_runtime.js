@@ -339,6 +339,7 @@
     if (!night || !night._nightwalker) return false;
     var relays = Object.keys(missionApi().RELAYS).map(function (id) { return (state.tunedRelays.indexOf(id) >= 0 ? "✓ " : "○ ") + missionApi().RELAYS[id].label; }).join("<br>");
     var options = [{ t: "Resume the field report", f: closeDialog }, { t: "Save progress and return to free roam", f: exitToFreeRoam }];
+if (root.TechOpsNightProgression) options.push({t:"Stats & skills",f:function(){root.TechOpsNightProgression.open(openJournal);}});
     if (root.openNightSupplies) options.push({ t: "Supplies and store", f: function () { root.openNightSupplies(); } });
       options.push({ t: "Restart this field report", f: function () {
       return dialog("RESTART PIER 7?", "Only this standalone field report will be reset. Ordinary Night progress, West Annex, and all Day-campaign saves remain unchanged.", [

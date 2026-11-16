@@ -101,14 +101,14 @@
   function moment(s,e,id,value,frame){const item=activities(s,e).find(x=>x.id===id);assert(item&&Math.abs(frame.x+11-item.x)<96&&Math.abs(frame.y+17-413)<96,'Approach the quiet activity.');ensure(s);const f=s.active.fieldcraft;if(id==='rhythm'){assert(Array.isArray(value)&&value.length<=16&&value.every(n=>Number.isInteger(n)&&n>=0&&n<4),'Invalid rhythm');f.moments[id]=value.slice();}else{assert(({lighting:['warm','cool'],phone:['away'],desk:['green','amber']})[id].includes(value),'Invalid activity choice');f.moments[id]=value;}f.last=id==='rhythm'?'Kept a private rehearsal pattern.':item.text;return f.last;}
   function recap(s,e){const a=s.active,parent=e.goals[a.step],g=parent&&parent.tasks&&a.task?parent.tasks.find(t=>t.id===a.task):parent,loc=e.rooms.find(r=>r.id===a.room);return {actor:a.actor,chapter:e.title,place:loc.name,next:g?g.label:'Quiet aftermath',last:a.fieldcraft&&a.fieldcraft.last||null,record:(s.knowledge[a.actor]||[]).slice(-1)[0]||null,escort:a.escort?a.escort.name:null};}
   /* Called only by the existing physics owner. Timers are simulation seconds. */
-  function jump(n,dt,pressed,locked){
+  function jump(n,dt,pressed,locked,maxJumps=2){
     const f=n._fieldFeel||(n._fieldFeel={held:false,buffer:0,grace:0});dt=Math.min(.05,Math.max(0,Number(dt)||0));
     if(locked){f.buffer=0;f.held=!!pressed;f.grace=0;return false;}
     f.buffer=Math.max(0,f.buffer-dt);f.grace=n.onGround?.09:Math.max(0,f.grace-dt);
     if(pressed&&!f.held)f.buffer=.14;f.held=!!pressed;
     if(f.buffer<=0)return false;
     if(n.onGround||f.grace>0){n.vy=-10.4;n.onGround=false;n.jumps=1;}
-    else if(n.jumps<2){n.vy=-8.8;n.jumps=2;n.flip=16;}
+    else if(n.jumps<Math.min(4,Math.max(2,maxJumps))){n.vy=-8.8;n.jumps=Math.max(1,n.jumps)+1;n.flip=16;}
     else return false;
     f.buffer=0;f.grace=0;return true;
   }
