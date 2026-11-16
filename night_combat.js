@@ -59,8 +59,10 @@
       const ec=enemy(e),dx=e.x+e.w/2-cx,feet=(e.y+e.h)-(n.y+n.h);
       if(ec.held||ec.recoverUntil>c.time)return false;
       if(move.onlyEnemy&&e!==move.onlyEnemy||move.airOnly&&!ec.air)return false;
-      if(grab)return n.onGround&&!ec.air&&!e.hover&&e.grabbable!==false&&
-        Math.abs(feet)<=18&&Math.abs(dx)<RULES.grabReach&&dx*face>-12;
+      if(grab){if(e.hover||e.grabbable===false||Math.abs(dx)>=RULES.grabReach||dx*face<=-12)return false;
+        if(n.onGround)return !ec.air&&Math.abs(feet)<=18;
+        return ec.air&&!ec.locked&&ec.airHits<RULES.maxAirHits&&Math.abs(feet)<=45;
+      }
       if(move.low&&(ec.air||e.hover))return false;
       const follow=!!(c.follow&&c.follow.engaged&&c.follow.enemy===e&&ec.air&&!ec.locked);
       const vertical=move.downward?130:follow?RULES.followVertical:(move.launch?120:n.onGround?65:92);
@@ -94,7 +96,8 @@
     e.x=clamp(n.x+(sign>0?n.w+3:-e.w-3),0,1800-e.w);e.y=n.y+n.h-e.h;
     // A side toss still collides with crowds, but stays inside a jump's reach.
     lift(n,e,dir==='up'?sign*.9:dir==='down'?0:sign*2.8,dir==='up'?-9.8:dir==='down'?3:-8.8,true);
-    if(dir==='down')enemy(e).locked=true;
+    if(g.air){const ec=enemy(e);ec.airHits=RULES.maxAirHits;ec.locked=true;if(dir==='down')ec.vy=10;}
+    else if(dir==='down')enemy(e).locked=true;
     damage(n,e,dir==='up'?16:dir==='down'?22:24,'throw');
     c.attack={kind:dir==='up'?'throw-up':dir==='down'?'throw-down':'throw',at:c.time,hit:true,connected:true,launch:dir!=='down',stage:0,duration:270,face:sign};
     n.jabAnim=17;c.hits++;c.lastHit=c.time;n.combo=c.hits;n.comboT=wallClock()+RULES.chainLife;
@@ -113,15 +116,15 @@
   }
   function begin(n,k,pressedAt,action='legacy'){
     const c=state(n);faceInput(n,k);
-    const dir=direction(k),implicit=action==='legacy'&&(dir==='left'||dir==='right');
+    const dir=direction(k),implicit=action==='legacy'&&n.onGround&&(dir==='left'||dir==='right');
     const dashGrab=c.dash&&!c.dash.spent&&c.time<=c.dash.until&&n.onGround&&dir!=='up'&&dir!=='down'&&(n.face||1)===c.dash.face;
     const e=(action==='grab'||implicit||dashGrab)?target(n,k,true):null;
     if(c.dash)c.dash.spent=true;
     if(e){
       n.face=e.x+e.w/2<n.x+n.w/2?-1:1;const ec=enemy(e);ec.held=true;e.windup=0;e.kb=0;
-      c.grab={enemy:e,at:c.time,entry:dir,armed:false};n.vx=0;n.dashT=0;event(n,'grab',e,{fromDash:!!dashGrab});say(n,'GRABBED · ← / → THROW · ↑ LAUNCH · ↓ SLAM');return true;
+      c.grab={enemy:e,at:c.time,entry:dir,armed:false,air:!n.onGround};n.vx=0;n.dashT=0;event(n,'grab',e,{fromDash:!!dashGrab});say(n,n.onGround?'GRABBED · ← / → THROW · ↑ LAUNCH · ↓ SLAM':'AIR GRAB · DIRECTION TO FINISH');return true;
     }
-    if(action==='grab'){clearChain(n);event(n,'grab-miss');say(n,'GRAB · GET CLOSE TO A GROUNDED ENEMY');return false;}
+    if(action==='grab'){clearChain(n);event(n,'grab-miss');say(n,n.onGround?'GRAB · GET CLOSE TO A GROUNDED ENEMY':'AIR GRAB · GET CLOSE TO A LAUNCHED ENEMY');return false;}
     const gap=pressedAt-c.lastInput,connected=c.lastHit>=0&&c.time-c.lastHit<RULES.chainLife;
     const beat=connected&&gap>=RULES.beatMin&&gap<=RULES.beatMax+(root.TechOpsNightProgression?.modifiers(n).combo||0);
     const eq=root.v733&&root.v733.equipped?root.v733.equipped():[];
