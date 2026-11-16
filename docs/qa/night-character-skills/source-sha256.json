@@ -1,0 +1,12 @@
+{
+  "docs/production/NIGHT-CHARACTER-SKILLS.md": "1fe1e89cdcb6f617ffb0fe60d93d772386e4d7b7d517057e835c0248f0273aea",
+  "scripts/night_character_skills_browser.mjs": "acc217bb2ac401fd1bbdaf07f42f75baa3efa4bf23cd8fd9ab6e2cbfd54ffdee",
+  "test_night_character_skills.js": "55d4c9a9f49ab6733521d6eaa2e5d021a6f8d22c5dbd3b275c585b556561df14",
+  "iona_nightwalker.js": "9c4c738e9f89262ab1f93947176695a18af5852f09ac2e15401aebe0d6f0caff",
+  "night_combat.js": "ebb2eee77f2dec171d27f9a6a5958a3ad6d6110a863455bd1a4d10802d60d204",
+  "night_combat_input.js": "3f61a020863b43881be478a90bc52896b9c6ef27698e2d7b736124263f760bbe",
+  "night_combat_lab.js": "b126ceb513fc796e67e686bdb38db90d5987a9817360e3ffe9376870c5b257b8",
+  "night_progression.js": "329eead0ad2fac7946399a744257173f9c49c6b675d9c163f545c624716d1911",
+  "runtime_hud.js": "8b68b91ebcb11e071fd20c51ab0d80bca14747731a521e5d869db86263cf35ef",
+  "scripts/production_release_gate.js": "9fab1f955e75ef1f7ac603eb624b73d461a24065f54f100eb92d44c80593ee15"
+}

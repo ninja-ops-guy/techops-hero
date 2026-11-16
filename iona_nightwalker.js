@@ -45,7 +45,7 @@
       }
       if (kind === 'get-up') cell = [23, 10, 6, 0][pose.frame];
       else {
-        cell = CELLS[kind] === undefined ? 6 : CELLS[kind];
+        const visual=root.TechOpsNightCombat?.MOVES[kind]?.visual||kind;cell = CELLS[visual] === undefined ? 6 : CELLS[visual];
         // One distinct action key pose, with guard anticipation/recovery.
         // Injury, defense, grabs, dashes and grounded defeat keep their own pose.
         if (!['down', 'hurt', 'block', 'grab', 'dash'].includes(kind) &&
