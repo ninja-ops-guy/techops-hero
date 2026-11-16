@@ -63,3 +63,7 @@ The code currently adds movement timing and a landing accent; it does not claim 
 - The existing domain suite traverses all 27 chapters and checks their progression contracts. This is not a complete new 27-chapter visual playthrough.
 
 Final qualification receipts and source hashes belong in `docs/qa/fieldcraft/`. Passing automated checks does not resolve PR #129's existing chronology/adaptation findings, approve character likeness, establish physical-device performance, or authorize release.
+
+## Continuity follow-up
+
+See [the continuity pass](FIELDCRAFT-CONTINUITY.md) for the owner-selected shipboard coda, historical viewpoint labels, receiving-group accounting and bounded care/return bridges. Those edits supersede the earlier statement that the coda location and explicit Earth-return ordering conflict were still untouched. Dramatic and visual adaptation work remains open.
