@@ -10,7 +10,7 @@
   const jumpPointers=new Set(),bound=new WeakSet();
   const directionTaps=[],directionHeld=new Set();
   const directionCodes={KeyA:-1,ArrowLeft:-1,KeyD:1,ArrowRight:1};
-  const keyMap={KeyE:'punch',Enter:'punch',KeyJ:'kick',KeyG:'grab',Space:'jump',ShiftLeft:'dash',ShiftRight:'dash'};
+  const keyMap={KeyE:'punch',Enter:'punch',KeyJ:'kick',KeyG:'grab',KeyH:'special1',KeyY:'special2',Space:'jump',ShiftLeft:'dash',ShiftRight:'dash'};
   function runtime(){const s=game();return s&&s.nightMode&&typeof s.nightMode==='object'?s.nightMode:typeof NM!=='undefined'?NM:root.NM;}
   function game(){return typeof S!=='undefined'?S:root.S;}
   function keyboard(){return typeof keys!=='undefined'?keys:(root.keys||{});}
@@ -40,6 +40,7 @@
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
     if(root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.input(action))return true;
     if(action==='punch'&&contextAction()&&typeof root.interact==='function'){root.interact();return true;}
+    if(action==='special1'||action==='special2')return root.TechOpsNightCombat.special(runtime(),action==='special1'?1:2,snapshot(k));
     if(action==='jump'){const c=root.TechOpsNightCombat.state(runtime());if(c.slide&&!root.TechOpsNightCombat.cancelSlide(runtime()))return false;if(c.gravity)c.gravity=null;jumpQueued=true;return true;}
     if(action==='dash'){const aim=snapshot(k);return aim.s||aim.arrowdown?(runtime().onGround?root.TechOpsNightCombat.slide(runtime(),runtime().face||1):root.TechOpsNightCombat.gravityCancel(runtime())):root.TechOpsNightCombat.dash(runtime(),runtime().face||1);}
     return root.TechOpsNightCombat.attack(runtime(),snapshot(k),action);
@@ -92,7 +93,7 @@
   }
   function editable(el){return !!(el&&el.closest&&el.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]'));}
   function stop(e){e.preventDefault();e.stopImmediatePropagation();}
-  function actionFor(code){const b=root.TechOpsFieldcraftRuntime&&root.TechOpsFieldcraftRuntime.bindings();if(b){const action=Object.keys(b).find(k=>b[k]===code||(code==='ShiftRight'&&b[k]==='ShiftLeft'));return action||null;}return keyMap[code];}
+  function actionFor(code){if(code==='KeyH')return 'special1';if(code==='KeyY')return 'special2';const b=root.TechOpsFieldcraftRuntime&&root.TechOpsFieldcraftRuntime.bindings();if(b){const action=Object.keys(b).find(k=>b[k]===code||(code==='ShiftRight'&&b[k]==='ShiftLeft'));return action||null;}return keyMap[code];}
   function keyDown(e){
     if(directionCodes[e.code]&&ready()&&!editable(e.target)&&!e.repeat){
       if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
@@ -152,15 +153,16 @@
       b.addEventListener('dblclick',e=>{if(!ready())return;stop(e);root.TechOpsNightCombat.dash(runtime(),Number(b.dataset.dx)<0?-1:1);});
     }
     if(active)box.dataset.nightCombatInput=enabled?'active':'paused';else delete box.dataset.nightCombatInput;
-    for(const action of ['grab','kick','jump']){
+    for(const action of ['grab','kick','jump','special1','special2']){
       const id='night-input-'+action;let b=doc.getElementById(id);
-      if(!b){b=doc.createElement('button');b.id=id;b.type='button';b.className='v55-nbtn night-input-action';b.textContent=action.toUpperCase();b.setAttribute('aria-label',action==='grab'?'Grab or throw enemy':action==='kick'?'Directional kick':'Jump');box.appendChild(b);bindButton(b,action);}
-      b.hidden=!active||(action==='grab'&&!assistControls);b.disabled=!enabled;
+      if(!b){b=doc.createElement('button');b.id=id;b.type='button';b.className='v55-nbtn night-input-action';b.textContent=action.startsWith('special')?'SPECIAL '+action.slice(-1):action.toUpperCase();b.setAttribute('aria-label',action.startsWith('special')?'Character special '+action.slice(-1):action==='grab'?'Grab or throw enemy':action==='kick'?'Directional kick':'Jump');box.appendChild(b);bindButton(b,action);}
+      if(action.startsWith('special')){b.style.setProperty('min-height','44px','important');b.style.setProperty('min-width','56px','important');}
+      b.hidden=!active||((action==='grab'||action.startsWith('special'))&&!assistControls);b.disabled=!enabled;
     }
     const dash=Array.from(box.children).find(b=>/DASH/.test(b.textContent||'')&&!b.id);
     if(dash){bindButton(dash,'dash');dash.hidden=active&&!assistControls;}
     let more=doc.getElementById('night-input-assists');
-    if(!more){more=doc.createElement('button');more.id='night-input-assists';more.type='button';more.className='v55-nbtn night-input-action';more.textContent='MORE';more.setAttribute('aria-label','Show optional dash and grab buttons');more.addEventListener('click',()=>{assistControls=!assistControls;sync();});box.appendChild(more);}
+    if(!more){more=doc.createElement('button');more.id='night-input-assists';more.type='button';more.className='v55-nbtn night-input-action';more.textContent='MORE';more.setAttribute('aria-label','Show dash, grab and character special buttons');more.addEventListener('click',()=>{assistControls=!assistControls;sync();});box.appendChild(more);}
     more.hidden=!active;more.disabled=!enabled;more.setAttribute('aria-expanded',String(assistControls));
     const punch=doc.getElementById('tb-interact');bindButton(punch,'punch',true);
     if(active&&punch){

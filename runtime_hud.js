@@ -112,9 +112,9 @@
       text(ctx, 'HP ' + hp, leftX + 8, l.top + 19, hp > 35 ? '#b0f0b6' : '#ff91a3', true);
       ctx.fillStyle = '#304053'; ctx.fillRect(leftX + 73, l.top + 9, hpWidth, 10);
       ctx.fillStyle = hp > 35 ? '#7ee787' : '#ff6b81'; ctx.fillRect(leftX + 73, l.top + 9, hpWidth * hp / 100, 10);
-      text(ctx, 'FOCUS', leftX + 8, l.top + 40);
+      text(ctx, 'F '+Math.round(root.TechOpsNightCombat?.focus?.(n)||0), leftX + 8, l.top + 40);
       const pipWidth = Math.max(3, Math.min(11, (l.left - 76) / 6 - 3));
-      for (let i = 0; i < 6; i++) { ctx.fillStyle = i < Math.min(Number(n.combo) || 0, 6) ? (n.perfectT > now ? '#ffd24a' : '#7ec8ff') : '#304053'; ctx.fillRect(leftX + 64 + i * (pipWidth + 3), l.top + 30, pipWidth, 9); }
+      for (let i = 0; i < 6; i++) { ctx.fillStyle = i < (root.TechOpsNightCombat?.focus?.(n)||0)*6/100 ? (n.perfectT > now ? '#ffd24a' : '#7ec8ff') : '#304053'; ctx.fillRect(leftX + 64 + i * (pipWidth + 3), l.top + 30, pipWidth, 9); }
       text(ctx, cashText, leftX + 8, l.top + 63, '#98e7ab');
       if (comboText) { ctx.textAlign = 'right'; text(ctx, comboText, leftX + l.left - 8, l.top + (separateCombo ? 81 : 63), n.perfectT > now ? '#ffd24a' : '#d8e7f5'); ctx.textAlign = 'left'; }
       // A short header keeps clock, threat and location on distinct baselines.

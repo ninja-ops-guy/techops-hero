@@ -1,0 +1,17 @@
+{
+  "profile": "portrait",
+  "checks": [
+    "Mike special 1 uses real touch input, hits and spends focus",
+    "Mike special 2 uses real touch input, hits and spends focus",
+    "K special 1 uses real touch input, hits and spends focus",
+    "K special 2 uses real touch input, hits and spends focus",
+    "Iona special 1 uses real touch input, hits and spends focus",
+    "Iona special 2 uses real touch input, hits and spends focus",
+    "Felicia special 1 uses real touch input, hits and spends focus",
+    "Felicia special 2 uses real touch input, hits and spends focus",
+    "all character practice presets restore the street and leave XP and skills unchanged",
+    "character unlock survives reload without giving Mike Iona’s move"
+  ],
+  "errors": [],
+  "pass": true
+}

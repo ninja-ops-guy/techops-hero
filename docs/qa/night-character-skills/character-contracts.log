@@ -1,0 +1,17 @@
+PASS mike special 1 has bounded contacts, actual damage and a focus cost
+PASS mike special 2 has bounded contacts, actual damage and a focus cost
+PASS k special 1 has bounded contacts, actual damage and a focus cost
+PASS k special 2 has bounded contacts, actual damage and a focus cost
+PASS iona special 1 has bounded contacts, actual damage and a focus cost
+PASS iona special 2 has bounded contacts, actual damage and a focus cost
+PASS felicia special 1 has bounded contacts, actual damage and a focus cost
+PASS felicia special 2 has bounded contacts, actual damage and a focus cost
+PASS character ownership in Living World resolves K and Felicia independently
+PASS learned special persists and another character cannot use it
+PASS locks, insufficient focus, pause, wrong posture and whiffs do not create free damage
+PASS Uzi cannot hit behind, across vertical floors or beyond its range
+PASS focus builds on real normal hits and blocks, caps, and drops on hurt
+PASS special multi-hit attacks respect the existing airborne juggle cap
+PASS character passives affect only the appropriate actor and mechanic
+PASS practice skill catalog spends no points and keeps progression rewards excluded
+{"suite":"night-character-skills","checks":16}

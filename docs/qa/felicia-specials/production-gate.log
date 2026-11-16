@@ -1,0 +1,819 @@
+TechOps Hero production gate: 131 suites
+PASS notes travel before contact, hit once per note and never refund focus
+PASS notes respect direction, vertical separation, walls and finite range
+PASS projectiles pause and disappear on hurt or actor replacement
+PASS missile locks one location, warns, then damages only its bounded area
+PASS moving out of a marked missile location avoids the impact
+PASS missile cancels on hurt, cannot fire airborne, and cannot borrow another actor
+PASS note contacts respect an existing finite airborne juggle
+PASS old saves retain original specials; learning and equipping alternatives persist
+PASS failed equip save rolls back the loadout; practice selection never writes progression
+PASS cat presentation uses full body geometry under the legacy hidden-body render pass
+{"suite":"felicia-specials","checks":10}
+PASS mike special 1 has bounded contacts, actual damage and a focus cost
+PASS mike special 2 has bounded contacts, actual damage and a focus cost
+PASS k special 1 has bounded contacts, actual damage and a focus cost
+PASS k special 2 has bounded contacts, actual damage and a focus cost
+PASS iona special 1 has bounded contacts, actual damage and a focus cost
+PASS iona special 2 has bounded contacts, actual damage and a focus cost
+PASS felicia special 1 has bounded contacts, actual damage and a focus cost
+PASS felicia special 2 has bounded contacts, actual damage and a focus cost
+PASS character ownership in Living World resolves K and Felicia independently
+PASS learned special persists and another character cannot use it
+PASS locks, insufficient focus, pause, wrong posture and whiffs do not create free damage
+PASS Uzi cannot hit behind, across vertical floors or beyond its range
+PASS focus builds on real normal hits and blocks, caps, and drops on hurt
+PASS special multi-hit attacks respect the existing airborne juggle cap
+PASS character passives affect only the appropriate actor and mechanic
+PASS practice skill catalog spends no points and keeps progression rewards excluded
+{"suite":"night-character-skills","checks":16}
+PASS level thresholds, multiple levels, cap and finite point budgets
+PASS same encounter cannot award twice across JSON reload; streets remain distinct
+PASS costs, prerequisites, caps and skills cannot overspend
+PASS bad saves fail closed, including forged overspend and premature jumps
+PASS jump upgrades give bounded third/fourth jumps and never auto-repeat
+PASS save failure rolls allocations back and preserves old XP
+PASS day/dogs/Sector04 are isolated and legacy saves preserve baseline
+PASS real contact receives strength and dexterity; combo window and dash skill apply
+PASS KO and street-clear rewards persist once with actual street number
+PASS quiet and unfinished chapters give no XP; completed dangerous chapters reward once
+PASS failed XP save is retryable without minting duplicate rewards
+PASS walking off an edge consumes the ground jump after grace expires
+{"suite":"night-progression","checks":12}
+PASS entry requires a safe street, no pending attack, and valid mode
+PASS training uses baseline modifiers and cannot earn combat or clear rewards
+PASS checkpoint and exit restore street without practice health, kills or cash
+PASS arena finish is once-only and retry produces a fresh opponent
+PASS roster uses bounded distinct practice attributes and rejects invented actors
+PASS combat identity unlocks only Iona bicycle and selected arena opponent persists on retry
+PASS entry refuses special modes without altering them
+{"suite":"night-combat-lab","checks":7}
+Air grab: four directional finishes, juggle limit, range, eligibility and interruption PASS
+PASS legacy saves remain valid; optional data is lazily added without story grants
+PASS equipment changes require a quiet room or clear entry; no purchase or healing side effects
+PASS physical proximity, kit ownership and living guards gate tool use
+PASS isolation stops only the local task, warns before restoration and cannot be spammed
+PASS diversion moves the work zone without clearing the hazard or resolving objectives
+PASS a mistimed bypass creates a persisted alternate approach without changing survivors
+PASS raised crossing persists in its room, never opens a story route or teleports an escort
+PASS all 27 chapters support valid field state without making equipment mandatory
+PASS pause, huge frame gaps, leave and reload do not fast-forward machinery
+PASS relaxed timing adds warning time while the ten-second cycle stays stable
+PASS quiet activities are location and progression gated, optional and unscored
+PASS Iona rehearsal stays private, bounded and survives save/load
+PASS recap contains only the current viewpoint’s established records
+PASS service recovery preserves group position and objectives; no named death or reward
+PASS control remapping swaps conflicts and rejects movement/menu keys
+PASS malformed optional saves fail closed rather than deleting old progress
+PASS jump grace preserves a first jump after walking off and does not grant infinite jumps
+PASS pre-landing jump buffer expires, never auto-repeats and clears under interruption
+PASS hangar support cannot open the unrelated fracture shelter; completed local saves migrate
+PASS an already-active legacy chapter migrates its own completed support check on resume
+PASS complete cycle observation requires ten seconds and restarts after movement
+PASS real input adapter preserves directional combat beside objectives and uses explicit interact
+PASS optional notes hide future destinations and retain the actual last interaction
+PASS optional notes hide undiscovered chains and never copy Iona’s private take into Mike’s record
+PASS a later shared step does not erase Iona’s own last interaction or reveal Mike’s receipt
+PASS completed optional notes survive reload without offering duplicate rewards
+PASS optional journal is reachable through the real runtime menu and preserves progress
+{"suite":"fieldcraft","checks":27}
+PASS no context, playback or request before explicit start
+PASS explicit start, phrase-boundary transitions and bounded voices
+PASS dialogue, master mute, hidden page and stop immediately dispose all voices
+PASS unpause schedules a fresh phrase instead of replaying missed audio
+PASS audio failure is reported without throwing into gameplay
+PASS leaving while resume is pending cannot enable late audio
+PASS artist stems reject remote paths and mismatched durations
+PASS artist layers share an audio start time and replace the reference arrangement
+PASS decoded stems respect a separate mobile memory budget
+PASS a configured score load cancelled by leaving cannot activate late
+PASS rehearsal auditions survive only their own menu, then stop on other menus or blur
+PASS existing master toggle routes exclusively to the active field score
+{"suite":"field-score","checks":12}
+PASS all twenty-seven chapters have a reachable objective sequence, including supported transports
+PASS future chapters and native character reveals fail closed
+PASS fights and stored flags cannot substitute for human verification
+PASS hold work pauses in menus, on movement, and on incoming damage
+PASS work cycles warn before contact and replay variations leave canon objectives intact
+PASS transport rejects narrow shortcut and unsupplied medical ramp
+PASS escort cannot teleport through a route or complete a distant handoff
+PASS viewpoint knowledge stays separate and actor authority is enforced
+PASS eleven optional chains persist across locations without repeat rewards
+PASS suspended chapters resume their route, escort and partial work without native mutations
+PASS choosing another unlocked chapter suspends the current revisit without losing it
+PASS invalid versions, actors, and positions are rejected without erasing the source
+PASS production integration is lazy and remains under the startup script ceiling
+{"suite":"living-world","checks":13,"chapters":27,"sidequests":11}
+PASS later invitation and physical visit are independently required, including legacy completed Iona saves
+PASS dialogue resumes on the exact unread line without completion flags
+PASS all three dispatch orders preserve first-call consequences and cannot repeat completed calls
+PASS multi-chapter optional chains cannot advance from the old location or a supplied coordinate
+PASS delayed relay requires delivery and never copies private records
+PASS old completed records remain replayable without inventing new completion or visit facts
+PASS runtime Iona combat ownership requires the current authorized expedition viewpoint
+PASS browser bridge keeps an undelivered Iona completion out of Mike’s general journal
+PASS aftermath reports only completed consequences
+PASS earlier viewpoints are explicit and never imply a physical return from space to Earth
+PASS shipboard coda preserves existing save IDs and distinguishes carried records from live Earth reports
+PASS bounded return preserves two travelers, unequal clocks and the care watch
+{"suite":"living-world-progression","checks":12}
+Store purchase, inventory use, stock persistence, migration and rollback: PASS
+PASS incident-specific intake, branching answers, persistent topic memory, distinct crew, no guessed evidence and stale-close protection
+PASS desktop entrypoints away from Mike desk do not write opening state
+PASS side-view room cannot borrow its frozen floor entry position for desk or evidence access
+PASS side-view E reaches the interior owner instead of invisible floor devices or contacts
+PASS confirmed PLAY commits once without replaying the legacy soundtrack wrapper
+PASS timeout does not claim listening and offers a recoverable choice
+PASS muted does not claim listening and offers a recoverable choice
+PASS not-found does not claim listening and offers a recoverable choice
+PASS unavailable does not claim listening and offers a recoverable choice
+PASS cancelled does not claim listening and offers a recoverable choice
+PASS explicit muted continuation uses the audio owner and records an honest skip
+PASS stale muted callback away from the desk cannot mute or advance another scene
+PASS late PLAY after closed cannot advance the opening
+PASS late PLAY after moved cannot advance the opening
+PASS late PLAY after new-run cannot advance the opening
+PASS late PLAY after new-view cannot advance the opening
+PASS late PLAY after night cannot advance the opening
+PASS late PLAY after side-view cannot advance the opening
+PASS muted continuation prevents a delayed real DayAudio playlist callback from playing
+PASS field UI and public quick-close routes cannot create remote evidence or close a ticket
+Day spatial campaign and morning audio: 19 tests passed
+Day device cases: PASS (424 assertions; 8 complete paths, surface/order/authority/save/idempotence negatives)
+PASS: Day physical world, 24 generated maps + 60 real native-placement maps, routes, service access, migration, proximity, mode and canon objectives
+PASS authored office desk reuse, coworker positions and v2 checkpoint migration
+PASS load is silent, idempotent and creates no extra soundtrack player
+PASS SFX need an explicit gesture and reuse the global audio context
+PASS all six semantic cues are finite and voices stay bounded
+PASS cue spam and unknown/prototype event names are ignored
+PASS master mute silences active cues and blocks new effects
+PASS SFX preferences multiply master gain, persist separately and never change music choice
+PASS zero SFX volume and unsupported browsers fail silently
+PASS night mode and paused state suppress day effects
+PASS background hides all effects and ducks music without playing or pausing
+PASS nested duck reasons restore only after their own release, respecting pause
+PASS stale asynchronous volume reads cannot reapply a closed duck
+PASS music slider changed during duck determines restore volume
+PASS morning song requires gesture and explicit opt-in respects a mute choice
+PASS zero music volume never calls the global play toggle even on explicit opt-in
+PASS song request is pending until real PLAY confirms the exact current track
+PASS wrong playlist item stays silent until selected track confirms PLAY
+PASS explicit Play music control may enable the existing master toggle
+PASS no widget, missing song, failed command and playback error never report heard
+PASS mute while playback is pending prevents a success receipt
+PASS background cancels a pending song request and cannot award listening
+PASS repeated attempts keep one event dispatcher and preserve another owner
+PASS rejected WebAudio resume never replays stale cues
+Day audio: 22 tests passed
+PASS physical proximity gates device opening, observations and Mike’s desk
+PASS Mike’s physical workstation remains available before clock-in
+PASS no device opens during Night or combat
+PASS screen and physical evidence cannot be cross-collected
+PASS Shipping’s printer cannot expose or collect workstation observations
+PASS all eight optional cases complete through the rendered action flow without canonical writes
+PASS retained buttons cannot operate a replacement modal
+PASS device rendering clears the previous dialogue typewriter click owner
+PASS Doors print jobs respect save failures, stale controls and the identity being verified
+PASS Doors work order reads the recorded outcome of a partially closed ticket
+PASS optional failed-save mutation rolls back and successful replay is idempotent
+PASS canonical operator hold requires supported cause and rolls back on failed checkpoint
+PASS canonical save failure leaves evidence uncommitted and retry records it once
+PASS canonical requester verification checks physical presence again and closes only through authority
+PASS an explicit adjacent device route overrides alphabetical station priority and matches HUD
+PASS ambiguous nearby people and devices offer explicit Talk and Inspect choices
+PASS explicit requester route reaches verification even beside a device
+PASS side view cannot use frozen floor coordinates and preserves a route without teleporting
+PASS an inherited workaround can be verified as limited service without false restoration
+PASS Day 2 field workstation reopens its follow-up while unfinished carryover retains original investigation
+PASS progress list closes before evidence and action layout begins
+PASS repairs require their physical or software surface and all technical checks require a screen
+PASS HUD describes the tracked destination instead of contradicting its route button
+PASS talking to Security does not read the nearby computer or grant badge evidence
+Day experience integration: 24 tests passed
+PASS NICK remains a talk target beside a tracked workstation
+PASS AMIT remains a talk target beside a tracked workstation
+PASS BRANDON remains a talk target beside a tracked workstation
+PASS DANIEL remains a talk target beside a tracked workstation
+PASS ordinary ambient and ticket NPCs retain their own interaction owners
+PASS side room uses its visible desk position, never frozen floor coordinates
+PASS office entry triggers standup once per entry and never after completion
+Startup prefetch: ordering, bounded hints, fallback, errors, timers, cleanup and idempotency PASS
+{"evidence":"simulated-200ms-per-script-network","serial":{"time":8800,"maxHints":0,"files":44},"prefetched":{"time":1800,"maxHints":5,"files":44}}
+Review inventory, codec boundary, idempotent skip and resurrection contracts: PASS
+Release certification refuses missing, stale, spoofed-tier, weak R1 and modified evidence: PASS
+R1 release governance evidence builder: PASS
+R1 candidate/deployment identity evidence builder: PASS
+R1 vertical-slice visual + fresh-context evidence builder: PASS
+R1 deterministic runtime asset manifest: PASS
+Browser geometry accepts measured 44px roundoff, rejects undersized or invalid targets: PASS
+Runtime HUD: CSS-pixel readability, complete copy, bounded cards, captions, resize, mode/modal isolation and world anchors PASS
+Good Dogs HUD: CSS font/card bounds, solo/co-op roles, health states, complete objectives/messages, duplicate retirement, modal isolation and rotation PASS
+Campaign Director v2 / Story Bible v1.2: Act I contract PASS
+Game save resilience + day checkpoint + standalone Night/Good Dogs isolation: PASS
+Day notice queue: modal deferral, eventual delivery, one-shot settlement and stale mode/run expiry PASS
+Unified Day/Night difficulty contract: PASS
+Ticket stabilize -> verify -> document + honest escalation contract: PASS
+Story Bible v1.2 legacy Felicia/ending firewall: PASS
+Campaign Acts II-III semantics + bounded companion/Duet gate: PASS
+Campaign Acts II-III reload/reveal gates: PASS
+Ordered natural Act I -> Act VI progression with Act IV reload: PASS
+Act IV investigation: 3 responses, every-boundary reload, reasoning, verification, ownership and migration PASS
+Campaign native Act II gameplay: PASS
+Campaign casebook visual outcome/provenance parity: PASS
+Campaign Day 1 world-camera continuity + retired workstation concept overlay: PASS
+Act 1 synchronous mount, deferred/absent observer, resize and repeated scene geometry: PASS
+Workstation concept retirement regression: PASS
+Cinematic systems, exact level inventory, animation semantics, camera determinism, and M3 mixed-media asset: PASS
+Cinematic modal focus, background pause, idempotent skip and save recovery: PASS
+Handoff provenance, transparency, budget, semantic priority, animation timing, and world isolation: PASS 585070 bytes
+Crash duration, capability, recovery, pause/visibility, idempotence and modal cleanup: PASS
+Good Dogs M1→M8 objective gates and M1→M3 cinematic continuity: PASS
+Good Dogs executable chronology, legacy-save, skip and failure boundaries: PASS
+✔ fresh M4, settled film and released native handoff are playable (2.635018ms)
+✔ run #808: film-only exit passes the old predicate while the outgoing runtime is ending (0.901143ms)
+✔ CUT_04 transient dialog=false is not fresh-runtime evidence (1.670129ms)
+✔ rejects ending runtime (0.79245ms)
+✔ rejects inactive authority (0.794233ms)
+✔ rejects wrong world (0.768374ms)
+✔ rejects runtime mission mismatch (0.673221ms)
+✔ rejects saved mission mismatch (0.710067ms)
+✔ rejects canonical state mismatch (0.95221ms)
+✔ rejects authority mission mismatch (0.72575ms)
+✔ rejects pending handoff (0.724508ms)
+✔ rejects pending runtime (0.690276ms)
+✔ rejects transition cooldown (0.587683ms)
+✔ rejects missing completion (0.583387ms)
+✔ rejects old mission completion (0.494032ms)
+✔ rejects handoff error (0.576335ms)
+✔ rejects bridge error (0.61955ms)
+✔ rejects native cinematic without DOM (0.487322ms)
+✔ rejects native DOM absent from bridge blockers (0.548294ms)
+✔ rejects director-only claim (0.526761ms)
+✔ rejects progression cinematic ownership (1.720514ms)
+✔ rejects fading dialogue (0.653231ms)
+✔ rejects visible prison briefing (0.500642ms)
+✔ rejects running bridge (0.680121ms)
+✔ rejects active film flag (0.545349ms)
+✔ rejects bridge-visible blocker (0.595144ms)
+✔ rejects wrong clip exit (0.563737ms)
+✔ rejects nonterminal clip exit (0.754072ms)
+✔ rejects unrecorded clip (0.618329ms)
+✔ rejects persistent invisible dialog latch (0.563847ms)
+✔ rejects missing authority (0.677178ms)
+✔ rejects missing native observer (0.999522ms)
+✔ rejects missing runtime (1.152471ms)
+✔ hidden/inactive media overlays do not create false blockers (1.174604ms)
+✔ reader accepts deeply frozen state and never settles/ticks/clears it (0.744689ms)
+✔ absent campaign state cannot be initialized by observation (0.503286ms)
+✔ a broken acceptance API propagates instead of being normalized to success (0.653081ms)
+✔ bounded waiter observes pending -> native-owned -> released without mutation (0.917548ms)
+✔ persistent dialog or missing handoff times out and cannot reach the next fixture (52.771069ms)
+✔ invalid deadlines and mission requests are rejected before browser evaluation (0.681384ms)
+✔ actual production modules expose native ownership even when bridge DOM inventory is empty (11.352381ms)
+✔ progression fixture waits before Cell 118 mutation and before declaring CUT_05 playable (0.416927ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.177919
+Good Dogs independent co-op controls, puzzle gates, solo commands, revive and opening ownership: PASS
+Good Dogs cold resume + transactional persistence integrity: PASS
+Campaign playable world visuals + Good Boys Story Bible route v8: PASS
+Late-game / MORNINGSTAR / swarm contracts: PASS
+Swarm doctrine legacy-save migration: PASS
+Good Boys Waldo-house canon + production-art authority: PASS
+Night cinematic composed guard recursion regression: PASS
+Good Dogs combat separation + whiff contract: PASS
+Good Boys / Night world and Charger isolation: PASS
+Canonical Good Boys completion ownership / legacy fallback: PASS
+Good Dogs canonical M1-first opening and M2-owned flight handoff: PASS
+Good Dogs immediate selector reopen: PASS
+Good Boys Pages visual contract: PASS
+Good Dogs reference UI v2 contract: PASS
+Runtime autofix evidence attribution and repeat-run integrity: PASS
+Runtime triage: pass; 0 finding(s); 9 evidence files
+✔ all nine suites pass only with exit codes and valid reports (13.325638ms)
+✔ art-only exit failure is surfaced (2.22874ms)
+✔ presentation-only exit failure is surfaced (0.87187ms)
+✔ night_combat-only exit failure is surfaced (0.908806ms)
+✔ coop-only exit failure is surfaced (1.378241ms)
+✔ intro-only exit failure is surfaced (0.788395ms)
+✔ late_game-only exit failure is surfaced (0.894304ms)
+✔ bot-only exit failure is surfaced (0.877819ms)
+✔ progression-only exit failure is surfaced (0.848586ms)
+✔ backgrounds-only exit failure is surfaced (0.849237ms)
+✔ run 762 co-op evidence is isolated; broader traces do not masquerade as co-op coverage (2.652397ms)
+✔ warnings survive without making a healthy suite fail (0.694023ms)
+✔ capture failures remain explicit even when gameplay passed (0.743568ms)
+✔ malformed/empty report is not green: {broken (0.73214ms)
+✔ malformed/empty report is not green: null (0.66497ms)
+✔ malformed/empty report is not green: [] (0.593332ms)
+✔ malformed/empty report is not green: {} (0.584739ms)
+✔ missing report, missing output, timeout, and absent directory fail closed (0.760543ms)
+✔ oversized report is rejected without parsing (13.483536ms)
+✔ symlink evidence is never followed (0.966032ms)
+✔ compact bundle includes JSON, REPL and failure screenshot, not trace archives (2.386316ms)
+✔ untrusted report markup and mentions are neutralized in summary (0.770398ms)
+✔ CLI binds PR head separately from tested merge SHA and preserves real artifact ID (1.984063ms)
+✔ trace capture stops once before cleanup and retains runtime failures (3.754293ms)
+✔ trace start failure cannot invent a trace (0.837609ms)
+✔ trace stop failure cannot invent a trace (0.548354ms)
+✔ workflow gate parity and privilege boundaries (0.383687ms)
+✔ runtime Night combat timeout matches the authoritative integration budget (0.264147ms)
+✔ co-op instrumentation does not relax original movement or isolation assertions (0.278589ms)
+✔ reporter creates an issue even when triage artifact is missing (218.764014ms)
+✔ reporter appends evidence to existing issue without executing artifact text (291.228467ms)
+✔ same run attempt is not posted twice (211.586492ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 788.425167
+Good Boys production compositor ownership: PASS
+Good Boys UI ownership, single opening authority, hardened cutscene lifecycle, fail-closed flight, and lazy media regression: PASS
+Good Boys mobile launch guard/resume lexical runtime: PASS
+Good Boys legacy ship approach compatibility guard: PASS
+Good Boys canonical supplied-asset ship/cockpit opening: PASS
+Good Dogs executable flight failure cleanup, retry, timeout and stale-callback settlement: PASS
+Good Dogs Story Bible semantic contract: PASS
+Good Dogs Index -> security -> Access Node sequence: PASS
+Good Boys ship-deck mapping contract: PASS
+Production mode router v12 input/coop regression: PASS
+Production title/readiness experience: PASS
+Production presentation ownership and keyboard controls: PASS
+Runtime mode shell direct entry, Sector 04 isolation, title compatibility and idempotent restore: PASS
+Production runtime safety v2: PASS
+Production immutable parser compositor: PASS
+Movement focus handoff: PASS
+Production runtime lock v2: PASS
+Mobile production tester contract: PASS
+Production static performance budget: PASS {"localStartupScripts":273,"indexKiB":17.1,"styleKiB":43.2,"startupJsMiB":2.61,"largestScript":"game.js?v=20260928-day-field-r3","largestScriptKiB":181}
+Merge Gate tested-head provenance: PASS
+Production asset integration: PASS (101 PNGs, 3 JPGs, 10 JSON manifests, 52 payload parts, 43 asset authorities; 121 physical assets covered; transient retry + bounded preload verified)
+✔ post-K M5 only; modal, mismatched, pre-rescue and later missions retain native renderer (5.144482ms)
+✔ current canonical Index -> security -> explicit Access Node order survives 3D demo (1.833696ms)
+✔ retry does not inherit old encounter flags; resume keeps actual checkpoint (1.746404ms)
+✔ pause blocks movement and actions; Index predictions refer to past samples (2.852227ms)
+✔ compositor uses the 3D callback once and keeps the immutable simulation (1.795228ms)
+✔ local partner has independent movement, can be revived, and a dead checkpoint cannot heal on reload (1.35737ms)
+✔ all six quality-tier models match the shipped manifest and GLB envelope (38.754981ms)
+✔ four-way keyboard and touch controls match the camera without orbiting on reversal (5.254868ms)
+✔ grounded corridor has no platform collision, normalized movement, or jump action (4.459163ms)
+✔ corridor attacks and Access Node use respect lateral distance (1.320015ms)
+✔ portrait cameras keep both complete dogs inside the horizontal frame (2.894761ms)
+✔ actual native M5 simulation walks four directions on the floor and isolates other missions (2.355571ms)
+✔ guided play uses proximity targeting without facing misses or remote hits (5.038999ms)
+✔ solo partner contributes attacks and hold-strike respects cooldown and pause (1.458141ms)
+✔ objective and enabled interaction follow encounter, console range, partner and door readiness (1.680065ms)
+✔ distant enemies cannot damage the dogs before the encounter is reached (4.115416ms)
+✔ guided inputs complete all four beats without editing health or encounter flags (7.053071ms)
+✔ swap transfers control to the partner without teleporting either dog (0.837238ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 99.416529
+Mike canonical animation manifest + provenance + source readiness: PASS
+Mike workstation arcade: PASS
+Campaign production visual atlas renderer: PASS
+Campaign asset contract: PASS
+Campaign asset pipeline: PASS
+Campaign runtime assets: PASS
+Complete campaign contract: PASS
+Campaign scene schema / Story Bible v1.2: PASS
+Campaign runtime adapter / Story Bible v1.2: PASS
+Campaign native Act I workstation integration: PASS
+PASS fresh casebook does not invent progress or reveal future answers
+PASS verification and human outcome remain independent across all valid outcomes
+PASS partial, missing technical proof, and inconsistent outcomes cannot look verified
+PASS assignment and recorded completion ownership do not collapse into each other
+PASS unrelated identity evidence cannot reveal the badge record
+PASS delegated badge evidence keeps its actual source and remains unresolved
+PASS reviewing an existing badge report cannot upgrade provenance or duplicate history
+PASS history can be read before standup without clock-in, workstation writes or discovery
+PASS QUEUE exposes the casebook through real dialog callbacks without duplicate actions
+PASS needs-attention filter retains unresolved access and excludes only proven restoration
+PASS TEAMS remembers the saved outcomes rather than repeating stale pre-repair complaints
+PASS completed-contact interaction uses honest memory and cannot grant a second completion
+PASS old saves without history get no fabricated events
+PASS timeline is bounded, chronological and excludes future story events
+PASS invalid event timestamps remain unknown instead of becoming invented dates
+PASS save-controlled labels are escaped and prototype-shaped owner IDs stay text
+PASS cold runtime reload reconstructs memory from the canonical save only
+PASS Tuesday transition preserves the recorded casebook without resetting outcomes
+PASS malformed or inaccessible storage fails visibly without overwriting progress
+PASS every record callback reloads fresh state and repeated review remains read-only
+Campaign casebook: 20 tests passed
+PASS shipping_cannot_print cannot skip evidence
+PASS shipping_cannot_print wrong hypothesis is evidence-backed and non-terminal
+PASS shipping_cannot_print remediation cannot skip supported hypothesis
+PASS shipping_cannot_print verification cannot skip remediation or technical check
+PASS shipping_cannot_print full flow closes only after requester verification
+PASS plating_workstation_down cannot skip evidence
+PASS plating_workstation_down wrong hypothesis is evidence-backed and non-terminal
+PASS plating_workstation_down remediation cannot skip supported hypothesis
+PASS plating_workstation_down verification cannot skip remediation or technical check
+PASS plating_workstation_down full flow closes only after requester verification
+PASS progress persists inside canonical save and resumes without a parallel namespace
+PASS duplicate evidence is idempotent and does not spam history
+PASS canonical resolver remains the only closure authority
+PASS resolved tickets cannot be mutated by the investigation API
+PASS unknown tickets, evidence and hypotheses fail closed
+PASS interaction intercepts only unresolved Shipping and Plating after day unlock
+PASS UI path requires gather -> hypothesis -> remediation -> technical -> requester
+PASS reload between every investigation phase resumes from canonical state
+PASS investigation copy contains no ORPHEUS/reveal leakage
+PASS bootstrap loader references the stable investigation module
+Campaign Day 1 investigations: 20 tests passed
+PASS reading an absent investigation cannot create a store or history
+PASS reading a frozen present investigation is non-mutating
+PASS insufficient evidence and unknown hypotheses cannot create history
+PASS shipping_cannot_print needs the diagnostic clue, not just any two observations
+PASS plating_workstation_down needs the diagnostic clue, not just any two observations
+PASS reviewing an additional clue cannot regress technical validation
+PASS repeat fixes/checks/support cannot change the phase or history
+PASS a stale different hypothesis cannot replace remediation in progress
+PASS repeat rejected hypotheses do not spam history
+PASS the review screen offers resume, not a phase-resetting hypothesis path
+PASS double-tapping a stale closure callback is safe and awards no second closure
+PASS an unloaded investigation module cannot turn world interaction into instant closure
+PASS a malformed investigation cannot fall through to the legacy instant resolver
+PASS a stale evidence callback after another closure rereads the record safely
+PASS temporary workarounds cannot bypass a supported hypothesis or real limited-service confirmation
+PASS a confirmed workaround produces partial/degraded canonical closure, never full restoration
+PASS reported restoration requires technical proof and stays partial
+PASS temporary workaround verification resumes after a cold reload
+PASS duplicate temporary workaround actions do not create extra history or change phase
+PASS workaround preview can be declined without changing the saved investigation
+Investigation integrity: 20 tests passed
+PASS shipping_cannot_print strong/restored has an evidence-appropriate next shift
+PASS shipping_cannot_print strong/degraded has an evidence-appropriate next shift
+PASS shipping_cannot_print strong/unmet has an evidence-appropriate next shift
+PASS shipping_cannot_print partial/restored has an evidence-appropriate next shift
+PASS shipping_cannot_print partial/degraded has an evidence-appropriate next shift
+PASS shipping_cannot_print partial/unmet has an evidence-appropriate next shift
+PASS plating_workstation_down strong/restored has an evidence-appropriate next shift
+PASS plating_workstation_down strong/degraded has an evidence-appropriate next shift
+PASS plating_workstation_down strong/unmet has an evidence-appropriate next shift
+PASS plating_workstation_down partial/restored has an evidence-appropriate next shift
+PASS plating_workstation_down partial/degraded has an evidence-appropriate next shift
+PASS plating_workstation_down partial/unmet has an evidence-appropriate next shift
+PASS Day 1 cannot create next-shift state or expose handoff observations
+PASS untouched tickets carry over without being closed or re-randomized
+PASS Impossible Access never enters ordinary recurrence or changes provenance
+PASS repeating Tuesday cannot reset work, duplicate history or rewind later chapters
+PASS migrated Tuesday saves expose a read-only deterministic handoff
+PASS rejected actions are atomic, including before lazy migration
+PASS history review does not count as an independent technical observation
+PASS every follow-up phase round-trips through the canonical save key
+PASS duplicate evidence, hypotheses, fixes, checks and closure cannot farm history
+PASS unsupported hypotheses are nonterminal and do not spam rejection history
+PASS reviewing new observations cannot undo a supported remediation
+PASS conflicting old outcomes remain conflicting in history after a new confirmed outcome
+PASS verified carryover completion uses its original investigation and owner
+PASS handoff copy cannot mutate the persisted snapshot
+Workday follow-up contracts: 26 tests passed
+PASS Tuesday contacts are actually placed and repeat placement is idempotent
+PASS next-shift placement does not overlap existing noncampaign NPCs
+PASS contact fallback search reserves authored coworker interaction tiles
+PASS actual adjacent interaction reaches the next-shift investigation
+PASS Tuesday board opens the workstation, not a replay of Day 1 standup
+PASS QUEUE, TEAMS and original casebook all expose the same handoff
+PASS reviewing the handoff, original records, and observations is read-only
+PASS shipping_cannot_print recheck UI requires both observations and real requester confirmation
+PASS plating_workstation_down recheck UI requires both observations and real requester confirmation
+PASS shipping_cannot_print degraded-service UI includes hypothesis, repair, recheck, and task confirmation
+PASS plating_workstation_down degraded-service UI includes hypothesis, repair, recheck, and task confirmation
+PASS a stale requester-confirmation callback cannot close twice or add history
+PASS current service visuals can improve while original casebook remains degraded
+PASS completed follow-up contacts remember the actual next-shift outcome
+PASS sound settings are reachable from the existing workstation without adding a tab
+PASS unresolved carryover has a resume action, not an instant closure
+PASS blocked storage fails visibly and cannot replace the authoritative save
+PASS historical casebook visuals do not borrow a later restoration
+PASS resuming an already constructed Tuesday world installs contacts immediately
+PASS old Day 1 security contacts do not leak into the Tuesday contact set
+PASS carried work completion never invents a new firsthand provenance
+PASS shipping_cannot_print reported choice reaches Tuesday consequences through normal field UI
+PASS shipping_cannot_print workaround choice reaches Tuesday consequences through normal field UI
+PASS plating_workstation_down reported choice reaches Tuesday consequences through normal field UI
+PASS plating_workstation_down workaround choice reaches Tuesday consequences through normal field UI
+Workday follow-up UI/runtime: 25 tests passed
+Canonical Day 1 runtime gate: PASS
+Campaign production opening acceptance: PASS
+Sector 04 native sandbox: PASS
+Sector 04 runtime bridge: PASS
+Nightwalker West Annex contract: PASS
+Nightwalker West Annex runtime: PASS
+Dead Air contract: PASS
+Dead Air runtime: PASS
+Campaign save/reload traversal: PASS
+Campaign browser entrypoint: PASS
+Static entrypoint integrity: PASS
+v736 runtime asset wiring checks passed
+Night reference visual authority + normal-run isolation: PASS
+Night onboarding and Intern pacing: PASS
+Glitch split-asset graceful degradation: PASS
+PASS joystick intent sampled at action time, outside the temporary key bridge
+PASS explicit stationary grab, released movement and a new direction throw
+PASS live joystick chooses left-facing punch before the next frame
+PASS explicit punch never becomes an accidental close-range grab
+PASS up punch uppercuts and launches on contact, not on input
+PASS down punch hits low without launching
+PASS kick launches a grounded opponent
+PASS rising-kick launches a grounded opponent
+PASS down kick sweeps with bounded ground recovery
+PASS low attacks cannot hit a hovering or launched opponent
+PASS kick range differs from punch range
+PASS attack facing remains fixed at contact after movement turns
+PASS grab rejects air, hover, disabled grab, and out-of-range targets
+PASS grab uses feet alignment for different character heights
+PASS grab expiry and incoming damage release both actors
+PASS early throw confirm is buffered rather than dropped
+PASS removed enemy cannot leave a stuck grab
+PASS recovery buffer retains kick type and direction at press time
+PASS a grounded relaunch never resets an existing air-combo count
+PASS air punches/kicks stop at three hits and force descent
+PASS down-air kick slams early, with no infinite lift
+PASS only a connected launcher may cancel recovery into jump
+PASS pause does not advance combat or accept actions
+PASS KO reward resolves once even on repeated inputs
+PASS Good Dogs, Sector 04 and Waldo remain excluded
+PASS opposite directions cancel and no caller keys are mutated
+PASS adapter keeps up as aim, supplies a distinct jump edge, restores keys on exceptions
+PASS jump substitution is not mistaken for uppercut aim
+PASS a jump pressed before the first frame survives runtime binding
+PASS tap-jump queue survives hit-stop and is consumed exactly once afterward
+PASS normalization reaches both arrow and letter inputs in the real frame bridge
+PASS pause cancels a queued jump rather than releasing it on resume
+PASS input adapter uses the existing frame caller and core owns no listener or extra loop
+PASS house interaction remains delegated instead of becoming a punch
+PASS Charger interaction stays reachable and a nearby enemy keeps punch ownership
+PASS pause/game-over/hidden tab and director lock refuse both direct and input actions
+PASS canonical Night world wins over a stale global alias
+PASS audio failures cannot interrupt contact or KO settlement
+{"suite":"night-directional-combat","passed":38,"failed":0}
+PASS production Night step: uppercut -> jump -> 3 air hits at 0.016 seconds/frame
+PASS production Night step: rising-kick -> jump -> 3 air hits at 0.016 seconds/frame
+PASS production Night step: kick -> jump -> 3 air hits at 0.016 seconds/frame
+PASS production Night step: uppercut -> jump -> 3 air hits at 0.1 seconds/frame
+PASS production Night step: rising-kick -> jump -> 3 air hits at 0.1 seconds/frame
+PASS production Night step: kick -> jump -> 3 air hits at 0.1 seconds/frame
+PASS production Night step: uppercut -> jump -> 3 air hits at 0.25 seconds/frame
+PASS production Night step: rising-kick -> jump -> 3 air hits at 0.25 seconds/frame
+PASS production Night step: kick -> jump -> 3 air hits at 0.25 seconds/frame
+{"suite":"night-directional-physics","passed":9,"failed":0}
+PASS normal airborne targeting keeps the authored 92px window
+PASS engaged follow overrides only vertical tolerance inside the bounded follow envelope
+PASS follow never bypasses horizontal reach, facing, recovery, lock, or target identity
+PASS launcher follow is inert until the player explicitly jumps
+PASS engaged follow keeps transient-grounded juggle contacts owned until landing or lock
+PASS a whiff preserves follow ownership so a still-airborne juggle remains recoverable
+PASS landing ends follow ownership even without a timeout
+{"suite":"night-follow-window","passed":7,"failed":0}
+Directional integration: controller edges, menu scope, single loader and consolidated lifecycle PASS
+PASS gravity cancel suspends briefly, spends cooldown and permits one ground attack in air
+PASS gravity cancel rejects whiffs and interruptions; confirmed hits can cancel
+PASS gravity cancel expires and re-arms only after landing
+PASS slide has startup, grounded movement, cancel window and shared cooldown
+PASS slide can cancel into a deliberate attack and interruption ends it
+PASS double-tap both keyboard directions, with no repeat while held
+PASS late taps and alternating directions do not dash
+PASS keyboard taps shorter than a render frame are retained, repeats are ignored
+PASS overlapping direction aliases require a complete release before the next tap
+PASS tap expiry uses elapsed input time even during hit-stop or a stalled frame
+PASS joystick double flicks need neutral; analog jitter cannot retrigger
+PASS opposed keyboard and joystick inputs cannot create a dash
+PASS cooldown, block and stun cannot create additional dash windows
+PASS pause/blur cleanup clears tap history and the dash-to-grab window
+PASS real movement: double tap, approach, attack grabs and stops the dash
+PASS outside the dash window, normal forward attacks stay punches
+PASS dash attacks never pull distant/hovering targets into a grab
+PASS high/low aim remains available immediately after dashing
+PASS unchanged owners: Good Dogs, Sector 04 and social Waldo
+{"suite":"night-movement-combos","passed":19,"airSequences":54,"delayedTouchSequences":12,"maxObservedHorizontalGap":58.4,"failed":0}
+{"suite":"visual-combat-assets","moves":20,"authoredFrames":80,"scenePlates":5,"runtimeArtBytes":2909227,"failed":0}
+Iona actor isolation, simulation timing, combat mapping, rendering priority and unavailable-image behavior: PASS
+PASS down + light is a distinct quick aerial attack on keyboard and joystick
+PASS down light cannot strike above or outside its lower reach
+PASS down light hits grounded enemies below without launching or bouncing the player
+PASS Iona up + aerial kick pedals three contacts on the simulation clock
+PASS bicycle respects contacts already spent by previous air attacks
+PASS non-Iona retains the existing aerial kick and Iona ground-up retains rising kick
+PASS bicycle cannot farm grounded enemies or retarget a new victim between contacts
+PASS pause, interruption and leaving Iona viewpoint stop later contacts
+PASS multi-contact KO settles cash once and does not touch another enemy
+PASS buffered down-light preserves directional intent after aerial light recovery
+PASS pre-resolved throw poses never gain a duplicate delayed jab
+PASS actual Night physics: launch → jump → bicycle at 0.016s/frame
+PASS actual Night physics: launch → jump → light-bicycle at 0.016s/frame
+PASS actual Night physics: launch → jump → light-down at 0.016s/frame
+PASS actual Night physics: launch → jump → bicycle at 0.1s/frame
+PASS actual Night physics: launch → jump → light-bicycle at 0.1s/frame
+PASS actual Night physics: launch → jump → light-down at 0.1s/frame
+PASS actual Night physics: launch → jump → bicycle at 0.25s/frame
+PASS actual Night physics: launch → jump → light-bicycle at 0.25s/frame
+PASS actual Night physics: launch → jump → light-down at 0.25s/frame
+{"suite":"night-aerial-combos","passed":20,"failed":0}
+Night contextual combat: contact timing, rhythm, grabs, throws, stun, finite juggles, collision rewards and campaign isolation PASS
+PASS load is silent, lazy and listener installation is idempotent
+PASS one shared context and one reusable noise buffer serve repeated effects
+PASS every supported semantic cue schedules a finite local voice
+PASS cue timbres distinguish a miss, hit, finisher, block and knockout
+PASS duplicate serials and crowd bursts do not double-play
+PASS serials reset with the combat state, not across every swing
+PASS guarded damage is not a second impact sound
+PASS unknown/prototype names are safely ignored
+PASS voice count is bounded even during a crowd collision storm
+PASS quiet effects cannot steal all active high-priority feedback
+PASS ended sounds disconnect every voice node
+PASS partial WebAudio construction failures clean up and cannot affect combat
+PASS failed bus graphs are not retained as a working audio bus
+PASS the game lexical mute binding still controls combat effects
+PASS combat volume zero does not create an audio context
+PASS combat preference validation is finite, bounded, and independent of story saves
+PASS corrupt or unavailable preference storage does not break play
+PASS hidden document silences existing voices and rejects new sounds
+PASS suspended contexts drop, rather than enqueue, late combat events
+PASS unsupported audio leaves actual hit timing and damage intact
+PASS Good Dogs, Sector 04 and Waldo do not enter the street audio bus
+PASS captions remain available with sounds off and expire on the simulation clock
+PASS caption preference is reachable without touching music controls
+PASS real combat events drive hit, block, and hurt sounds exactly once
+PASS new audio cannot control or stop music playback
+PASS guard captions do not get overwritten by the guarded damage modifier
+PASS knockout noise synthesis does not consume reward RNG
+PASS rejected resume promise is contained without replay
+PASS master SFX zero suppresses construction and sound
+PASS master and combat gains multiply without touching music
+PASS stereo location is clamped and voice-owned pan nodes disconnect
+PASS stereo left/right follows confirmed event location, not random sound position
+PASS older browsers without stereo panners keep functional mono effects
+PASS old Night world emits no sound after switching into another mode or dialog
+PASS pause, drive, game over and presentation blockers suppress sound and captions
+PASS suppressed effects cannot be replayed after unpausing
+PASS classic-script state overrides stale window aliases for sound
+PASS missing active world does not unlock on a stale-world gesture
+Combat audio: 38 tests passed
+PASS mobile skin preserves the M3 relay verb on repeated updates
+PASS mobile skin preserves reach, cell and custom mission interaction labels
+PASS mobile skin leaves disabled and contextual action ownership untouched
+PASS stale Good Dogs state cannot restyle a Day or another Night world
+PASS live Good Dogs still receives the current mobile skin
+PASS bootstrap retains latest main Night flow and mobile controls exactly once
+PASS entrypoint cache key matches the integrated bootstrap build
+PASS entrypoint requests exactly one local loader with the current bootstrap cache key
+PASS integration gate includes Night flow and every new quality regression suite
+Quality integration: 9 tests passed
+Live-crawl visual cohesion contract: PASS
+PASS load starts no loop, context, listener or duplicate DOM HUD
+PASS live upgrade stops old loop and removes only retired owned surfaces
+PASS all eight mission descriptions derive IDs from the actual immutable registry
+PASS M4 follows actual clue objects and needs three observations, not walking distance
+PASS M4 clue completion points to the real cell entrance and does not claim the prisoner free
+PASS M4 empty enemy list cannot certify ambush success
+PASS M4 no K reveal in guidance before the native release
+PASS M5 empty room does not skip the Mike Index
+PASS M5 guidance distinguishes boss, incoming security, node and secured route
+PASS M6 uses actual decrypt seconds and measured surveillance state
+PASS M6 zero decrypt alone cannot imply final wave or release completion
+PASS M6 lost or uninitialized uplink does not look like success
+PASS M7 empty boss roster and walking to shuttle cannot bypass tandem guidance
+PASS M3 reads native relay and exit coordinates and phase without invoking mutating helpers
+PASS M2 pending wave is not an empty-room victory
+PASS M1 points to Hidden Bay only after trail state exists
+PASS M8 does not manufacture campaign completion
+PASS dialog, battle, driving, ending, hidden and presentation-owned surfaces suppress guidance
+PASS stale runtime, Day state, game over and canonical mission divergence never show an old objective
+PASS invalid missions fail closed without repairing or clamping the save
+PASS all read models accept frozen runtime and preserve all save/mission fields
+PASS the native HUD consumes guidance in its original objective slot
+PASS Night status preserves explicit clear and pending state and excludes other modes
+PASS landmark utilities return real finite metadata without a fake endpoint after route end
+PASS paused missions cannot leak objective guidance
+PASS classic-script state takes precedence over stale window aliases
+PASS classic-script world is used when no explicit world is supplied
+Gameplay experience: 27 tests passed
+PASS profiles are distinct, frozen, and cover only the four late prison scenes
+PASS stage geometry and registry definitions are never changed by staging
+PASS every referenced source frame exists in the approved manifest
+PASS M4 consoles follow the real four clue positions rather than three legacy decorative markers
+PASS M4 old saves without evidence use registry consoles without inventing new evidence
+PASS malformed or excessive evidence cannot create unbounded placements
+PASS M5 access console and exit align with registry gameplay anchors
+PASS M6 uplink uses the actual runtime position; cell remains at registry position
+PASS M7 shuttle entrance aligns with canonical registry instead of an invented destination
+PASS ordinary streets, Sector 04, M1-M3 and M8 retain existing environment owners
+PASS Day state and a stale mission mirror cannot draw prison layers
+PASS all compositions are deterministic and accept frozen campaign/runtime state
+PASS failed source decode retains the background and reports no decoded success
+PASS successful source calls are culled and bounded by viewport and layout
+PASS camera culling drops all offscreen approved props rather than repeatedly drawing them
+PASS foreground treatment is below feet and bounded
+PASS opened lighting requires recorded mission outcome, never an empty room or x position
+PASS reduced motion produces identical drawing commands at different wall-clock times
+PASS landmarks do not cover source art with the old 116x96 opaque panel
+PASS labels yield to nearby airborne actor and avoid unconfirmed identity
+PASS canvas state is restored if an asset renderer fails
+PASS the existing cinematic renderer calls new staging without new draw/step wrappers
+PASS decoded-only backdrop replaces baked landmark boxes without changing gameplay geometry
+PASS opened prisoner doors use the paired open source frame at the real interaction entrance
+PASS cell art and objective follow the same runtime-width projection after registry initialization
+PASS offscreen target labels do not impersonate a visible target at the viewport edge
+PASS structural supports are anchored to existing platforms without changing geometry
+PASS excessive platform fixtures cannot create unbounded scenery work
+PASS distinct detention and shuttle scenery remains deterministic at portrait and desktop sizes
+PASS staging has no authority over the existing M5 3D renderer
+Orbital scene staging: 30 tests passed
+PASS one frame-owned clock advances once without aging work tickets
+PASS dialogue, pause, game-over and hidden tabs stop time
+PASS invalid deltas and suspended frames cannot fast-forward the night
+PASS midnight changes display, not the workday or office state
+PASS travel counts, while Good Dogs and Waldo retain their own loop
+PASS home requires the spatial ground-level door and explicit interaction
+PASS home claims survive the actual stale-dialog guard and block gameplay
+PASS normal finish and skip use one settlement and clear Night identity
+PASS stale callbacks release their claim but do not touch a replacement run
+PASS missing cinematic renderer keeps an explicit safe continuation
+PASS shared cinematic controls own Night transitions without a duplicate skip
+PASS late shared controls replace only the owned fallback and transfer its focus
+PASS campaign discovery cannot invent prerequisites or evidence
+PASS same-day return preserves evidence, original clock, weather and cash
+PASS delayed day notices are scoped to state, day and mode generation
+PASS real Sector 04 adapter waits for Night Drive and reuses the encounter
+PASS pending Sector 04 attachment cannot enter a different run
+PASS one dispatch, no competing heartbeat or automatic edge sleep
+PASS existing presentation places the readable menu in the current HUD reservation before any drawing receipt
+PASS campaign control retains its label node across stable frames and updates only changed presentation
+Night lifecycle: 20 regression groups passed
+✔ retains native termination evidence and failure exit without retaining credentials (94.401896ms)
+✔ bounds stderr retention while preserving the final crash signature (123.048949ms)
+✔ persists sanitized evidence while acceptance is still running (1046.326323ms)
+✔ a termination request stays an interruption even if the child cleans up with exit zero (69.051081ms)
+✔ crash metadata retains the signal and native stack without host identity or command secrets (0.594964ms)
+✔ samples only the launched browser descendants and records available OOM evidence (2173.453788ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3514.691676
+PASS the real game save checkpoints the complete isolated Night world
+PASS resume restores durable location and travel, without held actions or stale modal callbacks
+PASS checkpoint clears gravity suspension but retains the used airtime
+PASS all street districts, final clear states and active drive checkpoints are supported
+PASS Waldo travel, property activity, departure and once-only rewards survive a complete reload loop
+PASS malformed Waldo checkpoints fail closed without replacing live state or saved bytes
+PASS corrupt, future, malformed and foreign saves never mutate live state or other slots
+PASS malformed combat checkpoints stop before restoration and preserve all saved bytes
+PASS a real airborne throw resumes with finite physics and no repeated collision reward
+PASS quota failure preserves the previous snapshot and reports failure until retry succeeds
+PASS frame checkpoints and pagehide retain real progress without a second simulation timer
+PASS fractional minute rollover remains a valid checkpoint and autosaves the next minute
+PASS a standalone run cannot enter or mutate the campaign through its run menu
+PASS completion retires the saved run before paying rewards and retries failed storage explicitly
+PASS title router resumes the checkpoint once without starting a new run, difficulty or intro
+PASS a failed restore remains stopped through health polls and keeps the saved checkpoint
+PASS field report health and supplies checkpoint together at the street return point
+Night recovery: 17 regression groups passed
+PASS one frame-owned clock advances once without aging work tickets
+PASS dialogue, pause, game-over and hidden tabs stop time
+PASS invalid deltas and suspended frames cannot fast-forward the night
+PASS midnight changes display, not the workday or office state
+PASS travel counts, while Good Dogs and Waldo retain their own loop
+PASS home requires the spatial ground-level door and explicit interaction
+PASS home claims survive the actual stale-dialog guard and block gameplay
+PASS normal finish and skip use one settlement and clear Night identity
+PASS stale callbacks release their claim but do not touch a replacement run
+PASS missing cinematic renderer keeps an explicit safe continuation
+PASS shared cinematic controls own Night transitions without a duplicate skip
+PASS late shared controls replace only the owned fallback and transfer its focus
+PASS campaign discovery cannot invent prerequisites or evidence
+PASS same-day return preserves evidence, original clock, weather and cash
+PASS delayed day notices are scoped to state, day and mode generation
+PASS real Sector 04 adapter waits for Night Drive and reuses the encounter
+PASS pending Sector 04 attachment cannot enter a different run
+PASS one dispatch, no competing heartbeat or automatic edge sleep
+PASS existing presentation places the readable menu in the current HUD reservation before any drawing receipt
+PASS campaign control retains its label node across stable frames and updates only changed presentation
+Night lifecycle: 20 regression groups passed
+Night mobile visual contract: PASS
+Short landscape world projection and actor bounds: PASS
+Gameplay recording cohesion contract: PASS
+Recording world cohesion single-render, platform dressing, transition, and bootstrap contract: PASS
+UI co-op asset authority: PASS
+JavaScript syntax check: PASS (647 files)
+Mike action atlas quarantine: PASS
+
+PRODUCTION GATE: PASS
