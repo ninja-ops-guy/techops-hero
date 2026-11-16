@@ -101,6 +101,7 @@ test('Iona comic interlude unlocks from Night Walker progress and preserves comi
  assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/uninterrupted drop/);
  assert.match(revenge.goals.find(g=>g.id==='records_shutter').text,/different far-end officer/);
  assert(revenge.goals.findIndex(g=>g.id==='records_shutter')<revenge.goals.findIndex(g=>g.id==='far_end_officer'));
+ assert(revenge.goals.findIndex(g=>g.id==='records_shutter')<revenge.goals.findIndex(g=>g.id==='director'));
  assert(revenge.goals.findIndex(g=>g.id==='new_patrol')<revenge.goals.findIndex(g=>g.id==='older_officer_rescue'));
  assert(revenge.goals.findIndex(g=>g.id==='older_officer_rescue')<revenge.goals.findIndex(g=>g.id==='fire_door'));
  assert.match(revenge.goals.find(g=>g.id==='fire_door').text,/not the newly arriving patrol officer/);
