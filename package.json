@@ -16,7 +16,8 @@
     "release:assess": "node scripts/quality_release_receipt.mjs",
     "release:r1:assess": "node scripts/quality_release_receipt.mjs",
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs",
-    "test:browser:field-score": "node scripts/field_score_browser.mjs"
+    "test:browser:field-score": "node scripts/field_score_browser.mjs",
+    "test:browser:iona-revenge": "node scripts/iona_revenge_browser.mjs"
   },
   "devDependencies": {
     "playwright": "1.55.1"

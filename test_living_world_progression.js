@@ -92,7 +92,7 @@ test('Iona comic interlude unlocks from Night Walker progress and preserves comi
  assert.equal(A.gate(s,'archive',{facts:{campaign_complete:true,mike_meets_k:true}}).open,true);
  assert.match(A.episode('iona_world_left_running').bridge,/after Red’s arrest and before Iona contacts K/);
  const revenge=A.episode('iona_world_left_running');
- assert.deepEqual(revenge.goals.slice(revenge.goals.findIndex(g=>g.id==='first_count'),revenge.goals.findIndex(g=>g.id==='sandbag')+1).map(g=>g.id),['first_count','position','draw_guard','sandbag']);
+ assert.deepEqual(revenge.goals.slice(revenge.goals.findIndex(g=>g.id==='first_count'),revenge.goals.findIndex(g=>g.id==='sandbag')+1).map(g=>g.id),['first_count','ledger','ledger_handoff','position','draw_guard','sandbag']);
  assert(revenge.goals.findIndex(g=>g.id==='send_medics')<revenge.goals.findIndex(g=>g.id==='cut'));
  assert(revenge.goals.findIndex(g=>g.id==='lift_rescue')<revenge.goals.findIndex(g=>g.id==='free'));
  assert.match(revenge.goals.find(g=>g.id==='draw_guard').text,/closed security grille/);
@@ -109,6 +109,29 @@ test('Iona comic interlude unlocks from Night Walker progress and preserves comi
  assert(revenge.goals.findIndex(g=>g.id==='all_clear')<revenge.goals.findIndex(g=>g.id==='burn'));
  assert.match(revenge.goals.find(g=>g.id==='burn').text,/only after the verified all-clear/);
  assert.match(A.episode('iona_freight_name').goals[1].options[1][2],/authorizer’s identity remains unresolved/);
+});
+test('Iona locks the access route, preserves it on resume, and escorts the older officer before the burn',()=>{
+ const s=A.initial('standalone');s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;
+ A.start(s,'iona_world_left_running',{});const e=A.episode(s.active.id);
+ s.flags.iona_gallery_ready=true;s.active.room='records';s.active.x=1600;
+ s.active.step=e.goals.findIndex(g=>g.id==='gate_recovery');
+ assert.equal(A.routes(s).find(r=>r.to==='gallery').open,true);
+ let g=A.current(s);at(s,g);A.interact(s);for(let i=0;i<65;i++)A.tick(s,.05,{x:g.x-11,y:g.y-17,vx:0,paused:false,hurt:false});
+ assert.equal(s.flags.iona_access_gate_locked,true);
+ s.active.x=1600;assert.throws(()=>A.travel(s,'gallery'),/locked/);
+ const restored=A.clone(s);A.validate(restored);assert.equal(A.routes(restored).find(r=>r.to==='gallery').open,false);
+ assert.equal(A.routes(restored).find(r=>r.to==='west').open,true);
+ A.start(restored,e.id,{},true);restored.active.room='records';restored.active.x=1600;
+ assert.equal(A.routes(restored).find(r=>r.to==='gallery').open,true,'replay must not inherit a closed route from prior flags');
+ s.active.step=e.goals.findIndex(g=>g.id==='older_officer_rescue');g=A.current(s);at(s,g);assert(A.interact(s).ok);
+ assert.equal(s.active.escort.id,'last_officer');assert.equal(s.active.escort.room,'stairs');
+ s.active.step=e.goals.findIndex(g=>g.id==='last_officer');g=A.current(s);at(s,g);
+ assert.equal(A.interact(s).ok,false,'officer still on stairs cannot count at the west line');
+ s.active.escort.room='west';s.active.escort.x=g.x-30;assert(A.interact(s).ok);
+ assert.equal(s.flags.iona_older_counted,true);g=A.current(s);at(s,g);
+ assert.equal(A.interact(s).ok,false,'ledger must also be safe');s.flags.iona_ledger_clear=true;assert(A.interact(s).ok);
+ assert.equal(s.flags.iona_all_clear,true);g=A.current(s);at(s,g);delete s.flags.iona_all_clear;
+ assert.equal(A.interact(s).ok,false,'burn requires the independent all-clear');
 });
 test('shipboard coda preserves existing save IDs and distinguishes carried records from live Earth reports',()=>{
  const e=A.episode('queue_afterward');assert.deepEqual(e.rooms.map(r=>r.id),['desk','floor','home']);assert.deepEqual(e.goals.map(g=>g.id),['queue','repair','remember','end']);assert.deepEqual(e.after,['low_return']);assert.match(e.bridge,/existing crew/);assert.match(e.goals.at(-1).text,/rests aboard/);

@@ -123,6 +123,7 @@
   function routes(s){const a=s.active,e=episode(a.id);return e.routes.filter(r=>r.from===a.room||r.to===a.room).map(r=>{
     const to=r.from===a.room?r.to:r.from;let reason='';
     if(r.requires&&!s.flags[r.requires])reason=r.requires==='never_open'?'Physically blocked despite the displayed route.':'This route has not been established.';
+    if(r.closesAfter&&e.goals.some((g,i)=>g.id===r.closesAfter&&a.step>i))reason='The access gate is locked. Use the west freight route.';
     if(r.choice&&s.choices[r.choice[0]]!==r.choice[1])reason='This earlier response did not establish the shortcut.';
     if(r.actor&&r.actor!==a.actor)reason='Switch to '+r.actor+' at the field controls.';
     if(r.power&&!s.flags[r.power])reason='Local support is not ready.';
