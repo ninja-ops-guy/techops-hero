@@ -8,7 +8,7 @@ function path(s,to){const seen=new Set(),queue=[[s.active.room,[]]];while(queue.
 function travelTo(s,to){for(const room of path(s,to)){s.active.x=1600;if(s.active.escort)s.active.escort.x=1560;A.travel(s,room);}}
 function complete(s,e){
   A.start(s,e.id,{});let budget=160;
-  while(!s.active.finished&&budget--){const g=A.current(s);if(g.actor&&s.active.actor!==g.actor)A.switchActor(s);travelTo(s,g.room);s.active.x=g.x-11;s.active.y=g.y-17;if(g.actor&&s.active.actor!==g.actor)A.switchActor(s);if(g.kind==='handoff')s.active.escort.x=g.x-30;
+  while(!s.active.finished&&budget--){const g=A.current(s);if(g.actor&&s.active.actor!==g.actor)A.switchActor(s);travelTo(s,g.room);s.active.x=g.x-11;s.active.y=g.y-17;if(g.actor&&s.active.actor!==g.actor)A.switchActor(s);if(g.kind==='handoff'&&s.active.escort)s.active.escort.x=g.x-30;
     const choice=g.kind==='dispatch'?g.tasks.find(t=>!(s.active.tasks||[]).includes(t.id)).id:g.answer||g.options&&g.options[0][0];
     const r=A.interact(s,choice);assert.equal(r.ok,true,e.id+'/'+g.id);
     if(g.kind==='hold'){for(let t=0;t<g.seconds*20+2&&A.current(s)===g;t++)A.tick(s,.05,{x:g.x-11,y:g.y-17,vx:0,paused:false,hurt:false});assert.notEqual(A.current(s),g,'hold must finish');}

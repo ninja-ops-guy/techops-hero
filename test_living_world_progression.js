@@ -96,8 +96,15 @@ test('Iona comic interlude unlocks from Night Walker progress and preserves comi
  assert(revenge.goals.findIndex(g=>g.id==='send_medics')<revenge.goals.findIndex(g=>g.id==='cut'));
  assert(revenge.goals.findIndex(g=>g.id==='lift_rescue')<revenge.goals.findIndex(g=>g.id==='free'));
  assert.match(revenge.goals.find(g=>g.id==='draw_guard').text,/closed security grille/);
- assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/first guard is already across/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/first officer is already on Iona’s side/);
  assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/does not end the pursuit/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/uninterrupted drop/);
+ assert.match(revenge.goals.find(g=>g.id==='records_shutter').text,/different far-end officer/);
+ assert(revenge.goals.findIndex(g=>g.id==='records_shutter')<revenge.goals.findIndex(g=>g.id==='far_end_officer'));
+ assert(revenge.goals.findIndex(g=>g.id==='new_patrol')<revenge.goals.findIndex(g=>g.id==='older_officer_rescue'));
+ assert(revenge.goals.findIndex(g=>g.id==='older_officer_rescue')<revenge.goals.findIndex(g=>g.id==='fire_door'));
+ assert.match(revenge.goals.find(g=>g.id==='fire_door').text,/not the newly arriving patrol officer/);
+ assert(revenge.routes.some(r=>r.from==='stairs'&&r.to==='fire_door'));
  assert(revenge.goals.findIndex(g=>g.id==='all_clear')<revenge.goals.findIndex(g=>g.id==='burn'));
  assert.match(revenge.goals.find(g=>g.id==='burn').text,/only after the verified all-clear/);
  assert.match(A.episode('iona_freight_name').goals[1].options[1][2],/authorizer’s identity remains unresolved/);
