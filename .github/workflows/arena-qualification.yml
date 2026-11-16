@@ -1,0 +1,39 @@
+name: Arena prototype qualification
+on:
+  pull_request:
+    paths:
+      - 'arena/**'
+      - 'scripts/arena_pvp_browser.mjs'
+      - 'package*.json'
+      - '.github/workflows/arena-qualification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-prototype:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Record exact source identity
+        run: |
+          git rev-parse HEAD HEAD^{tree}
+          sha256sum arena/*.cjs arena/client.js arena/index.html scripts/arena_pvp_browser.mjs
+      - name: Protocol, simulation and client regressions
+        run: npm run test:arena
+      - name: Campaign regression gate
+        run: npm test
+      - run: npx --no-install playwright install --with-deps chromium
+      - name: Two isolated browser clients
+        run: npm run test:browser:arena
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arena-prototype-${{ github.sha }}
+          path: /tmp/arena-pvp/
+          if-no-files-found: warn
