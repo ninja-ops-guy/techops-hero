@@ -23,8 +23,10 @@ function step(s){s.tick++;if(s.phase==='countdown'){if(--s.remaining<=0)s.phase=
  }
  // Collect contacts before resolving damage so trades do not depend on slot order.
  const contacts=hits.filter(h=>{const p=s.players[h.from],q=s.players[1-h.from];return Math.abs(q.x-p.x)<=h.reach&&Math.abs(q.y-p.y)<48&&(q.x-p.x)*p.face>=0;});
+ const focusDelta=[0,0];
  for(const h of contacts){const p=s.players[h.from],q=s.players[1-h.from],blocked=q.input.block&&!q.attack&&!q.stun&&(p.x-q.x)*q.face>=0;
- q.hp=Math.max(0,q.hp-(blocked?2:h.damage));p.focus=Math.min(100,p.focus+(blocked?2:8));if(blocked)q.focus=Math.min(100,q.focus+4);else {q.stun=12;q.attack=null;q.focus=Math.max(0,q.focus-15);q.vx=p.face*180;}}
+ q.hp=Math.max(0,q.hp-(blocked?2:h.damage));focusDelta[h.from]+=blocked?2:8;if(blocked)focusDelta[1-h.from]+=4;else {q.stun=12;q.attack=null;focusDelta[1-h.from]-=15;q.vx=p.face*180;}}
+ for(let i=0;i<2;i++)s.players[i].focus=Math.max(0,Math.min(100,s.players[i].focus+focusDelta[i]));
  s.roundTicks--;if(s.players.some(p=>p.hp===0)||s.roundTicks<=0){const [a,b]=s.players.map(p=>p.hp);s.winner=a===b?null:a>b?0:1;if(s.winner!==null)s.scores[s.winner]++;s.phase=s.scores.some(v=>v>=2)?'finished':'round-over';}
  return s;}
 function next(s){if(s.phase==='round-over'){s.round++;round(s);return true;}return false;}

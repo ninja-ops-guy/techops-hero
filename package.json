@@ -17,7 +17,7 @@
     "release:r1:assess": "node scripts/quality_release_receipt.mjs",
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs",
     "arena:prototype": "node arena/server.cjs",
-    "test:arena": "node --test arena/test.cjs",
+    "test:arena": "node --test arena/test.cjs arena/*.test.cjs",
     "test:browser:arena": "node scripts/arena_pvp_browser.mjs"
   },
   "devDependencies": {
