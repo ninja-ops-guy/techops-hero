@@ -226,9 +226,9 @@
     if(root.TechOpsLivingWorldRuntime)return root.TechOpsLivingWorldRuntime.openBoard();
     dialog('LIVING WORLD','Opening the expedition casebook…',[{t:'Back',f:root.closeDlg}]);
     if(!expeditionLoad){
-      const scripts=['campaign_living_world_data.js','campaign_living_world.js','campaign_living_world_runtime.js'];
+      const scripts=['campaign_living_world_data.js','campaign_fieldcraft.js','campaign_living_world.js','runtime_field_score.js','campaign_fieldcraft_runtime.js','campaign_living_world_runtime.js'];
       expeditionLoad=scripts.reduce((prior,src)=>prior.then(()=>new Promise((resolve,reject)=>{
-        const script=root.document.createElement('script');script.src=src+'?v=20261115-expeditions-2';script.async=false;
+        const script=root.document.createElement('script');script.src=src+'?v=20261116-fieldcraft-1';script.async=false;
         script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('Could not load '+src));};root.document.head.appendChild(script);
       })),Promise.resolve()).catch(e=>{expeditionLoad=null;throw e;});
     }

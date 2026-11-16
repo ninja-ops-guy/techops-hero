@@ -2,7 +2,7 @@
  * no private animation loop, duplicate input owner, or original-story grants. */
 (function(root){
   'use strict';
-  const A=root.TechOpsLivingWorld,D=A.Data,FLOOR=430;
+  const A=root.TechOpsLivingWorld,D=A.Data,FLOOR=430,F=A.Fieldcraft,X=root.TechOpsFieldcraftRuntime;
   let origin=null,saveAge=0,lastHP=100,ui=null,images={},saveError=null;
   const game=()=>typeof S!=='undefined'?S:root.S;
   const world=()=>game()&&game().nightMode;
@@ -12,12 +12,12 @@
   const now=()=>root.performance?root.performance.now():Date.now();
   const html=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const clone=A.clone;
-  function close(){if(root.TechOpsCampaignVisuals)root.TechOpsCampaignVisuals.hide();if(root.closeDlg)root.closeDlg();}
-  function dialog(title,body,options){if(!root.dlg)return false;root.dlg(title,body,options);const el=root.document&&root.document.getElementById('dialogue');if(el){el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','dlg-name');const first=el.querySelector('button');if(first)first.focus();}return true;}
+  function close(){if(root.document&&root.document.body){root.document.body.classList.remove('field-menu-open');const box=root.document.getElementById('dialogue');if(box)delete box.dataset.fieldActivity;}if(root.TechOpsCampaignVisuals)root.TechOpsCampaignVisuals.hide();if(root.closeDlg)root.closeDlg();}
+  function dialog(title,body,options){if(root.document&&root.document.body){root.document.body.classList.remove('field-menu-open');const box=root.document.getElementById('dialogue');if(box)delete box.dataset.fieldActivity;}if(!root.dlg)return false;root.dlg(title,body,options);const el=root.document&&root.document.getElementById('dialogue');if(el){el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','dlg-name');const first=el.querySelector('button');if(first)first.focus({preventScroll:true});el.scrollTop=0;}return true;}
   function native(){try{const n=A.facts(root.TechOpsCampaign.load(root.localStorage));n.day=Math.max(n.day,Number(game().day)||0);return n;}catch(_){return {facts:{},day:0};}}
   function ensure(){const s=game();s.meta=s.meta||{};const scope=s.meta._standaloneMode==='nightcrawler'?'standalone':'campaign';if(!s.meta.livingWorld)s.meta.livingWorld=A.initial(scope);A.validate(s.meta.livingWorld);if(s.meta.livingWorld.scope!==scope)throw new Error('This expedition belongs to a different playthrough.');return s.meta.livingWorld;}
   function persist(){
-    try{A.validate(state());const ok=typeof save==='function'?save():root.save&&root.save();if(!ok)throw new Error(root.__techopsSaveError||'Save did not complete');saveError=null;return true;}catch(e){saveError=String(e.message||e);return false;}
+    try{A.validate(state());const ok=typeof save==='function'?save():root.save&&root.save();if(!ok)throw new Error(root.__techopsSaveError||'Save did not complete');saveError=null;if(X)X.saved();return true;}catch(e){saveError=String(e.message||e);if(X)X.failed();return false;}
   }
   function failed(){dialog('PROGRESS NOT SAVED','This action could not be saved. Its completion has been rolled back. Your supplies remain unchanged.<br><br>'+html(saveError||'Storage is unavailable.'),[{t:'Keep playing and retry the action',f:close},{t:'Open field journal',f:openJournal}]);}
   function commit(fn){
@@ -32,7 +32,7 @@
       return result;
     }catch(e){game().meta.livingWorld=before;game().journal=journal;dialog('ROUTE NOT AVAILABLE',html(e.message),[{t:'Back',f:close}]);return null;}
   }
-  function snapshotNight(n){return JSON.parse(JSON.stringify(n,(k,v)=>['_nightCombat','_livingWorld'].includes(k)?undefined:v));}
+  function snapshotNight(n){return JSON.parse(JSON.stringify(n,(k,v)=>['_nightCombat','_livingWorld','_fieldFeel'].includes(k)?undefined:v));}
   function resumable(s,id){return !!(s.active&&s.active.id===id&&!s.active.finished||s.runs[id]&&!s.runs[id].finished);}
   function checkpointNight(){if(!origin||!active(world()))return null;const n=world(),restored=clone(origin);restored.hp=Math.max(1,n.hp);restored.cash=n.cash;restored.kills=n.kills;return restored;}
   function openBoard(){
@@ -44,7 +44,7 @@
     options.push({t:'Back to Night Walker',f:close});
     return dialog('LIVING WORLD / EXPEDITIONS','<b>'+s.done.length+' / '+D.episodes.length+' chapters completed</b><br>Explore → fight → preserve a route → rescue → return.<br><br>'+(s.scope==='standalone'?'A chronological companion campaign with its own character knowledge and consequences. It includes later-comic spoilers as you advance. Main Day-story milestones remain separate.':'Expeditions open alongside your main campaign. Day evidence and authored milestones determine access. Expedition reports remain in this playthrough.')+(reason?'<br><br><b>Next:</b> '+html(reason):''),options);
   }
-  function brief(id){const e=A.episode(id),s=state(),resume=resumable(s,id);return dialog(e.title.toUpperCase(),'<b>'+html(e.chapter)+'</b><br><br>'+html(e.bridge||'')+(e.bridge?'<br><br>':'')+html(e.premise)+'<br><br>Move with arrows / stick. Jump with Space. Use E or INTERACT beside a marked point. Open C for routes, supplies, and the field journal.'+(e.vehicle?'<br><br>You control the '+(e.vehicle==='cradle'?'supported transport':e.vehicle==='service_car'?'service car':'service carrier')+' from '+html(e.actor)+'’s viewpoint. Use wide routes; this is a grounded transport segment.':''),[{t:resume?'Resume this chapter':'Enter this chapter',f:()=>enter(id)},{t:'Back to expeditions',f:openBoard}]);}
+  function brief(id){const e=A.episode(id),s=state(),resume=resumable(s,id),a=s.active&&s.active.id===id?s.active:s.runs[id],recap=resume&&a?F.recap({...s,active:a},e):null;return dialog(e.title.toUpperCase(),'<b>'+html(e.chapter)+'</b><br><br>'+html(e.bridge||'')+(e.bridge?'<br><br>':'')+html(e.premise)+(recap?'<br><br><b>Welcome back · '+html(recap.actor.toUpperCase())+'</b><br>'+html(recap.place)+'<br><b>Next:</b> '+html(recap.next)+(recap.escort?'<br><b>With you:</b> '+html(recap.escort):'')+(recap.last?'<br>'+html(recap.last):'')+(recap.record?'<br><b>Your last record:</b> '+html(recap.record):''):'')+'<br><br>Move with arrows / stick. Jump with Space. Use F or INTERACT beside a marked point. E is Light; J is Kick. T opens field equipment and C opens the journal. Action keys can be remapped in Comfort and controls.'+(e.vehicle?'<br><br>You control the '+(e.vehicle==='cradle'?'supported transport':e.vehicle==='service_car'?'service car':'service carrier')+' from '+html(e.actor)+'’s viewpoint. Use wide routes; this is a grounded transport segment.':''),[{t:resume?'Resume this chapter':'Enter this chapter',f:()=>enter(id)},{t:'Back to expeditions',f:openBoard}]);}
   function enter(id){
     const n=world();if(!n||n._v736||n._sector04||n._nightwalker)return false;
     ensure();if(!origin)origin=snapshotNight(n);
@@ -68,9 +68,9 @@
     return make([[420,350,180],[810,320,210],[1080,350,190]]);
   }
   function loadRoom(){
-    const n=world(),a=state().active,e=A.episode(a.id);n._livingWorld={active:true};n.district='industrial';n.street=1;n.drive=null;n.x=a.x;n.y=a.y;n.vx=0;n.vy=0;n.w=e.vehicle==='cradle'?76:e.vehicle?68:22;n.h=34;n.cam=0;n.face=1;n.clear=false;n.platforms=platforms(e,a);n.enemies=[];delete n._nightCombat;n.hitStop=0;n.jHeld=false;n.onGround=true;n.dashCD=0;n.dashT=0;lastHP=n.hp;spawn(n);resetInput();announce();
+    const n=world(),a=state().active,e=A.episode(a.id);n._livingWorld={active:true};n.district='industrial';n.street=1;n.drive=null;n.x=a.x;n.y=a.y;n.vx=0;n.vy=0;n.w=e.vehicle==='cradle'?76:e.vehicle?68:22;n.h=34;n.cam=0;n.face=1;n.clear=false;n.platforms=platforms(e,a);n.enemies=[];delete n._nightCombat;n.hitStop=0;n.jHeld=false;n.onGround=true;n.dashCD=0;n.dashT=0;lastHP=n.hp;spawn(n);resetInput();announce();if(X)X.loaded();
   }
-  function resetInput(){if(root.TechOpsNightInput)root.TechOpsNightInput.reset();try{for(const k of Object.keys(keys))keys[k]=false;}catch(_){} }
+  function resetInput(){if(world())delete world()._fieldFeel;if(root.TechOpsNightInput)root.TechOpsNightInput.reset();try{for(const k of Object.keys(keys))keys[k]=false;}catch(_){} }
   function spawn(n){
     const s=state(),a=s.active,e=A.episode(a.id),g=A.current(s);if(!g||!e.danger||a.finished||g.room!==a.room||a.step===0||e.vehicle)return;
     // Chorus hosts are never farmable humanoid targets. Only unoccupied
@@ -85,6 +85,7 @@
     if(!active(world()))return [];const n=world(),s=state(),a=s.active,g=A.current(s),c=[];
     if(g&&g.room===a.room)c.push({type:'goal',x:g.x,y:g.y,label:g.label});
     for(const q of D.sidequests){if(A.sideLocation(s,q).episode===a.id&&A.sideLocation(s,q).room===a.room&&(s.side[q.id]||0)<q.steps.length)c.push({type:'side',id:q.id,x:sideX(q,s),y:413,label:q.title});}
+    if(X)c.push(...X.nearby());
     if(n.x<180||n.x>1490)c.push({type:'exit',x:n.x+11,y:n.y+17,label:'Choose a physical route'});
     return c.map(p=>Object.assign(p,{distance:Math.hypot(n.x+n.w/2-p.x,n.y+n.h/2-p.y)})).filter(p=>p.distance<=96).sort((a,b)=>a.distance-b.distance);
   }
@@ -92,12 +93,13 @@
   function sideX(q,s){return A.sideLocation(s,q).x;}
   function interact(selection){
     if(!active(world())||game().inDialog)return false;
-    const points=nearby(),chosen=selection&&['goal','side','exit'].includes(selection.type)?points.find(p=>p.type===selection.type&&p.id===selection.id):null;
+    const points=nearby(),chosen=selection&&['goal','side','exit','field','moment'].includes(selection.type)?points.find(p=>p.type===selection.type&&p.id===selection.id):null;
     if(!chosen&&points.filter(p=>p.type!=='exit').length>1){
       dialog('AT THIS LOCATION','Choose the person or task you want to spend time with.',points.filter(p=>p.type!=='exit').map(p=>({t:p.label,f:()=>{close();interact(p);}})).concat({t:'Step back',f:close}));return true;
     }
     const p=chosen||points[0];if(!p)return false;
     const s=state(),g=A.current(s);s.active.x=Math.max(0,Math.min(1760,world().x));s.active.y=world().y;
+    if(X&&['field','moment'].includes(p.type))return X.handle(p);
     if(p.type==='exit'){openRoutes();return true;}
     if(p.type==='side'){const q=D.sidequests.find(q=>q.id===p.id),step=s.side[q.id]||0;dialog(q.title,html(q.steps[step][1]),[{t:q.steps[step][0],f:()=>{const r=commit(st=>A.sidequest(st,q.id,sideX(q,st)));if(r){const next=A.sideLocation(state(),q);const follow=q.stages&&!r.complete?'<br><br>Next: '+html(A.episode(next.episode).title)+' — '+html(A.episode(next.episode).rooms.find(room=>room.id===next.room).name):'';dialog(q.title,html(r.text)+follow,[{t:r.complete||q.stages?'Keep this moment':'Continue in the room',f:close}]);announce();}}},{t:'Another time',f:close}]);return true;}
     if(g.kind==='scene'){showScene();return true;}
@@ -117,13 +119,14 @@
     if(!active(world()))return openBoard();const s=state(),a=s.active,e=A.episode(a.id),g=A.current(s);
     const options=[{t:'Resume — '+(g?g.label:'quiet aftermath'),f:close},{t:'Routes and current conditions',f:openRoutes}];
     if(e.actors)options.push({t:'Switch operator — '+e.actors.find(x=>x!==a.actor),f:()=>{const r=commit(s=>A.switchActor(s));if(r){delete world()._nightCombat;if(e.remoteRooms)loadRoom();resetInput();announce();close();}}});
+    if(X)options.push({t:'Field equipment and approaches',f:X.tools},{t:'Comfort, controls and audio',f:X.settings});
     if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
     options.push({t:'Save chapter and return to the street',f:()=>leave(false)});
     const knowledge=(s.knowledge[a.actor]||[]).slice(-4).map(html).join('<br><br>');
     return dialog(e.title.toUpperCase(),'<b>'+html(a.actor.toUpperCase())+' / '+html(e.chapter)+'</b><br><br>'+html(g?g.label:'Complete — the aftermath is quiet.')+'<br><br><b>This viewpoint’s record</b><br>'+knowledge,options);
   }
   function leave(board){const n=world(),restored=checkpointNight();if(!restored)return false;const r=commit(s=>A.leave(s));if(!r)return false;close();Object.keys(n).forEach(k=>delete n[k]);Object.assign(n,restored);origin=null;hideUI();resetInput();if(board)openBoard();return true;}
-  function beforeStep(n){if(!active(n))return;const e=A.episode(state().active.id);n.clear=false;if(e.vehicle){n.vy=0;n.dashT=0;n.vx=Math.max(-2.6,Math.min(2.6,n.vx));} }
+  function beforeStep(n){if(!active(n))return;if(X)X.beforeStep();const e=A.episode(state().active.id);n.clear=false;if(e.vehicle){n.vy=0;n.dashT=0;n.vx=Math.max(-2.6,Math.min(2.6,n.vx));} }
   function afterStep(n,dt){
     if(!active(n)||game().inDialog||game().paused||root.document.hidden)return;
     const s=state(),a=s.active,e=A.episode(a.id),hurt=n.hp<lastHP,before=clone(s);
@@ -133,20 +136,22 @@
     // Authored machine work cycles, not omniscient pursuit. Quiet windows and
     // raised service platforms remain available, with no random named deaths.
     if(!a.finished&&e.danger&&['horror','rescue','stealth'].includes(e.mode)){
-      const h=A.cycle(s);if(h.on&&Math.abs(n.x-h.x)<50&&n.y+n.h>390&&n.ifr<=0){n.hp=Math.max(1,n.hp-6);n.ifr=55;n.vx=-4; a.holding=false;if(n.hp<=1){onDefeat();return;}}
+      const h=A.cycle(s);if(h.on&&Math.abs(n.x-h.x)<50&&n.y+n.h>390&&n.ifr<=0){n.hp=Math.max(1,n.hp-(X?X.incoming(6):6));n.ifr=55;n.vx=-4; a.holding=false;if(n.hp<=1){onDefeat();return;}}
     }
     if(before.active.holding&&!a.holding&&!result.advanced){
       n.msg='WORK PAUSED — wait for space, then interact to resume';n.msgT=now()+3500;
       if(ui)ui.querySelector('[role=status]').textContent=n.msg;
       result.changed=true;
     }
+    if(X)X.afterStep(dt);
     lastHP=n.hp;saveAge+=Math.min(.05,dt||0);
     if(result.changed||saveAge>=4){saveAge=0;if(!persist()){game().meta.livingWorld=before;failed();return;}}
     if(result.advanced){n.enemies=[];spawn(n);announce();if(result.finished)completion();}
     if(ui){ui.hidden=false;const p=nearest();ui.querySelector('button').disabled=!p;ui.querySelector('button').textContent=p?'INTERACT · '+p.label:'Move to a marked point';}
   }
-  function onDefeat(){if(!active(world()))return false;world().hp=Math.max(1,world().hp);resetInput();dialog('FALL BACK TO THE CHECKPOINT','The route attempt failed. Objectives and consumed supplies stay recorded. Recover at this room’s entry with emergency support.',[{t:'Recover at the room entry',f:()=>{const oldHP=world().hp;world().hp=40;const r=commit(s=>A.retry(s));if(r){loadRoom();close();}else world().hp=oldHP;}},{t:'Save and leave the expedition',f:()=>leave(false)}]);return true;}
-  function input(action){if(!active(world()))return false;if(action==='punch'&&nearest()){interact();return true;}return !!A.episode(state().active.id).vehicle;}
+  function recover(walkway){const oldHP=world().hp;world().hp=40;const result=commit(s=>{A.retry(s);const pos=F.recover(s,A.episode(s.active.id),walkway);Object.assign(s.active,pos);return true;});if(result){loadRoom();close();}else world().hp=oldHP;}
+  function onDefeat(){if(!active(world()))return false;world().hp=Math.max(1,world().hp);resetInput();const options=[{t:'Recover at the room entry',f:()=>recover(false)}];if(F.available(state(),A.episode(state().active.id)))options.push({t:'Recover via the service walkway',f:()=>recover(true)});options.push({t:'Save and leave the expedition',f:()=>leave(false)});dialog('FALL BACK TO THE CHECKPOINT','Objectives and consumed supplies remain recorded. Recover with emergency support, or take a raised service approach. Your group waits at the room entry; rejoin them before leaving.',options);return true;}
+  function input(action){if(!active(world()))return false;if(X&&X.input(action))return true;return !!A.episode(state().active.id).vehicle;}
   function ensureUI(){
     if(ui)return;
     const style=root.document.createElement('style');style.textContent='.living-world-active #see-world-linked-button{display:none!important}#living-world-controls[hidden]{display:none!important}#living-world-interact{position:absolute;left:50%;transform:translateX(-50%);bottom:150px;pointer-events:auto;min-height:44px;max-width:310px;padding:10px 15px;border:1px solid #7edbcc;border-radius:6px;background:#071b23f2;color:#e5f7f2;font:12px/1.4 monospace}#living-world-objective{position:absolute;left:12px;right:12px;max-width:520px;box-sizing:border-box;padding:9px 12px;border-left:2px solid #75cbbb;background:#071119ed;color:#e0eeeb;font:12px/1.45 monospace}#living-world-progress{height:3px;background:#75cbbb;margin-top:6px;max-width:100%}@media(max-width:559px){#living-world-interact{left:12px;transform:none;bottom:202px;width:185px;max-width:48vw}}@media(max-height:500px){#living-world-interact{bottom:70px;max-width:280px}#living-world-objective{max-width:390px;font-size:11px;padding:6px 10px}}';root.document.head.append(style);
@@ -220,6 +225,7 @@
     if(a.escort&&a.escort.room===a.room){const x=a.escort.x-n.cam;ctx.fillStyle='#98b7ac';ctx.fillRect(x,386,20,44);ctx.fillStyle='#f0d49e';ctx.fillRect(x+3,374,14,15);ctx.fillStyle='#dbf2e7';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText(a.escort.name,x+10,365);}
     if(!a.finished&&e.danger&&['horror','rescue','stealth'].includes(e.mode)){const h=A.cycle(s),x=h.x-n.cam;ctx.fillStyle=h.on?'#dba16a':'#435657';ctx.fillRect(x-30,355,60,68);ctx.fillStyle='#172731';ctx.fillRect(x-14,369,28,30);ctx.strokeStyle=h.on||h.warning?'#ffbb72':'#8caaa7';ctx.strokeRect(x-30,355,60,68);ctx.font='11px monospace';ctx.textAlign='center';ctx.fillStyle='#ebd7bd';ctx.fillText(h.on?'WORK CYCLE / KEEP CLEAR':h.warning?'WORK CYCLE / STARTING':'WORK CYCLE / PAUSED',x,340);}
     for(const enemy of n.enemies||[]){if(!enemy.alive)continue;if(root.drawNightEnemyAtlas)root.drawNightEnemyAtlas(ctx,enemy,enemy.x-n.cam,t);ctx.fillStyle='#8b69aa';ctx.fillRect(enemy.x-n.cam,enemy.y-9,30*enemy.hp/enemy.maxHp,4);if(enemy.windup>8){ctx.fillStyle='#ffd596';ctx.font='bold 20px monospace';ctx.fillText('!',enemy.x-n.cam,enemy.y-18);}}
+    if(X)X.draw(ctx,n,t);
     actor(ctx,n,t);if(root.TechOpsNightCombat)root.TechOpsNightCombat.draw(ctx,n);
     const hud=root.TechOpsRuntimeHud;if(hud)hud.drawNight(ctx,n,{district:{name:e.title,streets:1,accent,danger:e.danger},clock:a.actor.toUpperCase(),status:a.finished?'QUIET AFTERMATH':e.mode.toUpperCase(),now:t});
     if(ui){
@@ -233,6 +239,7 @@
     }
     return true;
   }
-  function hideUI(){if(ui)ui.hidden=true;if(root.document)root.document.body.classList.remove('living-world-active');}
-  root.TechOpsLivingWorldRuntime={VERSION:2,active,viewpoint,openBoard,openJournal,openRoutes,enter,interact,nearest,input,beforeStep,afterStep,drawScene,checkpointNight,onDefeat,hideUI,leave,health:()=>({active:active(world()),saveError,chapter:game()&&game().meta.livingWorld.active.id})};
+  function hideUI(){if(X)X.hidden();if(ui)ui.hidden=true;if(root.document)root.document.body.classList.remove('living-world-active');}
+  if(X)X.attach({A,state,world,active,game,commit,dialog,close,openJournal,interact});
+  root.TechOpsLivingWorldRuntime={VERSION:2,active,viewpoint,openBoard,openJournal,openRoutes,enter,interact,nearest,input,beforeStep,afterStep,drawScene,checkpointNight,onDefeat,hideUI,leave,health:()=>({active:active(world()),saveError,chapter:game()&&game().meta?.livingWorld?.active?.id})};
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -494,7 +494,9 @@ function stepNM(dt) {
   NM.vx = clamp(NM.vx, -maxV, maxV);
   if (!L && !R && NM.onGround) NM.vx *= Math.pow(.76, f);
   // jump / double jump (flip)
-  if (J && !NM.jHeld) {
+  if (NM._livingWorld && window.TechOpsFieldcraft) {
+    if(window.TechOpsFieldcraft.jump(NM,dt,J,pairDown))sfx('jump');
+  } else if (J && !NM.jHeld) {
     if (NM.onGround) { NM.vy = -10.4; NM.onGround = false; NM.jumps = 1; sfx("jump"); }
     else if (NM.jumps < 2) { NM.vy = -8.8; NM.jumps = 2; NM.flip = 16; sfx("jump"); }
   }
@@ -536,6 +538,7 @@ function stepNM(dt) {
   for (const e of NM.enemies) {
     if (!e.alive) continue;
     if (streetCombat && streetCombat.stepEnemy(NM,e,dt)) continue;
+    if(NM._livingWorld&&window.TechOpsFieldcraftRuntime&&window.TechOpsFieldcraftRuntime.redirectEnemy(NM,e,dt))continue;
     // launch / downed states first
     if (e.launch > 0) { e.launch -= f; e.y -= 3.2 * f; e.x += (e.kb || 0) * f; if (e.launch <= 0) e.kb = 0; continue; }
     if (e.down > 0) { e.down -= f; e.y = NM_FLOOR - e.h; continue; }
@@ -558,7 +561,7 @@ function stepNM(dt) {
       if (e.windup > 26) {
         e.windup = 0;
         const chip = NM.block;
-        NM.hp -= chip ? Math.ceil(e.dmg * .25) : e.dmg;
+        NM.hp -= NM._livingWorld&&window.TechOpsFieldcraftRuntime?window.TechOpsFieldcraftRuntime.incoming(chip ? Math.ceil(e.dmg * .25) : e.dmg):(chip ? Math.ceil(e.dmg * .25) : e.dmg);
         NM.ifr = 22;
         if (!chip) { NM.vx = Math.sign(dx) * -5; NM.vy = -3; if(streetCombat)streetCombat.hurt(NM); }
         if(chip&&streetCombat&&streetCombat.blocked)streetCombat.blocked(NM,e);
@@ -574,7 +577,7 @@ function stepNM(dt) {
         e.windup = 0; e.cd = 150;
         if (NM.ifr <= 0) {
           const chip = NM.block;
-          NM.hp -= chip ? Math.ceil(e.dmg * .3) : Math.ceil(e.dmg * .8);
+          NM.hp -= NM._livingWorld&&window.TechOpsFieldcraftRuntime?window.TechOpsFieldcraftRuntime.incoming(chip ? Math.ceil(e.dmg * .3) : Math.ceil(e.dmg * .8)):(chip ? Math.ceil(e.dmg * .3) : Math.ceil(e.dmg * .8));
           if(!chip&&streetCombat)streetCombat.hurt(NM);
           NM.ifr = 22;
           if(chip&&streetCombat&&streetCombat.blocked)streetCombat.blocked(NM,e);

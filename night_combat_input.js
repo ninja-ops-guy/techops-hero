@@ -26,7 +26,7 @@
   function contextAction(){
     if(!ready())return null;
     const n=runtime(),lifecycle=root.TechOpsNightRuntime;
-    if(n._livingWorld)return root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.nearest()?'expedition':null;
+    if(n._livingWorld)return null; // Explicit F / INTERACT owns expedition actions.
     if(lifecycle&&lifecycle.atHome())return 'home';
     const car=typeof NM_CAR_X==='number'?NM_CAR_X:26;
     if(n.x<car+150&&!(n.enemies||[]).some(e=>e.alive&&Math.abs(e.x-n.x)<90))return 'charger';
@@ -34,7 +34,7 @@
   }
   function snapshot(k){return frameInput||root.TechOpsNightCombat.normalizeInput(k||keyboard(),joystick());}
   function inputTime(){return root.performance&&root.performance.now?root.performance.now():Date.now();}
-  function reset(){jumpKey=false;jumpQueued=false;jumpPointers.clear();directionTaps.length=0;directionHeld.clear();keyboardHorizontal=0;stickHorizontal=0;lastTap=null;shiftHeld=false;const c=runtime()?._nightCombat;if(c)c.dash=null;}
+  function reset(){if(runtime())delete runtime()._fieldFeel;jumpKey=false;jumpQueued=false;jumpPointers.clear();directionTaps.length=0;directionHeld.clear();keyboardHorizontal=0;stickHorizontal=0;lastTap=null;shiftHeld=false;const c=runtime()?._nightCombat;if(c)c.dash=null;}
   function dispatch(action,k){
     if(!ready())return false;
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
@@ -65,7 +65,8 @@
     const opposed=left&&right||digital&&v*kd<-.3;
     if(opposed)lastTap=null;
     else if(dir&&edge&&!(digital&&queued.length))tap(dir,source,inputTime());
-    if(k.shift&&!shiftHeld)combat.dash(n,n.face||1);
+    const fieldBindings=root.TechOpsFieldcraftRuntime&&root.TechOpsFieldcraftRuntime.bindings();
+    if(k.shift&&!shiftHeld&&(!fieldBindings||fieldBindings.dash==='ShiftLeft'))combat.dash(n,n.face||1);
     shiftHeld=!!k.shift;
   }
   function runStep(step,dt,k,j){
@@ -91,6 +92,7 @@
   }
   function editable(el){return !!(el&&el.closest&&el.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]'));}
   function stop(e){e.preventDefault();e.stopImmediatePropagation();}
+  function actionFor(code){const b=root.TechOpsFieldcraftRuntime&&root.TechOpsFieldcraftRuntime.bindings();if(b){const action=Object.keys(b).find(k=>b[k]===code||(code==='ShiftRight'&&b[k]==='ShiftLeft'));return action||null;}return keyMap[code];}
   function keyDown(e){
     if(directionCodes[e.code]&&ready()&&!editable(e.target)&&!e.repeat){
       if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
@@ -103,12 +105,12 @@
       if(!held)directionTaps.push({dir,at:inputTime(),opposed});
       if(directionTaps.length>8)directionTaps.shift();
     }
-    const action=keyMap[e.code];if(!action||!ready()||editable(e.target))return;
+    const action=actionFor(e.code);if(!ready()||editable(e.target))return;if(!action){if(runtime()._livingWorld&&keyMap[e.code])stop(e);return;}
     stop(e);if(e.repeat)return;
     dispatch(action);
     if(action==='jump')jumpKey=true;
   }
-  function keyUp(e){directionHeld.delete(e.code);if(e.code==='Space')jumpKey=false;if(keyMap[e.code]&&ready()&&!editable(e.target))stop(e);}
+  function keyUp(e){directionHeld.delete(e.code);if(actionFor(e.code)==='jump')jumpKey=false;if(actionFor(e.code)&&ready()&&!editable(e.target))stop(e);}
   function bindButton(button,action,legacy=false){
     if(!button||bound.has(button))return;bound.add(button);
     const press=e=>{

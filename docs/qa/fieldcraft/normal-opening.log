@@ -1,0 +1,6 @@
+CHAPTER service_ring
+OBJECTIVE service_ring request
+OBJECTIVE service_ring power
+OBJECTIVE service_ring verify
+OBJECTIVE service_ring return
+PASS desktop 1 chapters, 0 optional quests

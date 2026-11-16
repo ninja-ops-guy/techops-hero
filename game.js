@@ -2965,13 +2965,15 @@ function initMusic(userInitiated = false) {
   connect();
 }
 function setMusic(on) {
+  const fieldScore=window.TechOpsFieldScore;
+  if(fieldScore&&fieldScore.engaged()){musicRequested=false;musicOn=!!on;sfxMuted=!on;fieldScore.setMuted(!on);$("btn-music").textContent=on?"🔊":"🔇";applyMusicRequest();return;}
   musicRequested = !!on;
   musicOn = musicRequested;
   sfxMuted = !musicRequested; // one toggle rules all audio
   $("btn-music").textContent = musicRequested ? "🔊" : "🔇";
   applyMusicRequest();
 }
-$("btn-music").addEventListener("click", () => { const on = !musicRequested; if (on) initMusic(true); setMusic(on); });
+$("btn-music").addEventListener("click", () => { const field=window.TechOpsFieldScore&&window.TechOpsFieldScore.engaged();const on=field?window.TechOpsFieldScore.isMuted():!musicRequested;if(on&&!field)initMusic(true);setMusic(on); });
 
 // ---------- boot ----------
 function showTouchUI() {
