@@ -1,0 +1,163 @@
+{
+  "profile": "desktop",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "reports": [
+    {
+      "id": "service_ring",
+      "completed": true
+    },
+    {
+      "id": "three_calls",
+      "completed": true
+    },
+    {
+      "id": "annex",
+      "completed": true
+    },
+    {
+      "id": "pier",
+      "completed": true
+    },
+    {
+      "id": "rooftops",
+      "completed": true
+    },
+    {
+      "id": "hangar",
+      "completed": true
+    },
+    {
+      "id": "prison",
+      "completed": true
+    },
+    {
+      "id": "home",
+      "completed": true
+    },
+    {
+      "id": "waldo_visit",
+      "completed": true
+    },
+    {
+      "id": "low_quarter",
+      "completed": true
+    },
+    {
+      "id": "dock",
+      "completed": true
+    },
+    {
+      "id": "iona_local",
+      "completed": true
+    },
+    {
+      "id": "iona_pressure",
+      "completed": true
+    },
+    {
+      "id": "archive",
+      "completed": true
+    },
+    {
+      "id": "factory_heist",
+      "completed": true
+    },
+    {
+      "id": "last_shift",
+      "completed": true
+    },
+    {
+      "id": "moving_safehouse",
+      "completed": true
+    },
+    {
+      "id": "fracture",
+      "completed": true
+    },
+    {
+      "id": "iona_blackout",
+      "completed": true
+    },
+    {
+      "id": "borrowed_skill",
+      "completed": true
+    },
+    {
+      "id": "morrow_array",
+      "completed": true
+    },
+    {
+      "id": "factory_return",
+      "completed": true
+    },
+    {
+      "id": "no_common_channel",
+      "completed": true
+    },
+    {
+      "id": "hold_receiving",
+      "completed": true
+    },
+    {
+      "id": "iona_receiving",
+      "completed": true
+    },
+    {
+      "id": "low_return",
+      "completed": true
+    },
+    {
+      "id": "queue_afterward",
+      "completed": true
+    },
+    {
+      "sideQuest": "worker_route",
+      "completed": true
+    },
+    {
+      "sideQuest": "two_cups",
+      "completed": true
+    },
+    {
+      "sideQuest": "name_door",
+      "completed": true
+    },
+    {
+      "sideQuest": "soundcheck",
+      "completed": true
+    },
+    {
+      "sideQuest": "delivery",
+      "completed": true
+    },
+    {
+      "sideQuest": "receiving_end",
+      "completed": true
+    },
+    {
+      "sideQuest": "spare_key",
+      "completed": true
+    },
+    {
+      "sideQuest": "repair_held",
+      "completed": true
+    },
+    {
+      "sideQuest": "unfinished_song",
+      "completed": true
+    },
+    {
+      "sideQuest": "takes_over",
+      "completed": true
+    },
+    {
+      "sideQuest": "place_ready",
+      "completed": true
+    }
+  ],
+  "errors": [],
+  "method": "Normal title and expedition UI; keyboard movement and platform jumps. No story flags, health, positions, or objective completions injected."
+}
