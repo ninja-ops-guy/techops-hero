@@ -40,8 +40,8 @@
     if(runtime()!==lastRuntime){reset();lastRuntime=runtime();}
     if(root.TechOpsLivingWorldRuntime&&root.TechOpsLivingWorldRuntime.input(action))return true;
     if(action==='punch'&&contextAction()&&typeof root.interact==='function'){root.interact();return true;}
-    if(action==='jump'){const c=root.TechOpsNightCombat.state(runtime());if(c.slide&&!root.TechOpsNightCombat.cancelSlide(runtime()))return false;jumpQueued=true;return true;}
-    if(action==='dash'){const aim=snapshot(k);return aim.s||aim.arrowdown?root.TechOpsNightCombat.slide(runtime(),runtime().face||1):root.TechOpsNightCombat.dash(runtime(),runtime().face||1);}
+    if(action==='jump'){const c=root.TechOpsNightCombat.state(runtime());if(c.slide&&!root.TechOpsNightCombat.cancelSlide(runtime()))return false;if(c.gravity)c.gravity=null;jumpQueued=true;return true;}
+    if(action==='dash'){const aim=snapshot(k);return aim.s||aim.arrowdown?(runtime().onGround?root.TechOpsNightCombat.slide(runtime(),runtime().face||1):root.TechOpsNightCombat.gravityCancel(runtime())):root.TechOpsNightCombat.dash(runtime(),runtime().face||1);}
     return root.TechOpsNightCombat.attack(runtime(),snapshot(k),action);
   }
   function movementGesture(n,k,j){
@@ -66,7 +66,7 @@
     if(opposed)lastTap=null;
     else if(dir&&edge&&!(digital&&queued.length))tap(dir,source,inputTime());
     const fieldBindings=root.TechOpsFieldcraftRuntime&&root.TechOpsFieldcraftRuntime.bindings();
-    if(k.shift&&!shiftHeld&&(!fieldBindings||fieldBindings.dash==='ShiftLeft')){const aim=combat.normalizeInput(k,j||{});if(aim.s||aim.arrowdown)combat.slide(n,n.face||1);else combat.dash(n,n.face||1);}
+    if(k.shift&&!shiftHeld&&(!fieldBindings||fieldBindings.dash==='ShiftLeft')){const aim=combat.normalizeInput(k,j||{});if(aim.s||aim.arrowdown){if(n.onGround)combat.slide(n,n.face||1);else combat.gravityCancel(n);}else combat.dash(n,n.face||1);}
     shiftHeld=!!k.shift;
   }
   function runStep(step,dt,k,j){
@@ -166,7 +166,7 @@
     if(active&&punch){
       const context=contextAction();punch.textContent=context?'A':'PUNCH';
       punch.setAttribute('aria-label',context==='home'?"Enter Mike's house":context==='charger'?'Open Charger routes':'Directional punch');
-      punch.title=context?'E / A interacts':'Double-tap left/right to dash; down + dash slides, then jump or attack to cancel after startup. Attack after dash to grab. Up/down aims attacks and throws; GRAB in the air catches an eligible launched enemy. E light / J kick / Space jump. In air: down + E light, down + J slam; Iona up + J bicycle. Run menu: combo guide. More: optional dash and grab buttons.';
+      punch.title=context?'E / A interacts':'Double-tap left/right to dash; down + dash slides on ground or gravity-cancels in air; jump or attack cancels a slide after startup. Attack after dash to grab. Up/down aims attacks and throws; GRAB in the air catches an eligible launched enemy. E light / J kick / Space jump. In air: down + E light, down + J slam; Iona up + J bicycle. Run menu: combo guide. More: optional dash and grab buttons.';
     }
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
     if(!enabled)reset();

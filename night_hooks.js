@@ -515,7 +515,8 @@ function stepNM(dt) {
   if (NM.dashT > 0) NM.dashT -= f;
   if(grounded&&NM.dashT>0&&!NM.block)ground.dodgeMove(NM,dt);
   // gravity (tighter than the old float)
-  NM.vy = Math.min(NM.vy + NM_GRAV * f, 13.5);
+  if (NM._nightCombat && NM._nightCombat.gravity) NM.vy = 0;
+  else NM.vy = Math.min(NM.vy + NM_GRAV * f, 13.5);
   // integrate
   const prevBottom = NM.y + NM.h;
   NM.x = clamp(NM.x + NM.vx * f, 0, NM_W - NM.w);

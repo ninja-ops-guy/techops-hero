@@ -71,7 +71,7 @@
     }).sort((a,b)=>Math.abs(a.x+a.w/2-cx)-Math.abs(b.x+b.w/2-cx))[0]||null;
   }
   function clearChain(n){const c=state(n);c.hits=0;c.stage=0;c.beat=false;c.lastHit=-10000;n.combo=0;}
-  function cancel(n){if(!active(n))return;const c=state(n);if(c.grab){const ec=enemy(c.grab.enemy);ec.held=false;ec.stunUntil=c.time+180;}c.grab=null;c.attack=null;c.dash=null;c.slide=null;c.follow=null;n.jabAnim=0;clearChain(n);}
+  function cancel(n){if(!active(n))return;const c=state(n);if(c.grab){const ec=enemy(c.grab.enemy);ec.held=false;ec.stunUntil=c.time+180;}c.grab=null;c.attack=null;c.dash=null;c.slide=null;c.gravity=null;c.follow=null;n.jabAnim=0;clearChain(n);}
   function dash(n,face){
     if(!active(n)||inputBlocked())return false;
     const c=state(n);if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.attack||c.stunUntil>c.time)return false;
@@ -86,6 +86,15 @@
     face=face<0?-1:1;n.face=face;n.dashCD=48;n.vx=face*7.2;c.dash=null;c.slide={at:c.time,until:c.time+500,face};event(n,'slide');return true;
   }
   function cancelSlide(n){if(!active(n))return false;const c=state(n);if(!c.slide||c.time-c.slide.at<100)return false;c.slide=null;n.vx=Math.max(-4.8,Math.min(4.8,n.vx));event(n,'slide-cancel');return true;}
+  // One airborne gravity cancel per jump sequence. No invulnerability or extra
+  // jump; it spends dash cooldown and can cancel only a confirmed attack.
+  function gravityCancel(n){
+    if(!active(n)||inputBlocked()||n.onGround)return false;
+    const c=state(n),a=c.attack,move=a&&MOVES[a.kind];
+    if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.slide||c.gravity||c.gravityUsed||c.stunUntil>c.time)return false;
+    if(a&&(!a.connected||(move?.contacts&&a.contactIndex<move.contacts.length)))return false;
+    if(a){c.attack=null;n.jabAnim=0;}c.dash=null;c.gravityUsed=true;c.gravity={at:c.time,until:c.time+180};n.dashCD=60;n.vy=0;n.vx=clamp(n.vx||0,-3.4,3.4);event(n,'gravity-cancel');say(n,'GRAVITY CANCEL · ATTACK NOW');return true;
+  }
   function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;value*=root.TechOpsNightProgression?.modifiers(n).damage||1;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});if(root.TechOpsNightProgression)root.TechOpsNightProgression.defeat(n,e);say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
   function lift(n,e,vx,vy,thrown){const c=state(n),ec=enemy(e);ec.held=false;ec.air=true;ec.airHits=0;ec.locked=false;ec.vx=vx;ec.vy=vy;ec.thrown=thrown;ec.flightHits=[];ec.wallHit=false;ec.stunUntil=c.time+450;e.launch=0;e.down=0;e.kb=0;c.follow={enemy:e,engaged:false};}
   function throwHeld(n,dir){
@@ -131,8 +140,9 @@
     const stage=beat?(c.stage+1)%3:0;
     const f=c.follow,fe=f&&f.enemy,fec=fe&&enemy(fe);
     const followAir=!!(f&&f.engaged&&fe&&fe.alive&&n.enemies.includes(fe)&&fec.air&&!fec.locked&&Math.abs((fe.y+fe.h)-(n.y+n.h))<RULES.followVertical);
+    const groundedCancel=!!(c.gravity&&action!=='grab');if(groundedCancel)c.gravity=null;
     let kind;
-    if(!n.onGround||followAir)kind=action==='kick'?(dir==='down'?'air-slam':dir==='up'&&actor(n)==='iona'?'bicycle-kick':'air-kick'):(dir==='down'?'air-down':'air');
+    if((!n.onGround||followAir)&&!groundedCancel)kind=action==='kick'?(dir==='down'?'air-slam':dir==='up'&&actor(n)==='iona'?'bicycle-kick':'air-kick'):(dir==='down'?'air-down':'air');
     else if(action==='kick')kind=dir==='up'?'rising-kick':dir==='down'?'sweep':'kick';
     else kind=dir==='up'?'uppercut':dir==='down'?'low':stage===2||stage===1&&eq.includes('pivot')?'launcher':stage===1?'cross':'jab';
     const move=MOVES[kind];c.lastInput=pressedAt;
@@ -202,6 +212,7 @@
   }
   function tick(n,dt,k){if(!active(n))return {locked:false};if(n.drive||inputBlocked())return {locked:true};const c=state(n);k=readInput(k);c.time+=(Number.isFinite(dt)?Math.min(Math.max(dt,0),.05):0)*1000;
     if(c.slide&&c.time>=c.slide.until)c.slide=null;
+    if(n.onGround){c.gravity=null;c.gravityUsed=false;}else if(c.gravity&&c.time>=c.gravity.until)c.gravity=null;
     if(c.grab){const g=c.grab,ec=enemy(g.enemy),dir=direction(k);if(!g.enemy.alive||!n.enemies.includes(g.enemy)||c.time-g.at>RULES.grabLife){ec.held=false;ec.stunUntil=c.time+180;c.grab=null;event(n,'escape',g.enemy);}else{g.enemy.x=clamp(n.x+(n.face>0?n.w+3:-g.enemy.w-3),0,1800-g.enemy.w);g.enemy.y=n.y+n.h-g.enemy.h;ec.stunUntil=c.time+180;if(!dir)g.armed=true;if(g.pending)throwHeld(n,g.pending);else if(dir&&(g.armed||dir!==g.entry))throwHeld(n,dir);}}
     if(c.attack){const a=c.attack,age=c.time-a.at;n.jabAnim=Math.max(1,(a.duration-age)/16);const move=MOVES[a.kind]||{};if(move.actor&&actor(n)!==move.actor)a.finished=true;const contacts=a.hit&&a.contactIndex===undefined?[]:move.contacts||[a.windup||RULES.windup];while(!a.finished&&(a.contactIndex||0)<contacts.length&&age>=contacts[a.contactIndex||0]){a.hit=true;strike(n,a);a.contactIndex=(a.contactIndex||0)+1;}if(age>=a.duration){const queued=a.buffer;c.attack=null;n.jabAnim=0;if(queued&&c.stunUntil<=c.time)begin(n,queued.keys,queued.at,queued.action);}}
     followAir(n,dt,k);
@@ -241,5 +252,5 @@
     const width=Math.min(290,W-20),x=(W-width)/2,y=91;ctx.fillStyle='#08111de8';ctx.fillRect(x,y,width,42);ctx.fillStyle='#a9c4d9';ctx.fillText(c.grab?'← / → THROW   ↑ LAUNCH   ↓ SLAM':c.stunUntil>c.time?'RECOVER':dashReady?'DASH → ATTACK TO GRAB':c.attack?.kind==='bicycle-kick'?'BICYCLE · THREE AIR HITS MAX':c.attack?.kind==='air-down'?'DOWN LIGHT · AIM BELOW':c.attack?.kind?.startsWith('air')?'AIR COMBO · THREE HITS MAX':'↑ / ↓ AIM · JUMP TO FOLLOW',W/2,y+14);
     const age=c.time-c.lastInput,barW=width-24;ctx.fillStyle='#27354b';ctx.fillRect(x+12,y+25,barW,6);ctx.fillStyle='#b18b39';ctx.fillRect(x+12+barW*RULES.beatMin/700,y+25,barW*(RULES.beatMax-RULES.beatMin)/700,6);if(c.lastHit>=0&&age<700){ctx.fillStyle=age>=RULES.beatMin&&age<=RULES.beatMax?'#ffe39a':'#8dc6fa';ctx.fillRect(x+12+barW*age/700-2,y+23,4,10);}ctx.restore();
   }
-  root.TechOpsNightCombat={VERSION:4,RULES,MOVES,active,actor,state,attack,dash,slide,cancelSlide,tick,stepEnemy,blocked:blockedContact,hurt,cancel,pose,draw,target,normalizeInput,readInput,jumpCancel,grab:(n,k)=>attack(n,k,'grab'),kick:(n,k)=>attack(n,k,'kick')};
+  root.TechOpsNightCombat={VERSION:4,RULES,MOVES,active,actor,state,attack,dash,slide,cancelSlide,gravityCancel,tick,stepEnemy,blocked:blockedContact,hurt,cancel,pose,draw,target,normalizeInput,readInput,jumpCancel,grab:(n,k)=>attack(n,k,'grab'),kick:(n,k)=>attack(n,k,'kick')};
 })(typeof globalThis!=='undefined'?globalThis:this);

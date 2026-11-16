@@ -63,6 +63,7 @@ test('resume restores durable location and travel, without held actions or stale
   assert.equal(c.NM._nightCombat.grab,null);assert.equal(c.NM._nightCombat.attack,null);assert.equal(c.NM.enemies[0]._nightCombat.held,false);
   assert.equal(c.NM.enemies[0].hp,16);assert.equal(c.NM.block,false);assert.equal(c.NM.jHeld,false);assert.equal(c.keys.d,false);assert.equal(c.joy.x,0);assert.equal(c.joy.y,0);
 });
+test('checkpoint clears gravity suspension but retains the used airtime',()=>{const {c,api,start}=fixture();start();vm.runInContext(fs.readFileSync('night_combat.js','utf8'),c);c.NM.onGround=false;c.NM.y=300;const state=c.TechOpsNightCombat.state(c.NM);state.gravity={at:0,until:180};state.gravityUsed=true;assert(api.saveCheckpoint());const saved=api.checkpointStatus().state.nightMode._nightCombat;assert.equal(saved.gravity,null);assert.equal(saved.gravityUsed,true);});
 test('all street districts, final clear states and active drive checkpoints are supported',()=>{
   const {c,api,start}=fixture();start();
   for(const district of ['downtown','longwharf','industrial','wooster','airport','suburbs','home']){

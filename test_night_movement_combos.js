@@ -14,6 +14,16 @@ function fixture(dt=.016){
 function test(name,fn){fn();passed++;console.log('PASS '+name);}
 function tap(f,dir){f.r.keys[dir]=true;f.frame();f.r.keys[dir]=false;f.frame();}
 function events(f,type){return f.n._nightCombat.events.filter(e=>e.type===type);}
+test('gravity cancel suspends briefly, spends cooldown and permits one ground attack in air',()=>{
+ for(const name of ['mike','k','iona','felicia']){const f=fixture();f.r.TechOpsCombatLab={ROSTER:{mike:{},k:{},iona:{},felicia:{}}};f.n._combatLab={actor:name};f.n.enemies=[];f.n.onGround=false;f.n.y=250;f.n.vy=6;const y=f.n.y;
+ f.r.keys.s=true;f.r.keys.shift=true;f.frame();assert.equal(events(f,'gravity-cancel').length,1);assert.equal(f.n.y,y);assert.equal(f.n.ifr,0);assert(f.n.dashCD>0);assert.equal(f.api.gravityCancel(f.n),false);
+ f.r.keys.s=false;f.r.keys.shift=false;assert(f.input.dispatch('punch'));assert.equal(f.n._nightCombat.attack.kind,'jab');assert(!f.n._nightCombat.gravity);f.frame();assert(f.n.y>y);f.n.dashCD=0;assert.equal(f.api.gravityCancel(f.n),false,'one use per airtime');
+ }
+});
+test('gravity cancel rejects whiffs and interruptions; confirmed hits can cancel',()=>{
+ const f=fixture();f.n.onGround=false;f.n.y=300;f.e.y=300;assert(f.api.attack(f.n,{},'punch'));assert.equal(f.api.gravityCancel(f.n),false);for(let i=0;i<6;i++)f.frame();assert(f.n._nightCombat.attack.connected);assert(f.api.gravityCancel(f.n));assert(!f.n._nightCombat.attack);f.api.hurt(f.n);assert(!f.n._nightCombat.gravity);assert(f.n._nightCombat.gravityUsed);
+});
+test('gravity cancel expires and re-arms only after landing',()=>{const f=fixture();f.n.enemies=[];f.n.onGround=false;f.n.y=350;f.n.vy=4;assert(f.api.gravityCancel(f.n));for(let i=0;i<15;i++)f.frame();assert(!f.n._nightCombat.gravity);f.n.dashCD=0;assert.equal(f.api.gravityCancel(f.n),false);f.until(()=>f.n.onGround,'land after cancel');f.frame();f.n.onGround=false;f.n.y-=2;assert(f.api.gravityCancel(f.n));});
 test('slide has startup, grounded movement, cancel window and shared cooldown',()=>{
  const f=fixture();f.n.enemies=[];const x=f.n.x;f.r.keys.s=true;f.r.keys.shift=true;f.frame();assert.equal(events(f,'slide').length,1);assert.equal(f.n.ifr,0);assert(f.n.x>x);assert.equal(f.input.dispatch('jump'),false);for(let i=0;i<8;i++)f.frame();assert(f.input.dispatch('jump'));f.frame();assert(!f.n._nightCombat.slide);assert(!f.n.onGround);assert(f.n.dashCD>0);assert.equal(f.api.slide(f.n,1),false);
 });

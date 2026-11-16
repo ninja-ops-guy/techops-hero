@@ -79,7 +79,7 @@
   function normalizedSnapshot(s){
     // Combat targets are object references. Persist the world once, clear queued
     // player actions, and retain enemy reaction timers/damage without replaying a hit.
-    const snapshot=JSON.parse(JSON.stringify(s,(key,value)=>key==='_nightCombat'&&value&&Array.isArray(value.events)?Object.assign({},value,{attack:null,grab:null,dash:null,slide:null,follow:null,events:[],fx:[],hits:0,stage:0,beat:false}):value));
+    const snapshot=JSON.parse(JSON.stringify(s,(key,value)=>key==='_nightCombat'&&value&&Array.isArray(value.events)?Object.assign({},value,{attack:null,grab:null,dash:null,slide:null,gravity:null,follow:null,events:[],fx:[],hits:0,stage:0,beat:false}):value));
     const n=snapshot.nightMode;
     snapshot.inDialog=false;snapshot.inBattle=false;snapshot.paused=false;snapshot.moving=false;
     n.block=false;n.jHeld=false;n._737sHeld=false;n.dashT=0;n.vx=0;n.jabAnim=0;n.combo=0;n.hitStop=0;
@@ -245,7 +245,7 @@
     return dialog('NIGHT WALKER // DIRECTIONAL COMBOS',
       '<b>LIGHT / E</b> · neutral: jab → cross → launcher on the gold beat; ↑: uppercut; ↓: low strike.<br><b>KICK / J</b> · neutral: kick launch; ↑: rising kick; ↓: sweep.<br><br><b>AIR</b> · Light: punch; ↓ + Light: quick downward strike at enemies below; Kick: air kick; ↓ + Kick: heavy slam.'+
       (iona?'<br><b>IONA</b> · ↑ + Kick in the air: bicycle kick. Each kick spends one of the three air contacts.':'')+
-      '<br><br><b>CHAIN IT</b> · Land an ↑ attack, press Jump / Space to follow, then Light → '+(iona?'↑ + Kick for the bicycle finish.':'Kick → Light.')+'<br>Jump above the enemy, then ↓ + Light to drive them toward the ground. Aim toward the target. Three aerial contacts end the juggle; a missed launcher cannot cancel into a follow-up jump.',
+      '<br><br><b>GRAVITY CANCEL</b> · In air, ↓ + Dash briefly holds you in place; attack during that window for a grounded move. Once per airtime, costs dash cooldown; no invulnerability.<br><br><b>CHAIN IT</b> · Land an ↑ attack, press Jump / Space to follow, then Light → '+(iona?'↑ + Kick for the bicycle finish.':'Kick → Light.')+'<br>Jump above the enemy, then ↓ + Light to drive them toward the ground. Aim toward the target. Three aerial contacts end the juggle; a missed launcher cannot cancel into a follow-up jump.',
       [{t:'Back to the run menu',f:openCampaign},{t:'Back to the street',f:root.closeDlg}]);
   }
   function openCampaign(){
