@@ -209,7 +209,7 @@ interact = function () {
   const s = S;
   if (s && s.nightMode) {
     // v7.31: next to the parked Charger, E opens the district map instead of jabbing
-    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM._livingWorld && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
+    if (NM && !NM._v736 && !NM._sector04 && !NM._nightwalker && !NM._livingWorld && !NM._combatLab && !NM.drive && NM.x < NM_CAR_X + 150 && !s.inDialog && !(NM.enemies||[]).some(e=>e.alive&&Math.abs(e.x-NM.x)<90)) return nmCarMenu();
     return nmJab();
   }
   const o = s && s._nightObjs;
@@ -452,7 +452,7 @@ function nmJab() {
   nmCheckClear();
 }
 function nmCheckClear() {
-  if (NM && NM._livingWorld) { NM.clear=false; return; }
+  if (NM && (NM._livingWorld || NM._combatLab)) { NM.clear=false; return; }
   if (!NM.clear && NM.enemies.length && NM.enemies.every(e => !e.alive)) {
     NM.clear = true;
     if(window.TechOpsNightProgression)window.TechOpsNightProgression.clear(NM);
@@ -486,15 +486,17 @@ function stepNM(dt) {
   // Grounded M5 uses a normalized horizontal plane; the same loop owns combat.
   if(grounded)NM.vx=corridorAxis*3.4;
   // run
-  if (!NM.block && !grounded) {
+  const sliding=!!(NM._nightCombat && NM._nightCombat.slide);
+  if (!NM.block && !grounded && !sliding) {
     const training=window.TechOpsNightProgression?.modifiers(NM);
     const acc = (NM.onGround ? .62 : .4*(training?.air||1))*(training?.speed||1);
     if (L) { NM.vx -= acc * f; NM.face = -1; }
     if (R) { NM.vx += acc * f; NM.face = 1; }
   }
-  const maxV = NM.dashT > 0 ? 9.5 : 4.8*(window.TechOpsNightProgression?.modifiers(NM).speed||1);
+  const maxV = NM.dashT > 0 ? 9.5 : sliding ? 7.2 : 4.8*(window.TechOpsNightProgression?.modifiers(NM).speed||1);
   NM.vx = clamp(NM.vx, -maxV, maxV);
-  if (!L && !R && NM.onGround) NM.vx *= Math.pow(.76, f);
+  if (sliding) NM.vx *= Math.pow(.96, f);
+  else if (!L && !R && NM.onGround) NM.vx *= Math.pow(.76, f);
   // jump / double jump (flip)
   if (NM._livingWorld && window.TechOpsFieldcraft) {
     if(window.TechOpsFieldcraft.jump(NM,dt,J,pairDown,window.TechOpsNightProgression?.modifiers(NM).jumps||2))sfx('jump');
@@ -513,7 +515,8 @@ function stepNM(dt) {
   if (NM.dashT > 0) NM.dashT -= f;
   if(grounded&&NM.dashT>0&&!NM.block)ground.dodgeMove(NM,dt);
   // gravity (tighter than the old float)
-  NM.vy = Math.min(NM.vy + NM_GRAV * f, 13.5);
+  if (NM._nightCombat && NM._nightCombat.gravity) NM.vy = 0;
+  else NM.vy = Math.min(NM.vy + NM_GRAV * f, 13.5);
   // integrate
   const prevBottom = NM.y + NM.h;
   NM.x = clamp(NM.x + NM.vx * f, 0, NM_W - NM.w);
@@ -541,6 +544,7 @@ function stepNM(dt) {
     if (!e.alive) continue;
     if (streetCombat && streetCombat.stepEnemy(NM,e,dt)) continue;
     if(NM._livingWorld&&window.TechOpsFieldcraftRuntime&&window.TechOpsFieldcraftRuntime.redirectEnemy(NM,e,dt))continue;
+    if (e._labDummy) continue; // combat reaction timers are handled above; no AI attack.
     // launch / downed states first
     if (e.launch > 0) { e.launch -= f; e.y -= 3.2 * f; e.x += (e.kb || 0) * f; if (e.launch <= 0) e.kb = 0; continue; }
     if (e.down > 0) { e.down -= f; e.y = NM_FLOOR - e.h; continue; }

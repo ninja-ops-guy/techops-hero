@@ -25,7 +25,7 @@ for(const asset of ["runtime_day_doors.js","runtime_day_doors.css"]){
   assert.ok(!html.includes(asset),"Doors assets load only when a computer is used");
   assert.ok(fs.readFileSync("runtime_day.js","utf8").includes(asset+"?v=20261105-doors-r1"));
 }
-assert.strictEqual(refFor("campaign_world_visuals.js"),"campaign_world_visuals.js?v=20261115-living-world-r2");
+assert.strictEqual(refFor("campaign_world_visuals.js"),"campaign_world_visuals.js?v=20261116-gravity-cancel-r1");
 const bootstrapBuild=fs.readFileSync("production_bootstrap.js","utf8").match(/BUILD="([A-Za-z0-9._-]+)"/);
 for(const src of ["v725_hooks.js","good_boys_hud_lite.js"]){assert.strictEqual(refFor(src),src+"?v=20260921-presentation-r1");}
 for(const src of ["night_hooks.js","v737_hooks.js"]){assert.strictEqual(refFor(src),src+"?v="+bootstrapBuild[1]);}

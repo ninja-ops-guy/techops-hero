@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=50,BUILD="20261115-living-world-r2",started=false,done=false;
+  var VERSION=50,BUILD="20261116-gravity-cancel-r1",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",
@@ -17,6 +17,7 @@
     "runtime_combat_audio.js",
     "runtime_hud.js",
     "night_progression.js",
+    "night_combat_lab.js",
     "night_combat.js",
     "night_move_atlas.js",
     "night_move_visuals.js",

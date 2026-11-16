@@ -9,6 +9,7 @@
   function actor(n){
     const s=typeof S!=='undefined'?S:root.S,linked=root.TechOpsLinked;
     const expedition=root.TechOpsLivingWorldRuntime;
+    if(active(n)&&s&&s.nightMode===n&&n._combatLab&&root.TechOpsCombatLab?.ROSTER[n._combatLab.actor])return n._combatLab.actor;
     if(active(n)&&!n.drive&&s&&s.nightMode===n&&expedition&&expedition.viewpoint(n)==='iona')return 'iona';
     if(!active(n)||n.drive||!s||s.nightMode!==n||!linked)return 'mike';
     const op=linked.mission(),id=s.meta&&s.meta.seeWorldLink;
@@ -58,8 +59,10 @@
       const ec=enemy(e),dx=e.x+e.w/2-cx,feet=(e.y+e.h)-(n.y+n.h);
       if(ec.held||ec.recoverUntil>c.time)return false;
       if(move.onlyEnemy&&e!==move.onlyEnemy||move.airOnly&&!ec.air)return false;
-      if(grab)return n.onGround&&!ec.air&&!e.hover&&e.grabbable!==false&&
-        Math.abs(feet)<=18&&Math.abs(dx)<RULES.grabReach&&dx*face>-12;
+      if(grab){if(e.hover||e.grabbable===false||Math.abs(dx)>=RULES.grabReach||dx*face<=-12)return false;
+        if(n.onGround)return !ec.air&&Math.abs(feet)<=18;
+        return ec.air&&!ec.locked&&ec.airHits<RULES.maxAirHits&&Math.abs(feet)<=45;
+      }
       if(move.low&&(ec.air||e.hover))return false;
       const follow=!!(c.follow&&c.follow.engaged&&c.follow.enemy===e&&ec.air&&!ec.locked);
       const vertical=move.downward?130:follow?RULES.followVertical:(move.launch?120:n.onGround?65:92);
@@ -68,12 +71,29 @@
     }).sort((a,b)=>Math.abs(a.x+a.w/2-cx)-Math.abs(b.x+b.w/2-cx))[0]||null;
   }
   function clearChain(n){const c=state(n);c.hits=0;c.stage=0;c.beat=false;c.lastHit=-10000;n.combo=0;}
-  function cancel(n){if(!active(n))return;const c=state(n);if(c.grab){const ec=enemy(c.grab.enemy);ec.held=false;ec.stunUntil=c.time+180;}c.grab=null;c.attack=null;c.dash=null;c.follow=null;n.jabAnim=0;clearChain(n);}
+  function cancel(n){if(!active(n))return;const c=state(n);if(c.grab){const ec=enemy(c.grab.enemy);ec.held=false;ec.stunUntil=c.time+180;}c.grab=null;c.attack=null;c.dash=null;c.slide=null;c.gravity=null;c.follow=null;n.jabAnim=0;clearChain(n);}
   function dash(n,face){
     if(!active(n)||inputBlocked())return false;
     const c=state(n);if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.attack||c.stunUntil>c.time)return false;
     face=face<0?-1:1;n.face=face;n.dashT=10;n.dashCD=42*(root.TechOpsNightProgression?.modifiers(n).dash||1);n.ifr=Math.max(n.ifr||0,12);n.vx=face*9.5;
     c.dash={at:c.time,until:c.time+RULES.dashGrabWindow,face,spent:false};event(n,'dash');sound('dash');return true;
+  }
+  // Slide has no invulnerability and shares dash cooldown. A deliberate jump
+  // or attack after startup cancels it; held directions cannot chain slides.
+  function slide(n,face){
+    if(!active(n)||inputBlocked()||!n.onGround)return false;
+    const c=state(n);if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.attack||c.slide||c.stunUntil>c.time)return false;
+    face=face<0?-1:1;n.face=face;n.dashCD=48;n.vx=face*7.2;c.dash=null;c.slide={at:c.time,until:c.time+500,face};event(n,'slide');return true;
+  }
+  function cancelSlide(n){if(!active(n))return false;const c=state(n);if(!c.slide||c.time-c.slide.at<100)return false;c.slide=null;n.vx=Math.max(-4.8,Math.min(4.8,n.vx));event(n,'slide-cancel');return true;}
+  // One airborne gravity cancel per jump sequence. No invulnerability or extra
+  // jump; it spends dash cooldown and can cancel only a confirmed attack.
+  function gravityCancel(n){
+    if(!active(n)||inputBlocked()||n.onGround)return false;
+    const c=state(n),a=c.attack,move=a&&MOVES[a.kind];
+    if(n.drive||n.hp<=0||n.block||n.dashCD>0||c.grab||c.slide||c.gravity||c.gravityUsed||c.stunUntil>c.time)return false;
+    if(a&&(!a.connected||(move?.contacts&&a.contactIndex<move.contacts.length)))return false;
+    if(a){c.attack=null;n.jabAnim=0;}c.dash=null;c.gravityUsed=true;c.gravity={at:c.time,until:c.time+180};n.dashCD=60;n.vy=0;n.vx=clamp(n.vx||0,-3.4,3.4);event(n,'gravity-cancel');say(n,'GRAVITY CANCEL · ATTACK NOW');return true;
   }
   function damage(n,e,value,kind,flags){if(!e.alive||e.hp<=0)return false;value*=root.TechOpsNightProgression?.modifiers(n).damage||1;const c=state(n),ec=enemy(e);e.hp=Math.max(0,e.hp-Math.round(value));e.hitT=8;e.windup=0;ec.stunUntil=Math.max(ec.stunUntil,c.time+RULES.stun);n.hitStop=Math.max(n.hitStop||0,kind==='throw'||kind==='launcher'?5:3);event(n,kind,e,Object.assign({damage:Math.round(value)},flags||{}));if(root.TechOpsArtHandoff)root.TechOpsArtHandoff.impact(n,e,kind==='jab'?'hit':'finisher',wallClock());sound('hit');if(e.hp<=0){e.alive=false;ec.held=false;n.kills=(n.kills||0)+1;const cash=e.cash||[0,0],pay=cash[0]+Math.floor(Math.random()*(cash[1]-cash[0]+1));n.cash=(n.cash||0)+pay;event(n,'ko',e,{cash:pay});if(root.TechOpsNightProgression)root.TechOpsNightProgression.defeat(n,e);say(n,'KNOCKOUT · +$'+pay);if(typeof root.nmCheckClear==='function')root.nmCheckClear();}return true;}
   function lift(n,e,vx,vy,thrown){const c=state(n),ec=enemy(e);ec.held=false;ec.air=true;ec.airHits=0;ec.locked=false;ec.vx=vx;ec.vy=vy;ec.thrown=thrown;ec.flightHits=[];ec.wallHit=false;ec.stunUntil=c.time+450;e.launch=0;e.down=0;e.kb=0;c.follow={enemy:e,engaged:false};}
@@ -85,7 +105,8 @@
     e.x=clamp(n.x+(sign>0?n.w+3:-e.w-3),0,1800-e.w);e.y=n.y+n.h-e.h;
     // A side toss still collides with crowds, but stays inside a jump's reach.
     lift(n,e,dir==='up'?sign*.9:dir==='down'?0:sign*2.8,dir==='up'?-9.8:dir==='down'?3:-8.8,true);
-    if(dir==='down')enemy(e).locked=true;
+    if(g.air){const ec=enemy(e);ec.airHits=RULES.maxAirHits;ec.locked=true;if(dir==='down')ec.vy=10;}
+    else if(dir==='down')enemy(e).locked=true;
     damage(n,e,dir==='up'?16:dir==='down'?22:24,'throw');
     c.attack={kind:dir==='up'?'throw-up':dir==='down'?'throw-down':'throw',at:c.time,hit:true,connected:true,launch:dir!=='down',stage:0,duration:270,face:sign};
     n.jabAnim=17;c.hits++;c.lastHit=c.time;n.combo=c.hits;n.comboT=wallClock()+RULES.chainLife;
@@ -97,29 +118,31 @@
     if(!active(n)||inputBlocked()||!['legacy','punch','kick','grab'].includes(action))return false;try{if(root.TechOpsCombatAudio)root.TechOpsCombatAudio.unlock();}catch(_){}
     const c=state(n);if(n.drive||n.block||n.hp<=0||c.stunUntil>c.time||root.S&&(root.S.inDialog||root.S.inBattle))return false;
     k=readInput(k);
+    if(c.slide&&!cancelSlide(n))return false;
     if(c.grab)return throwHeld(n,direction(k)||((n.face||1)<0?'left':'right'));
     if(c.attack){const age=c.time-c.attack.at;if(age>=c.attack.duration-RULES.buffer&&!c.attack.buffer)c.attack.buffer={at:c.time,keys:Object.assign({},k),action};return false;}
     return begin(n,k,c.time,action);
   }
   function begin(n,k,pressedAt,action='legacy'){
     const c=state(n);faceInput(n,k);
-    const dir=direction(k),implicit=action==='legacy'&&(dir==='left'||dir==='right');
+    const dir=direction(k),implicit=action==='legacy'&&n.onGround&&(dir==='left'||dir==='right');
     const dashGrab=c.dash&&!c.dash.spent&&c.time<=c.dash.until&&n.onGround&&dir!=='up'&&dir!=='down'&&(n.face||1)===c.dash.face;
     const e=(action==='grab'||implicit||dashGrab)?target(n,k,true):null;
     if(c.dash)c.dash.spent=true;
     if(e){
       n.face=e.x+e.w/2<n.x+n.w/2?-1:1;const ec=enemy(e);ec.held=true;e.windup=0;e.kb=0;
-      c.grab={enemy:e,at:c.time,entry:dir,armed:false};n.vx=0;n.dashT=0;event(n,'grab',e,{fromDash:!!dashGrab});say(n,'GRABBED · ← / → THROW · ↑ LAUNCH · ↓ SLAM');return true;
+      c.grab={enemy:e,at:c.time,entry:dir,armed:false,air:!n.onGround};n.vx=0;n.dashT=0;event(n,'grab',e,{fromDash:!!dashGrab});say(n,n.onGround?'GRABBED · ← / → THROW · ↑ LAUNCH · ↓ SLAM':'AIR GRAB · DIRECTION TO FINISH');return true;
     }
-    if(action==='grab'){clearChain(n);event(n,'grab-miss');say(n,'GRAB · GET CLOSE TO A GROUNDED ENEMY');return false;}
+    if(action==='grab'){clearChain(n);event(n,'grab-miss');say(n,n.onGround?'GRAB · GET CLOSE TO A GROUNDED ENEMY':'AIR GRAB · GET CLOSE TO A LAUNCHED ENEMY');return false;}
     const gap=pressedAt-c.lastInput,connected=c.lastHit>=0&&c.time-c.lastHit<RULES.chainLife;
     const beat=connected&&gap>=RULES.beatMin&&gap<=RULES.beatMax+(root.TechOpsNightProgression?.modifiers(n).combo||0);
     const eq=root.v733&&root.v733.equipped?root.v733.equipped():[];
     const stage=beat?(c.stage+1)%3:0;
     const f=c.follow,fe=f&&f.enemy,fec=fe&&enemy(fe);
     const followAir=!!(f&&f.engaged&&fe&&fe.alive&&n.enemies.includes(fe)&&fec.air&&!fec.locked&&Math.abs((fe.y+fe.h)-(n.y+n.h))<RULES.followVertical);
+    const groundedCancel=!!(c.gravity&&action!=='grab');if(groundedCancel)c.gravity=null;
     let kind;
-    if(!n.onGround||followAir)kind=action==='kick'?(dir==='down'?'air-slam':dir==='up'&&actor(n)==='iona'?'bicycle-kick':'air-kick'):(dir==='down'?'air-down':'air');
+    if((!n.onGround||followAir)&&!groundedCancel)kind=action==='kick'?(dir==='down'?'air-slam':dir==='up'&&actor(n)==='iona'?'bicycle-kick':'air-kick'):(dir==='down'?'air-down':'air');
     else if(action==='kick')kind=dir==='up'?'rising-kick':dir==='down'?'sweep':'kick';
     else kind=dir==='up'?'uppercut':dir==='down'?'low':stage===2||stage===1&&eq.includes('pivot')?'launcher':stage===1?'cross':'jab';
     const move=MOVES[kind];c.lastInput=pressedAt;
@@ -188,6 +211,8 @@
     c.relay=a.beat?(c.relay||0)+1:0;if(eq.includes('relay')&&c.relay>=3){n.dashCD=0;c.relay=0;say(n,'LOW-ORBIT RELAY · DASH READY');}
   }
   function tick(n,dt,k){if(!active(n))return {locked:false};if(n.drive||inputBlocked())return {locked:true};const c=state(n);k=readInput(k);c.time+=(Number.isFinite(dt)?Math.min(Math.max(dt,0),.05):0)*1000;
+    if(c.slide&&c.time>=c.slide.until)c.slide=null;
+    if(n.onGround){c.gravity=null;c.gravityUsed=false;}else if(c.gravity&&c.time>=c.gravity.until)c.gravity=null;
     if(c.grab){const g=c.grab,ec=enemy(g.enemy),dir=direction(k);if(!g.enemy.alive||!n.enemies.includes(g.enemy)||c.time-g.at>RULES.grabLife){ec.held=false;ec.stunUntil=c.time+180;c.grab=null;event(n,'escape',g.enemy);}else{g.enemy.x=clamp(n.x+(n.face>0?n.w+3:-g.enemy.w-3),0,1800-g.enemy.w);g.enemy.y=n.y+n.h-g.enemy.h;ec.stunUntil=c.time+180;if(!dir)g.armed=true;if(g.pending)throwHeld(n,g.pending);else if(dir&&(g.armed||dir!==g.entry))throwHeld(n,dir);}}
     if(c.attack){const a=c.attack,age=c.time-a.at;n.jabAnim=Math.max(1,(a.duration-age)/16);const move=MOVES[a.kind]||{};if(move.actor&&actor(n)!==move.actor)a.finished=true;const contacts=a.hit&&a.contactIndex===undefined?[]:move.contacts||[a.windup||RULES.windup];while(!a.finished&&(a.contactIndex||0)<contacts.length&&age>=contacts[a.contactIndex||0]){a.hit=true;strike(n,a);a.contactIndex=(a.contactIndex||0)+1;}if(age>=a.duration){const queued=a.buffer;c.attack=null;n.jabAnim=0;if(queued&&c.stunUntil<=c.time)begin(n,queued.keys,queued.at,queued.action);}}
     followAir(n,dt,k);
@@ -227,5 +252,5 @@
     const width=Math.min(290,W-20),x=(W-width)/2,y=91;ctx.fillStyle='#08111de8';ctx.fillRect(x,y,width,42);ctx.fillStyle='#a9c4d9';ctx.fillText(c.grab?'← / → THROW   ↑ LAUNCH   ↓ SLAM':c.stunUntil>c.time?'RECOVER':dashReady?'DASH → ATTACK TO GRAB':c.attack?.kind==='bicycle-kick'?'BICYCLE · THREE AIR HITS MAX':c.attack?.kind==='air-down'?'DOWN LIGHT · AIM BELOW':c.attack?.kind?.startsWith('air')?'AIR COMBO · THREE HITS MAX':'↑ / ↓ AIM · JUMP TO FOLLOW',W/2,y+14);
     const age=c.time-c.lastInput,barW=width-24;ctx.fillStyle='#27354b';ctx.fillRect(x+12,y+25,barW,6);ctx.fillStyle='#b18b39';ctx.fillRect(x+12+barW*RULES.beatMin/700,y+25,barW*(RULES.beatMax-RULES.beatMin)/700,6);if(c.lastHit>=0&&age<700){ctx.fillStyle=age>=RULES.beatMin&&age<=RULES.beatMax?'#ffe39a':'#8dc6fa';ctx.fillRect(x+12+barW*age/700-2,y+23,4,10);}ctx.restore();
   }
-  root.TechOpsNightCombat={VERSION:4,RULES,MOVES,active,actor,state,attack,dash,tick,stepEnemy,blocked:blockedContact,hurt,cancel,pose,draw,target,normalizeInput,readInput,jumpCancel,grab:(n,k)=>attack(n,k,'grab'),kick:(n,k)=>attack(n,k,'kick')};
+  root.TechOpsNightCombat={VERSION:4,RULES,MOVES,active,actor,state,attack,dash,slide,cancelSlide,gravityCancel,tick,stepEnemy,blocked:blockedContact,hurt,cancel,pose,draw,target,normalizeInput,readInput,jumpCancel,grab:(n,k)=>attack(n,k,'grab'),kick:(n,k)=>attack(n,k,'kick')};
 })(typeof globalThis!=='undefined'?globalThis:this);

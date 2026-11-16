@@ -17,7 +17,8 @@
       // Throws release on their existing immediate contact event. Grab supplies
       // the preparation; render the open-hand release, then recovery.
       frame=kind.startsWith('throw')?(age<140?2:3):phase(age,a.windup||70,a.duration);
-    }else if(n.dashT>0){kind='dash';age=c.dash?time-c.dash.at:(10-n.dashT)*1000/60;frame=Math.min(3,Math.floor(age/45));}
+    }else if(c.slide){kind='sweep';age=time-c.slide.at;frame=Math.min(3,Math.floor(age/90));}
+    else if(n.dashT>0){kind='dash';age=c.dash?time-c.dash.at:(10-n.dashT)*1000/60;frame=Math.min(3,Math.floor(age/45));}
     else if(n.block)kind='block';
     let prior=entries.get(n);
     // District reloads keep NM but replace its simulation clock. Do not carry
