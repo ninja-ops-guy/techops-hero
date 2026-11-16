@@ -4,6 +4,7 @@ on:
     paths:
       - 'arena/**'
       - 'scripts/arena_pvp_browser.mjs'
+      - 'scripts/arena_core_browser.mjs'
       - 'package*.json'
       - '.github/workflows/arena-qualification.yml'
   workflow_dispatch:
@@ -23,17 +24,23 @@ jobs:
       - name: Record exact source identity
         run: |
           git rev-parse HEAD HEAD^{tree}
-          sha256sum arena/*.cjs arena/client.js arena/index.html scripts/arena_pvp_browser.mjs
+          sha256sum arena/*.cjs arena/*.js arena/index.html scripts/arena_pvp_browser.mjs scripts/arena_core_browser.mjs
       - name: Protocol, simulation and client regressions
         run: npm run test:arena
       - name: Campaign regression gate
         run: npm test
-      - run: npx --no-install playwright install --with-deps chromium
+      - run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Node, Chromium and WebKit core replay parity
+        run: npm run test:browser:arena-core
+        env:
+          ARENA_CORE_ARTIFACT_DIR: /tmp/arena-core
       - name: Two isolated browser clients
         run: npm run test:browser:arena
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: arena-prototype-${{ github.sha }}
-          path: /tmp/arena-pvp/
+          path: |
+            /tmp/arena-pvp/
+            /tmp/arena-core/
           if-no-files-found: warn
