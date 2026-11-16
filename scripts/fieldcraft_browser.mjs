@@ -42,6 +42,13 @@ try{
    await page.waitForFunction(()=>window.S?.nightMode&&!S.inDialog&&!window.__productionDesiredMode);
    await press(page.locator('#night-campaign'));await press(option(/Living World/));await press(option(/^Begin — The Route We Keep$/));await press(option(/^Enter this chapter$/));
    await moveTo(609);await press(page.locator('#field-tools'));await press(option(/^Read local cycle$/));assert.equal(await page.evaluate(()=>TechOpsFieldcraft.room(S.meta.livingWorld).scanned),true);await close();check('fresh title entry and physical movement reach a saved local scan');
+   await page.keyboard.press('KeyC');await press(option(/^Optional quest notes$/));
+   let notes=await page.locator('#dlg-text').innerText();assert(notes.includes('The Spare Key'));assert(!notes.includes('The Last Shift'));assert(!notes.includes('An Unfinished Song'));await press(option(/^Resume chapter$/));
+   await moveTo(1560);await press(page.locator('#living-world-interact'));await press(option(/^Travel — Maintenance passage$/));await moveTo(339);await press(page.locator('#living-world-interact'));
+   if(await option(/^The Spare Key$/).count())await press(option(/^The Spare Key$/));await press(option(/^Ask who may keep the spare$/));
+   await page.waitForFunction(()=>document.getElementById('dlg-text').textContent.includes('next lead'));assert(!(await page.locator('#dlg-text').innerText()).includes('The Last Shift'));await press(option(/^Keep this moment$/));
+   await page.keyboard.press('KeyC');await press(option(/^Optional quest notes$/));notes=await page.locator('#dlg-text').innerText();assert(notes.includes('maintenance worker'));assert(!notes.includes('The Last Shift'));
+   await page.screenshot({path:`${out}/${profile}-optional-notes.png`});await press(option(/^Resume chapter$/));check('optional notes record a real interaction without revealing future sites or private viewpoints');
    await fixture('fracture','rear',1,609);
    await press(page.locator('#field-tools'));await press(option(/^Read local cycle$/));await close();await press(page.locator('#field-tools'));await press(option(/^Isolate task circuit$/));await close();
    assert.equal(await page.evaluate(()=>TechOpsLivingWorld.cycle(S.meta.livingWorld).task),'isolated');assert.equal(await page.evaluate(()=>S.meta.livingWorld.flags.fracture_local_support),undefined);check('task isolation changes the hazard without granting shelter support');

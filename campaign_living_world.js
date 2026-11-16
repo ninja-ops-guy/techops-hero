@@ -63,6 +63,22 @@
   function holdSeconds(s,g){return g.assistChoice&&s.choices[g.assistChoice[0]]===g.assistChoice[1]?g.assistChoice[2]:g.seconds;}
   function sceneLine(s){const g=current(s);return g&&g.lines&&g.lines[s.active.sceneIndex||0];}
   function sideLocation(s,q){return q.stages?q.stages[Math.min(s.side[q.id]||0,q.stages.length-1)]:{episode:q.episode,room:q.room,x:q.points&&q.points[s.side[q.id]||0]||q.x};}
+  // Player notes stay with the current viewpoint; future sites and other
+  // characters' private interactions are not revealed by global progress.
+  function optionalNotes(s){
+    if(!s.active)return [];
+    const actor=s.active.actor,visited=id=>s.active.id===id||s.done.includes(id)||!!s.runs[id];
+    const owns=loc=>{const e=episode(loc.episode);return (e.actors||[e.actor]).includes(actor);};
+    const location=(q,index)=>q.stages?q.stages[index]:{episode:q.episode,room:q.room};
+    const label=loc=>{const e=episode(loc.episode);return e.title+' — '+e.rooms.find(r=>r.id===loc.room).name;};
+    return Data.sidequests.flatMap(q=>{
+      const count=s.side[q.id]||0,first=location(q,0),next=count<q.steps.length?location(q,count):null;
+      let lastIndex=count-1;while(lastIndex>=0&&!owns(location(q,lastIndex)))lastIndex--;
+      const ownLast=lastIndex>=0,knownNext=next&&owns(next)&&visited(next.episode);
+      if(!ownLast&&!knownNext&&!(owns(first)&&visited(first.episode)))return [];
+      return [{id:q.id,title:q.title,complete:count===q.steps.length&&owns(location(q,count-1)),last:ownLast?q.steps[lastIndex][0]+' — '+q.steps[lastIndex][1]:null,next:knownNext?label(next):null,action:knownNext?q.steps[count][0]:null}];
+    });
+  }
   function consequences(s){const rows=[];for(const q of Data.sidequests)if(s.flags[q.reward])rows.push(q.title+': '+q.steps.at(-1)[1]);return rows.length?rows.join('\n\n'):'The receiving desk is open again. Optional work can still be revisited; nobody’s missing side quest erases the main rescue.';}
 
   function record(s,text){const a=s.active,k=a.actor;s.knowledge[k]=s.knowledge[k]||[];if(!s.knowledge[k].includes(text))s.knowledge[k].push(text);}
@@ -151,5 +167,5 @@
     return true;
   }
   validateData();
-  return {VERSION:1,Data,clone,initial,validate,episode,gate,start,current,holdSeconds,sceneLine,sideLocation,consequences,interact,routes,travel,tick,switchActor,sidequest,leave,retry,cycle,baseCycle,Fieldcraft:F,facts};
+  return {VERSION:1,Data,clone,initial,validate,episode,gate,start,current,holdSeconds,sceneLine,sideLocation,optionalNotes,consequences,interact,routes,travel,tick,switchActor,sidequest,leave,retry,cycle,baseCycle,Fieldcraft:F,facts};
 });

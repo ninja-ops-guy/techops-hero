@@ -29,4 +29,25 @@ test('real input adapter preserves directional combat beside objectives and uses
  const {s}=fixture('iona_pressure');const n={district:'industrial',_livingWorld:{active:true},enemies:[],hp:100,onGround:true};let attacks=0,interactions=0;
  const r={S:{nightMode:n,meta:{livingWorld:s}},keys:{},joy:{},TechOpsNightCombat:{active:()=>true,normalizeInput:k=>k,attack:()=>{attacks++;return true;}},TechOpsLivingWorldRuntime:{input:action=>{if(action==='interact'){interactions++;return true;}return false;},nearest:()=>({type:'goal'})}};r.globalThis=r;vm.runInNewContext(fs.readFileSync('night_combat_input.js','utf8'),r);r.TechOpsNightInput.dispatch('punch',{arrowup:true});r.TechOpsNightInput.dispatch('punch',{arrowdown:true});r.TechOpsNightInput.dispatch('interact');assert.equal(attacks,2);assert.equal(interactions,1);assert.equal(r.TechOpsNightInput.contextAction(),null);
 });
+test('optional notes hide future destinations and retain the actual last interaction',()=>{
+ const s=A.initial();A.start(s,'service_ring',{});const q=A.Data.sidequests.find(q=>q.id==='spare_key');s.active.room='service';s.active.x=339;A.sidequest(s,q.id);
+ const before=JSON.stringify(s),note=A.optionalNotes(s).find(n=>n.id===q.id);assert.equal(note.next,null);assert(note.last.includes('maintenance worker'));assert(!JSON.stringify(note).includes('The Last Shift'));assert.equal(JSON.stringify(s),before);
+ s.done.push('last_shift');assert(A.optionalNotes(s).find(n=>n.id===q.id).next.includes('The Last Shift'));
+});
+test('optional notes hide undiscovered chains and never copy Iona’s private take into Mike’s record',()=>{
+ const s=A.initial();A.start(s,'service_ring',{});assert(!A.optionalNotes(s).some(n=>n.id==='unfinished_song'));
+ s.side.unfinished_song=2;s.done.push('queue_afterward');const note=A.optionalNotes(s).find(n=>n.id==='unfinished_song');assert(note);assert.equal(note.last,null);assert(note.action.includes('chose to share'));assert(!JSON.stringify(note).includes('imperfect take'));
+});
+test('a later shared step does not erase Iona’s own last interaction or reveal Mike’s receipt',()=>{
+ const {s}=fixture('iona_local');s.side.unfinished_song=3;const note=A.optionalNotes(s).find(n=>n.id==='unfinished_song');assert(note.last.includes('same four beats'));assert.equal(note.complete,false);assert(!note.last.includes('Mike'));assert.equal(note.next,null);
+});
+test('completed optional notes survive reload without offering duplicate rewards',()=>{
+ const s=A.initial();A.start(s,'service_ring',{});s.side.spare_key=3;s.flags.spare_key_kept=true;
+ const restored=A.validate(JSON.parse(JSON.stringify(s))),before=JSON.stringify(restored),note=A.optionalNotes(restored).find(n=>n.id==='spare_key');assert(note.complete);assert.equal(note.next,null);assert.equal(JSON.stringify(restored),before);
+});
+test('optional journal is reachable through the real runtime menu and preserves progress',()=>{
+ const s=A.initial();A.start(s,'service_ring',{});let menu,body;const n={_livingWorld:{active:true}};
+ const r={TechOpsLivingWorld:A,S:{meta:{livingWorld:s},nightMode:n},document:{getElementById:()=>null},dlg:(title,text,choices)=>{body=text;menu=choices;}};r.globalThis=r;
+ vm.runInNewContext(fs.readFileSync('campaign_living_world_runtime.js','utf8'),r);const before=JSON.stringify(s);r.TechOpsLivingWorldRuntime.openJournal();menu.find(x=>x.t==='Optional quest notes').f();assert(body.includes('The Spare Key'));assert(!body.includes('The Last Shift'));assert.equal(JSON.stringify(s),before);
+});
 console.log(JSON.stringify({suite:'fieldcraft',checks}));

@@ -9,6 +9,7 @@ Mike requested implementation of the eight proposed improvements on November 16,
 Start Night Walker, open the run menu, choose **Living World**, and begin or resume an unlocked chapter. The existing native-story prerequisites and Waldo invitation/visit gates remain authoritative. For a fresh companion run, The Route We Keep teaches the local panel and has no combat requirement.
 
 - **F / INTERACT** performs the marked physical interaction. **E / Light** always attacks in an expedition; nearby objectives cannot capture directional attacks.
+- **Optional quest notes** in the journal show the current viewpoint’s last interaction and next known place. Unvisited chapters and another character’s private steps stay hidden. Completed chapters explicitly identify revisits as replays.
 - **T / FIELD** opens equipment and comfort settings. **C** remains the journal. Touch has separate labelled interaction, combat and field controls.
 - Change equipment in a quiet room or a clear room entry. Locate the matching physical panel, platform or motor before using its tool.
 - **Survey:** scanner, verified task isolation, and a risky quick bypass. **Route:** powered crossing and diversion motor. **Escort:** scanner and powered crossing. Kits cost no currency and never gate required story actions.
