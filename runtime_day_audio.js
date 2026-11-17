@@ -133,10 +133,11 @@
       if (generation !== duckGeneration || baseVolume === null) return;
       const currentMaster = master('volMusic');
       const sourceVolume = currentMaster !== duckMaster ? currentMaster * 100 : baseVolume;
-      try { w.setVolume(sourceVolume * factor()); } catch (_) {}
+      try { w.setVolume(sourceVolume * factor()); } catch (_) { return false; }
       if (!ducks.size) { baseVolume = null; duckMaster = null; }
+      return true;
     };
-    if (baseVolume !== null) { apply(); return true; }
+    if (baseVolume !== null) return apply();
     if (!ducks.size || typeof w.getVolume !== 'function') return false;
     try {
       w.getVolume(value => {
@@ -155,6 +156,26 @@
   function resume(reason) {
     if (!ducks.delete(String(reason || 'context'))) return false;
     return syncDucks(); // Volume only. Never undo the player's pause/mute choice.
+  }
+  // A film claim uses the current settings authority as its restoration baseline.
+  // It never starts, pauses, or resumes the widget itself.
+  function beginCinematic(reason) {
+    if (!reason) return false;
+    const w = widget();
+    if (!w || typeof w.setVolume !== 'function') {
+      // A requested but not-yet-ready widget may begin playing later: fail closed.
+      const requested = typeof musicRequested !== 'undefined' ? musicRequested : root.musicRequested;
+      return requested === false;
+    }
+    const key = String(reason);
+    if (baseVolume === null) { baseVolume = master('volMusic') * 100; duckMaster = master('volMusic'); }
+    ducks.set(key, 0);
+    const ok = syncDucks();
+    if (!ok) {
+      ducks.delete(key);
+      if (!ducks.size) { baseVolume = null; duckMaster = null; }
+    }
+    return ok;
   }
   function onContext(next) {
     const value = typeof next === 'string' ? next : next && next.type;
@@ -280,7 +301,7 @@
   }
   root.TechOpsDayAudio = {
     VERSION: 1, KEY, CUES, emit, unlock, silence, onContext, setPreferences, configure: setPreferences, settings,
-    playMorningTrack, duck, resume,
+    playMorningTrack, duck, resume, beginCinematic, refreshDucks: syncDucks,
     diagnostics: () => ({ played: stats.played, dropped: stats.dropped, unavailable: stats.unavailable, voices: voices.length,
       context: surface, contextState: context ? context.state : 'not-created', duckReasons: Array.from(ducks.keys()),
       playback: Object.assign({}, lastPlayback) })
