@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const sim = require('./simulation.cjs');
+const advanced = require('./advanced-simulation.js');
+const transport = require('./advanced-transport.cjs');
 const ACTIONS = new Set(['create', 'join', 'poll', 'input', 'ready', 'leave']);
 const EDGE_KEYS = ['jump', 'punch', 'kick', 'dash'];
 const DEFAULT_LIMITS = {
@@ -14,11 +16,12 @@ const DEFAULT_LIMITS = {
 };
 function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
   now = Date.now, terminalTtlMs = 10000, disconnectMs = 10000,
-  roomIdleMs = 120000, inputStaleMs = 250, rateLimits = {} } = {}) {
+  roomIdleMs = 120000, inputStaleMs = 250, rateLimits = {}, advancedCombat = false } = {}) {
   const loopback = ['127.0.0.1', 'localhost', '::1'].includes(host);
   if (!loopback && !allowedOrigins?.length) {
     throw new Error('Non-loopback Arena requires explicit allowedOrigins; public hosting is not qualified.');
   }
+  if (advancedCombat && !loopback) throw new Error('Advanced combat is restricted to local review.');
   const configuredOrigins = allowedOrigins?.map(value => {
     const url = new URL(value);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
@@ -68,7 +71,10 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
     room.state.phase = 'disconnected';
     room.state.winner = winner;
     room.state.outcome = { reason, winner, ...(matchComplete ? { matchComplete: true } : {}) };
-    for (let i = 0; i < room.seats.length; i++) sim.input(room.state, i, {});
+    for (let i = 0; i < room.seats.length; i++) {
+      if (advancedCombat) transport.clear(room.seats[i].channel);
+      else sim.input(room.state, i, {});
+    }
     room.votes.clear();
   }
   // Enforce deadlines at every action as well as on the timer. A stalled timer
@@ -88,11 +94,12 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
   }
   function snapshot(room, auth) {
     return { slot: auth.slot, code: auth.code, waiting: !room.state,
+      ...(advancedCombat ? {protocol:2,rulesetId:advanced.RULESET_ID,ack:room.seats[auth.slot].channel.seq} : {}),
       state: room.state ? { tick: room.state.tick, phase: room.state.phase,
         remaining: room.state.remaining, roundTicks: room.state.roundTicks,
         round: room.state.round, scores: room.state.scores, winner: room.state.winner,
         ...(room.state.outcome ? { outcome: room.state.outcome } : {}),
-        players: room.state.players.map(({ previous, input, ...player }) => player) } : null,
+        players: room.state.players.map(({ previous, input, buffer, buttons, lastPress, ...player }) => player) } : null,
       ready: room.votes.size };
   }
   const server = http.createServer(async (req, res) => {
@@ -108,6 +115,8 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
       const url = new URL(req.url, 'http://localhost');
       const assets = { '/': 'index.html', '/client.js': 'client.js',
         '/input-contract.js': 'input-contract.js', '/simulation.cjs': 'simulation.cjs' };
+      if (advancedCombat) Object.assign(assets, {'/':'advanced.html','/advanced-client.js':'advanced-client.js',
+        '/advanced-input.js':'advanced-input.js','/advanced-moves.js':'advanced-moves.js','/advanced-simulation.js':'advanced-simulation.js'});
       if (req.method === 'GET' && Object.hasOwn(assets, url.pathname)) {
         res.writeHead(200, { 'Content-Type': url.pathname === '/' ? 'text/html' : 'text/javascript',
           'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'",
@@ -131,6 +140,7 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
       // Body parsing is asynchronous; authority uses the current action time.
       const time = now();
       if (data.action === 'create' || data.action === 'join') {
+        if (advancedCombat && (data.protocol!==2||data.rulesetId!==advanced.RULESET_ID)) return json(res,409,{error:'Arena protocol mismatch'});
         if (!sim.ROSTER.includes(data.character)) return json(res, 400, { error: 'Choose a fighter' });
         if (!admitted(source.buckets, data.action, time)) return json(res, 429, { error: 'Room admission rate exceeded' });
         let code = data.code, room = rooms.get(code);
@@ -146,11 +156,14 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
         if (!room || room.seats.length >= 2 || room.state) return json(res, 409, { error: 'Room unavailable' });
         const token = crypto.randomBytes(24).toString('hex'), slot = room.seats.length;
         room.seats.push({ token, character: data.character, seen: time, seq: -1,
-          lastInput: time, awaitingRelease: new Set(), buckets: {} });
+          lastInput: time, awaitingRelease: new Set(), buckets: {}, ...(advancedCombat?{channel:transport.create()}: {}) });
         tokens.set(token, { code, slot });
         room.updated = time;
-        if (room.seats.length === 2) room.state = sim.create(room.seats.map(seat => seat.character));
-        return json(res, 200, { token, slot, code });
+        if (room.seats.length === 2) {
+          if(advancedCombat){room.match=advanced.createMatch({schemaVersion:2,rulesetId:advanced.RULESET_ID,matchId:code,characters:room.seats.map(seat=>seat.character)});room.state=room.match.state;}
+          else room.state = sim.create(room.seats.map(seat => seat.character));
+        }
+        return json(res, 200, { token, slot, code, ...(advancedCombat?{protocol:2,rulesetId:advanced.RULESET_ID}: {}) });
       }
       const auth = tokens.get(data.token), room = auth && rooms.get(auth.code);
       if (!room) return json(res, 401, { error: 'Session expired. Create or join another room.' });
@@ -170,6 +183,10 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
         if (!room.state || !['countdown', 'fight'].includes(room.state.phase)) {
           return json(res, 409, { error: 'Match is not accepting input' });
         }
+        if(advancedCombat){
+          const error=transport.accept(seat.channel,data,room.state.round,time,inputStaleMs);
+          if(error)return json(res,error.status,{error:error.error});
+        }else{
         if (!Number.isSafeInteger(data.seq) || data.seq <= seat.seq) return json(res, 409, { error: 'Stale input' });
         if (!data.keys || Array.isArray(data.keys) || typeof data.keys !== 'object' ||
             Object.keys(data.keys).some(key => !sim.KEYS.includes(key) || typeof data.keys[key] !== 'boolean')) {
@@ -183,6 +200,7 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
         seat.seq = data.seq;
         seat.lastInput = time;
         sim.input(room.state, auth.slot, keys);
+        }
       }
       if (data.action === 'ready') {
         if (!room.state || !['round-over', 'finished'].includes(room.state.phase)) {
@@ -190,7 +208,14 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
         }
         room.votes.add(auth.slot);
         if (room.votes.size === 2) {
-          if (room.state.phase === 'finished') room.state = sim.create(room.state.characters);
+          if(advancedCombat){
+            if(room.state.phase==='finished'){
+              // New namespace and monotonically increasing round reject old rematch input.
+              room.match=advanced.createMatch({schemaVersion:2,rulesetId:advanced.RULESET_ID,matchId:crypto.randomBytes(12).toString('hex'),characters:room.state.characters});
+              room.match.state.round=room.state.round+1;
+            }else advanced.nextRound(room.match);
+            room.state=room.match.state;room.events=[];room.seats.forEach(s=>transport.clear(s.channel));
+          }else if (room.state.phase === 'finished') room.state = sim.create(room.state.characters);
           else sim.next(room.state);
           room.votes.clear();
         }
@@ -209,6 +234,14 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
     for (const [code, room] of rooms) {
       if (expireRoom(code, room, time)) continue;
       if (!room.state) continue;
+      if(advancedCombat){
+        if(!['countdown','fight'].includes(room.state.phase))continue;
+        const before=room.state.phase;
+        const frames=room.seats.map(s=>transport.consume(s.channel,room.state.tick+1,room.state.round,time,inputStaleMs));
+        room.events=advanced.stepMatch(room.match,frames);room.state=room.match.state;
+        if(before==='countdown'&&room.state.phase==='fight')room.seats.forEach(s=>transport.clear(s.channel));
+        continue;
+      }
       for (let slot = 0; slot < room.seats.length; slot++) {
         const seat = room.seats[slot];
         if (time - seat.lastInput > inputStaleMs) {
@@ -226,7 +259,7 @@ function start({ port = 4260, host = '127.0.0.1', allowedOrigins,
 if (require.main === module) {
   const host = process.env.ARENA_HOST || '127.0.0.1', port = Number(process.env.PORT) || 4260;
   const allowedOrigins = process.env.ARENA_ALLOWED_ORIGINS?.split(',').map(value => value.trim());
-  start({ port, host, allowedOrigins });
+  start({ port, host, allowedOrigins, advancedCombat: process.env.ARENA_ADVANCED_COMBAT === '1' });
   console.log(`Arena prototype: http://${host}:${port}`);
 }
 module.exports = { start };
