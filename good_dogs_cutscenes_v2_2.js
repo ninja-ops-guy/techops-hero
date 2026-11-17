@@ -112,8 +112,9 @@
       const finish=(resultStatus,source)=>{
         if(!valid()||document.hidden||!settlement.claim())return false;done=true;const skipped=resultStatus===STATUS.USER_SKIPPED,at=Date.now(),currentTime=Number(video.currentTime||0),readyState=Number(video.readyState||0);
         window.__goodDogsCutsceneExit={id,status:resultStatus,skipped,source,at,currentTime,readyState,ios,session:ticket};
-        cleanup();if(cancelCurrent===cancel)cancelCurrent=null;
+        cleanup();
         try{video.pause();}catch(_){}
+        if(cancelCurrent===cancel)cancelCurrent=null;
         try{video.removeAttribute("src");}catch(_){}
         try{video.remove();}catch(_){}
         frame.classList.remove("gd-playing","gd-frame-ready");playBtn.classList.remove("active");root.classList.remove("active");delete root.dataset.activeCutscene;document.body.style.overflow=priorOverflow;
