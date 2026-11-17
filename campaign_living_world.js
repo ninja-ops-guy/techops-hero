@@ -18,7 +18,9 @@
     if(s.active)validateRun(s.active);
     return s;
   }
-  function validateRun(a){
+  function validateRun(a,backup=false){
+    assert(a&&(!('scriptRevision' in a)||a.id==='iona_world_left_running'&&a.scriptRevision===21),'Unsupported mission revision');
+    if(a.legacyCheckpoint!==undefined){assert(!backup&&a.scriptRevision===21&&a.legacyCheckpoint.id===a.id&&a.legacyCheckpoint.scriptRevision===undefined,'Invalid legacy checkpoint');validateRun(a.legacyCheckpoint,true);}
     const e=a&&episode(a.id);assert(e&&e.rooms.some(r=>r.id===a.room),'Unknown active location');
     assert((e.actors||[e.actor]).includes(a.actor),'Unknown viewpoint');
     assert(Number.isInteger(a.step)&&a.step>=0&&a.step<=e.goals.length,'Invalid objective');
@@ -48,13 +50,29 @@
     }
     return {open:true,reason:s.done.includes(id)?'Replay a completed chapter.':'Ready'};
   }
+  // Old saves stored only a numeric objective. v21 moves the archive hold
+  // from 21 to 19. Revisit it rather than invent evidence of its completion.
+  // Keep the untouched old run for diagnosis; no flags or done entries are added.
+  function reconcileIona(a,s){
+    if(a.id!=='iona_world_left_running'||a.finished||a.scriptRevision===21)return;
+    if(a.step>=19&&a.step<=21){
+      a.legacyCheckpoint=clone(a);
+      a.step=s.flags.iona_north_intake_lead?19:18;
+      a.room='records';a.x=episode(a.id).goals[a.step].x-11;a.y=396;
+      a.escort=null;a.hold=0;a.holding=false;a.sceneIndex=0;
+      delete a.task;delete a.tasks;
+    }
+    a.scriptRevision=21;
+  }
   function start(s,id,native,restart){
     validate(s);const g=gate(s,id,native);assert(g.open,g.reason);
     for(const chapter of ['hangar','fracture']){const r=s.active&&s.active.id===chapter?s.active:s.runs[chapter];if(s.done.includes(chapter)||r&&r.step>1)s.flags[chapter+'_local_support']=true;}
-    if(s.active&&s.active.id===id&&!restart){F.ensure(s);return s.active;}
+    if(s.active&&s.active.id===id&&!restart){reconcileIona(s.active,s);F.ensure(s);return s.active;}
     if(s.active&&s.active.id!==id)leave(s);
     const e=episode(id),old=s.runs[id];
     s.active=!restart&&old&&!old.finished?clone(old):{id,room:e.rooms[0].id,actor:e.actor,step:0,x:150,y:396,elapsed:0,hold:0,holding:false,escort:null,encounters:{},variant:old?(old.variant+1)%2:(Data.episodes.indexOf(e)%2),finished:false};
+    if(!restart&&old&&!old.finished)reconcileIona(s.active,s);
+    else if(id==='iona_world_left_running')s.active.scriptRevision=21;
     F.ensure(s);
     return s.active;
   }
@@ -102,6 +120,7 @@
     if(a.room!==g.room||Math.abs(a.x+11-g.x)>92||Math.abs(a.y+17-g.y)>96)return {ok:false,text:'Move close to '+g.label+'.'};
     if(g.actor&&g.actor!==a.actor)return {ok:false,text:'This action belongs to '+g.actor+'. Switch operator at the field controls.'};
     if(g.requires&&g.requires.some(f=>!s.flags[f]))return {ok:false,text:'Complete the local support and receiving checks first.'};
+    if(g.requiresEscort&&(!a.escort||a.escort.id!==g.requiresEscort||a.escort.room!==a.room||Math.abs(a.escort.x-g.x)>135))return {ok:false,text:'Wait for the injured older officer to reach you.'};
     if(g.kind==='dispatch'){
       const task=g.tasks.find(t=>t.id===choice);if(!task||(a.tasks||[]).includes(choice))return {ok:false,choose:true,text:'Choose an unfinished call.'};
       a.task=choice;if(g.choiceKey&&!s.choices[g.choiceKey])s.choices[g.choiceKey]=choice;
@@ -123,6 +142,7 @@
   function routes(s){const a=s.active,e=episode(a.id);return e.routes.filter(r=>r.from===a.room||r.to===a.room).map(r=>{
     const to=r.from===a.room?r.to:r.from;let reason='';
     if(r.requires&&!s.flags[r.requires])reason=r.requires==='never_open'?'Physically blocked despite the displayed route.':'This route has not been established.';
+    if(r.closesAfter&&e.goals.some((g,i)=>g.id===r.closesAfter&&a.step>i))reason='The access gate is locked. Use the west freight route.';
     if(r.choice&&s.choices[r.choice[0]]!==r.choice[1])reason='This earlier response did not establish the shortcut.';
     if(r.actor&&r.actor!==a.actor)reason='Switch to '+r.actor+' at the field controls.';
     if(r.power&&!s.flags[r.power])reason='Local support is not ready.';
@@ -143,6 +163,7 @@
     a.x=Math.max(0,Math.min(1760,frame.x));a.y=Math.max(-1000,Math.min(430,frame.y));
     if(a.escort&&a.escort.room===a.room){const dx=a.x-45-a.escort.x;if(Math.abs(dx)>12&&Math.abs(dx)<300)a.escort.x+=Math.sign(dx)*Math.min(Math.abs(dx),95*dt);}
     const g=current(s);if(!a.holding||!g||g.kind!=='hold')return {changed:false};
+    if(g.requires&&g.requires.some(f=>!s.flags[f])){a.holding=false;a.hold=0;return {changed:true,paused:true};}
     const near=g.room===a.room&&Math.abs(a.x+11-g.x)<=92&&Math.abs(a.y+17-g.y)<=96;
     if(!near||frame.hurt||Math.abs(frame.vx||0)>.6){a.holding=false;if(g.observeCycle)a.hold=0;return {changed:true,paused:true};}
     a.hold+=dt;if(a.hold>=holdSeconds(s,g))return Object.assign(advance(s),{changed:true});

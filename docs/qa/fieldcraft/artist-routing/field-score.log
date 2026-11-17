@@ -1,0 +1,26 @@
+PASS no context, playback or request before explicit start
+PASS explicit start, phrase-boundary transitions and bounded voices
+PASS dialogue, master mute, hidden page and stop immediately dispose all voices
+PASS unpause schedules a fresh phrase instead of replaying missed audio
+PASS audio failure is reported without throwing into gameplay
+PASS leaving while resume is pending cannot enable late audio
+PASS artist stems reject remote paths and mismatched durations
+PASS artist layers share an audio start time and replace the reference arrangement
+PASS decoded stems respect a separate mobile memory budget
+PASS a configured score load cancelled by leaving cannot activate late
+PASS rehearsal auditions survive only their own menu, then stop on other menus or blur
+PASS existing master toggle routes exclusively to the active field score
+PASS published catalog has approved scene references but no fabricated exports
+PASS catalog rejects unsupported meter, missing approval, duplicate stems and a reserved cue
+PASS artist catalog enables only a matching scene and retains declared phrase length
+PASS song selection waits for audible phrase boundary then leaves no artist voices
+PASS a stopped fetch is discarded before decode and never activates later
+PASS replacement loads serialize decoding and discard an obsolete decoded pack
+PASS near-length layers with different sample counts are rejected
+PASS failed routed load exposes the error without repeated per-frame fetches
+PASS missing initial artist pack returns a usable reference fallback with an error
+PASS a rejected stale resume cannot stop a later successful start
+PASS muted asynchronous load cannot play and stop releases buffers
+PASS danger, combat and recovery select separate mixes without hiding speech
+PASS real campaign adapter exposes only visible threats and completed dock departure
+{"suite":"field-score","checks":25}

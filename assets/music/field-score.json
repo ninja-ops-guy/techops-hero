@@ -4,5 +4,62 @@
   "bpm": 96,
   "bars": 4,
   "layers": {},
-  "production_status": "Experimental original instrumental reference. Replace with creator-approved, aligned stems before claiming the artist soundtrack is adaptive."
+  "production_status": "Experimental original instrumental reference. Replace with creator-approved, aligned stems before claiming the artist soundtrack is adaptive.",
+  "schemaVersion": 2,
+  "tracks": {
+    "agamemnon": {
+      "title": "AGAMEMNON",
+      "status": "pending",
+      "recordingUrl": "https://soundcloud.com/raikouno/agamemnon",
+      "pack": null
+    },
+    "time-crumbles": {
+      "title": "Time Crumbles",
+      "status": "pending",
+      "recordingUrl": "https://soundcloud.com/raikouno/time-crumbles-wav",
+      "pack": null
+    },
+    "somewhere-deep-down-below": {
+      "title": "Somewhere Deep Down Below",
+      "status": "pending",
+      "recordingUrl": "https://soundcloud.com/raikouno/somewhere-deep-down-below",
+      "pack": null
+    },
+    "the-mercy-i-buried": {
+      "title": "The Mercy I Buried",
+      "status": "reserved",
+      "recordingUrl": "https://soundcloud.com/raikouno/the-mercy-i-buried",
+      "pack": null
+    }
+  },
+  "cues": [
+    {
+      "id": "iona-depot-heist",
+      "episode": "iona_world_left_running",
+      "moment": "depot-heist",
+      "actors": [
+        "iona"
+      ],
+      "track": "agamemnon"
+    },
+    {
+      "id": "prison-escape",
+      "episode": "prison",
+      "moment": "escape-corridor",
+      "actors": [
+        "katrin",
+        "manchez"
+      ],
+      "track": "time-crumbles"
+    },
+    {
+      "id": "dock-departure",
+      "episode": "dock",
+      "moment": "departure-aftermath",
+      "actors": [
+        "iona"
+      ],
+      "track": "somewhere-deep-down-below"
+    }
+  ]
 }

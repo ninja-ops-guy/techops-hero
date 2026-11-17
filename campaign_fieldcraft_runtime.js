@@ -3,7 +3,7 @@
 (function(root){
   'use strict';
   const F=root.TechOpsFieldcraft,reducedMotion=root.matchMedia?root.matchMedia('(prefers-reduced-motion: reduce)'):null;
-  let H=null,button=null,status=null,landing=null,lastGround=true,previousHP=null,lastSaved=null,scoreRequest=0;
+  let H=null,button=null,status=null,landing=null,lastGround=true,previousHP=null,lastSaved=null,scoreRequest=0,lastDangerAt=null;
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const key=c=>c==='Space'?'Space':c==='ShiftLeft'?'Shift':c.replace('Key','');
   const s=()=>H.state(),n=()=>H.world(),e=()=>H.A.episode(s().active.id),p=()=>F.ensure(s());
@@ -12,7 +12,7 @@
   function commit(fn){const value=H.commit(fn);if(value!==null){syncPlatforms();applyPreferences();}return value;}
   function attach(host){H=host;return api;}
   function syncPlatforms(){if(!live())return;const w=n();w.platforms=(w.platforms||[]).filter(x=>!x._fieldcraft).concat(F.platforms(s()));}
-  function loaded(){if(!live())return;F.ensure(s());syncPlatforms();applyPreferences();lastGround=!!n().onGround;previousHP=n().hp;landing=null;}
+  function loaded(){if(!live())return;F.ensure(s());syncPlatforms();applyPreferences();lastGround=!!n().onGround;previousHP=n().hp;landing=null;lastDangerAt=null;}
   function applyPreferences(){if(!root.document||!live())return;root.document.body.style.setProperty('--field-text-scale',String(p().text));root.document.body.classList.add('living-world-active');}
   function show(title,body,options){const result=H.dialog(title,'<div>'+body+'</div>',options);if(root.document){root.document.body.classList.add('field-menu-open');const el=root.document.getElementById('dialogue');if(el)el.scrollTop=0;}return result;}
   function tools(){
@@ -29,8 +29,8 @@
   }
   function kits(){const ep=e(),st=s(),can=F.canChange(st,ep,n());return show('CHOOSE EQUIPMENT',Object.values(F.KITS).map(k=>'<b>'+esc(k.name)+'</b> · '+esc(k.description)).join('<br><br>')+(can?'':'<br><br>Return to a quiet room or clear room entry to change equipment.'),(can?Object.keys(F.KITS).map(id=>({t:(p().kit===id?'Equipped — ':'Equip — ')+F.KITS[id].name,f:()=>{const r=commit(st=>F.equip(st,ep,id,n()));if(r)tools();}})):[]).concat([{t:'Back',f:tools}]));}
   function setting(name,value){if(commit(st=>{F.ensure(st)[name]=value;return true;})){if(score())score().setVolume(p().volume);settings();}}
-  function settings(){const v=p(),audio=score();return show('COMFORT / CONTROLS',
-    'These settings apply to Living World expeditions.<br><br><b>Combat:</b> '+(v.damage==='gentle'?'Gentle · half incoming damage':'Standard')+'<br><b>Machine timing:</b> '+(v.timing==='relaxed'?'Relaxed · one extra warning second':'Standard')+'<br><b>Text:</b> '+Math.round(v.text*100)+'%<br><b>Motion accents:</b> '+(v.motion?'On (system reduced-motion preference respected)':'Off')+'<br><br>Field ambience is an optional instrumental arrangement. Your existing soundtrack remains available when it is off. Audio starts only when you choose it.',[
+  function settings(){const v=p(),audio=score(),diagnostics=audio?.diagnostics();return show('COMFORT / CONTROLS',
+    'These settings apply to Living World expeditions.<br><br><b>Combat:</b> '+(v.damage==='gentle'?'Gentle · half incoming damage':'Standard')+'<br><b>Machine timing:</b> '+(v.timing==='relaxed'?'Relaxed · one extra warning second':'Standard')+'<br><b>Text:</b> '+Math.round(v.text*100)+'%<br><b>Motion accents:</b> '+(v.motion?'On (system reduced-motion preference respected)':'Off')+'<br><br>Field ambience is an optional instrumental arrangement. Your existing soundtrack remains available when it is off. Audio starts only when you choose it.'+(audio?.engaged()?'<br><b>Selected score:</b> '+esc(diagnostics.title)+(diagnostics.error?'<br>The artist arrangement is unavailable. The reference instrumental is selected.':''):''),[
       {t:'Combat: '+(v.damage==='standard'?'Gentle':'Standard'),f:()=>setting('damage',v.damage==='standard'?'gentle':'standard')},
       {t:'Machine timing: '+(v.timing==='standard'?'Relaxed':'Standard'),f:()=>setting('timing',v.timing==='standard'?'relaxed':'standard')},
       {t:'Text size: '+Math.round((v.text===1?1.15:v.text===1.15?1.3:1)*100)+'%',f:()=>setting('text',v.text===1?1.15:v.text===1.15?1.3:1)},
@@ -49,7 +49,7 @@
     const started=await audio.start(p().volume);if(request!==scoreRequest)return;
     if(!live()||s().active!==owner){audio.stop();return;}
     if(started){
-      try{const loaded=await audio.loadConfiguredPack();if(request!==scoreRequest)return;if(!loaded||!live()||s().active!==owner){audio.stop();return;}if(root.setMusic)root.setMusic(true);after();}
+      try{const loaded=await audio.loadConfiguredPack(scoreContext());if(request!==scoreRequest)return;if(!loaded||!live()||s().active!==owner){audio.stop();return;}if(root.setMusic)root.setMusic(true);after();}
       catch(error){if(request!==scoreRequest)return;audio.stop();show('AUDIO UNAVAILABLE',esc(error.message),[{t:'Back',f:settings}]);}
     }
     else show('AUDIO UNAVAILABLE',esc(audio.diagnostics().error||'Tap again to enable audio.'),[{t:'Back',f:settings}]);
@@ -73,10 +73,23 @@
   function handle(point){return point.type==='field'?tools():point.type==='moment'?activity(point.id):false;}
   function input(action){if(!live())return false;if(action==='interact'){H.interact();return true;}if(action==='field'){tools();return true;}return false;}
   function bindings(){return live()?p().bindings:null;}
-  function beforeStep(){
-    if(!live())return;const game=H.game(),ep=e(),w=n(),st=s(),work=H.A.cycle(st);
-    if(score())score().update({blocked:game.inDialog||game.paused||game.gameOver||root.document.hidden,rehearsal:!!game.inDialog&&!game.paused&&!game.gameOver&&!root.document.hidden&&root.document.getElementById('dialogue')?.dataset.fieldActivity==='rhythm',threat:!st.active.finished&&(w.enemies||[]).some(x=>x.alive&&Math.abs(x.x-w.x)<350)||F.hazard(ep,st.active)&&(work.warning||work.on),escort:!!st.active.escort,quiet:F.isQuiet(ep,st.active)||st.active.finished});
+  function scoreContext(){
+    const game=H.game(),ep=e(),w=n(),st=s(),a=st.active,work=H.A.cycle(st),goal=H.A.current(st);
+    const blocked=!!(game.inDialog||game.paused||game.gameOver||root.document.hidden);
+    // Use visible local threats only; the score is not a hidden-enemy detector.
+    const width=root.document.getElementById('game')?.width||root.innerWidth||800,visible=x=>x>=w.cam&&x<=w.cam+width;
+    const enemies=(w.enemies||[]).filter(x=>x.alive&&x.hp>0&&visible(x.x)&&Math.abs(x.x-w.x)<350);
+    const danger=!a.finished&&(enemies.length>0||F.hazard(ep,a)&&visible(work.x)&&Math.abs(work.x-w.x)<350&&(work.warning||work.on));
+    const combat=!a.finished&&enemies.length>0&&!!(w._nightCombat?.attack||w._nightCombat?.grab||enemies.some(x=>x.windup>0)||previousHP!==null&&w.hp<previousHP);
+    if(!blocked&&danger)lastDangerAt=a.elapsed;
+    const recovery=!a.finished&&!danger&&lastDangerAt!==null&&a.elapsed-lastDangerAt<4;
+    const moment=a.id==='iona_world_left_running'&&(a.finished||goal&&goal.id!=='verify')?'depot-heist':
+      a.id==='prison'&&(a.finished||goal&&['free_oz','leave'].includes(goal.id))?'escape-corridor':
+      a.id==='dock'&&a.finished?'departure-aftermath':null;
+    return {blocked,rehearsal:!!game.inDialog&&!game.paused&&!game.gameOver&&!root.document.hidden&&root.document.getElementById('dialogue')?.dataset.fieldActivity==='rhythm',
+      episode:a.id,actor:a.actor,moment,combat,danger,recovery,escort:!!a.escort,quiet:F.isQuiet(ep,a)||a.finished};
   }
+  function beforeStep(){if(live()&&score())score().update(scoreContext());}
   function afterStep(dt){if(!live())return;const w=n();
     if(!lastGround&&w.onGround)landing={x:w.x+w.w/2,y:w.y+w.h,age:0};lastGround=w.onGround;
     if(landing){landing.age+=Math.min(.05,dt||0);if(landing.age>.28)landing=null;}
@@ -116,6 +129,6 @@
     ctx.restore();
   }
   function hidden(){scoreRequest++;if(button)button.hidden=true;if(score())score().stop();landing=null;previousHP=null;lastSaved=null;}
-  const api={attach,loaded,tools,settings,nearby,handle,input,bindings,beforeStep,afterStep,incoming,redirectEnemy,draw,hidden,syncPlatforms,saved:()=>{lastSaved=Date.now();},failed:()=>{lastSaved=null;},keyLabel:key};
+  const api={attach,loaded,tools,settings,nearby,handle,input,bindings,beforeStep,afterStep,incoming,redirectEnemy,draw,hidden,syncPlatforms,saved:()=>{lastSaved=Date.now();},failed:()=>{lastSaved=null;},keyLabel:key,scoreContext};
   root.TechOpsFieldcraftRuntime=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "project": "TechOps Hero",
+  "medium": "game",
+  "chapter": "The World He Left Running / The Name in the Freight Book",
+  "production_state": "SCRIPTED",
+  "source": {
+    "filename": "TechOps-Hero-Iona-Script-and-Game-Decision.md",
+    "library_file_id": "libfile_fde3_f-c4c09d7221d48191be893643238dacc7_ffd948f5b8cc819189458c50cefab7ab",
+    "version": 16,
+    "modified_at": "2026-11-16T16:35:57.511469Z"
+  },
+  "pages": [],
+  "scenes": [{
+    "scene_id": "iona_world_left_running",
+    "page_ids": ["39A", "39B", "40A", "46", "47", "47A", "48", "49", "50", "51"],
+    "story_phase": "after Red's arrest; before the Volume V voice-window contact",
+    "location": "Low Quarter depot",
+    "channel": "objective",
+    "style_register": "established pixel art",
+    "cast": [
+      {"actor_id": "iona", "name_used": "Iona"},
+      {"actor_id": "mara", "name_used": "Mara"}
+    ],
+    "offstage_actor": {"actor_id": "k_red_el", "name_used": "Red", "channel": "archive recording"},
+    "beats": [
+      "Mara secures the ledger at the open west exit before Iona pursues the director.",
+      "Iona returns the first officer through the access gate, recovers his keys, locks three pursuers beyond the grille and checks the latch.",
+      "Iona crosses and closes a separate records shutter; a fourth officer approaches from the archive side.",
+      "The director identifies the North Intake continuation desk; the original authorizer remains unknown.",
+      "Iona releases a newly arriving patrol officer, then returns for the distinct older injured officer.",
+      "The older officer follows from the stairs through the fire-door room and is received at the yellow line.",
+      "Mara and the lift resident confirm the all-clear before the local burn."
+    ],
+    "facts_known_by": {
+      "iona": ["Her rehearsal count was used without her witnessing the transfer.", "North Intake is a lead; the original research order is still needed."],
+      "mara": ["The ledger is secure and the independent evacuation count is complete before the burn."],
+      "mike": []
+    },
+    "visual_review": {"status": "NOT_VERIFIED", "approved_reference_files": [], "reason": "No artwork generated or changed; browser could not start."}
+  }],
+  "approval": {"status": "PROVISIONAL", "owner_approved_retcons": [], "visual_reviewer": ""}
+}

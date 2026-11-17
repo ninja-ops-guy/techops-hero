@@ -76,6 +76,63 @@ test('earlier viewpoints are explicit and never imply a physical return from spa
  assert.match(A.episode('no_common_channel').bridge,/before the pier convergence and departure/);
  assert.match(A.episode('morrow_array').bridge,/before the Earth fracture/);
 });
+test('Iona comic interlude unlocks from Night Walker progress and preserves comic chronology',()=>{
+ const s=A.initial('campaign');
+ s.flags.waldo_invited=s.flags.waldo_visit_received=true;
+ s.done=['iona_local'];
+ assert.equal(A.gate(s,'iona_pressure',{facts:{campaign_complete:true}}).open,true);
+ s.done.push('iona_pressure');
+ assert.equal(A.gate(s,'iona_world_left_running',{facts:{campaign_complete:false}}).open,false);
+ assert.equal(A.gate(s,'iona_world_left_running',{facts:{campaign_complete:true}}).open,true);
+ assert.equal(A.gate(s,'iona_freight_name',{facts:{campaign_complete:true}}).open,false);
+ s.done.push('iona_world_left_running');
+ assert.equal(A.gate(s,'iona_freight_name',{facts:{campaign_complete:true}}).open,true);
+ assert.equal(A.gate(s,'archive',{facts:{campaign_complete:true}}).open,false);
+ s.done.push('iona_freight_name');
+ assert.equal(A.gate(s,'archive',{facts:{campaign_complete:true,mike_meets_k:true}}).open,true);
+ assert.match(A.episode('iona_world_left_running').bridge,/after Red’s arrest and before Iona contacts K/);
+ const revenge=A.episode('iona_world_left_running');
+ assert.deepEqual(revenge.goals.slice(revenge.goals.findIndex(g=>g.id==='first_count'),revenge.goals.findIndex(g=>g.id==='sandbag')+1).map(g=>g.id),['first_count','ledger','ledger_handoff','position','draw_guard','sandbag']);
+ assert(revenge.goals.findIndex(g=>g.id==='send_medics')<revenge.goals.findIndex(g=>g.id==='cut'));
+ assert(revenge.goals.findIndex(g=>g.id==='lift_rescue')<revenge.goals.findIndex(g=>g.id==='free'));
+ assert.match(revenge.goals.find(g=>g.id==='draw_guard').text,/closed security grille/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/first officer has not crossed/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/not an end to pursuit/);
+ assert.match(revenge.goals.find(g=>g.id==='sandbag').text,/drop one sandbag straight/);
+ assert.match(revenge.goals.find(g=>g.id==='records_shutter').text,/different far-end officer/);
+ assert(revenge.goals.findIndex(g=>g.id==='records_shutter')<revenge.goals.findIndex(g=>g.id==='far_end_officer'));
+ assert(revenge.goals.findIndex(g=>g.id==='records_shutter')<revenge.goals.findIndex(g=>g.id==='director'));
+ assert(revenge.goals.findIndex(g=>g.id==='new_patrol')<revenge.goals.findIndex(g=>g.id==='older_officer_rescue'));
+ assert(revenge.goals.findIndex(g=>g.id==='older_officer_rescue')<revenge.goals.findIndex(g=>g.id==='fire_door'));
+ assert.match(revenge.goals.find(g=>g.id==='fire_door').text,/injured gait/);
+ assert(revenge.routes.some(r=>r.from==='stairs'&&r.to==='fire_door'));
+ assert(revenge.goals.findIndex(g=>g.id==='all_clear')<revenge.goals.findIndex(g=>g.id==='burn'));
+ assert.match(revenge.goals.find(g=>g.id==='burn').text,/Only after Mara’s verified all-clear/);
+ assert.match(A.episode('iona_freight_name').goals[1].options[1][2],/authorizer’s identity remains unresolved/);
+});
+test('Iona locks the access route, preserves it on resume, and escorts the older officer before the burn',()=>{
+ const s=A.initial('standalone');s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;
+ A.start(s,'iona_world_left_running',{});const e=A.episode(s.active.id);
+ s.flags.iona_gallery_ready=true;s.active.room='records';s.active.x=1600;
+ s.active.step=e.goals.findIndex(g=>g.id==='gate_recovery');
+ assert.equal(A.routes(s).find(r=>r.to==='gallery').open,true);
+ let g=A.current(s);at(s,g);A.interact(s);for(let i=0;i<65;i++)A.tick(s,.05,{x:g.x-11,y:g.y-17,vx:0,paused:false,hurt:false});
+ assert.equal(s.flags.iona_access_gate_locked,true);
+ s.active.x=1600;assert.throws(()=>A.travel(s,'gallery'),/locked/);
+ const restored=A.clone(s);A.validate(restored);assert.equal(A.routes(restored).find(r=>r.to==='gallery').open,false);
+ assert.equal(A.routes(restored).find(r=>r.to==='west').open,true);
+ A.start(restored,e.id,{},true);restored.active.room='records';restored.active.x=1600;
+ assert.equal(A.routes(restored).find(r=>r.to==='gallery').open,true,'replay must not inherit a closed route from prior flags');
+ s.active.step=e.goals.findIndex(g=>g.id==='older_officer_rescue');g=A.current(s);at(s,g);assert(A.interact(s).ok);
+ assert.equal(s.active.escort.id,'last_officer');assert.equal(s.active.escort.room,'stairs');
+ s.active.step=e.goals.findIndex(g=>g.id==='last_officer');g=A.current(s);at(s,g);
+ assert.equal(A.interact(s).ok,false,'officer still on stairs cannot count at the west line');
+ s.active.escort.room='west';s.active.escort.x=g.x-30;assert(A.interact(s).ok);
+ assert.equal(s.flags.iona_older_counted,true);g=A.current(s);at(s,g);
+ assert.equal(A.interact(s).ok,false,'ledger must also be safe');s.flags.iona_ledger_clear=true;assert(A.interact(s).ok);
+ assert.equal(s.flags.iona_all_clear,true);g=A.current(s);at(s,g);delete s.flags.iona_all_clear;
+ assert.equal(A.interact(s).ok,false,'burn requires the independent all-clear');
+});
 test('shipboard coda preserves existing save IDs and distinguishes carried records from live Earth reports',()=>{
  const e=A.episode('queue_afterward');assert.deepEqual(e.rooms.map(r=>r.id),['desk','floor','home']);assert.deepEqual(e.goals.map(g=>g.id),['queue','repair','remember','end']);assert.deepEqual(e.after,['low_return']);assert.match(e.bridge,/existing crew/);assert.match(e.goals.at(-1).text,/rests aboard/);
  for(const id of ['spare_key','repair_held','takes_over','place_ready']){const q=A.Data.sidequests.find(q=>q.id===id);assert.match(q.steps.at(-1)[1],/Earth/);assert.equal(q.stages.at(-1).episode,'queue_afterward');}
@@ -83,5 +140,61 @@ test('shipboard coda preserves existing save IDs and distinguishes carried recor
 });
 test('bounded return preserves two travelers, unequal clocks and the care watch',()=>{
  const e=A.episode('low_return');assert.match(e.bridge,/Only K and Iona/);assert.match(e.bridge,/six ship-side hours, twenty-four Low Quarter hours/);assert.match(e.bridge,/explicit care watch/);assert.match(e.bridge,/spare is consumed/);assert.match(A.episode('factory_return').bridge,/one living body remains under care/);
+});
+
+test('v21 archive hold precedes director departure and keeps gate/keys geography',()=>{
+ const e=A.episode('iona_world_left_running'),g=id=>e.goals.find(g=>g.id===id);
+ assert.deepEqual(e.goals.slice(18,22).map(g=>g.id),['director','hold_archive','director_exit','director_handoff']);
+ assert.match(g('draw_guard').text,/key ring in its cylinder/);assert.match(g('gate_recovery').text,/pulls the key ring from the lock/);
+ assert.match(g('gate_recovery').text,/all three officers and the sandbag security-side/);
+ assert.match(g('hold_archive').text,/Red is not physically here/);
+ const s=A.initial();s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;A.start(s,e.id,{});
+ s.active.step=19;at(s,A.current(s));assert.equal(A.interact(s).ok,false);
+ s.flags.iona_north_intake_lead=true;assert.equal(A.interact(s).ok,true);
+ s.active.step=20;at(s,A.current(s));assert.equal(A.interact(s).ok,false,'departure requires hold');
+ s.flags.iona_archive_held=true;assert.equal(A.interact(s).ok,true);assert.equal(s.active.escort.id,'research_director');
+});
+test('legacy displaced checkpoints preserve backups without granting completion or flags',()=>{
+ for(const step of [0,18,19,20,21,22,28])for(const saved of [false,true])for(const lead of [false,true]){
+  const s=A.initial();s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;
+  if(lead)s.flags.iona_north_intake_lead=true;A.start(s,'iona_world_left_running',{});
+  s.active.step=step;delete s.active.scriptRevision;
+  s.active.room='west';s.active.holding=true;s.active.hold=2;
+  if(step===20)s.active.escort={id:'research_director',name:'director',room:'west',x:500};
+  const original=A.clone(s.active),flags=A.clone(s.flags),done=A.clone(s.done);
+  if(saved){s.runs[s.active.id]=A.clone(s.active);s.active=null;}
+  A.start(s,'iona_world_left_running',{});A.validate(s);
+  assert.deepEqual(s.flags,flags);assert.deepEqual(s.done,done);assert.equal(s.active.finished,false);
+  if(step>=19&&step<=21){assert.equal(s.active.step,lead?19:18);assert.deepEqual(s.active.legacyCheckpoint,original);assert.equal(s.active.escort,null);assert.equal(s.active.holding,false);assert.equal(s.active.room,'records');}
+  else {assert.equal(s.active.step,step);assert.equal(s.active.legacyCheckpoint,undefined);}
+  const migrated=A.clone(s);A.start(s,'iona_world_left_running',{});assert.deepEqual(s,migrated,'resume is idempotent');
+ }
+});
+test('revision validation rejects future/malformed backups; completed history remains unchanged',()=>{
+ const s=A.initial();s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;A.start(s,'iona_world_left_running',{});
+ for(const bad of [null,'21',20,22]){const t=A.clone(s);t.active.scriptRevision=bad;assert.throws(()=>A.validate(t),/revision/);}
+ const t=A.clone(s);t.active.legacyCheckpoint=A.clone(t.active);assert.throws(()=>A.validate(t),/legacy/);
+ s.active.step=29;s.active.finished=true;delete s.active.scriptRevision;s.done.push(s.active.id);s.runs[s.active.id]=A.clone(s.active);s.active=null;
+ const original=A.clone(s.runs);A.start(s,'iona_world_left_running',{},true);assert.deepEqual(s.runs,original);assert.equal(s.active.step,0);assert.equal(s.active.scriptRevision,21);assert.equal(s.active.legacyCheckpoint,undefined);
+});
+test('wrong or distant escorts cannot supply the older officer fire-door or final count',()=>{
+ const s=A.initial();s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;A.start(s,'iona_world_left_running',{});
+ for(const id of ['fire_door','last_officer']){
+  s.active.step=A.episode(s.active.id).goals.findIndex(g=>g.id===id);const g=A.current(s);at(s,g);
+  for(const escort of [null,{id:'research_director',name:'director',room:g.room,x:g.x},{id:'last_officer',name:'older',room:g.room,x:0},{id:'last_officer',name:'older',room:'stairs',x:g.x}]){s.active.escort=escort;assert.equal(A.interact(s).ok,false);assert.equal(s.flags.iona_older_counted,undefined);}
+  s.active.escort={id:'last_officer',name:'older',room:g.room,x:g.x};assert.equal(A.interact(s).ok,true);
+ }
+ assert.equal(s.flags.iona_older_counted,true);
+});
+
+test('serialized holding without prerequisites cannot manufacture archive HOLD; burn checks original evidence',()=>{
+ const s=A.initial();s.done=['iona_pressure'];s.flags.waldo_invited=s.flags.waldo_visit_received=true;A.start(s,'iona_world_left_running',{});
+ s.active.step=19;let g=A.current(s);at(s,g);s.active.holding=true;s.active.hold=4;
+ const t=A.validate(JSON.parse(JSON.stringify(s)));A.tick(t,.05,{x:g.x-11,y:g.y-17,vx:0});
+ assert.equal(t.active.step,19);assert.equal(t.flags.iona_archive_held,undefined);assert.equal(t.active.holding,false);assert.equal(t.active.hold,0);
+ for(const missing of ['iona_ledger_clear','iona_older_counted','iona_all_clear']){
+  t.active.step=28;g=A.current(t);at(t,g);t.flags.iona_ledger_clear=t.flags.iona_older_counted=t.flags.iona_all_clear=true;delete t.flags[missing];
+  assert.equal(A.interact(t).ok,false,missing);assert.equal(t.active.finished,false);assert.equal(t.done.includes(t.active.id),false);
+ }
 });
 console.log(JSON.stringify({suite:'living-world-progression',checks}));
