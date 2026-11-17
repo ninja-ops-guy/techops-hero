@@ -2869,6 +2869,7 @@ function setMusic(on) {
   sfxMuted = !musicRequested; // one toggle rules all audio
   $("btn-music").textContent = musicRequested ? "🔊" : "🔇";
   applyMusicRequest();
+  try { document.dispatchEvent(new Event("techops-audio-change")); } catch (_) {}
 }
 $("btn-music").addEventListener("click", () => { const on = !musicRequested; if (on) initMusic(true); setMusic(on); });
 

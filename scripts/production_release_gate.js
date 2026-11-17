@@ -35,6 +35,7 @@ const tests = [
   "test_workstation_concept_retirement.js",
   "test_cinematic_systems.js",
   "test_cinematic_presentation.js",
+  "test_good_dogs_caption_sound.js",
   "test_art_handoff.js",
   "test_crash_playback_budget.js",
   "test_good_dogs_route_contract.js",

@@ -22,7 +22,11 @@
   };
   const STATUS=Object.freeze({COMPLETED:"COMPLETED",USER_SKIPPED:"USER_SKIPPED"});
   const H264_MIME='video/mp4; codecs="avc1.42E01E"';
-  let sessionSerial=0;
+  let sessionSerial=0,cancelCurrent=null;
+  const CAPTION_KEY="techops_good_dogs_captions_v1";
+  function captionPreference(){try{return localStorage.getItem(CAPTION_KEY)!=="off";}catch(_){return true;}}
+  function masterMuted(){return (typeof sfxMuted!=="undefined"&&sfxMuted)||window.sfxMuted===true;}
+  function movieVolume(){const n=window.V67SET&&window.V67SET.volMusic;return Number.isFinite(n)?Math.max(0,Math.min(1,n)):1;}
 
   function mediaCapability(video,mimeType){
     const type=mimeType||H264_MIME;
@@ -44,7 +48,7 @@
     let root=document.getElementById("good-dogs-cutscene-overlay");
     if(!root){
       root=document.createElement("div");root.id="good-dogs-cutscene-overlay";root.setAttribute("role","dialog");root.setAttribute("aria-modal","true");root.setAttribute("aria-label","Good Dogs cinematic");root.setAttribute("aria-describedby","gd-film-status");
-      root.innerHTML='<div class="gd-film-frame"><p id="gd-film-status" class="gd-film-status" role="status" aria-live="polite"></p><button class="gd-film-play" type="button">PLAY CUTSCENE</button><button class="gd-film-pause" type="button">PAUSE</button><button class="gd-film-sound" type="button" aria-label="Cutscene sound">TURN SOUND ON</button><button class="gd-film-skip" type="button">SKIP</button></div>';
+      root.innerHTML='<div class="gd-film-frame"><p id="gd-film-status" class="gd-film-status" role="status" aria-live="polite"></p><button class="gd-film-play" type="button">PLAY CUTSCENE</button><button class="gd-film-pause" type="button">PAUSE</button><button class="gd-film-sound" type="button" aria-label="Cutscene sound">TURN SOUND ON</button><button class="gd-film-cc" type="button" aria-label="Cutscene captions">CC UNAVAILABLE</button><button class="gd-film-skip" type="button">SKIP</button></div>';
       document.body.appendChild(root);
     }
     const frame=root.querySelector(".gd-film-frame")||root;
@@ -58,6 +62,9 @@
       #good-dogs-cutscene-overlay.active{display:flex}.gd-film-frame{position:relative;width:100vw;height:100vh;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
       /* Fresh video nodes have no stale frame. Keep them visible so WebKit can submit decoded frames. */
       .gd-film-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:1;visibility:visible}
+      .gd-film-video::cue{color:#fff;background:rgba(0,0,0,.92);font:600 1em/1.35 sans-serif}
+      .gd-film-cc{position:absolute;right:max(10px,env(safe-area-inset-right));top:calc(max(8px,env(safe-area-inset-top)) + 56px);z-index:11;min-height:48px;padding:8px 12px;background:#09121bf2;color:#fff;border:1px solid #71879a;font:700 12px monospace;touch-action:manipulation}.gd-film-cc[hidden]{display:none}
+      .gd-playing .gd-film-status.gd-notice{opacity:1}
       .gd-film-play{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;min-width:210px;min-height:58px;padding:12px 18px;border:1px solid #8df1ce;background:#071019f2;color:#fff;font:700 13px monospace;letter-spacing:.08em;touch-action:manipulation}.gd-film-play.active{display:block}
       .gd-film-skip{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));z-index:11;min-width:86px;min-height:48px;background:#09121bf2;color:#fff;border:1px solid #71879a;padding:8px 12px;font:700 12px monospace;touch-action:manipulation}
       .gd-film-sound{position:absolute;left:max(10px,env(safe-area-inset-left));top:calc(max(8px,env(safe-area-inset-top)) + 56px);z-index:11;min-height:48px;padding:8px 12px;background:#09121bf2;color:#fff;border:1px solid #71879a;font:700 12px monospace;touch-action:manipulation}.gd-film-sound[hidden]{display:none}
@@ -69,28 +76,45 @@
 
   async function play(id,options={}){
     const def=CLIPS[id];if(!def)throw new Error("Unknown Good Dogs cutscene: "+id);if(def.retired&&!options.force)throw new Error("Retired Good Dogs cutscene: "+id);
+    if(cancelCurrent)cancelCurrent();
     ensureCss();
     const previousFocus=document.activeElement;
-    const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip"),pauseBtn=root.querySelector(".gd-film-pause"),soundBtn=root.querySelector(".gd-film-sound"),status=root.querySelector(".gd-film-status");
+    const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip"),pauseBtn=root.querySelector(".gd-film-pause"),soundBtn=root.querySelector(".gd-film-sound"),ccBtn=root.querySelector(".gd-film-cc"),status=root.querySelector(".gd-film-status");
     const ticket=++sessionSerial,state=ensureState(),priorOverflow=document.body.style.overflow,ios=isIOSDevice(),autoRequested=options.autoplay!==false;
     const video=document.createElement("video");video.className="gd-film-video";video.playsInline=true;video.muted=true;video.defaultMuted=true;video.volume=1;video.preload="auto";video.autoplay=autoRequested;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");if(autoRequested)video.setAttribute("autoplay","");frame.insertBefore(video,playBtn);
     root.classList.add("active");root.dataset.activeCutscene=id;document.body.style.overflow="hidden";frame.classList.remove("gd-playing","gd-frame-ready");playBtn.classList.remove("active");skip.disabled=false;skip.textContent="SKIP";
     const capability=mediaCapability(video,options.mimeType),settlement=createSettlementGate();
     soundBtn.hidden=!def.hasAudio||!capability.supported;soundBtn.textContent="TURN SOUND ON";soundBtn.setAttribute("aria-pressed","false");
+    let ccOn=captionPreference(),trackEl=null,captionReady=!!def.captionSrc;
+    ccBtn.hidden=!capability.supported;
+    if(captionReady){trackEl=document.createElement("track");trackEl.kind="captions";trackEl.label="English";trackEl.srclang="en";trackEl.src=def.captionSrc;video.appendChild(trackEl);}
+    const syncCaption=()=>{ccBtn.textContent=captionReady?(ccOn?"CC ON":"CC OFF"):"CC UNAVAILABLE";ccBtn.setAttribute("aria-disabled",captionReady?"false":"true");ccBtn.setAttribute("aria-pressed",captionReady&&ccOn?"true":"false");try{if(trackEl&&trackEl.track)trackEl.track.mode=ccOn?"showing":"disabled";}catch(_){}};
+    syncCaption();
     let done=false,startTimer=0,stallTimer=0,hardTimer=0,lastTime=-1,progressed=false,retryReason="",playInFlight=false,frameRevealed=false,autoAttempted=false,deferredEnded=false;
-    status.textContent="Loading cinematic. You can skip at any time.";pauseBtn.hidden=true;skip.focus();
+    status.classList.remove("gd-notice");status.textContent="Loading cinematic. You can skip at any time.";pauseBtn.hidden=true;skip.focus();
     window.__goodDogsCutscenePresentation={id,authoredVideoOnly:true,poster:false,proceduralPlate:false,crt:false,vignette:false,freshVideoNode:true,session:ticket,at:Date.now()};
     window.__goodDogsCutsceneCapability=Object.assign({id,session:ticket,at:Date.now()},capability);
 
     return new Promise(resolve=>{
       const valid=()=>ticket===sessionSerial&&!done&&!settlement.settled();
+      const claim="good-dogs-film-"+ticket;
+      let claimed=false,noticeTimer=0;
+      const releaseAudio=()=>{if(claimed){claimed=false;try{window.TechOpsDayAudio.resume(claim);}catch(_){}}};
+      const muteFilm=()=>{video.muted=true;soundBtn.textContent="TURN SOUND ON";soundBtn.setAttribute("aria-pressed","false");releaseAudio();};
+      const notice=message=>{status.textContent=message;status.classList.add("gd-notice");clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(valid()){status.classList.remove("gd-notice");status.textContent=video.paused?"Cinematic paused. Resume or skip to continue.":"Cinematic playing.";}},4000);};
+      const requestClaim=()=>{try{const audio=window.TechOpsDayAudio;return !!(audio&&typeof audio.beginCinematic==="function"&&audio.beginCinematic(claim));}catch(_){return false;}};
+      const audioChange=()=>{if(!valid())return;try{video.volume=movieVolume();}catch(_){}if(masterMuted()&&!video.muted){muteFilm();notice("Master audio is muted. Turn it on before enabling cinematic sound.");}};
+      const settingsChange=()=>{audioChange();if(!valid()||video.muted||!claimed)return;if(!requestClaim()){muteFilm();notice("Cinematic sound stopped because the soundtrack is not ready.");}};
+      const captionEvent=e=>{if(!valid()||document.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}if(!captionReady){notice("Captions are not available for this cinematic.");return;}ccOn=!ccOn;try{localStorage.setItem(CAPTION_KEY,ccOn?"on":"off");}catch(_){}syncCaption();};
+      if(trackEl){trackEl.onload=syncCaption;trackEl.onerror=()=>{if(!valid())return;captionReady=false;syncCaption();notice("Captions could not be loaded for this cinematic.");};}
       const clearTimers=()=>{clearTimeout(startTimer);clearTimeout(stallTimer);clearTimeout(hardTimer);startTimer=stallTimer=hardTimer=0;};
-      const cleanup=()=>{clearTimers();video.onended=null;video.onerror=null;video.onloadedmetadata=null;video.onloadeddata=null;video.oncanplay=null;video.onplaying=null;video.ontimeupdate=null;video.onwaiting=null;video.onstalled=null;skip.removeEventListener("click",skipEvent);playBtn.removeEventListener("click",playEvent);pauseBtn.removeEventListener("click",pauseEvent);soundBtn.removeEventListener("click",soundEvent);document.removeEventListener("keydown",key,true);document.removeEventListener("visibilitychange",visibility);};
+      const cleanup=()=>{clearTimers();clearTimeout(noticeTimer);muteFilm();if(trackEl){trackEl.onload=null;trackEl.onerror=null;}ccBtn.removeEventListener("click",captionEvent);document.removeEventListener("techops-audio-change",settingsChange);video.onended=null;video.onerror=null;video.onloadedmetadata=null;video.onloadeddata=null;video.oncanplay=null;video.onplaying=null;video.ontimeupdate=null;video.onwaiting=null;video.onstalled=null;skip.removeEventListener("click",skipEvent);playBtn.removeEventListener("click",playEvent);pauseBtn.removeEventListener("click",pauseEvent);soundBtn.removeEventListener("click",soundEvent);document.removeEventListener("keydown",key,true);document.removeEventListener("visibilitychange",visibility);};
       const finish=(resultStatus,source)=>{
         if(!valid()||document.hidden||!settlement.claim())return false;done=true;const skipped=resultStatus===STATUS.USER_SKIPPED,at=Date.now(),currentTime=Number(video.currentTime||0),readyState=Number(video.readyState||0);
         window.__goodDogsCutsceneExit={id,status:resultStatus,skipped,source,at,currentTime,readyState,ios,session:ticket};
         cleanup();
         try{video.pause();}catch(_){}
+        if(cancelCurrent===cancel)cancelCurrent=null;
         try{video.removeAttribute("src");}catch(_){}
         try{video.remove();}catch(_){}
         frame.classList.remove("gd-playing","gd-frame-ready");playBtn.classList.remove("active");root.classList.remove("active");delete root.dataset.activeCutscene;document.body.style.overflow=priorOverflow;
@@ -99,30 +123,32 @@
         if(typeof options.onStateWrite==="function")try{options.onStateWrite({id,status:resultStatus,skipped});}catch(_){}
         settle(resolve,{id,status:resultStatus,skipped,source,session:ticket});return true;
       };
-      const waitForUser=(reason)=>{if(!valid())return;retryReason=reason;playInFlight=false;clearTimers();try{video.pause();}catch(_){}frame.classList.remove("gd-playing");pauseBtn.hidden=true;const unsupported=reason==="codec-unsupported",paused=reason==="tab-hidden"||reason==="user-paused";playBtn.disabled=unsupported;playBtn.textContent=unsupported?"VIDEO UNAVAILABLE":reason==="media-error"?"RETRY VIDEO":paused?"RESUME CUTSCENE":"PLAY CUTSCENE";status.textContent=unsupported?"This browser cannot play this cinematic. Choose Skip to continue the story.":paused?"Cinematic paused. Resume when you are ready, or skip to continue the story.":reason==="autoplay-disabled"?"Ready to play. Choose Play cutscene, or skip to continue the story.":"Playback stopped. Choose Play or Retry, or skip to continue the story.";playBtn.classList.add("active");if(!document.hidden)(unsupported?skip:playBtn).focus();window.__goodDogsCutsceneNeedsGesture={id,reason,at:Date.now(),currentTime:Number(video.currentTime||0),readyState:Number(video.readyState||0),networkState:Number(video.networkState||0),paused:video.paused,ended:video.ended,duration:video.duration,buffered:Array.from({length:video.buffered.length},(_,i)=>[video.buffered.start(i),video.buffered.end(i)]),paint:video.getBoundingClientRect().toJSON(),visibility:getComputedStyle(video).visibility,mediaError:video.error?{code:video.error.code,message:video.error.message}:null,ios,session:ticket,capability};};
+      const cancel=()=>{if(!valid()||!settlement.claim())return;done=true;cleanup();if(cancelCurrent===cancel)cancelCurrent=null;try{video.pause();video.removeAttribute("src");video.remove();}catch(_){}frame.classList.remove("gd-playing","gd-frame-ready");playBtn.classList.remove("active");root.classList.remove("active");delete root.dataset.activeCutscene;document.body.style.overflow=priorOverflow;if(previousFocus&&previousFocus.isConnected!==false&&typeof previousFocus.focus==="function")previousFocus.focus();settle(resolve,{id,status:"CANCELLED",skipped:false,source:"superseded",session:ticket});};
+      cancelCurrent=cancel;
+      const waitForUser=(reason)=>{if(!valid())return;retryReason=reason;playInFlight=false;clearTimers();muteFilm();try{video.pause();}catch(_){}frame.classList.remove("gd-playing");pauseBtn.hidden=true;const unsupported=reason==="codec-unsupported",paused=reason==="tab-hidden"||reason==="user-paused";playBtn.disabled=unsupported;playBtn.textContent=unsupported?"VIDEO UNAVAILABLE":reason==="media-error"?"RETRY VIDEO":paused?"RESUME CUTSCENE":"PLAY CUTSCENE";status.textContent=unsupported?"This browser cannot play this cinematic. Choose Skip to continue the story.":paused?"Cinematic paused. Resume when you are ready, or skip to continue the story.":reason==="autoplay-disabled"?"Ready to play. Choose Play cutscene, or skip to continue the story.":"Playback stopped. Choose Play or Retry, or skip to continue the story.";playBtn.classList.add("active");if(!document.hidden)(unsupported?skip:playBtn).focus();window.__goodDogsCutsceneNeedsGesture={id,reason,at:Date.now(),currentTime:Number(video.currentTime||0),readyState:Number(video.readyState||0),networkState:Number(video.networkState||0),paused:video.paused,ended:video.ended,duration:video.duration,buffered:Array.from({length:video.buffered.length},(_,i)=>[video.buffered.start(i),video.buffered.end(i)]),paint:video.getBoundingClientRect().toJSON(),visibility:getComputedStyle(video).visibility,mediaError:video.error?{code:video.error.code,message:video.error.message}:null,ios,session:ticket,capability};};
       const revealFrame=()=>{if(!valid()||frameRevealed)return;frameRevealed=true;frame.classList.add("gd-frame-ready");};
       const requestDecodedFrame=()=>{if(!valid()||frameRevealed)return;if(typeof video.requestVideoFrameCallback==="function"){try{video.requestVideoFrameCallback(()=>{if(valid())revealFrame();});return;}catch(_){}}if(Number(video.readyState||0)>=2&&Number(video.currentTime||0)>.02)revealFrame();};
       const armStall=()=>{clearTimeout(stallTimer);stallTimer=setTimeout(()=>waitForUser("media-stall"),4200);};
-      const markPlaying=()=>{if(!valid())return;if(document.hidden){waitForUser("tab-hidden");return;}progressed=true;playInFlight=false;playBtn.classList.remove("active");pauseBtn.hidden=false;frame.classList.add("gd-playing");if(status.textContent!=="Cinematic playing.")status.textContent="Cinematic playing.";if(document.activeElement===playBtn)pauseBtn.focus();requestDecodedFrame();armStall();clearTimeout(hardTimer);hardTimer=setTimeout(()=>waitForUser("hard-timeout"),60000);};
+      const markPlaying=()=>{if(!valid())return;if(document.hidden){waitForUser("tab-hidden");return;}progressed=true;playInFlight=false;playBtn.classList.remove("active");pauseBtn.hidden=false;frame.classList.add("gd-playing");if(!status.classList.contains("gd-notice")&&status.textContent!=="Cinematic playing.")status.textContent="Cinematic playing.";if(document.activeElement===playBtn)pauseBtn.focus();requestDecodedFrame();armStall();clearTimeout(hardTimer);hardTimer=setTimeout(()=>waitForUser("hard-timeout"),60000);};
       const attemptPlay=()=>{if(!valid()||playInFlight)return;if(document.hidden){waitForUser("tab-hidden");return;}playInFlight=true;playBtn.classList.remove("active");let p;try{p=video.play();}catch(err){window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err),ios,session:ticket};waitForUser("play-throw");return;}if(p&&typeof p.then==="function")p.then(()=>{if(!valid())return;playInFlight=false;if(document.hidden){waitForUser("tab-hidden");return;}requestDecodedFrame();}).catch(err=>{if(!valid())return;window.__goodDogsCutsceneAutoplayBlocked={id,at:Date.now(),error:String(err&&err.message||err),ios,session:ticket};waitForUser("play-rejected");});clearTimeout(startTimer);startTimer=setTimeout(()=>{if(valid()&&!progressed)waitForUser("no-first-frame");},4200);};
       const attemptAutoplay=()=>{if(!valid()||!autoRequested||autoAttempted)return;autoAttempted=true;window.__goodDogsCutsceneAutoplay={id,requested:true,ios,muted:true,playsInline:true,immediate:true,session:ticket,at:Date.now()};attemptPlay();};
       const skipEvent=e=>{if(!valid()||document.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}skip.disabled=true;skip.textContent="SKIPPING…";finish(STATUS.USER_SKIPPED,"click-skip");};
       const playEvent=e=>{if(!valid()||!capability.supported||document.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}if(deferredEnded){finish(STATUS.COMPLETED,"visible-resume");return;}progressed=false;if(retryReason==="media-error"){try{video.pause();video.src=options.src||def.src;video.load();}catch(_){}}attemptPlay();};
       const pauseEvent=e=>{try{e.preventDefault();e.stopPropagation();}catch(_){}waitForUser("user-paused");};
-      const soundEvent=e=>{if(!valid()||document.hidden||soundBtn.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}video.muted=!video.muted;soundBtn.textContent=video.muted?"TURN SOUND ON":"MUTE SOUND";soundBtn.setAttribute("aria-pressed",video.muted?"false":"true");};
+      const soundEvent=e=>{if(!valid()||document.hidden||soundBtn.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}if(!video.muted){muteFilm();return;}if(masterMuted()){notice("Master audio is muted. Turn it on before enabling cinematic sound.");return;}if(video.paused){notice("Resume the cinematic before enabling its sound.");return;}if(!requestClaim()){notice("Cinematic sound is unavailable while the soundtrack is not ready.");return;}claimed=true;try{video.volume=movieVolume();video.muted=false;}catch(_){muteFilm();notice("Cinematic sound could not be enabled.");return;}soundBtn.textContent="MUTE SOUND";soundBtn.setAttribute("aria-pressed","true");status.classList.remove("gd-notice");};
       const visibility=()=>{if(!valid())return;if(document.hidden)waitForUser(capability.supported?"tab-hidden":"codec-unsupported");else if(retryReason==="tab-hidden")(capability.supported?playBtn:skip).focus();};
-      const key=e=>{if(!valid())return;if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();finish(STATUS.USER_SKIPPED,"keyboard-skip");}else if(e.key==="Tab"){e.preventDefault();e.stopImmediatePropagation();const buttons=[playBtn,pauseBtn,soundBtn,skip].filter(b=>!b.disabled&&!b.hidden&&(b!==playBtn||b.classList.contains("active"))),i=buttons.indexOf(document.activeElement);buttons[i<0?(e.shiftKey?buttons.length-1:0):(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}};
-      skip.addEventListener("click",skipEvent);playBtn.addEventListener("click",playEvent);pauseBtn.addEventListener("click",pauseEvent);soundBtn.addEventListener("click",soundEvent);document.addEventListener("keydown",key,true);document.addEventListener("visibilitychange",visibility);
+      const key=e=>{if(!valid())return;if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();finish(STATUS.USER_SKIPPED,"keyboard-skip");}else if(e.key==="Tab"){e.preventDefault();e.stopImmediatePropagation();const buttons=[playBtn,pauseBtn,soundBtn,ccBtn,skip].filter(b=>!b.disabled&&!b.hidden&&(b!==playBtn||b.classList.contains("active"))),i=buttons.indexOf(document.activeElement);buttons[i<0?(e.shiftKey?buttons.length-1:0):(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}};
+      skip.addEventListener("click",skipEvent);playBtn.addEventListener("click",playEvent);pauseBtn.addEventListener("click",pauseEvent);soundBtn.addEventListener("click",soundEvent);ccBtn.addEventListener("click",captionEvent);document.addEventListener("techops-audio-change",settingsChange);document.addEventListener("keydown",key,true);document.addEventListener("visibilitychange",visibility);
       video.onended=()=>{if(!valid())return;if(document.hidden){deferredEnded=true;waitForUser("tab-hidden");return;}finish(STATUS.COMPLETED,"ended");};
       video.onerror=()=>waitForUser("media-error");
       video.onloadedmetadata=attemptAutoplay;video.onloadeddata=attemptAutoplay;video.oncanplay=attemptAutoplay;
       video.onplaying=()=>{clearTimeout(startTimer);markPlaying();};
-      video.ontimeupdate=()=>{if(!valid())return;const t=Number(video.currentTime||0);if(t>lastTime+.01){lastTime=t;if(t>.02){progressed=true;requestDecodedFrame();markPlaying();}}};
+      video.ontimeupdate=()=>{if(!valid())return;audioChange();const t=Number(video.currentTime||0);if(t>lastTime+.01){lastTime=t;if(t>.02){progressed=true;requestDecodedFrame();markPlaying();}}};
       video.onwaiting=video.onstalled=()=>{if(valid()&&progressed)armStall();};
       if(!capability.supported){waitForUser("codec-unsupported");return;}
       video.src=options.src||def.src;try{video.load();}catch(_){}
       if(autoRequested)attemptAutoplay();else waitForUser("autoplay-disabled");
     });
   }
-  window.GoodDogsCutscenes={VERSION:"3.7",STATUS,H264_MIME,play,clips:CLIPS,state:ensureState,isIOSDevice,mediaCapability,createSettlementGate};
+  window.GoodDogsCutscenes={VERSION:"3.8",STATUS,H264_MIME,play,clips:CLIPS,state:ensureState,isIOSDevice,mediaCapability,createSettlementGate};
 })();

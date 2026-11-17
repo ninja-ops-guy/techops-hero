@@ -16,9 +16,13 @@
   }
   function applySet() {
     document.body.classList.toggle("v67-cb", !!SET.colorblind);
-    if (typeof scWidget !== "undefined" && scWidget && scWidget.setVolume) {
+    const audio = window.TechOpsDayAudio;
+    if (audio && audio.diagnostics && audio.diagnostics().duckReasons.length) {
+      audio.refreshDucks();
+    } else if (typeof scWidget !== "undefined" && scWidget && scWidget.setVolume) {
       try { scWidget.setVolume(Math.round(SET.volMusic * 100)); } catch (e) { }
     }
+    try { document.dispatchEvent(new Event("techops-audio-change")); } catch (_) {}
   }
   function buildSettings() {
     if ($("v67-settings")) return;

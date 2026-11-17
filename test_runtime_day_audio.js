@@ -145,5 +145,21 @@ function fixture(options = {}) {
     const f = fixture({ suspended: true, rejectResume: true }); assert.equal(f.api.unlock({ userGesture: true }), false); assert.equal(f.api.emit('repair'), false);
     await Promise.resolve(); await Promise.resolve(); assert.equal(f.api.diagnostics().played, 0);
   });
+  await test('cinematic suppression composes with other ducks and restores current settings without playing music', () => {
+    const f = fixture({deferVolume:true}); f.api.duck('dialogue', .3);
+    assert.equal(f.api.beginCinematic('film'), true); assert.equal(f.w.volume,0);
+    f.volumeReads[0](72); assert.equal(f.w.volume,0, 'stale async read cannot undo film suppression');
+    f.r.V67SET.volMusic=.25; f.api.refreshDucks(); assert.equal(f.w.volume,0);
+    f.w.paused=true; f.api.resume('film'); assert.equal(f.w.volume,7.5);
+    f.api.resume('dialogue'); assert.equal(f.w.volume,25); assert.equal(f.w.paused,true);
+    assert.equal(f.log.filter(x=>x[0]==='play'||x[0]==='pause').length,0);
+  });
+  await test('cinematic sound fails closed when requested music has no widget or suppression throws', () => {
+    const absent=fixture({noWidget:true}); assert.equal(absent.api.beginCinematic('film'),false);
+    vm.runInContext('musicRequested=false',absent.r); assert.equal(absent.api.beginCinematic('film'),true);
+    const broken=fixture(); broken.w.setVolume=()=>{throw Error('unavailable');};
+    assert.equal(broken.api.beginCinematic('film'),false);
+    assert.equal(broken.api.diagnostics().duckReasons.length,0);
+  });
   console.log('Day audio: ' + count + ' tests passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

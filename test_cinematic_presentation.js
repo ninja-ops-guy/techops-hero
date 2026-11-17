@@ -62,7 +62,7 @@ function harness({supported = true, reducedMotion = false} = {}) {
     getComputedStyle: () => ({display: "block", visibility: 'visible'}),
     Image: class {set src(value) {this._src = value; this.complete = true; this.naturalWidth = 384; queueMicrotask(() => this.onload?.());} get src() {return this._src;}},
     S: {inDialog: false, meta: {_v736: {m: 8, done: false}}}, NM: {_v736: {m: 8}, enemies: [], clear: false},
-    localStorage: {setItem() {}}, TechOpsGoodDogsCampaignState: {completeReturn() {trace.push('semantic');}},
+    localStorage: {setItem() {}}, TechOpsDayAudio: {beginCinematic() {return true;}, resume() {return true;}}, TechOpsGoodDogsCampaignState: {completeReturn() {trace.push('semantic');}},
     save() {trace.push('save'); return true;}, location: {reload() {trace.push('reload'); reloads++;}}
   });
   root.window = root; root.globalThis = root; vm.createContext(root);
@@ -111,7 +111,7 @@ const flush = async () => {for (let i = 0; i < 8; i++) await Promise.resolve();}
     const overlay = h.doc.getElementById('good-dogs-cutscene-overlay'), video = overlay.querySelector('video'), sound = overlay.querySelector('.gd-film-sound');
     assert.strictEqual(video.muted, true, 'autoplay starts muted'); assert.strictEqual(video.volume, 1);
     assert.strictEqual(sound.hidden, false); assert.strictEqual(sound.attributes['aria-pressed'], 'false');
-    sound.focus(); h.doc.emit('keydown', event({key: 'Tab'})); assert.strictEqual(h.doc.activeElement, overlay.querySelector('.gd-film-skip'));
+    sound.focus(); h.doc.emit('keydown', event({key: 'Tab'})); assert.strictEqual(h.doc.activeElement, overlay.querySelector('.gd-film-cc'));
     sound.emit('click', event()); assert.strictEqual(video.muted, false); assert.strictEqual(sound.attributes['aria-pressed'], 'true');
     sound.emit('click', event()); assert.strictEqual(video.muted, true);
     h.visibility(true); sound.emit('click', event()); assert.strictEqual(video.muted, true, 'hidden controls cannot enable sound');
