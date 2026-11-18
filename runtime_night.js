@@ -96,6 +96,13 @@
   function saveCheckpoint(s){
     s=s||state();if(!standalone(s))return false;
     if(!s.nightMode){if(s.meta.nightVisit&&s.meta.nightVisit.active===false)return completeCheckpoint(s);return false;}
+    // Field reports keep their own objective saves. Persist the street return
+    // point together with the current health, purchases and remaining supplies.
+    if(s.nightMode._nightwalker){
+      const mission=s.nightMode._nightwalker.runtimeId==='deadAir'?root.TechOpsDeadAirRuntime:root.TechOpsNightwalkerRuntime;
+      const returnNight=mission&&mission.checkpointNight&&mission.checkpointNight();
+      if(returnNight)s=Object.assign({},s,{nightMode:returnNight});
+    }
     if(!validCheckpoint(s)){checkpointError='Night progress could not be checkpointed safely. Keep this tab open.';root.__nightCheckpointError='invalid-night-world';return false;}
     try{return writeCheckpoint({version:CHECKPOINT_VERSION,mode:'nightcrawler',status:'active',savedAt:Date.now(),state:normalizedSnapshot(s)});}
     catch(e){checkpointError='Night progress could not be checkpointed safely. Keep this tab open.';root.__nightCheckpointError=String(e&&e.message||e);return false;}
@@ -216,12 +223,13 @@
     }
     if(standalone(state())){
       const options=[{t:'Save Night and return to title',f:saveAndReturn},{t:'Back to the street',f:root.closeDlg}];
+      if(root.openNightSupplies)options.push({t:'Supplies and store',f:()=>root.openNightSupplies()});
       if(root.TechOpsNightwalkerRuntime)options.unshift({t:'NIGHTWALKER — West Annex field report',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsNightwalkerRuntime.enterBrowser();}});
       if(root.TechOpsDeadAirRuntime)options.unshift({t:'NIGHTWALKER — Dead Air at Pier 7',f:()=>{if(root.closeDlg)root.closeDlg();root.TechOpsDeadAirRuntime.enterBrowser();}});
       return dialog('AFTER HOURS — STANDALONE RUN','Your Night route saves separately. Each field report has its own save; neither route can change Day-campaign story objectives.',options);
     }
     const c=campaignState();if(!c)return dialog('NIGHT WALKER // CAMPAIGN','Campaign data is unavailable. Your progress has not been changed.',[{t:'Back',f:root.closeDlg}]);
-    const f=c.flags,options=[],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
+    const f=c.flags,options=[{t:'Supplies and store',f:()=>root.openNightSupplies()}],evidence=c.evidence&&c.evidence.ghostIdentityEvidence;let text;
     if(f.tuesday_morning_reached){text='<b>AFTER HOURS — COMPLETE</b><br>The next campaign beat continues in the day shift. Your evidence and choices are preserved.';options.push({t:'Return to the day campaign',f:resumeDay});}
     else if(!f.day_work_unlocked){text='<b>CHAPTER I — AFTER HOURS</b><br>Complete the Day 1 standup and workstation opening to unlock Sector 04. Free roam is not the story campaign.';options.push({t:'Resume the daytime opening',f:resumeDay});}
     else{

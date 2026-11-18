@@ -238,4 +238,24 @@ test('a failed restore remains stopped through health polls and keeps the saved 
     assert.equal(data.get(api.CHECKPOINT_KEY),saved);assert.equal(elements['title-screen'].classList.contains('hidden'),false);
   }
 });
+test('field report health and supplies checkpoint together at the street return point',()=>{
+  for(const [name,apiName] of [['campaign_nightwalker','TechOpsNightwalkerRuntime'],['campaign_dead_air','TechOpsDeadAirRuntime']]){
+    const {c,api,start}=fixture();start();
+    const originalDistrict=c.NM.district,originalX=c.NM.x;
+    vm.runInContext(fs.readFileSync(name+'.js','utf8'),c);
+    vm.runInContext(fs.readFileSync(name+'_runtime.js','utf8'),c);
+    const mission=c[apiName];
+    mission.enterBrowser();
+    assert.ok(c.NM._nightwalker);
+    c.NM.hp=88;c.S.supplies={supply_firstaid:0,supply_dressing:1};c.S.storeStock=['book_itil'];c.S.storeStockDay=1;
+    assert.equal(c.saveFromGame(),true);
+    const saved=api.checkpointStatus();assert.equal(saved.status,'ready');
+    assert.equal(saved.state.nightMode.district,originalDistrict);assert.equal(saved.state.nightMode.x,originalX);
+    assert.equal(saved.state.nightMode.hp,88);assert.equal(saved.state.supplies.supply_firstaid,0);
+    assert.equal(saved.state.supplies.supply_dressing,1);assert.equal(saved.state.storeStockDay,1);
+    assert.ok(c.NM._nightwalker,'saving does not exit the live mission');
+    mission.exitToFreeRoam();assert.equal(c.NM.hp,88);assert.equal(c.NM.x,originalX);
+    assert.equal(api.resumeCheckpoint(),true);assert.equal(c.NM.hp,88);assert.equal(c.S.supplies.supply_dressing,1);
+  }
+});
 console.log(`Night recovery: ${passed} regression groups passed`);

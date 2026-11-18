@@ -339,7 +339,8 @@
     if (!night || !night._nightwalker) return false;
     var relays = Object.keys(missionApi().RELAYS).map(function (id) { return (state.tunedRelays.indexOf(id) >= 0 ? "✓ " : "○ ") + missionApi().RELAYS[id].label; }).join("<br>");
     var options = [{ t: "Resume the field report", f: closeDialog }, { t: "Save progress and return to free roam", f: exitToFreeRoam }];
-    options.push({ t: "Restart this field report", f: function () {
+    if (root.openNightSupplies) options.push({ t: "Supplies and store", f: function () { root.openNightSupplies(); } });
+      options.push({ t: "Restart this field report", f: function () {
       return dialog("RESTART PIER 7?", "Only this standalone field report will be reset. Ordinary Night progress, West Annex, and all Day-campaign saves remain unchanged.", [
         { t: "Confirm restart", f: function () { var fresh = missionApi().initialState(); activeState = fresh; createEncounter(fresh, night); saveState(fresh); showBriefing(false); } },
         { t: "Keep current report", f: openJournal }
@@ -347,13 +348,20 @@
     } });
     return dialog("NIGHTWALKER // PIER 7 FIELD REPORT", "<b>Current step:</b> " + missionApi().objective(state) + "<br><br>" + relays + "<br><br>Recording integrity: <b>" + state.recordingIntegrity + "%</b><br>Recovery: " + (state.choice || "not chosen") + "<br>Source identity: " + state.sourceIdentity + "<br>Human verification: " + (state.requesterVerified ? "confirmed" : "pending") + "<br><br>This standalone report never writes Day-campaign objectives.", options);
   }
+  function checkpointNight() {
+    var night = browserNight();
+    if (!originNight || !night || !night._nightwalker) return null;
+    var restored = clone(originNight);
+    restored.hp = night.hp;
+    return restored;
+  }
   function exitToFreeRoam() {
     var night = browserNight();
     if (!night) return false;
     saveState(loadState());
     closeDialog();
     if (originNight) {
-      var restored = clone(originNight);
+      var restored = checkpointNight();
       Object.keys(night).forEach(function (key) { delete night[key]; });
       Object.assign(night, restored);
       originNight = null;
@@ -443,6 +451,7 @@
     drawOverlay: drawOverlay,
     enterBrowser: enterBrowser,
     openJournal: openJournal,
+    checkpointNight: checkpointNight,
     exitToFreeRoam: exitToFreeRoam,
     install: install
   };

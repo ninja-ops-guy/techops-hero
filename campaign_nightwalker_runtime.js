@@ -369,6 +369,7 @@ return (seen ? "✓ " : "○ ") + missionApi().EVIDENCE[id].label;
 var options = [{ t: "Resume the field report", f: closeDialog }];
 if (state.completed) options.push({ t: "Return to free roam", f: exitToFreeRoam });
 else options.push({ t: "Save progress and return to free roam", f: exitToFreeRoam });
+if (root.openNightSupplies) options.push({ t: "Supplies and store", f: function () { root.openNightSupplies(); } });
 options.push({ t: "Restart this field report", f: function () {
 return dialog("RESTART WEST ANNEX?", "Only this standalone field report will be reset. Ordinary Night progress and all Day-campaign saves remain unchanged.", [
 { t: "Confirm restart", f: function () { var fresh = missionApi().initialState(); activeMissionState = fresh; createEncounter(fresh, night); saveState(fresh); showBriefing(false); } },
@@ -377,13 +378,20 @@ return dialog("RESTART WEST ANNEX?", "Only this standalone field report will be 
 } });
 return dialog("NIGHTWALKER // WEST ANNEX FIELD REPORT", "<b>Current step:</b> " + missionApi().objective(state) + "<br><br>" + evidence + "<br><br>Hypothesis: " + (state.hypothesis || "not recorded") + "<br>Relay: " + (state.relayIsolated ? "isolated" : state.controllerRevealed ? "revealed" : "not understood") + "<br>Human verification: " + (state.requesterVerified ? "confirmed" : "pending") + "<br><br>This standalone report never writes Day-campaign objectives.", options);
 }
+function checkpointNight() {
+  var night = browserNight();
+  if (!originNight || !night || !night._nightwalker) return null;
+  var restored = clone(originNight);
+  restored.hp = night.hp;
+  return restored;
+}
 function exitToFreeRoam() {
 var night = browserNight();
 if (!night) return false;
 saveState(loadState());
 closeDialog();
 if (originNight) {
-var restored = clone(originNight);
+var restored = checkpointNight();
 Object.keys(night).forEach(function (key) { delete night[key]; });
 Object.assign(night, restored);
 originNight = null;
@@ -472,6 +480,7 @@ tick: tick,
 drawOverlay: drawOverlay,
 enterBrowser: enterBrowser,
 openJournal: openJournal,
+checkpointNight: checkpointNight,
 exitToFreeRoam: exitToFreeRoam,
 install: install
 };

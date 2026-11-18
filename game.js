@@ -257,6 +257,8 @@ const LEARN = {
 };
 // ---------- store: books teach moves, lab equipment grants passives ----------
 const STORE_STOCK = [
+  { id: "supply_dressing", name: "Field Dressing", icon: "🩹", cost: 20, type: "supply", heal: 15, effect: "Carry one use. Restores 15 HP in Day or Night Walker." },
+  { id: "supply_firstaid", name: "First Aid Kit", icon: "🧰", cost: 40, type: "supply", heal: 35, effect: "Carry one use. Restores 35 HP in Day or Night Walker." },
   { id: "book_itil", name: "ITIL Handbook", icon: "📘", cost: 150, type: "book", move: "rdp", blurb: "Teaches: Remote Desktop" },
   { id: "book_phoenix", name: "The Phoenix Project", icon: "📕", cost: 220, type: "book", move: "gpo", blurb: "Teaches: Group Policy (+25% dmg ×3t)" },
   { id: "book_linux", name: "The Linux Bible", icon: "📓", cost: 350, type: "book", move: "sudo", blurb: "Teaches: sudo rm -rf /bug" },
@@ -292,6 +294,96 @@ function applyLab(key) {
   else if (key === "punch") s.stats.hardware += 2;
   else if (key === "faraday") s.stats.security += 2;
   else if (key === "kb") s.stressResist = Math.min(.6, (s.stressResist || 0) + .15);
+}
+
+function supplyCount(id) {
+  const count = S && S.supplies && S.supplies[id];
+  return Number.isSafeInteger(count) && count > 0 ? count : 0;
+}
+function storeItemAvailable(it) {
+  if (!it || !S) return false;
+  if (it.type === "book") return !S.books.includes(it.id);
+  if (it.type === "lab") return S.lab.filter(key => key === it.key).length < (it.key === "kb" ? 2 : 1);
+  if (it.type === "infra") return !(S.infra || []).includes(it.retire);
+  return it.type === "supply";
+}
+function refreshStoreStock() {
+  if (S.storeStockDay === S.day && Array.isArray(S.storeStock)) return;
+  const stock = STORE_STOCK.filter(it => it.type !== "supply" && storeItemAvailable(it));
+  S.storeStock = stock.sort(() => Math.random() - .5).slice(0, 4).map(it => it.id)
+    .concat(STORE_STOCK.filter(it => it.type === "supply").map(it => it.id));
+  S.storeStockDay = S.day;
+}
+function buyStoreItem(id) {
+  const s = S, it = STORE_STOCK.find(item => item.id === id);
+  if (!s || s.gameOver || s.inBattle || !storeItemAvailable(it) || !(s.storeStock || []).includes(id)) return false;
+  if (s.budget < it.cost) { toast("Not enough budget!"); return false; }
+  const stock = s.storeStock, budget = s.budget, count = supplyCount(id);
+  s.budget -= it.cost;
+  s.storeStock = stock.filter(item => item !== id);
+  if (it.type === "supply") {
+    s.supplies = s.supplies || {};
+    s.supplies[id] = count + 1;
+    if (!save()) {
+      s.budget = budget; s.storeStock = stock; s.supplies[id] = count;
+      return false;
+    }
+    toast(`${it.name} added to supplies.`);
+  } else {
+    if (it.type === "book") { s.books.push(it.id); toast(`📖 Learned a new move: ${it.blurb.replace("Teaches: ", "")}!`); }
+    else if (it.type === "infra") changeManagement(it);
+    else { s.lab.push(it.key); applyLab(it.key); toast(`🔧 ${it.name} installed: ${it.effect}`); }
+    save();
+  }
+  sfx("loot"); updateHUD();
+  return true;
+}
+function supplyTarget() {
+  if (!S || S.gameOver || S.inBattle) return null;
+  const n = S.nightMode;
+  if (!n) return { actor: S, maxHp: S.maxHp };
+  if (typeof n !== "object" || n._v736 || n.drive || n._nightSettled || !(n.hp > 0)) return null;
+  return { actor: n, maxHp: 100 };
+}
+function useSupply(id) {
+  const it = STORE_STOCK.find(item => item.id === id && item.type === "supply");
+  const target = supplyTarget(), count = supplyCount(id);
+  if (!it || !target || !count || !Number.isFinite(target.actor.hp) || target.actor.hp >= target.maxHp) return false;
+  const hp = target.actor.hp;
+  target.actor.hp = Math.min(target.maxHp, hp + it.heal);
+  S.supplies[id] = count - 1;
+  if (!save()) { target.actor.hp = hp; S.supplies[id] = count; return false; }
+  if (S.nightMode) {
+    S.nightMode.msg = `${it.name} · +${target.actor.hp - hp} HP`;
+    S.nightMode.msgT = performance.now() + 2500;
+  }
+  updateHUD(); sfx("loot");
+  return true;
+}
+function openNightSupplies(store = false, notice = "") {
+  const s = S, n = s && s.nightMode, target = supplyTarget();
+  if (!n || !target || s.paused) return false;
+  const presentation = window.TechOpsPresentationDirector && window.TechOpsPresentationDirector.current();
+  if (presentation && (presentation.claims.some(claim => claim.blocking) || presentation.surfaces.some(id => id !== "dialogue"))) return false;
+  refreshStoreStock();
+  const items = STORE_STOCK.filter(it => it.type === "supply");
+  const options = [];
+  for (const it of items) {
+    const count = supplyCount(it.id);
+    if (store && s.storeStock.includes(it.id)) options.push({
+      t: `${it.name} — $${it.cost} · +${it.heal} HP${s.budget < it.cost ? " · insufficient budget" : ""}`,
+      f: () => { if (S !== s || S.nightMode !== n) return; const bought = buyStoreItem(it.id); openNightSupplies(true, bought ? `${it.name} added to supplies.` : s.budget < it.cost ? "Insufficient budget." : "Purchase could not be saved. Please retry."); }
+    });
+    if (!store && count) options.push({
+      t: `Use ${it.name} ×${count} — +${it.heal} HP${n.hp >= target.maxHp ? " · full health" : ""}`,
+      f: () => { if (S !== s || S.nightMode !== n) return; const used = useSupply(it.id); openNightSupplies(false, used ? `${it.name} used.` : n.hp >= target.maxHp ? "Health is full. Supply kept." : "Supply kept. Please retry when saving is available."); }
+    });
+  }
+  options.push({ t: store ? "Back to supplies" : "Store — buy field supplies", f: () => openNightSupplies(!store) });
+  options.push({ t: "Back to Night Walker", f: closeDlg });
+  const stockNote = store ? "One of each supply is stocked each day." : items.map(it => `${it.name} ×${supplyCount(it.id)}`).join("<br>");
+  dlg(store ? "NIGHT WALKER // SUPPLY STORE" : "NIGHT WALKER // SUPPLIES", `HP ${Math.ceil(n.hp)}/100 · Budget $${s.budget}<br><br>${stockNote}${notice ? `<br><br>${notice}` : ""}`, options);
+  return true;
 }
 // ---------- workforce: hire technicians who work tickets for you ----------
 const STAFF_TIERS = {
@@ -399,7 +491,7 @@ function newState() {
     tickets: [], ticketsDone: 0, ticketsTotal: 0, lootToday: 0,
     chaos: null, promoted: false, autoUsed: false,
     meta: { closed: 0, printerKills: 0, chains: 0, crits: 0, legendaries: 0, cmds: 0, lore: [], debt: 0, wrongDiag: 0, recentTypes: [], kb: {}, incidents: 0, mttr: [], hires: 0 },
-    ach: [], books: [], lab: [], storeStock: [], stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
+    ach: [], books: [], lab: [], supplies: {}, storeStock: [], storeStockDay: 0, stressResist: 0, diff: 1, ngPlus: false, shadowDone: false,
     staff: [], audited: false, infra: [],
     px: 0, py: 0, dir: 1, fx: "down", moving: false,
     npcs: [], portals: [], devices: [], loreSpots: [], coffeeMachines: [],
@@ -431,7 +523,7 @@ const save = () => {
     }
     const saveRevision = Math.max(Date.now(), Number(S._saveRevision || 0) + 1);
     S._saveRevision = saveRevision;
-    const payload = JSON.stringify({ _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
+    const payload = JSON.stringify({ _profileSchemaVersion: PROFILE_SAVE_SCHEMA_VERSION, day: S.day, clock: S.clock, xp: S.xp, budget: S.budget, stress: S.stress, hp: S.hp, maxHp: S.maxHp, certs: S.certs, inv: S.inv, supplies: S.supplies, storeStock: S.storeStock, storeStockDay: S.storeStockDay, journal: S.journal, stats: S.stats, soft: S.soft, rep: S.rep, meta: S.meta, ach: S.ach, books: S.books, lab: S.lab, stressResist: S.stressResist, diff: S.diff, ngPlus: S.ngPlus, shadowDone: S.shadowDone, staff: S.staff, audited: S.audited, infra: S.infra, certDiscount: S.certDiscount || 0, _saveRevision: saveRevision });
     const standaloneMode = S.meta && S.meta._standaloneMode;
     const standaloneNight = standaloneMode === "nightcrawler";
     const standaloneGoodDogs = standaloneMode === "gooddogs";
@@ -509,6 +601,9 @@ const normalizeLoadedProfile = d => {
   d.meta.hires = Number.isFinite(d.meta.hires) ? d.meta.hires : 0;
   for (const key of ["certs","inv","journal","ach","books","lab","staff","infra"]) if (!Array.isArray(d[key])) d[key] = [];
   for (const key of ["stats","soft","rep"]) if (!d[key] || typeof d[key] !== "object" || Array.isArray(d[key])) d[key] = {};
+  if (!d.supplies || typeof d.supplies !== "object" || Array.isArray(d.supplies)) d.supplies = {};
+  for (const id of Object.keys(d.supplies)) if (!Number.isSafeInteger(d.supplies[id]) || d.supplies[id] < 0) delete d.supplies[id];
+  if (!Array.isArray(d.storeStock)) { d.storeStock = []; d.storeStockDay = 0; }
   d._profileSchemaVersion = PROFILE_SAVE_SCHEMA_VERSION;
   window.__techopsSaveMigration = { from: fromVersion, to: PROFILE_SAVE_SCHEMA_VERSION, migrated: fromVersion !== PROFILE_SAVE_SCHEMA_VERSION };
   return d;
@@ -879,11 +974,8 @@ function setupDay() {
   // coffee machines
   const nc = s.chaos?.id === "heat" ? 4 : 2;
   for (let i = 0; i < nc; i++) { const p = freeSpot(s.map); s.coffeeMachines.push({ x: p.x, y: p.y, used: false }); }
-  // daily store stock rotation
-  const stockPool = STORE_STOCK.filter(it => !s.books.includes(it.id)
-    && !(it.type === "lab" && s.lab.filter(k => k === it.key).length >= (it.key === "kb" ? 2 : 1))
-    && !(it.type === "infra" && (s.infra || []).includes(it.retire)));
-  s.storeStock = [...stockPool].sort(() => Math.random() - .5).slice(0, 4).map(it => it.id);
+  // Daily stock survives reloads and includes field supplies.
+  refreshStoreStock();
 
   // automation server: scripts chew through one routine ticket overnight
   if (s.lab.includes("autosrv")) {
@@ -1418,7 +1510,7 @@ document.querySelectorAll(".dbtn").forEach(b => {
 });
 $("tb-interact").addEventListener("touchstart", e => { e.preventDefault(); interact(); });
 $("tb-menu").addEventListener("touchstart", e => { e.preventDefault(); openPanel(); });
-$("btn-menu").addEventListener("click", openPanel);
+$("btn-menu").addEventListener("click", () => openPanel());
 // digital twin: network vision overlay (button or V key)
 function toggleTwin() {
   if (!S) return;
@@ -2708,7 +2800,8 @@ function endOfDay() {
 // ---------- panel (character / inventory / store / certs / journal / reputation / achievements) ----------
 let panelOpen = false;
 function openPanel(tab = "Character") {
-  if (S.inBattle) return;
+  if (!S || S.inBattle || S.inDialog || S.gameOver) return;
+  if (S.nightMode) return openNightSupplies(tab === "Store");
   panelOpen = true;
   $("panel").classList.remove("hidden");
   const tabs = ["Character", "Team", "Inventory", "Store", "Certifications", "Journal", "Reputation", "Achievements"];
@@ -2777,9 +2870,22 @@ function renderTab(tab) {
       renderTab("Team"); save();
     });
   } else if (tab === "Inventory") {
-    el.innerHTML = s.inv.length ? "" : "<i>No loot yet. Close tickets and clear dungeons!</i>";
+    el.innerHTML = `<h4>Field supplies</h4><p>HP ${s.hp}/${s.maxHp}</p>`;
+    const target = supplyTarget();
+    for (const it of STORE_STOCK.filter(item => item.type === "supply")) {
+      const count = supplyCount(it.id);
+      const usable = count > 0 && target && target.actor.hp < target.maxHp;
+      el.innerHTML += `<div class="loot-item">${it.icon} <b>${it.name} ×${count}</b><br><small>${it.effect}</small> <button data-use="${it.id}" ${usable ? "" : "disabled"}>USE</button></div>`;
+    }
+    el.innerHTML += "<h4>Equipment</h4>";
+    el.innerHTML += s.inv.length ? "" : "<i>No equipment yet. Close tickets and clear dungeons!</i>";
     for (const l of s.inv) el.innerHTML += `<div class="loot-item">${l.icon} <span class="rarity-${l.rarity}"><b>${l.name}</b> (${l.rarity})</span><br><small>${l.stat === "stress" ? "Passive: move faster, stress resist" : `+${l.val} ${l.stat}`}</small></div>`;
+    el.querySelectorAll("button[data-use]").forEach(b => b.onclick = () => {
+      if (S !== s) return;
+      useSupply(b.dataset.use); renderTab("Inventory");
+    });
   } else if (tab === "Store") {
+    refreshStoreStock();
     el.innerHTML = `<i>Invest in your IT department. Budget: <b>$${s.budget}</b></i><br><br>`;
     if (!s.storeStock.length) el.innerHTML += "<i>Sold out for today. Come back tomorrow.</i>";
     const VENDORS = [
@@ -2793,6 +2899,7 @@ function renderTab(tab) {
       el.innerHTML += `<h4 style="color:#7fd4ff;margin:10px 0 6px">${header}</h4><small style="color:#9a9"><i>${pick(VENDOR_QUOTES[v])}</i></small><br>`;
       for (const id of items) {
         const it = STORE_STOCK.find(x => x.id === id);
+        if (!storeItemAvailable(it)) continue;
         const afford = s.budget >= it.cost;
         el.innerHTML += `<div class="loot-item">${it.icon} <b>${it.name}</b> <span style="color:#8f8">$${it.cost}</span><br><small>${it.type === "book" ? it.blurb : it.effect}</small> <button data-buy="${it.id}" data-cost="${it.cost}" ${afford ? "" : "disabled"} style="float:right;background:#153;border:1px solid #4f4;color:#8f8;border-radius:5px;padding:3px 10px;font-family:inherit">BUY</button></div>`;
       }
@@ -2801,15 +2908,9 @@ function renderTab(tab) {
     el.innerHTML += `<br><small>Owned: ${[...s.books.map(b => STORE_STOCK.find(x => x.id === b)?.name), ...s.lab.map(k => STORE_STOCK.find(x => x.key === k)?.name)].filter(Boolean).join(", ") || "nothing yet"}</small>`;
     if (ownedInfra.length) el.innerHTML += `<br><small>🏗️ Infrastructure: ${ownedInfra.join(", ")} — those tickets are retired for good.</small>`;
     el.querySelectorAll("button[data-buy]").forEach(b => b.onclick = () => {
-      const it = STORE_STOCK.find(x => x.id === b.dataset.buy);
-      if (s.budget < it.cost) return toast("Not enough budget!");
-      s.budget -= it.cost;
-      if (it.type === "book") { s.books.push(it.id); toast(`📖 Learned a new move: ${it.blurb.replace("Teaches: ", "")}!`); }
-      else if (it.type === "infra") { changeManagement(it); }
-      else { s.lab.push(it.key); applyLab(it.key); toast(`🔧 ${it.name} installed: ${it.effect}`); }
-      s.storeStock = s.storeStock.filter(x => x !== it.id);
-      sfx("loot");
-      renderTab("Store"); updateHUD(); save();
+      if (S !== s) return;
+      buyStoreItem(b.dataset.buy);
+      if (panelOpen) renderTab("Store");
     });
   } else if (tab === "Certifications") {
     el.innerHTML = "<i>Certs unlock new battle abilities. Study with your budget.</i><br><br>";

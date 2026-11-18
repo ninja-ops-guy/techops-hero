@@ -311,7 +311,7 @@
   }
   function syncHud(){
     if(root.document)checkOfficeEntry();
-    if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
+    if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle&&!(typeof panelOpen!=="undefined"&&panelOpen)&&!(typeof eodOpen!=="undefined"&&eodOpen);var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
     if(!hud){hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);}
     hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';return;}
     var w=world();if(!w)return;w.ensureWorld();var objective=w.nextObjective()||{},resolution=targetResolution(),nearby=resolution.target;
