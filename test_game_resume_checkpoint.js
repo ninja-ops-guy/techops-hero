@@ -70,6 +70,16 @@ const panelProfile = context.loadProfile();
 const panelRestored = context.loadCheckpoint(panelProfile);
 assert.strictEqual(panelRestored.budget, 123, "a newer panel save cannot roll back to an older checkpoint");
 assert.strictEqual(panelRestored.inv[0].id, "panel-purchase");
+const linkedProfile = { ...panelProfile, meta: { ...panelProfile.meta, seeWorldLink: { profileId: "local-primary", runId: "run-original" } } };
+const linkedScene = JSON.parse(data.get(context.DAY_CHECKPOINT_KEY));
+linkedScene.state.meta.seeWorldLink = { profileId: "local-primary", runId: "run-different" };
+data.set(context.DAY_CHECKPOINT_KEY, JSON.stringify(linkedScene));
+assert.strictEqual(context.loadCheckpoint(linkedProfile), null, "equal timestamps cannot authorize a scene from another linked run");
+linkedScene.state.meta.seeWorldLink.runId = "run-original";
+data.set(context.DAY_CHECKPOINT_KEY, JSON.stringify(linkedScene));
+assert.strictEqual(context.loadCheckpoint(linkedProfile).budget, 123, "matching linked runs retain their scene");
+delete linkedScene.state.meta.seeWorldLink;
+data.set(context.DAY_CHECKPOINT_KEY, JSON.stringify(linkedScene));
 const staleProfile = { ...panelProfile, _saveRevision: panelProfile._saveRevision + 1 };
 assert.strictEqual(context.loadCheckpoint(staleProfile), null, "a checkpoint older than the profile must never win Continue");
 context.panelOpen = false;
@@ -95,6 +105,17 @@ assert.ok(recovered && recovered.meta, "corrupt primary recovers from the last v
 assert.strictEqual(data.get("techops_save_corrupt_v1"), "{broken-primary", "corrupt primary bytes are retained in the bounded quarantine slot");
 assert.strictEqual(data.get("techops_save"), validBackup, "successful quarantine repairs the primary from the verified backup");
 assert.strictEqual(context.window.__techopsSaveRecovery, "backup-restored");
+assert.strictEqual(recovered.budget, 91);
+assert.strictEqual(context.loadCheckpoint(recovered), null, "Continue cannot replace the recovered budget with the later same-day checkpoint");
+assert.strictEqual(context.loadCheckpoint(context.loadProfile()), null, "the repaired primary still rejects the orphaned scene after another load");
+
+// Current saves stamp the profile, checkpoint envelope, and scene in the same write.
+const currentCheckpoint = data.get(context.DAY_CHECKPOINT_KEY);
+const mismatchedScene = JSON.parse(currentCheckpoint);
+mismatchedScene.savedAt = recovered._saveRevision;
+data.set(context.DAY_CHECKPOINT_KEY, JSON.stringify(mismatchedScene));
+assert.strictEqual(context.loadCheckpoint(recovered), null, "a matching envelope cannot authorize a different scene revision");
+data.set(context.DAY_CHECKPOINT_KEY, currentCheckpoint);
 
 // If quarantine cannot be written, recovery is memory-only and the corrupt primary stays untouched.
 data.set("techops_save", "{broken-again");
@@ -106,6 +127,7 @@ const memoryRecovered = context.loadProfile();
 assert.ok(memoryRecovered && memoryRecovered.meta, "backup remains usable when quarantine storage is unavailable");
 assert.strictEqual(data.get("techops_save"), "{broken-again", "memory-only recovery must not overwrite unquarantined corrupt bytes");
 assert.strictEqual(context.window.__techopsSaveRecovery, "backup-memory-only");
+assert.strictEqual(context.loadCheckpoint(memoryRecovered), null, "a memory-only recovery also owns the resumed budget");
 assert.match(context.window.__techopsSaveQuarantineError, /QuotaExceededError/);
 localStorage.setItem = originalSetItem;
 data.set("techops_save", stablePrimary);
@@ -135,6 +157,14 @@ assert.strictEqual(migratedLegacy._profileSchemaVersion, 1, "legacy profile is p
 assert.deepStrictEqual(JSON.parse(JSON.stringify(context.window.__techopsSaveMigration)), { from: 0, to: 1, migrated: true }, "migration metadata crosses the VM boundary as plain data");
 assert.strictEqual(migratedLegacy.meta.marker, "legacy", "migration preserves unknown/canonical player metadata");
 assert.deepStrictEqual(migratedLegacy.certs, ["ccna"], "migration preserves existing player collections");
+
+assert.strictEqual(context.loadCheckpoint(migratedLegacy), null, "a modern checkpoint cannot replace an unversioned profile");
+const legacyScene = JSON.parse(currentCheckpoint);
+legacyScene.version = 1;
+delete legacyScene.state._saveRevision;
+data.set(context.DAY_CHECKPOINT_KEY, JSON.stringify(legacyScene));
+assert.strictEqual(context.loadCheckpoint(migratedLegacy).px, legacyScene.state.px, "legacy same-day checkpoints still resume with legacy profiles");
+data.set(context.DAY_CHECKPOINT_KEY, currentCheckpoint);
 
 // A future schema cannot be silently interpreted by older code; a valid backup
 // remains the only permitted recovery path.
