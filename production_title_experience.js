@@ -9,8 +9,8 @@
   "use strict";
   if (!root || !root.document || root.TechOpsProductionTitleExperience) return;
 
-  var VERSION = 1;
-  var BUILD = "20261118-day-restart-r1";
+  var VERSION = 3;
+  var BUILD = "20261119-state-machines-r2";
   var RESULT_KEY = "techops_nightcrawler_last_result_v1";
   var READY_TIMEOUT = Math.max(4000, Number(root.TECHOPS_TITLE_READY_TIMEOUT) || 20000);
   var POLL_MS = 100;
@@ -22,6 +22,12 @@
   var lastResult = null;
   var ui = {};
   var gate = { phase: "loading", ready: false, detail: "Preparing the production runtime…", snapshot: null };
+
+  function setGatePhase(phase, event) {
+    var machines = root.TechOpsStateMachineInstrumentation;
+    gate.phase = machines && typeof machines.next === "function" ? machines.next("title-readiness", gate.phase, event, phase) : phase;
+    return gate.phase;
+  }
 
   var CARDS = {
     "btn-start": {
@@ -274,6 +280,7 @@
     var busy = gate.phase === "loading" || gate.phase === "launching";
     ui.screen.setAttribute("aria-busy", busy ? "true" : "false");
     ui.screen.setAttribute("data-title-readiness", gate.phase);
+    ui.screen.setAttribute("data-state-machine", "title-readiness");
     ui.readiness.setAttribute("data-state", gate.phase);
     if (gate.phase === "ready") ui.readinessLabel.textContent = "ALL MODES READY";
     else if (gate.phase === "failed") ui.readinessLabel.textContent = "SAFE STARTUP PAUSED";
@@ -301,7 +308,7 @@
   function fail(message) {
     stopPolling();
     launchMode = null;
-    gate.phase = "failed";
+    setGatePhase("failed", "launch.failed");
     gate.ready = false;
     gate.detail = safeString(message || "Production systems did not finish loading. Retry when ready.", 260);
     root.__productionTitleReadiness = { ready: false, phase: gate.phase, detail: gate.detail, snapshot: gate.snapshot, at: now(), version: VERSION };
@@ -315,13 +322,13 @@
     gate.snapshot = snapshot;
     if (snapshot.ready) {
       stopPolling();
-      gate.phase = "ready";
+      setGatePhase("ready", "runtime.ready");
       gate.ready = true;
       gate.detail = "Choose a shift. Every route now has its production authority.";
     } else if (deadline && now() >= deadline) {
       return fail("The production runtime is incomplete (" + waitingDetail(snapshot).replace(/^Loading\s+|…$/g, "") + "). No mode was started. Retry to check again.");
     } else {
-      gate.phase = "loading";
+      setGatePhase("loading", "runtime.loading");
       gate.ready = false;
       gate.detail = waitingDetail(snapshot);
     }
@@ -332,7 +339,7 @@
   function startPolling() {
     stopPolling();
     deadline = now() + READY_TIMEOUT;
-    gate.phase = "loading";
+    setGatePhase("loading", "retry");
     gate.ready = false;
     gate.detail = "Preparing the production runtime…";
     refresh();
@@ -352,7 +359,7 @@
     var authority = root.TechOpsGoodBoysButtonHardFix;
     if (mode !== "gooddogs" || launchMode !== mode || !titleVisible() || !authority || authority.launching !== false || !root.__goodBoysOpeningPhase || root.__goodBoysOpeningPhase.phase !== "title") return false;
     launchMode = null;
-    gate.phase = "ready";
+    setGatePhase("ready", "launch.cancelled");
     gate.ready = true;
     gate.detail = "Good Dogs opening cancelled. Choose any ready mode.";
     render();
@@ -389,7 +396,7 @@
       return false;
     }
     launchMode = mode;
-    gate.phase = "launching";
+    setGatePhase("launching", "launch.requested");
     gate.ready = false;
     gate.detail = mode === "gooddogs" ? "Handing off to the canonical Waldo’s House opening…" : "Handing off to the canonical Night Crawler route…";
     render();

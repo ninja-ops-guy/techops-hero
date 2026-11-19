@@ -61,6 +61,7 @@ const tests = [
   "test_good_dogs_bible_contract.js",
   "test_good_boys_access_core_sequence.js",
   "test_good_boys_ship_deck_mapping.js",
+  "test_runtime_state_machines.js",
   "test_production_mode_router.js",
   "test_production_title_experience.js",
   "test_production_presentation_guard.js",

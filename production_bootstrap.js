@@ -7,7 +7,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsProductionBootstrap)return;
-  var VERSION=49,BUILD="20261112-night-dispatch-r1",started=false,done=false;
+  var VERSION=51,BUILD="20261119-state-machines-r2",started=false,done=false;
   var FILES=[
     "runtime_mode_shell.js",
     "production_asset_registry.js",
