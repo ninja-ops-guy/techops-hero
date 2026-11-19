@@ -68,8 +68,9 @@ Thirty-three machines were identified. Some were already explicit or validated; 
 ### Developer experience
 
 - Transition graphs name valid states and events beside the runtime, rather than hiding them across boolean combinations.
-- `transition()` provides a strict result for tests; `next()` provides the compatibility seam for legacy coordinators.
-- Unexpected transitions include sequence, source, event, requested target, reason, details, and timestamp in a bounded history.
+- `TechOpsStateMachineInstrumentation.transition()` provides a strict result for tests; `next()` provides the compatibility seam for the two legacy coordinators.
+- Every finalized record distinguishes `contractTarget` from `effectiveTarget`. Compatibility records are complete before they enter history or reach listeners.
+- Unexpected transitions include sequence, source, event, effective target, reason, details, and timestamp in a bounded history.
 - The registry has no dependencies and does not alter save formats.
 
 ### Agent experience
@@ -88,9 +89,21 @@ TechOpsStateMachines.read("night-launch")
 
 // Inspect accepted and unexpected coordinator transitions.
 TechOpsStateMachines.history()
+
+// Evidence scope, truncation, initialization/reset and notification metadata.
+TechOpsStateMachines.evidence()
+
+// Observational cross-machine checks; these never rewrite runtime state.
+TechOpsStateMachines.invariants()
 ```
 
-Every inspection is read-only. `context-required` means the machine belongs to a record or actor, not that gameplay is broken. `registered: false` means live legacy state needs a contract review; it is not silently rewritten.
+Every inspection is read-only. The agent-facing object exports no transition or history-reset method. Production instrumentation is a separate capability, `TechOpsStateMachineInstrumentation`; history reset is private and not exported. This is capability separation for safe consumption, not a security boundary against arbitrary same-origin JavaScript.
+
+`context-required` means the machine belongs to a record or actor, not that gameplay is broken. `registered: false` means live legacy state needs a contract review; it is not silently rewritten. `inspect().authority` is always `observational`.
+
+Evidence is memory-only and scoped to the current page session. `evidence().truncated` and `dropped` reveal missing history; `oldestSequence`, `newestSequence`, and `nextSequence` identify the retained range. `resetCount` and `lastResetAt` distinguish initialization from later resets. `notificationErrors` records listener/dispatch failures without allowing them to change gameplay.
+
+`contractTarget` is the target defined by the registered map, or `null` for an undocumented edge. `effectiveTarget` is the final compatibility result. Both are finalized before history recording and `CustomEvent` emission. A listener receives a defensive copy and cannot mutate the stored record.
 
 ## Migration policy
 
@@ -109,7 +122,9 @@ Do not copy campaign, combat, cinematic, audio, or checkpoint state into the reg
 - all 33 unique contracts and their state references;
 - complete title and Night launch paths;
 - unexpected-transition compatibility behavior;
-- serializable read-only inspection and bounded history;
-- parser order and absence of registry-owned clocks or save writes.
+- serializable read-only inspection, bounded history, and truncation/reset metadata;
+- finalized compatibility records and listener-exception isolation;
+- the observational Night-ready/runtime-active cross-machine invariant;
+- parser order and absence of registry-owned clocks, public reset authority, or save writes.
 
 The production release gate includes this suite before the existing router and title regressions.

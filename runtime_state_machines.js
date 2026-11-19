@@ -9,7 +9,7 @@
 (function(root){
   "use strict";
   if(!root||root.TechOpsStateMachines)return;
-  var VERSION=1,HISTORY_LIMIT=160,history=[],sequence=0;
+  var VERSION=2,HISTORY_LIMIT=160,history=[],sequence=0,dropped=0,notificationErrors=0,initializedAt=Date.now();
 
   function clone(value){
     if(value==null||typeof value!=="object")return value;
@@ -194,34 +194,65 @@
     "save-recovery":function(){if(root.__techopsSaveLoadError||root.__techopsSaveError)return"failed";if(root.__techopsSaveRecovery)return root.__techopsSaveRecovery;if(root.__techopsSaveMigration&&root.__techopsSaveMigration.migrated)return"migrated";return"clean";}
   };
 
-  function record(entry){history.push(entry);if(history.length>HISTORY_LIMIT)history.splice(0,history.length-HISTORY_LIMIT);return entry;}
-  function transition(id,from,event,details){
+  function evidence(){
+    return{
+      scope:"page-session",persistent:false,capacity:HISTORY_LIMIT,retained:history.length,
+      dropped:dropped,truncated:dropped>0,complete:dropped===0,
+      initializedAt:initializedAt,resetCount:0,lastResetAt:null,
+      oldestSequence:history.length?history[0].sequence:null,
+      newestSequence:history.length?history[history.length-1].sequence:null,
+      nextSequence:sequence+1,notificationErrors:notificationErrors
+    };
+  }
+  function record(entry){
+    history.push(entry);
+    if(history.length>HISTORY_LIMIT){dropped+=history.length-HISTORY_LIMIT;history.splice(0,history.length-HISTORY_LIMIT);}
+    return entry;
+  }
+  function settle(id,from,event,fallback,compatibility,details){
     var machine=DEFINITIONS[id],target=machine&&machine.transitions[from]&&machine.transitions[from][event],accepted=typeof target==="string";
-    var result={sequence:++sequence,machine:id,from:from,event:event,to:accepted?target:from,accepted:accepted,details:details||null,at:Date.now()};
+    var effective=accepted?target:compatibility&&fallback!==undefined?fallback:from;
+    var result={sequence:++sequence,machine:id,from:from,event:event,to:effective,accepted:accepted,contractTarget:accepted?target:null,effectiveTarget:effective,compatibilityFallback:!accepted&&compatibility,details:details||null,at:Date.now()};
     if(!machine)result.reason="unknown-machine";else if(!machine.transitions[from])result.reason="unknown-state";else if(!accepted)result.reason="unexpected-transition";
-    record(result);
-    try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:state-transition",{detail:clone(result)}));}catch(_){}
+    if(compatibility&&!accepted&&machine&&machine.states.indexOf(effective)<0)result.reason="unregistered-legacy-state";
+    // Finalize before either history or listeners can observe the record. Event
+    // delivery is diagnostic only; listener failures cannot alter the transition.
+    Object.freeze(result);record(result);
+    try{if(root.dispatchEvent&&root.CustomEvent)root.dispatchEvent(new root.CustomEvent("techops:state-transition",{detail:clone(result)}));}catch(_){notificationErrors++;}
     return result;
   }
+  function transition(id,from,event,details){return settle(id,from,event,from,false,details);}
   function next(id,from,event,fallback,details){
-    var result=transition(id,from,event,details),machine=DEFINITIONS[id];
-    if(result.accepted)return result.to;
-    // Compatibility seam: never change legacy behavior because instrumentation
-    // discovered an undocumented edge. Make the edge visible and preserve it.
-    result.requested=fallback!==undefined?fallback:from;result.to=result.requested;
-    if(machine&&machine.states.indexOf(result.to)<0)result.reason="unregistered-legacy-state";
-    return result.to;
+    // Compatibility seam: record the final effective target, but never reject a
+    // legacy edge merely because its contract is incomplete.
+    return settle(id,from,event,fallback,true,details).to;
   }
   function read(id,input){
     var machine=DEFINITIONS[id];if(!machine)return{id:id,available:false,state:"unknown",reason:"unknown-machine"};
     var selector=SELECTORS[id];if(!selector)return{id:id,file:machine.file,kind:machine.kind,available:false,state:"context-required",reason:"Pass the owning record or actor to inspect this contextual machine."};
     try{var value=selector(input||{}),current=state(value);return{id:id,file:machine.file,kind:machine.kind,available:current!=="unavailable",state:current,registered:machine.states.indexOf(current)>=0};}catch(error){return{id:id,file:machine.file,kind:machine.kind,available:false,state:"error",reason:String(error&&error.message||error)};}
   }
-  function inspect(){var machines={};Object.keys(DEFINITIONS).forEach(function(id){machines[id]=read(id);});return{version:VERSION,at:Date.now(),machineCount:Object.keys(DEFINITIONS).length,machines:machines};}
+  function invariants(){
+    var launch=read("night-launch").state,night=root.TechOpsNightRuntime,health=null;
+    try{health=night&&typeof night.health==="function"?night.health():null;}catch(_){}
+    return[{
+      id:"night-ready-requires-active-runtime",
+      rule:"night-launch=ready implies an active Night runtime",
+      enforced:false,applicable:launch==="ready",
+      pass:launch==="ready"?!!(health&&health.active):null,
+      evidence:{launchPhase:launch,runtimeActive:health&&typeof health.active==="boolean"?health.active:null}
+    }];
+  }
+  function inspect(){var machines={};Object.keys(DEFINITIONS).forEach(function(id){machines[id]=read(id);});return{version:VERSION,authority:"observational",at:Date.now(),machineCount:Object.keys(DEFINITIONS).length,machines:machines,evidence:evidence(),invariants:invariants()};}
   function inventory(){return Object.keys(DEFINITIONS).map(function(id){return clone(DEFINITIONS[id]);});}
+  // Agent-facing surface: no writes, transition dispatch, or history reset.
+  // Same-origin scripts are not a security boundary; the separation prevents
+  // accidental misuse and makes evidence capabilities explicit to consumers.
   root.TechOpsStateMachines=Object.freeze({
-    VERSION:VERSION,transition:transition,next:next,read:read,inspect:inspect,inventory:inventory,
-    history:function(){return clone(history);},clearHistory:function(){history=[];sequence=0;return true;}
+    VERSION:VERSION,read:read,inspect:inspect,inventory:inventory,
+    evidence:evidence,invariants:invariants,history:function(){return clone(history);}
   });
+  // Production coordinators alone use this separate instrumentation capability.
+  root.TechOpsStateMachineInstrumentation=Object.freeze({VERSION:VERSION,transition:transition,next:next});
   if(typeof module!=="undefined"&&module.exports)module.exports=root.TechOpsStateMachines;
 })(typeof globalThis!=="undefined"?globalThis:this);
