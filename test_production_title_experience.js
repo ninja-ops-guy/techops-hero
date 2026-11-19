@@ -98,6 +98,11 @@ function boot(options = {}) {
   add(document, screen, "div", "title-hint", "MOVE · INTERACT");
   const dogs = add(document, screen, "button", "btn-v736", "GOOD DOGS PROTOCOL — CO-OP SIDE STORY");
   const night = add(document, screen, "button", "btn-nightcrawler", "NIGHT CRAWLER");
+  const restart = add(document, document.body, "dialog", "day-restart");
+  const keep = add(document, restart, "button", "day-restart-keep");
+  const replace = add(document, restart, "button", "day-restart-replace");
+  restart.showModal = () => { restart.open = true; };
+  restart.close = () => { restart.open = false; };
   const storage = new Map(Object.entries(options.storage || {}));
   let dogLaunches = 0;
   let nightLaunches = 0;
@@ -124,7 +129,8 @@ function boot(options = {}) {
     setTimeout() { return 1; },
     addEventListener(type, handler) { (rootListeners[type] ||= []).push(handler); },
     __productionBootstrapReady: ready,
-    TechOpsCampaign: ready ? {} : null,
+    TechOpsSaveKeys: { day: "techops_save", dayCheckpoint: "techops_day_checkpoint_v1" },
+    TechOpsCampaign: ready ? { SAVE_KEY: "techops_hero_campaign_v1" } : null,
     TechOpsCampaignNativeAct1: ready ? {} : null,
     TechOpsStory: ready ? {} : null,
     TechOpsGoodBoysButtonHardFix: {
@@ -139,7 +145,8 @@ function boot(options = {}) {
   context.globalThis = context;
   vm.createContext(context);
   vm.runInContext(SOURCE, context, { filename: "production_title_experience.js" });
-  return { context, document, screen, start, continuation, dogs, night, storage, counts: () => ({ dogLaunches, nightLaunches }) };
+  const guard = rootListeners.click[0];
+  return { context, document, screen, restart, keep, replace, guard, start, continuation, dogs, night, storage, counts: () => ({ dogLaunches, nightLaunches }) };
 }
 
 function event(target, type = "click") {
@@ -157,16 +164,53 @@ function event(target, type = "click") {
 
 assert.match(
   INDEX,
-  /v737_hooks\.js\?v=[\w-]+"><\/script><script src="production_title_experience\.js\?v=20260920-quality-r2"><\/script><script src="v742_hooks\.js/,
+  /v737_hooks\.js\?v=[\w-]+"><\/script><script src="production_title_experience\.js\?v=20261118-day-restart-r1"><\/script><script src="v742_hooks\.js/,
   "title authority must load immediately after v737 and before later wrappers"
 );
-assert.match(INDEX, /style\.css\?v=20260920-quality-r2/, "shared control CSS must bypass stale interaction styles");
-assert.match(SOURCE, /BUILD = "20260920-quality-r2"/, "runtime build marker must match the entrypoint");
+assert.match(INDEX, /style\.css\?v=20261118-day-restart-r1/, "shared control CSS must bypass stale interaction styles");
+assert.match(SOURCE, /BUILD = "20261118-day-restart-r1"/, "runtime build marker must match the entrypoint");
 assert.doesNotMatch(INDEX, /<script src="good_boys_mobile_launch_guard\.js/, "readiness gating must retire the duplicate parser-time mobile launch guard");
 assert.match(BOOTSTRAP, /"good_boys_mobile_launch_guard\.js"/, "the mobile launch guard must remain in the production bootstrap before readiness");
 assert.match(STYLE, /#title-mode-grid \.title-mode-card:focus-visible/, "mode cards need a visible keyboard focus treatment");
 assert.match(STYLE, /@media\(max-width:620px\)/, "mode cards need a narrow-screen composition");
 assert.match(STYLE, /prefers-reduced-motion:reduce/, "title motion must honor reduced-motion preference");
+
+// New Day can clear each of these independently, including an unreadable save
+// or a surviving backup with no primary. Keep alternate launch routes isolated.
+for (const key of ["techops_save", "techops_save_bak", "techops_day_checkpoint_v1", "techops_hero_campaign_v1"]) {
+  const b = boot({ storage: { [key]: "{unreadable" } });
+  const first = event(b.start);
+  b.guard(first);
+  assert.ok(first.immediateStopped && b.restart.open, key);
+  b.keep.listeners.click[0]();
+  assert.equal(b.restart.open, false);
+  assert.equal(b.storage.get(key), "{unreadable");
+
+  b.guard(event(b.start));
+  const confirmed = event(b.start);
+  b.start.click = () => b.guard(confirmed);
+  b.replace.listeners.click[0]();
+  assert.equal(confirmed.defaultPrevented, false, "the confirmed click can reach the canonical New Day handler");
+  const next = event(b.start);
+  b.guard(next);
+  assert.ok(next.immediateStopped, "consent applies only to that start");
+}
+{
+  const b = boot({ storage: { techops_nightcrawler_session_v1: "standalone" } });
+  const first = event(b.start);
+  b.guard(first);
+  assert.equal(first.defaultPrevented, false, "a standalone Night save is not a Day shift");
+  b.storage.set("techops_save", "existing");
+  for (const target of [b.continuation, b.dogs, b.night]) {
+    const ev = event(target);
+    b.guard(ev);
+    assert.equal(ev.defaultPrevented, false);
+  }
+  b.context.__techopsAlternateStartMode = "gooddogs";
+  const handoff = event(b.start);
+  b.guard(handoff);
+  assert.equal(handoff.defaultPrevented, false);
+}
 
 {
   const b = boot();

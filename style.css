@@ -270,6 +270,33 @@ body.v67-cb #battle-log .dmg { color: #e69f00; }
 #game,canvas,button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 
 /* ===== Production title / readiness experience ===== */
+#day-restart {
+  margin: auto;
+  width: min(27rem, calc(100% - 2rem));
+  padding: 1.25rem;
+  border: 1px solid #67c8ff;
+  border-radius: 10px;
+  background: #101c2a;
+  color: #eef6ff;
+  font: 1rem/1.5 "Courier New", monospace;
+}
+#day-restart::backdrop { background: rgba(3, 9, 20, .82); }
+#day-restart h2 { font-size: 1.25rem; }
+#day-restart p { margin: .65rem 0 1rem; }
+#day-restart div { display: flex; flex-wrap: wrap; gap: .65rem; }
+#day-restart button {
+  min-height: 44px;
+  padding: .5rem .75rem;
+  border: 1px solid #7794ab;
+  border-radius: 6px;
+  background: #172a3b;
+  color: inherit;
+  font: bold .875rem/1.3 "Courier New", monospace;
+  cursor: pointer;
+}
+#day-restart #day-restart-replace { color: #ffbdc6; }
+#day-restart button:focus-visible { outline: 3px solid #f8e49b; outline-offset: 2px; }
+
 #title-screen.production-title-experience{
   justify-content:flex-start;
   gap:14px;
