@@ -22,9 +22,11 @@ assert.ok(indexBytes < 250 * 1024, `index.html exceeds 250 KiB structural budget
 assert.ok(styleBytes < 160 * 1024, `style.css exceeds 160 KiB structural budget: ${styleBytes}`);
 // Day field experience adds four bounded concern modules to the prior 265.
 // See docs/DAY_FIELD_EXPERIENCE_2026-09-28.md. West Annex adds two bounded
-// Nightwalker concern modules. These structural allowances are not measured
+// Nightwalker concern modules. The state-machine registry adds one bounded,
+// dependency-free parser module. These structural allowances are not measured
 // startup certification; the exact-head performance gate still applies.
-assert.ok(local.length <= 273, `startup script count ${local.length} exceeds reviewed Nightwalker ceiling 273`);
+assert.ok(local.length <= 274, `startup script count ${local.length} exceeds reviewed state-registry ceiling 274`);
+assert.ok(fs.statSync('runtime_state_machines.js').size < 48*1024, 'state-machine registry exceeds the reviewed 48 KiB budget');
 const nightwalkerModules = ['campaign_nightwalker.js','campaign_nightwalker_runtime.js'];
 for (const file of nightwalkerModules) assert.strictEqual(localFiles.filter(f=>f===file).length,1,`${file} must load once`);
 assert.ok(nightwalkerModules.reduce((total,file)=>total+fs.statSync(file).size,0) < 64*1024, 'Nightwalker mission layers exceed the reviewed 64 KiB combined budget');
