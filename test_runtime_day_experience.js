@@ -220,3 +220,19 @@ test('office entry triggers standup once per entry and never after completion',(
  b.ctx.S.room={id:'itdept',x:.12};b.X.syncHud();b.X.syncHud();assert.equal(opened,1);
  c.flags.standup_completed=true;b.C.save(c,b.storage);b.ctx.S.room=null;b.ctx.S.px=21;b.ctx.S.py=16;b.X.syncHud();b.ctx.S.room={id:'itdept',x:.12};b.X.syncHud();assert.equal(opened,1);
 });
+
+test('inspection freezes only the backdrop, repaints on resize, and resumes floor rendering on exit',()=>{
+  const game=fs.readFileSync(path.join(__dirname,'game.js'),'utf8');
+  const loop=game.slice(game.indexOf('let last = 0;'),game.indexOf('// ---------- interaction ----------'));
+  const r={S:{inDialog:true,dayInteraction:'inspect'},cv:{width:390,height:844},ticks:0,paint:0,hud:0};
+  r.window={TechOpsDayExperience:{syncHud(){r.hud++;}}};
+  Object.assign(r,{requestAnimationFrame(){},step(){r.ticks++;},draw(){r.paint++;}});
+  vm.runInNewContext(loop,r);
+  r.loop(16);r.loop(32);
+  assert.equal(r.paint,1);
+  r.cv.width=844;r.loop(48);
+  assert.equal(r.paint,2);
+  r.S.inDialog=false;r.loop(64);r.loop(80);
+  assert.equal(r.paint,4);
+  assert.equal(r.ticks,5);assert.equal(r.hud,5);
+});

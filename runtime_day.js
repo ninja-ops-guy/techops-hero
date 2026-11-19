@@ -325,9 +325,14 @@
   }
   function syncHud(){
     if(root.document)checkOfficeEntry();
-    if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
+    if(!root.document)return;if(active&&!isDay())release();var s=gs();
+    var inRoom=!!(s&&s.room&&!s.nightMode);
+    if(root.document.body.classList.contains('day-room-visible')!==inRoom)root.document.body.classList[inRoom?'add':'remove']('day-room-visible');
+    var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
     if(!hud){hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);}
-    hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';return;}
+    if(hud.hidden!==!visible)hud.hidden=!visible;
+    if(root.document.body.classList.contains('day-route-visible')!==visible)root.document.body.classList[visible?'add':'remove']('day-route-visible');
+    if(!visible){lastHud='';return;}
     var w=world();if(!w)return;w.ensureWorld();var objective=w.nextObjective()||{},resolution=targetResolution(),nearby=resolution.target;
     var target=s.meta.dayRouteTarget||objective.stationId||objective.targetId||objective.id;
     var data={title:objective.title||objective.label||'Day shift',detail:objective.detail||objective.description||'Follow the workday. Inspect before making changes.',target:target,near:nearby&&nearby.id,choices:resolution.choose};var key=JSON.stringify(data);if(key===lastHud)return;lastHud=key;
