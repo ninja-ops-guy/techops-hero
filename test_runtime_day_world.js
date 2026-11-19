@@ -21,6 +21,40 @@ vm.runInContext("Math.random = () => 0.1;\n" + wanderHook + "\nstep(0);", wander
 assert.deepStrictEqual([board.x, board.y], [34, 12]);
 assert.deepStrictEqual([ambient.x, ambient.y], [24, 13]);
 
+// Tie the movement invariant to its player-visible consequence. The world
+// fixture omits unrelated equipment; interaction still uses the production
+// native wrapper and Day target resolver, including contact/person priority.
+{
+  const { boot, shift } = require('./test_helpers/gameplay_fixture');
+  const b = boot(), r = b.r;
+  shift(b);
+  r.COWORKERS = [{ id: 'amit', name: 'AMIT', x: 33, y: 13 }];
+  b.N.ensureWorld();
+  const contact = r.S.npcs.find(n => n.id === 'campaign_standup');
+  contact.x = 34; contact.y = 12;
+  r.S.npcs = [contact, { id: 'ordinary', ambient: true, x: 25, y: 12 }];
+  r.TechOpsDayWorld = { ensureWorld: () => true, nearby: () => [] };
+  r.coworkerTalk = npc => r.dlg(npc.name, 'Conversation', []);
+  vm.runInContext(fs.readFileSync(require.resolve('./runtime_day.js'), 'utf8'), r);
+  b.N.install();
+  r.step = () => {};
+  r.performance = { now: () => 3000 };
+  r.pick = items => items[0];
+  const offsets = [-1, 1];
+  r.R = () => offsets.shift();
+  vm.runInContext('Math.random = () => 0.1;\n' + wanderHook + '\nstep(0);', r);
+  // The production story-spine interval calls this placement authority.
+  b.N.ensureWorld();
+  r.S.px = 33; r.S.py = 14; r.S.meta.dayRouteTarget = 'mike_desk';
+  r.interact();
+  assert.strictEqual(r.dialog.name, 'AMIT', 'forced ambient wandering must preserve Amit dialogue ownership');
+  r.closeDlg();
+  contact.x = 33; contact.y = 13; // old checkpoint with the historical overlap
+  b.N.ensureWorld();
+  r.interact();
+  assert.strictEqual(r.dialog.name, 'AMIT', 'checkpoint contact repair must restore Amit dialogue ownership');
+}
+
 let campaign = { flags: {}, tickets: {}, investigations: {}, evidence: {} };
 global.TechOpsCampaign = { load() { return campaign; } };
 function makeMap(seed) {
