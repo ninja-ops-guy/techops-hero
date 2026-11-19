@@ -13,7 +13,7 @@
   "use strict";
   if(!root)return;
   try{if(root.TechOpsProductionModeRouter&&root.TechOpsProductionModeRouter.timer)root.clearInterval(root.TechOpsProductionModeRouter.timer);}catch(e){}
-  var VERSION=12,desired=null,timer=null,introAutomationAt=0,
+  var VERSION=13,desired=null,timer=null,introAutomationAt=0,
       nightLaunchPhase="idle",nightLaunchIssued=false,nightPollActive=false,
       nightCallbacks=[],nightTraceSeq=0,nightTitleStartIssued=false,
       nightDispatch=null,nightDispatchApproved=null;
@@ -43,8 +43,8 @@
 
   function nightSnapshot(event,extra){var s=state(),n=world(),o={seq:++nightTraceSeq,at:(root.performance&&typeof root.performance.now==="function")?root.performance.now():(Date.now?Date.now():0),event:event||"snapshot",phase:nightLaunchPhase,desired:desired,inDialog:!!(s&&s.inDialog),nightMode:!!(s&&s.nightMode),hasS:!!s,hasNM:!!n,runInitialized:runInitialized(),cinematic:nightCinematicVisible(),runtimeMounted:nightRuntimeMounted()};if(extra)for(var k in extra)if(Object.prototype.hasOwnProperty.call(extra,k))o[k]=extra[k];return o;}
   function nightTrace(event,extra){var a=root.__productionNightLaunchTrace||(root.__productionNightLaunchTrace=[]),o=nightSnapshot(event,extra);a.push(o);if(a.length>160)a.splice(0,a.length-160);root.__productionNightLaunchPhase=nightLaunchPhase;return o;}
-  function setNightPhase(phase,event,extra){nightLaunchPhase=phase;root.__productionNightLaunchPhase=phase;return nightTrace(event||("phase."+phase),extra);}
-  function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightDispatch=null;nightDispatchApproved=null;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture){nightLaunchPhase="intent";root.__productionNightLaunchPhase=nightLaunchPhase;nightTrace("intent.capture",{source:"document-capture"});}setNightPhase("launch","launch.begin");}
+  function setNightPhase(phase,event,extra){var machines=root.TechOpsStateMachines;nightLaunchPhase=machines&&typeof machines.next==="function"?machines.next("night-launch",nightLaunchPhase,event,phase):phase;root.__productionNightLaunchPhase=nightLaunchPhase;return nightTrace(event||("phase."+nightLaunchPhase),extra);}
+  function beginNightLaunch(fromCapture){nightLaunchIssued=false;nightPollActive=false;nightCallbacks=[];nightTitleStartIssued=false;nightDispatch=null;nightDispatchApproved=null;nightTraceSeq=0;root.__productionNightLaunchTrace=[];root.__productionNightLaunchOk=false;if(fromCapture)setNightPhase("intent","intent.capture",{source:"document-capture"});setNightPhase("launch","launch.begin");}
   function runNightCallbacks(){var cbs=nightCallbacks.splice(0);for(var i=0;i<cbs.length;i++)try{cbs[i]();}catch(e){}}
   function finishNightLaunch(){clearBlockingDialog();forceNightIdentity();restoreRuntimeUi();clearErrors();desired=null;root.__productionDesiredMode=null;root.__productionNightLaunchOk=true;root.__productionActiveMode="nightcrawler";setNightPhase("ready","router.ready");runNightCallbacks();}
   function failNightLaunch(reason,extra){root.__productionModeRouterError=reason||"night_runtime_timeout";setNightPhase("failed","launch.failed",extra||{});nightPollActive=false;nightCallbacks=[];setDesired(null);root.__techopsAlternateStartMode=null;root.__productionActiveMode=null;clearNightIdentity();try{var screen=root.document&&root.document.getElementById("title-screen");if(screen)screen.classList.remove("hidden");var title=root.TechOpsProductionTitleExperience;if(title&&typeof title.routeFailed==="function")title.routeFailed("nightcrawler",root.__productionModeRouterError);}catch(e){}}
