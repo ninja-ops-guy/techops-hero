@@ -1,0 +1,9 @@
+/* Small-screen readability overrides for the existing title and Night lifecycle.
+ * Kept separate from state ownership and gameplay rules. */
+@media(max-width:620px){
+  #title-screen.production-title-experience .t-line3{max-width:34ch;line-height:1.8;letter-spacing:2px;text-wrap:balance}
+  #title-screen.production-title-experience #title-flavor{margin-top:4px;font-size:11px;line-height:1.8}
+}
+@media(max-width:650px){
+  body #night-chapter{top:182px;font-size:11px;padding:10px 14px}
+}
