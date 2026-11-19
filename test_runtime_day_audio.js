@@ -63,6 +63,16 @@ function fixture(options = {}) {
     assert.equal(f.api.diagnostics().played, 6); assert(f.api.diagnostics().voices <= 4);
     assert(f.log.filter(x => x[0] === 'stop' && Number.isFinite(x[1])).every(x => x[1] < 3));
   });
+  await test('a replacement audio context can play the first cue immediately', () => {
+    const f = fixture();
+    f.api.unlock({ userGesture: true });
+    f.contexts[0].currentTime = 120;
+    assert.ok(f.api.emit('clue'));
+    f.contexts[0].state = 'closed';
+    f.api.unlock({ userGesture: true });
+    assert.ok(f.api.emit('clue'));
+    assert.equal(f.api.emit('clue'), false);
+  });
   await test('cue spam and unknown/prototype event names are ignored', () => {
     const f = fixture(); f.api.unlock({ userGesture: true }); assert(f.api.emit('clue')); assert.equal(f.api.emit('clue'), false);
     ['missing', 'toString', '__proto__'].forEach(type => assert.equal(f.api.emit(type), false));

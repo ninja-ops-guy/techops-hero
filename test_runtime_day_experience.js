@@ -61,6 +61,18 @@ test('Shipping’s printer cannot expose or collect workstation observations',()
   const b=boot();b.open('shipping_printer');assert(!b.ctx.document.getElementById('dlg-text').children.some(x=>x.dataset.dayAction==='screen'));assert.equal(b.X.transact('observe','queue_trace'),false);
   assert.equal(b.X.transact('observe','printer_self_test'),true);const c=b.C.load(b.storage);assert.deepEqual(json(b.I.getRecord(c,SHIPPING).evidence),['printer_self_test']);assert.equal(b.ctx.S.meta.dayCases,undefined);
 });
+test('re-reading the current printer note keeps the controls, save and discovery cue stable',()=>{
+  const b=boot(),sounds=[];
+  b.open('shipping_printer');
+  b.ctx.TechOpsDayAudio={emit(type){sounds.push(type);},unlock(){}};
+  b.click('observe','printer_self_test');
+  const control=b.button('observe','printer_self_test'),writes=b.storage.writes;
+  b.click('observe','printer_self_test');
+  b.click('physical');
+  assert.strictEqual(b.button('observe','printer_self_test'),control);
+  assert.equal(b.storage.writes,writes);
+  assert.deepEqual(sounds,['clue']);
+});
 test('all eight optional cases complete through the rendered action flow without canonical writes',()=>{
   const b=boot(),canon=b.storage.getItem(b.C.SAVE_KEY||'techops_hero_campaign_v1'),writes=b.storage.writes;
   for(const id of b.cases.ids()){
