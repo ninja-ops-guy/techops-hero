@@ -9,8 +9,8 @@
   "use strict";
   if (!root || !root.document || root.TechOpsProductionTitleExperience) return;
 
-  var VERSION = 2;
-  var BUILD = "20261119-state-machines-r1";
+  var VERSION = 3;
+  var BUILD = "20261119-state-machines-r2";
   var RESULT_KEY = "techops_nightcrawler_last_result_v1";
   var READY_TIMEOUT = Math.max(4000, Number(root.TECHOPS_TITLE_READY_TIMEOUT) || 20000);
   var POLL_MS = 100;
@@ -24,7 +24,7 @@
   var gate = { phase: "loading", ready: false, detail: "Preparing the production runtime…", snapshot: null };
 
   function setGatePhase(phase, event) {
-    var machines = root.TechOpsStateMachines;
+    var machines = root.TechOpsStateMachineInstrumentation;
     gate.phase = machines && typeof machines.next === "function" ? machines.next("title-readiness", gate.phase, event, phase) : phase;
     return gate.phase;
   }
