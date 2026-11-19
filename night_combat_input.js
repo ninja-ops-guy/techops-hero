@@ -134,6 +134,25 @@
     for(const type of ['pointerup','pointercancel','lostpointercapture','touchend','touchcancel','mouseup'])button.addEventListener(type,release,{passive:false});
     if(legacy)button.dataset.nightCombatPunch='true';
   }
+  // Toggles (MORE) are not combat actions, but they owe touch the same press
+  // pipeline: pointerdown owns the physical press, compatibility duplicates are
+  // suppressed, and keyboard/AT clicks (detail 0) still activate. A click-only
+  // listener never fires when a page-level touch handler prevents default.
+  function bindToggle(button,fn){
+    if(!button||bound.has(button))return;bound.add(button);
+    const press=e=>{
+      if(e.type==='pointerdown'&&e.button>0)return;
+      stop(e);
+      if((e.type==='touchstart'||e.type==='mousedown')&&root.PointerEvent)return;
+      if(e.type==='click'&&e.detail!==0)return;
+      if(button.disabled)return;
+      fn();
+    };
+    button.addEventListener('pointerdown',press,{capture:true});
+    button.addEventListener('touchstart',press,{capture:true,passive:false});
+    button.addEventListener('mousedown',press,{capture:true});
+    button.addEventListener('click',press,{capture:true});
+  }
   function sync(){
     const doc=root.document;if(!doc)return;
     const box=doc.getElementById('v55-nmbtns');if(!box)return;
@@ -156,7 +175,7 @@
     const dash=Array.from(box.children).find(b=>/DASH/.test(b.textContent||'')&&!b.id);
     if(dash){bindButton(dash,'dash');dash.hidden=active&&!assistControls;}
     let more=doc.getElementById('night-input-assists');
-    if(!more){more=doc.createElement('button');more.id='night-input-assists';more.type='button';more.className='v55-nbtn night-input-action';more.textContent='MORE';more.setAttribute('aria-label','Show optional dash and grab buttons');more.addEventListener('click',()=>{assistControls=!assistControls;sync();});box.appendChild(more);}
+    if(!more){more=doc.createElement('button');more.id='night-input-assists';more.type='button';more.className='v55-nbtn night-input-action';more.textContent='MORE';more.setAttribute('aria-label','Show optional dash and grab buttons');bindToggle(more,()=>{assistControls=!assistControls;sync();});box.appendChild(more);}
     more.hidden=!active;more.disabled=!enabled;more.setAttribute('aria-expanded',String(assistControls));
     const punch=doc.getElementById('tb-interact');bindButton(punch,'punch',true);
     if(active&&punch){
@@ -167,7 +186,7 @@
     else if(punch&&punch.dataset.nightCombatPunch==='true'){punch.removeAttribute('aria-label');punch.removeAttribute('title');}
     if(!enabled)reset();
   }
-  root.TechOpsNightInput={VERSION:4,owns,ready,contextAction,snapshot,dispatch,runStep,sync,reset};
+  root.TechOpsNightInput={VERSION:5,owns,ready,contextAction,snapshot,dispatch,runStep,sync,reset};
   if(root.addEventListener){
     root.addEventListener('keydown',keyDown,true);root.addEventListener('keyup',keyUp,true);
     root.addEventListener('blur',reset);
