@@ -164,11 +164,11 @@ function event(target, type = "click") {
 
 assert.match(
   INDEX,
-  /v737_hooks\.js\?v=[\w-]+"><\/script><script src="production_title_experience\.js\?v=20261119-state-machines-r1"><\/script><script src="v742_hooks\.js/,
+  /v737_hooks\.js\?v=[\w-]+"><\/script><script src="production_title_experience\.js\?v=20261119-state-machines-r2"><\/script><script src="v742_hooks\.js/,
   "title authority must load immediately after v737 and before later wrappers"
 );
-assert.match(INDEX, /style\.css\?v=20261119-state-machines-r1/, "shared control CSS must bypass stale interaction styles");
-assert.match(SOURCE, /BUILD = "20261119-state-machines-r1"/, "runtime build marker must match the entrypoint");
+assert.match(INDEX, /style\.css\?v=20261119-state-machines-r2/, "shared control CSS must bypass stale interaction styles");
+assert.match(SOURCE, /BUILD = "20261119-state-machines-r2"/, "runtime build marker must match the entrypoint");
 assert.doesNotMatch(INDEX, /<script src="good_boys_mobile_launch_guard\.js/, "readiness gating must retire the duplicate parser-time mobile launch guard");
 assert.match(BOOTSTRAP, /"good_boys_mobile_launch_guard\.js"/, "the mobile launch guard must remain in the production bootstrap before readiness");
 assert.match(STYLE, /#title-mode-grid \.title-mode-card:focus-visible/, "mode cards need a visible keyboard focus treatment");
