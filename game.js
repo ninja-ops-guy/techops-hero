@@ -1491,6 +1491,7 @@ function scheduleDayNotice(callback, delay) {
 
 // ---------- game loop ----------
 let last = 0;
+let inspectionBackdropWidth = 0, inspectionBackdropHeight = 0;
 function loop(t) {
   const dt = Math.min(.1, (t - last) / 1000); last = t;
   // Dispatch Night before the historical day wrappers can produce weather,
@@ -1498,7 +1499,18 @@ function loop(t) {
   const nightRuntime = window.TechOpsNightRuntime;
   const nightFrame = !!(nightRuntime && nightRuntime.frame(dt));
   if (nightFrame) window.__nightRuntimeLastOk = Date.now();
-  else { step(dt); draw(); }
+  else {
+    step(dt);
+    // Physical inspection owns the screen. Keep the office as a still
+    // backdrop while its DOM controls and status animations remain live.
+    const inspecting = S && S.inDialog && S.dayInteraction === "inspect" && !S.nightMode;
+    if (!inspecting || cv.width !== inspectionBackdropWidth || cv.height !== inspectionBackdropHeight) {
+      draw();
+      inspectionBackdropWidth = inspecting ? cv.width : 0;
+      inspectionBackdropHeight = inspecting ? cv.height : 0;
+    }
+  }
+  if (nightFrame) inspectionBackdropWidth = inspectionBackdropHeight = 0;
   if (window.TechOpsDayExperience) window.TechOpsDayExperience.syncHud();
   requestAnimationFrame(loop);
 }

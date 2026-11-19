@@ -61,6 +61,18 @@ test('Shipping’s printer cannot expose or collect workstation observations',()
   const b=boot();b.open('shipping_printer');assert(!b.ctx.document.getElementById('dlg-text').children.some(x=>x.dataset.dayAction==='screen'));assert.equal(b.X.transact('observe','queue_trace'),false);
   assert.equal(b.X.transact('observe','printer_self_test'),true);const c=b.C.load(b.storage);assert.deepEqual(json(b.I.getRecord(c,SHIPPING).evidence),['printer_self_test']);assert.equal(b.ctx.S.meta.dayCases,undefined);
 });
+test('re-reading the current printer note keeps the controls, save and discovery cue stable',()=>{
+  const b=boot(),sounds=[];
+  b.open('shipping_printer');
+  b.ctx.TechOpsDayAudio={emit(type){sounds.push(type);},unlock(){}};
+  b.click('observe','printer_self_test');
+  const control=b.button('observe','printer_self_test'),writes=b.storage.writes;
+  b.click('observe','printer_self_test');
+  b.click('physical');
+  assert.strictEqual(b.button('observe','printer_self_test'),control);
+  assert.equal(b.storage.writes,writes);
+  assert.deepEqual(sounds,['clue']);
+});
 test('all eight optional cases complete through the rendered action flow without canonical writes',()=>{
   const b=boot(),canon=b.storage.getItem(b.C.SAVE_KEY||'techops_hero_campaign_v1'),writes=b.storage.writes;
   for(const id of b.cases.ids()){
@@ -207,4 +219,20 @@ test('office entry triggers standup once per entry and never after completion',(
  const b=boot();const c=b.C.createInitialState();b.C.save(c,b.storage);let opened=0;b.ctx.TechOpsCampaignNativeAct1.openStandup=()=>opened++;
  b.ctx.S.room={id:'itdept',x:.12};b.X.syncHud();b.X.syncHud();assert.equal(opened,1);
  c.flags.standup_completed=true;b.C.save(c,b.storage);b.ctx.S.room=null;b.ctx.S.px=21;b.ctx.S.py=16;b.X.syncHud();b.ctx.S.room={id:'itdept',x:.12};b.X.syncHud();assert.equal(opened,1);
+});
+
+test('inspection freezes only the backdrop, repaints on resize, and resumes floor rendering on exit',()=>{
+  const game=fs.readFileSync(path.join(__dirname,'game.js'),'utf8');
+  const loop=game.slice(game.indexOf('let last = 0;'),game.indexOf('// ---------- interaction ----------'));
+  const r={S:{inDialog:true,dayInteraction:'inspect'},cv:{width:390,height:844},ticks:0,paint:0,hud:0};
+  r.window={TechOpsDayExperience:{syncHud(){r.hud++;}}};
+  Object.assign(r,{requestAnimationFrame(){},step(){r.ticks++;},draw(){r.paint++;}});
+  vm.runInNewContext(loop,r);
+  r.loop(16);r.loop(32);
+  assert.equal(r.paint,1);
+  r.cv.width=844;r.loop(48);
+  assert.equal(r.paint,2);
+  r.S.inDialog=false;r.loop(64);r.loop(80);
+  assert.equal(r.paint,4);
+  assert.equal(r.ticks,5);assert.equal(r.hud,5);
 });

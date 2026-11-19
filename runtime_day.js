@@ -64,6 +64,14 @@
         var e=def.evidence.find(function(item){return item.id===value;});
         if(!e||e.surface!==active.surface)throw new Error('Use the correct physical or screen view to make that observation.');
         if(station.ticketId==='shipping_cannot_print'&&((e.surface==='physical'&&station.id!=='shipping_printer')||(e.surface==='screen'&&station.id!=='shipping_workstation')))throw new Error('This observation belongs to the other device. Follow its floor route.');
+        if(rec.evidence.includes(value)){
+          // Re-reading a note is a UI action. Keep the current view still when
+          // the same note is already visible, including its keyboard focus.
+          if(active.notice!==e.text||active.error){
+            active.notice=e.text;active.error=false;cue('inspect');if(refresh)render();
+          }
+          return true;
+        }
         feedback=e.text;sound='clue';
       }
       if(data.canonical){
@@ -181,6 +189,8 @@
     var owner=active,version=++owner.view,box=root.document.getElementById('dlg-text');
     var previous=root.document.activeElement,inside=box.contains&&box.contains(previous);
     var pane=inside&&box.querySelector('.doors-pane'),scroll=pane&&pane.scrollTop;
+    var workspace=box.querySelector('.day-workspace'),evidence=box.querySelector('.day-evidence');
+    var workspaceTop=workspace&&workspace.scrollTop,evidenceTop=evidence&&evidence.scrollTop;
     var previousWindow=pane&&pane.parentElement.getAttribute('aria-label');
     box.onclick=null;box.innerHTML=html;
     var buttons=Array.from(box.querySelectorAll('[data-day-action]'));
@@ -191,7 +201,7 @@
       if(a==='route')return routeTo(v);
       if(a==='requester-route')return goRequester(v);
       if(a==='physical'||a==='screen'){
-        if(a==='screen'&&!canScreen)return;
+        if(a===active.surface||(a==='screen'&&!canScreen))return;
         active.surface=a;active.notice='';active.error=false;active.doors=null;
         if(root.TechOpsDayAudio)root.TechOpsDayAudio.onContext(a==='screen'?'desktop':'inspection');
         cue('transition');render();return;
@@ -206,14 +216,18 @@
       transact(a,v);
     };});
     gs().dayInteraction=owner.surface==='screen'?'workstation':'inspect';
+    if(workspace&&owner.surface==='physical'){
+      box.querySelector('.day-workspace').scrollTop=workspaceTop;
+      box.querySelector('.day-evidence').scrollTop=evidenceTop;
+    }
     if(inside){
       var nextPane=box.querySelector('.doors-pane');
       if(nextPane&&previousWindow===nextPane.parentElement.getAttribute('aria-label'))nextPane.scrollTop=scroll;
       var visible=buttons.filter(b=>b.getClientRects().length);
-      var same=visible.find(function(b){return b.dataset.dayAction===previous.dataset.dayAction&&b.dataset.value===previous.dataset.value;});
+      var same=visible.find(function(b){return b.dataset.dayAction===previous.dataset.dayAction&&b.dataset.value===previous.dataset.value&&b.classList.contains('day-hotspot')===previous.classList.contains('day-hotspot');});
       if(nextPane&&previousWindow!==nextPane.parentElement.getAttribute('aria-label'))same=null;
       var next=same||box.querySelector('[data-doors-heading]')||visible.find(b=>b.dataset.dayAction==='doors-task')||visible.find(b=>b.dataset.dayAction==='doors-open')||visible[0];
-      if(next)next.focus();
+      if(next)next.focus({preventScroll:!!same});
     }
   }
   function openDevice(station){
@@ -311,9 +325,14 @@
   }
   function syncHud(){
     if(root.document)checkOfficeEntry();
-    if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
+    if(!root.document)return;if(active&&!isDay())release();var s=gs();
+    var inRoom=!!(s&&s.room&&!s.nightMode);
+    if(root.document.body.classList.contains('day-room-visible')!==inRoom)root.document.body.classList[inRoom?'add':'remove']('day-room-visible');
+    var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
     if(!hud){hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);}
-    hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';return;}
+    if(hud.hidden!==!visible)hud.hidden=!visible;
+    if(root.document.body.classList.contains('day-route-visible')!==visible)root.document.body.classList[visible?'add':'remove']('day-route-visible');
+    if(!visible){lastHud='';return;}
     var w=world();if(!w)return;w.ensureWorld();var objective=w.nextObjective()||{},resolution=targetResolution(),nearby=resolution.target;
     var target=s.meta.dayRouteTarget||objective.stationId||objective.targetId||objective.id;
     var data={title:objective.title||objective.label||'Day shift',detail:objective.detail||objective.description||'Follow the workday. Inspect before making changes.',target:target,near:nearby&&nearby.id,choices:resolution.choose};var key=JSON.stringify(data);if(key===lastHud)return;lastHud=key;

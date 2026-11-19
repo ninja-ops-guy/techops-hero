@@ -66,6 +66,8 @@
       silence();
       try { if (bus) bus.disconnect(); } catch (_) {}
       context = shared; bus = null;
+      // Cue timestamps belong to the previous context's audio clock.
+      lastCue = Object.create(null);
     }
     if (!bus) { const next = context.createGain(); next.connect(context.destination); bus = next; }
     return context;
