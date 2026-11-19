@@ -2,7 +2,7 @@
  * Production playback contract:
  *   - authored movie is the only cinematic image on screen
  *   - fresh <video> element for every play() session (no stale media lifecycle)
- *   - muted + playsInline autoplay begins immediately; media events are retries, not the trigger
+ *   - muted + playsInline autoplay begins immediately; sound requires a player gesture
  *   - user PLAY fallback only on actual failure/stall
  *   - reveal only after a decoded frame exists
  *   - only COMPLETED or USER_SKIPPED advances campaign state
@@ -11,14 +11,14 @@
   "use strict";
   const BASE="assets/cutscenes/good_dogs/";
   const CLIPS={
-    GD_CUT_01:{src:BASE+"01_signal_beyond_earth_pixel.mp4"},
+    GD_CUT_01:{src:BASE+"01_signal_beyond_earth_pixel.mp4",hasAudio:true},
     GD_CUT_02:{src:BASE+"02_signal_pull_transition_pixel.mp4?v=20260903-picked-pilot-attack-r1"},
-    GD_CUT_03:{src:BASE+"03_orbital_approach_pixel.mp4",retired:true},
-    GD_CUT_04:{src:BASE+"04_cell118_triple_jump_to_terminal_pixel.mp4"},
-    GD_CUT_05:{src:BASE+"05_cell118_approach_k_reveal_pixel.mp4"},
-    GD_CUT_06:{src:BASE+"06_k_freed_prison_escort_pixel.mp4"},
-    GD_CUT_07:{src:BASE+"07_cell1984_hack_pixel.mp4"},
-    GD_CUT_08:{src:BASE+"08_team_reunited_exit_pixel.mp4"}
+    GD_CUT_03:{src:BASE+"03_orbital_approach_pixel.mp4",retired:true,hasAudio:true},
+    GD_CUT_04:{src:BASE+"04_cell118_triple_jump_to_terminal_pixel.mp4",hasAudio:true},
+    GD_CUT_05:{src:BASE+"05_cell118_approach_k_reveal_pixel.mp4",hasAudio:true},
+    GD_CUT_06:{src:BASE+"06_k_freed_prison_escort_pixel.mp4",hasAudio:true},
+    GD_CUT_07:{src:BASE+"07_cell1984_hack_pixel.mp4",hasAudio:true},
+    GD_CUT_08:{src:BASE+"08_team_reunited_exit_pixel.mp4",hasAudio:true}
   };
   const STATUS=Object.freeze({COMPLETED:"COMPLETED",USER_SKIPPED:"USER_SKIPPED"});
   const H264_MIME='video/mp4; codecs="avc1.42E01E"';
@@ -44,7 +44,7 @@
     let root=document.getElementById("good-dogs-cutscene-overlay");
     if(!root){
       root=document.createElement("div");root.id="good-dogs-cutscene-overlay";root.setAttribute("role","dialog");root.setAttribute("aria-modal","true");root.setAttribute("aria-label","Good Dogs cinematic");root.setAttribute("aria-describedby","gd-film-status");
-      root.innerHTML='<div class="gd-film-frame"><p id="gd-film-status" class="gd-film-status" role="status" aria-live="polite"></p><button class="gd-film-play" type="button">PLAY CUTSCENE</button><button class="gd-film-pause" type="button">PAUSE</button><button class="gd-film-skip" type="button">SKIP</button></div>';
+      root.innerHTML='<div class="gd-film-frame"><p id="gd-film-status" class="gd-film-status" role="status" aria-live="polite"></p><button class="gd-film-play" type="button">PLAY CUTSCENE</button><button class="gd-film-pause" type="button">PAUSE</button><button class="gd-film-sound" type="button" aria-label="Cutscene sound">TURN SOUND ON</button><button class="gd-film-skip" type="button">SKIP</button></div>';
       document.body.appendChild(root);
     }
     const frame=root.querySelector(".gd-film-frame")||root;
@@ -60,6 +60,7 @@
       .gd-film-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:1;visibility:visible}
       .gd-film-play{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;min-width:210px;min-height:58px;padding:12px 18px;border:1px solid #8df1ce;background:#071019f2;color:#fff;font:700 13px monospace;letter-spacing:.08em;touch-action:manipulation}.gd-film-play.active{display:block}
       .gd-film-skip{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));z-index:11;min-width:86px;min-height:48px;background:#09121bf2;color:#fff;border:1px solid #71879a;padding:8px 12px;font:700 12px monospace;touch-action:manipulation}
+      .gd-film-sound{position:absolute;left:max(10px,env(safe-area-inset-left));top:calc(max(8px,env(safe-area-inset-top)) + 56px);z-index:11;min-height:48px;padding:8px 12px;background:#09121bf2;color:#fff;border:1px solid #71879a;font:700 12px monospace;touch-action:manipulation}.gd-film-sound[hidden]{display:none}
       .gd-film-status{position:absolute;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:10;width:fit-content;max-width:calc(100% - 32px);margin:0 auto;padding:8px 12px;background:#071019e8;color:#e8f8ff;font:12px/1.5 monospace;text-align:center;pointer-events:none}.gd-playing .gd-film-status{opacity:0}.gd-film-pause{position:absolute;left:max(10px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));z-index:11;min-height:48px;min-width:86px;background:#09121bf2;color:#fff;border:1px solid #71879a;font:700 12px monospace}.gd-film-pause[hidden]{display:none}#good-dogs-cutscene-overlay button:focus-visible{outline:3px solid #ffe0a2;outline-offset:3px}
       @supports(height:100dvh){.gd-film-frame{height:100dvh}}@media(prefers-reduced-motion:reduce){#good-dogs-cutscene-overlay *{scroll-behavior:auto}}
     `;(document.head||document.documentElement).appendChild(css);
@@ -70,11 +71,12 @@
     const def=CLIPS[id];if(!def)throw new Error("Unknown Good Dogs cutscene: "+id);if(def.retired&&!options.force)throw new Error("Retired Good Dogs cutscene: "+id);
     ensureCss();
     const previousFocus=document.activeElement;
-    const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip"),pauseBtn=root.querySelector(".gd-film-pause"),status=root.querySelector(".gd-film-status");
+    const root=makeOverlay(),frame=root.querySelector(".gd-film-frame"),playBtn=root.querySelector(".gd-film-play"),skip=root.querySelector(".gd-film-skip"),pauseBtn=root.querySelector(".gd-film-pause"),soundBtn=root.querySelector(".gd-film-sound"),status=root.querySelector(".gd-film-status");
     const ticket=++sessionSerial,state=ensureState(),priorOverflow=document.body.style.overflow,ios=isIOSDevice(),autoRequested=options.autoplay!==false;
-    const video=document.createElement("video");video.className="gd-film-video";video.playsInline=true;video.muted=true;video.defaultMuted=true;video.volume=0;video.preload="auto";video.autoplay=autoRequested;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");if(autoRequested)video.setAttribute("autoplay","");frame.insertBefore(video,playBtn);
+    const video=document.createElement("video");video.className="gd-film-video";video.playsInline=true;video.muted=true;video.defaultMuted=true;video.volume=1;video.preload="auto";video.autoplay=autoRequested;video.setAttribute("playsinline","");video.setAttribute("webkit-playsinline","");video.setAttribute("muted","");if(autoRequested)video.setAttribute("autoplay","");frame.insertBefore(video,playBtn);
     root.classList.add("active");root.dataset.activeCutscene=id;document.body.style.overflow="hidden";frame.classList.remove("gd-playing","gd-frame-ready");playBtn.classList.remove("active");skip.disabled=false;skip.textContent="SKIP";
     const capability=mediaCapability(video,options.mimeType),settlement=createSettlementGate();
+    soundBtn.hidden=!def.hasAudio||!capability.supported;soundBtn.textContent="TURN SOUND ON";soundBtn.setAttribute("aria-pressed","false");
     let done=false,startTimer=0,stallTimer=0,hardTimer=0,lastTime=-1,progressed=false,retryReason="",playInFlight=false,frameRevealed=false,autoAttempted=false,deferredEnded=false;
     status.textContent="Loading cinematic. You can skip at any time.";pauseBtn.hidden=true;skip.focus();
     window.__goodDogsCutscenePresentation={id,authoredVideoOnly:true,poster:false,proceduralPlate:false,crt:false,vignette:false,freshVideoNode:true,session:ticket,at:Date.now()};
@@ -83,7 +85,7 @@
     return new Promise(resolve=>{
       const valid=()=>ticket===sessionSerial&&!done&&!settlement.settled();
       const clearTimers=()=>{clearTimeout(startTimer);clearTimeout(stallTimer);clearTimeout(hardTimer);startTimer=stallTimer=hardTimer=0;};
-      const cleanup=()=>{clearTimers();video.onended=null;video.onerror=null;video.onloadedmetadata=null;video.onloadeddata=null;video.oncanplay=null;video.onplaying=null;video.ontimeupdate=null;video.onwaiting=null;video.onstalled=null;skip.removeEventListener("click",skipEvent);playBtn.removeEventListener("click",playEvent);pauseBtn.removeEventListener("click",pauseEvent);document.removeEventListener("keydown",key,true);document.removeEventListener("visibilitychange",visibility);};
+      const cleanup=()=>{clearTimers();video.onended=null;video.onerror=null;video.onloadedmetadata=null;video.onloadeddata=null;video.oncanplay=null;video.onplaying=null;video.ontimeupdate=null;video.onwaiting=null;video.onstalled=null;skip.removeEventListener("click",skipEvent);playBtn.removeEventListener("click",playEvent);pauseBtn.removeEventListener("click",pauseEvent);soundBtn.removeEventListener("click",soundEvent);document.removeEventListener("keydown",key,true);document.removeEventListener("visibilitychange",visibility);};
       const finish=(resultStatus,source)=>{
         if(!valid()||document.hidden||!settlement.claim())return false;done=true;const skipped=resultStatus===STATUS.USER_SKIPPED,at=Date.now(),currentTime=Number(video.currentTime||0),readyState=Number(video.readyState||0);
         window.__goodDogsCutsceneExit={id,status:resultStatus,skipped,source,at,currentTime,readyState,ios,session:ticket};
@@ -107,9 +109,10 @@
       const skipEvent=e=>{if(!valid()||document.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}skip.disabled=true;skip.textContent="SKIPPING…";finish(STATUS.USER_SKIPPED,"click-skip");};
       const playEvent=e=>{if(!valid()||!capability.supported||document.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}if(deferredEnded){finish(STATUS.COMPLETED,"visible-resume");return;}progressed=false;if(retryReason==="media-error"){try{video.pause();video.src=options.src||def.src;video.load();}catch(_){}}attemptPlay();};
       const pauseEvent=e=>{try{e.preventDefault();e.stopPropagation();}catch(_){}waitForUser("user-paused");};
+      const soundEvent=e=>{if(!valid()||document.hidden||soundBtn.hidden)return;try{e.preventDefault();e.stopPropagation();}catch(_){}video.muted=!video.muted;soundBtn.textContent=video.muted?"TURN SOUND ON":"MUTE SOUND";soundBtn.setAttribute("aria-pressed",video.muted?"false":"true");};
       const visibility=()=>{if(!valid())return;if(document.hidden)waitForUser(capability.supported?"tab-hidden":"codec-unsupported");else if(retryReason==="tab-hidden")(capability.supported?playBtn:skip).focus();};
-      const key=e=>{if(!valid())return;if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();finish(STATUS.USER_SKIPPED,"keyboard-skip");}else if(e.key==="Tab"){e.preventDefault();e.stopImmediatePropagation();const buttons=[playBtn,pauseBtn,skip].filter(b=>!b.disabled&&!b.hidden&&(b!==playBtn||b.classList.contains("active"))),i=buttons.indexOf(document.activeElement);buttons[i<0?(e.shiftKey?buttons.length-1:0):(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}};
-      skip.addEventListener("click",skipEvent);playBtn.addEventListener("click",playEvent);pauseBtn.addEventListener("click",pauseEvent);document.addEventListener("keydown",key,true);document.addEventListener("visibilitychange",visibility);
+      const key=e=>{if(!valid())return;if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();finish(STATUS.USER_SKIPPED,"keyboard-skip");}else if(e.key==="Tab"){e.preventDefault();e.stopImmediatePropagation();const buttons=[playBtn,pauseBtn,soundBtn,skip].filter(b=>!b.disabled&&!b.hidden&&(b!==playBtn||b.classList.contains("active"))),i=buttons.indexOf(document.activeElement);buttons[i<0?(e.shiftKey?buttons.length-1:0):(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}};
+      skip.addEventListener("click",skipEvent);playBtn.addEventListener("click",playEvent);pauseBtn.addEventListener("click",pauseEvent);soundBtn.addEventListener("click",soundEvent);document.addEventListener("keydown",key,true);document.addEventListener("visibilitychange",visibility);
       video.onended=()=>{if(!valid())return;if(document.hidden){deferredEnded=true;waitForUser("tab-hidden");return;}finish(STATUS.COMPLETED,"ended");};
       video.onerror=()=>waitForUser("media-error");
       video.onloadedmetadata=attemptAutoplay;video.onloadeddata=attemptAutoplay;video.oncanplay=attemptAutoplay;

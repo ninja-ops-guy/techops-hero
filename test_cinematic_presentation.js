@@ -106,6 +106,23 @@ const flush = async () => {for (let i = 0; i < 8; i++) await Promise.resolve();}
     play.emit('click', event()); h.step(); await flush(); assert.strictEqual((await result).status, 'COMPLETED'); assert.strictEqual(writes, 1);
   }
   {
+    const h = harness(); h.load('good_dogs_cutscenes_v2_2.js'); let writes = 0;
+    const result = h.root.GoodDogsCutscenes.play('GD_CUT_01', {onStateWrite() {writes++;}});
+    const overlay = h.doc.getElementById('good-dogs-cutscene-overlay'), video = overlay.querySelector('video'), sound = overlay.querySelector('.gd-film-sound');
+    assert.strictEqual(video.muted, true, 'autoplay starts muted'); assert.strictEqual(video.volume, 1);
+    assert.strictEqual(sound.hidden, false); assert.strictEqual(sound.attributes['aria-pressed'], 'false');
+    sound.focus(); h.doc.emit('keydown', event({key: 'Tab'})); assert.strictEqual(h.doc.activeElement, overlay.querySelector('.gd-film-skip'));
+    sound.emit('click', event()); assert.strictEqual(video.muted, false); assert.strictEqual(sound.attributes['aria-pressed'], 'true');
+    sound.emit('click', event()); assert.strictEqual(video.muted, true);
+    h.visibility(true); sound.emit('click', event()); assert.strictEqual(video.muted, true, 'hidden controls cannot enable sound');
+    h.visibility(false); assert.strictEqual(writes, 0, 'audio choice never advances the story');
+    const staleSound = [...sound.listeners.get('click')][0]; overlay.querySelector('.gd-film-skip').emit('click', event()); h.step(); await flush(); await result;
+    const next = h.root.GoodDogsCutscenes.play('GD_CUT_02');
+    const nextVideo = overlay.querySelector('video'); assert.strictEqual(sound.hidden, true, 'silent film has no sound control');
+    staleSound(event()); assert.strictEqual(nextVideo.muted, true, 'retired sound handler cannot affect another session');
+    overlay.querySelector('.gd-film-skip').emit('click', event()); h.step(); await flush(); await next;
+  }
+  {
     const h = harness(); h.load('good_dogs_home_scene.js');
     const result = h.root.TechOpsGoodDogsHomeScene.play(); await flush();
     const overlay = h.doc.getElementById('good-dogs-home-scene'), next = overlay.querySelector('#gd-home-next'), skip = overlay.querySelector('#gd-home-skip'), staleSkip = skip.onclick;
