@@ -588,9 +588,21 @@ function loadDayCheckpoint(profile) {
     const state = envelope && (envelope.version === 1 || envelope.version === 2) && envelope.state;
     if (!state || !state.map || !Array.isArray(state.npcs) || !Array.isArray(state.tickets) || Number(state.day) !== Number(profile && profile.day)) return null;
     if (state.nightMode || state.inBattle || state.gameOver) return null;
-    const checkpointRevision = Number(envelope.savedAt || state._saveRevision || 0);
-    const profileRevision = Number(profile && profile._saveRevision || 0);
-    if (profileRevision && checkpointRevision < profileRevision) return null;
+    // Continue loads the profile first, which may have rolled back to a backup.
+    // A later scene from the same day must not replace that recovered state.
+    const revision = profile._saveRevision;
+    if (envelope.version === 2) {
+      if (!Number.isSafeInteger(revision) || revision <= 0 ||
+          envelope.savedAt !== revision || state._saveRevision !== revision) return null;
+    } else {
+      // Legacy scenes can predate revision stamps. Keep the same-day fallback
+      // for those pairs, and check any available revision against the profile.
+      if (state._saveRevision !== undefined && state._saveRevision !== revision) return null;
+      if (revision !== undefined && (envelope.savedAt ?? state._saveRevision) !== revision) return null;
+    }
+    const profileLink = profile.meta?.seeWorldLink;
+    const sceneLink = state.meta?.seeWorldLink;
+    if (profileLink?.profileId !== sceneLink?.profileId || profileLink?.runId !== sceneLink?.runId) return null;
     // setupDay deliberately stores the same ticket objects in both arrays.
     // JSON cannot preserve that alias, so re-link it before gameplay resumes.
     state.tickets = state.tickets.map(ticket => {

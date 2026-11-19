@@ -10,7 +10,7 @@
   if (!root || !root.document || root.TechOpsProductionTitleExperience) return;
 
   var VERSION = 1;
-  var BUILD = "20260920-quality-r2";
+  var BUILD = "20261118-day-restart-r1";
   var RESULT_KEY = "techops_nightcrawler_last_result_v1";
   var READY_TIMEOUT = Math.max(4000, Number(root.TECHOPS_TITLE_READY_TIMEOUT) || 20000);
   var POLL_MS = 100;
@@ -451,6 +451,47 @@
     return launchAlternate(mode);
   }
 
+  // Guard the click before document and target listeners can claim a new linked
+  // run or clear its snapshot. Replay the canonical start only after consent.
+  function installDayRestartGuard() {
+    var dialog = byId("day-restart");
+    var start = byId("btn-start");
+    if (!dialog || !start) return;
+    var replacing = false;
+    byId("day-restart-keep").addEventListener("click", function () { dialog.close(); });
+    byId("day-restart-replace").addEventListener("click", function () {
+      dialog.close();
+      replacing = true;
+      try { start.click(); } finally { replacing = false; }
+    });
+    root.addEventListener("click", function (ev) {
+      if (closestAction(ev.target) !== start || replacing || !titleVisible() ||
+          !gate.ready || launchMode || root.__techopsAlternateStartMode || root.__productionDesiredMode) return;
+      var keys = root.TechOpsSaveKeys;
+      try {
+        var hasSave = [keys.day, "techops_save_bak", keys.dayCheckpoint, root.TechOpsCampaign.SAVE_KEY]
+          .some(function (key) { return root.localStorage.getItem(key) !== null; });
+        if (!hasSave) return;
+      } catch (_) {
+        stop(ev);
+        gate.detail = "Browser storage is unavailable. The saved shift could not be checked.";
+        render();
+        return;
+      }
+      if (typeof dialog.showModal !== "function") {
+        if (root.confirm("Replace your saved Day campaign and its backup with a new shift?")) return;
+        stop(ev);
+        return;
+      }
+      stop(ev);
+      if (!dialog.open) {
+        start.focus();
+        dialog.showModal();
+      }
+    }, true);
+  }
+
+  installDayRestartGuard();
   consumeNightResult();
   doc.addEventListener("pointerup", capture, true);
   doc.addEventListener("click", capture, true);

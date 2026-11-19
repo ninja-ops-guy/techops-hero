@@ -65,7 +65,25 @@ try {
     localStorage.setItem("techops_save", JSON.stringify({ day: 2, clock: 900, budget: 999, meta: { marker: "stale-run" } }));
     localStorage.setItem("techops_save_bak", JSON.stringify({ day: 8, meta: { marker: "stale-backup" } }));
   });
-  await page.locator("#btn-start").click();
+  const savedDayState = () => page.evaluate(() => Object.fromEntries(
+    Object.keys(localStorage).filter(key => key.startsWith("techops")).map(key => [key, localStorage.getItem(key)])
+  ));
+  const previousShift = await savedDayState();
+  const dayStart = page.locator("#btn-start");
+  const restart = page.getByRole("dialog", { name: "Start a new Day Shift?" });
+  await dayStart.click();
+  await restart.waitFor();
+  assert.equal(await page.evaluate(() => document.activeElement?.id), "day-restart-keep");
+  await page.keyboard.press("Escape");
+  await restart.waitFor({ state: "hidden" });
+  assert.deepEqual(await savedDayState(), previousShift);
+  await dayStart.press("Enter");
+  await restart.getByRole("button", { name: "Keep saved shift" }).click();
+  assert.deepEqual(await savedDayState(), previousShift);
+  assert.equal(await dayStart.isVisible(), true);
+  await dayStart.click();
+  await restart.getByRole("button", { name: "Replace and start over" }).click();
+  report.checks.push("Escape and Keep saved shift preserve the existing Day save before an explicit restart");
   await page.locator("#dlg-options button").filter({ hasText: "Standard" }).click();
   await page.locator("#dlg-options button").filter({ hasText: "Clock in" }).click();
   await page.waitForFunction(() => {
