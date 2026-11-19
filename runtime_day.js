@@ -3,7 +3,7 @@
  * One existing dialogue owner, no polling, frame loop, teleport or music player. */
 (function(root){
   'use strict';
-  var active=null,returnFocus=null,lastHud='',hud=null,targetMenuOwner=0;
+  var active=null,returnFocus=null,lastHud='',lastAnnouncement='',hud=null,routeStatus=null,targetMenuOwner=0;
   var CANON={shipping_cannot_print:{requester:'SHIPPING CLERK',need:'Print accurate customs labels before the outbound shipment leaves.',symptom:'The printer says Ready. The clerk’s labels disappear.',notification:'Your printer is ready. Your label has chosen a different career.'},plating_workstation_down:{requester:'PLATING OPERATOR / AMIT',need:'Restore the operator’s production session without disturbing the controlled process.',symptom:'The workstation is responsive. The production application cannot reconnect.',notification:'Restart complete. Your dependencies have elected to remain asleep.'}};
   function gs(){try{return typeof S!=='undefined'?S:root.S;}catch(_){return null;}}
   function world(){return root.TechOpsDayWorld;}
@@ -24,7 +24,7 @@
     if(!campaign().flags.day_work_unlocked){notify('Finish the morning at Mike’s desk and clock in first.');return false;}
     return true;
   }
-  function routeTo(id){var target=stationById(id),s=gs();if(!s)return false;s.meta=s.meta||{};s.meta.dayRouteTarget=id;exit();if(id==='mike_desk'&&s.room&&s.room.id==='itdept'){notify('Mike’s desk is on the right side of this room. Walk over and press E.');return true;}var route=world()&&world().route(id);notify(s.room?'Route saved. Walk to the glowing room exit or press Q to return to the floor.':route&&route.ok?'Route marked: '+(target?target.label:id):'Check the floor map for '+(target?target.label:id)+'.');syncHud();return true;}
+  function routeTo(id){var s=gs(),w=world();if(!s||!w)return false;s.meta=s.meta||{};s.meta.dayRouteTarget=id;exit();if(id==='mike_desk'&&s.room&&s.room.id==='itdept'){notify('Mike’s desk is on the right side of this room. Walk over and press E.');return true;}var route=w.route(id);if(s.room)notify('Route saved. Walk to the glowing room exit or press Q to return to the floor.');else if(!route.ok)notify(route.message);syncHud();return true;}
   // A route mark is guidance to a destination, not a persistent filter. Once
   // Mike has arrived and actually used the marked station or contact, keeping
   // the old mark makes the HUD route button re-target yesterday's stop (e.g.
@@ -222,7 +222,7 @@
     if(!guard(station))return false;
     if(station.ticketId&&CANON[station.ticketId]){
       var state=campaign(),followup=state.flags.tuesday_morning_reached&&root.TechOpsCampaign.workdayHandoff(state).find(function(item){return item.ticketId===station.ticketId;});
-      if(followup&&followup.kind!=='carryover')return root.TechOpsCampaignNativeAct1.openWorkdayFollowup(station.ticketId);
+      if(followup&&followup.kind!=='carryover'){clearRouteMark(station.id);return root.TechOpsCampaignNativeAct1.openWorkdayFollowup(station.ticketId);}
     }
     if(CANON[station.ticketId]&&!root.TechOpsCampaignInvestigations){notify('Diagnostic tools are still loading. Try again in a moment.');return false;}
     returnFocus=root.document.activeElement;unlock();root.dlg('FIELD SERVICE','',[]);
@@ -246,7 +246,12 @@
       root.dlg(data.requester,escape(I.definition(ticketId).workaroundCheck)+'<br><br>This confirms limited service. The durable repair remains a next-shift follow-up.',[{t:'Requester confirms limited service',f:function(){try{if(!requesterNearby(ticketId)||!gs().inDialog)throw new Error('Return to the requester before verifying limited service.');var current=campaign();I.verifyWorkaroundOutcome(current,ticketId);if(root.TechOpsCampaign.save(current,root.localStorage)===false)throw new Error('The limited-service outcome could not be saved.');gs().meta.dayRouteTarget=null;if(world())world().route(null);cue('verify');root.dlg('LIMITED SERVICE VERIFIED','The requester confirmed the workaround. Partial verification and degraded service are recorded; the remaining repair stays in the handoff.',[{t:'Return to work',f:root.closeDlg}]);}catch(error){notify(error.message);}}},{t:'Keep the handoff open',f:root.closeDlg}]);return true;
     }
     if(rec&&rec.technicalCheckPassed){root.dlg(data.requester,escape(I.definition(ticketId).humanVerification)+'<br><br>The technical check alone did not close this incident.',[{t:'Witness the requester’s successful task',f:function(){try{if(!requesterNearby(ticketId)||!gs().inDialog)throw new Error('Return to the requester before verifying the real task.');var current=campaign();I.verifyHumanOutcome(current,ticketId);if(root.TechOpsCampaign.save(current,root.localStorage)===false)throw new Error('The verified outcome could not be saved. Retry before closing.');cue('verify');root.dlg('SERVICE RESTORED',escape(I.definition(ticketId).humanVerification),[{t:'Return to work',f:root.closeDlg}]);}catch(e){notify(e.message);} }},{t:'Keep the verification open',f:root.closeDlg}]);return true;}
-    root.dlg(data.requester,escape(data.need)+'<br><br>'+escape(data.symptom)+(ticketId==='plating_workstation_down'?'<br><br>Amit owns this incident. Coordinate with him and the operator before any change.':''),[{t:'Mark the route to the equipment',f:function(){routeTo(canonicalStation(ticketId,false));}},{t:'Back to floor',f:root.closeDlg}]);return true;
+    world().markBriefed(contactKey);
+    var shipping=ticketId==='shipping_cannot_print';
+    var request=shipping?'“The printer says Ready. My customs labels vanish when I send them. If I can’t label those cartons, they stay on the dock.”':'“I can sign in, but the production app won’t reconnect. I need my station back before I can run the next job.”';
+    var reply=shipping?'“Show me the printer first. When it’s back, I want to see your label come out.”':'“Amit owns the change. I’ll check the workstation with him. We’ll get your go-ahead before we touch the service.”';
+    var next=world().ticketObjective(ticketId,C);
+    root.dlg(data.requester,request+'<br><br><b>Mike</b><br>'+reply,[{t:'Mark the route to the equipment',f:function(){routeTo(next?next.target:canonicalStation(ticketId,false));}},{t:'Back to floor',f:root.closeDlg}]);return true;
   }
   function nearbyTargets(){
     var s=gs(),w=world();if(!isDay()||!w)return [];var result=w.nearby().slice(),native=s.meta&&s.meta.campaignAct1Native||{};
@@ -267,8 +272,14 @@
     if(item.kind==='person'){var handler=root[item.handler];if(typeof handler!=='function')return false;handler(item.npc);return true;}
     if(item.kind!=='contact')return openDevice(item);
     if(item.ticketId)return talk(item.ticketId);
-    var n=root.TechOpsCampaignNativeAct1;if(item.id==='standup')return gs().day>=2?n.openWorkdayHandoff():n.openStandup();
-    if(item.id==='access'){root.dlg('SECURITY OPS','Security has a badge record that needs review against physical presence. Read the access log on the Security workstation before documenting a conclusion.',[{t:'Walk to Security workstation',f:function(){return routeTo('security_workstation');}},{t:'Back to floor',f:root.closeDlg}]);return true;}return false;
+    var n=root.TechOpsCampaignNativeAct1;if(item.id==='standup'){clearRouteMark('standup');return gs().day>=2?n.openWorkdayHandoff():n.openStandup();}
+    if(item.id==='access'){
+      var c=campaign();clearRouteMark('access');
+      if(!c.flags.day_work_unlocked){root.dlg('SECURITY OPS','“Catch me after you clock in. There’s a badge report I’d like you to look at.”',[{t:'Back to floor',f:root.closeDlg}]);return true;}
+      world().markBriefed('access');
+      var request=c.assignments.impossible_access_event==='security'?'“We took the access review. The badge system accepted the credential. We couldn’t corroborate a person on camera. I’ve left the report on our workstation.”':'“The badge system accepted the credential. The camera gives us no physical match. You’ve got the review. Both records are on our workstation.”';
+      root.dlg('SECURITY OPS',request+'<br><br><b>Mike</b><br>“I’ll keep the badge result and the camera result separate in the record.”',[{t:'Walk to Security workstation',f:function(){return routeTo('security_workstation');}},{t:'Back to floor',f:root.closeDlg}]);return true;
+    }return false;
   }
   function interact(){
     var s=gs();if(!isDay()||s.inDialog||s.inBattle)return false;
@@ -312,21 +323,53 @@
   function syncHud(){
     if(root.document)checkOfficeEntry();
     if(!root.document)return;if(active&&!isDay())release();var s=gs();root.document.body.classList[s&&s.room&&!s.nightMode?'add':'remove']('day-room-visible');var visible=isDay()&&!s.inDialog&&!s.inBattle;var title=root.document.getElementById('title-screen');if(title&&!title.classList.contains('hidden'))visible=false;
-    if(!hud){hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);}
+    if(!hud){
+      hud=root.document.createElement('section');hud.id='day-route-hud';hud.setAttribute('aria-label','Day shift objective');root.document.body.appendChild(hud);
+      routeStatus=root.document.createElement('div');routeStatus.id='day-floor-announcement';routeStatus.setAttribute('role','status');routeStatus.setAttribute('aria-live','polite');root.document.body.appendChild(routeStatus);
+    }
     hud.hidden=!visible;root.document.body.classList[visible?'add':'remove']('day-route-visible');if(!visible){lastHud='';return;}
     var w=world();if(!w)return;w.ensureWorld();var objective=w.nextObjective()||{},resolution=targetResolution(),nearby=resolution.target;
-    var target=s.meta.dayRouteTarget||objective.stationId||objective.targetId||objective.id;
-    var data={title:objective.title||objective.label||'Day shift',detail:objective.detail||objective.description||'Follow the workday. Inspect before making changes.',target:target,near:nearby&&nearby.id,choices:resolution.choose};var key=JSON.stringify(data);if(key===lastHud)return;lastHud=key;
-    if(s.meta.dayRouteTarget){var tracked=stationById(target),contactNames={shipping:'Shipping clerk',plating:'Plating operator',standup:s.day>=2?'Shift handoff board':'Morning standup board',access:'Security Ops',sector04Door:'Sector 04 entrance'};data.title='Destination · '+(tracked?tracked.label:contactNames[target]||'Marked location');data.detail='Follow the floor route. '+(tracked?'Use this equipment when Mike reaches it.':'Meet the requester or inspect the marked destination.');}
-    hud.innerHTML='<header>AEROTECH / FIELD OPERATIONS</header><div class="day-objective"><strong>'+escape(data.title)+'</strong><small>'+escape(data.detail)+'</small></div>'+(nearby||resolution.choose?'<button type="button" class="day-nearby" data-day-interact>E / A · '+escape(resolution.choose?'Choose nearby interaction':targetLabel(nearby))+'</button>':'')+'<button type="button" data-day-route>Show floor route</button><button type="button" data-day-jobs>Field service board</button>';
-    hud.querySelector('[data-day-route]').onclick=function(){routeTo(target||'mike_desk');};hud.querySelector('[data-day-jobs]').onclick=openBoard;
+    var target=s.meta.dayRouteTarget||objective.stationId||objective.target||objective.id||'mike_desk';
+    var marked=s.meta.dayRouteTarget&&w.currentRoute();
+    if(s.meta.dayRouteTarget&&(!marked||!marked.target||marked.target.id!==target))marked=w.route(target);
+    var contactNames={shipping:'Shipping clerk',plating:'Plating operator',standup:s.day>=2?'Shift handoff board':'Morning standup board',access:'Security Ops',sector04Door:'Sector 04 entrance'};
+    var tracked=marked&&(marked.target||stationById(target));
+    var destination=marked&&(contactNames[target]||tracked&&tracked.label);
+    var status=destination&&(marked.status==='arrived'?'At ':marked.ok?'Route to ':'Route blocked · ')+destination;
+    var detour=destination&&target!==objective.target;
+    var data={title:detour?'Destination · '+destination:objective.label||'Day shift',detail:detour?'':objective.detail||'',target:target,status:detour?(marked.status==='arrived'?'At destination':marked.ok?'Follow the floor guide':'Route blocked'):destination?status:'',phase:detour?'':objective.phase||'',interaction:resolution.choose?'Choose nearby interaction':nearby?targetLabel(nearby):''};
+    var key=JSON.stringify(data);if(key===lastHud)return;lastHud=key;
+    var announcement=[data.title,data.status].filter(Boolean).join('. ');
+    if(announcement!==lastAnnouncement){lastAnnouncement=announcement;routeStatus.textContent=announcement;}
+    var focus=root.document.activeElement;
+    var focusSelector=focus===hud.querySelector('[data-day-route]')?'[data-day-route]':focus===hud.querySelector('[data-day-jobs]')?'[data-day-jobs]':focus===hud.querySelector('[data-day-interact]')?'[data-day-interact]':null;
+    hud.innerHTML='<div class="day-objective" data-phase="'+escape(data.phase)+'"><strong>'+escape(data.title)+'</strong>'+(data.detail?'<small>'+escape(data.detail)+'</small>':'')+(data.status?'<span class="day-route-status">'+escape(data.status)+'</span>':'')+'</div>'+
+      '<button type="button" data-day-route>Show floor route</button><button type="button" data-day-jobs>Field service board</button>'+
+      (data.interaction?'<button type="button" class="day-nearby" data-day-interact><kbd>E / A</kbd> '+escape(data.interaction)+'</button>':'');
+    hud.querySelector('[data-day-route]').onclick=function(){routeTo(target);};hud.querySelector('[data-day-jobs]').onclick=openBoard;
     var nearbyButton=hud.querySelector('[data-day-interact]');if(nearbyButton)nearbyButton.onclick=interact;
+    if(focusSelector){var restored=hud.querySelector(focusSelector)||hud.querySelector('[data-day-route]');restored.focus();}
   }
-  function openBoard(){
-    if(!isDay()||gs().inDialog)return;var c=campaign(),options=[];
-    options.push({t:'Main objective — '+(world().nextObjective().title||world().nextObjective().label||'Day shift'),f:function(){var o=world().nextObjective();routeTo(o.stationId||o.target||o.targetId||o.id||'mike_desk');}});
-    if(c.flags.day_work_unlocked)world().stations().filter(function(st){return st.caseId;}).forEach(function(st){var r=(gs().meta.dayCases||{})[st.caseId];options.push({t:(r&&r.phase==='complete'?'✓ ':'')+st.label,f:function(){routeTo(st.id);}});});
-    options.push({t:'Back to floor',f:root.closeDlg});root.dlg('FIELD SERVICE BOARD','The story work stays first. Optional service calls develop your investigation skills and keep the factory running. Choose a destination to mark its walking route.',options);
+  function openBoard(serviceCalls){
+    if(!isDay()||gs().inDialog&&serviceCalls!==true)return;
+    var c=campaign(),w=world(),native=root.TechOpsCampaignNativeAct1,objective=w.nextObjective(),options=[],body='';
+    if(serviceCalls===true){
+      w.stations().filter(function(st){return st.caseId&&st.available;}).forEach(function(st){
+        var record=(gs().meta.dayCases||{})[st.caseId];
+        options.push({t:st.label+(record&&record.phase==='complete'?' · verified':''),f:function(){routeTo(st.id);}});
+      });
+      body='Choose a station to mark a route to its equipment.';
+      options.push({t:'Back to shift queue',f:function(){root.closeDlg();openBoard();}});
+    }else{
+      if(objective)options.push({t:'Show route · '+objective.label,f:function(){routeTo(objective.target);}});
+      var cards=native&&native.dayQueue?native.dayQueue(c):[];
+      body='<div class="day-field-queue">'+cards.map(function(item){
+        if(item.target&&(!objective||objective.target!==item.target))options.push({t:'Show route · '+item.title,f:function(){routeTo(item.target);}});
+        return '<article data-tone="'+escape(item.tone)+'"><div><strong>'+escape(item.title)+'</strong><small>'+escape(item.status)+'</small></div><p>'+escape(item.impact)+'</p><small>'+escape(item.owner)+(item.target?' · '+escape(item.nextAction):'')+'</small><small>'+escape(item.verification)+'</small></article>';
+      }).join('')+'</div>';
+      if(c.flags.day_work_unlocked)options.push({t:'Other service calls',f:function(){openBoard(true);}});
+    }
+    options.push({t:'Back to floor',f:root.closeDlg});root.dlg(serviceCalls===true?'FIELD SERVICE CALLS':'FIELD SERVICE BOARD','<div>'+body+'</div>',options);
   }
   function keydown(e){
     var desk=root.TechOpsDayDesktop&&root.TechOpsDayDesktop.active();
@@ -356,7 +399,7 @@
   function loadTheme(){
     var doc=root.document;
     if(!doc||!doc.head||doc.getElementById('day-doors-theme'))return;
-    var link=doc.createElement('link');link.id='day-doors-theme';link.rel='stylesheet';link.href='runtime_day_doors.css?v=20261105-doors-r1';
+    var link=doc.createElement('link');link.id='day-doors-theme';link.rel='stylesheet';link.href='runtime_day_doors.css?v=20261112-day-shift';
     link.onerror=function(){link.remove();};doc.head.appendChild(link);
   }
   function valid(token){return token===serial&&root.S&&root.S.inDialog&&!root.S.inBattle&&root.TechOpsDayExperience.desktopNearby();}
@@ -385,7 +428,13 @@
     bind('[data-os-task]',function(){minimize(!box.querySelector('.os-window').classList.contains('os-minimized'));});
     bind('[data-os-max]',function(){box.querySelector('.os-window').classList.toggle('os-maximized');});
     var actions=box.querySelector('.os-actions');
-    (options||[]).forEach(function(option){if(home&&apps.some(function(a){return a[0]===option.t;}))return;var b=root.document.createElement('button');b.type='button';b.textContent=option.t==='Combat sound & captions'?'Sound & captions':option.t;b.onclick=function(){if(valid(token))return option.f();};actions.appendChild(b);});
+    (options||[]).forEach(function(option){
+      if(home&&apps.some(function(a){return a[0]===option.t;}))return;
+      var b=root.document.createElement('button');b.type='button';b.textContent=option.t==='Combat sound & captions'?'Sound & captions':option.t;
+      b.onclick=function(){if(valid(token))return option.f();};
+      var slot=option.slot&&Array.from(box.querySelectorAll('[data-os-action-slot]')).find(function(el){return el.dataset.osActionSlot===option.slot;});
+      (slot||actions).appendChild(b);
+    });
     if(app==='PROMPT'){startPrompt(box,token);return true;}
     if(film)startFilm(name,box,actions,token);
     var focus=box.querySelector(film?'.os-actions button:not(:disabled)':home?'.os-shortcuts button':'.os-actions button');if(focus)focus.focus();
@@ -423,13 +472,12 @@
     var shots=profile?[
       ['FIELD SYSTEMS','Every flight begins with people on the ground.','assets/campaign/workstation.corporate_aircraft_panel.png','wide'],
       ['FELICIA / SECURITY RESEARCH','Aircraft systems. Antenna racks. A violin case beside the work.','assets/campaign/workstation.corporate_aircraft_panel.png','pan'],
-      ['PEOPLE BEHIND THE FLIGHT','Felicia plays. For a moment, the company profile feels personal.','assets/campaign/workstation.felicia.video_frame.png','portrait'],
+      ['PEOPLE BEHIND THE FLIGHT','Felicia Cruz · Violin','assets/campaign/workstation.felicia.video_frame.png','portrait'],
       ['SIGNAL INTERRUPTION','ORPHEUS','assets/campaign/workstation.corporate_aircraft_panel.png','signal'],
-      ['PROFILE ENDS','The corporate edit continues. Mike has not met her yet.','assets/campaign/workstation.felicia.video_frame.png','portrait']
+      ['PROFILE ENDS','Felicia Cruz · Systems Integrations','assets/campaign/workstation.felicia.video_frame.png','portrait']
     ]:listening?[
-      ['RED IN THE MIRROR','The correct track is playing. The queue can wait a moment.','assets/campaign/workstation.corporate_aircraft_panel.png','wide'],
-      ['BEFORE THE SHIFT','An ordinary song, heard before the work begins.','assets/campaign/workstation.corporate_aircraft_panel.png','pan']
-    ]:[['09:00 / NEW HAVEN','Shipping is waiting. Plating is waiting. Security has a contradiction.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT','The clock begins. Leave it better than you found it.','assets/campaign/plating.line_background.png','pan']];
+      ['RED IN THE MIRROR','Now playing','assets/campaign/workstation.corporate_aircraft_panel.png','wide']
+    ]:[['09:00 / NEW HAVEN','Outbound cartons are waiting on customs labels.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT','Plating is holding the next job.','assets/campaign/plating.line_background.png','pan']];
     var content=box.querySelector('.os-content'),i=0;
     if(profile&&root.TechOpsDayAudio)root.TechOpsDayAudio.duck('opening-film',.22);
     var finish=Array.from(actions.querySelectorAll('button')).find(function(b){return b.textContent==='Finish video';});if(finish)finish.disabled=true;

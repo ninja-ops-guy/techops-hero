@@ -126,41 +126,55 @@ const V63_PROPS = [
 const V63_ANIM = { 0: "pulse", 39: "pulse", 26: "sway" };
 const propsImg = new Image();
 if (typeof TO_PROPS_ATLAS === "string") propsImg.src = TO_PROPS_ATLAS;
+let v63PropLayout;
 function v63PropSpots(s) {
-  // resolve each prop to the nearest open tile (once per day/map)
-  if (s.meta._v63Spots && s.meta._v63SpotsDay === s.day) return s.meta._v63Spots;
-  const openAt = (x, y) => s.map[y] && s.map[y][x] === 0;
+  const dayStations = s.meta.dayStations;
+  const contacts = s.meta.campaignAct1Native;
+  if (v63PropLayout?.map === s.map && v63PropLayout.dayStations === dayStations && v63PropLayout.contacts === contacts) return v63PropLayout.spots;
+  const occupied = new Set();
+  const reserve = (x, y) => occupied.add(y * MAPW + x);
+  if (Array.isArray(dayStations?.items)) {
+    for (const station of dayStations.items) {
+      if (!station?.available) continue;
+      reserve(station.x, station.y);
+      if (station.approach) reserve(station.approach.x, station.approach.y);
+    }
+  }
+  for (const contact of Object.values(contacts || {})) if (contact) reserve(contact.x, contact.y);
+  const openAt = (x, y) => s.map[y]?.[x] === 0 && !occupied.has(y * MAPW + x);
+  const saved = s.meta._v63SpotsDay === s.day && Array.isArray(s.meta._v63Spots) ? s.meta._v63Spots : [];
   const spots = [];
   for (const [idx, px, py] of V63_PROPS) {
-    let best = null, bd = 99;
-    for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
-      const x = px + dx, y = py + dy;
-      if (openAt(x, y)) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = { x, y }; } }
+    let spot = saved.find(item => item[0] === idx && openAt(item[1], item[2]));
+    if (!spot) {
+      let bestDistance = Infinity;
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const x = px + dx, y = py + dy, distance = dx * dx + dy * dy;
+        if (distance < bestDistance && openAt(x, y)) { bestDistance = distance; spot = [idx, x, y]; }
+      }
     }
-    if (best) spots.push([idx, best.x, best.y]);
+    if (spot) { spots.push(spot); reserve(spot[1], spot[2]); }
   }
-  s.meta._v63Spots = spots; s.meta._v63SpotsDay = s.day;
+  s.meta._v63Spots = spots;
+  s.meta._v63SpotsDay = s.day;
+  v63PropLayout = { map: s.map, dayStations, contacts, spots };
   return spots;
 }
-const __origDrawV63Props = draw;
-draw = function () {
-  __origDrawV63Props.apply(this, arguments);
-  const s = S;
-  if (!s || !s.map || s.nightMode || !propsImg.width) return;
-  const spots = v63PropSpots(s);
-  if (!spots.length) return;
-  const tm = performance.now();
-  const ts = cv.height / 14, sc = ts / TILE;
-  ctx.save(); ctx.scale(sc, sc); ctx.translate(-camX, -camY);
-  for (const [idx, x, y] of spots) {
-    const cx = idx % 8, cy = (idx / 8) | 0;
-    let w = 40, h = 40, X = x * TILE + 16 - w / 2, Y = y * TILE + TILE - h + 2;
+function drawScenery(s, tm, x0, x1, y0, y1) {
+  if (!propsImg.width) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  for (const [idx, x, y] of v63PropSpots(s)) {
+    if (x < x0 - 1 || x > x1 + 1 || y < y0 - 1 || y > y1 + 1) continue;
+    const cx = idx % 8, cy = Math.floor(idx / 8);
+    const size = 40;
+    let X = x * TILE + (TILE - size) / 2;
+    const Y = y * TILE + TILE - size + 2;
     const anim = V63_ANIM[idx];
     if (anim === "pulse") ctx.globalAlpha = .8 + .2 * Math.sin(tm / 300 + idx);
     else if (anim === "sway") X += Math.round(Math.sin(tm / 700) * 2);
-    ctx.drawImage(propsImg, cx * 80, cy * 80, 80, 80, X, Y, w, h);
+    ctx.drawImage(propsImg, cx * 80, cy * 80, 80, 80, X, Y, size, size);
     ctx.globalAlpha = 1;
   }
   ctx.restore();
-};
-window.v63 = { v63PropSpots, PROPS: V63_PROPS }; // v7.20: prop inspection reuses the resolved spots
+}
+window.v63 = { v63PropSpots, drawScenery, PROPS: V63_PROPS }; // v7.20: prop inspection reuses the resolved spots

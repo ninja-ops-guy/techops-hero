@@ -27,7 +27,7 @@ const profile = {
 };
 const report = {
   status: 'running', fixture: false, browser: 'chromium', profile,
-  scope: 'Complete unassisted Day-1 playthrough with normal player controls: real title/morning buttons, HUD route marking, keyboard walking with collision checks, side-room entry by walking, workstation desktop interactions, Shipping printer + workstation investigation, and requester verification. No teleports, no coordinate fixtures, no progress injection. page.evaluate is read-only. Morning music uses the real "Continue with music muted" accessibility path (external audio is blocked here); audible playback of Red in the Mirror remains uncertified in this environment.'
+  scope: 'Unassisted Day-1 opening through verified Shipping restoration: real title/morning buttons, Doors Queue, field service board, requester briefing, keyboard walking with collision checks, side-room entry by walking, physical printer inspection, and local workstation repair. No teleports, no coordinate fixtures, no progress injection. page.evaluate is read-only. Morning music uses the real "Continue with music muted" accessibility path (external audio is blocked here); audible playback of Red in the Mirror remains uncertified in this environment.'
 };
 let browser, server;
 const beats = [];
@@ -51,12 +51,20 @@ async function clickMatch(page, pattern) {
 async function state(page) {
   return page.evaluate(() => {
     const c = TechOpsCampaign.load(localStorage);
+    const objective = TechOpsDayWorld.nextObjective();
     return {
       px: S.px, py: S.py, room: S.room ? { id: S.room.id, x: S.room.x, door: S.room.door || null } : null,
       inDialog: S.inDialog, flags: c.flags, tickets: c.tickets,
-      investigations: c.investigations || {}, listening: c.morningListening || null,
-      objective: TechOpsDayWorld.nextObjective() && { id: TechOpsDayWorld.nextObjective().id, title: TechOpsDayWorld.nextObjective().title }
+      investigations: c.investigations || {}, evidence: c.evidence, listening: c.morningListening || null,
+      briefings: S.meta.dayBriefings || {},
+      objective: objective && { id: objective.id, title: objective.label }
     };
+  });
+}
+async function markedRoute(page) {
+  return page.evaluate(() => {
+    const route = TechOpsDayWorld.currentRoute();
+    return route && { ok: route.ok, target: route.target?.id, steps: route.steps };
   });
 }
 async function screenshot(page, name) {
@@ -79,7 +87,9 @@ async function hudDiag(page) {
     const all = children.concat(right);
     const overlaps = [];
     for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) if (hit(all[i], all[j])) overlaps.push({ a: all[i].el, b: all[j].el });
-    return { viewport: { w: innerWidth, h: innerHeight }, hudTop: r(top), gridTemplateColumns: getComputedStyle(top).gridTemplateColumns, children, hudRightChildren: right, questTracker: r(document.getElementById('quest-tracker')), hitStack: stack, overlaps };
+    const linked = document.getElementById('see-world-linked-button');
+    const linkedOverlaps = linked ? [...right, r(document.getElementById('day-route-hud'))].filter(control => hit(r(linked), control)).map(control => control.el) : [];
+    return { viewport: { w: innerWidth, h: innerHeight }, hudTop: r(top), gridTemplateColumns: getComputedStyle(top).gridTemplateColumns, children, hudRightChildren: right, questTracker: r(document.getElementById('quest-tracker')), hitStack: stack, overlaps, linkedOverlaps };
   });
 }
 // READ-ONLY workstation console geometry: taskbar vs footer overlap check.
@@ -189,7 +199,7 @@ try {
   // 2 · Mark the standup route with the real HUD button, walk it with arrows.
   report.hudDiagBeforeRoute = await hudDiag(page);
   await page.locator('#day-route-hud [data-day-route]').click();
-  report.standupRoute = await page.evaluate(() => { const r = TechOpsDayWorld.currentRoute(); return { ok: r.ok, target: r.target && r.target.id, steps: r.steps }; });
+  report.standupRoute = await markedRoute(page);
   assert.equal(report.standupRoute.ok, true); assert.equal(report.standupRoute.target, 'standup');
   report.walkToStandup = await walkTo(page, 'standup', 'contact');
   assert.equal(report.walkToStandup.stop.stop, 'dialog', 'standup opens by walking into the office, no E required');
@@ -216,7 +226,28 @@ try {
   await page.locator('.os-desktop').waitFor({ state: 'visible', timeout: 8000 });
   await beat('workstation-opened', { dialog: await page.locator('#dlg-name').innerText() });
 
-  // 5 · Morning at the desk: muted-continuation music, company profile, clock-in.
+  // 5 · Morning at the desk: read the assigned work, then complete the morning.
+  await click(page, 'QUEUE');
+  const queue = page.locator('.doors-queue');
+  const queueCards = queue.locator('.doors-queue__card');
+  await queueCards.first().waitFor({ state: 'visible', timeout: 8000 });
+  report.queue = await queueCards.allTextContents();
+  assert.match(await queue.innerText(), /ticket clocks paused until clock-in/i);
+  assert.equal(report.queue.length, 3, 'the Doors Queue presents the three assigned campaign cases');
+  assert.match(report.queue[0], /shipping/i);
+  assert.match(report.queue[0], /customs label/i);
+  assert.match(report.queue[1], /plating/i);
+  assert.match(report.queue[1], /production/i);
+  assert.match(report.queue[2], /impossible access/i);
+  assert.match(report.queue[2], /security needs/i);
+  const afterQueue = await state(page);
+  assert.deepEqual(afterQueue.investigations, report.afterStandup.investigations, 'reading Queue does not advance investigations');
+  assert.deepEqual(afterQueue.evidence, report.afterStandup.evidence, 'reading Queue does not create campaign evidence');
+  assert.deepEqual(afterQueue.tickets, report.afterStandup.tickets, 'reading Queue does not close a case');
+  assert.equal(afterQueue.flags.day_work_unlocked, false, 'reading Queue does not clock Mike in');
+  await screenshot(page, '03-doors-queue');
+  await beat('doors-queue-read');
+  await click(page, 'Back to desktop');
   await click(page, 'MUSIC');
   await click(page, 'Continue with music muted');
   report.afterMusic = await state(page);
@@ -243,13 +274,44 @@ try {
   await page.waitForFunction(() => !S.room, null, { timeout: 5000 });
   report.floorAfterClockIn = await state(page);
   report.hudDiagFloor = await hudDiag(page);
+  if (profile.width <= 720 && profile.height >= 501) assert.deepEqual(report.hudDiagFloor.linkedOverlaps, [], 'Linked Story is clear of Day floor controls');
   await screenshot(page, '07-floor-after-clock-in');
   await beat('returned-to-floor');
 
-  // 7 · Shipping investigation: route to the printer, inspect, evidence.
-  assert.equal(report.floorAfterClockIn.objective.id, 'shipping_printer', 'first field objective is the Shipping printer');
-  await page.locator('#day-route-hud [data-day-route]').click();
-  report.printerRoute = await page.evaluate(() => { const r = TechOpsDayWorld.currentRoute(); return { ok: r.ok, target: r.target && r.target.id, steps: r.steps }; });
+  // 7 · Meet Shipping's requester before moving from the need to the equipment.
+  assert.equal(report.floorAfterClockIn.objective.id, 'shipping', 'first field objective is the Shipping clerk');
+  await page.locator('#day-route-hud [data-day-jobs]').click();
+  const board = page.locator('.day-field-queue');
+  const shippingCard = board.locator('article').filter({ hasText: /Shipping Cannot Print/i });
+  await shippingCard.waitFor({ state: 'visible' });
+  report.fieldBoard = await board.innerText();
+  assert.match(await shippingCard.innerText(), /customs label/i);
+  await screenshot(page, '08-field-board');
+  await click(page, 'Show route · Talk to the Shipping clerk');
+  report.briefingRoute = await markedRoute(page);
+  assert.equal(report.briefingRoute?.ok, true);
+  assert.equal(report.briefingRoute.target, 'shipping');
+  const afterBoard = await state(page);
+  assert.deepEqual({ px: afterBoard.px, py: afterBoard.py }, { px: report.floorAfterClockIn.px, py: report.floorAfterClockIn.py }, 'the board marks a route without moving Mike');
+  assert.deepEqual(afterBoard.investigations, report.floorAfterClockIn.investigations, 'reading the board does not gather evidence');
+  assert.deepEqual(afterBoard.evidence, report.floorAfterClockIn.evidence, 'reading the board does not create campaign evidence');
+  assert.deepEqual(afterBoard.tickets, report.floorAfterClockIn.tickets, 'reading the board does not close a case');
+  assert.deepEqual(afterBoard.briefings, report.floorAfterClockIn.briefings, 'a route marker is not a requester briefing');
+  report.walkToBriefing = await walkTo(page, 'shipping', 'contact');
+  assert.equal(report.walkToBriefing.stop.stop, 'arrived', 'keyboard walk reaches the Shipping clerk');
+  await pressEAndResolveChoose(page, /Shipping clerk/);
+  await page.locator('#dlg-name').filter({ hasText: /Shipping clerk/i }).waitFor({ state: 'visible' });
+  assert.match(await page.locator('#dlg-text').innerText(), /customs label/i);
+  report.afterBriefing = await state(page);
+  assert.equal(report.afterBriefing.briefings.shipping, true, 'the actual requester conversation records the briefing');
+  assert.deepEqual(report.afterBriefing.investigations, afterBoard.investigations, 'the briefing alone does not gather technical evidence');
+  assert.deepEqual(report.afterBriefing.evidence, afterBoard.evidence, 'the briefing alone does not create campaign evidence');
+  assert.deepEqual(report.afterBriefing.tickets, afterBoard.tickets, 'the briefing alone does not close a case');
+  assert.equal(report.afterBriefing.objective.id, 'shipping_printer', 'the clerk briefing leads to the actual printer');
+  await screenshot(page, '08-shipping-briefing');
+  await beat('shipping-requester-briefed');
+  await click(page, 'Mark the route to the equipment');
+  report.printerRoute = await markedRoute(page);
   assert.equal(report.printerRoute.target, 'shipping_printer');
   report.walkToPrinter = await walkTo(page, 'shipping_printer', 'station');
   assert.equal(report.walkToPrinter.stop.stop, 'arrived', 'keyboard walk reaches the printer approach tile');
@@ -307,7 +369,7 @@ try {
   assert.deepEqual(pageErrors, [], 'no page errors during the playthrough');
   report.status = 'passed';
   await writeFile(`${out}/report.json`, JSON.stringify(report, null, 2));
-  console.log(JSON.stringify({ status: report.status, beats: beats.length, steps: { standup: report.walkToStandup.steps.length, desk: report.walkToDesk.steps.length, printer: report.walkToPrinter.steps.length, workstation: report.walkToWorkstation.steps.length, requester: report.walkToRequester.steps.length }, hudFloorOverlaps: report.hudDiagFloor.overlaps, consoleWorkstationOverlap: report.consoleDiagWorkstation.taskbarOverlapsFooter, tickets: report.afterVerification.tickets }, null, 2));
+  console.log(JSON.stringify({ status: report.status, beats: beats.length, steps: { standup: report.walkToStandup.steps.length, desk: report.walkToDesk.steps.length, briefing: report.walkToBriefing.steps.length, printer: report.walkToPrinter.steps.length, workstation: report.walkToWorkstation.steps.length, requester: report.walkToRequester.steps.length }, hudFloorOverlaps: report.hudDiagFloor.overlaps, consoleWorkstationOverlap: report.consoleDiagWorkstation.taskbarOverlapsFooter, tickets: report.afterVerification.tickets }, null, 2));
 } catch (error) {
   report.status = 'failed';
   report.failure = String(error.stack || error);
