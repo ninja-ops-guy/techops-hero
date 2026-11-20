@@ -90,3 +90,20 @@ body.day-room-visible #quest-tracker{visibility:hidden!important;pointer-events:
 @keyframes day-scanline{0%,8%{transform:translateY(0);opacity:.15}48%{opacity:1}90%,100%{transform:translateY(69px);opacity:.15}}
 @keyframes day-scan-glow{0%,8%{transform:translateY(0);opacity:.04}48%{opacity:.22}90%,100%{transform:translateY(69px);opacity:.04}}
 @media(prefers-reduced-motion:reduce){.day-equipment-diagram *{animation:none!important}}
+
+/* More authored device behaviors: localized, quiet loops rather than generic bobbing. */
+.day-equipment-diagram .day-motion-cursor{animation:day-cursor-blink 1.05s steps(2,end) infinite}
+.day-equipment-diagram .day-motion-packet{animation:day-packet-route 3.1s ease-in-out infinite}\n.day-equipment-diagram .day-motion-laptop .day-motion-packet{animation-name:day-laptop-data}\n.day-equipment-diagram .day-motion-network .day-motion-packet{animation-name:day-network-data}
+.day-equipment-diagram.is-repaired .day-motion-packet{animation-duration:2.2s}
+.day-equipment-diagram .day-motion-fan{transform-box:fill-box;transform-origin:center;animation:day-fan-turn 2.8s linear infinite}
+.day-equipment-diagram .day-motion-wave{transform-box:fill-box;transform-origin:center;animation:day-wave 2.4s ease-out infinite}
+.day-equipment-diagram .day-motion-wave.wave-b{animation-delay:1.2s}
+.day-equipment-diagram .day-motion-colon{animation:day-cursor-blink 1s steps(2,end) infinite}
+.day-equipment-diagram .day-motion-screen-sweep{animation:day-screen-sweep 5.2s ease-in-out infinite;opacity:.22}
+@keyframes day-cursor-blink{0%,48%{opacity:1}49%,100%{opacity:0}}
+@keyframes day-packet-route{0%{transform:translate(0,0);opacity:0}12%{opacity:1}78%{transform:translate(68px,0);opacity:1}100%{transform:translate(78px,0);opacity:0}}
+.day-equipment-diagram:not(.is-repaired) .day-motion-packet{animation-name:day-packet-stall}
+@keyframes day-laptop-data{0%,10%{transform:translateX(0);opacity:0}18%{opacity:1}82%{transform:translateX(128px);opacity:1}100%{transform:translateX(144px);opacity:0}}\n@keyframes day-network-data{0%,10%{transform:translateX(0);opacity:0}18%{opacity:1}82%{transform:translateX(220px);opacity:1}100%{transform:translateX(238px);opacity:0}}\n@keyframes day-packet-stall{0%,12%{transform:translate(0,0);opacity:0}24%,55%{transform:translate(28px,0);opacity:1}65%,100%{transform:translate(28px,0);opacity:0}}
+@keyframes day-fan-turn{to{transform:rotate(360deg)}}
+@keyframes day-wave{0%{transform:scale(.65);opacity:.08}40%{opacity:.65}100%{transform:scale(1.35);opacity:0}}
+@keyframes day-screen-sweep{0%,10%{transform:translateY(0);opacity:0}28%{opacity:.3}75%,100%{transform:translateY(122px);opacity:0}}
