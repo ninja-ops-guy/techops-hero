@@ -132,7 +132,7 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          timeout 120s node scripts/presentation_slice_bot.mjs
+          timeout 150s node scripts/presentation_slice_bot.mjs
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0

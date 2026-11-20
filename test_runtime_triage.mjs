@@ -137,6 +137,13 @@ test('workflow gate parity and privilege boundaries', () => {
   assert.equal((workflow.match(/issues: write/g) || []).length, 1);
   assert.match(workflow, /name: runtime-triage-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
 });
+test('scheduled presentation uses the same bounded time as the merge gate', () => {
+  const mergeGate = fs.readFileSync(new URL('./.github/workflows/merge-gate.yml', import.meta.url), 'utf8');
+  const command = /^\s*timeout (\d+)s node scripts\/presentation_slice_bot\.mjs\s*$/m;
+  const gate = mergeGate.match(command);
+  assert.ok(gate && Number(gate[1]) > 0, 'merge gate must bound the six-scene presentation run');
+  assert.equal(workflow.match(command)?.[1], gate[1]);
+});
 test('runtime Night combat timeout matches the authoritative integration budget', () => {
   const timeoutLine = /^\s*timeout\s+(\d+)s\s+node scripts\/night_combat_bot\.mjs(?:\s*\|[^\n]+)?\s*$/m;
   const runtimeMatch = workflow.match(timeoutLine);
