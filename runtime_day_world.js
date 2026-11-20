@@ -24,7 +24,20 @@
     { id: "plc_hmi_dependency", caseId: "plc_hmi_dependency", label: "Packaging cell HMI", kind: "device", deviceType: "plc_hmi", roomId: "factory", zoneId: "factory", surface: "both", art: 6, x: 25, y: 26 },
     { id: "industrial_scanner_vlan", caseId: "industrial_scanner_vlan", label: "Traceability scanner", kind: "device", deviceType: "industrial_scanner", roomId: "factory", zoneId: "factory", surface: "both", art: 6, x: 34, y: 26 },
     { id: "access_point_poe", caseId: "access_point_poe", label: "Engineering wireless AP", kind: "device", deviceType: "access_point", roomId: "eng", zoneId: "eng", surface: "both", art: 21, x: 8, y: 12 },
-    { id: "timeclock_time_sync", caseId: "timeclock_time_sync", label: "HR time clock", kind: "device", deviceType: "time_clock", roomId: "office", zoneId: "hr", surface: "both", art: 21, x: 24, y: 10 }
+    { id: "timeclock_time_sync", caseId: "timeclock_time_sync", label: "HR time clock", kind: "device", deviceType: "time_clock", roomId: "office", zoneId: "hr", surface: "both", art: 21, x: 24, y: 10 },
+    { id: "network_drop_activation", caseId: "network_drop_activation", label: "Production network drop", kind: "device", deviceType: "network_drop", roomId: "factory", zoneId: "factory", surface: "both", art: 21, x: 30, y: 26 },
+    { id: "robotic_arm_cell", caseId: "robotic_arm_cell", label: "Robotic arm cell", kind: "device", deviceType: "robotic_arm", roomId: "factory", zoneId: "factory", surface: "both", art: 6, x: 38, y: 26 },
+    { id: "vision_camera", caseId: "vision_camera", label: "Inspection vision camera", kind: "device", deviceType: "vision_camera", roomId: "factory", zoneId: "factory", surface: "both", art: 21, x: 42, y: 26 },
+    { id: "conveyor_plc_gateway", caseId: "conveyor_plc_gateway", label: "Conveyor gateway", kind: "device", deviceType: "plc_gateway", roomId: "factory", zoneId: "factory", surface: "both", art: 6, x: 46, y: 26 },
+    { id: "weld_station_hmi", caseId: "weld_station_hmi", label: "Weld-cell HMI", kind: "device", deviceType: "weld_hmi", roomId: "factory", zoneId: "factory", surface: "both", art: 2, x: 50, y: 26 },
+    { id: "mes_terminal", caseId: "mes_terminal", label: "MES dispatch terminal", kind: "device", deviceType: "mes_terminal", roomId: "factory", zoneId: "factory", surface: "both", art: 2, x: 54, y: 26 },
+    { id: "ot_jump_host", caseId: "ot_jump_host", label: "OT support jump host", kind: "device", deviceType: "ot_jump_host", roomId: "factory", zoneId: "factory", surface: "both", art: 2, x: 58, y: 26 },
+    { id: "laser_cutter_interlock", caseId: "laser_cutter_interlock", label: "Laser cutter HMI", kind: "device", deviceType: "laser_hmi", roomId: "factory", zoneId: "factory", surface: "both", art: 2, x: 62, y: 26 },
+    { id: "warehouse_agv", caseId: "warehouse_agv", label: "AGV dispatch console", kind: "device", deviceType: "agv_dispatch", roomId: "factory", zoneId: "factory", surface: "both", art: 2, x: 66, y: 26 },
+    { id: "quality_inspection_camera", caseId: "quality_inspection_camera", label: "Quality camera", kind: "device", deviceType: "quality_camera", roomId: "factory", zoneId: "factory", surface: "both", art: 21, x: 70, y: 26 },
+    { id: "badge_reader_controller", caseId: "badge_reader_controller", label: "Production badge controller", kind: "device", deviceType: "badge_controller", roomId: "factory", zoneId: "factory", surface: "both", art: 21, x: 74, y: 26 },
+    { id: "backup_replication_link", caseId: "backup_replication_link", label: "Plant backup link", kind: "device", deviceType: "backup_replication", roomId: "factory", zoneId: "factory", surface: "both", art: 2, x: 78, y: 26 },
+    { id: "spare_parts_kiosk", caseId: "spare_parts_kiosk", label: "Spare-parts kiosk", kind: "device", deviceType: "parts_kiosk", roomId: "factory", zoneId: "factory", surface: "both", art: 21, x: 82, y: 26 },
   ];
   var ROOM_NAMES = { office: "IT / OPERATIONS", factory: "PRODUCTION FLOOR", eng: "ENGINEERING LAB", finance: "FINANCE ROW", lobby: "RECEPTION", hr: "HR CORNER", server: "DATA CENTER", exec: "EXECUTIVE SUITE", sales: "SALES FLOOR" };
   function state() { try { return typeof S !== "undefined" ? S : root.S || null; } catch (_) { return root.S || null; } }
