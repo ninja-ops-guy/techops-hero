@@ -350,6 +350,12 @@
     var nearbyButton=hud.querySelector('[data-day-interact]');if(nearbyButton)nearbyButton.onclick=interact;
     if(focusSelector){var restored=hud.querySelector(focusSelector)||hud.querySelector('[data-day-route]');restored.focus();}
   }
+  function openPlanner(){
+    if(!isDay()||gs().inDialog)return;
+    var cases=root.TechOpsDayCases,meta=gs().meta||{},plan=cases&&cases.shiftPlan?cases.shiftPlan(meta.dayCases||{},meta.dayAssignments||{}):[];
+    var body='<p class="day-planner-intro">Run the shift in dependency order. Blocked work stays visible until its upstream service is verified; safe-window cases require the named operator or controls owner.</p><div class="day-field-queue">'+plan.map(function(item){var tone=item.status==='ready'?'active':'attention';return '<article data-tone="'+tone+'"><div><strong>'+escape(item.title)+'</strong><small>'+escape(item.status.toUpperCase())+'</small></div><p>'+escape(item.nextAction)+'</p><small>'+escape(item.owner)+(item.blockedBy.length?' · blocked by '+escape(item.blockedBy.join(', ')):'')+(item.safeWindow?' · safe window':'')+'</small></article>';}).join('')+'</div>';
+    root.dlg('SHIFT PLANNER',body,[{t:'Back to field board',f:function(){root.closeDlg();openBoard();}},{t:'Back to floor',f:root.closeDlg}]);
+  }
   function openBoard(serviceCalls){
     if(!isDay()||gs().inDialog&&serviceCalls!==true)return;
     var c=campaign(),w=world(),native=root.TechOpsCampaignNativeAct1,objective=w.nextObjective(),options=[],body='';
@@ -368,6 +374,7 @@
         return '<article data-tone="'+escape(item.tone)+'"><div><strong>'+escape(item.title)+'</strong><small>'+escape(item.status)+'</small></div><p>'+escape(item.impact)+'</p><small>'+escape(item.owner)+(item.target?' · '+escape(item.nextAction):'')+'</small><small>'+escape(item.verification)+'</small></article>';
       }).join('')+'</div>';
       if(c.flags.day_work_unlocked)options.push({t:'Other service calls',f:function(){openBoard(true);}});
+      options.push({t:'Shift planner · dependencies and delegation',f:openPlanner});
     }
     options.push({t:'Back to floor',f:root.closeDlg});root.dlg(serviceCalls===true?'FIELD SERVICE CALLS':'FIELD SERVICE BOARD','<div>'+body+'</div>',options);
   }
