@@ -102,8 +102,7 @@
   }
   function servicePlacement(s, position, component, blockers, taken, protectedTargets) {
     var after = flood(s.map, player(s), blockers, key(position));
-    // A new blocker must leave the floor connected and retain the last
-    // approach to each existing contact or prop.
+    // Preserve connectivity and an approach to each contact.
     if (after.queue.length !== component.queue.length - 1 || !protectedTargets.every(function (item) { return approachable(item, after); })) return null;
     var approach = CARDINAL.map(function (d) { return neighbor(position, d); }).find(function (n) { return after.visited[key(n)] && !taken[key(n)]; });
     return approach ? { component: after, approach: approach } : null;
@@ -154,12 +153,10 @@
     if (!active()) return false;
     var s = state(), d = data();
     if (lastState === s && lastMap === s.map && validStore(s, d)) return true;
-    // A new procedural day reuses profile metadata, whereas a checkpoint also
-    // restores its collision tiles. Reuse only a complete matching checkpoint.
+    // Only a matching checkpoint restores collision tiles.
     var newMapInSameRun = lastState === s && lastMap && lastMap !== s.map;
     if (!newMapInSameRun && validStore(s, d)) { lastState = s; lastMap = s.map; routeCache = null; return true; }
-    // Upgrade an earlier physical-world checkpoint only when every owned prop
-    // still matches; never erase a coincidental tile on a new procedural map.
+    // Migrate matching props only. Procedural maps may reuse tile values.
     if (!newMapInSameRun && d && d.version < VERSION && d.day === s.day && Array.isArray(d.items) && d.items.filter(function (item) { return item.available; }).every(function (item) { return s.map[item.y] && s.map[item.y][item.x] === item.art; })) {
       d.items.forEach(function (item) { if (item.available && !item.authored && !(item.id === "mike_desk" && authoredDesk() && item.x === authoredDesk().x && item.y === authoredDesk().y) && SPECS.some(function (spec) { return spec.id === item.id && spec.art === item.art; })) s.map[item.y][item.x] = 0; });
     }
@@ -167,15 +164,14 @@
     if (!component.queue.length) return false;
     var protectedTargets = accessTargets(s, component);
     SPECS.forEach(function (spec) { var placed = place(s, spec, taken, component, blockers, protectedTargets); items.push(placed.item); component = placed.component; });
-    // Later stations may consume an earlier station's preferred service tile.
-    // Store an approach that is valid in the final map, not during placement.
+    // Choose approaches after all stations are placed.
     items.forEach(function (item) {
       if (item.available) item.approach = CARDINAL.map(function (d) { return neighbor(item, d); }).find(function (p) { return !!component.visited[key(p)]; });
     });
     s.meta = s.meta || {};
     s.meta.dayStations = { version: VERSION, day: s.day, width: s.map[0].length, height: s.map.length, items: items, routeTarget: null };
     lastState = s; lastMap = s.map; routeCache = null;
-    // Existing owner caches map identity, so invalidate only when props change.
+    // Invalidate cached map identity after prop changes.
     if (typeof root.draw === "function") { root.draw._tlMap = null; root.draw._mmMap = null; }
     return true;
   }
@@ -304,7 +300,7 @@
     if (!f.standup_completed) return objective("standup", "Attend morning standup", "Agree who owns each problem before beginning work.", "standup");
     if (!f.day_work_unlocked) return deskObjective(f);
     var shipping = ticketObjective(SHIPPING, c), plating = ticketObjective(PLATING, c);
-    // Keep work the player already started ahead of an unanswered intake.
+    // Continue the active investigation first.
     if (shipping && shipping.phase === "briefing" && plating && plating.phase !== "briefing") return plating;
     return shipping || plating || ticketObjective(ACCESS, c) || objective("sector04Door", "Continue to Sector 04", "The shift is documented. Follow the access record to the hangar entrance.", "departure");
   }
@@ -328,8 +324,7 @@
       if (!item.available) return;
       var x = item.x * TILE, y = item.y * TILE, selected = guided && guided.target && guided.target.id === item.id;
       var color = selected ? "#e7f9b1" : item.kind === "desk" ? "#9ee6cc" : "#f2c888";
-      // A visible service laptop supports software diagnostics on headless gear.
-      // It belongs to this station; this never grants remote desktop access.
+      // The adjacent service laptop belongs to this station.
       if (item.supportComputer) {
         ctx.fillStyle = "#132331"; ctx.fillRect(x + 2, y + 19, 13, 9);
         ctx.fillStyle = "#83bbcc"; ctx.fillRect(x + 4, y + 21, 9, 5);

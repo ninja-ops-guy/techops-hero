@@ -25,10 +25,7 @@
     return true;
   }
   function routeTo(id){var s=gs(),w=world();if(!s||!w)return false;s.meta=s.meta||{};s.meta.dayRouteTarget=id;exit();if(id==='mike_desk'&&s.room&&s.room.id==='itdept'){notify('Mike’s desk is on the right side of this room. Walk over and press E.');return true;}var route=w.route(id);if(s.room)notify('Route saved. Walk to the glowing room exit or press Q to return to the floor.');else if(!route.ok)notify(route.message);syncHud();return true;}
-  // A route mark is guidance to a destination, not a persistent filter. Once
-  // Mike has arrived and actually used the marked station or contact, keeping
-  // the old mark makes the HUD route button re-target yesterday's stop (e.g.
-  // Mike's desk after clock-in) instead of the current objective.
+  // Clear the marker after the player uses its destination.
   function clearRouteMark(id){var s=gs();if(!s||!s.meta||s.meta.dayRouteTarget!==id)return;s.meta.dayRouteTarget=null;if(world())world().route(null);}
   function canonicalStation(ticketId,screen){return ticketId==='shipping_cannot_print'?(screen?'shipping_workstation':'shipping_printer'):'plating_workstation';}
   function requireDesk(){if(desktopNearby())return true;routeTo('mike_desk');return false;}
@@ -65,8 +62,7 @@
         if(!e||e.surface!==active.surface)throw new Error('Use the correct physical or screen view to make that observation.');
         if(station.ticketId==='shipping_cannot_print'&&((e.surface==='physical'&&station.id!=='shipping_printer')||(e.surface==='screen'&&station.id!=='shipping_workstation')))throw new Error('This observation belongs to the other device. Follow its floor route.');
         if(rec.evidence.includes(value)){
-          // Re-reading a note is a UI action. Keep the current view still when
-          // the same note is already visible, including its keyboard focus.
+          // Keep focus on a note that is already open.
           if(active.notice!==e.text||active.error){
             active.notice=e.text;active.error=false;cue('inspect');if(refresh)render();
           }
@@ -107,7 +103,7 @@
   }
   function button(label,action,value,extra){return '<button type="button" data-day-action="'+action+'"'+(value?' data-value="'+escape(value)+'"':'')+(extra||'')+'>'+label+'</button>';}
   function diagram(kind,repaired){
-    // Coordinate-aligned equipment drawings keep the clue on the actual component.
+    // Hotspots align with equipment drawings.
     var body='',ink='#132936',edge='#9aadb7',metal='#516876',light='#ced7d8',cyan='#81d4ce',gold='#d8ad68';
     if(kind==='laptop'){
       body='<path d="M155 176V43Q155 32 166 32H353Q364 32 364 43V176" fill="'+metal+'"/><rect x="166" y="44" width="187" height="122" rx="3" fill="'+ink+'"/><path d="M183 64H302M183 80H330M183 99H259" stroke="#477482" stroke-width="4"/><path d="M151 176H368L393 227H130Z" fill="#83969f"/><path d="M172 185H351L361 207H162Z" fill="#263e4b"/><path d="M185 188L182 204M207 188L205 204M229 188V204M251 188V204M273 188V204M295 188L297 204M317 188L320 204M170 196H355" stroke="#66828e" stroke-width="2"/><path d="M230 212H285L288 222H227Z" fill="#b9c6ca"/><path d="M130 227H393V234H130Z" fill="#3b5361"/><rect x="126" y="182" width="19" height="13" rx="3" fill="#06161f"/><path d="'+(repaired?'M122 183H142V195H122Z':'M102 183H122V195H102Z')+'" fill="'+light+'"/><rect x="'+(repaired?113:93)+'" y="181" width="15" height="17" rx="3" fill="'+gold+'"/><path d="'+(repaired?'M115 190H70V252H470V189':'M95 190H70V252H470V189')+'" fill="none" stroke="'+gold+'" stroke-width="5"/>'+(repaired?'':'<path d="M123 184V194" stroke="#f2d398" stroke-width="2"/>')+'<rect x="419" y="129" width="130" height="64" rx="7" fill="'+metal+'"/><rect x="431" y="168" width="48" height="10" rx="2" fill="'+ink+'"/><path d="M488 173H537" stroke="#263e4b" stroke-width="7"/><circle cx="456" cy="153" r="5" fill="'+cyan+'"/><circle cx="491" cy="153" r="4" fill="'+(repaired?cyan:ink)+'"/><path d="M504 129V84H561V222H548" fill="none" stroke="#728993" stroke-width="4"/><path d="M510 187V221H542V240" fill="none" stroke="#728993" stroke-width="4"/>';
