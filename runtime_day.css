@@ -110,6 +110,6 @@ body.day-room-visible #quest-tracker{visibility:hidden!important;pointer-events:
 
 /* Fault packets visibly stop; after repair they cross the full route. */
 .day-equipment-diagram:not(.is-repaired) .day-motion-laptop .day-motion-packet,
-.day-equipment-diagram:not(.is-repaired) .day-motion-network .day-motion-packet{animation-name:day-packet-stall!important}
-.day-equipment-diagram.is-repaired .day-motion-laptop .day-motion-packet{animation-name:day-laptop-data!important}
-.day-equipment-diagram.is-repaired .day-motion-network .day-motion-packet{animation-name:day-network-data!important}
+.day-equipment-diagram:not(.is-repaired) .day-motion-network .day-motion-packet{animation-name:day-packet-stall}
+.day-equipment-diagram.is-repaired .day-motion-laptop .day-motion-packet{animation-name:day-laptop-data}
+.day-equipment-diagram.is-repaired .day-motion-network .day-motion-packet{animation-name:day-network-data}
