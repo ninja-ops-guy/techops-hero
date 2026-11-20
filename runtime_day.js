@@ -126,7 +126,25 @@
     }else{
       body='<rect x="81" y="35" width="282" height="171" rx="8" fill="'+metal+'"/><rect x="93" y="47" width="258" height="146" rx="3" fill="'+ink+'"/><rect x="112" y="65" width="156" height="13" rx="2" fill="#4f7785"/><path d="M112 98H324M112 114H299M112 130H310" stroke="#446773" stroke-width="4"/><path d="M112 157H302" stroke="#2b4b5b" stroke-width="10"/><path d="M112 157H215" stroke="'+cyan+'" stroke-width="10"/><path d="M213 208V235M170 239H267" stroke="'+edge+'" stroke-width="10"/><rect x="384" y="47" width="106" height="198" rx="7" fill="#586e7b"/><path d="M399 66H475M399 81H475" stroke="#233f4d" stroke-width="5"/><circle cx="408" cy="129" r="7" fill="'+cyan+'"/><path d="M434 123H472M434 138H472M400 182H475M400 192H475M400 202H475M400 212H475" stroke="#2b4654" stroke-width="4"/><path d="M362 170H379V228" fill="none" stroke="#7a929c" stroke-width="4"/><path d="M94 255H317L330 272H83Z" fill="#687f8c"/>';
     }
-    return '<svg viewBox="0 0 600 300" role="img" aria-label="'+escape(kind||'equipment')+' inspection diagram"><ellipse cx="302" cy="279" rx="235" ry="10" fill="#06121b"/>'+body+'</svg>';
+    var motion='';
+    if(kind==='printer'||kind==='label_printer'){
+      motion='<g class="day-motion-printer" aria-hidden="true"><path class="day-motion-label" d="M236 181H288V205H236Z" fill="#f5efda" stroke="#adbac0" stroke-width="2"/><path d="M243 187H280M243 193H276M243 199H268" stroke="#455866" stroke-width="2"/><circle class="day-motion-led" cx="455" cy="100" r="4" fill="#79e0bd"/></g>';
+    }else if(kind==='plc_hmi'||kind==='hmi'||kind==='plc'){
+      motion='<g class="day-motion-hmi" aria-hidden="true"><path class="day-motion-trace" d="M145 162H188V125H224V143H286" fill="none" stroke="#84e4d0" stroke-width="4" stroke-dasharray="14 12"/><circle class="day-motion-led" cx="348" cy="87" r="7" fill="#8ce1bd"/></g>';
+    }else if(kind==='industrial_scanner'||kind==='scanner'){
+      motion='<g class="day-motion-scanner" aria-hidden="true"><path class="day-motion-scan" d="M101 83H276" stroke="#72e2d2" stroke-width="2"/><path class="day-motion-scan-glow" d="M101 83H276" stroke="#72e2d2" stroke-width="10" opacity=".18"/></g>';
+    }else if(kind==='laptop'){
+      motion='<g class="day-motion-laptop" aria-hidden="true"><rect class="day-motion-cursor" x="183" y="106" width="3" height="12" rx="1" fill="#91e5cf"/><circle class="day-motion-packet" cx="111" cy="98" r="3" fill="#f3c979"/></g>';
+    }else if(kind==='mini_pc'){
+      motion='<g class="day-motion-mini-pc" aria-hidden="true"><circle cx="371" cy="217" r="12" fill="#1e3745" stroke="#8ba0a9" stroke-width="2"/><g class="day-motion-fan"><path d="M371 207Q380 208 375 215L371 217ZM381 217Q380 226 373 221L371 217ZM371 227Q362 226 367 219L371 217ZM361 217Q362 208 369 213L371 217Z" fill="#91aab3"/></g><circle class="day-motion-led" cx="463" cy="218" r="5" fill="#85e2c4"/></g>';
+    }else if(kind==='access_point'||kind==='network'||kind==='ap'){
+      motion='<g class="day-motion-network" aria-hidden="true"><path class="day-motion-wave wave-a" d="M129 47Q138 38 147 47" fill="none" stroke="#7fe3d3" stroke-width="2"/><path class="day-motion-wave wave-b" d="M122 42Q138 26 154 42" fill="none" stroke="#7fe3d3" stroke-width="2"/><circle class="day-motion-packet" cx="192" cy="119" r="3.5" fill="#f2c875"/></g>';
+    }else if(kind==='time_clock'){
+      motion='<g class="day-motion-clock" aria-hidden="true">'+(repaired?'':'<rect x="151" y="66" width="19" height="40" fill="'+ink+'"/><text class="day-motion-colon" x="155" y="99" fill="'+light+'" font-family="monospace" font-size="37">:</text>')+'<circle class="day-motion-led" cx="359" cy="233" r="4" fill="#85e2c4"/></g>';
+    }else{
+      motion='<g class="day-motion-status" aria-hidden="true"><rect class="day-motion-screen-sweep" x="97" y="52" width="250" height="3" fill="#86e0ce"/><circle class="day-motion-led" cx="408" cy="129" r="7" fill="#85e2c4"/></g>';
+    }
+    return '<svg class="day-equipment-diagram'+(repaired?' is-repaired':'')+'" viewBox="0 0 600 300" role="img" aria-label="'+escape(kind||'equipment')+' inspection diagram"><ellipse cx="302" cy="279" rx="235" ry="10" fill="#06121b"/>'+body+motion+'</svg>';
   }
   var doorsScript=null, doorsLoadFailed=false;
   function doorsScreen(station, data, notes){
