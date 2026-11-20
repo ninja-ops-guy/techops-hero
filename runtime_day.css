@@ -107,3 +107,9 @@ body.day-room-visible #quest-tracker{visibility:hidden!important;pointer-events:
 @keyframes day-fan-turn{to{transform:rotate(360deg)}}
 @keyframes day-wave{0%{transform:scale(.65);opacity:.08}40%{opacity:.65}100%{transform:scale(1.35);opacity:0}}
 @keyframes day-screen-sweep{0%,10%{transform:translateY(0);opacity:0}28%{opacity:.3}75%,100%{transform:translateY(122px);opacity:0}}
+
+/* Fault packets visibly stop; after repair they cross the full route. */
+.day-equipment-diagram:not(.is-repaired) .day-motion-laptop .day-motion-packet,
+.day-equipment-diagram:not(.is-repaired) .day-motion-network .day-motion-packet{animation-name:day-packet-stall!important}
+.day-equipment-diagram.is-repaired .day-motion-laptop .day-motion-packet{animation-name:day-laptop-data!important}
+.day-equipment-diagram.is-repaired .day-motion-network .day-motion-packet{animation-name:day-network-data!important}
