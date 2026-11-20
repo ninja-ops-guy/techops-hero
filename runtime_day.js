@@ -133,8 +133,16 @@
       motion='<g class="day-motion-hmi" aria-hidden="true"><path class="day-motion-trace" d="M145 162H188V125H224V143H286" fill="none" stroke="#84e4d0" stroke-width="4" stroke-dasharray="14 12"/><circle class="day-motion-led" cx="348" cy="87" r="7" fill="#8ce1bd"/></g>';
     }else if(kind==='industrial_scanner'||kind==='scanner'){
       motion='<g class="day-motion-scanner" aria-hidden="true"><path class="day-motion-scan" d="M101 83H276" stroke="#72e2d2" stroke-width="2"/><path class="day-motion-scan-glow" d="M101 83H276" stroke="#72e2d2" stroke-width="10" opacity=".18"/></g>';
+    }else if(kind==='laptop'){
+      motion='<g class="day-motion-laptop" aria-hidden="true"><rect class="day-motion-cursor" x="183" y="106" width="3" height="12" rx="1" fill="#91e5cf"/><circle class="day-motion-packet" cx="111" cy="98" r="3" fill="#f3c979"/></g>';
+    }else if(kind==='mini_pc'){
+      motion='<g class="day-motion-mini-pc" aria-hidden="true"><circle cx="371" cy="217" r="12" fill="#1e3745" stroke="#8ba0a9" stroke-width="2"/><g class="day-motion-fan"><path d="M371 207Q380 208 375 215L371 217ZM381 217Q380 226 373 221L371 217ZM371 227Q362 226 367 219L371 217ZM361 217Q362 208 369 213L371 217Z" fill="#91aab3"/></g><circle class="day-motion-led" cx="463" cy="218" r="5" fill="#85e2c4"/></g>';
+    }else if(kind==='access_point'||kind==='network'||kind==='ap'){
+      motion='<g class="day-motion-network" aria-hidden="true"><path class="day-motion-wave wave-a" d="M129 47Q138 38 147 47" fill="none" stroke="#7fe3d3" stroke-width="2"/><path class="day-motion-wave wave-b" d="M122 42Q138 26 154 42" fill="none" stroke="#7fe3d3" stroke-width="2"/><circle class="day-motion-packet" cx="192" cy="119" r="3.5" fill="#f2c875"/></g>';
+    }else if(kind==='time_clock'){
+      motion='<g class="day-motion-clock" aria-hidden="true">'+(repaired?'':'<rect x="151" y="66" width="19" height="40" fill="'+ink+'"/><text class="day-motion-colon" x="155" y="99" fill="'+light+'" font-family="monospace" font-size="37">:</text>')+'<circle class="day-motion-led" cx="359" cy="233" r="4" fill="#85e2c4"/></g>';
     }else{
-      motion='<g class="day-motion-status" aria-hidden="true"><circle class="day-motion-led" cx="408" cy="129" r="7" fill="#85e2c4"/></g>';
+      motion='<g class="day-motion-status" aria-hidden="true"><rect class="day-motion-screen-sweep" x="97" y="52" width="250" height="3" fill="#86e0ce"/><circle class="day-motion-led" cx="408" cy="129" r="7" fill="#85e2c4"/></g>';
     }
     return '<svg class="day-equipment-diagram'+(repaired?' is-repaired':'')+'" viewBox="0 0 600 300" role="img" aria-label="'+escape(kind||'equipment')+' inspection diagram"><ellipse cx="302" cy="279" rx="235" ry="10" fill="#06121b"/>'+body+motion+'</svg>';
   }
