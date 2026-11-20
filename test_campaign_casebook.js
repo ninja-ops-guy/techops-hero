@@ -5,6 +5,8 @@ const vm = require("node:vm");
 const path = require("node:path");
 const campaignSource = fs.readFileSync(path.join(__dirname, "campaign_act1.js"), "utf8");
 const nativeSource = fs.readFileSync(path.join(__dirname, "campaign_native_act1.js"), "utf8");
+const worldSource = fs.readFileSync(path.join(__dirname, "runtime_day_world.js"), "utf8");
+const investigationsSource = fs.readFileSync(path.join(__dirname, "campaign_act1_investigations.js"), "utf8");
 const SHIPPING = "shipping_cannot_print", PLATING = "plating_workstation_down", ACCESS = "impossible_access_event";
 let passed = 0;
 function test(name, body) { body(); passed++; console.log("PASS " + name); }
@@ -22,6 +24,8 @@ function boot(store = storage()) {
   });
   vm.runInContext(campaignSource, context, { filename: "campaign_act1.js" });
   vm.runInContext(nativeSource, context, { filename: "campaign_native_act1.js" });
+  vm.runInContext(worldSource, context, { filename: "runtime_day_world.js" });
+  vm.runInContext(investigationsSource, context, { filename: "campaign_act1_investigations.js" });
   return { context, C: context.TechOpsCampaign, N: context.TechOpsCampaignNativeAct1, store };
 }
 function shift(b, accessOwner = "mike") {
@@ -130,6 +134,53 @@ test("QUEUE exposes the casebook through real dialog callbacks without duplicate
   assert.equal(b.context.S.inDialog, false);
 });
 
+test("QUEUE previews human impact and ownership before clock-in without marking routes", () => {
+  const b = boot(), s = b.C.createInitialState();
+  b.C.assignTicket(s, SHIPPING, "mike"); b.C.assignTicket(s, PLATING, "amit"); b.C.assignTicket(s, ACCESS, "security");
+  b.C.completeStandup(s); b.C.checkWorkstation(s); b.C.save(s, b.store);
+  const before = b.store.getItem(b.C.SAVE_KEY), writes = b.store.writes;
+  b.N.openWorkstationTab("QUEUE");
+  assert.match(b.context.dialog.body, /Ticket clocks paused until clock-in/);
+  assert.match(b.context.dialog.body, /Shipping must print customs labels/);
+  assert.match(b.context.dialog.body, /Plating operator · Assigned to Amit/);
+  assert.match(b.context.dialog.body, /Security operations · Assigned to Security Ops/);
+  assert.doesNotMatch(b.context.dialog.body, /02:13|data-os-action-slot/);
+  assert.equal(b.store.getItem(b.C.SAVE_KEY), before); assert.equal(b.store.writes, writes);
+});
+
+test("QUEUE route only marks the latest physical step and writes no case progress", () => {
+  const b = boot(); shift(b);
+  const marks = [];
+  b.context.TechOpsDayExperience = { requireDesk: () => true, workstationSkin() {}, routeTo(target) { marks.push(target); return true; } };
+  b.N.openWorkstationTab("QUEUE");
+  const route = b.context.dialog.options.find(o => o.t === "Mark Shipping route");
+  assert.equal(route.slot, SHIPPING);
+  assert.match(b.context.dialog.body, /Talk to the Shipping clerk/);
+  const before = b.store.getItem(b.C.SAVE_KEY), writes = b.store.writes;
+  route.f(); assert.deepEqual(marks, ["shipping"]);
+  b.context.S.meta.dayBriefings = { day: 1, shipping: true };
+  route.f(); assert.deepEqual(marks, ["shipping"]);
+  assert.match(b.context.dialog.body, /Inspect the Shipping printer/);
+  click(b, "Mark Shipping route"); assert.deepEqual(marks, ["shipping", "shipping_printer"]);
+  assert.equal(b.store.getItem(b.C.SAVE_KEY), before); assert.equal(b.store.writes, writes);
+});
+
+test("QUEUE distinguishes a technical pass, requester restoration and unresolved Security evidence", () => {
+  const b = boot(), s = shift(b, "security"), I = b.context.TechOpsCampaignInvestigations;
+  I.recordEvidence(s, SHIPPING, "printer_self_test"); I.recordEvidence(s, SHIPPING, "queue_trace");
+  I.chooseHypothesis(s, SHIPPING, "permissions"); I.applyFix(s, SHIPPING); I.runTechnicalCheck(s, SHIPPING);
+  let cards = b.N.dayQueue(s);
+  assert.equal(cards[0].status, "Requester verification due");
+  assert.equal(cards[0].target, "shipping");
+  assert.match(cards[0].verification, /Technical check passed. Requester task pending/);
+  I.verifyHumanOutcome(s, SHIPPING);
+  b.C.recordGhostEvidence(s, { id: "badge_impossible_access", perspective: "delegated_partial", discoveredBy: "security" });
+  cards = b.N.dayQueue(freeze(s));
+  assert.equal(cards[0].status, "Verified / restored"); assert.equal(cards[0].target, null);
+  assert.equal(cards[2].status, "Documented / unresolved"); assert.equal(cards[2].target, null);
+  assert.match(cards[2].verification, /Delegated badge report from Security Ops. Physical presence remains unverified/);
+});
+
 test("needs-attention filter retains unresolved access and excludes only proven restoration", () => {
   const b = boot(), s = shift(b); close(b, s, SHIPPING); close(b, s, PLATING, "partial", "restored");
   b.N.openTicketHistory(); click(b, "Show needs attention");
@@ -200,12 +251,18 @@ test("cold runtime reload reconstructs memory from the canonical save only", () 
 });
 
 test("Tuesday transition preserves the recorded casebook without resetting outcomes", () => {
-  const b = boot(), s = shift(b); close(b, s, SHIPPING);
+  const b = boot(), s = shift(b); close(b, s, SHIPPING); close(b, s, PLATING, "partial", "degraded");
   b.C.recordGhostEvidence(s, { id: "badge_impossible_access", perspective: "firsthand" });
   const before = plain(b.N.ticketHistory(s));
   b.C.enterSector04(s); b.C.insightAccessGuard(s); b.C.suppressAccessGuard(s); b.C.severAccessController(s); b.C.transitionToTuesday(s); b.C.save(s, b.store);
   const reloaded = boot(b.store); assert.equal(reloaded.C.load(b.store).campaign.day, 2);
-  assert.deepEqual(plain(reloaded.N.ticketHistory(reloaded.C.load(b.store))), before);
+  const campaign = reloaded.C.load(reloaded.store);
+  assert.deepEqual(plain(reloaded.N.ticketHistory(campaign)), before);
+  const [shipping, plating] = reloaded.N.dayQueue(campaign);
+  assert.equal(shipping.status, "Verified / restored"); assert.equal(shipping.target, null);
+  assert.equal(plating.status, "Awaiting briefing"); assert.equal(plating.target, "plating");
+  assert.match(plating.nextAction, /next-shift Plating/);
+  assert.equal(plating.verification, "Next-shift verification pending.");
 });
 
 test("malformed or inaccessible storage fails visibly without overwriting progress", () => {
