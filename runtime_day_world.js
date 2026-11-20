@@ -327,6 +327,8 @@
     var guided = currentRoute(), tm = Number(now) || 0;
     var reduced = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
     ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    // Weather is a presentation layer only: it never changes collision, routes, or campaign facts.
+    if (root.TechOpsDaySeasons && typeof root.TechOpsDaySeasons.render === "function") root.TechOpsDaySeasons.render(ctx, tm, s.day);
     if (guided && guided.ok && guided.path.length > 1) {
       ctx.strokeStyle = "#062831"; ctx.lineWidth = 6; ctx.beginPath();
       guided.path.forEach(function (p, i) { if (!i) ctx.moveTo(p.x * TILE + 16, p.y * TILE + 16); else ctx.lineTo(p.x * TILE + 16, p.y * TILE + 16); }); ctx.stroke();
