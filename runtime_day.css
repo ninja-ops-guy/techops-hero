@@ -76,3 +76,17 @@ body.day-room-visible #quest-tracker{visibility:hidden!important;pointer-events:
 
 /* Keep live workstation targets at full size throughout entrance feedback. */
 @keyframes day-os-fade-in{from{opacity:0}to{opacity:1}}
+
+/* Small equipment scenes add stateful life without a continuous renderer. */
+.day-equipment-diagram .day-motion-label{transform-box:fill-box;transform-origin:center;animation:day-label-feed 2.6s cubic-bezier(.35,.02,.65,.98) infinite}
+.day-equipment-diagram.is-repaired .day-motion-label{animation-duration:4.2s}
+.day-equipment-diagram .day-motion-led{transform-box:fill-box;transform-origin:center;animation:day-led-pulse 1.8s ease-in-out infinite}
+.day-equipment-diagram .day-motion-trace{animation:day-telemetry 2.4s linear infinite}
+.day-equipment-diagram .day-motion-scan{animation:day-scanline 2.8s ease-in-out infinite}
+.day-equipment-diagram .day-motion-scan-glow{animation:day-scan-glow 2.8s ease-in-out infinite}
+@keyframes day-label-feed{0%,12%{transform:translateY(-9px);opacity:.08}34%,62%{transform:translateY(0);opacity:1}78%,100%{transform:translateY(8px);opacity:.12}}
+@keyframes day-led-pulse{0%,100%{opacity:.55}48%{opacity:1;filter:drop-shadow(0 0 5px #70e4bf)}}
+@keyframes day-telemetry{to{stroke-dashoffset:-52}}
+@keyframes day-scanline{0%,8%{transform:translateY(0);opacity:.15}48%{opacity:1}90%,100%{transform:translateY(69px);opacity:.15}}
+@keyframes day-scan-glow{0%,8%{transform:translateY(0);opacity:.04}48%{opacity:.22}90%,100%{transform:translateY(69px);opacity:.04}}
+@media(prefers-reduced-motion:reduce){.day-equipment-diagram *{animation:none!important}}
