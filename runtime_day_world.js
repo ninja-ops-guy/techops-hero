@@ -10,6 +10,7 @@
   "use strict";
   var VERSION = 3, TILE = 32, lastState = null, lastMap = null, routeCache = null;
   var CARDINAL = [[0, 1], [-1, 0], [1, 0], [0, -1]];
+  var SHIPPING = "shipping_cannot_print", PLATING = "plating_workstation_down", ACCESS = "impossible_access_event";
   var SPECS = [
     { id: "mike_desk", label: "Mike's workstation", kind: "desk", deviceType: "desktop", roomId: "office", zoneId: "office", surface: "screen", art: 2, x: 31, y: 15 },
     { id: "shipping_printer", label: "Shipping label printer", kind: "device", deviceType: "printer", ticketId: "shipping_cannot_print", roomId: "factory", zoneId: "factory", surface: "physical", art: 14, x: 8, y: 26, contact: "shipping" },
@@ -56,11 +57,15 @@
     (s.npcs || []).concat(officePeople()).forEach(function (n) { out[key(n)] = true; });
     return out;
   }
+  function worldProps(s) {
+    var items = [].concat(s.devices || [], s.portals || [], s.coffeeMachines || [], s.loreSpots || []);
+    var night = s._nightObjs || {};
+    Object.keys(night).forEach(function (id) { items = items.concat(night[id] || []); });
+    return items.filter(function (item) { return item && Number.isInteger(item.x) && Number.isInteger(item.y); });
+  }
   function occupiedProps(s) {
     var out = occupants(s);
-    [s.devices, s.portals, s.coffeeMachines, s.loreSpots].forEach(function (list) { (list || []).forEach(function (p) { out[key(p)] = true; }); });
-    var night = s._nightObjs || {};
-    Object.keys(night).forEach(function (id) { var item = night[id]; if (item && Number.isFinite(item.x) && Number.isFinite(item.y)) out[key(item)] = true; });
+    worldProps(s).forEach(function (item) { out[key(item)] = true; });
     return out;
   }
   function flood(map, start, blockers, excluded) {
@@ -92,10 +97,28 @@
     return CARDINAL.some(function (d) { return !!component.visited[key(neighbor(target, d))]; });
   }
   function accessTargets(s, component) {
-    var list = (s.npcs || []).concat(officePeople(), s.devices || [], s.portals || [], s.coffeeMachines || [], s.loreSpots || []);
-    var night = s._nightObjs || {};
-    Object.keys(night).forEach(function (id) { if (night[id] && Number.isInteger(night[id].x) && Number.isInteger(night[id].y)) list.push(night[id]); });
+    var list = (s.npcs || []).concat(officePeople(), worldProps(s));
     return list.filter(function (item) { return approachable(item, component); });
+  }
+  function servicePlacement(s, position, component, blockers, taken, protectedTargets) {
+    var after = flood(s.map, player(s), blockers, key(position));
+    // A new blocker must leave the floor connected and retain the last
+    // approach to each existing contact or prop.
+    if (after.queue.length !== component.queue.length - 1 || !protectedTargets.every(function (item) { return approachable(item, after); })) return null;
+    var approach = CARDINAL.map(function (d) { return neighbor(position, d); }).find(function (n) { return after.visited[key(n)] && !taken[key(n)]; });
+    return approach ? { component: after, approach: approach } : null;
+  }
+  function byAnchor(anchor) {
+    return function (a, b) { return distance(a, anchor) - distance(b, anchor) || a.y - b.y || a.x - b.x; };
+  }
+  function contactSpot(anchor, zoneId) {
+    var s = state(); if (!s || !s.map) return null;
+    var start = player(s), blockers = occupants(s), taken = occupiedProps(s), component = flood(s.map, start, blockers);
+    var protectedTargets = accessTargets(s, component);
+    var candidates = component.queue.filter(function (p) {
+      return !taken[key(p)] && distance(p, start) > 0 && zone(p.x, p.y) === zoneId;
+    }).sort(byAnchor(anchor));
+    return candidates.find(function (p) { return servicePlacement(s, p, component, blockers, taken, protectedTargets); }) || null;
   }
   function place(s, spec, taken, component, blockers, protectedTargets) {
     var desk = spec.id === "mike_desk" && authoredDesk();
@@ -108,23 +131,16 @@
     var origin = spec.contact ? contact(spec.contact) || spec : spec;
     var candidates = component.queue.filter(function (p) {
       return !taken[key(p)] && distance(p, player(s)) > 0 && zone(p.x, p.y) === spec.zoneId;
-    }).sort(function (a, b) { return distance(a, origin) - distance(b, origin) || a.y - b.y || a.x - b.x; });
+    }).sort(byAnchor(origin));
     for (var i = 0; i < candidates.length; i++) {
-      var p = candidates[i], after = flood(s.map, player(s), blockers, key(p));
-      // Use precisely the same NPC collision rules as player movement and
-      // wayfinding. Preserving geometry alone can trap a clerk behind a prop.
-      if (after.queue.length !== component.queue.length - 1) continue;
-      // A cul-de-sac's final service tile may disappear without splitting the
-      // floor component. Explicitly retain access to every existing target.
-      if (!protectedTargets.every(function (item) { return approachable(item, after); })) continue;
-      var approach = CARDINAL.map(function (d) { return neighbor(p, d); }).find(function (n) { return after.visited[key(n)] && !taken[key(n)]; });
-      if (!approach) continue;
-      var item = Object.assign({}, spec, { x: p.x, y: p.y, approach: approach, roomName: ROOM_NAMES[spec.zoneId], available: true });
+      var p = candidates[i], placement = servicePlacement(s, p, component, blockers, taken, protectedTargets);
+      if (!placement) continue;
+      var item = Object.assign({}, spec, { x: p.x, y: p.y, approach: placement.approach, roomName: ROOM_NAMES[spec.zoneId], available: true });
       if (spec.id === "printer_queue_blocked" || spec.id === "access_point_poe") item.supportComputer = { kind: "service_laptop", label: "Mike's service laptop", connection: spec.id === "access_point_poe" ? "Managed switch console" : "Approved print administration session" };
       delete item.contact;
       s.map[p.y][p.x] = spec.art; taken[key(p)] = true;
       protectedTargets.push(item);
-      return { item: item, component: after };
+      return { item: item, component: placement.component };
     }
     return { item: Object.assign({}, spec, { available: false, roomName: ROOM_NAMES[spec.zoneId], unavailableReason: "No reachable service position in this room." }), component: component };
   }
@@ -173,10 +189,10 @@
     if (value.id && (station(value.id) || contact(value.id))) return target(value.id);
     return Number.isInteger(value.x) && Number.isInteger(value.y) ? value : null;
   }
-  function plan(value) {
+  function plan(value, start) {
     var s = state(), dest = target(value);
     if (!active() || !dest || dest.available === false) return { ok: false, status: "unavailable", path: [], steps: 0, message: dest && dest.unavailableReason || "This destination is unavailable in the current scene." };
-    var start = player(s), explored = flood(s.map, start, occupants(s));
+    var explored = flood(s.map, start || player(s), occupants(s));
     var endings = CARDINAL.map(function (d) { return neighbor(dest, d); });
     if (dest.kind !== "contact" && floor(s.map, dest)) endings.push({ x: dest.x, y: dest.y });
     var endingKeys = Object.create(null); endings.forEach(function (p) { endingKeys[key(p)] = true; });
@@ -201,29 +217,96 @@
     if (!routeCache || routeCache.signature !== signature) routeCache = { signature: signature, result: plan(d.routeTarget) };
     return routeCache.result;
   }
+  function followsFloorRoute(previousX, previousY) {
+    var s = state(), d = data(), id = d && d.routeTarget;
+    if (!active() || !id || id === "standup" || id === "mike_desk") return false;
+    var from = { x: Math.round(previousX), y: Math.round(previousY) }, to = player(s);
+    if (distance(from, to) !== 1) return false;
+    var route = plan(id, from), next = route.path[1];
+    return !!(route.ok && next && distance(next, to) === 0);
+  }
   function objective(id, label, detail, phase) { return { id: id, target: id, stationId: station(id) ? id : null, label: label, detail: detail, phase: phase }; }
+  function briefed(id) {
+    var s = state(), briefings = s && s.meta && s.meta.dayBriefings;
+    return !!(briefings && briefings.day === s.day && briefings[id]);
+  }
+  function markBriefed(id) {
+    if (!active() || ["shipping", "plating", "access"].indexOf(id) < 0 || briefed(id)) return false;
+    var s = state();
+    s.meta = s.meta || {};
+    if (!s.meta.dayBriefings || s.meta.dayBriefings.day !== s.day) s.meta.dayBriefings = { day: s.day };
+    s.meta.dayBriefings[id] = true;
+    return true;
+  }
+  function deskObjective(flags) {
+    if (!flags.workstation_checked) return objective("mike_desk", "Start at Mike’s desk", "Open Doors and check the morning queue.", "desk");
+    if (!flags.red_in_mirror_heard) return objective("mike_desk", "Play Red in the Mirror", "Open Music in Doors for Mike’s morning track.", "music");
+    if (!flags.felicia_video_watched) return objective("mike_desk", "Watch Felicia’s company profile", "Open Company in Doors and find People Behind the Flight.", "company");
+    return objective("mike_desk", "Clock in for the shift", "Open Company in Doors to start the ticket clock.", "clock_in");
+  }
+  function serviceObjective(ticketId, record) {
+    var shipping = ticketId === SHIPPING, requester = shipping ? "shipping" : "plating";
+    var equipment = shipping ? "shipping_workstation" : "plating_workstation";
+    var phase = record && record.phase, evidence = record && Array.isArray(record.evidence) ? record.evidence : [];
+    if (phase === "workaround_verify") return objective(requester, "Verify limited service", shipping ? "Check the urgent labels with the clerk and record what Shipping still needs." : "Confirm the waiting cycle with the operator and record what the next shift still needs.", "verify");
+    if (phase === "human_verify") return objective(requester, shipping ? "Verify the real Shipping task" : "Verify the operator’s production task", shipping ? "Watch the clerk print and check a real customs label." : "Watch the operator complete a real production interaction.", "verify");
+    if (phase === "technical_check") return objective(equipment, shipping ? "Test the corrected print path" : "Check the restored integration", shipping ? "Trace a fresh job through authorization to the printer." : "Verify that the service stays up and reconnects to the controller.", "technical");
+    if (phase === "remediate") {
+      var s = state(), holds = s && s.meta && s.meta.dayOperatorHolds;
+      if (!shipping && !(holds && holds[ticketId])) return objective(equipment, "Coordinate the operator hold", "Confirm a safe change window with Amit and the operator.", "coordinate");
+      return objective(equipment, shipping ? "Restore approved queue access" : "Restore the integration dependency", shipping ? "Apply the supported change from the Shipping workstation." : "Make the agreed service change at the Plating workstation.", "repair");
+    }
+    if (!record && !briefed(requester)) return objective(requester, shipping ? "Talk to the Shipping clerk" : "Talk to the Plating operator", shipping ? "Find out what is holding the outbound shipment." : "Hear what the operator needs to resume and where Amit needs support.", "briefing");
+    var technicalClue = shipping ? "queue_trace" : "integration_service";
+    if (evidence.length >= 2 && evidence.indexOf(technicalClue) >= 0) return objective(equipment, shipping ? "Diagnose the missing labels" : "Diagnose the production interruption", "Compare the recorded observations and choose a supported cause.", "diagnose");
+    if (shipping && evidence.indexOf("printer_self_test") < 0) return objective("shipping_printer", "Inspect the Shipping printer", "Run a local self-test to check the print engine.", "inspect");
+    return shipping ? objective(equipment, "Trace the customs-label failure", "Use the Shipping workstation to trace a job and compare an approved account.", "investigate") : objective(equipment, "Inspect the Plating workstation", "Check local sign-in, the controller path, and the integration service.", "investigate");
+  }
+  function followupObjective(record, campaign) {
+    if (!record || record.phase === "complete") return null;
+    var shipping = record.ticketId === SHIPPING, requester = shipping ? "shipping" : "plating";
+    var equipment = shipping ? "shipping_workstation" : "plating_workstation", name = shipping ? "Shipping" : "Plating";
+    if (record.kind === "carryover") return (campaign.tickets || {})[record.ticketId] ? null : serviceObjective(record.ticketId, (campaign.investigations || {})[record.ticketId]);
+    if (record.phase === "human_verify") return objective(requester, "Verify the next-shift " + name + " task", "Witness the requester complete the actual task.", "verify");
+    if (record.phase === "remediate") return objective(equipment, "Repair the " + name + " service gap", "Apply the supported next-shift change at the workstation.", "repair");
+    if (record.phase === "technical_check") return objective(equipment, "Run the " + name + " technical recheck", "Test the changed path before returning to the requester.", "technical");
+    if (record.evidence.indexOf("requester") < 0) return objective(requester, "Check in with next-shift " + name, "Ask what the new shift can actually do before testing the system.", "briefing");
+    if (record.evidence.indexOf("technical") < 0) return objective(equipment, "Check the " + name + " service firsthand", "Collect a new technical observation at the workstation.", "investigate");
+    return objective(equipment, "Assess the " + name + " handoff", "Compare the requester’s report with your technical observation.", "diagnose");
+  }
+  function handoff(campaign) {
+    var api = root.TechOpsCampaign;
+    return api && typeof api.workdayHandoff === "function" ? api.workdayHandoff(campaign) : [];
+  }
+  function ticketObjective(ticketId, campaign) {
+    var flags = campaign && campaign.flags;
+    if (!flags || !flags.day_work_unlocked) return null;
+    if (flags.tuesday_morning_reached) return followupObjective(handoff(campaign).find(function (record) { return record.ticketId === ticketId; }), campaign);
+    if (ticketId === ACCESS) {
+      var sources = campaign.evidence && campaign.evidence.ghostIdentityEvidence && campaign.evidence.ghostIdentityEvidence.sources || [];
+      if (sources.some(function (source) { return source.id === "badge_impossible_access"; })) return null;
+      if (!briefed("access")) return objective("access", "Check in with Security Ops", "Hear why the Sector 04 entry was flagged.", "briefing");
+      var delegated = campaign.assignments && campaign.assignments[ACCESS] === "security";
+      return objective("security_workstation", "Document the impossible badge record", delegated ? "Review Security’s findings at its evidence workstation." : "Compare the recorded badge access with Mike’s physical presence.", "evidence");
+    }
+    if (ticketId !== SHIPPING && ticketId !== PLATING || (campaign.tickets || {})[ticketId]) return null;
+    return serviceObjective(ticketId, (campaign.investigations || {})[ticketId]);
+  }
   function nextObjective() {
     if (!active()) return null;
     var c; try { c = root.TechOpsCampaign && root.TechOpsCampaign.load(root.localStorage); } catch (_) { return objective("mike_desk", "Review the workday", "Walk to Mike's workstation.", "desk"); }
     if (!c) return objective("mike_desk", "Review the workday", "Walk to Mike's workstation.", "desk");
-    var f = c.flags || {}, investigations = c.investigations || {}, tickets = c.tickets || {};
-    if (f.tuesday_morning_reached) return objective("mike_desk", "Review the next-shift handoff", "Check the verified outcomes and follow-up work at your desk.", "handoff");
+    var f = c.flags || {};
+    if (f.tuesday_morning_reached) {
+      var pending = handoff(c).map(function (record) { return followupObjective(record, c); }).find(Boolean);
+      return pending || objective("mike_desk", "Review the next-shift handoff", "Check the recorded outcomes at your desk.", "handoff");
+    }
     if (!f.standup_completed) return objective("standup", "Attend morning standup", "Agree who owns each problem before beginning work.", "standup");
-    if (!f.day_work_unlocked) return objective("mike_desk", "Begin the morning at your desk", "Queue, Red in the Mirror, and Felicia's company profile.", "desk");
-    if (!tickets.shipping_cannot_print) {
-      var shipping = investigations.shipping_cannot_print;
-      if (shipping && /human_verify|workaround_verify/.test(shipping.phase)) return objective("shipping", "Verify the real Shipping task", "Talk to the clerk and check a real customs label.", "verify");
-      if (!shipping || !Array.isArray(shipping.evidence) || shipping.evidence.indexOf("printer_self_test") < 0) return objective("shipping_printer", "Inspect the Shipping printer", "Check the local print engine before blaming the workstation.", "inspect");
-      return objective("shipping_workstation", "Trace the customs-label failure", "Use the Shipping computer to inspect the queue and identity evidence.", "investigate");
-    }
-    if (!tickets.plating_workstation_down) {
-      var plating = investigations.plating_workstation_down;
-      if (plating && /human_verify|workaround_verify/.test(plating.phase)) return objective("plating", "Verify the operator's production task", "Confirm the real production interaction with the operator.", "verify");
-      return objective("plating_workstation", "Inspect the Plating workstation", "Support the assigned owner; distinguish Doors health from the integration dependency.", "investigate");
-    }
-    var sources = c.evidence && c.evidence.ghostIdentityEvidence && c.evidence.ghostIdentityEvidence.sources || [];
-    if (!sources.some(function (source) { return source.id === "badge_impossible_access"; })) return objective("security_workstation", "Document the impossible badge record", "Inspect the access record at Security's evidence workstation.", "evidence");
-    return objective("sector04Door", "Continue to Sector 04", "Finish the handoff, then follow the established Night Walker transition.", "departure");
+    if (!f.day_work_unlocked) return deskObjective(f);
+    var shipping = ticketObjective(SHIPPING, c), plating = ticketObjective(PLATING, c);
+    // Keep work the player already started ahead of an unanswered intake.
+    if (shipping && shipping.phase === "briefing" && plating && plating.phase !== "briefing") return plating;
+    return shipping || plating || ticketObjective(ACCESS, c) || objective("sector04Door", "Continue to Sector 04", "The shift is documented. Follow the access record to the hangar entrance.", "departure");
   }
   function render(ctx, now) {
     if (!ctx || !active()) return false;
@@ -236,6 +319,11 @@
       guided.path.forEach(function (p, i) { if (!i) ctx.moveTo(p.x * TILE + 16, p.y * TILE + 16); else ctx.lineTo(p.x * TILE + 16, p.y * TILE + 16); }); ctx.stroke();
       ctx.strokeStyle = "#9ee6cc"; ctx.lineWidth = 2; ctx.setLineDash([3, 8]); ctx.lineDashOffset = reduced ? 0 : -tm / 90; ctx.stroke(); ctx.setLineDash([]);
     }
+    if (guided && guided.ok && guided.target.kind === "contact") {
+      var contactX = guided.target.x * TILE, contactY = guided.target.y * TILE;
+      ctx.fillStyle = "#112933"; ctx.fillRect(contactX + 3, contactY + 29, 26, 4);
+      ctx.fillStyle = "#bcecd2"; ctx.fillRect(contactX + 5, contactY + 30, 22, 2);
+    }
     d.items.forEach(function (item) {
       if (!item.available) return;
       var x = item.x * TILE, y = item.y * TILE, selected = guided && guided.target && guided.target.id === item.id;
@@ -247,11 +335,10 @@
         ctx.fillStyle = "#83bbcc"; ctx.fillRect(x + 4, y + 21, 9, 5);
         ctx.fillStyle = "#c2cbd0"; ctx.fillRect(x + 1, y + 28, 15, 2);
       }
-      ctx.strokeStyle = color; ctx.lineWidth = selected ? 2 : 1;
-      ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
-      ctx.fillStyle = "#132331"; ctx.fillRect(x + 22, y - 3, 11, 11);
-      ctx.fillStyle = color; ctx.font = "bold 9px monospace"; ctx.fillText(item.kind === "desk" ? "M" : item.caseId ? "+" : "!", x + 27.5, y + 2.5);
       if (selected || at(item.id)) {
+        ctx.strokeStyle = color; ctx.lineWidth = selected ? 2 : 1;
+        ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+        ctx.font = "bold 9px monospace";
         var text = item.label, width = Math.min(220, ctx.measureText(text).width + 12);
         ctx.fillStyle = "#10222ded"; ctx.fillRect(x + 16 - width / 2, y - 19, width, 14);
         ctx.fillStyle = "#f3f5df"; ctx.fillText(text, x + 16, y - 12);
@@ -259,5 +346,5 @@
     });
     ctx.restore(); return true;
   }
-  return { VERSION: VERSION, ensureWorld: ensureWorld, stations: stations, nearby: nearby, at: at, deskNearby: deskNearby, route: route, currentRoute: currentRoute, nextObjective: nextObjective, render: render, contact: contact };
+  return { VERSION: VERSION, ensureWorld: ensureWorld, stations: stations, nearby: nearby, at: at, deskNearby: deskNearby, route: route, currentRoute: currentRoute, followsFloorRoute: followsFloorRoute, nextObjective: nextObjective, ticketObjective: ticketObjective, markBriefed: markBriefed, render: render, contact: contact, contactSpot: contactSpot };
 });

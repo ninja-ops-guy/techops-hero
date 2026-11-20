@@ -603,12 +603,15 @@ function stepNM(dt) {
 const __origDrawV50 = draw;
 draw = function () {
   if (S && S.nightMode) return drawNM();
-  __origDrawV50.apply(this, arguments);
-  // office overlay: exit door, ramps, shortcuts
-  const s = S, o = s && s._nightObjs;
+  return __origDrawV50.apply(this, arguments);
+};
+
+// These ground props live in the Day renderer's world transform. Drawing
+// under the cast keeps even older maps with shared coordinates readable.
+function drawDayTravelProps(s) {
+  const o = s && s._nightObjs;
   if (!o || !s.map) return;
-  const ts = cv.height / 14, sc = ts / TILE;
-  ctx.save(); ctx.scale(sc, sc); ctx.translate(-camX, -camY);
+  ctx.save();
   ctx.font = "24px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText("🚪", o.door.x * TILE + 16, o.door.y * TILE + 14);
   ctx.font = "9px monospace"; ctx.fillStyle = "#9fb7d9";
@@ -632,7 +635,7 @@ draw = function () {
     ctx.globalAlpha = 1;
   }
   ctx.restore();
-};
+}
 
 // the parked Charger (drawn — slab body, green ghost-flame hints, underglow)
 function nmCar(x, cx, cy, w, tm) {
