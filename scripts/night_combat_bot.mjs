@@ -6,6 +6,7 @@ import {chromium,webkit,devices} from 'playwright';
 import {beginRuntimeEvidence} from './runtime_evidence_capture.mjs';
 import {roomBootstrapSnapshot} from './room_bootstrap_snapshot.mjs';
 import {createNightDiagnostics} from './night_combat_diagnostics.mjs';
+import {boundedNightCleanup,NightCleanupTimeout,nightStreetReady} from './night_combat_qualification.mjs';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
 const diagnostics=createNightDiagnostics({out});
@@ -68,7 +69,9 @@ for(const [name,type,touch] of profiles){
   // The spawn is beside the Charger: E/Punch must still open its routes.
   if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('KeyE');
   await page.getByText('THE CHARGER',{exact:false}).first().waitFor({state:'visible'});
-  await click(page.locator('#dlg-options button').filter({hasText:'Back to the street.'}));checks.push('Charger interaction preserved');
+  await click(page.locator('#dlg-options button').filter({hasText:'Back to the street.'}));
+  await diagnostics.phase(name,'charger.return',()=>page.waitForFunction(nightStreetReady));
+  checks.push('Charger interaction preserved');
   // Preserve the existing touch grab/throw checks through the optional controls.
   await click(page.locator('#night-input-assists'));
   await page.locator('#night-input-grab').waitFor({state:'visible'});
@@ -165,7 +168,9 @@ for(const [name,type,touch] of profiles){
   await setup();await click(page.locator('#night-campaign'));const hp=await page.evaluate(()=>NM.enemies[0].hp);
   await page.keyboard.press('KeyJ');await page.keyboard.press('KeyG');
   if(await page.evaluate(()=>NM.enemies[0].hp)!==hp)throw Error('Combat leaked into campaign dialog');
-  await click(page.locator('#dlg-options button').filter({hasText:'Back to the street'}));checks.push('standalone run-menu combat isolation');
+  await click(page.locator('#dlg-options button').filter({hasText:'Back to the street'}));
+  await diagnostics.phase(name,'campaign.return',()=>page.waitForFunction(nightStreetReady));
+  checks.push('standalone run-menu combat isolation');
   if(errors.length)throw Error(errors.join('\n'));
   record.pass=true;
   diagnostics.mark(name,'gameplay','end');
@@ -176,12 +181,21 @@ for(const [name,type,touch] of profiles){
   catch(error){if(!hasProfileError){profileError=error;hasProfileError=true;}record.artifacts={trace:null,runtime:null,captureErrors:[diagnostics.errorText(error)]};}
   // Evidence failures cannot turn an unobserved run green. Preserve gameplay errors.
   if(record.artifacts.captureErrors.length){record.pass=false;record.error=record.error||'Night combat evidence capture failed';}
-  let cleanupError,cleanupFailed=false;
-  if(context)try{await diagnostics.phase(name,'context.close',()=>context.close());}catch(error){cleanupError=error;cleanupFailed=true;diagnostics.cleanupFailure(record,'context.close',error);}
-  if(browser)try{await diagnostics.phase(name,'browser.close',()=>browser.close());}catch(error){if(!cleanupFailed)cleanupError=error;cleanupFailed=true;diagnostics.cleanupFailure(record,'browser.close',error);}
+  let cleanupError,cleanupFailed=false,cleanupTimedOut=false;
+  for(const [operation,resource] of [['context.close',context],['browser.close',browser]]){
+   if(!resource)continue;
+   try{await diagnostics.phase(name,operation,()=>boundedNightCleanup(()=>resource.close(),operation));}
+   catch(error){
+    if(!cleanupFailed)cleanupError=error;cleanupFailed=true;
+    cleanupTimedOut=cleanupTimedOut||error instanceof NightCleanupTimeout;
+    diagnostics.cleanupFailure(record,operation,error);
+   }
+  }
   diagnostics.report(name,record,results);
-  // A rejected close still stops later profiles, but cannot replace the first
-  // gameplay failure or prevent an attempted browser close. Hangs still await.
+  // A hung transport can keep Node alive even after a rejected race. Persist FAIL
+  // first, then terminate this harness; never advance to unqualified profiles.
+  // Only resources created by this harness are closed; no process-name killing.
+  if(cleanupTimedOut)process.exit(1);
   if(cleanupFailed)throw hasProfileError?profileError:cleanupError;
  }
 }
