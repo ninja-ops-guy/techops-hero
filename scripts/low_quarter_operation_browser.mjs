@@ -24,8 +24,8 @@ try{for(const profile of profiles)for(const ending of endings){
    }assert(Math.abs(o.x-x)<15,'Reach '+x+' got '+o.x);
  };
  const interact=async id=>{await p.locator('[data-interaction="'+id+'"]').click();await advance(.2);};
- const work=async id=>{const prop=await p.evaluate(id=>TechOpsLowQuarterOperation.PROPS.find(x=>x.id===id),id);await walk(prop.x);await advance(.2);await interact(id);await advance(prop.seconds+.3);assert((await snap()).lowQuarterOperation.done[id],id+' : '+await p.locator('#message').textContent());};
- const go=async room=>{if(room==='receiving')await p.getByRole('button',{name:'Follow convoy to receiving yard',exact:true}).click();else await p.locator('[data-route="'+room+'"]').click();const o=(await snap()).lowQuarterOperation;assert(o.travel,'Route '+room);await advance(o.travel.duration+.4);assert.equal((await snap()).lowQuarterOperation.room,room);};
+ const work=async id=>{console.log(profile+' '+ending+' · '+id);const prop=await p.evaluate(id=>TechOpsLowQuarterOperation.PROPS.find(x=>x.id===id),id);await walk(prop.x);await advance(.2);await interact(id);await advance(prop.seconds+.3);assert((await snap()).lowQuarterOperation.done[id],id+' : '+await p.locator('#message').textContent());};
+ const go=async room=>{console.log(profile+' '+ending+' · travel '+room);if(room==='receiving')await p.getByRole('button',{name:'Follow convoy to receiving yard',exact:true}).click();else await p.locator('[data-route="'+room+'"]').click();const o=(await snap()).lowQuarterOperation;assert(o.travel,'Route '+room);await advance(o.travel.duration+.4);assert.equal((await snap()).lowQuarterOperation.room,room);};
  await work('lookout');await work('watch');await work('survey_approaches');await go('services');await work('survey_services');await work('power');await work('radio');
  // Reload from actual serialized gameplay after warning/repair, then resume with UI.
  const before=(await snap()).lowQuarter;await p.reload();await p.click('#resume');assert.deepEqual((await snap()).lowQuarter,before);

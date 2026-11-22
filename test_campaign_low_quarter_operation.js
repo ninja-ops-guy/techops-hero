@@ -7,7 +7,7 @@ function tick(s,t,input={}){for(let n=0;n<t-1e-8;n+=.1)O.step(s,Math.min(.1,t-n)
 function walk(s,x){const o=s.lowQuarterOperation;for(let n=0;Math.abs(o.x-x)>4&&n<2000;n++)O.step(s,.02,{[o.x<x?'right':'left']:true});assert(Math.abs(o.x-x)<=4,'Cannot reach '+x);}
 function work(s,id){const p=O.PROPS.find(p=>p.id===id);assert(p,'Unknown work '+id);assert.equal(s.lowQuarterOperation.room,p.room,id+' location');walk(s,p.x);assert(O.interact(s,id),id+': '+s.lowQuarterOperation.message);tick(s,p.seconds+.2);assert(s.lowQuarterOperation.done[id],id+' incomplete');}
 function go(s,room){assert(O.travel(s,room),'Route '+s.lowQuarterOperation.room+' to '+room);const t=s.lowQuarterOperation.travel.duration;tick(s,t+.2);assert.equal(s.lowQuarterOperation.room,room);}
-function prepare(s){
+function prepare(s,robotApproach=false){
  work(s,'lookout');work(s,'watch');work(s,'survey_approaches');go(s,'services');work(s,'survey_services');work(s,'power');work(s,'radio');
  go(s,'shelters');work(s,'survey_shelters');work(s,'vent');work(s,'care');if(s.story.ending==='open_network')work(s,'cooperate');work(s,'test_shelters');
  for(const p of s.lowQuarterOperation.residents.filter(p=>p.room==='shelters')){walk(s,p.x);assert(O.interact(s,p.id));}
@@ -18,7 +18,8 @@ function prepare(s){
  if(s.story.ending==='open_network'){work(s,'dispatch');tick(s,22);work(s,'isolate');tick(s,18);work(s,'restore');}
  assert(R.AUTHORITY[s.story.ending].every(k=>R.inspect(s).checks[k]),JSON.stringify(R.inspect(s).checks));
  // Gather four actual teams; all follow on each physical route.
- for(const room of O.ROOMS){const u=s.lowQuarterOperation.units.find(u=>u.id==='team_'+room);walk(s,u.x);assert(O.interact(s,u.id));}
+ for(const room of O.ROOMS){if(robotApproach&&room==='departure')continue;const u=s.lowQuarterOperation.units.find(u=>u.id==='team_'+room);walk(s,u.x);assert(O.interact(s,u.id));}
+ if(robotApproach){const u=s.lowQuarterOperation.units.find(u=>u.id==='robot');walk(s,u.x);assert(O.interact(s,'robot'));}
  for(const room of ['shelters','departure','services','approaches']){
    if(s.lowQuarterOperation.room!==room)go(s,room);
    walk(s,820);tick(s,1);assert(O.interact(s,'post'),'Assign '+room);
@@ -41,11 +42,12 @@ for(const ending of ['shutdown','control','open_network'])test(ending+' physical
 });
 test('lost exposed defender, source-bound delayed adaptation, actual closure and replacement',()=>{
  const s=setup();prepare(s);tick(s,901-s.lowQuarterOperation.tick);go(s,'services');tick(s,90);const o=s.lowQuarterOperation;
- assert(o.done.assimilated);assert(o.done.enemy_order);const sg=S.status(s);assert.equal(sg.orders.road_attack.fact,'road_v1');assert.equal(sg.acquiredFacts.road_v1.version,'v1');assert.equal(R.inspect(s).units.team_approaches.ready,false);
+ assert(o.done.assimilated);assert(o.done.enemy_order);const sg=S.status(s);assert.equal(sg.orders.road_attack.fact,'road_v1');assert.equal(sg.acquiredFacts.road_v1.version,'v1');const lost=s.lowQuarter.siege.events.find(e=>e.type==='assimilate');assert.equal(lost.unit,o.exposedUnit);assert.equal(o.units.find(u=>u.id===lost.unit).room,'approaches');assert.equal(R.inspect(s).units[lost.unit].ready,false);assert.equal(s.lowQuarter.events.find(e=>e.id===lost.receipt).unit,lost.unit);
  go(s,'departure');work(s,'cut_route');assert(S.status(s).responses.road_attack);assert.equal(S.status(s).relayConnected,true);
  // Route interruption does not erase already acquired knowledge.
  assert(S.status(s).sudoFacts.road_v1);
 });
+test('physical robot loss cannot produce human assimilation or tactical memories',()=>{const s=setup('control');prepare(s,true);tick(s,901-s.lowQuarterOperation.tick);assert.equal(s.lowQuarterOperation.exposedUnit,'robot');go(s,'services');tick(s,100);assert.equal(R.inspect(s).units.robot.ready,false);assert.equal(s.lowQuarter.siege.events.filter(e=>e.type==='assimilate').length,0);assert.deepEqual(S.status(s).acquiredFacts,{});});
 test('failed save leaves original operation and ledgers byte-identical',()=>{const s=setup(),before=JSON.stringify(s);assert.throws(()=>O.transact(s,c=>O.step(c,.5),()=>false),/not saved/);assert.equal(JSON.stringify(s),before);});
 test('unknown operation revision preserves data and blocks only review',()=>{const s=setup();s.lowQuarterOperation.revision='future';const before=JSON.stringify(s),v=O.validate(s);assert(v.valid&&v.blocked);assert.equal(JSON.stringify(s),before);});
 test('ordinary legacy campaign has no review operation',()=>{const s=C.createInitialState();assert(O.validate(s).valid);assert.equal(s.lowQuarterOperation,undefined);});

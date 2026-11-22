@@ -49,7 +49,7 @@
     return {approved:true,areas:Object.fromEntries(ROOMS.map(x=>[x,x])),hopperRecovery:180,
       relay:{location:'approaches',uploadDelay:10,orderDelay:5},
       waves:[{id:'first_ship',tick:900,warningTick:0,infected:80000,sector:'approaches'},{id:'second_ship',tick:7200,warningTick:180,infected:160000,sector:'approaches'}],
-      facts:[{id:'road_v1',kind:'route',target:'service_road',version:'v1',sector:'departure',knownBy:['team_approaches']}],
+      facts:[{id:'road_v1',kind:'route',target:'service_road',version:'v1',sector:'departure',knownBy:ROOMS.map(r=>'team_'+r).concat(['reserve_1','reserve_2'])}],
       observations:['arrival','resolution','assimilation','relay','response','order'].map(kind=>({id:'observe_'+kind,kind,location:kind==='response'?'departure':'approaches',roles:['witness'],sources:[kind+'_physical',kind+'_watch']})),
       rescue:{id:ID,revision:REV,approved:true,encounter:Siege.AUTHORITY,sectors:ROOMS.map(id=>({id,requiredStrength:2,posts:[id+'_post']})),actors,
         people:Array.from({length:12},(_,i)=>({id:'resident_'+(i+1),sector:i<8?'departure':'shelters'})),
@@ -226,18 +226,18 @@
     for(const u of o.units.filter(u=>u.follow&&u.room===o.room)){u.x+=Math.sign(o.x-40-u.x)*Math.min(Math.abs(o.x-40-u.x),140*dt);}
     for(const p of o.residents.filter(p=>p.follow&&p.room===o.room)){const target=Math.min(o.x-25,1120);p.x+=Math.sign(target-p.x)*Math.min(Math.abs(target-p.x),100*dt);}
     if(o.convoy&&!o.convoy.interrupted&&!o.convoy.arrived){o.convoy.progress+=dt;if(o.convoy.progress>=90){o.convoy.arrived=true;observation(s,'vehicle_arrival','yard_watch','van',{trip:'opening_trip'});}}
-    if(o.assaultStart!==null&&!o.breachStart&&o.tick>=o.assaultStart){observedSiege(s,'arrival','arrival',{wave:'first_ship'});siege(s,'advance',{phase:'adaptation'});o.breachStart=o.tick;o.message='Ship landing witnessed. Eighteen infected are through the freight breach.';}
+    if(o.assaultStart!==null&&!o.breachStart&&o.tick>=o.assaultStart){observedSiege(s,'arrival','arrival',{wave:'first_ship'});siege(s,'advance',{phase:'adaptation'});o.breachStart=o.tick;o.exposedUnit=o.units.find(u=>u.ready&&u.room==='approaches')?.id;o.message='Ship landing witnessed. Eighteen infected are through the freight breach.';}
     if(o.breachStart&&!o.done.gate){
       if(o.spawned<18&&o.enemies.filter(e=>e.alive).length<6){o.enemies.push({id:'infected_'+(++o.spawned),x:1250+o.spawned%3*70,y:0,hp:60,alive:true,hitAt:-1});}
-      const team=o.units.find(u=>u.id==='team_approaches');
+      const team=o.units.find(u=>u.id===o.exposedUnit);assert(team&&team.room==='approaches','Exposed defender must physically hold the approach');
       for(const e of o.enemies.filter(e=>e.alive)){
         const nearPlayer=o.room==='approaches'&&!o.travel&&o.hp>0;const target=nearPlayer?o.x:820;e.x+=Math.sign(target-e.x)*42*dt;
         if(nearPlayer&&Math.abs(e.x-o.x)<35&&o.y<35&&o.tick-e.hitAt>1&&o.tick-o.hurtAt>0.8){e.hitAt=o.tick;o.hurtAt=o.tick;o.hp=Math.max(0,o.hp-3);}
         if(!nearPlayer&&team.hp>0&&Math.abs(e.x-820)<40){team.hp=Math.max(0,team.hp-4*dt);}
       }
-      if(!team.hp&&!o.done.assimilated){team.ready=false;observation(s,'defender_loss','approach_watch',team.id,{physicalInfected:true});
+      if(!team.hp&&!o.done['lost_'+team.id]){o.done['lost_'+team.id]=true;team.ready=false;observation(s,'defender_loss','approach_watch',team.id,{physicalInfected:true});
         rescue(s,'unit',{unit:team.id,sector:'approaches',post:'approaches_post',actor:'officer_approaches',ready:false});
-        observedSiege(s,'assimilate','assimilation',{unit:team.id,receipt:s.lowQuarter.events.at(-1).id});o.done.assimilated=o.tick;
+        if(team.id!=='robot'){observedSiege(s,'assimilate','assimilation',{unit:team.id,receipt:s.lowQuarter.events.at(-1).id});o.done.assimilated=o.tick;}
       }
       if(o.hp===0){o.halted=true;o.message='Iona is incapacitated. Opening halted; missing people and defense remain unresolved. Restart the review to try again.';}
     }
