@@ -112,6 +112,7 @@
     if(id==='isolate'&&!o.drill.arrived)return 'Wait for the test team to arrive before isolating its coordinator.';
     if(id==='dispatch'&&e==='shutdown'&&!d.coalition)return 'Secure the military coalition first.';
     if(id==='dispatch'&&e==='open_network'&&!d.cooperate)return 'Earn shelter cooperation first.';
+    if(id==='van'&&d.enemy_order&&!d.alternative)return 'Clear and test the alternate road before dispatching into a known attack.';
     if(id==='van'&&o.residents.filter(p=>p.consent==='transport'&&p.room==='departure'&&Math.abs(p.x-1120)<75).length===0)return 'Ask residents and physically escort them to the vehicle first.';
     if(id==='gate'&&(!o.breachStart||o.kills<18||o.enemies.some(e=>e.alive)))return 'Clear the eighteen-person breach before sealing the ingress.';
     if(id==='receiver'&&(!o.convoy||!o.convoy.arrived||o.convoy.interrupted))return 'The vehicle must physically reach this yard first.';
@@ -122,7 +123,7 @@
     }
     return '';
   }
-  function finishWork(s,id){const o=s.lowQuarterOperation,d=o.done;o.work=null;d[id]=true;observation(s,'interaction','iona',id,{room:o.room,x:o.x});
+  function finishWork(s,id){const o=s.lowQuarterOperation,d=o.done;o.work=null;if(id==='stop'&&!o.drill.moving){o.message='The test team passed the stop before you completed it. Return to Dispatch and order a new physical drill.';return;}d[id]=true;observation(s,'interaction','iona',id,{room:o.room,x:o.x});
     switch(id){
       case 'watch':emitCheck(s,'threat_corroborated','approaches');siege(s,'wave_warning',{wave:'first_ship',receipt:R.inspect(s).checks.threat_corroborated});o.message='Iona: Two reports agree. Warn every sector.';break;
       case 'power':if(s.story.ending==='shutdown')emitCheck(s,'local_power_tested','services');break;
@@ -130,7 +131,7 @@
       case 'records':emitCheck(s,'independent_records','services');break;
       case 'rota':if(s.story.ending==='shutdown')emitCheck(s,'human_rota','services');break;
       case 'coalition':emitCheck(s,'military_coalition','services');break;
-      case 'dispatch':o.drill.moving=true;o.drill.target=1420;o.message='Test team moving. Control: operate the external stop before it passes the red line.';break;
+      case 'dispatch':o.drill.moving=true;o.drill.arrived=false;o.drill.target=o.drill.x>1200?1040:1420;o.message='Test team moving. Control: operate the external stop before it passes the red line.';break;
       case 'stop':o.drill.stopped=true;o.drill.moving=false;emitCheck(s,'external_stop_tested','services');break;
       case 'audit':emitCheck(s,'independent_audit','services');break;
       case 'veto':emitCheck(s,'civilian_veto','departure');o.message='Resident: There are still people on the loading road. Keep this gate open.';break;
@@ -171,7 +172,7 @@
   }
   function position(s){return s.lowQuarterOperation;}
   function nearby(s){const o=position(s);if(o.travel||o.halted||o.checkpoint)return [];
-    const objects=PROPS.filter(p=>p.room===o.room&&(!o.done[p.id]||p.id==='test_services'&&!checked(s,'essential_services_tested'))&&Math.abs(p.x-o.x)<65).map(p=>({...p,kind:'prop'}));
+    const objects=PROPS.filter(p=>p.room===o.room&&(!o.done[p.id]||p.id==='test_services'&&!checked(s,'essential_services_tested')||p.id==='dispatch'&&s.story.ending==='control'&&!o.done.stop)&&Math.abs(p.x-o.x)<65).map(p=>({...p,kind:'prop'}));
     if(o.room==='services'&&commandReady(s))for(const u of o.units.filter(u=>!u.target&&!u.ready&&u.hp>0&&u.room===o.room&&Math.abs(u.x-o.x)<70))objects.push({id:u.id,label:u.id==='robot'&&s.story.ending==='shutdown'?'Robot lacks independent Shutdown qualification; use military reserves':'Ask '+u.id+' to follow to a defensive post',kind:'unit'});
     if(ROOMS.includes(o.room)&&Math.abs(o.x-820)<65&&commandReady(s)&&o.units.some(u=>u.follow&&u.room===o.room&&Math.abs(u.x-o.x)<90))objects.push({id:'post',label:'Assign following team to this sector post',kind:'post'});
     for(const p of o.residents.filter(p=>!p.boarded&&p.room===o.room&&Math.abs(p.x-o.x)<55&&!p.follow&&!o.done['shelter_'+p.id]))objects.push({id:p.id,label:p.consent==='declined'?'Resident declined. Ask again':o.room==='shelters'?'Ask resident to shelter with care':'Ask resident to follow to the vehicle',kind:'resident'});
@@ -246,7 +247,7 @@
     if(o.raiders&&!o.done.cut_route){o.raiders.travel+=dt;if(o.raiders.travel>=45){o.raiders.room='departure';o.raiders.x=Math.max(1120,o.raiders.x-42*dt);}else if(o.raiders.travel>=20)o.raiders.room='services';}
     if(o.raiders?.room==='departure'&&o.raiders.x<=1120&&!o.done.cut_route&&o.convoy?.route==='service_road'&&!o.convoy.arrived&&!o.convoy.interrupted){o.convoy.interrupted=true;rescue(s,'trip_failed',{trip:'opening_trip',actor:'witness_departure'});o.message='Convoy route compromised. Passengers unresolved; vehicle and crew remain committed.';}
     if(o.done.gate&&o.done.receiver&&(!o.done.enemy_order||o.done.cut_route)&&o.residents.filter(p=>o.done['shelter_'+p.id]).length===4){
-      const r=R.inspect(s);if(o.residents.filter(p=>r.people[p.id].status==='evacuated').length===8&&ROOMS.every(k=>Object.values(r.units).some(u=>u.ready&&u.sector===k))){o.checkpoint=true;observation(s,'opening_checkpoint','local_watch','opening_only');o.message='Opening checkpoint saved. Breach sealed; receiving care verified. District census, other landing fronts and later ships remain unresolved.';}
+      const r=R.inspect(s);if(R.evaluate(s).safe.length===12&&o.residents.filter(p=>r.people[p.id].status==='evacuated').length===8&&ROOMS.every(k=>Object.values(r.units).some(u=>u.ready&&u.sector===k))){o.checkpoint=true;observation(s,'opening_checkpoint','local_watch','opening_only');o.message='Opening checkpoint saved. Breach sealed; receiving care verified. District census, other landing fronts and later ships remain unresolved.';}
     }
   }
   function objective(s){const o=position(s),d=o.done;if(o.checkpoint||o.halted)return o.message;

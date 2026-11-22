@@ -7,11 +7,11 @@ function tick(s,t,input={}){for(let n=0;n<t-1e-8;n+=.1)O.step(s,Math.min(.1,t-n)
 function walk(s,x){const o=s.lowQuarterOperation;for(let n=0;Math.abs(o.x-x)>4&&n<2000;n++)O.step(s,.02,{[o.x<x?'right':'left']:true});assert(Math.abs(o.x-x)<=4,'Cannot reach '+x);}
 function work(s,id){const p=O.PROPS.find(p=>p.id===id);assert(p,'Unknown work '+id);assert.equal(s.lowQuarterOperation.room,p.room,id+' location');walk(s,p.x);assert(O.interact(s,id),id+': '+s.lowQuarterOperation.message);tick(s,p.seconds+.2);assert(s.lowQuarterOperation.done[id],id+' incomplete');}
 function go(s,room){assert(O.travel(s,room),'Route '+s.lowQuarterOperation.room+' to '+room);const t=s.lowQuarterOperation.travel.duration;tick(s,t+.2);assert.equal(s.lowQuarterOperation.room,room);}
-function prepare(s,robotApproach=false){
+function prepare(s,robotApproach=false,skipAlternate=false){
  work(s,'lookout');work(s,'watch');work(s,'survey_approaches');go(s,'services');work(s,'survey_services');work(s,'power');work(s,'radio');
  go(s,'shelters');work(s,'survey_shelters');work(s,'vent');work(s,'care');if(s.story.ending==='open_network')work(s,'cooperate');work(s,'test_shelters');
  for(const p of s.lowQuarterOperation.residents.filter(p=>p.room==='shelters')){walk(s,p.x);assert(O.interact(s,p.id));}
- go(s,'departure');work(s,'survey_departure');work(s,'road');work(s,'alternative');work(s,'test_departure');
+ go(s,'departure');work(s,'survey_departure');work(s,'road');if(!skipAlternate)work(s,'alternative');work(s,'test_departure');
  go(s,'services');go(s,'approaches');work(s,'test_approaches');go(s,'services');work(s,'rota');work(s,'test_services');
  if(s.story.ending==='shutdown'){work(s,'records');work(s,'coalition');work(s,'dispatch');tick(s,22);}
  if(s.story.ending==='control'){work(s,'dispatch');work(s,'stop');work(s,'audit');go(s,'departure');work(s,'veto');work(s,'challenge');go(s,'services');}
@@ -48,6 +48,12 @@ test('lost exposed defender, source-bound delayed adaptation, actual closure and
  assert(S.status(s).sudoFacts.road_v1);
 });
 test('physical robot loss cannot produce human assimilation or tactical memories',()=>{const s=setup('control');prepare(s,true);tick(s,901-s.lowQuarterOperation.tick);assert.equal(s.lowQuarterOperation.exposedUnit,'robot');go(s,'services');tick(s,100);assert.equal(R.inspect(s).units.robot.ready,false);assert.equal(s.lowQuarter.siege.events.filter(e=>e.type==='assimilate').length,0);assert.deepEqual(S.status(s).acquiredFacts,{});});
+test('a late external stop grants no credit and an actual return drill recovers it',()=>{
+ const s=setup('control');go(s,'services');work(s,'power');work(s,'radio');work(s,'dispatch');walk(s,1200);tick(s,17);assert(O.interact(s,'stop'));tick(s,3.2);assert(!s.lowQuarterOperation.done.stop);assert(!R.inspect(s).checks.external_stop_tested);work(s,'dispatch');work(s,'stop');assert(R.inspect(s).checks.external_stop_tested);
+});
+test('known attacked route requires an actually cleared alternate before dispatch',()=>{
+ const s=setup();prepare(s,false,true);tick(s,901-s.lowQuarterOperation.tick);go(s,'services');tick(s,100);go(s,'departure');const r=s.lowQuarterOperation.residents[0];walk(s,r.x);O.interact(s,r.id);walk(s,1120);tick(s,10);assert.equal(O.interact(s,'van'),false);assert.equal(s.lowQuarterOperation.work,null);assert.equal(s.lowQuarterOperation.convoy,null);assert.match(s.lowQuarterOperation.message,/alternate/);
+});
 test('failed save leaves original operation and ledgers byte-identical',()=>{const s=setup(),before=JSON.stringify(s);assert.throws(()=>O.transact(s,c=>O.step(c,.5),()=>false),/not saved/);assert.equal(JSON.stringify(s),before);});
 test('unknown operation revision preserves data and blocks only review',()=>{const s=setup();s.lowQuarterOperation.revision='future';const before=JSON.stringify(s),v=O.validate(s);assert(v.valid&&v.blocked);assert.equal(JSON.stringify(s),before);});
 test('ordinary legacy campaign has no review operation',()=>{const s=C.createInitialState();assert(O.validate(s).valid);assert.equal(s.lowQuarterOperation,undefined);});
