@@ -25,6 +25,13 @@
   function tick(){
     ticks++;
     if(standaloneGoodDogs()){parkPrivateTimers();if(ticks%8===0)validate();root.__campaignCompletionRuntimeTick=ticks;root.__campaignCompletionRuntimeParked="gooddogs";return;}
+    // The siege owns its active scene and canonical transactions. Re-running
+    // Day/late-game installers here repeatedly reloads and replays the entire
+    // growing siege ledger and can also race its in-flight world checkpoint.
+    if(root.TechOpsLowQuarterPlay&&typeof root.TechOpsLowQuarterPlay.active==="function"&&root.TechOpsLowQuarterPlay.active()){
+      parkPrivateTimers();if(ticks%8===0)validate();root.__campaignCompletionRuntimeTick=ticks;root.__campaignCompletionRuntimeParked="low-quarter";return;
+    }
+    if(root.__campaignCompletionRuntimeParked==="low-quarter")root.__campaignCompletionRuntimeParked=null;
     installOwners();
     installRescue();
     if(root.S && root.S.nightMode && !root.S.nightMode._v736) { if(ticks%8===0)validate(); return; }

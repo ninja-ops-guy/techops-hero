@@ -130,7 +130,9 @@ Reserve arrival restores actual defense strength; the lost picket stays lost.
   Normal players have no UI for arbitrary events or victory flags.
 - `campaign_low_quarter_play.js` mounts the mission inside the real campaign,
   isolates its controls, reuses the K asset, saves milestones and unfinished
-  world state and restores the prior surface when closed.
+  world state and restores the prior surface when closed. Shared campaign maintenance parks unrelated
+  Day/late-game installers while the siege owns the scene; periodic canonical
+  validation remains and ordinary maintenance resumes on return.
 - `campaign_low_quarter_runtime.js` retains inspection and irreversible
   closeout; entry/resume is available only after the original epilogue.
 - `campaign_late_game_bootstrap.js` loads content, mission and play surface after
