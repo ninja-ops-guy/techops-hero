@@ -20,11 +20,12 @@
    }
    if(room==='approaches'){
      c.fillStyle=o.done.gate?'#7caaa0':'#705c52';c.fillRect(1000,210,12,120);c.fillRect(1000,210,100,12);if(o.done.gate)c.fillRect(1012,225,87,105);
+     if(!o.done.ready){c.fillStyle='#a8a5b6';const distantX=600-Math.min(140,o.tick*.12);c.fillRect(distantX,95,55,7);c.fillRect(distantX+15,88,26,8);c.fillStyle='#ddac9c';c.fillRect(distantX+44,101,10,3);}
      if(o.done.ready){const t=o.assaultStart-o.tick;c.fillStyle='#b4abb8';const x=1050-Math.max(0,Math.min(160,(60-t)*3));c.fillRect(x,90,130,18);c.fillRect(x+30,74,75,20);c.fillStyle='#c77979';c.fillRect(x+90,110,40,6);}
    }
    if(room==='services')actor(c,o.drill.x,330,'#597a8b','Test team','local',1,o.drill.moving?o.tick:0);
    for(const u of o.units.filter(u=>u.room===room&&u.hp>0))actor(c,u.x,330,u.ready?'#5c8b78':'#617887',u.id+(u.ready?' · POST':''),'local',1,u.follow?o.tick:0);
-   for(const p of o.residents.filter(p=>p.room===room&&!p.boarded))actor(c,p.x,330,o.done['shelter_'+p.id]?'#77a981':'#ad8f76',p.id.replace('resident_','R'),'local',1,p.follow?o.tick:0);
+   for(const p of o.residents.filter(p=>p.room===room&&(!p.boarded||room==='receiving'&&o.done.receiver)))actor(c,room==='receiving'?220+Number(p.id.split('_')[1])*38:p.x,330,o.done['shelter_'+p.id]?'#77a981':'#ad8f76',p.id.replace('resident_','R'),'local',1,p.follow?o.tick:0);
    if(room==='departure'&&!o.convoy){c.fillStyle='#637878';c.fillRect(1070,280,130,49);c.fillStyle='#16242d';c.fillRect(1160,285,32,20);c.fillStyle='#05090e';c.fillRect(1080,320,20,15);c.fillRect(1170,320,20,15);}
    if(room==='receiving'){actor(c,600,330,'#9bc6ac','Receiving medic');if(o.convoy?.arrived){c.fillStyle='#637878';c.fillRect(700,280,130,49);}}
    if(o.raiders?.room===room&&!o.done.cut_route){actor(c,o.raiders.x,330,'#ba6a74','ROUTE RAIDERS');}
