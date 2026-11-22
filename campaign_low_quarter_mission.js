@@ -83,7 +83,7 @@
       if(!m.units.some(function(u){return u.id==='reserve_2';}))obj('relief_'+k,'Request the second reserve at this sector’s rear post',1260,3,'relief');
       if(k==='approaches'&&m.waves.arrival_1&&m.picket==='exposed')obj('picket','Guide the exposed signal picket behind the barrier',350,2,'picket');
       if(k==='approaches'&&m.picket==='assimilated'&&!m.units.some(function(u){return u.id==='reserve_1';}))obj('reserve','Lead a reserve to replace the lost defensive capacity',2430,3,'reserve');
-      if(k==='approaches'&&m.waves.arrival_1&&m.relay)obj('relay','Isolate the landed relay; verify loss of forward traffic',2270,5,'relay');
+      if(k==='approaches'&&m.waves.arrival_1&&m.waves.arrival_1.arrived!==null&&m.relay)obj('relay','Isolate the landed relay; verify loss of forward traffic',2270,5,'relay');
       if(k==='approaches'&&Object.keys(m.orders).some(function(o){return !m.responded[o];}))obj('counter','Close compromised primary lane and test the alternative',1890,3,'counter');
       var wave=D.waves.find(function(w){return w.sector===k;}),w=m.waves[wave.id];
       if(w&&!w.sealed)obj('ramp_'+k,'Seal this ship group\'s unloading access',100,5,'ramp');

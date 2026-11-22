@@ -169,15 +169,31 @@ and future schemas. This is simulation acceptance, not browser playthrough.
 `scripts/low_quarter_play_browser.mjs` opens the real game's board and attempts
 the complete four-sector mission under all three endings plus emulated touch
 layout. Only the pre-mission completed epilogue is seeded. Mission progression
-uses keyboard/dialogue/pointer controls and Playwright virtual time, with no
+uses keyboard/dialogue/pointer controls and Playwright virtual time in bounded
+250ms frames feeding the unchanged 100ms world steps, with no
 injected mission receipts, positions or health. Screenshots, errors and results
 are retained by `.github/workflows/low-quarter-play.yml` against the exact head.
 The browser path checks all-shelter rescue; full eight-trip transport is covered
 by simulation and still needs browser/device traversal.
 
-Local Chromium launch is blocked before any page by process-singleton socket
-denial. Do not claim browser acceptance from local simulation results. Hosted
+The full local Chromium executable is blocked before any page by process-singleton
+socket denial. The installed Chromium 140 headless shell launches and is an
+available local browser path; qualify its actual results separately. Do not
+claim browser acceptance from local simulation results. Hosted
 outcomes must be read at the actual candidate head, including failures. The
 earlier PR #152 board fixture pass does not qualify this mission. Physical phone
 performance, full transport browser play, native multitouch, final art/likeness
 and measured production frame-time remain explicit release qualifications.
+
+## Related opening review
+
+Draft [PR #153](https://github.com/ninja-ops-guy/techops-hero/pull/153), created
+during this implementation, provides a separately approved tab-local opening
+review with twelve people and Iona as its playable actor. It stops before final
+wave/district resolution. This scenario supplies the approved complete
+48-resident response area, K as its player, canonical entry and final closeout.
+Both reuse #150/#152 authority. Their physical producer layers, population,
+force tuning and save revisions are alternatives, not cumulative counts or
+interchangeable histories. Reconcile board/bootstrap integration and physical
+producer ownership before merge. No source on #153 was overwritten, merged or
+claimed as this scenario's qualification.
