@@ -22,13 +22,17 @@ try{
   await page.clock.install();
   await page.getByRole('button',{name:'Enter Hold the Way Home',exact:true}).click();
   const snapshot=()=>page.evaluate(()=>TechOpsLowQuarterPlay.snapshot());
-  const objects=()=>page.evaluate(()=>TechOpsLowQuarterMission.objects({...TechOpsCampaign.load(localStorage),lowQuarterMission:TechOpsLowQuarterPlay.snapshot()}));
+  const objects=()=>page.evaluate(()=>TechOpsLowQuarterMission.objects({lowQuarterMission:TechOpsLowQuarterPlay.snapshot()}));
   async function run(ms){for(let left=ms;left>0;left-=250)await page.clock.fastForward(Math.min(250,left));const error=await page.evaluate(()=>TechOpsLowQuarterPlay.error());assert.equal(error,null);}
   async function held(key,ms){if(touch&&['ArrowLeft','ArrowRight','KeyE'].includes(key)){const b=await page.locator('[data-control="'+key+'"]').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await run(ms);await page.mouse.up();}else{await page.keyboard.down(key);await run(ms);await page.keyboard.up(key);}}
   async function walk(x){for(let n=0;n<8;n++){const s=await snapshot(),dx=x-s.player.x;if(Math.abs(dx)<12)return;await held(dx>0?'ArrowRight':'ArrowLeft',Math.max(100,Math.abs(dx)/110*1000));}throw Error('Walking did not reach '+x);}
   async function use(id){const o=(await objects()).find(v=>v.id===id);assert(o,'object exists '+id);await walk(o.x);
-   const near=await page.evaluate(()=>TechOpsLowQuarterMission.nearest({...TechOpsCampaign.load(localStorage),lowQuarterMission:TechOpsLowQuarterPlay.snapshot()})?.id);assert.equal(near,id,'actual nearest interaction');
-   await held('KeyE',(o.duration+.4)*1000);
+   const near=await page.evaluate(()=>TechOpsLowQuarterMission.nearest({lowQuarterMission:TechOpsLowQuarterPlay.snapshot()})?.id);assert.equal(near,id,'actual nearest interaction');
+   let pointer=false;
+   if(touch){const b=await page.locator('[data-control="KeyE"]').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();pointer=true;}else await page.keyboard.down('KeyE');
+   let completed=false;
+   try{for(let n=0;n<200;n++){await run(250);if((await snapshot()).dialog||!(await objects()).some(v=>v.id===id)){completed=true;break;}}}finally{if(pointer)await page.mouse.up();else await page.keyboard.up('KeyE');}
+   assert(completed,'World interaction completed under held input: '+id+' · '+(await snapshot()).message);
   }
   async function wait(predicate,limit=1500){for(let n=0;n<limit;n++){if(predicate(await snapshot()))return;await run(1000);}throw Error('World observation timed out: '+(await snapshot()).message);}
   async function go(to){if((await snapshot()).player.sector===to)return;if(!(await objects()).some(o=>o.id==='exit_'+to))await go('services');await use('exit_'+to);await wait(s=>!s.travel);}
