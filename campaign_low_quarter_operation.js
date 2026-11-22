@@ -172,7 +172,7 @@
   function position(s){return s.lowQuarterOperation;}
   function nearby(s){const o=position(s);if(o.travel||o.halted||o.checkpoint)return [];
     const objects=PROPS.filter(p=>p.room===o.room&&(!o.done[p.id]||p.id==='test_services'&&!checked(s,'essential_services_tested'))&&Math.abs(p.x-o.x)<65).map(p=>({...p,kind:'prop'}));
-    if(o.room==='services'&&commandReady(s))for(const u of o.units.filter(u=>!u.target&&!u.ready&&u.hp>0&&u.room===o.room&&Math.abs(u.x-o.x)<70))objects.push({id:u.id,label:u.id==='robot'?'Robot lacks independent Shutdown qualification; use military reserves':'Ask '+u.id+' to follow to a defensive post',kind:'unit'});
+    if(o.room==='services'&&commandReady(s))for(const u of o.units.filter(u=>!u.target&&!u.ready&&u.hp>0&&u.room===o.room&&Math.abs(u.x-o.x)<70))objects.push({id:u.id,label:u.id==='robot'&&s.story.ending==='shutdown'?'Robot lacks independent Shutdown qualification; use military reserves':'Ask '+u.id+' to follow to a defensive post',kind:'unit'});
     if(ROOMS.includes(o.room)&&Math.abs(o.x-820)<65&&commandReady(s)&&o.units.some(u=>u.follow&&u.room===o.room&&Math.abs(u.x-o.x)<90))objects.push({id:'post',label:'Assign following team to this sector post',kind:'post'});
     for(const p of o.residents.filter(p=>!p.boarded&&p.room===o.room&&Math.abs(p.x-o.x)<55&&!p.follow&&!o.done['shelter_'+p.id]))objects.push({id:p.id,label:p.consent==='declined'?'Resident declined. Ask again':o.room==='shelters'?'Ask resident to shelter with care':'Ask resident to follow to the vehicle',kind:'resident'});
     return objects;

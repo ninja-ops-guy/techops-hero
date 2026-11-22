@@ -5,11 +5,11 @@ const base=process.env.LOW_QUARTER_BASE_URL||'http://127.0.0.1:4208/';
 const out=process.env.OPERATION_ARTIFACT_DIR||'artifacts/low-quarter-operation';fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
 const profiles=(process.env.OPERATION_PROFILES||'desktop,touch').split(','),endings=(process.env.OPERATION_ENDINGS||'shutdown,control,open_network').split(',');
-const reports=[];
+const reports=[];let activePage=null;
 try{for(const profile of profiles)for(const ending of endings){
  const ctx=await browser.newContext({viewport:profile==='touch'?{width:390,height:844}:{width:1280,height:800},hasTouch:profile==='touch',reducedMotion:profile==='touch'?'reduce':'no-preference'});
- const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
- await p.clock.install();await p.goto(new URL('low-quarter-review.html',base).href);await p.clock.pauseAt(new Date());
+ const p=await ctx.newPage(),errors=[];activePage=p;p.on('pageerror',e=>errors.push(e.message));
+ await p.clock.install({time:new Date('2026-11-22T12:00:00Z')});await p.goto(new URL('low-quarter-review.html',base).href);await p.clock.pauseAt(new Date('2026-11-22T12:10:00Z'));
  // This sentinel must never be read or changed by the review serializer.
  await p.evaluate(()=>localStorage.setItem(TechOpsCampaign.SAVE_KEY,'ordinary-campaign-sentinel'));
  await p.selectOption('#ending',ending);await p.click('#launch');
@@ -49,4 +49,4 @@ try{for(const profile of profiles)for(const ending of endings){
  await p.reload();await p.click('#resume');assert.deepEqual((await snap()).lowQuarter,state.lowQuarter);assert((await snap()).lowQuarterOperation.checkpoint);assert.deepEqual(errors,[]);
  reports.push({profile,ending,checkpoint:true,safe:12,rescueEvents:state.lowQuarter.events.length,siegeEvents:state.lowQuarter.siege.events.length,observations:o.observations.length,ordinarySaveUntouched:true,inputs:profile==='touch'?'pointer-held movement and real UI actions':'keyboard movement and real UI actions',clock:'virtual browser clock; no gameplay state/receipt injection',physicalPhone:false});
  fs.writeFileSync(out+'/playthroughs.json',JSON.stringify(reports,null,2));console.log('PASS '+profile+' '+ending+' natural opening, save/reload, independent receiving, ordinary-save isolation');await ctx.close();
-}}finally{await browser.close();}
+}}catch(error){if(activePage&&!activePage.isClosed()){await activePage.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});const diagnostic=await activePage.evaluate(()=>({state:globalThis.TechOpsLowQuarterOperationRuntime?.snapshot(),error:document.getElementById('save-error')?.textContent,message:document.getElementById('message')?.textContent})).catch(()=>null);fs.writeFileSync(out+'/failure.json',JSON.stringify({error:String(error),diagnostic},null,2));}throw error;}finally{await browser.close();}

@@ -27,6 +27,7 @@
    for(const p of o.residents.filter(p=>p.room===room&&!p.boarded))actor(c,p.x,330,o.done['shelter_'+p.id]?'#77a981':'#ad8f76',p.id.replace('resident_','R'),'local',1,p.follow?o.tick:0);
    if(room==='departure'&&!o.convoy){c.fillStyle='#637878';c.fillRect(1070,280,130,49);c.fillStyle='#16242d';c.fillRect(1160,285,32,20);c.fillStyle='#05090e';c.fillRect(1080,320,20,15);c.fillRect(1170,320,20,15);}
    if(room==='receiving'){actor(c,600,330,'#9bc6ac','Receiving medic');if(o.convoy?.arrived){c.fillStyle='#637878';c.fillRect(700,280,130,49);}}
+   if(o.raiders?.room===room&&!o.done.cut_route){actor(c,o.raiders.x,330,'#ba6a74','ROUTE RAIDERS');}
    if(room==='approaches')for(const e of o.enemies.filter(e=>e.alive)){actor(c,e.x,330,'#965068','INFECTED');c.fillStyle='#eea5a5';c.fillRect(e.x-15,257,e.hp/2,3);}
    if(room!=='receiving'){
      actor(c,room==='approaches'?360:100,330,'#bfb188','Local witness');actor(c,room==='approaches'?420:160,330,'#658b9a','Officer');

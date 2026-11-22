@@ -49,5 +49,6 @@ test('lost exposed defender, source-bound delayed adaptation, actual closure and
 test('failed save leaves original operation and ledgers byte-identical',()=>{const s=setup(),before=JSON.stringify(s);assert.throws(()=>O.transact(s,c=>O.step(c,.5),()=>false),/not saved/);assert.equal(JSON.stringify(s),before);});
 test('unknown operation revision preserves data and blocks only review',()=>{const s=setup();s.lowQuarterOperation.revision='future';const before=JSON.stringify(s),v=O.validate(s);assert(v.valid&&v.blocked);assert.equal(JSON.stringify(s),before);});
 test('ordinary legacy campaign has no review operation',()=>{const s=C.createInitialState();assert(O.validate(s).valid);assert.equal(s.lowQuarterOperation,undefined);});
+test('unready landing deadline does not invent readiness, deaths or victory',()=>{const s=setup();tick(s,901);assert(s.lowQuarterOperation.halted);assert.equal(s.lowQuarter.events.length,0);assert.equal(s.lowQuarter.result,null);assert.equal(S.status(s).arrivedWaves.length,0);assert.equal(R.evaluate(s).safe.length,0);assert.equal(R.evaluate(s).unresolved.length,12);});
 console.log(tests+' operation tests passed');
 module.exports={setup,work,walk,go,tick,prepare,combat,civilians};
