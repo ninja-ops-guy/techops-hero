@@ -143,9 +143,11 @@ jobs:
           set -euo pipefail
           timeout 480s node scripts/night_lifecycle_browser.mjs
       - name: Night combat acceptance
+        env:
+          DEBUG: pw:browser
         run: |
           set -euo pipefail
-          timeout 300s node scripts/night_combat_bot.mjs
+          timeout 300s node scripts/night_combat_bot.mjs 2>&1 | tee runtime-bot-artifacts/night-combat-browser.log
       - name: Presentation and art acceptance
         run: |
           set -euo pipefail

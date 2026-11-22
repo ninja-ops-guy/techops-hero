@@ -7,6 +7,7 @@ import {beginRuntimeEvidence} from './runtime_evidence_capture.mjs';
 import {roomBootstrapSnapshot} from './room_bootstrap_snapshot.mjs';
 import {createNightDiagnostics} from './night_combat_diagnostics.mjs';
 import {boundedNightCleanup,NightCleanupTimeout,nightStreetReady} from './night_combat_qualification.mjs';
+import {createNightShutdownDiagnostics} from './night_shutdown_diagnostics.mjs';
 const base=process.env.BOT_BASE_URL||'http://127.0.0.1:4173/';
 const out=process.env.BOT_OUT_DIR||'runtime-bot-artifacts';fs.mkdirSync(out,{recursive:true});
 const diagnostics=createNightDiagnostics({out});
@@ -15,12 +16,15 @@ const profiles=[['chromium',chromium,false],['chromium-touch',chromium,true],['w
 const selected=process.env.NIGHT_COMBAT_BROWSERS?.split(',');
 for(const [name,type,touch] of profiles){
  if(selected&&!selected.includes(name))continue;
- let browser,context,page,capture=null,profileError,hasProfileError=false,gameplayStarted=false;
+ let browser,context,page,shutdown,capture=null,profileError,hasProfileError=false,gameplayStarted=false;
  const errors=[],checks=[];
  const record={browser:name,touch,fixture:true,checks,errors,pass:false};results.push(record);
  diagnostics.mark(name,'profile','begin');
  try{
-  browser=await diagnostics.phase(name,'browser.launch',()=>type.launch({headless:true,...(type===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(type===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})}));
+  const launchOptions={headless:true,...(type===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?{executablePath:process.env.BOT_CHROMIUM_EXECUTABLE}:{}),...(type===chromium&&process.env.BOT_CHROMIUM_CHANNEL?{channel:process.env.BOT_CHROMIUM_CHANNEL}:{})};
+  shutdown=createNightShutdownDiagnostics({record,launchOptions});
+  browser=await diagnostics.phase(name,'browser.launch',()=>type.launch(launchOptions));
+  shutdown.attach(browser);
   record.browserVersion=browser.version();
   context=await diagnostics.phase(name,'context.create',()=>browser.newContext(touch?{...devices['iPhone 13']}:{viewport:{width:1440,height:900}}));
   await diagnostics.phase(name,'context.route',()=>context.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort()));
@@ -182,6 +186,7 @@ for(const [name,type,touch] of profiles){
   // Evidence failures cannot turn an unobserved run green. Preserve gameplay errors.
   if(record.artifacts.captureErrors.length){record.pass=false;record.error=record.error||'Night combat evidence capture failed';}
   let cleanupError,cleanupFailed=false,cleanupTimedOut=false;
+  if(browser)shutdown?.observe('before.context.close',browser);
   for(const [operation,resource] of [['context.close',context],['browser.close',browser]]){
    if(!resource)continue;
    try{await diagnostics.phase(name,operation,()=>boundedNightCleanup(()=>resource.close(),operation));}
@@ -190,7 +195,9 @@ for(const [name,type,touch] of profiles){
     cleanupTimedOut=cleanupTimedOut||error instanceof NightCleanupTimeout;
     diagnostics.cleanupFailure(record,operation,error);
    }
+   if(browser)shutdown?.observe('after.'+operation,browser);
   }
+  shutdown?.settle();
   diagnostics.report(name,record,results);
   // A hung transport can keep Node alive even after a rejected race. Persist FAIL
   // first, then terminate this harness; never advance to unqualified profiles.
