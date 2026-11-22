@@ -110,7 +110,7 @@ newly locked population or exact canon count. No synthetic district is shipped.
 
 ## Validation
 
-- `node test_campaign_chorus_siege.js`: 21 tests, including reachable full saves
+- `node test_campaign_chorus_siege.js`: 22 tests, including reachable full saves
   without assimilation under every ending, knowledge provenance, relay limits,
   missing posts, atomic persistence, reload, future schema and stale closeout.
 - `node test_campaign_low_quarter.js`: existing 58 cases.

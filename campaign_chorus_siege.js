@@ -114,7 +114,7 @@
         case 'respond':
           assert(x.orders[e.order]&&!x.responses[e.order]&&e.tick>x.orders[e.order].tick,'An issued attack precedes its response');observe(e,r,'response');
           var f=facts[x.orders[e.order].fact];
-          if(f.kind==='route')receipt(e,'route',function(v){return v.route===f.target&&v.open===false;});
+          if(f.kind==='route'){receipt(e,'route',function(v){return v.route===f.target&&v.open===false&&v.tick>x.orders[e.order].tick;});assert(r.routes[f.target]===false,'Compromised route must remain closed');}
           else if(f.kind==='post')receipt(e,'unit',function(v){return v.sector===f.sector&&v.post===f.target&&v.ready===true&&v.tick>x.orders[e.order].tick;});
           else receipt(e,'sector',function(v){return v.sector===f.sector&&v.contained===true&&v.habitable===true&&v.tick>x.orders[e.order].tick;});
           x.responses[e.order]=e.id;break;
