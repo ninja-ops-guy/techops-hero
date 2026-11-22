@@ -2,7 +2,7 @@ name: Low Quarter board acceptance
 
 on:
   pull_request:
-    branches: [main, codex/low-quarter-rescue-authority]
+    branches: [main, codex/low-quarter-rescue-authority, codex/chorus-siege]
     paths:
       - 'campaign_*.js'
       - 'chapters_vii_x.js'
@@ -10,6 +10,10 @@ on:
       - 'game.js'
       - 'production_*.js'
       - 'index.html'
+      - 'low-quarter-review.html'
+      - 'test_campaign_low_quarter_operation.js'
+      - 'scripts/low_quarter_operation_browser.mjs'
+      - 'scripts/production_release_gate.js'
       - '*.css'
       - 'test_campaign_low_quarter.js'
       - 'test_campaign_chorus_siege.js'
@@ -33,7 +37,7 @@ defaults:
 jobs:
   board:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
       LOW_QUARTER_BASE_URL: http://127.0.0.1:4208/
       EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
@@ -60,16 +64,17 @@ jobs:
             head: git('rev-parse', 'HEAD'), tree: git('rev-parse', 'HEAD^{tree}'),
             run_id: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT,
             node: process.version, platform: process.platform,
-            scope: 'Real-page desktop/touch board and reload with an explicit completed-save fixture. Includes synthetic siege fixtures; no playable district mission or physical-phone qualification.'
+            scope: 'Real-page desktop/touch board and reload with an explicit completed-save fixture. Includes synthetic board fixtures and physical producer contract tests. Natural-input opening playthroughs run in separate matrix jobs; no full district mission or physical-phone qualification.'
           };
           fs.writeFileSync('artifacts/low-quarter-board/source.json', JSON.stringify(receipt, null, 2) + '\n');
           JS
-          sha256sum campaign_chorus_siege.js test_campaign_chorus_siege.js scripts/chorus_siege_browser.mjs campaign_low_quarter.js campaign_low_quarter_runtime.js campaign_story.js campaign_late_game_bootstrap.js chapters_vii_x.js index.html test_campaign_low_quarter.js scripts/low_quarter_browser.mjs scripts/media_http_server.py package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-board/source-sha256.txt
+          sha256sum campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html test_campaign_low_quarter_operation.js scripts/low_quarter_operation_browser.mjs campaign_chorus_siege.js test_campaign_chorus_siege.js scripts/chorus_siege_browser.mjs campaign_low_quarter.js campaign_low_quarter_runtime.js campaign_story.js campaign_late_game_bootstrap.js chapters_vii_x.js index.html test_campaign_low_quarter.js scripts/low_quarter_browser.mjs scripts/media_http_server.py package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-board/source-sha256.txt
       - name: Verify existing rescue authority contracts
         run: |
           set -euo pipefail
           node test_campaign_low_quarter.js 2>&1 | tee artifacts/low-quarter-board/contracts.log
           node test_campaign_chorus_siege.js 2>&1 | tee artifacts/low-quarter-board/siege-contracts.log
+          node test_campaign_low_quarter_operation.js 2>&1 | tee artifacts/low-quarter-board/operation-contracts.log
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - name: Exercise the real-page board in desktop and touch layouts
@@ -94,5 +99,69 @@ jobs:
         with:
           name: low-quarter-board-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
           path: artifacts/low-quarter-board/
+          if-no-files-found: error
+          retention-days: 14
+
+  operation:
+    name: Opening / ${{ matrix.profile }} / ${{ matrix.ending }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        profile: [desktop, touch]
+        ending: [shutdown, control, open_network]
+    env:
+      LOW_QUARTER_BASE_URL: http://127.0.0.1:4208/
+      OPERATION_PROFILES: ${{ matrix.profile }}
+      OPERATION_ENDINGS: ${{ matrix.ending }}
+      OPERATION_ARTIFACT_DIR: artifacts/low-quarter-operation
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Bind operation evidence to candidate source
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/low-quarter-operation
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git diff --exit-code
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+          fs.writeFileSync('artifacts/low-quarter-operation/source.json',JSON.stringify({head:git('rev-parse','HEAD'),tree:git('rev-parse','HEAD^{tree}'),run_id:process.env.GITHUB_RUN_ID,attempt:process.env.GITHUB_RUN_ATTEMPT,profile:process.env.OPERATION_PROFILES,ending:process.env.OPERATION_ENDINGS,scope:'Natural keyboard/pointer inputs in explicit review launch; virtual clock; no full-campaign, physical-phone or performance qualification.'},null,2));
+          JS
+          sha256sum campaign_act1.js campaign_low_quarter.js campaign_chorus_siege.js campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html scripts/low_quarter_operation_browser.mjs package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-operation/source-sha256.txt
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Play the opening through normal inputs
+        run: |
+          set -euo pipefail
+          python3 scripts/media_http_server.py --port 4208 --bind 127.0.0.1 > artifacts/low-quarter-operation/server.log 2>&1 &
+          operation_server_pid=$!
+          trap 'kill "$operation_server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for i in {1..30}; do
+            if curl -fsS "$LOW_QUARTER_BASE_URL" >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          timeout 1000s node scripts/low_quarter_operation_browser.mjs 2>&1 | tee artifacts/low-quarter-operation/browser.log
+      - name: Confirm source remained unchanged
+        if: always()
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: low-quarter-operation-${{ matrix.profile }}-${{ matrix.ending }}-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          path: artifacts/low-quarter-operation/
           if-no-files-found: error
           retention-days: 14

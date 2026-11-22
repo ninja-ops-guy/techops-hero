@@ -19,7 +19,7 @@
       var requirements=(s.requirements||[]).filter(function(k){return !missing||missing.indexOf(k.id)>=0;});
       if(requirements.length)body+='<br><br>'+requirements.map(function(k){return escape(k.label);}).join('<br>');
       body+='<br><br>Holding the district requires coordinated military defense. Robots require a verified command arrangement. Iona’s AeroTech campaign and the wider Chorus threat continue. Deep space requires its own mission, vessel and crew preparation.';
-      var options=[{t:'Close',f:root.closeDlg}];
+      var options=[{t:'Close',f:root.closeDlg},{t:'Play opening prototype in a separate review tab',f:function(){root.open('low-quarter-review.html','_blank','noopener');}}];
       if(s.phase==='active')options.unshift({t:'Review irreversible closeout',f:confirmCloseout});
       root.dlg('LOW QUARTER // DEFENSE AND RESCUE',body,options);return true;
     }catch(e){root.__lowQuarterError=e.message;return false;}
