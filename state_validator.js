@@ -50,6 +50,11 @@
       }
       if(ch.campaignComplete&&!ch.ending&&!story.ending)errors.push("Campaign completion requires an ending");
     }
+    if(story.ending&&ch&&ch.ending&&story.ending!==ch.ending)errors.push("Orpheus ending mirrors disagree");
+    if(root.TechOpsLowQuarter&&typeof root.TechOpsLowQuarter.validate==="function"){
+      var rescue=root.TechOpsLowQuarter.validate(state||{});
+      if(!rescue.valid)errors=errors.concat(rescue.errors||["Invalid Low Quarter rescue"]);
+    }
     if(facts.good_dogs_protocol_complete&&!(facts.k_freed&&facts.waldo_freed&&facts.warden_null_defeated&&facts.crew_returned_to_earth))errors.push("Story facts: Good Dogs completion missing canonical rescue facts");
     return{valid:errors.length===0,errors:errors,version:VERSION,at:Date.now()};
   }

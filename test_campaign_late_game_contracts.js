@@ -13,7 +13,7 @@ function context(seed={}){
     globalThis:null,localStorage:{},S:null,
     setInterval:()=>0,clearInterval:()=>{},setTimeout:(fn)=>{if(fn)fn();return 0;},clearTimeout:()=>{},
     closeDlg:()=>{},toast:()=>{},
-    TechOpsCampaign:{load:()=>state,save:(s)=>{assert.strictEqual(s,state);return true;}},
+    TechOpsCampaign:{load:()=>state,save:(s)=>{Object.assign(state,s);return true;}},
     TechOpsCampaignAct2:{
       snapshot:(s)=>({evidenceScore:(s.p1&&s.p1.evidence&&s.p1.evidence.score)||0,trustScore:(s.p1&&s.p1.trust&&s.p1.trust.score)||0,violinistRevealed:!!(s.p1&&s.p1.reveal&&s.p1.reveal.violinistRevealed),morningstarSignatureFound:true}),
       ensure:(s)=>s.p1,
@@ -38,7 +38,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.ok(bootstrap.indexOf("morningstar_swarm_runtime.js")<bootstrap.indexOf("campaign_completion_runtime.js"),"gameplay bridge must exist before shared maintenance owner runs");
   assert.ok(!bootstrap.includes("TechOpsGoodBoysCampaignState.transition"),"late-game bootstrap must never mutate Good Boys mission authority");
   const entry=fs.readFileSync("campaign_native_act1_visuals.js","utf8");
-  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20260920-revision-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
+  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20261121-rescue-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
 }
 
 // Player-facing MORNINGSTAR/swarm bridge: shared HUD + Felicia Watchdog actions remain authority-routed.
@@ -186,6 +186,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
 // Late-game ending validator: semantic gates are real and canonical Story chooses the ending first.
 {
   const c=context();c.state.lateGame={metrics:{evidence:80,trust:40},morningstar:{phase:5}};c.state.story.facts={mike_meets_k:true,k_personhood_affirmed:true,duet_protocol_complete:true,watchdog_defeated:true,orpheus_interface_reached:true};c.root.TechOpsMORNINGSTARBuild={getCurrentPhase:()=>5};run("chapters_vii_x.js",c);
+  c.state.story.completedActs=["prologue","act_1","act_2","act_3","act_4","act_5","act_6","interlude","act_7","act_8"];
   const V=c.root.TechOpsEndingValidator;assert.strictEqual(V.validate("shutdown").valid,true);assert.strictEqual(V.validate("control").valid,true);assert.strictEqual(V.validate("open_network").valid,false,"low trust blocks Open Network");
   c.state.lateGame.metrics.trust=80;assert.strictEqual(V.validate("control").valid,false,"high trust blocks Control");assert.strictEqual(V.validate("open_network").valid,true,"distributed ending unlocks only after prerequisites");
   assert.strictEqual(c.root.TechOpsChapterX.selectEnding("open_network"),true);
