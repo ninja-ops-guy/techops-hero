@@ -161,6 +161,11 @@
       assert(state.flags.standup_completed && state.flags.workstation_checked && state.flags.red_in_mirror_heard && state.flags.felicia_blog_found && state.flags.felicia_video_watched, "Day work cannot unlock before the authored opening completes");
     }
     var rescue=typeof globalThis!=="undefined"&&globalThis.TechOpsLowQuarter;
+    var lowQuarterMission=typeof globalThis!=="undefined"&&globalThis.TechOpsLowQuarterMission;
+    if(state.lowQuarterMission&&lowQuarterMission){
+      var missionValidation=lowQuarterMission.validate(state);
+      assert(missionValidation.valid,(missionValidation.errors||["Invalid Low Quarter mission checkpoint"]).join("; "));
+    }
     if(state.lowQuarter&&rescue&&typeof rescue.validate==="function"){
       var rescueValidation=rescue.validate(state);
       assert(rescueValidation.valid,(rescueValidation.errors||["Invalid Low Quarter rescue"]).join("; "));

@@ -38,7 +38,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.ok(bootstrap.indexOf("morningstar_swarm_runtime.js")<bootstrap.indexOf("campaign_completion_runtime.js"),"gameplay bridge must exist before shared maintenance owner runs");
   assert.ok(!bootstrap.includes("TechOpsGoodBoysCampaignState.transition"),"late-game bootstrap must never mutate Good Boys mission authority");
   const entry=fs.readFileSync("campaign_native_act1_visuals.js","utf8");
-  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20261122-siege-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
+  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20261122-hold-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
 }
 
 // Player-facing MORNINGSTAR/swarm bridge: shared HUD + Felicia Watchdog actions remain authority-routed.
@@ -62,6 +62,25 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   const maintenance=fs.readFileSync("campaign_completion_runtime.js","utf8");
   assert.doesNotThrow(()=>new Function(maintenance),"shared campaign completion runtime must parse");
   assert.match(maintenance,/TechOpsMORNINGSTARRuntime\.install/);
+}
+
+// The dedicated siege scene has one save/progression owner; periodic canonical
+// validation remains, and ordinary maintenance resumes after the scene closes.
+{
+  const c=context();let active=true,loads=0,dayTicks=0,installs=0,validations=0;
+  c.root.TechOpsLowQuarterPlay={active:()=>active};
+  c.root.TechOpsCampaign.load=()=>{loads++;return c.state;};
+  c.root.TechOpsCampaignBibleGapPass={tick:()=>dayTicks++};
+  c.root.TechOpsLowQuarterRuntime={install:()=>installs++};
+  c.root.TechOpsStateValidator={validateStory:()=>{validations++;return {valid:true};}};
+  run('campaign_completion_runtime.js',c);
+  for(let n=0;n<7;n++)c.root.TechOpsCampaignCompletionRuntime.tick();
+  assert.strictEqual(loads,1,'active siege avoids repeated installer ledger replay');
+  assert.strictEqual(validations,1,'canonical periodic validation stays active');
+  assert.strictEqual(dayTicks,0);assert.strictEqual(installs,0);
+  active=false;c.root.TechOpsCampaignCompletionRuntime.tick();
+  assert.strictEqual(dayTicks,1);assert.strictEqual(installs,1);
+  assert.strictEqual(c.root.__campaignCompletionRuntimeParked,null);
 }
 
 // MORNINGSTAR: every phase requires its authored day tickets plus night recovery and reaches the Duet gate.
