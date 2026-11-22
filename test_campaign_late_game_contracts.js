@@ -38,7 +38,7 @@ function run(file,c){vm.runInContext(fs.readFileSync(file,"utf8"),c.ctx,{filenam
   assert.ok(bootstrap.indexOf("morningstar_swarm_runtime.js")<bootstrap.indexOf("campaign_completion_runtime.js"),"gameplay bridge must exist before shared maintenance owner runs");
   assert.ok(!bootstrap.includes("TechOpsGoodBoysCampaignState.transition"),"late-game bootstrap must never mutate Good Boys mission authority");
   const entry=fs.readFileSync("campaign_native_act1_visuals.js","utf8");
-  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20261121-rescue-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
+  assert.ok(entry.includes("campaign_late_game_bootstrap.js?v=20261122-siege-r1"),"browser campaign entrypoint must wire the current late-game bootstrap without stale cache reuse");
 }
 
 // Player-facing MORNINGSTAR/swarm bridge: shared HUD + Felicia Watchdog actions remain authority-routed.

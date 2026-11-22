@@ -11,6 +11,10 @@
     try{
       var s=snapshot(),r=s.result,body=s.message?escape(s.message):'Orpheus decision and district rescue are separate outcomes.';
       if(r)body+='<br><br><b>'+escape(r.outcome.replace(/_/g,' '))+'</b><br>Verified safe: '+r.safe.length+'<br>Unresolved: '+r.unresolved.length+'<br>Retained sectors: '+r.retainedSectors.length;
+      if(r&&root.TechOpsChorusSiege&&load().lowQuarter.siege){
+        var siege=root.TechOpsChorusSiege.status(load());
+        body+='<br><br><b>Chorus siege</b><br>Phase: '+escape(siege.phase.replace(/_/g,' '))+'<br>Sudo relay: '+(siege.relayConnected?'Connected':'Interrupted')+'<br>Arrivals resolved: '+siege.resolvedWaves.length+' / '+siege.arrivedWaves.length+'<br>Observed adaptive orders: '+Object.keys(siege.orders).length;
+      }
       var missing=r?r.missing:null;
       var requirements=(s.requirements||[]).filter(function(k){return !missing||missing.indexOf(k.id)>=0;});
       if(requirements.length)body+='<br><br>'+requirements.map(function(k){return escape(k.label);}).join('<br>');
@@ -22,7 +26,7 @@
   }
   function confirmCloseout(){
     var state=load(),lq=state.lowQuarter;if(!lq||lq.phase!=='active')return false;
-    var count=lq.events.length,r=root.TechOpsLowQuarter.evaluate(state);
+    var count=lq.siege?{rescue:lq.events.length,siege:lq.siege.events.length}:lq.events.length,r=root.TechOpsLowQuarter.evaluate(state);
     root.dlg('LOW QUARTER // CLOSEOUT','This closes the rescue operation for this run.<br><br>Outcome: '+escape(r.outcome.replace(/_/g,' '))+'<br>Unresolved people: '+escape(r.unresolved.join(', ')||'None')+'<br>Missing defense requirements: '+escape(r.missing.join(', ')||'None'),[
       {t:'Keep working',f:open},
       {t:'Confirm permanent closeout',f:function(){try{

@@ -147,3 +147,12 @@ Open Network fallback, and any specific losses or deadline consequences. Recover
 from interrupted transports requires its own authored operation. No named death,
 instant planetary aircraft failure, Star Hopper time travel or Malar unlock is
 introduced by this implementation.
+
+## Approved Chorus siege follow-up
+
+The encounter layer and its current content boundary are documented in
+[CHORUS_SIEGE.md](CHORUS_SIEGE.md). It adds deterministic phased arrivals,
+source-bound defender assimilation, local/Sudo command separation, relay
+interruption and hold verification. No live district scenario is registered.
+The original civilian, military, robot, branch, persistence and continuation
+contracts above remain authoritative.
