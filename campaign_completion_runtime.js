@@ -15,6 +15,7 @@
     try{if(root.TechOpsMORNINGSTARBuild&&root.TechOpsMORNINGSTARBuild.install)root.TechOpsMORNINGSTARBuild.install();}catch(e){lastError=String(e&&e.stack||e);}
     try{if(root.TechOpsMORNINGSTARRuntime&&root.TechOpsMORNINGSTARRuntime.install)root.TechOpsMORNINGSTARRuntime.install();}catch(e){lastError=String(e&&e.stack||e);}
   }
+  function installRescue(){try{if(root.TechOpsLowQuarterRuntime)root.TechOpsLowQuarterRuntime.install();}catch(e){lastError=String(e&&e.stack||e);}}
   function validate(){
     try{
       var c=root.TechOpsCampaign,s=c&&c.load?c.load(root.localStorage):null,v=root.TechOpsStateValidator;
@@ -25,6 +26,7 @@
     ticks++;
     if(standaloneGoodDogs()){parkPrivateTimers();if(ticks%8===0)validate();root.__campaignCompletionRuntimeTick=ticks;root.__campaignCompletionRuntimeParked="gooddogs";return;}
     installOwners();
+    installRescue();
     if(root.S && root.S.nightMode && !root.S.nightMode._v736) { if(ticks%8===0)validate(); return; }
     try{if(root.TechOpsCampaignBibleGapPass&&root.TechOpsCampaignBibleGapPass.tick)root.TechOpsCampaignBibleGapPass.tick();}catch(e){lastError=String(e&&e.stack||e);}
     try{if(root.TechOpsSwarmDoctrine&&root.TechOpsSwarmDoctrine.checkQuestioningMoment)root.TechOpsSwarmDoctrine.checkQuestioningMoment();}catch(e){lastError=String(e&&e.stack||e);}

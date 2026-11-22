@@ -11,9 +11,11 @@
     {src:"morningstar_build.js",global:"TechOpsMORNINGSTARBuild"},
     {src:"swarm_doctrine.js",global:"TechOpsSwarmDoctrine"},
     {src:"morningstar_swarm_runtime.js",global:"TechOpsMORNINGSTARRuntime"},
-    {src:"chapters_vii_x.js",global:"TechOpsLateGameCampaign"},
+    {src:"campaign_low_quarter.js",global:"TechOpsLowQuarter"},
+    {src:"campaign_low_quarter_runtime.js",global:"TechOpsLowQuarterRuntime"},
+    {src:"chapters_vii_x.js",global:"TechOpsLateGameCampaign",revision:"20261121-rescue-r1"},
     {src:"felicia_first_office.js",global:"TechOpsFeliciaFirstOfficeDialogue"},
-    {src:"campaign_completion_runtime.js",global:"TechOpsCampaignCompletionRuntime"}
+    {src:"campaign_completion_runtime.js",global:"TechOpsCampaignCompletionRuntime",revision:"20261121-rescue-r1"}
   ];
   function dependenciesReady(){
     return !!(root.TechOpsCampaign&&root.TechOpsCampaignAct2&&root.TechOpsStory&&root.TechOpsCampaignNativeAct2&&root.interact);
@@ -27,7 +29,7 @@
           var n=0,t=(root.setInterval||setInterval)(function(){if(root[def.global]||n++>100){(root.clearInterval||clearInterval)(t);resolve(!!root[def.global]);}},25);return;
         }
         var s=root.document.createElement("script");
-        s.src=def.src+"?v=20260920-revision-r1";
+        s.src=def.revision?def.src+"?v="+def.revision:def.src+"?v=20260920-revision-r1";
         s.async=false;s.dataset.techopsLateGame=def.src;
         s.onload=function(){resolve(!!root[def.global]);};
         s.onerror=function(){root.__lateGameBootstrapError="load-failed:"+def.src;resolve(false);};
