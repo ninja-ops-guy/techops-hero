@@ -20,6 +20,11 @@
       if(requirements.length)body+='<br><br>'+requirements.map(function(k){return escape(k.label);}).join('<br>');
       body+='<br><br>Holding the district requires coordinated military defense. Robots require a verified command arrangement. Iona’s AeroTech campaign and the wider Chorus threat continue. Deep space requires its own mission, vessel and crew preparation.';
       var options=[{t:'Close',f:root.closeDlg}];
+      var campaign=load();
+      if(root.TechOpsLowQuarterPlay&&campaign.story&&campaign.story.facts&&campaign.story.facts.campaign_complete&&(!campaign.lowQuarter||campaign.lowQuarter.phase==='legacy_unassessed'||campaign.lowQuarter.scenario==='lq_hold_01')){
+        body+='<br><br><b>Hold the Way Home</b><br>Playable surveyed response area: 48 residents. Wider Low Quarter unassessed.';
+        options.unshift({t:campaign.lowQuarterMission?'Resume Hold the Way Home':'Enter Hold the Way Home',f:root.TechOpsLowQuarterPlay.open});
+      }
       if(s.phase==='active')options.unshift({t:'Review irreversible closeout',f:confirmCloseout});
       root.dlg('LOW QUARTER // DEFENSE AND RESCUE',body,options);return true;
     }catch(e){root.__lowQuarterError=e.message;return false;}

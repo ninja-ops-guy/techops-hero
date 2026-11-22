@@ -1,5 +1,12 @@
 # Chorus siege encounter layer
 
+November 22 follow-up: the separately owner-approved `lq_hold_01:r1` playable
+response area is now registered by `campaign_low_quarter_scenario.js` and loaded
+through the campaign bootstrap. See [LOW_QUARTER_PLAYABLE.md](LOW_QUARTER_PLAYABLE.md)
+for physical producers, scope, controls, save checkpoints and qualification.
+The authority-only implementation boundary described below is the original
+PR #152 layer; its synthetic test district is still not shipped as content.
+
 Creator-approved November 22, 2026. This implements the approved encounter
 structure on top of PR #150. It does not register a live district operation.
 Concrete population, geography, force allocations, routes and schedules remain

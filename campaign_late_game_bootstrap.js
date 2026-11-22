@@ -11,12 +11,15 @@
     {src:"morningstar_build.js",global:"TechOpsMORNINGSTARBuild"},
     {src:"swarm_doctrine.js",global:"TechOpsSwarmDoctrine"},
     {src:"morningstar_swarm_runtime.js",global:"TechOpsMORNINGSTARRuntime"},
-    {src:"campaign_low_quarter.js",global:"TechOpsLowQuarter",revision:"20261122-siege-r1"},
-    {src:"campaign_chorus_siege.js",global:"TechOpsChorusSiege",revision:"20261122-siege-r1"},
-    {src:"campaign_low_quarter_runtime.js",global:"TechOpsLowQuarterRuntime",revision:"20261122-siege-r1"},
-    {src:"chapters_vii_x.js",global:"TechOpsLateGameCampaign",revision:"20261122-siege-r1"},
+    {src:"campaign_low_quarter.js",global:"TechOpsLowQuarter",revision:"20261122-hold-r1"},
+    {src:"campaign_chorus_siege.js",global:"TechOpsChorusSiege",revision:"20261122-hold-r1"},
+    {src:"campaign_low_quarter_scenario.js",global:"TechOpsLowQuarterScenario",revision:"20261122-hold-r1",optional:true},
+    {src:"campaign_low_quarter_mission.js",global:"TechOpsLowQuarterMission",revision:"20261122-hold-r1",optional:true},
+    {src:"campaign_low_quarter_play.js",global:"TechOpsLowQuarterPlay",revision:"20261122-hold-r1",optional:true},
+    {src:"campaign_low_quarter_runtime.js",global:"TechOpsLowQuarterRuntime",revision:"20261122-hold-r1"},
+    {src:"chapters_vii_x.js",global:"TechOpsLateGameCampaign",revision:"20261122-hold-r1"},
     {src:"felicia_first_office.js",global:"TechOpsFeliciaFirstOfficeDialogue"},
-    {src:"campaign_completion_runtime.js",global:"TechOpsCampaignCompletionRuntime",revision:"20261122-siege-r1"}
+    {src:"campaign_completion_runtime.js",global:"TechOpsCampaignCompletionRuntime",revision:"20261122-hold-r1"}
   ];
   function dependenciesReady(){
     return !!(root.TechOpsCampaign&&root.TechOpsCampaignAct2&&root.TechOpsStory&&root.TechOpsCampaignNativeAct2&&root.interact);
@@ -44,7 +47,7 @@
     if(!dependenciesReady()){root.__lateGameBootstrapError="canonical-dependencies-timeout";return;}
     var results=[];
     for(var i=0;i<FILES.length;i++)results.push(await loadOne(FILES[i]));
-    ready=results.every(Boolean);
+    ready=results.every(function(loaded,i){return loaded||FILES[i].optional===true;});
     if(ready&&root.TechOpsCampaignCompletionRuntime&&typeof root.TechOpsCampaignCompletionRuntime.tick==="function")root.TechOpsCampaignCompletionRuntime.tick();
     root.__lateGameBootstrapAcceptance={version:VERSION,ready:ready,files:FILES.map(function(f,i){return{src:f.src,loaded:!!results[i]};}),goodBoysWrites:false,canonicalDependencies:true,singleMaintenanceOwner:!!root.TechOpsCampaignCompletionRuntime,playerFacingMorningstar:!!root.TechOpsMORNINGSTARRuntime,at:Date.now()};
     try{root.dispatchEvent(new CustomEvent("techops:late-game-ready",{detail:root.__lateGameBootstrapAcceptance}));}catch(_){}

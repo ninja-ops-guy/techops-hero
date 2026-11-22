@@ -45,6 +45,7 @@ const tests = [
   "test_campaign_late_game_contracts.js",
   "test_campaign_low_quarter.js",
   "test_campaign_chorus_siege.js",
+  "test_campaign_low_quarter_mission.js",
   "test_campaign_swarm_migration.js",
   "test_good_boys_canon_runtime.js",
   "test_good_boys_combat_contract.js",

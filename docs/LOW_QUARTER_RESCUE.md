@@ -1,5 +1,10 @@
 # Low Quarter defense and rescue
 
+November 22 follow-up: a separately approved first playable response area now
+uses this authority. See [LOW_QUARTER_PLAYABLE.md](LOW_QUARTER_PLAYABLE.md). The
+original authority-layer scope and contracts below remain unchanged; its test
+fixtures do not become production content or whole-neighborhood rescue proof.
+
 Owner-approved design, November 21, 2026. Implementation is a mission authority,
 status board, save integration and regression suite. This draft does not yet ship
 an authored district operation: geography, troop strengths, schedules and named

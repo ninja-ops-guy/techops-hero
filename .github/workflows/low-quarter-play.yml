@@ -1,0 +1,73 @@
+name: Low Quarter playable mission
+
+on:
+  pull_request:
+    branches: [main, codex/chorus-siege]
+    paths:
+      - 'campaign_*.js'
+      - 'index.html'
+      - 'test_campaign_low_quarter_mission.js'
+      - 'scripts/low_quarter_play_browser.mjs'
+      - '.github/workflows/low-quarter-play.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: low-quarter-play-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  mission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      LOW_QUARTER_BASE_URL: http://127.0.0.1:4208/
+      LOW_QUARTER_ARTIFACTS: artifacts/low-quarter-play
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Bind retained evidence to candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          mkdir -p artifacts/low-quarter-play
+          git rev-parse HEAD > artifacts/low-quarter-play/head.txt
+          git rev-parse HEAD^{tree} > artifacts/low-quarter-play/tree.txt
+          sha256sum campaign_low_quarter_scenario.js campaign_low_quarter_mission.js campaign_low_quarter_play.js campaign_low_quarter.js campaign_chorus_siege.js campaign_low_quarter_runtime.js campaign_act1.js campaign_late_game_bootstrap.js campaign_story.js campaign_native_act1_visuals.js index.html test_campaign_low_quarter_mission.js scripts/low_quarter_play_browser.mjs .github/workflows/low-quarter-play.yml > artifacts/low-quarter-play/source-sha256.txt
+      - run: npm ci --no-audit --no-fund
+      - name: Production contracts
+        run: |
+          set -euo pipefail
+          npm test 2>&1 | tee artifacts/low-quarter-play/contracts.log
+      - run: npx playwright install --with-deps chromium
+      - name: Real game mission controls and virtual-time playthroughs
+        run: |
+          set -euo pipefail
+          python3 scripts/media_http_server.py --port 4208 --bind 127.0.0.1 > artifacts/low-quarter-play/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for i in {1..30}; do
+            if curl -fsS "$LOW_QUARTER_BASE_URL" >/dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          timeout 1200s node scripts/low_quarter_play_browser.mjs 2>&1 | tee artifacts/low-quarter-play/browser.log
+      - name: Check source immutability
+        if: always()
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: low-quarter-play-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          path: artifacts/low-quarter-play/
+          if-no-files-found: error
+          retention-days: 14
