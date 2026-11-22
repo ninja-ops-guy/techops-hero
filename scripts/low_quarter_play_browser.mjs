@@ -6,10 +6,12 @@ import fs from 'node:fs';
 import {chromium} from 'playwright';
 const base=process.env.LOW_QUARTER_BASE_URL||'http://127.0.0.1:4208/';
 const output=process.env.LOW_QUARTER_ARTIFACTS||'artifacts/low-quarter-play';fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined});
 const reports=[];
-try{
- for(const [ending,touch] of [['shutdown',false],['control',false],['open_network',false],['shutdown',true]]){
+// Separate browser processes preserve real focus/visibility semantics between
+// independent ending/layout profiles; one failing profile does not erase others.
+const outcomes=await Promise.allSettled([['shutdown',false],['control',false],['open_network',false],['shutdown',true]].map(async([ending,touch])=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined});
+ try{
   const name=ending+(touch?'-touch':'-desktop'),context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1280,height:800},hasTouch:touch,isMobile:touch,reducedMotion:'reduce'}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   try{
@@ -66,5 +68,8 @@ try{
   await page.screenshot({path:output+'/'+name+'-aftermath.png'});reports.push({name,result,errors,qualification:'Completed-epilogue fixture only; full mission uses keyboard and dialogue controls with virtual time. Touch layout is emulation, not physical iPhone.'});
   fs.writeFileSync(output+'/playthroughs.json',JSON.stringify(reports,null,2)+'\n');console.log(name+': playable mission, four sectors, all 48 shelter handoffs, four physical arrivals, pause/reload and closeout PASS');
   }catch(error){let saved;try{saved=await page.evaluate(()=>window.TechOpsLowQuarterPlay?.snapshot());}catch{}fs.writeFileSync(output+'/'+name+'-failure.json',JSON.stringify({error:String(error),snapshot:saved,errors},null,2)+'\n');await page.screenshot({path:output+'/'+name+'-failure.png'}).catch(()=>{});throw error;}finally{await context.close();}
- }
-}finally{await browser.close();}
+ }finally{await browser.close();}
+}));
+const failures=outcomes.filter(v=>v.status==='rejected');
+if(failures.length)throw new AggregateError(failures.map(v=>v.reason),'One or more independent siege profiles failed');
+assert.equal(reports.length,4);
