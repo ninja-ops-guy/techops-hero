@@ -11,11 +11,12 @@
     {src:"morningstar_build.js",global:"TechOpsMORNINGSTARBuild"},
     {src:"swarm_doctrine.js",global:"TechOpsSwarmDoctrine"},
     {src:"morningstar_swarm_runtime.js",global:"TechOpsMORNINGSTARRuntime"},
-    {src:"campaign_low_quarter.js",global:"TechOpsLowQuarter"},
-    {src:"campaign_low_quarter_runtime.js",global:"TechOpsLowQuarterRuntime"},
-    {src:"chapters_vii_x.js",global:"TechOpsLateGameCampaign",revision:"20261121-rescue-r1"},
+    {src:"campaign_low_quarter.js",global:"TechOpsLowQuarter",revision:"20261122-siege-r1"},
+    {src:"campaign_chorus_siege.js",global:"TechOpsChorusSiege",revision:"20261122-siege-r1"},
+    {src:"campaign_low_quarter_runtime.js",global:"TechOpsLowQuarterRuntime",revision:"20261122-siege-r1"},
+    {src:"chapters_vii_x.js",global:"TechOpsLateGameCampaign",revision:"20261122-siege-r1"},
     {src:"felicia_first_office.js",global:"TechOpsFeliciaFirstOfficeDialogue"},
-    {src:"campaign_completion_runtime.js",global:"TechOpsCampaignCompletionRuntime",revision:"20261121-rescue-r1"}
+    {src:"campaign_completion_runtime.js",global:"TechOpsCampaignCompletionRuntime",revision:"20261122-siege-r1"}
   ];
   function dependenciesReady(){
     return !!(root.TechOpsCampaign&&root.TechOpsCampaignAct2&&root.TechOpsStory&&root.TechOpsCampaignNativeAct2&&root.interact);

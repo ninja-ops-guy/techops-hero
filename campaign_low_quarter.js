@@ -8,7 +8,7 @@
   if(root)root.TechOpsLowQuarter=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  var SCHEMA=1,definitions=Object.create(null);
+  var SCHEMA=1,definitions=Object.create(null),encounters=Object.create(null);
   var COMMON=['threat_corroborated','roster_reconciled','final_sweep_witnessed','essential_services_tested','continuity_staffed'];
   var AUTHORITY={
     shutdown:['independent_records','manual_comms_tested','local_power_tested','human_rota','military_coalition','independent_command_tested'],
@@ -41,11 +41,17 @@
     d.checks.forEach(function(c){assert(all.indexOf(c.id)>=0||['space_lead','ship_qualified','crew_accounted','home_handoff'].indexOf(c.id)>=0,'Unknown check');assert(id(c.location)&&Array.isArray(c.roles)&&c.roles.length&&c.roles.every(function(r){return ['witness','receiver','engineer','officer'].indexOf(r)>=0;}),'Independent verifier roles required');assert(Array.isArray(c.sources)&&c.sources.length>=2&&unique(c.sources)&&c.sources.every(id),'Two independent authored evidence sources required');});
     all.forEach(function(k){assert(own(checks,k),'Scenario must support every ending: '+k);});
     assert(!d.deadline||(integer(d.deadline.tick)&&integer(d.deadline.warningTick)&&d.deadline.warningTick<d.deadline.tick),'Deadline requires advance warning');
+    assert(!d.encounter||id(d.encounter),'Invalid encounter authority');
     var key=d.id+':'+d.revision;
     if(own(definitions,key))assert(equal(definitions[key],d),'Scenario revision cannot be replaced');
     else definitions[key]=d;
     return key;
   }
+  function registerEncounterAuthority(name,handler){
+    assert(id(name)&&typeof handler==='function','Encounter authority required');
+    assert(!own(encounters,name)||encounters[name]===handler,'Encounter authority cannot be replaced');encounters[name]=handler;
+  }
+  function inspect(state){var lq=state.lowQuarter;return copy(replay(lq));}
   function definition(lq){var d=definitions[lq.scenario+':'+lq.revision];assert(d,'Authored rescue mission is not available in this build');return d;}
   function ending(state){
     var e=state.story&&state.story.ending,mirror=state.lateGame&&state.lateGame.chapters&&state.lateGame.chapters.ending;
@@ -182,6 +188,13 @@
       if(strength<s.requiredStrength||!posts)missing.push(s.id+':defensive_capacity');
       if(v.habitable&&v.contained&&strength>=s.requiredStrength&&posts)retained.push(s.id);
     });
+    if(d.encounter){
+      assert(own(encounters,d.encounter),'Encounter authority is not available in this build');
+      var encounter=encounters[d.encounter](copy(state),copy(x));
+      assert(encounter&&!encounter.continuationBlocked,encounter&&encounter.reason||'Encounter version unavailable');
+      assert(encounter&&Array.isArray(encounter.missing)&&encounter.missing.every(id),'Invalid encounter assessment');
+      missing=missing.concat(encounter.missing);
+    }
     var safe=Object.keys(x.people).filter(function(p){var person=x.people[p],sector=x.sectors[person.sector];return person.status==='evacuated'||person.status==='sheltered'&&sector.habitable&&sector.contained;});
     var unresolved=Object.keys(x.people).filter(function(p){return safe.indexOf(p)<0;});
     var accounted=!!x.checks.roster_reconciled&&!!x.checks.final_sweep_witnessed&&Object.values(x.sectors).every(function(s){return s.surveyed;});
@@ -213,7 +226,9 @@
   }
   function closeout(state,expectedCount,confirmed){
     assert(confirmed===true,'Confirm the irreversible rescue closeout');var lq=state.lowQuarter;
-    assert(lq&&lq.phase==='active'&&lq.events.length===expectedCount,'Stale or closed rescue operation');
+    var expected=typeof expectedCount==='object'&&expectedCount?expectedCount:{rescue:expectedCount};
+    assert(lq&&lq.phase==='active'&&lq.events.length===expected.rescue,'Stale or closed rescue operation');
+    if(lq.siege)assert(expected.siege===lq.siege.events.length,'Stale siege closeout preview');
     var result=evaluate(state),s=copy(state);s.lowQuarter.phase='closed';s.lowQuarter.result=result;return s;
   }
   function validate(state){
@@ -225,6 +240,9 @@
       assert(ending(state)===lq.endingAtStart,'Rescue ending mismatch');
       // Missing content revisions block only the continuation, preserving old saves.
       if(!definitions[lq.scenario+':'+lq.revision])return {valid:true,continuationBlocked:true,reason:'Authored rescue mission is not available in this build'};
+      var activeDefinition=definitions[lq.scenario+':'+lq.revision];
+      if(activeDefinition.encounter&&!own(encounters,activeDefinition.encounter))return {valid:true,continuationBlocked:true,reason:'Encounter authority is not available in this build'};
+      if(activeDefinition.encounter){var compatibility=encounters[activeDefinition.encounter](copy(state),inspect(state));if(compatibility.continuationBlocked)return {valid:true,continuationBlocked:true,reason:compatibility.reason};}
       var r=evaluate(state);continuationState(state);assert(lq.phase==='closed'?equal(lq.result,r):lq.result===null,'Rescue result does not match verified events');return {valid:true};
     }catch(e){return {valid:false,errors:[e.message]};}
   }
@@ -238,5 +256,5 @@
     return {phase:lq.phase,result:evaluate(state),continuation:continuationStatus(state),requirements:endingRequirements(state)};
   }
   function endingRequirements(state){var e=state.story&&state.story.ending;return own(AUTHORITY,e)?COMMON.concat(AUTHORITY[e]).map(function(k){return {id:k,label:LABELS[k]};}):[];}
-  return {SCHEMA:SCHEMA,COMMON:COMMON.slice(),AUTHORITY:copy(AUTHORITY),registerScenario:registerScenario,migrate:migrate,begin:begin,applyEvent:applyEvent,evaluate:evaluate,continuationStatus:continuationStatus,applyContinuationEvent:applyContinuationEvent,closeout:closeout,validate:validate,transact:transact,status:status};
+  return {SCHEMA:SCHEMA,COMMON:COMMON.slice(),AUTHORITY:copy(AUTHORITY),registerScenario:registerScenario,registerEncounterAuthority:registerEncounterAuthority,inspect:inspect,migrate:migrate,begin:begin,applyEvent:applyEvent,evaluate:evaluate,continuationStatus:continuationStatus,applyContinuationEvent:applyContinuationEvent,closeout:closeout,validate:validate,transact:transact,status:status};
 });
