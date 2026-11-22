@@ -2,7 +2,7 @@ name: Low Quarter board acceptance
 
 on:
   pull_request:
-    branches: [main, codex/low-quarter-rescue-authority]
+    branches: [main, codex/low-quarter-rescue-authority, codex/chorus-siege]
     paths:
       - 'campaign_*.js'
       - 'chapters_vii_x.js'
@@ -10,6 +10,10 @@ on:
       - 'game.js'
       - 'production_*.js'
       - 'index.html'
+      - 'low-quarter-review.html'
+      - 'test_campaign_low_quarter_operation.js'
+      - 'scripts/low_quarter_operation_browser.mjs'
+      - 'scripts/production_release_gate.js'
       - '*.css'
       - 'test_campaign_low_quarter.js'
       - 'test_campaign_chorus_siege.js'
@@ -33,7 +37,7 @@ defaults:
 jobs:
   board:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
       LOW_QUARTER_BASE_URL: http://127.0.0.1:4208/
       EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
@@ -60,16 +64,17 @@ jobs:
             head: git('rev-parse', 'HEAD'), tree: git('rev-parse', 'HEAD^{tree}'),
             run_id: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT,
             node: process.version, platform: process.platform,
-            scope: 'Real-page desktop/touch board and reload with an explicit completed-save fixture. Includes synthetic siege fixtures; no playable district mission or physical-phone qualification.'
+            scope: 'Real-page desktop/touch board and reload with an explicit completed-save fixture. Includes synthetic board fixtures and natural-input opening-review playthroughs; no full district mission or physical-phone qualification.'
           };
           fs.writeFileSync('artifacts/low-quarter-board/source.json', JSON.stringify(receipt, null, 2) + '\n');
           JS
-          sha256sum campaign_chorus_siege.js test_campaign_chorus_siege.js scripts/chorus_siege_browser.mjs campaign_low_quarter.js campaign_low_quarter_runtime.js campaign_story.js campaign_late_game_bootstrap.js chapters_vii_x.js index.html test_campaign_low_quarter.js scripts/low_quarter_browser.mjs scripts/media_http_server.py package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-board/source-sha256.txt
+          sha256sum campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html test_campaign_low_quarter_operation.js scripts/low_quarter_operation_browser.mjs campaign_chorus_siege.js test_campaign_chorus_siege.js scripts/chorus_siege_browser.mjs campaign_low_quarter.js campaign_low_quarter_runtime.js campaign_story.js campaign_late_game_bootstrap.js chapters_vii_x.js index.html test_campaign_low_quarter.js scripts/low_quarter_browser.mjs scripts/media_http_server.py package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-board/source-sha256.txt
       - name: Verify existing rescue authority contracts
         run: |
           set -euo pipefail
           node test_campaign_low_quarter.js 2>&1 | tee artifacts/low-quarter-board/contracts.log
           node test_campaign_chorus_siege.js 2>&1 | tee artifacts/low-quarter-board/siege-contracts.log
+          node test_campaign_low_quarter_operation.js 2>&1 | tee artifacts/low-quarter-board/operation-contracts.log
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - name: Exercise the real-page board in desktop and touch layouts
@@ -86,6 +91,7 @@ jobs:
           test "$ready" = true
           timeout 180s node scripts/low_quarter_browser.mjs 2>&1 | tee artifacts/low-quarter-board/browser.log
           timeout 180s node scripts/chorus_siege_browser.mjs 2>&1 | tee artifacts/low-quarter-board/siege-browser.log
+          OPERATION_ARTIFACT_DIR=artifacts/low-quarter-board/operation timeout 1100s node scripts/low_quarter_operation_browser.mjs 2>&1 | tee artifacts/low-quarter-board/operation-browser.log
       - name: Confirm tracked source remained unchanged
         if: always()
         run: git diff --exit-code

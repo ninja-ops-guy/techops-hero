@@ -123,3 +123,14 @@ Local Chromium cannot launch because its process-singleton socket is denied.
 The PR's board workflow runs both browser harnesses on its exact head and retains
 source hashes and logs. Pending hosted results must not be described as passes.
 PR #150's earlier hosted board pass does not qualify these changed sources.
+
+## Approved first playable review (November 22)
+
+The opt-in [First Warning operation](LOW_QUARTER_FIRST_OPERATION.md) now supplies
+physical warning, branch command drills, deployment, civilian/transport, breach
+combat and bounded adaptation producers. Launch `low-quarter-review.html` in a
+separate review tab. It uses the existing authorities and campaign serializer,
+with isolated tab-local review state. It does not register the complete district
+in the ordinary campaign or award whole-wave/district success. Geography, counts
+and schedules are explicit provisional game-prototype content. Natural campaign
+return, district census, later waves and full closeout remain separate work.
