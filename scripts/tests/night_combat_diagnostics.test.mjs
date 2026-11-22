@@ -4,6 +4,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {test} from 'node:test';
 import {createNightDiagnostics} from '../night_combat_diagnostics.mjs';
+import {createNightShutdownDiagnostics} from '../night_shutdown_diagnostics.mjs';
+import {boundedNightCleanup,NightCleanupTimeout} from '../night_combat_qualification.mjs';
 
 // Execute the production orchestration against stdlib mocks. Only the encounter
 // body is substituted; these tests do not launch browsers or certify gameplay.
@@ -12,9 +14,9 @@ const first=source.indexOf("  await click(page.locator('#btn-nightcrawler'));"),
 assert.ok(first>0&&last>first);
 const runnable=(source.slice(0,first)+'  await encounter(name);\n'+source.slice(last)).replace(/^import .*;\r?\n/gm,'');
 const profiles=['chromium','chromium-touch','webkit'];
-function fixture({selected=profiles,hooks={},captureErrors=[],ioFailure,consoleFailure}={}){
+function fixture({selected=profiles,hooks={},captureErrors=[],ioFailure,consoleFailure,shutdownSnapshot=()=>({processes:[],truncated:false})}={}){
  const calls=[],phaseLog=[],reports=[],warnings=[],files=new Map([['night-combat-phases.jsonl','STALE\n']]);
- const process={env:{BOT_OUT_DIR:'/fixture',NIGHT_COMBAT_BROWSERS:selected.join(',')},exitCode:undefined};
+ const process={env:{BOT_OUT_DIR:'/fixture',NIGHT_COMBAT_BROWSERS:selected.join(',')},exitCode:undefined,exit(code){calls.push('exit:'+code);throw Error('HARNESS_EXIT');}};
  let launched=0,clock=0;
  const step=async(profile,operation,value)=>{calls.push(profile+':'+operation);if(hooks[profile+':'+operation])await hooks[profile+':'+operation]();return value;};
  const io={mkdirSync(){},writeFileSync(file,data,options){ioFailure?.('write',path.basename(file),data);if(path.basename(file)==='night-combat-phases.jsonl')assert.equal(options.flush,true);files.set(path.basename(file),data);},appendFileSync(file,data,options){assert.equal(options.flush,true);ioFailure?.('append',path.basename(file),data);files.set(path.basename(file),(files.get(path.basename(file))||'')+data);}};
@@ -23,11 +25,11 @@ function fixture({selected=profiles,hooks={},captureErrors=[],ioFailure,consoleF
   const name=selected[launched++];assert.equal(options.headless,true);assert.equal(Object.keys(options).length,1);
   const page={on(){},setDefaultTimeout(value){assert.equal(value,15000);},setDefaultNavigationTimeout(value){assert.equal(value,60000);},goto:(url,options)=>{assert.equal(url,'http://127.0.0.1:4173/');assert.equal(options.waitUntil,'domcontentloaded');return step(name,'navigation');},evaluate:fn=>step(name,fn===roomBootstrapSnapshot?'bootstrap.snapshot':'failure.snapshot',{fixture:true}),waitForFunction:()=>step(name,'bootstrap.ready'),screenshot:options=>{assert.equal(options.timeout,5000);return step(name,'failure.screenshot');}};
   const context={name,route:()=>step(name,'context.route'),newPage:()=>step(name,'page.create',page),close:()=>step(name,'context.close')};
-  const browser={version:()=> 'SIMULATED',newContext:options=>{assert.equal(name==='chromium',!!options.viewport);return step(name,'context.create',context);},close:()=>step(name,'browser.close')};
+  const browser={on(){},isConnected:()=>true,contexts:()=>[context],version:()=> 'SIMULATED',newContext:options=>{assert.equal(name==='chromium',!!options.viewport);return step(name,'context.create',context);},close:()=>step(name,'browser.close')};
   return step(name,'browser.launch',browser);
  }};
  function roomBootstrapSnapshot(){}
- const bindings={fs:io,path,process,console:log,chromium:browserType,webkit:{...browserType},devices:{'iPhone 13':{isMobile:true}},roomBootstrapSnapshot,
+ const bindings={createNightShutdownDiagnostics:options=>createNightShutdownDiagnostics({...options,snapshot:shutdownSnapshot,version:()=> 'SIMULATED'}),boundedNightCleanup:(run,operation)=>boundedNightCleanup(run,operation,100),NightCleanupTimeout,fs:io,path,process,console:log,chromium:browserType,webkit:{...browserType},devices:{'iPhone 13':{isMobile:true}},roomBootstrapSnapshot,
   createNightDiagnostics:options=>createNightDiagnostics({...options,io,log,now:()=>clock+=.5,fail:()=>{process.exitCode=1;}}),
   beginRuntimeEvidence:(context)=>step(context.name,'capture.begin',{finish:()=>step(context.name,'capture.finish',{trace:'SIMULATED-trace.zip',runtime:'SIMULATED-runtime.json',captureErrors})}),
   encounter:name=>step(name,'gameplay')};
@@ -225,4 +227,35 @@ for(const primary of [null,undefined])for(const origin of ['gameplay','capture',
  assert.equal(record.cleanupErrors[0].operation,close);assert.match(record.cleanupErrors[0].error,/SECONDARY_CLEANUP/);
  if(origin==='capture')assert.equal(record.artifacts.captureErrors[0],String(primary));
  if(origin==='gameplay then capture')assert.match(record.artifacts.captureErrors[0],/SECONDARY_CAPTURE/);
+});
+
+for(const operation of ['context.close','browser.close'])for(const primary of [false,true])test(`${operation} hang persists failure and exits before another profile${primary?' preserving gameplay error':''}`,async()=>{
+ const f=fixture({hooks:{['chromium:'+operation]:()=>new Promise(()=>{}),...(primary?{'chromium:gameplay':()=>{throw Error('FIRST_GAMEPLAY');}}:{})}});
+ await assert.rejects(f.run(),/HARNESS_EXIT/);
+ assert.ok(f.calls.includes('chromium:browser.close'));
+ assert.ok(!f.calls.includes('chromium-touch:browser.launch'));
+ const saved=JSON.parse(f.files.get('night-combat.json'))[0];
+ assert.equal(saved.pass,false);assert.equal(saved.cleanupErrors[0].operation,operation);
+ assert.match(saved.cleanupErrors[0].error,/did not settle within/);
+ if(primary)assert.match(saved.error,/FIRST_GAMEPLAY/);
+ assert.equal(f.calls.at(-1),'exit:1');
+ assert.ok(f.events().some(e=>e.operation===operation&&e.state==='error'));
+});
+
+// Observe the actual harness failure path with the new process diagnostics wired in.
+test('shutdown snapshot failure cannot skip owned cleanup or replace a gameplay failure',async()=>{
+ const f=fixture({selected:['chromium'],hooks:{'chromium:gameplay':()=>{throw Error('FIRST_GAMEPLAY');}},
+  shutdownSnapshot:()=>{throw Error('ps unavailable');}});
+ const [record]=await f.run();assert.equal(record.pass,false);assert.match(record.error,/FIRST_GAMEPLAY/);
+ assert.ok(f.calls.includes('chromium:context.close'));assert.ok(f.calls.includes('chromium:browser.close'));
+ const saved=JSON.parse(f.files.get('night-combat.json'))[0];assert.equal(saved.pass,false);
+ assert.equal(saved.shutdown.errors.length,3);assert.equal(saved.shutdown.launch.headless,true);
+});
+test('browser close hang retains the before and timeout process observations before exit',async()=>{
+ const f=fixture({hooks:{'chromium:browser.close':()=>new Promise(()=>{})}});
+ await assert.rejects(f.run(),/HARNESS_EXIT/);
+ const saved=JSON.parse(f.files.get('night-combat.json'))[0];
+ assert.deepEqual(saved.shutdown.snapshots.map(s=>s.stage),['before.context.close','after.context.close','after.browser.close']);
+ assert.equal(saved.pass,false);assert.equal(f.calls.at(-1),'exit:1');
+ assert.ok(!f.calls.includes('chromium-touch:browser.launch'));
 });
