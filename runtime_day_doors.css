@@ -61,6 +61,7 @@
 .doors-pane .day-actions { margin-top: 14px; }
 .doors-bar { border-top: 1px solid #648b8b; }
 .doors-bar button:first-child, .os-taskbar [data-os-home] { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.doors-bar > button:first-child { flex-shrink: 0; white-space: nowrap; }
 .doors-bar button[aria-pressed=true] { border-bottom: 3px solid #a9e9d4; }
 .doors-bar > span { margin-left: auto; color: #9cc4c5; font: 11px ui-monospace, monospace; }
 .os-show-desktop .os-icons { display: flex; flex-direction: column; }
@@ -192,8 +193,13 @@
 .os-desktop .doors-app-icon[data-icon=prompt] { background: #152a30; border-color: #739b91; color: #b5ecd2; }
 .os-desktop .os-icon b { font-size: 13px; }
 .os-desktop .os-icon small { font-size: 12px; }
-.os-content:has(.doors-terminal) { display: flex; overflow: hidden; min-width: 0; padding: 14px; }
-.doors-terminal { width: 100%; min-width: 0; flex: 1; gap: 10px; }
+/* Focus and scrollIntoView must not horizontally pan the fixed desktop or
+   its window. Only the command log and existing action strip own scrolling. */
+#dialogue.day-os-mode > #dlg-text:has(.doors-terminal),
+.os-desktop:has(.doors-terminal), .os-window:has(.doors-terminal) { overflow: clip !important; }
+.os-window:has(.doors-terminal) { min-width: 0; box-sizing: border-box; }
+.os-content:has(.doors-terminal) { display: flex; overflow: clip; min-width: 0; box-sizing: border-box; padding: 14px; }
+.doors-terminal { width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; flex: 1; gap: 10px; }
 .doors-terminal > header { flex: none; }
 .doors-terminal h1 { margin: 0; font-size: 18px; }
 .doors-terminal > header p { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 4px 0 0; color: #a9c6c7; font: 12px/1.4 ui-monospace, monospace; }
@@ -210,6 +216,7 @@
 .doors-terminal form button { min-width: 44px; flex: none; }
 .doors-terminal input:focus-visible { outline: 2px solid #ffcf77; outline-offset: 1px; }
 @media (max-width: 380px) {
+  .os-window:has(.doors-terminal) { left: 8px; right: 8px; width: auto; max-width: calc(100% - 16px); }
   .doors-terminal { gap: 6px; font-size: 13px; }
   .doors-terminal-prompt { display: none; }
   .os-content:has(.doors-terminal) { padding: 8px; }

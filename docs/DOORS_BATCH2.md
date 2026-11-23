@@ -38,7 +38,9 @@ production gate and the fixture-assisted Day UI flow at 1280×800 desktop,
 390×844 touch, 320×568 touch and 844×390 touch, with reduced motion. Coverage adds
 all Plating stages through the real requester witness, the existing Security
 clue, Prompt Enter/Run/error/cls/Tab/Shift+Tab/Escape, window controls, 44px targets,
-unobscured control centers and horizontal-overflow checks.
+unobscured control centers and horizontal-overflow checks. Nested app windows
+and Prompt heading/form/input bounds are rechecked after control scrolling and
+keyboard focus, guarding against hidden ancestors panning the window off-screen.
 
 Each browser report records head/tree/run/attempt and 17 source hashes before
 and after the run, with screenshots and source-immutability enforcement. Approach

@@ -120,22 +120,56 @@ async function walkMarkedRoute(page, stationId) {
   }
   throw Error('Marked keyboard route exceeded its bounded 160-step budget');
 }
-async function assertBatchLayout(page, label, selector = '.doors-field') {
+async function assertBatchGeometry(page, label, selector = '.doors-field', focusedPrompt = false) {
   const surface = page.locator(selector);
   await surface.waitFor({ state: 'visible' });
   const bounds = await surface.evaluate(el => {
-    const r = el.getBoundingClientRect();
-    return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: innerWidth, height: innerHeight,
-      documentWidth: document.body.scrollWidth,
-      regions: [...el.querySelectorAll('.doors-pane,.doors-properties,.doors-terminal,[data-plating-session],.doors-security')]
-        .map(node => ({ name: node.className, client: node.clientWidth, scroll: node.scrollWidth })) };
+    function rect(node) { const r = node.getBoundingClientRect(); return { x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height }; }
+    function visible(node) { return node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden'; }
+    const windows = [...el.querySelectorAll('.os-window,.doors-window')].filter(visible);
+    return { ...rect(el), viewport: { width: innerWidth, height: innerHeight }, documentWidth: document.body.scrollWidth,
+      surfaceScrollLeft: el.scrollLeft, surfaceClient: el.clientWidth, surfaceScroll: el.scrollWidth,
+      windows: windows.map(node => ({ name: node.className, ...rect(node), scrollLeft:node.scrollLeft })),
+      regions: [...el.querySelectorAll('.os-content,.doors-pane,.doors-properties,.doors-terminal,.doors-terminal form,[data-plating-session],.doors-security')].filter(visible)
+        .map(node => ({ name: node.className || node.tagName, client: node.clientWidth, scroll: node.scrollWidth, scrollLeft: node.scrollLeft, ...rect(node) })),
+      prompt: [...el.querySelectorAll('.doors-terminal h1,.doors-terminal form,.doors-terminal input')].filter(visible)
+        .map(node => ({ name: node.tagName, ...rect(node), client:node.clientWidth,scroll:node.scrollWidth,
+          focused: node === document.activeElement, parent: rect(node.closest('.os-window')) })) };
   });
-  assert.ok(bounds.x >= -1 && bounds.y >= -1 && bounds.right <= bounds.width + 1 && bounds.bottom <= bounds.height + 1, label + ' fits viewport');
-  assert.ok(bounds.documentWidth <= bounds.width + 1, label + ' does not cause page horizontal overflow');
-  for (const region of bounds.regions) assert.ok(region.scroll <= region.client + 1, label + ' fits horizontally: ' + JSON.stringify(region));
-  const buttons = surface.locator('button:visible:not(:disabled)');
+  const withinViewport = r => r.x >= -1 && r.y >= -1 && r.right <= bounds.viewport.width+1 && r.bottom <= bounds.viewport.height+1;
+  assert.ok(withinViewport(bounds), label + ' surface fits viewport: ' + JSON.stringify(bounds));
+  assert.ok(bounds.documentWidth <= bounds.viewport.width + 1, label + ' does not cause page horizontal overflow');
+  assert.equal(bounds.surfaceScrollLeft, 0, label + ' surface has no hidden horizontal scroll');
+  assert.ok(bounds.surfaceScroll <= bounds.surfaceClient+1, label + ' surface contents fit horizontally');
+  for (const window of bounds.windows) {
+    assert.ok(withinViewport(window), label + ' actual window fits viewport: ' + JSON.stringify(window));
+    assert.ok(window.x >= bounds.x-1 && window.right <= bounds.right+1 && window.y >= bounds.y-1 && window.bottom <= bounds.bottom+1,
+      label + ' actual window fits desktop: ' + JSON.stringify(window));
+    assert.equal(window.scrollLeft,0,label + ' window has no hidden horizontal scroll');
+  }
+  for (const region of bounds.regions) {
+    assert.ok(region.scroll <= region.client+1, label + ' fits horizontally: ' + JSON.stringify(region));
+    assert.equal(region.scrollLeft,0,label + ' content has no hidden horizontal scroll: ' + region.name);
+    assert.ok(region.x >= -1 && region.right <= bounds.viewport.width+1, label + ' nested content is horizontally visible: ' + JSON.stringify(region));
+  }
+  for (const node of bounds.prompt) {
+    assert.ok(node.x >= -1 && node.right <= bounds.viewport.width+1 && node.x >= node.parent.x-1 && node.right <= node.parent.right+1,
+      label + ' Prompt text/input is horizontally visible: ' + JSON.stringify(node));
+    if (node.name==='H1') assert.ok(node.scroll <= node.client+1, label + ' Prompt heading is not cropped');
+    if (focusedPrompt && node.name==='INPUT') {
+      assert.equal(node.focused,true,label + ' Prompt input retains focus');
+      assert.ok(withinViewport(node),label + ' focused Prompt input remains in viewport: ' + JSON.stringify(node));
+      assert.ok(node.width>=44 && node.height>=44,label + ' focused Prompt input remains usable');
+    }
+  }
+  return bounds;
+}
+async function assertBatchLayout(page, label, selector = '.doors-field') {
+  const bounds = await assertBatchGeometry(page,label,selector);
+  const buttons = page.locator(selector).locator('button:visible:not(:disabled)');
   for (const button of await buttons.all()) {
     await button.scrollIntoViewIfNeeded();
+    await assertBatchGeometry(page,label+' after control scroll',selector);
     const b = await button.evaluate(el => {
       const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
       return { label: el.getAttribute('aria-label') || el.textContent, width: r.width, height: r.height, hit: el.contains(hit) };
@@ -270,6 +304,7 @@ async function morningOpening(page, result) {
   assert.equal((await page.getByRole('log').innerText()).trim(), '', 'cls clears displayed history');
   await command.fill('whoami'); await command.press('Enter');
   await page.getByRole('log').getByText(/AEROTECH \/ Mike/).waitFor();
+  result.promptFocusedGeometry = await assertBatchGeometry(page, result.id + ' focused Prompt', '.os-desktop', true);
   await screenshot(page, result.id, 'prompt');
   await command.fill('open music'); await command.press('Enter');
   await page.getByRole('button', {name:'Play Red in the Mirror', exact:true}).waitFor();
