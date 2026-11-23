@@ -276,9 +276,16 @@ async function morningOpening(page, result) {
   await click(page, 'Open Felicia profile');
   await click(page, 'Play People Behind the Flight');
   await page.locator('.day-film-shot').waitFor({state:'visible'});
+  result.companyFilm = await page.evaluate(() => ({ alt: document.querySelector('.day-film-shot img')?.getAttribute('alt'), caption: document.querySelector('.day-film-caption')?.textContent, reducedHint: document.querySelector('.day-film-note')?.textContent }));
+  assert.equal(result.companyFilm.alt, '', 'company film uses its caption as the single text alternative');
+  assert.match(result.companyFilm.caption, /FIELD SYSTEMS/i);
+  assert.match(result.companyFilm.reducedHint, /Next shot/i);
   await screenshot(page, result.id, 'company-cutscene');
   await click(page, 'Skip video');
   await click(page, 'CLOCK IN — START DAY SHIFT');
+  await page.locator('.day-film-shot.handoff').waitFor({state:'visible'});
+  result.shiftHandoff = await page.locator('.day-film-caption').innerText();
+  assert.match(result.shiftHandoff, /RETURN TO THE FLOOR/i);
   await click(page, 'Stand up');
   result.opening = await page.evaluate(() => {
     const c = TechOpsCampaign.load(localStorage);
