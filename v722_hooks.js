@@ -57,36 +57,6 @@
       o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 2);
     } catch (e) { }
   }
-  function thunder722() {
-    const c = ac(); if (!c) return;
-    try {
-      const src = c.createBufferSource(); src.buffer = noiseBuffer(c, 1.4);
-      const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 140;
-      const g = c.createGain();
-      g.gain.setValueAtTime(.16 * vol722(), c.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001, c.currentTime + 1.3);
-      src.connect(lp); lp.connect(g); g.connect(c.destination); src.start();
-    } catch (e) { }
-  }
-  function sting722() {
-    const c = ac(); if (!c) return;
-    try {
-      const t0 = c.currentTime;
-      [[330, 0, .09], [415, .09, .09], [494, .18, .09], [660, .27, .22]].forEach(([f, d, dur]) => {
-        const o = c.createOscillator(), g = c.createGain();
-        o.type = "square"; o.frequency.value = f;
-        g.gain.setValueAtTime(.07 * vol722(), t0 + d);
-        g.gain.exponentialRampToValueAtTime(.001, t0 + d + dur);
-        o.connect(g); g.connect(c.destination); o.start(t0 + d); o.stop(t0 + d + dur);
-      });
-      const src = c.createBufferSource(); src.buffer = noiseBuffer(c, .4);
-      const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900;
-      const g2 = c.createGain();
-      g2.gain.setValueAtTime(.12 * vol722(), t0);
-      g2.gain.exponentialRampToValueAtTime(.001, t0 + .35);
-      src.connect(hp); hp.connect(g2); g2.connect(c.destination); src.start(t0);
-    } catch (e) { }
-  }
   function stopAudio722() {
     const c = AC722;
     live.forEach(n => {
@@ -134,23 +104,6 @@
     }
     x.stroke(); x.restore();
   }
-  function grain722(x, W, H) {
-    x.save(); x.globalAlpha = .05;
-    for (let i = 0; i < 260; i++) px(x, Math.random() * W, Math.random() * H, 2, 2, Math.random() > .5 ? "#fff" : "#000");
-    x.restore();
-  }
-  function crest(x, cx, cy, sc, C) {
-    x.save(); x.translate(cx, cy); x.scale(sc, sc);
-    x.fillStyle = C; x.shadowColor = C; x.shadowBlur = 22;
-    px(x, -4, -26, 8, 52, C); // spine
-    for (let i = 0; i < 3; i++) { // wings
-      const y = -20 + i * 14, w = 40 - i * 9;
-      x.beginPath(); x.moveTo(-6, y); x.lineTo(-6 - w, y - 10); x.lineTo(-6 - w, y - 2); x.lineTo(-6, y + 8); x.closePath(); x.fill();
-      x.beginPath(); x.moveTo(6, y); x.lineTo(6 + w, y - 10); x.lineTo(6 + w, y - 2); x.lineTo(6, y + 8); x.closePath(); x.fill();
-    }
-    x.restore();
-  }
-
   // Use the actual game actor, never a recolored stand-in for Felicia.
   let feliciaImg = null;
   function mikeSprite(x, key, dx, dy, h, fel) {
@@ -433,18 +386,28 @@
       txt(x, label, X + 1, LH - 22, narrow ? 26 : 17, si === i ? "#e6d8be" : "#a09b93");
     });
 
-    // A second framing beat within a panel, not a new event. Avoid cutaway
-    // motion in the stable/reduced-motion presentation.
-    if (compact || narrow || st < [850, 580, 950][si]) return;
+    // On phones the detail sits below the wide panel so the actor remains
+    // legible at 320 CSS pixels. Both views sample the same rendered instant.
+    const portrait = detail && !detail.hidden;
+    if (!portrait && (compact || narrow || st < [850,580,950][si])) return;
     const car = 350 + 134 * Math.min(st / 2350, 1) - 18 * Math.sin(Math.PI * Math.min(st / 2350, 1));
-    const dayActor = Math.min(330 + st * .28, 830), nightActor = Math.min(560 + (st - 600) * .12, 700);
-    const source = [[dayActor - 83, 360], [car - 70, 450], [nightActor - 83, 392]][si];
-    const scale = cv.width / LW, edge = 909, top = 88, width = 326, height = 174;
+    const dayActor = Math.min(330 + st * .28, 830);
+    const nightActor = st < 600 ? 420 : Math.min(560 + (st - 600) * .12, 700);
+    const source = [[dayActor-113,343,226,108],[car-204,407,408,195],[nightActor-113,387,226,108]][si];
+    const scale = cv.width / LW;
+    const [sx,sy,sw,sh] = source.map(value=>value*scale);
+    if (portrait) {
+      const pen = detail.getContext("2d");
+      pen.imageSmoothingEnabled = false;
+      pen.drawImage(cv,sx,sy,sw,sh,0,0,detail.width,detail.height);
+      return;
+    }
+    const edge = 909, top = 88, width = 326, height = 174;
     px(x, edge + 8, top + 8, width, height, "#070911");
     px(x, edge, top, width, height, "#d6c6a8");
     x.save();
     x.imageSmoothingEnabled = false;
-    x.drawImage(cv, source[0] * scale, source[1] * scale, 166 * scale, 83 * scale,
+    x.drawImage(cv, sx, sy, sw, sh,
       edge + 5, top + 5, width - 10, height - 10);
     x.restore();
     px(x, edge, top, 25, 4, accent);
@@ -452,14 +415,18 @@
 
   const SHOT_FNS = [shot1, shot3, shot4];
   let playing = false, ov = null, cv = null, ctx = null, raf = 0, t0 = 0;
-  let frame722 = 0, entry = null, skipButton = null, status = null, priorFocus = null, previousShot = -1;
+  let frame722 = 0, entry = null, skipButton = null, status = null, detail = null, priorFocus = null, previousShot = -1;
   const stats722 = { plays: 0, skips: 0, full: 0, compact: 0, canceled: 0 };
 
   function sizeCanvas() {
     if (!cv) return;
     const width = window.visualViewport?.width || window.innerWidth;
     const height = window.visualViewport?.height || window.innerHeight;
-    const fit = Math.max(.08, Math.min(width / LW, (height - 104) / LH));
+    const portrait = width < 600 && height > width * 1.25;
+    detail.hidden = !portrait;
+    const fit = Math.max(.08, Math.min(width / LW, (height - 120) / (LH + (portrait ? 520 : 0))));
+    if (portrait) detail.style.width = Math.floor(LW * fit * .91) + "px";
+    if (entry) entry.painted = false;
     cv.style.width = Math.floor(LW * fit) + "px";
     cv.style.height = Math.floor(LH * fit) + "px";
   }
@@ -477,9 +444,13 @@
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = LW * dpr; cv.height = LH * dpr;
     cv.style.cssText = "min-width:0;min-height:0;flex:none;image-rendering:pixelated;display:block";
+    detail = document.createElement("canvas");
+    detail.setAttribute("aria-hidden","true");
+    detail.width = 480; detail.height = 229;
+    detail.style.cssText = "height:auto;flex:none;image-rendering:pixelated;border:2px solid #cbbda6;box-sizing:border-box;margin:3px 0 9px";
     sizeCanvas();
     window.addEventListener("resize", sizeCanvas);
-    ov.appendChild(cv);
+    ov.appendChild(cv); ov.appendChild(detail);
     status = document.createElement("div");
     status.setAttribute("aria-live", "polite");
     status.style.cssText = "color:#c8d4f2;background:#111827;text-align:center;font-size:clamp(12px,2.4vw,18px);padding:8px 12px;margin:0;max-width:100%;box-sizing:border-box";
@@ -521,10 +492,6 @@
         ctx.fillStyle = "#070a12"; ctx.fillRect(0, 0, LW, LH);
         const narrow = (window.visualViewport?.width || window.innerWidth) < 600;
         ctx.save();
-        if (narrow && si === 2) {
-          ctx.scale(1.34, 1.34);
-          ctx.translate(-204, -114);
-        }
         const ready = SHOT_FNS[si](ctx, compact ? 0 : t, st, fel);
         ctx.restore();
         // A compact still may be requested while the existing sprite is decoding.
@@ -546,7 +513,7 @@
     stopAudio722();
     window.removeEventListener("resize", sizeCanvas);
     window.removeEventListener("keydown", onKey722, true);
-    ov?.remove(); ov = cv = ctx = status = skipButton = null;
+    ov?.remove(); ov = cv = ctx = status = skipButton = detail = null;
     if (reason === "cancel" || !hasSameState) { stats722.canceled++; priorFocus = null; return; }
     if (reason === "skip") stats722.skips++;
     if (reason === "full" && e.variant === "full") stats722.full++;

@@ -77,7 +77,7 @@ for(const [name,engine,width,height,touch,calm,skip] of [
       for(const beat of ['clock-out','new-haven','first-street']){
         await page.locator('[data-night-drive-shot="'+beat+'"]').waitFor();
         if(calm){
-          const still=()=>page.evaluate(()=>document.querySelector('#v722-cine canvas').toDataURL());
+          const still=()=>page.evaluate(()=>Array.from(document.querySelectorAll('#v722-cine canvas:not([hidden])'),c=>c.toDataURL()).join('|'));
           await page.waitForTimeout(180);const a=await still();await page.waitForTimeout(120);assert.equal(a===await still(),true,beat+' still');
         }
         if(beat==='first-street') await wait(()=>__nightSpriteDraws>0);
