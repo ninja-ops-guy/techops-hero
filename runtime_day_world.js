@@ -304,26 +304,113 @@
     if (shipping && shipping.phase === "briefing" && plating && plating.phase !== "briefing") return plating;
     return shipping || plating || ticketObjective(ACCESS, c) || objective("sector04Door", "Continue to Sector 04", "The shift is documented. Follow the access record to the hangar entrance.", "departure");
   }
+  // Presentation only: Day's tile map, collisions and route state stay owned by
+  // the existing map/campaign systems. These helpers draw over their positions.
+  function paletteFor(item) {
+    if (item.id === "shipping_printer" || item.id === "shipping_workstation") return { edge: "#90d8e6", body: "#254d5b", screen: "#102732", ink: "#f4f0d5", accent: "#f3c878" };
+    if (item.id === "plating_workstation" || item.id === "plc_hmi_dependency" || item.id === "industrial_scanner_vlan") return { edge: "#efd18a", body: "#65513b", screen: "#1d2528", ink: "#fff1c5", accent: "#a8d6bc" };
+    if (item.id === "security_workstation") return { edge: "#e6c5ca", body: "#3a2830", screen: "#151a22", ink: "#fff4df", accent: "#c7d8e8" };
+    return { edge: "#b9d7cf", body: "#314d52", screen: "#122631", ink: "#eff3df", accent: "#a8d6bc" };
+  }
+  function pixelStroke(ctx, color, width, draw) {
+    ctx.strokeStyle = "#0a1920"; ctx.lineWidth = width + 2; draw(); ctx.strokeStyle = color; ctx.lineWidth = width; draw();
+  }
+  function drawDepartmentSign(ctx, contact, kind) {
+    if (!contact) return;
+    var x = contact.x * TILE + 16, y = contact.y * TILE - 31, label = kind.toUpperCase();
+    var tone = kind === "shipping" ? "#90d8e6" : kind === "plating" ? "#efd18a" : "#e6c5ca";
+    ctx.fillStyle = "#0d2028eF"; ctx.fillRect(x - 28, y - 7, 56, 15);
+    ctx.strokeStyle = tone; ctx.lineWidth = 1; ctx.strokeRect(x - 28, y - 7, 56, 15);
+    ctx.fillStyle = tone;
+    if (kind === "shipping") {
+      ctx.strokeRect(x - 23, y - 3, 8, 6); ctx.fillRect(x - 13, y, 8, 2); ctx.fillRect(x - 7, y - 2, 4, 6);
+    } else if (kind === "plating") {
+      ctx.strokeRect(x - 23, y - 4, 8, 8); ctx.fillRect(x - 20, y - 6, 2, 12); ctx.fillRect(x - 25, y - 1, 12, 2);
+    } else {
+      ctx.beginPath(); ctx.moveTo(x - 20, y - 5); ctx.lineTo(x - 14, y - 2); ctx.lineTo(x - 16, y + 5); ctx.lineTo(x - 24, y + 5); ctx.lineTo(x - 26, y - 2); ctx.closePath(); ctx.stroke();
+    }
+    ctx.font = "bold 7px monospace"; ctx.textAlign = "left"; ctx.fillText(label, x - 9, y + 1); ctx.textAlign = "center";
+  }
+  function drawWorkstation(ctx, item) {
+    if (item.id === "mike_desk" || item.id === "laptop_dock_link") return;
+    var x = item.x * TILE, y = item.y * TILE, p = paletteFor(item), compact = item.deviceType === "mini_pc" || item.deviceType === "access_point" || item.deviceType === "time_clock";
+    // Ground shadow and a hard-edged plinth give every live station a common floor grammar.
+    ctx.fillStyle = "#08171c99"; ctx.fillRect(x + 3, y + 28, 26, 3);
+    if (item.deviceType === "printer") {
+      ctx.fillStyle = p.body; ctx.fillRect(x + 3, y + 13, 26, 14);
+      ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.strokeRect(x + 3, y + 13, 26, 14);
+      ctx.fillStyle = p.ink; ctx.fillRect(x + 8, y + 8, 16, 8); ctx.fillStyle = p.screen; ctx.fillRect(x + 8, y + 18, 16, 5);
+      ctx.fillStyle = p.accent; ctx.fillRect(x + 22, y + 19, 3, 3);
+      ctx.fillStyle = "#0a1920"; ctx.fillRect(x + 11, y + 10, 9, 1); ctx.fillRect(x + 11, y + 13, 6, 1);
+      return;
+    }
+    if (item.id === "plating_workstation" || item.deviceType === "plc_hmi") {
+      ctx.fillStyle = p.body; ctx.fillRect(x + 5, y + 4, 22, 24);
+      ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.strokeRect(x + 5, y + 4, 22, 24);
+      ctx.fillStyle = p.screen; ctx.fillRect(x + 8, y + 7, 16, 10);
+      ctx.fillStyle = p.accent; ctx.fillRect(x + 10, y + 10, 7, 2); ctx.fillRect(x + 10, y + 14, 11, 1);
+      ctx.fillStyle = p.ink; ctx.fillRect(x + 8, y + 20, 16, 2); ctx.fillRect(x + 8, y + 24, 5, 2);
+      return;
+    }
+    if (item.deviceType === "industrial_scanner") {
+      ctx.fillStyle = p.body; ctx.fillRect(x + 8, y + 7, 16, 19); ctx.strokeStyle = p.edge; ctx.strokeRect(x + 8, y + 7, 16, 19);
+      ctx.fillStyle = p.screen; ctx.fillRect(x + 10, y + 10, 12, 6); ctx.fillStyle = p.accent; ctx.fillRect(x + 12, y + 19, 8, 2); ctx.fillRect(x + 12, y + 23, 4, 2);
+      return;
+    }
+    if (compact) {
+      ctx.fillStyle = p.body; ctx.fillRect(x + 8, y + 8, 16, 15); ctx.strokeStyle = p.edge; ctx.strokeRect(x + 8, y + 8, 16, 15);
+      ctx.fillStyle = p.screen; ctx.fillRect(x + 11, y + 11, 10, 6); ctx.fillStyle = p.accent; ctx.fillRect(x + 12, y + 19, 3, 2); ctx.fillRect(x + 17, y + 19, 3, 2);
+      return;
+    }
+    // Workstations read as desks first, with the monitor and keyboard still legible at phone scale.
+    ctx.fillStyle = p.body; ctx.fillRect(x + 2, y + 21, 28, 5); ctx.fillRect(x + 5, y + 26, 3, 3); ctx.fillRect(x + 24, y + 26, 3, 3);
+    ctx.strokeStyle = p.edge; ctx.lineWidth = 1; ctx.strokeRect(x + 2, y + 21, 28, 5);
+    ctx.fillStyle = p.screen; ctx.fillRect(x + 8, y + 5, 16, 13); ctx.strokeStyle = p.edge; ctx.strokeRect(x + 8, y + 5, 16, 13);
+    ctx.fillStyle = p.accent; ctx.fillRect(x + 10, y + 8, 12, 6); ctx.fillStyle = p.ink; ctx.fillRect(x + 15, y + 18, 2, 3); ctx.fillRect(x + 10, y + 19, 12, 1);
+    ctx.fillStyle = "#0a1920"; ctx.fillRect(x + 11, y + 22, 10, 2); ctx.fillStyle = p.edge; ctx.fillRect(x + 23, y + 22, 3, 2);
+  }
+  function drawChevron(ctx, from, to) {
+    var x = from.x * TILE + 16, y = from.y * TILE + 16, dx = to.x - from.x, dy = to.y - from.y;
+    pixelStroke(ctx, "#e7f9b1", 1, function () {
+      ctx.beginPath();
+      if (dx > 0) { ctx.moveTo(x - 4, y - 5); ctx.lineTo(x + 4, y); ctx.lineTo(x - 4, y + 5); }
+      else if (dx < 0) { ctx.moveTo(x + 4, y - 5); ctx.lineTo(x - 4, y); ctx.lineTo(x + 4, y + 5); }
+      else if (dy > 0) { ctx.moveTo(x - 5, y - 4); ctx.lineTo(x, y + 4); ctx.lineTo(x + 5, y - 4); }
+      else { ctx.moveTo(x - 5, y + 4); ctx.lineTo(x, y - 4); ctx.lineTo(x + 5, y + 4); }
+    });
+  }
+  function drawArrivalMarker(ctx, target, tm, reduced) {
+    if (!target) return;
+    var x = target.x * TILE + 16, y = target.y * TILE + 16, inset = reduced ? 11 : 10 + Math.round((Math.sin(tm / 220) + 1) * 1);
+    ctx.strokeStyle = "#0a1920"; ctx.lineWidth = 4; ctx.strokeRect(x - inset, y - inset, inset * 2, inset * 2);
+    ctx.strokeStyle = "#f3f5df"; ctx.lineWidth = 1; ctx.strokeRect(x - inset, y - inset, inset * 2, inset * 2);
+    ctx.fillStyle = "#10222ded"; ctx.fillRect(x - 17, y - 25, 34, 10);
+    ctx.strokeStyle = "#f3f5df"; ctx.strokeRect(x - 17, y - 25, 34, 10);
+    ctx.fillStyle = "#f3f5df"; ctx.font = "bold 7px monospace"; ctx.fillText("TARGET", x, y - 20);
+  }
   function render(ctx, now) {
     if (!ctx || !active()) return false;
     var d = data(); if (!d) return false;
     var guided = currentRoute(), tm = Number(now) || 0;
     var reduced = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
     ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    // Named production areas stay recognisable even when the route passes busy art.
+    drawDepartmentSign(ctx, contact("shipping"), "shipping");
+    drawDepartmentSign(ctx, contact("plating"), "plating");
+    drawDepartmentSign(ctx, contact("access"), "security");
     if (guided && guided.ok && guided.path.length > 1) {
       ctx.strokeStyle = "#062831"; ctx.lineWidth = 6; ctx.beginPath();
       guided.path.forEach(function (p, i) { if (!i) ctx.moveTo(p.x * TILE + 16, p.y * TILE + 16); else ctx.lineTo(p.x * TILE + 16, p.y * TILE + 16); }); ctx.stroke();
       ctx.strokeStyle = "#9ee6cc"; ctx.lineWidth = 2; ctx.setLineDash([3, 8]); ctx.lineDashOffset = reduced ? 0 : -tm / 90; ctx.stroke(); ctx.setLineDash([]);
-    }
-    if (guided && guided.ok && guided.target.kind === "contact") {
-      var contactX = guided.target.x * TILE, contactY = guided.target.y * TILE;
-      ctx.fillStyle = "#112933"; ctx.fillRect(contactX + 3, contactY + 29, 26, 4);
-      ctx.fillStyle = "#bcecd2"; ctx.fillRect(contactX + 5, contactY + 30, 22, 2);
+      // Direction is carried by the chevron shape and target label, not color alone.
+      for (var step = 1; step < guided.path.length - 1; step += 4) drawChevron(ctx, guided.path[step], guided.path[step + 1]);
+      drawArrivalMarker(ctx, guided.target, tm, reduced);
     }
     d.items.forEach(function (item) {
       if (!item.available) return;
       var x = item.x * TILE, y = item.y * TILE, selected = guided && guided.target && guided.target.id === item.id;
       var color = selected ? "#e7f9b1" : item.kind === "desk" ? "#9ee6cc" : "#f2c888";
+      drawWorkstation(ctx, item);
       // The adjacent service laptop belongs to this station.
       if (item.supportComputer) {
         ctx.fillStyle = "#132331"; ctx.fillRect(x + 2, y + 19, 13, 9);
