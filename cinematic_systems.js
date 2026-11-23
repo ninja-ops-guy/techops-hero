@@ -293,13 +293,22 @@
   }
   function select(id,n,at){
     if(!n)return null;var isDog=id==='kat'||id==='man',state='idle',seq=null,ms=100;
-    if(n.hp<=0||n.downed||n.down>0||n.hitT>0||n.jabAnim>0||n.anim>0||n.block)return null;
+    if(n.hp<=0||n.downed||n.down>0||n.hitT>0||n.jabAnim>0||n.anim>0||n.block){if(id==='mike')tracks.delete(n);return null;}
     if(n.dashT>0&&isDog&&!n.onGround){state='airdash';seq=[13,14,15,16,17];ms=65;}
     else if(!n.onGround){state=n.vy<-2?'ascent':n.vy>2?'descent':'apex';if(!isDog)seq=[state==='ascent'?14:state==='apex'?15:16];}
     else if(Math.abs(n.vx||0)>=2.5){state='run';seq=[6,7,8,9,10,11];ms=Math.max(65,Math.min(130,400/Math.abs(n.vx)));}
     if(isDog&&state==='idle'&&Math.abs(n.vx||0)<.05)seq=[0];
     var prev=tracks.get(n);if(!prev||prev.id!==id||prev.state!==state){prev={id:id,state:state,at:at};tracks.set(n,prev);}
+    // Mike's reviewed run row follows distance rather than wall time. Paused
+    // frames and a held movement key against a boundary cannot pedal in place.
+    if(id==='mike'&&state==='run'&&Number.isFinite(n.x)){
+      var clock=n._nightCombat,sector=n.district||'';
+      if(prev.x==null||prev.clock!==clock||prev.sector!==sector||Math.abs(n.x-prev.x)>180||at<prev.lastAt){prev.distance=0;}
+      else prev.distance=(prev.distance||0)+Math.abs(n.x-prev.x);
+      prev.x=n.x;prev.clock=clock;prev.sector=sector;prev.lastAt=at;
+    }
     if(!seq)return null;var elapsed=Math.max(0,at-prev.at),idx=state==='airdash'?Math.min(seq.length-1,Math.floor(elapsed/ms)):Math.floor(elapsed/ms)%seq.length;
+    if(id==='mike'&&state==='run'&&Number.isFinite(n.x))idx=Math.floor((prev.distance||0)/24)%seq.length;
     if(state==="run"&&prev.phase!==idx){prev.phase=idx;if(idx===0||idx===3)root.__techOpsFootContact={actor:id,phase:idx,at:at};}
     return{id:id,state:state,frame:seq[idx],phase:idx,source:'handoff-extracted',loop:state==='run'};
   }

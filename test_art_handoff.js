@@ -34,3 +34,11 @@ assert.ok(fs.readFileSync('v737_hooks.js','utf8').includes('art.drawActor'),'act
 assert.ok(fs.readFileSync('night_hooks.js','utf8').includes('drawEnvironment(ctx,NM,"back",now)'));
 assert.ok(fs.readFileSync('production_wrapper_guard.js','utf8').includes('drawImpacts(x,n,clock())'));
 console.log('Handoff provenance, transparency, budget, semantic priority, animation timing, and world isolation: PASS',bytes+' bytes');
+
+const runner={hp:100,onGround:true,vx:4,face:1,x:100,district:'downtown',_nightCombat:{time:0}};
+assert.equal(art.select('mike',runner,0).frame,6);
+assert.equal(art.select('mike',runner,10000).frame,6,'a frozen position cannot animate a run');
+runner.x=124;assert.equal(art.select('mike',runner,10016).frame,7,'run phase follows actual distance');
+runner.x=148;assert.equal(art.select('mike',runner,10032).frame,8);
+runner.district='airport';runner.x=350;assert.equal(art.select('mike',runner,10048).frame,6,'district transition resets the stride');
+runner._nightCombat={time:0};assert.equal(art.select('mike',runner,10064).frame,6,'replaced combat session resets the stride');
