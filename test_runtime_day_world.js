@@ -321,3 +321,28 @@ for(let seed=1;seed<=12;seed++){
   delete global.MIKE_DESK;delete global.COWORKERS;
 }
 console.log('PASS authored office desk reuse, coworker positions and v2 checkpoint migration');
+
+
+// Presentation is passive: live equipment, named areas and route semantics are
+// painted without changing the tile map, route target, or campaign data.
+{
+  const visualState = setup(10); world.ensureWorld();
+  assert(world.route("shipping_workstation").ok);
+  const mapBefore = JSON.stringify(visualState.map);
+  const stationBefore = JSON.stringify(visualState.meta.dayStations);
+  const words = [];
+  const ctx = {
+    save() {}, restore() {}, fillRect() {}, strokeRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, stroke() {}, setLineDash() {},
+    fillText(text) { words.push(String(text)); },
+    measureText(text) { return { width: String(text).length * 6 }; }
+  };
+  assert.strictEqual(world.render(ctx, 240), true);
+  ["SHIPPING", "PLATING", "SECURITY", "TARGET"].forEach(label => assert(words.includes(label), `floor overlay exposes ${label} as text, not color alone`));
+  assert.strictEqual(JSON.stringify(visualState.map), mapBefore, "render cannot alter collision tiles");
+  assert.strictEqual(JSON.stringify(visualState.meta.dayStations), stationBefore, "render cannot alter route or saved station state");
+  const priorMatchMedia = global.matchMedia;
+  global.matchMedia = () => ({ matches: true });
+  assert.strictEqual(world.render(ctx, 480), true, "reduced-motion overlay remains legible");
+  if (priorMatchMedia === undefined) delete global.matchMedia; else global.matchMedia = priorMatchMedia;
+}
+console.log("PASS floor presentation: named areas, chevrons, target marker, passive/reduced-motion rendering");
