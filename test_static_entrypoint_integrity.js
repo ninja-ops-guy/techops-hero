@@ -21,8 +21,9 @@ for(const src of ["campaign_world_visuals.js","v66_hooks.js"])assert.strictEqual
 assert.strictEqual(refFor("runtime_day_audio.js"),"runtime_day_audio.js?v=20261118-inspect-r1");
 assert.strictEqual(refFor("runtime_day_cases.js"),"runtime_day_cases.js?v=20261105-doors-r1");
 assert.strictEqual(refFor("v67_hooks.js"),"v67_hooks.js?v=20261107-fixed-contacts-r1");
-for(const src of ["game.js","runtime_day.js","runtime_day_world.js","campaign_native_act1.js","v55_hooks.js","v63_hooks.js","v69_hooks.js","night_hooks.js"])assert.strictEqual(refFor(src),src+"?v=20261120-day-field");
-assert.ok(html.includes('href="runtime_day.css?v=20261120-day-field"'));
+for(const src of ["game.js","runtime_day_world.js","campaign_native_act1.js","v55_hooks.js","v63_hooks.js","v69_hooks.js","night_hooks.js"])assert.strictEqual(refFor(src),src+"?v=20261120-day-field");
+assert.strictEqual(refFor("runtime_day.js"),"runtime_day.js?v=20261123-batch3");
+assert.ok(html.includes('href="runtime_day.css?v=20261123-batch3"'));
 for(const [asset,version] of [["runtime_day_doors.js","20261105-doors-r1"],["runtime_day_doors.css","20261120-day-field"]]){
   const url=asset+"?v="+version;
   assertLocalFile(url,"Doors");

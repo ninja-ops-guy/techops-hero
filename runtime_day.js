@@ -173,8 +173,10 @@
     if(st.ticketId==='shipping_cannot_print')actions+=button(st.id==='shipping_printer'?'Walk to Shipping workstation':'Walk to label printer','route',st.id==='shipping_printer'?'shipping_workstation':'shipping_printer');
     var count=rec.evidence.length,phases=[count>0,!!rec.hypothesis,!!rec.fixApplied,done];
     var request='<div class="day-request"><span class="day-eyebrow">'+escape(def.requester)+'</span><h3>'+escape(def.symptom)+'</h3><p>'+escape(def.humanNeed)+'</p></div>';
-    var notes='<ol class="day-progress">'+['Observe','Diagnose','Repair','Verify'].map(function(p,i){return '<li data-done="'+phases[i]+'">'+p+'</li>';}).join('')+'</ol><h3>Evidence · '+count+' / '+all.length+'</h3>'+
-      (count?rec.evidence.map(function(id){var e=all.find(function(x){return x.id===id;});return e?'<div class="day-evidence-item"><strong>'+escape(e.label)+'</strong>'+escape(e.text)+'</div>':'';}).join(''):'<p class="day-empty">Inspect the equipment or run a diagnostic to record an observation.</p>')+'<div class="day-actions">'+actions+'</div>';
+    var evidenceItems=rec.evidence.map(function(id){var e=all.find(function(x){return x.id===id;});return e?'<div class="day-evidence-item"><strong>'+escape(e.label)+'</strong>'+escape(e.text)+'</div>':'';}).filter(Boolean);
+    var visibleEvidence=evidenceItems.slice(0,2).join(''),moreEvidence=evidenceItems.slice(2);
+    var evidenceHtml=count?'<div class="day-evidence-current">'+visibleEvidence+'</div>'+(moreEvidence.length?'<details class="day-evidence-more"><summary>Show '+moreEvidence.length+' more recorded observation'+(moreEvidence.length===1?'':'s')+'</summary>'+moreEvidence.join('')+'</details>':''):'<p class="day-empty">Inspect the equipment or run a diagnostic to record an observation.</p>';
+    var notes='<ol class="day-progress">'+['Observe','Diagnose','Repair','Verify'].map(function(p,i){return '<li data-done="'+phases[i]+'">'+p+'</li>';}).join('')+'</ol><h3>Evidence · '+count+' / '+all.length+'</h3>'+evidenceHtml+'<div class="day-actions">'+actions+'</div>';
     if(!physical)return display(st,doorsScreen(st,data,request+notes),data,canScreen);
     var html='<section class="day-console" aria-labelledby="day-device-title"><header class="day-console-header"><div><span class="day-eyebrow">DAY SHIFT / '+escape(st.roomName||st.roomId||st.zoneId||'FIELD SERVICE')+'</span><h2 id="day-device-title">'+escape(title)+'</h2></div>'+button('Return to floor','exit',null,' class="day-close"')+'</header>'+
       '<nav class="day-stage-nav" aria-label="Device views">'+button('01 · Inspect equipment','physical',null,' aria-pressed="true"')+(canScreen?button('02 · Open Doors','screen'):'')+'<span class="day-stage-note">'+escape(def.title)+'</span></nav>'+
@@ -482,7 +484,8 @@
   }
   function startFilm(name,box,actions,token){
     root.document.getElementById('dialogue').classList.add('day-film-mode');
-    var profile=name==='PEOPLE BEHIND THE FLIGHT',listening=name==='MORNING LISTENING';
+    var profile=name==='PEOPLE BEHIND THE FLIGHT',listening=name==='MORNING LISTENING',handoff=name==='09:00 // DAY SHIFT';
+    var reduced=!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
     var shots=profile?[
       ['FIELD SYSTEMS','Every flight begins with people on the ground.','assets/campaign/workstation.corporate_aircraft_panel.png','wide'],
       ['FELICIA / SECURITY RESEARCH','Aircraft systems. Antenna racks. A violin case beside the work.','assets/campaign/workstation.corporate_aircraft_panel.png','pan'],
@@ -491,11 +494,13 @@
       ['PROFILE ENDS','Felicia Cruz · Systems Integrations','assets/campaign/workstation.felicia.video_frame.png','portrait']
     ]:listening?[
       ['RED IN THE MIRROR','Now playing','assets/campaign/workstation.corporate_aircraft_panel.png','wide']
-    ]:[['09:00 / NEW HAVEN','Outbound cartons are waiting on customs labels.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT','Plating is holding the next job.','assets/campaign/plating.line_background.png','pan']];
+    ]:[['09:00 / NEW HAVEN','Outbound cartons are waiting on customs labels.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT / HANDOFF','Plating is holding the next job. Security has a contradiction to document.','assets/campaign/plating.line_background.png','pan']];
     var content=box.querySelector('.os-content'),i=0;
     if(profile&&root.TechOpsDayAudio)root.TechOpsDayAudio.duck('opening-film',.22);
     var finish=Array.from(actions.querySelectorAll('button')).find(function(b){return b.textContent==='Finish video';});if(finish)finish.disabled=true;
-    function shot(){if(!valid(token))return;var s=shots[i];content.innerHTML='<div class="day-film-shot '+s[3]+'"><img src="'+s[2]+'" alt="'+esc(s[0])+'"><div class="day-film-shade"></div><div class="day-film-caption" aria-live="polite"><small>'+esc(s[0])+'</small><h2>'+esc(s[1])+'</h2></div><div class="day-film-progress">'+shots.map(function(_,n){return '<i class="'+(n<=i?'seen':'')+'"></i>';}).join('')+'</div></div>';if(i<shots.length-1)timer=root.setTimeout(function(){i++;shot();},s[3]==='signal'?650:4200);else{if(finish)finish.disabled=false;next.textContent='Replay scene';}}
+    function shot(){if(!valid(token))return;var s=shots[i],dwell=s[3]==='signal'?650:(handoff?1600:3600),hint=reduced&&i<shots.length-1?'<p class="day-film-note">Use Next shot to advance.</p>':'',returnNote=handoff?'<p class="day-film-return">Return to the floor when the handoff is complete.</p>':'';
+      content.innerHTML='<figure class="day-film-shot '+s[3]+(handoff?' handoff':'')+'"><img src="'+s[2]+'" alt=""><div class="day-film-shade"></div><figcaption class="day-film-caption" aria-live="polite" aria-atomic="true"><small>'+esc(s[0])+'</small><h2>'+esc(s[1])+'</h2>'+returnNote+hint+'</figcaption><div class="day-film-progress" aria-hidden="true">'+shots.map(function(_,n){return '<i class="'+(n<=i?'seen':'')+'"></i>';}).join('')+'</div></figure>';
+      if(i<shots.length-1&&!reduced)timer=root.setTimeout(function(){i++;shot();},dwell);else{if(i===shots.length-1&&finish)finish.disabled=false;if(i===shots.length-1)next.textContent='Replay scene';}}
     var next=root.document.createElement('button');next.type='button';next.textContent='Next shot';next.onclick=function(){if(!valid(token))return;root.clearTimeout(timer);i=i<shots.length-1?i+1:0;shot();};actions.appendChild(next);shot();
   }
   root.TechOpsDayDesktop={present:present,release:release,loadTheme:loadTheme,active:function(){return current;}};
