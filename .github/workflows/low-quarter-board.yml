@@ -2,7 +2,7 @@ name: Low Quarter board acceptance
 
 on:
   pull_request:
-    branches: [main, codex/low-quarter-rescue-authority, codex/chorus-siege]
+    branches: [main, codex/low-quarter-rescue-authority, codex/chorus-siege, codex/low-quarter-first-operation]
     paths:
       - 'campaign_*.js'
       - 'chapters_vii_x.js'
@@ -11,6 +11,9 @@ on:
       - 'production_*.js'
       - 'index.html'
       - 'low-quarter-review.html'
+      - 'low-quarter-review.css'
+      - 'test_low_quarter_graphics.js'
+      - 'scripts/low_quarter_graphics_browser.mjs'
       - 'test_campaign_low_quarter_operation.js'
       - 'scripts/low_quarter_operation_browser.mjs'
       - 'scripts/production_release_gate.js'
@@ -68,13 +71,14 @@ jobs:
           };
           fs.writeFileSync('artifacts/low-quarter-board/source.json', JSON.stringify(receipt, null, 2) + '\n');
           JS
-          sha256sum campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html test_campaign_low_quarter_operation.js scripts/low_quarter_operation_browser.mjs campaign_chorus_siege.js test_campaign_chorus_siege.js scripts/chorus_siege_browser.mjs campaign_low_quarter.js campaign_low_quarter_runtime.js campaign_story.js campaign_late_game_bootstrap.js chapters_vii_x.js index.html test_campaign_low_quarter.js scripts/low_quarter_browser.mjs scripts/media_http_server.py package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-board/source-sha256.txt
+          sha256sum docs/graphics/low-quarter-scene-manifest.json low-quarter-review.css test_low_quarter_graphics.js scripts/low_quarter_graphics_browser.mjs campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html test_campaign_low_quarter_operation.js scripts/low_quarter_operation_browser.mjs campaign_chorus_siege.js test_campaign_chorus_siege.js scripts/chorus_siege_browser.mjs campaign_low_quarter.js campaign_low_quarter_runtime.js campaign_story.js campaign_late_game_bootstrap.js chapters_vii_x.js index.html test_campaign_low_quarter.js scripts/low_quarter_browser.mjs scripts/media_http_server.py package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-board/source-sha256.txt
       - name: Verify existing rescue authority contracts
         run: |
           set -euo pipefail
           node test_campaign_low_quarter.js 2>&1 | tee artifacts/low-quarter-board/contracts.log
           node test_campaign_chorus_siege.js 2>&1 | tee artifacts/low-quarter-board/siege-contracts.log
           node test_campaign_low_quarter_operation.js 2>&1 | tee artifacts/low-quarter-board/operation-contracts.log
+          node test_low_quarter_graphics.js 2>&1 | tee artifacts/low-quarter-board/graphics-contracts.log
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - name: Exercise the real-page board in desktop and touch layouts
@@ -91,6 +95,7 @@ jobs:
           test "$ready" = true
           timeout 180s node scripts/low_quarter_browser.mjs 2>&1 | tee artifacts/low-quarter-board/browser.log
           timeout 180s node scripts/chorus_siege_browser.mjs 2>&1 | tee artifacts/low-quarter-board/siege-browser.log
+          GRAPHICS_ARTIFACT_DIR=artifacts/low-quarter-board/graphics timeout 180s node scripts/low_quarter_graphics_browser.mjs 2>&1 | tee artifacts/low-quarter-board/graphics-browser.log
       - name: Confirm tracked source remained unchanged
         if: always()
         run: git diff --exit-code
@@ -139,7 +144,7 @@ jobs:
           const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
           fs.writeFileSync('artifacts/low-quarter-operation/source.json',JSON.stringify({head:git('rev-parse','HEAD'),tree:git('rev-parse','HEAD^{tree}'),run_id:process.env.GITHUB_RUN_ID,attempt:process.env.GITHUB_RUN_ATTEMPT,profile:process.env.OPERATION_PROFILES,ending:process.env.OPERATION_ENDINGS,scope:'Natural keyboard/pointer inputs in explicit review launch; virtual clock; no full-campaign, physical-phone or performance qualification.'},null,2));
           JS
-          sha256sum campaign_act1.js campaign_low_quarter.js campaign_chorus_siege.js campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html scripts/low_quarter_operation_browser.mjs package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-operation/source-sha256.txt
+          sha256sum docs/graphics/low-quarter-scene-manifest.json low-quarter-review.css test_low_quarter_graphics.js scripts/low_quarter_graphics_browser.mjs campaign_act1.js campaign_low_quarter.js campaign_chorus_siege.js campaign_low_quarter_operation.js campaign_low_quarter_operation_runtime.js campaign_low_quarter_operation_visuals.js low-quarter-review.html scripts/low_quarter_operation_browser.mjs package-lock.json .github/workflows/low-quarter-board.yml > artifacts/low-quarter-operation/source-sha256.txt
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - name: Play the opening through normal inputs
