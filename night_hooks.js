@@ -49,7 +49,77 @@ function nmEnemySpriteIndex(e) {
   return 0;
 }
 
-function drawNightEnemyAtlas(x, e, ex, now) {
+function downtownOpening(n) {
+  return n && n.district === "downtown" && n.street === 1 &&
+    !n.drive && !n._v736 && !n._sector04 && !n._nightwalker;
+}
+
+// Bake the light and ink contours once per occupied cell. No per-frame filter,
+// extra atlas request, or expansion of the enemy's collision rectangle.
+const openingEnemyCells = new WeakMap();
+function openingEnemyCell(img, index) {
+  let cells = openingEnemyCells.get(img);
+  if (!cells) { cells = new Map(); openingEnemyCells.set(img, cells); }
+  if (cells.has(index)) return cells.get(index);
+  const size = 112, sx = index % 3 * size, sy = Math.floor(index / 3) * size;
+  const cell = document.createElement("canvas");
+  cell.width = cell.height = size;
+  const pen = cell.getContext("2d");
+  if (!pen) return null;
+  pen.drawImage(img, sx, sy, size, size, 0, 0, size, size);
+  pen.globalCompositeOperation = "source-in";
+  pen.fillStyle = "#0c1121"; pen.fillRect(0, 0, size, size);
+  const rim = document.createElement("canvas");
+  rim.width = rim.height = size;
+  const ink = rim.getContext("2d");
+  if (!ink) return null;
+  for (const [dx,dy] of [[-4,0],[4,0],[0,-4],[0,4]]) ink.drawImage(cell,dx,dy);
+  pen.fillStyle = "#c9bdad"; pen.fillRect(0,0,size,size);
+  ink.drawImage(cell,-2,-2);
+  ink.drawImage(img,sx,sy,size,size,0,0,size,size);
+  cells.set(index,rim); return rim;
+}
+
+function drawOpeningContact(x, world) {
+  const combat = world._nightCombat;
+  if (!combat) return;
+  x.save();
+  for (const event of combat.fx) {
+    const age = combat.time - event.time;
+    if (age < 0 || age >= 260) continue;
+    const block = event.type === "block";
+    if (!block && !(event.damage > 0)) continue;
+    const center = world.x + world.w / 2;
+    const sx = (block ? center + (event.x < center ? -24 : 24) : event.x) - world.cam;
+    const sy = block ? world.y + 5 : event.y;
+    x.save(); x.translate(Math.round(sx), Math.round(sy));
+    x.globalAlpha = Math.min(1,(260-age)/90);
+    x.beginPath();
+    if (block || event.guarded) {
+      // A shield only appears on confirmed contact, including chip damage.
+      x.moveTo(0,-16); x.lineTo(13,-11); x.lineTo(11,4);
+      x.lineTo(0,14); x.lineTo(-11,4); x.lineTo(-13,-11);
+    } else {
+      x.moveTo(-22,-13); x.lineTo(-5,-5); x.lineTo(0,-18); x.lineTo(4,-5);
+      x.lineTo(20,-11); x.lineTo(8,1); x.lineTo(15,12);
+      x.lineTo(2,7); x.lineTo(-9,20); x.lineTo(-6,5); x.lineTo(-21,6); x.lineTo(-10,-1);
+    }
+    x.closePath(); x.lineWidth=4; x.strokeStyle="#101019"; x.stroke();
+    x.fillStyle = block || event.guarded ? "#8be3ef" : "#ffca76"; x.fill();
+    if (block || event.guarded) {
+      x.fillStyle="#14344b"; x.fillRect(-2,-9,4,15);
+      x.font="bold 13px monospace"; x.textAlign="center";
+      const label=block?"BLOCK":"GUARD";
+      x.strokeText(label,0,-21); x.fillStyle="#efffff"; x.fillText(label,0,-21);
+    } else {
+      x.fillStyle="#fff6dc"; x.fillRect(-3,-3,7,6);
+    }
+    x.restore();
+  }
+  x.restore();
+}
+
+function drawNightEnemyAtlas(x, e, ex, now, outlined) {
   const img = nmGlitchImg();
   if (!img || !e) return false;
   const C = 112;
@@ -60,13 +130,16 @@ function drawNightEnemyAtlas(x, e, ex, now) {
   const dy = Math.round(e.y + (e.h || 38) - size + 6);
   x.save();
   x.imageSmoothingEnabled = false;
-  if (e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
+  const cell = outlined && openingEnemyCell(img, gi);
+  if (!outlined && e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
   if (e.down > 0) {
     x.translate(dx + size / 2, dy + size / 2);
     x.rotate(.24 * Math.sign(e.kb || 1));
-    x.drawImage(img, sx, sy, C, C, -size / 2, -size / 2, size, size);
+    if (cell) x.drawImage(cell, -size / 2, -size / 2, size, size);
+    else x.drawImage(img, sx, sy, C, C, -size / 2, -size / 2, size, size);
   } else {
-    x.drawImage(img, sx, sy, C, C, dx, dy, size, size);
+    if (cell) x.drawImage(cell, dx, dy, size, size);
+    else x.drawImage(img, sx, sy, C, C, dx, dy, size, size);
   }
   x.restore();
   return true;
@@ -753,7 +826,7 @@ function drawNM() {
   ctx.strokeStyle = "#2c3652"; ctx.beginPath(); ctx.moveTo(0, horizon - 20); ctx.lineTo(W, horizon - 20); ctx.stroke();
   }
   // street: asphalt, lane marks, wet sheen under lamps
-  if(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
+  if(!sceneArt||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
@@ -773,10 +846,19 @@ function drawNM() {
   ctx.fillStyle = "#3a4663";
   for (const p of NM.platforms) { ctx.fillRect(p.x - NM.cam, p.y, p.w, p.h); ctx.fillStyle = "#55628a"; ctx.fillRect(p.x - NM.cam, p.y, p.w, 3); ctx.fillStyle = "#3a4663"; }
   }
+  const opening = downtownOpening(NM);
   // the Charger waits on Earth streets; Good Boys owns its campaign world.
   if (!NM._v736 && !NM._sector04 && !NM._nightwalker) {
     nmCar(ctx, NM_CAR_X + 60 - NM.cam, NM_FLOOR - 4, 120, now);
-    if (NM.x < NM_CAR_X + 150) {
+    if (opening && NM.x < NM_CAR_X + 150 && !S.inDialog && !NM.enemies.some(e => e.alive && Math.abs(e.x - NM.x) < 90)) {
+      const signX = NM_CAR_X + 60 - NM.cam, signY = NM_FLOOR - 103;
+      ctx.save(); ctx.fillStyle = "#111721"; ctx.fillRect(signX-32, signY-12, 64, 20);
+      ctx.strokeStyle = "#eac483"; ctx.lineWidth = 2; ctx.strokeRect(signX-32, signY-12, 64, 20);
+      ctx.fillStyle = "#fff3cf"; ctx.font = "bold 14px monospace"; ctx.textAlign = "center";
+      ctx.fillText("DRIVE", signX, signY+3);
+      ctx.beginPath(); ctx.moveTo(signX-5,signY+9); ctx.lineTo(signX+5,signY+9); ctx.lineTo(signX,signY+14); ctx.fill();
+      ctx.restore();
+    } else if (!opening && NM.x < NM_CAR_X + 150) {
     ctx.save(); ctx.globalAlpha = .7 + Math.sin(now / 260) * .3;
     ctx.fillStyle = "#9fb7d9"; ctx.font = "11px monospace"; ctx.textAlign = "center";
     ctx.fillText("Ⓔ DRIVE", NM_CAR_X + 60 - NM.cam, NM_FLOOR - 92);
@@ -800,7 +882,7 @@ function drawNM() {
     ctx.save();
     const ec=e._nightCombat;
     if(ec&&ec.air&&!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)){const ax=ex+e.w/2,ay=e.y+e.h/2;ctx.translate(ax,ay);ctx.rotate(Math.max(-.5,Math.min(.5,ec.vy*.035))*Math.sign(ec.vx||1));ctx.translate(-ax,-ay);}
-    if (!drawNightEnemyAtlas(ctx, e, ex, now)) {
+    if (!drawNightEnemyAtlas(ctx, e, ex, now, opening)) {
       const flick = e.hitT > 0 || (e.kind === "hunter" && Math.floor(now / 140 + e.x) % 7 === 0);
       ctx.fillStyle = flick ? "#ffffff" : "#2a3a56";
       ctx.beginPath(); ctx.roundRect(ex, e.y, e.w, e.h, 6); ctx.fill();
@@ -846,6 +928,7 @@ function drawNM() {
     ctx.restore();
   }
   if (NM.block) { ctx.strokeStyle = "#7ec8ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cxp, cyp, 24, -1.2, 1.2); ctx.stroke(); }
+  if (opening) drawOpeningContact(ctx, NM);
   if(window.TechOpsNightCombat)window.TechOpsNightCombat.draw(ctx,NM);
   // ---------- sheet-style HUD ----------
   // Screen-space presentation consumes the same state. World coordinates and
