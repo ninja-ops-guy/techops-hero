@@ -484,7 +484,8 @@
   }
   function startFilm(name,box,actions,token){
     root.document.getElementById('dialogue').classList.add('day-film-mode');
-    var profile=name==='PEOPLE BEHIND THE FLIGHT',listening=name==='MORNING LISTENING';
+    var profile=name==='PEOPLE BEHIND THE FLIGHT',listening=name==='MORNING LISTENING',handoff=name==='09:00 // DAY SHIFT';
+    var reduced=!!(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
     var shots=profile?[
       ['FIELD SYSTEMS','Every flight begins with people on the ground.','assets/campaign/workstation.corporate_aircraft_panel.png','wide'],
       ['FELICIA / SECURITY RESEARCH','Aircraft systems. Antenna racks. A violin case beside the work.','assets/campaign/workstation.corporate_aircraft_panel.png','pan'],
@@ -493,11 +494,13 @@
       ['PROFILE ENDS','Felicia Cruz · Systems Integrations','assets/campaign/workstation.felicia.video_frame.png','portrait']
     ]:listening?[
       ['RED IN THE MIRROR','Now playing','assets/campaign/workstation.corporate_aircraft_panel.png','wide']
-    ]:[['09:00 / NEW HAVEN','Outbound cartons are waiting on customs labels.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT','Plating is holding the next job.','assets/campaign/plating.line_background.png','pan']];
+    ]:[['09:00 / NEW HAVEN','Outbound cartons are waiting on customs labels.','assets/campaign/shipping.dock_background.png','wide'],['DAY SHIFT / HANDOFF','Plating is holding the next job. Security has a contradiction to document.','assets/campaign/plating.line_background.png','pan']];
     var content=box.querySelector('.os-content'),i=0;
     if(profile&&root.TechOpsDayAudio)root.TechOpsDayAudio.duck('opening-film',.22);
     var finish=Array.from(actions.querySelectorAll('button')).find(function(b){return b.textContent==='Finish video';});if(finish)finish.disabled=true;
-    function shot(){if(!valid(token))return;var s=shots[i];content.innerHTML='<div class="day-film-shot '+s[3]+'"><img src="'+s[2]+'" alt="'+esc(s[0])+'"><div class="day-film-shade"></div><div class="day-film-caption" aria-live="polite"><small>'+esc(s[0])+'</small><h2>'+esc(s[1])+'</h2></div><div class="day-film-progress">'+shots.map(function(_,n){return '<i class="'+(n<=i?'seen':'')+'"></i>';}).join('')+'</div></div>';if(i<shots.length-1)timer=root.setTimeout(function(){i++;shot();},s[3]==='signal'?650:4200);else{if(finish)finish.disabled=false;next.textContent='Replay scene';}}
+    function shot(){if(!valid(token))return;var s=shots[i],dwell=s[3]==='signal'?650:(handoff?1600:3600),hint=reduced&&i<shots.length-1?'<p class="day-film-note">Use Next shot to advance.</p>':'',returnNote=handoff?'<p class="day-film-return">Return to the floor when the handoff is complete.</p>':'';
+      content.innerHTML='<figure class="day-film-shot '+s[3]+(handoff?' handoff':'')+'"><img src="'+s[2]+'" alt=""><div class="day-film-shade"></div><figcaption class="day-film-caption" aria-live="polite" aria-atomic="true"><small>'+esc(s[0])+'</small><h2>'+esc(s[1])+'</h2>'+returnNote+hint+'</figcaption><div class="day-film-progress" aria-hidden="true">'+shots.map(function(_,n){return '<i class="'+(n<=i?'seen':'')+'"></i>';}).join('')+'</div></figure>';
+      if(i<shots.length-1&&!reduced)timer=root.setTimeout(function(){i++;shot();},dwell);else{if(i===shots.length-1&&finish)finish.disabled=false;if(i===shots.length-1)next.textContent='Replay scene';}}
     var next=root.document.createElement('button');next.type='button';next.textContent='Next shot';next.onclick=function(){if(!valid(token))return;root.clearTimeout(timer);i=i<shots.length-1?i+1:0;shot();};actions.appendChild(next);shot();
   }
   root.TechOpsDayDesktop={present:present,release:release,loadTheme:loadTheme,active:function(){return current;}};
