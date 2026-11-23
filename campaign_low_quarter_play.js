@@ -37,6 +37,17 @@
       if(root.closeDlg)root.closeDlg();priorDialog=!!(root.S&&root.S.inDialog);if(root.S)root.S.inDialog=true;
       var host=root.document.createElement('section');host.id='low-quarter-play';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label','Hold the Way Home — surveyed response area');
       var style=root.document.createElement('style');style.textContent='#low-quarter-play{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;background:#080e18;color:#e8f0f3;font:14px system-ui;padding:8px;box-sizing:border-box;overscroll-behavior:none}#low-quarter-play button{min-height:44px;min-width:44px;padding:8px 12px;background:#162a39;color:#f5faf8;border:1px solid #60928d;border-radius:5px;font:inherit;touch-action:none}#low-quarter-play header,#low-quarter-play nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}#low-quarter-play h2{font-size:17px;margin:4px auto 4px 0}#low-quarter-play canvas{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;min-height:0}#lq-scene{flex:1;min-height:140px;overflow:hidden;background:#080e18}#lq-status{min-height:42px;margin:5px 0;font-size:14px;line-height:1.4}#lq-choice{position:absolute;inset:20% 5% auto;background:#112332;border:2px solid #8acaab;border-radius:8px;padding:18px;box-shadow:0 0 0 100vmax #0009}#lq-choice[hidden]{display:none}#lq-choice button{margin:5px}#low-quarter-play small{color:#a9bfcb}#lq-prompt{min-height:42px;font-size:14px}@media(max-width:600px){#low-quarter-play{padding:6px;font-size:12px}#low-quarter-play button{padding:6px;min-height:44px}#low-quarter-play h2{font-size:14px}#lq-status{font-size:12px}#low-quarter-play small{font-size:11px}}';
+      // Give the street the full display height on landscape phones.
+      style.textContent += `@media (orientation:landscape) and (max-height:480px) and (min-width:640px){
+        #low-quarter-play{display:grid;grid-template-columns:minmax(0,1fr) 210px;grid-template-rows:auto 1fr auto auto;gap:4px 8px;padding:4px}
+        #lq-scene{grid-column:1;grid-row:1/5;align-self:stretch;min-height:0}
+        #low-quarter-play header,#lq-prompt,#lq-status,#low-quarter-play nav{grid-column:2}
+        #low-quarter-play header{grid-row:1}#low-quarter-play h2{font-size:13px;width:100%}
+        #low-quarter-play>small{display:none}#lq-prompt{grid-row:2;align-self:end}
+        #lq-status{grid-row:3}#low-quarter-play nav{grid-row:4;gap:3px}
+        #low-quarter-play button{padding:4px;font-size:12px}
+        #lq-prompt,#lq-status{font-size:12px;min-height:0}
+      }`;
       host.appendChild(style);var header=root.document.createElement('header'),title=root.document.createElement('h2');title.textContent='LOW QUARTER · HOLD THE WAY HOME';header.appendChild(title);
       var pause=button('Pause',function(){ui.paused=!ui.paused;keys={};pause.textContent=ui.paused?'Resume':'Pause';});header.appendChild(pause);header.appendChild(button('Save & return',close));host.appendChild(header);
       var scope=root.document.createElement('small');scope.textContent=Content.scope+' K and Iona are here; other crew stay at their established stations.';host.appendChild(scope);
@@ -70,11 +81,12 @@
     draw(at);dialog();frame=root.requestAnimationFrame(loop);
   }
   function rect(x,y,w,h,color){ui.ctx.fillStyle=color;ui.ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
-  function text(label,x,y,color,size){var c=ui.ctx;c.fillStyle=color||'#d9e5e9';c.font=(size||13)+'px monospace';c.textAlign='left';c.fillText(label,Math.round(x),Math.round(y));}
-  function figure(x,y,color,label,stride){if(root.TechOpsLowQuarterArt){root.TechOpsLowQuarterArt.person(ui.ctx,x,y,color,label,stride);return;}rect(x-7,y-34,14,22,color);rect(x-5,y-47,10,12,'#c7a68b');rect(x-7,y-12,5,12,'#1b2636');rect(x+2,y-12,5,12,'#1b2636');if(label)text(label,x-22,y-54,'#b8cbd0',10);}
+  function text(label,x,y,color,size){var c=ui.ctx;c.fillStyle=color||'#d9e5e9';c.font=Math.max(size||13,ui.labelSize||10)+'px monospace';c.textAlign='left';c.fillText(label,Math.round(x),Math.round(y));}
+  function figure(x,y,color,label,stride){if(root.TechOpsLowQuarterArt){root.TechOpsLowQuarterArt.person(ui.ctx,x,y,color,null,stride);if(label)text(label,x-22,y-56,'#cedbdd',10);return;}rect(x-7,y-34,14,22,color);rect(x-5,y-47,10,12,'#c7a68b');rect(x-7,y-12,5,12,'#1b2636');rect(x+2,y-12,5,12,'#1b2636');if(label)text(label,x-22,y-54,'#b8cbd0',10);}
   function draw(at){
     var m=state.lowQuarterMission,p=m.player,c=ui.ctx,area=Content.places.find(function(a){return a.id===p.sector;}),width=area?area.width:p.sector==='receiving'?1920:1450,floor=430;
     var W=ui.canvas.parentElement.clientWidth<600?540:960;if(ui.canvas.width!==W)ui.canvas.width=W;
+    ui.labelSize=Math.ceil(10/Math.max(.25,Math.min(ui.canvas.parentElement.clientWidth/W,ui.canvas.parentElement.clientHeight/540)));
     var reduced=root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var view=motion&&motion.sample(m,accumulator/.1,ui.paused||!!m.dialog||!!m.travel),px=view?view.x:p.x,jump=view?view.jump:p.jump;
     var cam=Math.max(0,Math.min(width-W,px-W/2)),art=root.TechOpsLowQuarterArt;

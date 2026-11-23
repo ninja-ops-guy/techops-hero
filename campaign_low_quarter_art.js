@@ -101,6 +101,22 @@
   x=Math.round(x);const stride=step?Math.round(Math.sin(step)*3):0,leftLift=Math.max(0,stride),rightLift=Math.max(0,-stride);
   r(c,x-8,F-34,16,22,'#101d29');r(c,x-6,F-33,12,20,color);r(c,x-6,F-47,12,13,'#142632');r(c,x-4,F-44,8,9,'#b49b83');r(c,x-7,F-48,14,5,'#243947');
   r(c,x-11,F-31-stride,4,16,'#182733');r(c,x+7,F-31+stride,4,16,'#182733');r(c,x-6,F-12,5,10-leftLift,'#1b2936');r(c,x+2,F-12,5,10-rightLift,'#1b2936');r(c,x-8,F-3-leftLift,8,3,'#101a26');r(c,x+1,F-3-rightLift,8,3,'#101a26');
+  // Distinguish an evacuation crew from residents at gameplay scale.
+  const robot=color==='#7f9dba',infected=color==='#9a405d'||color==='#584e64';
+  if(robot){
+   r(c,x-8,F-47,16,10,'#526b83');r(c,x-6,F-43,12,3,'#a6d7d2');
+   r(c,x-10,F-33,20,6,'#91aabb');r(c,x-5,F-25,10,4,'#384e62');
+  }else if(infected){
+   poly(c,[[x-10,F-27],[x-14,F-42],[x-5,F-33],[x+1,F-38],[x+5,F-29]],'#753951');
+   r(c,x-3,F-40,7,2,'#c48883');r(c,x+3,F-28,3,13,'#b96d78');
+  }else{
+   r(c,x-5,F-33,3,17,'#394451');r(c,x-5,F-24,9,3,'#627276');
+   r(c,x-6,F-15,12,3,'#344152');r(c,x+3,F-18,4,5,'#788078');
+   if(color==='#ddaf68'||color==='#6c8d78'){
+    r(c,x-6,F-49,12,5,color);r(c,x-8,F-45,17,3,color);
+    r(c,x-5,F-32,2,12,'#d5c79e');r(c,x+3,F-32,2,12,'#d5c79e');
+   }
+  }
   if(label){c.fillStyle='#cedbdd';c.font='10px monospace';c.textAlign='left';c.fillText(label,x-22,F-56);}
  }
  root.TechOpsLowQuarterArt={world:world,ship:ship,carrier:carrier,person:person,cacheStats:()=>({count:cache.size,paints:paints})};
