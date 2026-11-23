@@ -1,0 +1,49 @@
+{
+  "id": "nightwalker-style-review",
+  "status": "IN_PROGRESS_NOT_RELEASE_APPROVED",
+  "basis": "Creator requested approved K Terminal band visual language across Night Walker and its siege; K Terminal portfolio 62b7c6c31d255e7578bbf9c60d2d4daabe7e1910. This does not approve each newly generated asset.",
+  "references": {
+    "iona-nightwalker-atlas.webp": "Library Iona Nightwalker 24-pose game sprite atlas.png, inspected and encoded for web",
+    "k-iona-duo.webp": "Library K and Iona arcade sprite duo.png, inspected and encoded for web"
+  },
+  "candidate_generated": [
+    "approaches-background.webp",
+    "services-background.webp",
+    "shelters-background.webp",
+    "departure-background.webp",
+    "receiving-background.webp",
+    "supporting-roles-candidate.webp",
+    "k-walk-candidate.webp",
+    "infected-ship-candidate.webp",
+    "resident-infected-variants.webp",
+    "interactive-props-candidate.webp"
+  ],
+  "asset_sha256": {
+    "approaches-background.webp": "c9780d03cb11158639d9011db1b2642c015d61af68edc470c9d9a204f9c3b28b",
+    "departure-background.webp": "a2a3bac378a7b0971fc44c682da27e9334cd306b058949d21ce7a5ae10ed9486",
+    "infected-ship-candidate.webp": "c91507623e1ba6b83baca0f1ee48775447a23da1669d1b1250096e8536edb63c",
+    "interactive-props-candidate.webp": "808a66f07fbc6e97434bb71adeaafbbf09ca7b0f88df644b56dc2bbad44df77c",
+    "iona-nightwalker-atlas.webp": "2e3a2cf82ba9ebd47fe3a19e3a2b41f7bc24fe3d059a2258eef36f91a16ba76e",
+    "k-iona-duo.webp": "c93ae97dc3929974a538066465e5cfb473bad52a96867213875e4ba283a9285c",
+    "k-walk-candidate.webp": "293491a6368e866c79c248a32145fca00ef049766da0dafe9104b2fc45c30899",
+    "receiving-background.webp": "d49c981f4901d986e8e688ff13b708a4b7c11cf9468bfaa2872dc394bd27e8e8",
+    "resident-infected-variants.webp": "ffabc6e0f6df0e0077a9f4e284982ab87ee1fcf90886621f7fd3484651539992",
+    "services-background.webp": "3387467f3da4424731e8eaceda41f71b1ea1d01c1e591749f2a9aff9c6cd9f0c",
+    "shelters-background.webp": "97001631845e69635d560439ac85fa5488e96fa48a6235e5fd5dd953825112f1",
+    "supporting-roles-candidate.webp": "b10815fe83f0a698c5c6a9282cd0a8ab6fcdee98fe8d2f05e2f40a098eb8ac26"
+  },
+  "not_yet_covered": [
+    "Full Night Walker districts, enemies, vehicles, bosses and cinematics",
+    "Supporting role walk/strike/hurt and K non-walk action frames",
+    "Additional distinct resident and infected appearances",
+    "Textured care equipment and evacuation vehicle",
+    "Physical iPhone and Safari performance",
+    "Exact matching between backdrop landmarks and mission interaction coordinates"
+  ],
+  "boundaries": [
+    "Review candidate, not creator approval for each new asset",
+    "No changed combat, saving, receipts, chronology, population or deterministic authority",
+    "The six natural-input playthroughs must be rerun on this candidate"
+  ],
+  "previous_candidate": "PR #161 head 8603d8eaee8159856cc3f6c97c7ee61d62742315"
+}
