@@ -217,6 +217,9 @@
 .doors-terminal input:focus-visible { outline: 2px solid #ffcf77; outline-offset: 1px; }
 @media (max-width: 380px) {
   .os-window:has(.doors-terminal) { left: 8px; right: 8px; width: auto; max-width: calc(100% - 16px); }
+  .os-desktop:has(.doors-terminal) .os-taskbar { display: grid; grid-template-columns: max-content minmax(44px, 1fr) max-content; box-sizing: border-box; min-width: 0; gap: 4px; padding-inline: 4px; }
+  .os-desktop:has(.doors-terminal) .os-taskbar > button { min-width: 44px; padding-inline: 6px; }
+  .os-desktop:has(.doors-terminal) .os-taskbar .os-task-name { width: 100%; max-width: none; }
   .doors-terminal { gap: 6px; font-size: 13px; }
   .doors-terminal-prompt { display: none; }
   .os-content:has(.doors-terminal) { padding: 8px; }

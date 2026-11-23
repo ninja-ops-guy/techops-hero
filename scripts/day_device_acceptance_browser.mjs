@@ -140,7 +140,7 @@ async function assertBatchGeometry(page, label, selector = '.doors-field', focus
   assert.ok(withinViewport(bounds), label + ' surface fits viewport: ' + JSON.stringify(bounds));
   assert.ok(bounds.documentWidth <= bounds.viewport.width + 1, label + ' does not cause page horizontal overflow');
   assert.equal(bounds.surfaceScrollLeft, 0, label + ' surface has no hidden horizontal scroll');
-  assert.ok(bounds.surfaceScroll <= bounds.surfaceClient+1, label + ' surface contents fit horizontally');
+  assert.ok(bounds.surfaceScroll <= bounds.surfaceClient+1, label + ' surface contents fit horizontally: ' + JSON.stringify(bounds));
   for (const window of bounds.windows) {
     assert.ok(withinViewport(window), label + ' actual window fits viewport: ' + JSON.stringify(window));
     assert.ok(window.x >= bounds.x-1 && window.right <= bounds.right+1 && window.y >= bounds.y-1 && window.bottom <= bounds.bottom+1,
@@ -178,6 +178,17 @@ async function assertBatchLayout(page, label, selector = '.doors-field') {
     assert.ok(b.hit, label + ' unobscured control: ' + b.label);
   }
   return bounds;
+}
+async function failureGeometry(page) {
+  return page.evaluate(() => ({ viewport: { width:innerWidth,height:innerHeight },
+    nodes: [...document.querySelectorAll('.os-desktop,.os-window,.os-content,.os-taskbar,.os-taskbar > *,.doors-field,.doors-window,.doors-pane')]
+      .filter(el=>el.getClientRects().length).map(el=>{
+        const r=el.getBoundingClientRect(),s=getComputedStyle(el);
+        return { name:el.className||el.tagName, label:el.getAttribute('aria-label')||el.textContent.slice(0,90),
+          x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,
+          clientWidth:el.clientWidth,scrollWidth:el.scrollWidth,scrollLeft:el.scrollLeft,
+          display:s.display,position:s.position,flex:s.flex,minWidth:s.minWidth,maxWidth:s.maxWidth,overflowX:s.overflowX };
+      }) }));
 }
 async function keyboardTrap(page) {
   const focusable = page.locator('#dlg-text button:visible:not(:disabled),#dlg-text input:visible:not(:disabled)');
@@ -717,6 +728,7 @@ try {
     } catch (error) {
       result.status = 'failed'; result.failure = String(error.stack || error);
       result.failureState = await caseState(page).catch(() => null);
+      result.failureGeometry = await failureGeometry(page).catch(() => null);
       await page.screenshot({ path: `${out}/${profile.id}-failure.png`, fullPage: true }).catch(() => {});
       throw error;
     } finally { await context.close(); activePage = null; }
