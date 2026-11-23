@@ -399,7 +399,7 @@ try {
       result.checks.push('Real title and morning controls unlock Day; muted continuation is recorded explicitly');
       result.floorRouteVisual = await page.evaluate(() => {
         closeDlg(); if (S.room) v69ExitRoom();
-        const beforeMap = JSON.stringify(S.map), beforeStations = JSON.stringify(S.meta.dayStations);
+        const beforeMap = JSON.stringify(S.map), beforeStations = JSON.stringify(S.meta.dayStations.items);
         const visual = TechOpsCampaignWorldVisuals && TechOpsCampaignWorldVisuals.drawDayFloorPolish;
         if (typeof visual !== 'function') throw Error('Day floor visual overlay is unavailable');
         const planned = TechOpsDayWorld.route('shipping_workstation');
@@ -408,7 +408,7 @@ try {
           planned: { ok: planned.ok, target: planned.target && planned.target.id, steps: planned.steps },
           active: { ok: active && active.ok, target: active && active.target && active.target.id, steps: active && active.steps },
           mapUnchanged: beforeMap === JSON.stringify(S.map),
-          stationsUnchanged: beforeStations === JSON.stringify(S.meta.dayStations)
+          stationsUnchanged: beforeStations === JSON.stringify(S.meta.dayStations.items)
         };
       });
       assert.equal(result.floorRouteVisual.planned.ok, true);
@@ -417,7 +417,7 @@ try {
       assert.equal(result.floorRouteVisual.mapUnchanged, true);
       assert.equal(result.floorRouteVisual.stationsUnchanged, true);
       await screenshot(page, result.id, 'floor-route');
-      result.checks.push('Passive Day floor overlay exposes a real Shipping route without changing tiles or saved stations');
+      result.checks.push('Passive Day floor overlay exposes a real Shipping route without changing tiles or station geometry');
       result.offDevice = await page.evaluate(() => {
         closeDlg();
         if (S.room) v69ExitRoom();
