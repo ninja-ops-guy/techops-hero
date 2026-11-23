@@ -11,7 +11,7 @@ require("./campaign_act1.js");
 const native = require("./campaign_native_act1.js");
 const visuals = require("./campaign_native_act1_visuals.js");
 
-assert.strictEqual(visuals.VERSION, 6);
+assert.strictEqual(visuals.VERSION, 7);
 assert.strictEqual(visuals.ENTER_MS, 240);
 assert.strictEqual(visuals.EXIT_MS, 180);
 assert.strictEqual(visuals.url("shipping.dock_background"), "assets/campaign/shipping.dock_background.png");
@@ -94,12 +94,16 @@ assert.deepStrictEqual(p.motion, ["screen_scan", "camera_push"]);
 p = visuals.presentationFor("workstation", base, "PEOPLE BEHIND THE FLIGHT");
 assert.strictEqual(p.variant, "company_video");
 assert.ok(p.motion.includes("orpheus_glitch"));
+assert.strictEqual(p.statusText, "COMPANY PROFILE // INTERNAL MEDIA");
+assert.match(p.caption, /FELICIA/);
 
 const unlocked = JSON.parse(JSON.stringify(base));
 unlocked.flags.day_work_unlocked = true;
 p = visuals.presentationFor("workstation", unlocked, "09:00 // DAY SHIFT");
 assert.strictEqual(p.variant, "clocked_in");
 assert.strictEqual(p.statusText, "DAY SHIFT ACTIVE");
+assert.strictEqual(p.handoff, true);
+assert.match(p.caption, /RETURN TO FLOOR/);
 
 const owned = JSON.parse(JSON.stringify(base));
 owned.flags.standup_completed = true;
