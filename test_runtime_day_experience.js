@@ -181,8 +181,8 @@ test('progress list closes before evidence and action layout begins',()=>{
   const b=boot();b.open('laptop_dock_link');const html=b.ctx.document.getElementById('dlg-text').innerHTML;assert.match(html,/<ol class="day-progress">(?:<li[^>]*>[^<]+<\/li>){4}<\/ol><h3>Evidence/);
 });
 test('long Day evidence lists retain the extra observation behind a semantic summary',()=>{
-  const b=boot(),def=b.cases.definition('laptop_dock_link');
-  b.ctx.S.meta.dayCases.laptop_dock_link.evidence=def.evidence.map(item=>item.id);b.X.render();
+  const b=boot(),def=b.cases.definition('laptop_dock_link');b.open('laptop_dock_link');
+  for(const evidence of def.evidence){b.surface(evidence.surface);assert.equal(b.X.transact('observe',evidence.id),true);}
   const html=b.ctx.document.getElementById('dlg-text').innerHTML;
   assert.match(html,/class="day-evidence-current"/);
   assert.match(html,/<details class="day-evidence-more"><summary>Show 1 more recorded observation<\/summary>/);
