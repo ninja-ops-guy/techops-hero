@@ -6,7 +6,7 @@
  const VERSION=2,FLOOR=330,cache=new Map(),lastHP=new Map();let previous=null,lastRun=null,lastCanvas=null,lastState=null;
  const characterAssets={};
  if(typeof root.Image==='function'){
-  for(const [key,url] of Object.entries({iona:'assets/low-quarter-style-review/iona-nightwalker-atlas.webp',k:'assets/low-quarter-style-review/k-iona-duo.webp',roles:'assets/low-quarter-style-review/supporting-roles-candidate.webp',variants:'assets/low-quarter-style-review/resident-infected-variants.webp',props:'assets/low-quarter-style-review/interactive-props-candidate.webp',kWalk:'assets/low-quarter-style-review/k-walk-candidate.webp',ship:'assets/low-quarter-style-review/infected-ship-candidate.webp',approaches:'assets/low-quarter-style-review/approaches-background.webp',services:'assets/low-quarter-style-review/services-background.webp',shelters:'assets/low-quarter-style-review/shelters-background.webp',departure:'assets/low-quarter-style-review/departure-background.webp',receiving:'assets/low-quarter-style-review/receiving-background.webp'})){
+  for(const [key,url] of Object.entries({defenders:'assets/low-quarter-style-review/defender-actions.webp',iona:'assets/low-quarter-style-review/iona-nightwalker-atlas.webp',k:'assets/low-quarter-style-review/k-iona-duo.webp',roles:'assets/low-quarter-style-review/supporting-roles-candidate.webp',variants:'assets/low-quarter-style-review/resident-infected-variants.webp',props:'assets/low-quarter-style-review/interactive-props-candidate.webp',kWalk:'assets/low-quarter-style-review/k-walk-candidate.webp',ship:'assets/low-quarter-style-review/infected-ship-candidate.webp',approaches:'assets/low-quarter-style-review/approaches-background.webp',services:'assets/low-quarter-style-review/services-background.webp',shelters:'assets/low-quarter-style-review/shelters-background.webp',departure:'assets/low-quarter-style-review/departure-background.webp',receiving:'assets/low-quarter-style-review/receiving-background.webp'})){
    const image=new root.Image();characterAssets[key]=image;image.onload=()=>{if(lastCanvas&&lastState)draw(lastCanvas,lastState);};image.src=url;
   }
  }
@@ -137,6 +137,21 @@
   if(kind==='k'){const bx=x+(facing===1?-15:12),by=y-bob-55;rect(c,bx,by,1,5,'#162d27');rect(c,bx+2,by,1,2,'#162d27');rect(c,bx+1,by+2,1,1,'#162d27');rect(c,bx+2,by+3,1,2,'#162d27');}
  }
  function person(c,x,y,kind,index,pose,t,facing=1){rect(c,x-15,y+1,29,3,'rgba(2,9,17,.40)');if(referenceStyleCharacter(c,x,y,kind,pose,t,facing,index))return;silhouette(c,x,y,kind,index,pose,t,facing);}
+ function drawDefender(c,b,calm){
+  const art=characterAssets.defenders;
+  if((b.pose==='walk'||b.ready)&&art?.complete&&art.naturalWidth){
+   const strides=[0,1,2,1];
+   const frame=b.ready?3:calm?1:strides[Math.floor(Math.abs(b.x)/18)%4];
+   c.save();c.translate(Math.round(b.x),Math.round(b.y));c.scale(b.facing||1,1);
+   c.imageSmoothingEnabled=true;
+   c.drawImage(art,frame*192,b.kind==='robot'?192:0,192,192,-62,-120,124,124);
+   c.restore();
+  }else if(b.kind==='robot'&&!referenceStyleCharacter(c,b.x,b.y,'robot','idle',0,b.facing)){
+   robot(c,b.x,b.y,b.ready);
+  }else if(b.kind==='military'){
+   person(c,b.x,b.y,b.kind,b.i,b.pose,0,b.facing);
+  }
+ }
  function robot(c,x,y,ready){
   c.save();c.translate(x,y);
   rect(c,-32,1,64,3,'#101b24');
@@ -220,7 +235,7 @@
   if(room==='departure'&&!o.convoy)vehicle(c,1130,FLOOR,false);if(room==='receiving'&&o.convoy?.arrived)vehicle(c,812,FLOOR,true);
   // Render actors once in consistent foot order. Labels are a separate sparse layer.
   const actors=[];if(room==='services')actors.push({x:o.drill.x,y:FLOOR,kind:'military',i:0,pose:o.drill.moving?'walk':'idle',name:'TEST TEAM',facing:o.drill.moving&&o.drill.target<o.drill.x?-1:1});
-  for(const u of o.units.filter(u=>u.room===room&&u.hp>0))actors.push({x:u.x,y:FLOOR,kind:u.id==='robot'?'robot':'military',i:1,pose:u.follow&&Math.abs(u.x-o.x)>45?'walk':'idle',name:u.id==='robot'?'ROBOT TEAM':u.ready?'DEFENDERS / POST':'DEFENSE TEAM',ready:u.ready,facing:u.follow&&u.x>o.x-40?-1:1});
+  for(const u of o.units.filter(u=>u.room===room&&u.hp>0))actors.push({x:u.x,y:FLOOR,kind:u.id==='robot'?'robot':'military',i:1,pose:u.follow&&Math.abs(u.x-(o.x-40))>.1?'walk':'idle',name:u.id==='robot'?'ROBOT TEAM':u.ready?'DEFENDERS / POST':'DEFENSE TEAM',ready:u.ready,facing:u.follow&&u.x>o.x-40?-1:1});
   for(const p of o.residents.filter(p=>p.room===room&&(!p.boarded||room==='receiving'&&o.done.receiver))){actors.push({x:p.x,y:FLOOR,kind:'civilian',i:Number(p.id.split('_')[1]),pose:p.follow&&Math.abs(p.x-Math.min(o.x-25,1120))>4?'walk':'idle',name:'RESIDENT '+p.id.split('_')[1],facing:p.follow&&p.x>Math.min(o.x-25,1120)?-1:1});}
   if(room!=='receiving'){actors.push({x:room==='approaches'?360:100,y:FLOOR,kind:'civilian',i:2,pose:'idle',name:'LOCAL WITNESS'},{x:room==='approaches'?420:160,y:FLOOR,kind:'military',i:3,pose:'idle',name:'OFFICER'});}else actors.push({x:600,y:FLOOR,kind:'medic',i:0,pose:'idle',name:'RECEIVING MEDIC'});
   if(o.raiders?.room===room&&!o.done.cut_route)actors.push({x:o.raiders.x,y:FLOOR,kind:'infected',i:0,pose:'walk',name:'ROUTE RAIDERS',facing:-1});
@@ -231,7 +246,7 @@
   const moving=previous&&previous.room===room&&Math.abs(previous.x-o.x)>.1,pose=t-o.attackAt<.22?'strike':o.work?'work':moving&&!o.travel?'walk':'idle';
   actors.push({x:o.x-75,y:FLOOR-o.y,kind:'k',i:0,pose:moving?'walk':'idle',name:'K',facing:o.facing},{x:o.x,y:FLOOR-o.y,kind:'iona',i:0,pose,name:'IONA',facing:o.facing});
   actors.sort((x,y)=>(x.kind==='iona'?2:x.kind==='k'?1:0)-(y.kind==='iona'?2:y.kind==='k'?1:0));
-  for(const b of actors){if(b.x<cam-70||b.x>cam+W+70)continue;if(b.kind==='robot')robot(c,b.x,b.y,b.ready);else person(c,b.x,b.y,b.kind,b.i,b.pose,t,b.facing||1);if(b.ready){rect(c,b.x-19,FLOOR+5,38,2,'#91c5a4');}if(b.hp!==undefined){rect(c,b.x-17,b.y-107,34,4,'#192631');rect(c,b.x-16,b.y-106,32*b.hp/60,2,'#cc8a8e');if(!calm&&t>=b.hit&&t-b.hit<.13){line(c,b.x-20,b.y-57,b.x+20,b.y-41,'#f0cf96',3);line(c,b.x+10,b.y-64,b.x-8,b.y-31,'#e3ae83',2);}}}
+  for(const b of actors){if(b.x<cam-70||b.x>cam+W+70)continue;if(b.kind==='robot'||b.kind==='military')drawDefender(c,b,calm);else person(c,b.x,b.y,b.kind,b.i,b.pose,t,b.facing||1);if(b.ready){rect(c,b.x-19,FLOOR+5,38,2,'#91c5a4');}if(b.hp!==undefined){rect(c,b.x-17,b.y-107,34,4,'#192631');rect(c,b.x-16,b.y-106,32*b.hp/60,2,'#cc8a8e');if(!calm&&t>=b.hit&&t-b.hit<.13){line(c,b.x-20,b.y-57,b.x+20,b.y-41,'#f0cf96',3);line(c,b.x+10,b.y-64,b.x-8,b.y-31,'#e3ae83',2);}}}
   if(t-o.attackAt<.18&&!calm){poly(c,[[o.x+o.facing*20,FLOOR-o.y-62],[o.x+o.facing*65,FLOOR-o.y-44],[o.x+o.facing*70,FLOOR-o.y-31],[o.x+o.facing*48,FLOOR-o.y-38]],'rgba(232,208,157,.28)');}
   c.restore();
   // Only the current focus receives a label: no overlapping crowds of tiny IDs.

@@ -16,7 +16,8 @@
     "k-walk-candidate.webp",
     "infected-ship-candidate.webp",
     "resident-infected-variants.webp",
-    "interactive-props-candidate.webp"
+    "interactive-props-candidate.webp",
+    "defender-actions.webp"
   ],
   "asset_sha256": {
     "approaches-background.webp": "c9780d03cb11158639d9011db1b2642c015d61af68edc470c9d9a204f9c3b28b",
@@ -30,11 +31,12 @@
     "resident-infected-variants.webp": "ffabc6e0f6df0e0077a9f4e284982ab87ee1fcf90886621f7fd3484651539992",
     "services-background.webp": "3387467f3da4424731e8eaceda41f71b1ea1d01c1e591749f2a9aff9c6cd9f0c",
     "shelters-background.webp": "97001631845e69635d560439ac85fa5488e96fa48a6235e5fd5dd953825112f1",
-    "supporting-roles-candidate.webp": "b10815fe83f0a698c5c6a9282cd0a8ab6fcdee98fe8d2f05e2f40a098eb8ac26"
+    "supporting-roles-candidate.webp": "b10815fe83f0a698c5c6a9282cd0a8ab6fcdee98fe8d2f05e2f40a098eb8ac26",
+    "defender-actions.webp": "aeea076dd6c59a86bff2c2686a81e5dce7a544d622e53dee7cf28b0aa49de63b"
   },
   "not_yet_covered": [
     "Full Night Walker districts, enemies, vehicles, bosses and cinematics",
-    "Supporting role walk/strike/hurt and K non-walk action frames",
+    "Resident and infected movement, supporting cast combat reactions and K non-walk action frames",
     "Additional distinct resident and infected appearances",
     "Textured care equipment and evacuation vehicle",
     "Physical iPhone and Safari performance",
