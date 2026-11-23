@@ -397,6 +397,27 @@ try {
     try {
       await morningOpening(page, result);
       result.checks.push('Real title and morning controls unlock Day; muted continuation is recorded explicitly');
+      result.floorRouteVisual = await page.evaluate(() => {
+        closeDlg(); if (S.room) v69ExitRoom();
+        const beforeMap = JSON.stringify(S.map), beforeStations = JSON.stringify(S.meta.dayStations);
+        const visual = TechOpsCampaignWorldVisuals && TechOpsCampaignWorldVisuals.drawDayFloorPolish;
+        if (typeof visual !== 'function') throw Error('Day floor visual overlay is unavailable');
+        const planned = TechOpsDayWorld.route('shipping_workstation');
+        const active = TechOpsDayWorld.currentRoute();
+        return {
+          planned: { ok: planned.ok, target: planned.target && planned.target.id, steps: planned.steps },
+          active: { ok: active && active.ok, target: active && active.target && active.target.id, steps: active && active.steps },
+          mapUnchanged: beforeMap === JSON.stringify(S.map),
+          stationsUnchanged: beforeStations === JSON.stringify(S.meta.dayStations)
+        };
+      });
+      assert.equal(result.floorRouteVisual.planned.ok, true);
+      assert.equal(result.floorRouteVisual.planned.target, 'shipping_workstation');
+      assert.equal(result.floorRouteVisual.active.target, 'shipping_workstation');
+      assert.equal(result.floorRouteVisual.mapUnchanged, true);
+      assert.equal(result.floorRouteVisual.stationsUnchanged, true);
+      await screenshot(page, result.id, 'floor-route');
+      result.checks.push('Passive Day floor overlay exposes a real Shipping route without changing tiles or saved stations');
       result.offDevice = await page.evaluate(() => {
         closeDlg();
         if (S.room) v69ExitRoom();
@@ -542,6 +563,7 @@ try {
     ['simulated-desktop','P1 · Interface hierarchy','Mike’s physical workstation runs Doors. Minimize, taskbar restore and typed Prompt commands are exercised on every viewport.'],
     ['company-cutscene','P2 · Texture / art direction','Review photoreal media versus pixel characters. Functional capture is not art approval; visual consistency remains an authored asset task.'],
     ['printer-inspection','P1 · Evidence before action','Physical printer inspection supplies the self-test. The separate dispatch workstation runs Doors Print Center and Queue Security.'],
+    ['floor-route','P1 · Route legibility','The real Shipping path is captured at desktop, 390px, 320px and short landscape with reduced motion. Outlined chevrons, named departmental marks and a textual target label must remain legible without a color-only or moving cue.'],
     ['floor','P2 · World texture consistency','Fixed this round: NPC status markers are vector badges (gold ticket / pulsing red diamond / green check) instead of emoji glyphs, so the HUD stats row no longer picks up tofu boxes under the scrim in captures; the $80 / Tickets / Output row spacing is verified clean at 390px. Observed still open: top-down props, flat desk tiles and detailed side-room art have different pixel density and lighting. Next: choose one pixel grid, palette and light direction, then replace inconsistent props in both views.']
   ];
   report.visualReview={standard:'docs/production/PRODUCTION-BIBLE-R1.md',automaticVerdict:report.status,aestheticCertification:false,priorities:reviews.map(([scene,priority,note])=>({scene,priority,note}))};
