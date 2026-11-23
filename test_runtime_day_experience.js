@@ -183,7 +183,7 @@ test('progress list closes before evidence and action layout begins',()=>{
 test('long Day evidence lists retain the extra observation behind a semantic summary',()=>{
   const b=boot(),def=b.cases.definition('laptop_dock_link');b.open('laptop_dock_link');
   for(const evidence of def.evidence){b.surface(evidence.surface);assert.equal(b.X.transact('observe',evidence.id),true);}
-  const html=b.ctx.document.getElementById('dlg-text').innerHTML;
+  b.surface('physical');const html=b.ctx.document.getElementById('dlg-text').innerHTML;
   assert.match(html,/class="day-evidence-current"/);
   assert.match(html,/<details class="day-evidence-more"><summary>Show 1 more recorded observation<\/summary>/);
   assert.match(html,/Open connected devices/);
