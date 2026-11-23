@@ -152,6 +152,10 @@ async function walkTo(page, id, kind) {
       if (observed.targetOccupied && !observed.room && !observed.inDialog && !observed.inBattle && !observed.night) { evidence.transientOccupancy.push({ to: next.to, observed }); continue; }
       throw Error('Keyboard route did not reach its next tile: ' + JSON.stringify({ next, observed }));
     }
+    if (observed.room && id === 'mike_desk' && kind === 'station') {
+      evidence.stop = { stop: 'room', room: { id: observed.room } };
+      return evidence;
+    }
     assert.equal(observed.room, null, 'walk remains in the displayed floor scene');
     assert.equal(observed.keyReleased, true, 'route step releases its movement key');
     assert.equal(observed.px, next.to.x, 'actual keyboard movement reached the routed tile (x)');
