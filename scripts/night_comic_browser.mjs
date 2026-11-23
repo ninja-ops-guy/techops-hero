@@ -70,6 +70,7 @@ for(const [name,engine,width,height,touch,calm,skip] of [
     const cine=page.locator('#v722-cine');await cine.waitFor();
     await page.evaluate(()=>{enterNight();enterNight();});
     assert.equal(await page.evaluate(()=>!!S.nightMode),false);
+    assert.equal(await cine.locator('canvas').nth(1).isVisible(),height>width*1.25&&width<600,'portrait detail panel');
     const skipBtn=cine.getByRole('button',{name:'Skip to Night'});
     const box=await skipBtn.boundingBox();assert.ok(box&&box.height>=44&&box.y>=0&&box.y+box.height<=height+1);
     if(skip){await press(skipBtn);}

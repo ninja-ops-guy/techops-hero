@@ -424,6 +424,7 @@
     const height = window.visualViewport?.height || window.innerHeight;
     const portrait = width < 600 && height > width * 1.25;
     detail.hidden = !portrait;
+    detail.style.display = portrait ? "block" : "none";
     const fit = Math.max(.08, Math.min(width / LW, (height - 120) / (LH + (portrait ? 520 : 0))));
     if (portrait) detail.style.width = Math.floor(LW * fit * .91) + "px";
     if (entry) entry.painted = false;
