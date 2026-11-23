@@ -1,0 +1,250 @@
+{
+  "schema_version": "1.0",
+  "project": "TechOps Hero",
+  "medium": "game",
+  "source_revision": "53bb6a8d8926cdd4be7da54fb284414da870a3f0",
+  "bible_scope": "Integrated1.7 character/channel locks plus existing approved PR154 game-only response-area scenario; no new narrative fact.",
+  "production_state": "IMPLEMENTED_REVIEW_CANDIDATE",
+  "approval": {
+    "status": "PROVISIONAL",
+    "owner_approved_retcons": []
+  },
+  "sources": [
+    {
+      "path": "assets/v736/k_action_atlas.png",
+      "sha256": "6811803c6bf5c322fdf3f8b27729ccfefdbf7dfd7450172c4f6f320a7e50b8fb"
+    },
+    {
+      "path": "assets/handoff/mike.png",
+      "sha256": "155c9f4fae30b249552abddaaf6055b100157fb95d11883fa00139fbb5a3c290"
+    },
+    {
+      "path": "assets/handoff/atlas.json",
+      "sha256": "2b5ab97383f9b4f85a6adbbcfe55bc88dec97cba05bf3495ab9a3dc79b946636"
+    },
+    {
+      "path": "campaign_low_quarter_scenario.js",
+      "sha256": "802bce8a4f729ec4b7c30380486f57470f7f58a7567a44448e21ea51f83155bf"
+    },
+    {
+      "path": "campaign_low_quarter_mission.js",
+      "sha256": "c9b10144d9b38020484b9cea0252a502d1c1213ef1e88079ff2cd46674194dbc"
+    },
+    {
+      "path": "docs/LOW_QUARTER_PLAYABLE.md",
+      "sha256": "da118000a3eabf0e66c09be788d4f3c6c1af945cb55950ff9ac11da95251eae8"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "lq_hold_01.access",
+      "location": "access",
+      "channel": "objective",
+      "style_register": "game-pixel-art",
+      "story_phase": "existing post-epilogue response-area operation",
+      "cast": [
+        {
+          "actor_id": "k_red_el",
+          "name_used": "K",
+          "appearance": {
+            "source": "assets/v736/k_action_atlas.png",
+            "unchanged": true
+          }
+        }
+      ],
+      "beats": [
+        "Original rescue/defense/consent/independent-verification mechanics unchanged"
+      ],
+      "reference_files": [
+        "assets/v736/k_action_atlas.png",
+        "assets/handoff/mike.png",
+        "assets/handoff/atlas.json",
+        "campaign_low_quarter_scenario.js",
+        "campaign_low_quarter_mission.js",
+        "docs/LOW_QUARTER_PLAYABLE.md"
+      ],
+      "regalia_continuity": {
+        "state": "NOT_APPLICABLE"
+      },
+      "visual_review": {
+        "status": "INDEPENDENT_SOURCE_COMPOSITION_PASS_OWNER_ACCEPTANCE_PENDING"
+      }
+    },
+    {
+      "scene_id": "lq_hold_01.approaches",
+      "location": "approaches",
+      "channel": "objective",
+      "style_register": "game-pixel-art",
+      "story_phase": "existing post-epilogue response-area operation",
+      "cast": [
+        {
+          "actor_id": "k_red_el",
+          "name_used": "K",
+          "appearance": {
+            "source": "assets/v736/k_action_atlas.png",
+            "unchanged": true
+          }
+        }
+      ],
+      "beats": [
+        "Original rescue/defense/consent/independent-verification mechanics unchanged"
+      ],
+      "reference_files": [
+        "assets/v736/k_action_atlas.png",
+        "assets/handoff/mike.png",
+        "assets/handoff/atlas.json",
+        "campaign_low_quarter_scenario.js",
+        "campaign_low_quarter_mission.js",
+        "docs/LOW_QUARTER_PLAYABLE.md"
+      ],
+      "regalia_continuity": {
+        "state": "NOT_APPLICABLE"
+      },
+      "visual_review": {
+        "status": "INDEPENDENT_SOURCE_COMPOSITION_PASS_OWNER_ACCEPTANCE_PENDING"
+      }
+    },
+    {
+      "scene_id": "lq_hold_01.services",
+      "location": "services",
+      "channel": "objective",
+      "style_register": "game-pixel-art",
+      "story_phase": "existing post-epilogue response-area operation",
+      "cast": [
+        {
+          "actor_id": "k_red_el",
+          "name_used": "K",
+          "appearance": {
+            "source": "assets/v736/k_action_atlas.png",
+            "unchanged": true
+          }
+        }
+      ],
+      "beats": [
+        "Original rescue/defense/consent/independent-verification mechanics unchanged"
+      ],
+      "reference_files": [
+        "assets/v736/k_action_atlas.png",
+        "assets/handoff/mike.png",
+        "assets/handoff/atlas.json",
+        "campaign_low_quarter_scenario.js",
+        "campaign_low_quarter_mission.js",
+        "docs/LOW_QUARTER_PLAYABLE.md"
+      ],
+      "regalia_continuity": {
+        "state": "NOT_APPLICABLE"
+      },
+      "visual_review": {
+        "status": "INDEPENDENT_SOURCE_COMPOSITION_PASS_OWNER_ACCEPTANCE_PENDING"
+      }
+    },
+    {
+      "scene_id": "lq_hold_01.shelters",
+      "location": "shelters",
+      "channel": "objective",
+      "style_register": "game-pixel-art",
+      "story_phase": "existing post-epilogue response-area operation",
+      "cast": [
+        {
+          "actor_id": "k_red_el",
+          "name_used": "K",
+          "appearance": {
+            "source": "assets/v736/k_action_atlas.png",
+            "unchanged": true
+          }
+        }
+      ],
+      "beats": [
+        "Original rescue/defense/consent/independent-verification mechanics unchanged"
+      ],
+      "reference_files": [
+        "assets/v736/k_action_atlas.png",
+        "assets/handoff/mike.png",
+        "assets/handoff/atlas.json",
+        "campaign_low_quarter_scenario.js",
+        "campaign_low_quarter_mission.js",
+        "docs/LOW_QUARTER_PLAYABLE.md"
+      ],
+      "regalia_continuity": {
+        "state": "NOT_APPLICABLE"
+      },
+      "visual_review": {
+        "status": "INDEPENDENT_SOURCE_COMPOSITION_PASS_OWNER_ACCEPTANCE_PENDING"
+      }
+    },
+    {
+      "scene_id": "lq_hold_01.departure",
+      "location": "departure",
+      "channel": "objective",
+      "style_register": "game-pixel-art",
+      "story_phase": "existing post-epilogue response-area operation",
+      "cast": [
+        {
+          "actor_id": "k_red_el",
+          "name_used": "K",
+          "appearance": {
+            "source": "assets/v736/k_action_atlas.png",
+            "unchanged": true
+          }
+        }
+      ],
+      "beats": [
+        "Original rescue/defense/consent/independent-verification mechanics unchanged"
+      ],
+      "reference_files": [
+        "assets/v736/k_action_atlas.png",
+        "assets/handoff/mike.png",
+        "assets/handoff/atlas.json",
+        "campaign_low_quarter_scenario.js",
+        "campaign_low_quarter_mission.js",
+        "docs/LOW_QUARTER_PLAYABLE.md"
+      ],
+      "regalia_continuity": {
+        "state": "NOT_APPLICABLE"
+      },
+      "visual_review": {
+        "status": "INDEPENDENT_SOURCE_COMPOSITION_PASS_OWNER_ACCEPTANCE_PENDING"
+      }
+    },
+    {
+      "scene_id": "lq_hold_01.receiving",
+      "location": "receiving",
+      "channel": "objective",
+      "style_register": "game-pixel-art",
+      "story_phase": "existing post-epilogue response-area operation",
+      "cast": [
+        {
+          "actor_id": "k_red_el",
+          "name_used": "K",
+          "appearance": {
+            "source": "assets/v736/k_action_atlas.png",
+            "unchanged": true
+          }
+        }
+      ],
+      "beats": [
+        "Original rescue/defense/consent/independent-verification mechanics unchanged"
+      ],
+      "reference_files": [
+        "assets/v736/k_action_atlas.png",
+        "assets/handoff/mike.png",
+        "assets/handoff/atlas.json",
+        "campaign_low_quarter_scenario.js",
+        "campaign_low_quarter_mission.js",
+        "docs/LOW_QUARTER_PLAYABLE.md"
+      ],
+      "regalia_continuity": {
+        "state": "NOT_APPLICABLE"
+      },
+      "visual_review": {
+        "status": "INDEPENDENT_SOURCE_COMPOSITION_PASS_OWNER_ACCEPTANCE_PENDING"
+      }
+    }
+  ],
+  "art_method": "Authored deterministic engine pixel geometry; no generated raster art, new face, new pose, cloned person or synthetic likeness. Existing actor pixels preserved.",
+  "limits": [
+    "Final owner art acceptance pending",
+    "Not a DCC/3D scene or physical-device certification",
+    "Distinct dog walk poses remain quarantined; no relabelled attack/idle frames"
+  ]
+}

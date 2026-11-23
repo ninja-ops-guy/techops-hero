@@ -2,7 +2,7 @@ name: Low Quarter playable mission
 
 on:
   pull_request:
-    branches: [main, codex/chorus-siege]
+    branches: [main, codex/chorus-siege, codex/low-quarter-hold-way-home]
     paths:
       - 'campaign_*.js'
       - 'index.html'
@@ -41,7 +41,7 @@ jobs:
           mkdir -p artifacts/low-quarter-play
           git rev-parse HEAD > artifacts/low-quarter-play/head.txt
           git rev-parse HEAD^{tree} > artifacts/low-quarter-play/tree.txt
-          sha256sum campaign_low_quarter_scenario.js campaign_low_quarter_mission.js campaign_low_quarter_play.js campaign_low_quarter.js campaign_chorus_siege.js campaign_low_quarter_runtime.js campaign_completion_runtime.js campaign_act1.js campaign_late_game_bootstrap.js campaign_story.js campaign_native_act1_visuals.js index.html test_campaign_low_quarter_mission.js scripts/low_quarter_play_browser.mjs .github/workflows/low-quarter-play.yml > artifacts/low-quarter-play/source-sha256.txt
+          sha256sum cinematic_systems.js test_art_handoff.js campaign_low_quarter_art.js campaign_low_quarter_motion.js test_campaign_low_quarter_art_motion.js campaign_low_quarter_scenario.js campaign_low_quarter_mission.js campaign_low_quarter_play.js campaign_low_quarter.js campaign_chorus_siege.js campaign_low_quarter_runtime.js campaign_completion_runtime.js campaign_act1.js campaign_late_game_bootstrap.js campaign_story.js campaign_native_act1_visuals.js index.html test_campaign_low_quarter_mission.js scripts/low_quarter_play_browser.mjs .github/workflows/low-quarter-play.yml > artifacts/low-quarter-play/source-sha256.txt
       - run: npm ci --no-audit --no-fund
       - name: Production contracts
         run: |

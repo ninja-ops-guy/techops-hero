@@ -95,9 +95,10 @@ The approved game operation allocates four 60,000 manifest estimates, 240,000
 combined, displayed as “hundreds of thousands.” This operation-specific content
 number is not the old 200,000 test fixture or a universal canon population.
 Each group includes accompanying hulls; the foreground landing is not a tiny
-shuttle carrying 60,000. The current presentation is a readable code-art
-blockout with K's existing `assets/v736/k_action_atlas.png`. It is not final
-environment, ship-capacity, new character likeness or animation certification.
+shuttle carrying 60,000. The environment now has authored engine pixel-art architecture, street material,
+transport and hull silhouettes, with K's existing `assets/v736/k_action_atlas.png`.
+See `LOW_QUARTER_ART_MOTION.md` for the visual review candidate and qualification
+limits. Scenery does not certify ship capacity or new character likenesses.
 
 Proposed mission timing is retained: landings at 120/360/600/840 simulation
 seconds, 20-second physical flight, 240-second Hopper recovery, final hold no
