@@ -1,7 +1,7 @@
 # TechOps Hero — in-game 3D cinematic render reference
 
 **Owner reference:** seven supplied portrait MP4 clips, November 23, 2026.  
-**Purpose:** art-style inspiration for authored, engine-rendered 3D animation and cutscenes. Use the clips for material, lighting, depth, acting and camera language; stage original scenes from approved game beats. Their frames are illustrative previsualization, not real-time renders or game-ready geometry.
+**Purpose:** comic-to-game cutscene direction for authored, engine-rendered 3D animation. These clips derive from the comic and can help translate the corresponding story beats into mission cutscenes. Use the approved comic for event order, relationships and final dialogue; use the clips for camera, acting, lighting, materials and depth. Their frames are illustrative previsualization, not real-time renders or game-ready geometry.
 
 ## Reference map
 
@@ -16,6 +16,17 @@
 
 The filename stem follows `created-video-visual-ast_` and ends in `.mp4`. The originals were supplied to the project owner in chat; this document does not place those media files in the public repository. Treat all seven as style ideas rather than shot lists to recreate: generated lettering, specific staging, ship markings and incidental props need independent story and art approval.
 
+## Comic-to-mission placement
+
+| Reference group | Candidate mission cutscene | Source lock before production |
+| --- | --- | --- |
+| Iona action, vehicle and radio (clips 1, 4, 5) | An Iona-centered mission entry, escalation or escape at the matching comic moment. | Locate the actual comic pages and identify which action belongs to which mission; do not combine separate events merely because they share a visual mood. |
+| Dusk street, cat and translucent figure (clips 2, 3) | The story mission that visits this street or presents the corresponding cat/astral beat. | Confirm identities, location and chronology from the comic before naming the actors or tying it to a particular arc. |
+| K and Iona at the laundromat (clip 6) | A K–Iona encounter or memory cutscene when that relationship beat becomes available in play. | Verify the edition and page sequence; take spoken lines from the approved script, not the generated speech bubbles. |
+| Iona cockpit and orbital action (clip 7) | A later shipboard mission cutscene at the corresponding comic event. | Confirm the vessel, location and ship designs against the source. The clip does not establish that it belongs to Good Dogs M2 or any existing flight segment. |
+
+These are placement candidates, not verified chapter/page or mission IDs. Record the exact comic edition and pages, trigger/exit gameplay states, approved lines, asset IDs and character identities in each shot list before production. The mission may condense timing for player pacing while keeping the comic's causal beats intact. A cinematic should finish at the playable state that follows its scene, including Skip and resume.
+
 ## Render language
 
 - **Characters:** Preserve recognizable approved silhouettes before adding detail. Iona has short black hair with bangs, ear piercings and her dark work jacket. K has a beanie, over-ear headphones, clear glasses and K insignia. Do not import incidental face drift, costume changes, or generated text as character canon. Kali is a long-haired black cat; his paws must remain black in the game model.
@@ -27,13 +38,13 @@ The filename stem follows `created-video-visual-ast_` and ends in `.mp4`. The or
 
 ## Scene and engine integration
 
-1. Start with an existing cutscene beat and storyboard its entry, key acting pose, camera change and exit to play. Use a match frame between the final cutscene frame and the first playable frame, including horizon, actor placement and lighting direction.
+1. Start with the approved comic beat and the matching mission trigger. Storyboard its entry, key acting pose, camera change and exit to play. Reuse a source panel or motion idea when it serves that beat, then adapt it to game camera and controls. Use a match frame between the final cutscene frame and the first playable frame, including horizon, actor placement and lighting direction.
 2. Reuse the existing campaign and cinematic owners. The render/animation layer observes story state and plays a shot; it does not decide damage, collision, objective completion, saves, film recovery or input ownership. Skip, reduced-motion behavior, subtitles, audio priority, pause and a clean return to control must remain available.
 3. The current post-K Good Dogs 3D level has a stylized GLB prototype with quality tiers and a presentation-only renderer. Treat this brief as the quality target for the next character, rig, lighting and cinematic pass, not as a claim that the prototype already matches the supplied close-ups. See [post-K 3D](GOOD_DOGS_POST_K_3D.md) and [fidelity limits](GOOD_DOGS_3D_FIDELITY.md).
 4. Preserve the approved Night Walker sprite and environment grammar for normal 2D play. In-engine 3D cinematics can use this richer material and camera treatment, provided the characters, palette motifs and handoff back to gameplay are unmistakably the same world. Comic-panel framing in the laundromat reference is an optional authored transition, not a requirement to render gameplay as a comic page.
 
 ## First acceptance slice
 
-Deliver one short **engine-rendered** scene from an existing game beat with: (a) a wide location shot; (b) one correctly identified hero in a medium shot; (c) a close facial or hand-contact moment; (d) a matched return to live play. A Good Dogs house or ship scene can prove integration, while Iona and K need approved 3D likenesses before their own game scenes are staged.
+Deliver one short **engine-rendered** adaptation of a located comic beat that has a matching mission point: (a) its exact comic edition/pages and approved dialogue; (b) a wide location shot; (c) a correctly identified hero in a medium shot; (d) a close facial or hand-contact moment; (e) a matched return to live play. Choose a beat whose character models and mission trigger are ready. Iona and K need approved 3D likenesses before staging their scenes.
 
 Review the slice at desktop 16:9 and narrow mobile widths. Capture actual engine frames and a short playthrough showing motion, Skip and the handoff. Compare the hero silhouette, lighting direction, contact, facial stability and environment continuity against the supplied clips. Measure frame pacing on target hardware before setting final mesh, shadow, effect and texture budgets; the portrait MP4 resolution and encoding are reference metadata, not game output requirements.
