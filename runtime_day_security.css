@@ -1,0 +1,37 @@
+/* Local Security tool; styles remain scoped to its app body. */
+.doors-security { min-width: 0; font: 14px/1.5 system-ui, sans-serif; color: #243c46; }
+.doors-security__heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 6px 14px; margin-bottom: 12px; }
+.doors-security__eyebrow, .doors-security__label { display: block; font: 600 12px/1.5 ui-monospace, monospace; letter-spacing: .035em; }
+.doors-security__eyebrow { color: #4b6571; }
+.doors-pane .doors-security h3 { margin: 1px 0 0; font: 650 22px/1.2 system-ui, sans-serif; }
+.doors-security__scope { padding: 4px 8px; border: 1px solid #a6bbc0; border-radius: 4px; color: #365966; font-size: 13px; overflow-wrap: anywhere; }
+.doors-security__equipment { margin: 0 0 16px; border: 1px solid #496672; border-radius: 5px; overflow: hidden; background: #122631; }
+.doors-security__equipment svg { display: block; width: 100%; height: auto; }
+.doors-security__equipment figcaption { padding: 6px 10px; border-top: 1px solid #34505e; color: #c6d9de; background: #17303d; font-size: 12px; }
+.doors-security h4 { margin: 0; font-size: 15px; line-height: 1.4; }
+.doors-security__timeline { margin-bottom: 16px; }
+.doors-security__timeline > h4 { margin-bottom: 8px; color: #3d5d68; }
+.doors-security__timeline ol { list-style: none; margin: 0; padding: 0; }
+.doors-security__timeline li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; border: 1px solid #a8bdc1; border-radius: 4px; background: #e2ece9; padding: 12px; }
+.doors-security__timeline time { border-right: 2px solid #3f7969; color: #214c43; font: 650 16px/1.5 ui-monospace, monospace; }
+.doors-security__result { display: inline-block; padding: 1px 6px; border: 1px solid #427c69; background: #cce2d7; color: #204b3d; font: 650 13px/1.6 ui-monospace, monospace; }
+.doors-pane .doors-security__timeline p { margin: 4px 0 1px; color: #294b58; font: 600 14px/1.5 ui-monospace, monospace; overflow-wrap: anywhere; }
+.doors-security__timeline small { color: #4b646b; font-size: 13px; }
+.doors-security__comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.doors-security__comparison article { min-width: 0; border: 1px solid #b4c8c5; border-top: 3px solid #4e8071; padding: 12px; background: #e4eeea; }
+.doors-security__comparison [data-proof="unverified"] { border-top-color: #9d783c; background: #f0eadd; }
+.doors-security__label { color: #3b6659; margin-bottom: 5px; }
+.doors-security__comparison [data-proof="unverified"] .doors-security__label { color: #765c31; }
+.doors-pane .doors-security__comparison p { margin: 5px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.doors-pane .doors-security__boundary { border-left: 3px solid #69838c; margin: 13px 0; padding-left: 10px; color: #405c66; font-size: 14px; }
+.doors-security > button { max-width: 100%; }
+@media (max-width: 700px) {
+  .doors-security__comparison { grid-template-columns: minmax(0, 1fr); }
+  .doors-security__equipment { margin-bottom: 12px; }
+  .doors-security__timeline li { padding: 10px; gap: 8px; grid-template-columns: 59px minmax(0, 1fr); }
+}
+@media (max-height: 450px) {
+  .doors-security__equipment { max-width: 440px; }
+  .doors-security__heading { margin-bottom: 8px; }
+}
+.doors-security .doors-security__heading > div { display: block; min-width: 0; }
