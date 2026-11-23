@@ -753,7 +753,7 @@ function drawNM() {
   ctx.strokeStyle = "#2c3652"; ctx.beginPath(); ctx.moveTo(0, horizon - 20); ctx.lineTo(W, horizon - 20); ctx.stroke();
   }
   // street: asphalt, lane marks, wet sheen under lamps
-  if(!paintedBackdrop||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
+  if(!sceneArt||!sceneArt.drawGround(ctx,NM,NM_FLOOR)){
   ctx.fillStyle = domestic ? "#0b1519" : "#1e2536"; ctx.fillRect(0, NM_FLOOR, W, H - NM_FLOOR);
   ctx.fillStyle = domestic ? "#182521" : "#151b29"; ctx.fillRect(0, NM_FLOOR, W, 8);
   ctx.fillStyle = "#ffd24a55";
