@@ -648,18 +648,93 @@
       { dur: 2400, cap: "Aim: an AeroTech ground station. Nobody Tasked it.", draw(x, tm) { H.bg(x, "#0a0e20"); H.twinCity(x, tm, LW / 2 - 380, BAR + 90, 760, 300, false); H.txt(x, "INACTIVE SATELLITE — TRANSMISSION DETECTED", LW / 2, BAR + 60, 17, RED, "center", true); H.txt(x, "AIM: AEROTECH GROUND STATION 04", LW / 2, BAR + 420, 15, AMBER, "center", true); } },
       { dur: 2800, cap: "ORBITAL TRACE UNLOCKED — first indicator logged.", draw(x, tm) { house733(x, tm); drawWaldo733(x, LW / 2 + 180, LH - BAR - 40, 170, "wave"); H.mike(x, "down0", LW / 2 - 180, LH - BAR - 40, 140); H.panel(x, LW / 2 - 310, BAR + 80, 620, 92, "#0d1f16"); H.txt(x, "ORBITAL TRACE UNLOCKED", LW / 2, BAR + 112, 19, CYAN, "center", true); H.txt(x, "SATELLITE INDICATOR — LOGGED TO DOCS", LW / 2, BAR + 142, 14, GREEN, "center", true); } },
     ];
+    // Volume XIV, reader page 71 (CH38-04). Separate seated sprites keep the
+    // comic's screen direction and eye lines through changes in camera distance.
+    let porchCast;
+    function porchShot(x, tm, camera) {
+      if (!porchCast) {
+        porchCast = new Image();
+        porchCast.src = "assets/visual-combat/porch-cast.png";
+      }
+      x.save();
+      x.beginPath(); x.rect(0, BAR, LW, LH - BAR * 2); x.clip();
+      x.translate(0, BAR); x.scale(LW / 320, (LH - BAR * 2) / 148);
+      x.imageSmoothingEnabled = false;
+      function rect(left, top, w, h, color) {
+        x.fillStyle = color; x.fillRect(left, top, w, h);
+      }
+      if (camera === "sky") {
+        rect(0, 0, 320, 148, "#111c39");
+        for (let i = 0; i < 52; i++) rect(i * 83 % 320, i * 41 % 136, 1, 1, "#959ab4");
+        // The single untracked light changes heading over the eave.
+        const phase = Math.min(1, tm / 2600);
+        const sx = 136 + Math.floor(42 * phase), sy = 48 - Math.round(13 * Math.abs(phase - .47));
+        rect(sx - 2, sy, 5, 1, "#f4bca3"); rect(sx, sy - 1, 1, 3, "#fff5ce");
+        x.fillStyle = "#211e28"; x.beginPath(); x.moveTo(0, 88); x.lineTo(209, 148); x.lineTo(0,148); x.fill();
+        rect(28, 106, 5, 42, "#644436");
+        x.restore(); return;
+      }
+      if (camera === "close") { x.scale(1.84, 1.84); x.translate(-126, -41); }
+      rect(0,0,320,148,"#0f1b30");
+      const yard = window.TechOpsSceneArt?.image("waldo");
+      if (yard) x.drawImage(yard, 0, 0, yard.naturalWidth, yard.naturalHeight, -75, -18, 193, 140);
+      rect(42, 0, 278, 148, "#68472f");
+      const ready = porchCast.complete && porchCast.naturalWidth;
+      function prop(sx, sy, w, h, dx, dy, dw = w, dh = h) {
+        x.drawImage(porchCast, sx, sy, w, h, dx, dy, dw, dh);
+      }
+      if (ready) {
+        for (let y=0; y<148; y+=36) for (let left=42; left<320; left+=36) prop(263,90,36,36,left,y);
+      }
+      const shade = x.createLinearGradient(55,0,285,0);
+      shade.addColorStop(0,"rgba(11,21,38,.79)"); shade.addColorStop(1,"rgba(54,30,20,.18)");
+      x.fillStyle=shade; x.fillRect(42,0,278,148);
+      rect(73, 8, 149, 114, "#231f22"); rect(78, 13, 139, 103, "#493830");
+      rect(81, 16, 131, 96, "#64412f"); rect(87, 17, 35, 92, "#344050");
+      rect(100, 17, 3, 91, "#1f2c36"); rect(87, 39, 36, 2, "#202c3b");
+      rect(170, 18, 30, 42, "#875c38"); rect(183, 27, 2, 47, "#46302a");
+      rect(176, 22, 16, 10, "#edb367");
+      rect(123, 80, 84, 17, "#674335"); rect(123, 93, 84, 7, "#3f302f");
+      if (ready) {
+        prop(230,130,39,42,81,16,131,78);
+        x.drawImage(porchCast,263,0,24,35,123,59,24,35);
+        x.drawImage(porchCast,291,0,27,33,155,61,27,33);
+      }
+      rect(149, 13, 3, 98, "#272d31"); rect(79, 94, 135, 15, "#333638");
+      rect(47, 0, 5, 148, "#302928"); rect(42, 0, 5, 148, "#9a6d48");
+      rect(252, 0, 2, 18, "#211e23"); rect(249, 17, 8, 3, "#4a372c");
+      rect(245, 20, 16, 4, "#aa7642"); rect(242, 24, 22, 2, "#f5c780");
+      rect(245, 26, 16, 2, "#fff0ab");
+      if (ready) prop(230,90,30,24,239,7);
+      for (let i=0;i<8;i++) {
+        const sy=6+Math.round(Math.sin(i*Math.PI/7)*6);
+        rect(4+i*26,sy,27,1,"#2a2529"); rect(8+i*26,sy+1,1,3,"#c99253");
+        rect(8+i*26,sy+4,2,2,"#ffe6ac");
+      }
+      rect(0, 119, 320, 29, "#3e3030");
+      for (let y = 121; y < 148; y += 8) rect(0,y,320,2,"#231f25");
+      // Chair slats and arms remain behind their respective seated figures.
+      if (ready) {
+        prop(0,90,81,76,0,58,118,110);
+        prop(85,90,73,76,199,61,108,110);
+        x.drawImage(porchCast,0,0,132,87,10,59,140,92);
+        x.drawImage(porchCast,138,0,119,87,185,59,126,92);
+      } else {
+        H.mike(x,"right0",60,153,92);
+        drawWaldo733(x,249,153,93,"idle",true);
+      }
+      if (ready) prop(162,90,64,48,129,115,68,50);
+      x.restore();
+    }
     const WALDO_SMOKE_SHOTS = [
-      { dur: 2400, cap: "The porch. String lights. Nowhere to be.", draw(x, tm) { house733(x, tm); stars733(x, tm, 60); drawWaldo733(x, LW / 2 - 80, LH - BAR - 40, 170, "idle"); H.mike(x, "down0", LW / 2 + 100, LH - BAR - 40, 140); for (let i = 0; i < 3; i++) { const sy = LH - BAR - 220 - ((tm / 12 + i * 40) % 120); x.fillStyle = `rgba(190,200,220,${.2 - i * .05})`; x.beginPath(); x.arc(LW / 2 - 70 + Math.sin(tm / 800 + i) * 10, sy, 8 + i * 3, 0, 7); x.fill(); } } },
-      { dur: 2800, cap: "\"From up there, nobody owns the sky.\"", draw(x, tm) { H.bg(x, "#070b18"); stars733(x, tm, 120); drawWaldo733(x, LW / 2 - 160, LH - BAR - 40, 190, "idle"); H.bubble(x, "From up there, nobody owns the sky.", 240, BAR + 90, 460); H.bubble(x, "Down here, everybody wants to charge rent for it.", 280, BAR + 170, 520); } },
-      { dur: 2600, cap: "Something changes orbit. It's on no public tracker.", draw(x, tm) { H.bg(x, "#070b18"); stars733(x, tm, 100); const sx = 300 + (tm / 20) % 500, sy = BAR + 120 + 40 * Math.sin(tm / 900); x.fillStyle = RED; x.fillRect(sx, sy, 5, 5); x.strokeStyle = RED; x.beginPath(); x.arc(sx + 2, sy + 2, 14 + 4 * Math.sin(tm / 300), 0, 7); x.stroke(); H.txt(x, "UNTRACKED OBJECT — ORBIT CHANGE DETECTED", LW / 2, BAR + 260, 16, RED, "center", true); drawWaldo733(x, LW / 2 + 240, LH - BAR - 40, 160, "idle"); } },
-      {
-        dur: 0, cap: "He watches you. How do you answer a friend?", choice: {
-          prompt: "THE LONG TALK",
-          options: ["1 — JUST LISTEN", "2 — ASK ABOUT HIS PAST", "3 — TALK SHOP"],
+      { dur: 2400, cap: "The porch. String lights. Nowhere to be.", draw(x, tm) { porchShot(x, tm, "wide"); } },
+      { dur: 2800, cap: '"From up there, nobody owns the sky. Down here, everybody wants to charge rent for it."', draw(x, tm) { porchShot(x, tm, "close"); } },
+      { dur: 2600, cap: "Something changes orbit. It's on no public tracker.", draw(x, tm, local) { porchShot(x, local, "sky"); } },
+      { dur: 0, cap: "He watches you. How do you answer a friend?", choice: {
+          prompt: "THE LONG TALK", options: ["1 - JUST LISTEN", "2 - ASK ABOUT HIS PAST", "3 - TALK SHOP"],
           store: "_v733smoke", values: ["listen", "past", "shop"]
-        }, draw(x, tm) { house733(x, tm); stars733(x, tm, 70); drawWaldo733(x, LW / 2 - 100, LH - BAR - 40, 180, "idle"); H.mike(x, "down0", LW / 2 + 120, LH - BAR - 40, 145); }
-      },
-      { dur: 2800, cap: "SIGNAL INTERCEPT UNLOCKED — and a track for the deck.", draw(x, tm) { house733(x, tm); stars733(x, tm, 80); drawWaldo733(x, LW / 2 - 100, LH - BAR - 40, 170, "wave"); H.mike(x, "down0", LW / 2 + 120, LH - BAR - 40, 145); H.panel(x, LW / 2 - 320, BAR + 80, 640, 92, "#0d1f16"); H.txt(x, "SIGNAL INTERCEPT UNLOCKED", LW / 2, BAR + 112, 19, CYAN, "center", true); H.txt(x, "TRACK: CORRIDOS DEL CIELO", LW / 2, BAR + 142, 14, GOLD, "center", true); } },
+        }, draw(x, tm) { porchShot(x, tm, "wide"); } },
+      { dur: 2800, cap: "SIGNAL INTERCEPT UNLOCKED - Corridos del Cielo added to the deck.", draw(x, tm) { porchShot(x, tm, "wide"); } },
     ];
     const WALDO_TRACKER_SHOTS = [
       { dur: 2400, cap: "CHECK ENGINE. It vanishes whenever anyone looks.", draw(x, tm) { H.bg(x, "#0d1024"); x.fillStyle = "#10162a"; x.fillRect(LW / 2 - 380, LH - BAR - 260, 760, 260); x.strokeStyle = H.EDGE; x.lineWidth = 3; x.strokeRect(LW / 2 - 380, LH - BAR - 260, 760, 260); x.fillStyle = "#0a0f1e"; x.fillRect(LW / 2 - 320, LH - BAR - 150, 640, 150); x.fillStyle = AMBER; x.font = "bold 22px 'Courier New',monospace"; x.textAlign = "center"; if (((tm / 500) | 0) % 3) x.fillText("CHECK ENGINE", LW / 2, LH - BAR - 200); } },

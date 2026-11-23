@@ -1,24 +1,8 @@
-/* ==========================================================================
-   v7.22 — NIGHT DRIVE (the cinematic cut)
-   The 16:00 drive home / night-crawl opening now plays as a real-time
-   cinematic instead of a hard cut, after the reference boards + clip:
-     1. AEROTECH facade in the rain — Mike walks to his Charger
-     2. Headlights flare, the TECHOPS dashboard wakes
-     3. Neon New Haven drive — three-layer parallax, rain, wet asphalt
-     4. Iron & Tide under the elevated line — a glitch steps out of the alley
-     5. BATTLE START — crest slam, zoom punch, straight into the crawl
-   Reference-board corrections (erroneous details cut): legible English neon
-   only, Mike keeps the IT vest/sunglasses/dreadlocks (real sprite frames),
-   the alley threat is a glitch creature (the night crawl's actual enemy),
-   and the palette stays navy/purple with the wing crest.
-   Everything is procedural canvas + WebAudio — zero new assets. Player
-   frames come from the v7.21-bleed path automatically. Skippable (E /
-   Enter / Space / click), input-frozen while playing, Felicia mode gets
-   the Impreza variant. Wraps enterNight — every way out of the building
-   (South Exit door, both security sweeps) routes through it.
-   ========================================================================== */
+/* v7.22.3: AFTER THE SHIFT. Three pixel-art beats using the game atlases:
+   AeroTech clock-out, the established car crossing New Haven, and the
+   first Night street. Existing Night entry retains world/save ownership. */
 (function () {
-  const VER = "7.22";
+  const VER = "7.22.3";
   if (window.v722) return;
 
   // ---------- audio (own context, respects the v6.7 volume setting) ----------
@@ -167,20 +151,34 @@
     x.restore();
   }
 
-  // Mike (or a tinted stand-in for Felicia mode) straight from the real atlas —
-  // the v7.21 drawImage wrapper bleeds the source automatically.
-  let tmpSprite = null;
+  // Use the actual game actor, never a recolored stand-in for Felicia.
+  let feliciaImg = null;
   function mikeSprite(x, key, dx, dy, h, fel) {
     try {
-      if (typeof playerImg === "undefined" || !playerImg.complete || !playerImg.naturalWidth) return;
-      const fr = PLAYER_ATLAS.frames[key] || PLAYER_ATLAS.frames.right0, C = PLAYER_ATLAS.cell;
-      const dw = h, dh = h;
-      x.save();
-      x.imageSmoothingEnabled = false;
-      if (fel) { try { x.filter = "hue-rotate(250deg) saturate(1.3) brightness(.8)"; } catch (e) { } }
-      x.drawImage(playerImg, fr[0] * C, fr[1] * C, C, C, dx - dw / 2, dy - dh, dw, dh);
-      x.restore();
-    } catch (e) { }
+      if (fel && !feliciaImg && typeof TO_FELICIA !== "undefined") {
+        feliciaImg = new Image(); feliciaImg.src = TO_FELICIA;
+      }
+      const img = fel ? feliciaImg : (typeof playerImg !== "undefined" ? playerImg : null);
+      const atlas = fel ? (typeof FEL_ATLAS !== "undefined" ? FEL_ATLAS : null) : PLAYER_ATLAS;
+      if (!img || !img.complete || !img.naturalWidth || !atlas) return false;
+      const fr = atlas.frames[key] || atlas.frames.right0 || atlas.frames.down0, C = atlas.cell;
+      x.save(); x.imageSmoothingEnabled = false;
+      x.drawImage(img, fr[0] * C, fr[1] * C, C, C, dx - h / 2, dy - h, h, h);
+      x.restore(); return true;
+    } catch (e) { return false; }
+  }
+  function drawNightMike(x, cx, ground, moving, now) {
+    // Use the same Mike renderer as ordinary Night gameplay, not the Day atlas.
+    // This pose is presentation-only; do not read or mutate the live Night world.
+    const draw = window.TechOpsNightReferenceVisuals?.drawReferenceNightWalker;
+    if (typeof draw !== "function") return false;
+    const pose = {w:22, h:34, hp:1, face:1, vx:moving ? 1 : 0, onGround:true};
+    x.save();
+    try {
+      x.translate(Math.round(cx), ground);
+      x.scale(1.16, 1.16);
+      return draw(x, pose, -pose.w / 2, -pose.h - 3, now);
+    } finally { x.restore(); }
   }
   function suv(x, X, Y, sc, imp, lightsOn) {
     // X,Y = front wheel ground point; sc = px scale
@@ -237,10 +235,23 @@
     x.save(); x.font = 'bold 8px "Courier New",monospace'; x.fillStyle = "#cfe3ff"; x.textAlign = "center"; x.fillText("TECHOPS", 57, -3); x.restore();
     x.restore();
   }
+  function cutCar(x, X, Y, sc, fel, lightsOn) {
+    const draw = window.TechOpsNightReferenceVisuals?.drawCharger;
+    if (fel || typeof draw !== "function") { suv(x, X, Y, sc, fel, lightsOn); return; }
+    if (lightsOn) {
+      const beam = x.createLinearGradient(X + 85 * sc, Y - 32 * sc, X + 245 * sc, Y);
+      beam.addColorStop(0, "rgba(255,235,180,.28)");
+      beam.addColorStop(1, "rgba(255,235,180,0)");
+      x.fillStyle = beam; x.beginPath();
+      x.moveTo(X + 85 * sc, Y - 36 * sc); x.lineTo(X + 245 * sc, Y - 8 * sc);
+      x.lineTo(X + 245 * sc, Y + 8 * sc); x.lineTo(X + 85 * sc, Y - 26 * sc); x.closePath(); x.fill();
+    }
+    draw(x, X, Y, 150 * sc, 0);
+  }
   function glitch(x, X, Y, sc, t, reveal) {
     x.save(); x.translate(X, Y); x.scale(sc, sc);
     x.globalAlpha = reveal * (.55 + .45 * Math.abs(Math.sin(t * .05)));
-    const jit = () => (Math.random() - .5) * 6;
+    const jit = () => t ? (Math.random() - .5) * 6 : 0;
     x.save(); x.shadowColor = "#b26bff"; x.shadowBlur = 24;
     px(x, -16 + jit(), -64, 32, 40, "#3c2a63");          // torso slab
     px(x, -12 + jit(), -84, 24, 22, "#2a1d47");          // head
@@ -248,21 +259,27 @@
     px(x, 6 + jit(), -24, 14, 24, "#31215a");
     x.restore();
     px(x, -8, -78, 5, 5, "#ff3860"); px(x, 4, -78, 5, 5, "#ff3860"); // eyes
-    for (let i = 0; i < 5; i++) px(x, -18 + Math.random() * 36, -70 + Math.random() * 46, 10 + Math.random() * 14, 2, "#8a6cff"); // static slices
+    for (let i = 0; i < 5; i++) px(x, -18 + (i * 17) % 36, -70 + (i * 11) % 46, 10 + i * 2, 2, "#8a6cff"); // static slices
     x.restore();
   }
 
-  // ---------- the five shots ----------
-  const DUR = 13500;
-  const SHOTS = [0, 3300, 5700, 9700, 12000, DUR];
+  const DUR = 6800, SHORT_DUR = 1050;
+  const SHOTS = [0, 2200, 4550, DUR];
+  const SHOT_IDS = ["clock-out", "new-haven", "first-street"];
+  const seen = new Set();
+  function actorKey(state) { return state?.meta?._char === "felicia" ? "felicia" : "mike"; }
+  function seenKey(actor) { return "techops_night_drive_v2_seen_" + actor; }
+  function hasSeen(actor) {
+    try { return seen.has(actor) || localStorage.getItem(seenKey(actor)) === "1"; }
+    catch (_) { return seen.has(actor); }
+  }
+  function markSeen(actor) {
+    seen.add(actor);
+    try { localStorage.setItem(seenKey(actor), "1"); } catch (_) {}
+  }
   function captions(fel) {
-    return [
-      `${fel ? "FELICIA" : "MIKE"} EXITS AEROTECH INTO THE RAINY PARKING LOT.`,
-      fel ? "THE IMPREZA'S DASHBOARD WAKES. GHOST RIG ONLINE." : "THE DASHBOARD ACTIVATES. TECHOPS.",
-      "NEON NEW HAVEN — THE DRIVE HOME.",
-      "IRON & TIDE, UNDER THE ELEVATED LINE. SOMETHING MOVES IN THE ALLEY.",
-      "",
-    ];
+    return [fel ? "CLOCK-OUT / FELICIA HEADS FOR THE IMPREZA" : "CLOCK-OUT / MIKE HEADS FOR THE CHARGER",
+      "NEW HAVEN / AFTER THE SHIFT", "DOWNTOWN / SOMETHING MOVES UNDER THE EL"];
   }
 
   function shot1(x, t, tl, fel) { // AEROTECH facade, rain, walk to the car
@@ -294,40 +311,12 @@
     og.addColorStop(0, "rgba(255,214,140,.12)"); og.addColorStop(1, "rgba(255,214,140,0)");
     x.fillStyle = og; x.fillRect(300, 440, 90, LH - BAR - 440);
     // car + Mike walking toward it
-    suv(x, 950, 452, 1.05, fel, tl > 2400);
-    const mx = Math.min(330 + tl * .16, 830);
+    cutCar(x, 950, 452, 1.05, fel, tl > 1600);
+    const mx = Math.min(330 + tl * .28, 830);
     const step = ["right0", "right1", "right0", "right2"][(tl / 170 | 0) % 4];
-    mikeSprite(x, mx >= 830 ? "right0" : step, mx, 452, 92, fel);
+    const ready = mikeSprite(x, mx >= 830 ? "right0" : step, mx, 452, 92, fel);
     rain722(x, t, 90, LW, LH);
-  }
-
-  function shot2(x, t, tl, fel) { // close-up: headlights + dash wake
-    px(x, 0, BAR, LW, LH - BAR * 2, "#0b0f1c");
-    // ambient city glow behind the close-up
-    const amb2 = x.createRadialGradient(560, 380, 40, 560, 380, 560);
-    amb2.addColorStop(0, "rgba(90,110,190,.22)"); amb2.addColorStop(1, "rgba(90,110,190,0)");
-    x.fillStyle = amb2; x.fillRect(0, BAR, LW, LH - BAR * 2);
-    const push = 1 + tl / 2400 * .07; // slow push-in
-    x.save(); x.translate(LW / 2, 470); x.scale(push, push); x.translate(-LW / 2, -470);
-    suv(x, 560, 480, 2.1, fel, tl > 500);
-    // dashboard glow through the glass
-    if (tl > 900) {
-      const a = Math.min(1, (tl - 900) / 600);
-      x.save(); x.globalAlpha = a * .8;
-      px(x, 410, 300, 90, 40, "rgba(57,213,255,.25)");
-      txt(x, "TECHOPS", 455, 322, 13, "#39d5ff", "center", "#39d5ff");
-      px(x, 424, 332, 8, 4, "#39ff88"); px(x, 436, 332, 8, 4, "#ffb347"); px(x, 448, 332, 8, 4, "#ff5c8a");
-      x.restore();
-    }
-    // exhaust puff
-    if (tl > 400 && tl < 1600) {
-      x.save(); x.globalAlpha = .25 * (1 - (tl - 400) / 1200);
-      x.fillStyle = "#9aa7c7";
-      x.beginPath(); x.arc(340 - (tl - 400) * .05, 470 - (tl - 400) * .02, 14 + (tl - 400) * .03, 0, 7); x.fill();
-      x.restore();
-    }
-    x.restore();
-    rain722(x, t, 45, LW, LH);
+    return ready;
   }
 
   function shot3(x, t, tl, fel) { // the neon drive — three-layer parallax
@@ -348,7 +337,7 @@
       const bh = 180 + (i * 83) % 120;
       px(x, bx, 470 - bh, bw, bh, "#151b31");
       px(x, bx, 470 - bh, bw, 8, "#1f2742");
-      neonSign(x, bx + 16, 470 - bh + 20, signs[i], NEON[i % 5], t);
+      neonSign(x, bx + 16, 470 - bh + 20, signs[i], NEON[i % 5], 0);
       for (let w = 0; w < 8; w++) if ((i * 5 + w * 3) % 4 < 2) px(x, bx + 14 + (w % 4) * 46, 470 - bh + 84 + ((w / 4) | 0) * 40, 16, 20, "#2b3a5e");
     }
     // layer 3: road, lamps, reflections
@@ -371,7 +360,10 @@
     });
     // dashed centre line streaming by
     for (let i = 0; i < 10; i++) px(x, ((i * 160 - tl * .5) % (LW + 160) + LW + 160) % (LW + 160) - 80, 520, 60, 4, "#3d4a6e");
-    suv(x, 420, 520, 1.35, fel, true);
+    // Restrained camera drift; the tracked car and its headlights stay together.
+    const advance = Math.min(tl / 2350, 1);
+    const xCar = 350 + 134 * advance - 18 * Math.sin(Math.PI * advance);
+    cutCar(x, xCar, 520 + Math.sin(tl / 125) * 1.4, 1.35, fel, true);
     rain722(x, t, 70, LW, LH);
   }
 
@@ -397,149 +389,210 @@
     const rg = x.createLinearGradient(0, 470, 0, 560);
     rg.addColorStop(0, "rgba(255,92,138,.12)"); rg.addColorStop(1, "rgba(255,92,138,0)");
     x.fillStyle = rg; x.fillRect(400, 470, 160, 90);
-    suv(x, 420, 486, 1.15, fel, tl < 500);
-    // Mike steps out and faces the alley
+    cutCar(x, 420, 486, 1.15, fel, tl < 500);
+    // Preserve Felicia’s own look; reveal Mike in his Night Walker gear.
+    let ready = true;
     if (tl > 600) {
       const step = ["right0", "right1", "right0", "right2"][((tl - 600) / 170 | 0) % 4];
       const mx = Math.min(560 + (tl - 600) * .12, 700);
-      mikeSprite(x, mx >= 700 ? "right0" : step, mx, 486, 88, fel);
+      if (fel) ready = mikeSprite(x, mx >= 700 ? "right0" : step, mx, 486, 88, true);
+      else ready = drawNightMike(x, mx, 486, mx < 700 && t > 0, t);
     }
     // the glitch reveals itself from the alley
-    glitch(x, 1010, 500, 1.25, t, Math.min(1, Math.max(0, (tl - 1200) / 700)));
+    const reveal = Math.min(1, Math.max(0, (tl - 1200) / 700));
+    if (reveal > 0) {
+      x.save(); x.globalAlpha = reveal; x.translate(1010, 488); x.scale(1.75, 1.75);
+      const drawn = typeof drawNightEnemyAtlas === "function" &&
+        drawNightEnemyAtlas(x, {kind:"thug",y:-34,h:34,w:24}, -12, t, true);
+      x.restore();
+      if (!drawn) glitch(x,1010,488,1.1,t,reveal);
+    }
     if (tl > 1900) txt(x, "…", 940, 390, 26, "#b26bff", "center", "#b26bff");
     rain722(x, t, 80, LW, LH);
+    return ready;
   }
 
-  function shot5(x, t, tl, fel) { // BATTLE START slam
-    px(x, 0, BAR, LW, LH - BAR * 2, "#0a0714");
-    // radial purple burst
-    const burst = x.createRadialGradient(LW / 2, 360, 20, LW / 2, 360, 520);
-    burst.addColorStop(0, "rgba(178,107,255,.5)"); burst.addColorStop(1, "rgba(178,107,255,0)");
-    x.fillStyle = burst; x.fillRect(0, BAR, LW, LH - BAR * 2);
-    // the two silhouettes facing off
-    mikeSprite(x, "right0", 400, 500, 150, fel);
-    glitch(x, 890, 510, 2.1, t, 1);
-    // zoom punch + crest + title
-    const punch = tl < 260 ? 1 + (260 - tl) / 260 * .18 : 1;
-    const shake = (window.V67SET && V67SET.shake) ? Math.max(0, 1 - tl / 500) : 0;
+  // Composition is drawn by the engine over its own frame. The detail cut uses
+  // existing scene pixels (never an alternate character or vehicle asset).
+  function comicFrame(x, si, st, compact, narrow) {
+    const accent = ["#edba74", "#ca9af0", "#79dbec"][si];
+    const place = ["AEROTECH", "NEW HAVEN", "DOWNTOWN"][si];
+    px(x, 0, 0, LW, BAR, "#10121b");
+    px(x, 0, LH - BAR, LW, BAR, "#10121b");
+    px(x, 0, BAR, 27, LH - 2 * BAR, "#10121b");
+    px(x, LW - 27, BAR, 27, LH - 2 * BAR, "#10121b");
+    x.strokeStyle = "#d6c6a8"; x.lineWidth = 3; x.strokeRect(28, BAR + 1, LW - 56, LH - 2 * BAR - 2);
+    px(x, 28, 20, 44, 24, accent);
+    txt(x, "0" + (si + 1), 50, 32, narrow ? 22 : 16, "#11131b", "center");
+    txt(x, place, 86, 32, narrow ? 29 : 16, "#e6d8be");
+    txt(x, "AFTER THE SHIFT", LW - 30, 32, narrow ? 30 : 21, "#e6d8be", "right");
+    const beats = ["CLOCK OUT", "THE DRIVE", "FIRST STREET"];
+    beats.forEach((label, i) => {
+      const X = 28 + 412 * i;
+      px(x, X, LH - 43, 400, 4, si === i ? accent : "#373843");
+      txt(x, label, X + 1, LH - 22, narrow ? 26 : 17, si === i ? "#e6d8be" : "#a09b93");
+    });
+
+    // A second framing beat within a panel, not a new event. Avoid cutaway
+    // motion in the stable/reduced-motion presentation.
+    if (compact || narrow || st < [850, 580, 950][si]) return;
+    const car = 350 + 134 * Math.min(st / 2350, 1) - 18 * Math.sin(Math.PI * Math.min(st / 2350, 1));
+    const dayActor = Math.min(330 + st * .28, 830), nightActor = Math.min(560 + (st - 600) * .12, 700);
+    const source = [[dayActor - 83, 360], [car - 70, 450], [nightActor - 83, 392]][si];
+    const scale = cv.width / LW, edge = 909, top = 88, width = 326, height = 174;
+    px(x, edge + 8, top + 8, width, height, "#070911");
+    px(x, edge, top, width, height, "#d6c6a8");
     x.save();
-    x.translate(LW / 2 + (Math.random() - .5) * 8 * shake, 360 + (Math.random() - .5) * 8 * shake);
-    x.scale(punch, punch); x.translate(-LW / 2, -360);
-    crest(x, LW / 2, 260, 1.15, "#8a6cff");
-    txt(x, "BATTLE", LW / 2, 390, 92, "#ffffff", "center", "#b26bff");
-    txt(x, "START", LW / 2, 486, 92, "#b26bff", "center", "#b26bff");
+    x.imageSmoothingEnabled = false;
+    x.drawImage(cv, source[0] * scale, source[1] * scale, 166 * scale, 83 * scale,
+      edge + 5, top + 5, width - 10, height - 10);
     x.restore();
-    if (tl < 180) { x.fillStyle = `rgba(255,255,255,${.55 * (1 - tl / 180)})`; x.fillRect(0, BAR, LW, LH - BAR * 2); }
-    txt(x, "— SURVIVE THE ENCOUNTER —", LW / 2, 580, 20, "#39d5ff", "center", "#39d5ff");
+    px(x, edge, top, 25, 4, accent);
   }
 
-  const SHOT_FNS = [shot1, shot2, shot3, shot4, shot5];
+  const SHOT_FNS = [shot1, shot3, shot4];
+  let playing = false, ov = null, cv = null, ctx = null, raf = 0, t0 = 0;
+  let frame722 = 0, entry = null, skipButton = null, status = null, priorFocus = null, previousShot = -1;
+  const stats722 = { plays: 0, skips: 0, full: 0, compact: 0, canceled: 0 };
 
-  // ---------- engine ----------
-  let playing = false, ov = null, cv = null, ctx = null, raf = 0, t0 = 0, after722 = null, frame722 = 0;
-  const stats722 = { plays: 0, skips: 0, full: 0 };
+  function sizeCanvas() {
+    if (!cv) return;
+    const width = window.visualViewport?.width || window.innerWidth;
+    const height = window.visualViewport?.height || window.innerHeight;
+    const fit = Math.max(.08, Math.min(width / LW, (height - 104) / LH));
+    cv.style.width = Math.floor(LW * fit) + "px";
+    cv.style.height = Math.floor(LH * fit) + "px";
+  }
 
   function buildOverlay() {
     ov = document.createElement("div");
     ov.id = "v722-cine";
-    ov.style.cssText = "position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-label", "After the Shift");
+    ov.dataset.nightDriveVariant = entry.variant;
+    ov.style.cssText = "position:fixed;inset:0;z-index:9999;background:#070a12;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:monospace";
     cv = document.createElement("canvas");
+    cv.setAttribute("aria-hidden", "true");
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = LW * dpr; cv.height = LH * dpr;
-    const fit = Math.min(window.innerWidth / LW, window.innerHeight / LH);
-    cv.style.width = (LW * fit) + "px"; cv.style.height = (LH * fit) + "px";
-    cv.style.imageRendering = "auto";
+    cv.style.cssText = "min-width:0;min-height:0;flex:none;image-rendering:pixelated;display:block";
+    sizeCanvas();
+    window.addEventListener("resize", sizeCanvas);
     ov.appendChild(cv);
+    status = document.createElement("div");
+    status.setAttribute("aria-live", "polite");
+    status.style.cssText = "color:#c8d4f2;background:#111827;text-align:center;font-size:clamp(12px,2.4vw,18px);padding:8px 12px;margin:0;max-width:100%;box-sizing:border-box";
+    ov.appendChild(status);
+    skipButton = document.createElement("button");
+    skipButton.type = "button";
+    skipButton.textContent = "Skip to Night";
+    skipButton.id = "v722-skip";
+    skipButton.style.cssText = "min-height:44px;min-width:122px;margin:6px;padding:0 14px;color:#edf1ff;background:#252142;border:1px solid #9e83ea;font:700 14px monospace;cursor:pointer";
+    const owner = entry;
+    skipButton.addEventListener("click", () => { if (entry === owner) end722("skip"); });
+    ov.appendChild(skipButton);
     document.body.appendChild(ov);
     ctx = cv.getContext("2d");
+    if (!ctx) throw new Error("Night Drive canvas unavailable");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function shotAt(tl) {
-    for (let i = 0; i < SHOTS.length - 1; i++) if (tl >= SHOTS[i] && tl < SHOTS[i + 1]) return [i, tl - SHOTS[i]];
-    return [SHOT_FNS.length - 1, SHOTS[SHOTS.length - 1] - SHOTS[SHOTS.length - 2]];
-  }
-
-  const fired = {};
-  function cueAudio(i) {
-    if (fired[i]) return; fired[i] = true;
-    if (i === 0) { startRain(); pad722(); }
-    if (i === 1) engine722();
-    if (i === 2) { try { sfx("portal"); } catch (e) { } }
-    if (i === 3) thunder722();
-    if (i === 4) { sting722(); try { sfx("stinger"); } catch (e) { } }
+    try { skipButton.focus({ preventScroll: true }); } catch (_) {}
   }
 
   function draw722(now) {
-    if (!playing) return;
-    frame722++;
-    const tl = now - t0;
-    const fel = !!(S && S.meta && S.meta._char === "felicia");
-    const [si, st] = shotAt(tl);
-    cueAudio(si);
-    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, LW, LH);
-    try { SHOT_FNS[si](ctx, tl, st, fel); } catch (e) { }
-    grain722(ctx, LW, LH);
-    // letterbox
-    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, LW, BAR); ctx.fillRect(0, LH - BAR, LW, BAR);
-    crest(ctx, 46, 32, .42, "#8a6cff");
-    txt(ctx, "NIGHT CRAWL — AFTER THE SHIFT", LW / 2, 32, 20, "#b26bff", "center", "#b26bff");
-    const caps = captions(fel);
-    if (caps[si]) txt(ctx, caps[si], 30, LH - 33, 15, "#c8d4f2", "left");
-    // skip hint
-    if ((tl / 500 | 0) % 2 === 0) txt(ctx, "E / CLICK — SKIP ▸", LW - 24, LH - 33, 14, "#5a6a8f", "right");
-    // fade in / out
-    if (tl < 350) { ctx.fillStyle = `rgba(0,0,0,${1 - tl / 350})`; ctx.fillRect(0, 0, LW, LH); }
-    if (tl > DUR - 450) { ctx.fillStyle = `rgba(0,0,0,${(tl - (DUR - 450)) / 450})`; ctx.fillRect(0, 0, LW, LH); }
-    if (tl >= DUR) return end722(false);
+    if (!playing || !entry) return;
+    if (S !== entry.state) { end722("cancel"); return; }
+    const t = now - t0;
+    if (t >= entry.duration) { end722("full"); return; }
+    const compact = entry.variant !== "full";
+    const si = entry.variant === "repeat" ? 2 : t < SHOTS[1] ? 0 : t < SHOTS[2] ? 1 : 2;
+    const st = compact ? [1180, 980, 1850][si] : t - SHOTS[si];
+    const fel = entry.actor === "felicia";
+    try {
+      if (si !== previousShot) {
+        entry.painted = false;
+        previousShot = si; ov.dataset.nightDriveShot = SHOT_IDS[si];
+        status.textContent = captions(fel)[si];
+        if (!compact && si === 0) { startRain(); pad722(); }
+        if (!compact && si === 1) engine722();
+      }
+      // Hold one still per beat, including the drive and arrival on a first reduced-motion viewing.
+      if (!compact || !entry.painted) {
+        ctx.fillStyle = "#070a12"; ctx.fillRect(0, 0, LW, LH);
+        const narrow = (window.visualViewport?.width || window.innerWidth) < 600;
+        ctx.save();
+        if (narrow && si === 2) {
+          ctx.scale(1.34, 1.34);
+          ctx.translate(-204, -114);
+        }
+        const ready = SHOT_FNS[si](ctx, compact ? 0 : t, st, fel);
+        ctx.restore();
+        // A compact still may be requested while the existing sprite is decoding.
+        // Retry the same still, never draw the Day sprite as a fallback.
+        const art = window.TechOpsArtHandoff;
+        const carReady = fel || !art || !!art.image("charger") || t >= 310;
+        if (!compact || (ready !== false && carReady)) { frame722++; entry.painted = true; }
+        comicFrame(ctx, si, st, compact, narrow);
+      }
+    } catch (_) { end722("unavailable"); return; }
     raf = requestAnimationFrame(draw722);
   }
 
-  function end722(skipped) {
-    if (!playing) return;
-    playing = false;
+  function end722(reason) {
+    if (!playing || !entry) return;
+    const e = entry, hasSameState = S === e.state;
+    playing = false; entry = null;
     cancelAnimationFrame(raf);
     stopAudio722();
+    window.removeEventListener("resize", sizeCanvas);
     window.removeEventListener("keydown", onKey722, true);
-    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
-    ov = cv = ctx = null;
-    if (skipped) stats722.skips++; else stats722.full++;
-    if (S) S.inDialog = false;
-    const cb = after722; after722 = null;
-    if (cb) cb();
+    ov?.remove(); ov = cv = ctx = status = skipButton = null;
+    if (reason === "cancel" || !hasSameState) { stats722.canceled++; priorFocus = null; return; }
+    if (reason === "skip") stats722.skips++;
+    if (reason === "full" && e.variant === "full") stats722.full++;
+    if (reason !== "unavailable") markSeen(e.actor);
+    e.state.inDialog = false;
+    const focus = priorFocus; priorFocus = null;
+    if (focus?.isConnected) { try { focus.focus({ preventScroll: true }); } catch (_) {} }
+    if (!e.state.nightMode) e.after();
   }
 
   function onKey722(e) {
-    if (["e", "E", "Enter", " ", "Escape"].includes(e.key)) { e.stopPropagation(); e.preventDefault(); end722(true); }
-    else { e.stopPropagation(); } // swallow everything else so the world stays frozen
+    if (!playing) return;
+    if (["e", "E", "Enter", " ", "Escape"].includes(e.key) && !e.repeat) {
+      e.stopImmediatePropagation(); e.preventDefault(); end722("skip");
+    } else {
+      e.stopImmediatePropagation(); e.preventDefault();
+    }
   }
 
-  function play722(after) {
-    playing = true; after722 = after; stats722.plays++; frame722 = 0;
-    Object.keys(fired).forEach(k => delete fired[k]);
-    buildOverlay();
-    ov.addEventListener("click", () => end722(true));
-    window.addEventListener("keydown", onKey722, true);
-    t0 = performance.now();
-    raf = requestAnimationFrame(draw722);
+  function play722(state, after) {
+    const actor = actorKey(state);
+    const reduced = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const variant = hasSeen(actor) ? "repeat" : reduced ? "reduced" : "full";
+    entry = {actor, state, after, variant, duration: variant === "repeat" ? SHORT_DUR : DUR};
+    playing = true; frame722 = 0; previousShot = -1; stats722.plays++;
+    if (variant !== "full") stats722.compact++;
+    priorFocus = document.activeElement;
+    try {
+      buildOverlay();
+      window.addEventListener("keydown", onKey722, true);
+      t0 = performance.now(); raf = requestAnimationFrame(draw722);
+    } catch (_) { end722("unavailable"); }
   }
 
-  // ---------- the wrap: every way into the night routes through the cut ----------
   const __origEnterNight722 = enterNight;
   enterNight = function () {
     const s = S;
-    if (playing || !s || s.nightMode) return __origEnterNight722();
-    s.inDialog = true; // freeze the world under the letterbox
-    play722(() => { __origEnterNight722(); });
+    if (!s || s.nightMode) return __origEnterNight722();
+    if (playing) {
+      if (entry.state === s) return; // A double activation cannot mount a second Night world.
+      end722("cancel");
+    }
+    s.inDialog = true;
+    play722(s, () => { __origEnterNight722(); });
   };
 
-  window.v722 = {
-    version: VER, stats: stats722,
-    active: () => playing,
-    frames: () => frame722,
-    skip: () => end722(true),
-    DUR,
-    car: suv, // v7.27: shared Charger/Impreza draw so other scenes reuse the same car
-  };
-  console.log(`[v7.22] Night Drive cinematic loaded (v${VER})`);
+  window.v722 = {version:VER, stats:stats722, active:() => playing,
+    frames:() => frame722, skip:() => end722("skip"), DUR, SHORT_DUR, car:suv};
 })();

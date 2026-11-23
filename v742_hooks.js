@@ -26,7 +26,6 @@
   const SCENE_PANELS = {
     waldo_meet:["waldo_house","waldo_house","waldo_house","waldo_house","waldo_house"],
     waldo_grass:["waldo_house","waldo_house","waldo_house","waldo_house"],
-    waldo_smoke:["waldo_house","waldo_dialogue","waldo_house","waldo_house","waldo_house"],
     waldo_tracker:["waldo_garage","waldo_garage","waldo_garage","waldo_garage","waldo_dialogue","waldo_garage"],
     w_parts:["hidden_bay","hidden_bay","hidden_bay","waldo_garage"],
     w_nowhere:["hidden_bay","hidden_bay","hidden_bay","waldo_house"],
