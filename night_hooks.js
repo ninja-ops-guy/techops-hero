@@ -52,8 +52,22 @@ function nmEnemySpriteIndex(e) {
 // Reference-matched enemy art for ordinary Night only. Unsupported archetypes
 // and unavailable images keep the pre-existing renderer and gameplay state.
 let __nightReferenceEnemies = null, __nightStreetArchetypes = null;
+let nightActionAtlas;
+const nightActionRows = new Map(["guard", "hunter", "thug", "skimmer", "droneop"].map((kind, row) => [kind, row]));
+
+function nightEnemyActionColumn(e, calm) {
+  const combat = e._nightCombat;
+  const time = NM._nightCombat?.time || 0;
+  if (e.down > 0 || combat?.recoverUntil > time) return nightActionRows.get(e.kind) < 2 ? 4 : 3;
+  if (e.hitT > 0 || e.launch > 0 || combat?.held || combat?.air || combat?.stunUntil > time) return 3;
+  if (e.windup > 8) return 2;
+  if (e._press) return calm ? 0 : Math.floor(e.x / 16) & 1;
+  return -1;
+}
+
 function drawNightReferenceEnemy(x, e, ex, now) {
   if (!e || typeof NM !== "undefined" && (NM?._v736 || NM?._sector04?.active || NM?._nightwalker)) return false;
+  const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const frames = { hunter:[10,60,100,132], guard:[10,270,100,138] };
   const street = { thug:0, skimmer:1, droneop:2 };
   const fr = frames[e.kind], streetIndex = street[e.kind];
@@ -64,13 +78,28 @@ function drawNightReferenceEnemy(x, e, ex, now) {
   if (!img.complete || !img.naturalWidth) return false;
   const height = Math.max(68, Math.round((e.h || 38) * 2.2)), cx = Math.round(ex + (e.w || 30) / 2), base = Math.round(e.y + (e.h || 38) + 4);
   x.save(); x.imageSmoothingEnabled = false;
-  if (e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
-  x.translate(cx, base); if (e.down > 0) x.rotate(.24 * Math.sign(e.kb || 1));
-  if (fr) { const width = height * fr[2] / fr[3]; x.drawImage(img, ...fr, -width / 2, -height, width, height); }
-  else { const cell=img.naturalWidth/4, h=height*1.3, w=h*cell/img.naturalHeight; x.drawImage(img,cell*streetIndex,0,cell,img.naturalHeight,-w/2,-h*.91,w,h); }
+  if (!calm && e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
+  x.translate(cx, base);
+  if (NM.x + NM.w / 2 < e.x + e.w / 2) x.scale(-1, 1);
+  const column = nightEnemyActionColumn(e, calm);
+  if (column >= 0 && !nightActionAtlas) {
+    nightActionAtlas = new Image();
+    nightActionAtlas.src = "assets/night-reference/enemy-actions.webp";
+  }
+  if (column >= 0 && nightActionAtlas.complete && nightActionAtlas.naturalWidth) {
+    const scale = height / 138;
+    x.drawImage(nightActionAtlas, column * 192, nightActionRows.get(e.kind) * 160, 192, 160,
+      -96 * scale, -152 * scale, 192 * scale, 160 * scale);
+  } else if (fr) {
+    const width = height * fr[2] / fr[3];
+    x.drawImage(img, ...fr, -width / 2, -height, width, height);
+  } else {
+    const cell = img.naturalWidth / 4, h = height * 1.3, w = h * cell / img.naturalHeight;
+    x.drawImage(img, cell * streetIndex, 0, cell, img.naturalHeight, -w / 2, -h * .91, w, h);
+  }
   x.restore();
   if (e.kind === "droneop" && !e.down) {
-    const cell=img.naturalWidth/4, calm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const cell=img.naturalWidth/4;
     const bob=calm?0:Math.sin(now/240)*4, h=52, w=h*cell/img.naturalHeight;
     x.drawImage(img,cell*3,0,cell,img.naturalHeight,cx-w/2,e.y-52+bob,w,h);
   }
