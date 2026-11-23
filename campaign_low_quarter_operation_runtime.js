@@ -20,8 +20,9 @@
  function button(label,fn){const b=document.createElement('button');b.textContent=label;b.onclick=fn;return b;}
  let interactionKey='',routeKey='';
  function render(){if(!state)return;const o=state.lowQuarterOperation;V.draw($('world'),state);
-   $('status').textContent='HP '+Math.round(o.hp)+' · '+Math.floor(o.tick)+'s · breach '+o.kills+'/18 · '+(paused?'PAUSED':o.checkpoint?'CHECKPOINT':o.halted?'HALTED':'ACTIVE');
-   $('objective').textContent=O.objective(state);$('message').textContent=o.work?'Working: '+o.work.id+' · '+Math.ceil(o.work.remaining)+'s':o.message;
+   const clock=String(Math.floor(o.tick/60)).padStart(2,'0')+':'+String(Math.floor(o.tick%60)).padStart(2,'0');
+   $('status').textContent='IONA '+Math.round(o.hp)+' HP  /  '+clock+' LOCAL  /  BREACH '+o.kills+'/18  /  '+(o.checkpoint?'CHECKPOINT':o.halted?'HALTED':paused?'PAUSED':'ACTIVE');
+   $('objective').textContent=O.objective(state);const currentWork=o.work&&O.PROPS.find(p=>p.id===o.work.id);$('message').textContent=o.work?(currentWork?currentWork.label:'Working')+' · '+Math.ceil(o.work.remaining)+'s':o.message;
    const near=O.nearby(state),key=near.map(p=>p.id).join(',')+Boolean(o.work)+paused;
    if(key!==interactionKey){interactionKey=key;$('actions').replaceChildren();for(const p of near){const b=button(p.label,()=>act(s=>O.interact(s,p.id)));b.dataset.interaction=p.id;b.disabled=!!o.work||paused;$('actions').append(b);
      if(p.kind==='resident'){$('actions').append(button('Respect refusal',()=>act(s=>O.interact(s,p.id,'declined'))));}}
@@ -46,7 +47,7 @@
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&state){Object.keys(keys).forEach(k=>keys[k]=false);commit();paused=true;}});
  root.addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state){commit();paused=true;}});
  root.addEventListener('pagehide',commit);
- function frame(now){const dt=last?Math.min((now-last)/1000,.05):0;last=now;
+ function frame(now){const dt=last?Math.min(Math.max((now-last)/1000,0),.05):0;last=now;
    if(state&&!paused&&!fatal){try{O.step(state,dt,keys);saveAge+=dt;uiAge+=dt;if(saveAge>=1){commit();saveAge=0;}if(uiAge>=.12){render();uiAge=0;}else V.draw($('world'),state);
      if(state.lowQuarterOperation.checkpoint||state.lowQuarterOperation.halted){commit();paused=true;render();}
    }catch(e){fatal=true;paused=true;if(committed)state=JSON.parse(JSON.stringify(committed));$('save-error').textContent='Opening halted safely: '+e.message;}}

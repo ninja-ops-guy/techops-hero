@@ -53,3 +53,7 @@ Run `node test_campaign_low_quarter_operation.js`, the existing rescue and siege
 No local browser pass is claimed when Chromium cannot create its process-singleton socket. Hosted exact-head results must be inspected before claiming browser qualification. The pre-existing board fixture tests still do not qualify the opening and the opening does not qualify a full district rescue.
 
 Remaining: final character/terrain art, broader physical observer-injury scenarios, further combat tuning, local transport recovery, complete district census and geography, later waves and relay access, full mission closeout, natural campaign return integration and physical-device acceptance. Merge/deployment remain separately owner-gated.
+
+## Graphics successor
+
+The presentation successor is documented in [LOW_QUARTER_GRAPHICS.md](LOW_QUARTER_GRAPHICS.md). It replaces the code-art blockout, adds a closer portrait camera and keeps simulation/authority ownership intact. New pixel likeness acceptance and physical-device checks remain separate.

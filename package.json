@@ -14,6 +14,7 @@
     "test:browser:act4": "node scripts/act4_acceptance_browser.mjs",
     "release:assess": "node scripts/quality_release_receipt.mjs",
     "release:r1:assess": "node scripts/quality_release_receipt.mjs",
+    "test:browser:low-quarter-graphics": "node scripts/low_quarter_graphics_browser.mjs",
     "test:browser:low-quarter-operation": "node scripts/low_quarter_operation_browser.mjs",
     "runtime-bot": "node --check scripts/runtime_bot_v13.mjs && node scripts/runtime_bot_v13.mjs"
   },

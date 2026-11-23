@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "scene_id": "LOW_QUARTER_FIRST_WARNING_GRAPHICS",
+  "medium": "game_pixel_art",
+  "channel": "objective_parallel_realm_present",
+  "cast": [
+    "iona",
+    "k_red_el",
+    "local_civilians",
+    "local_defenders",
+    "robot",
+    "infected"
+  ],
+  "chronology": "Approved game opening after explicit ending/epilogue review setup; no new return bridge or comic chronology.",
+  "style": "Hand-authored pixel rendering with industrial materials, warm civic lighting and a separate clear action plane.",
+  "production_method": "Authored Canvas 2D code; no image generation request or image-editing operation.",
+  "references": [
+    {
+      "id": "iona_identity",
+      "source_name": "Iona-original-bible.jpeg",
+      "sha256": "e8c7c9906e674f7cf6aa85d631af4085bde8c31629cb4d2045cb85f97baab0dd",
+      "inspected": true,
+      "scope": "Iona face profile, hair silhouette and ear jewellery; new pixel rendition awaits likeness acceptance.",
+      "source_kind": "CREATOR_REFERENCE_OR_STANDING_PREVIOUS_VOLUME_REUSE",
+      "role": "IDENTITY_OR_COSTUME",
+      "new_output_approved": false
+    },
+    {
+      "id": "iona_workwear",
+      "source_name": "Iona and Mara disconnect the relay.png",
+      "sha256": "d890af079f95097072438788ff85f8d50015ae4db2ef00e09528392c5d9e3cfb",
+      "inspected": true,
+      "scope": "Iona only: practical workwear construction and hair; later dark-jacket correction governs colour. Mara is not part of this scene.",
+      "source_kind": "CREATOR_REFERENCE_OR_STANDING_PREVIOUS_VOLUME_REUSE",
+      "role": "IDENTITY_OR_COSTUME",
+      "new_output_approved": false
+    },
+    {
+      "id": "k_identity",
+      "source_name": "K-original-bible.jpeg",
+      "sha256": "4108430921b780856d49e45bf8747a116945e825d1c97751907cebbe581e5cd3",
+      "inspected": true,
+      "scope": "K beanie, headphones, beard and coat. Later clear-glasses correction supersedes tinted lenses in the older image.",
+      "source_kind": "CREATOR_REFERENCE_OR_STANDING_PREVIOUS_VOLUME_REUSE",
+      "role": "IDENTITY_OR_COSTUME",
+      "new_output_approved": false
+    }
+  ],
+  "protected_simulation_sources": {
+    "campaign_low_quarter_operation.js": "09150435afb940addf47c941ac727620573124d9e576cc11b4953bb49a54cfae",
+    "campaign_low_quarter.js": "ab20c5b7e57f858bdaf4228502882032bf6d998b3e50d43e56e9eea8651889a9",
+    "campaign_chorus_siege.js": "696acce62acb49e25b8d9e1032e10cb8af8bc6310c3d2ec138eff17ac695b514"
+  },
+  "render_states": [
+    "idle",
+    "walk",
+    "work",
+    "strike",
+    "damage",
+    "arrival",
+    "receiving"
+  ],
+  "likeness_status": "OWNER_VISUAL_ACCEPTANCE_PENDING",
+  "release_status": "REVIEW_CANDIDATE_NOT_MERGE_OR_DEPLOY_APPROVAL",
+  "scope_excludes": [
+    "PR154 operation/save/bootstrap changes",
+    "combat balance or hitboxes",
+    "new memories, named losses or story facts",
+    "full district or physical-phone qualification"
+  ]
+}
