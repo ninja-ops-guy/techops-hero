@@ -9,7 +9,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var VERSION = 6;
+  var VERSION = 7;
   var BASE = "assets/campaign/";
   var ENTER_MS = 240;
   var EXIT_MS = 180;
@@ -243,7 +243,7 @@
     var flags = state && state.flags || {};
     var tickets = state && state.tickets || {};
     var historical = /^CASEBOOK\b/i.test(String(dialogName || ""));
-    var p = { sceneId: sceneId, variant: "default", props: (SCENES[sceneId] && SCENES[sceneId].props || []).slice(), motion: [], statusText: null };
+    var p = { sceneId: sceneId, variant: "default", props: (SCENES[sceneId] && SCENES[sceneId].props || []).slice(), motion: [], statusText: null, caption: null, handoff: false };
 
     if (sceneId === "standup") {
       p.board = standupBoard(state);
@@ -253,10 +253,12 @@
     } else if (sceneId === "workstation") {
       var n = String(dialogName || "").toUpperCase();
       var video = n.indexOf("PEOPLE BEHIND THE FLIGHT") >= 0 || n.indexOf("COMPANY // FELICIA") >= 0;
+      var handoff = n.indexOf("09:00 // DAY SHIFT") >= 0;
       p.variant = flags.day_work_unlocked ? "clocked_in" : (video ? "company_video" : "pre_shift");
       p.motion = ["screen_scan", "camera_push"];
-      if (video) p.motion.push("orpheus_glitch");
-      p.statusText = flags.day_work_unlocked ? "DAY SHIFT ACTIVE" : "TICKET CLOCK PAUSED";
+      if (video) { p.motion.push("orpheus_glitch"); p.caption = "PEOPLE BEHIND THE FLIGHT · FELICIA / SECURITY RESEARCH"; }
+      if (handoff) { p.handoff = true; p.caption = "RETURN TO FLOOR · SHIPPING IS WAITING"; }
+      p.statusText = video ? "COMPANY PROFILE // INTERNAL MEDIA" : flags.day_work_unlocked ? "DAY SHIFT ACTIVE" : "TICKET CLOCK PAUSED";
     } else if (sceneId === "shipping") {
       var shipping = casebookRecord(state, "shipping_cannot_print", historical);
       var shippingDone = !!(shipping && shipping.status === "VERIFIED / RESTORED");
@@ -295,6 +297,8 @@
       ".act1-reference .a1-bg{position:absolute;inset:-2%;background-size:cover;background-position:center;image-rendering:auto;filter:saturate(.92) contrast(1.06);animation:a1-breathe 8s ease-in-out infinite alternate}",
       ".act1-reference .a1-grade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,10,15,.74),rgba(5,10,15,.12) 45%,rgba(5,10,15,.55)),radial-gradient(circle at 50% 42%,transparent 20%,rgba(0,0,0,.6) 100%)}",
       ".act1-reference .a1-label{position:absolute;left:18px;top:max(18px,env(safe-area-inset-top));font-size:9px;color:#d7e6ea;letter-spacing:1px;text-shadow:0 2px 0 #000}",
+      ".act1-reference .a1-caption{position:absolute;left:8%;right:8%;bottom:calc(var(--techops-dialog-height,120px) + 14px);padding:8px 10px;border-left:3px solid #79d6e8;background:linear-gradient(90deg,rgba(4,12,19,.9),rgba(4,12,19,.42));color:#d7eef2;font:700 8px/1.5 'Courier New',monospace;letter-spacing:.12em;text-shadow:0 2px 0 #000;pointer-events:none}",
+      ".act1-reference.a1-handoff .a1-caption{border-color:#7effcd;color:#c7f7df}",
       ".act1-reference .a1-status{position:absolute;left:8%;right:8%;bottom:calc(var(--a1-floor-bottom,18%) + 12px);padding:9px 12px;border:1px solid rgba(215,230,234,.16);background:rgba(4,10,14,.68);color:#d7e6ea;font-size:8px;line-height:1.5;text-align:center;text-shadow:0 2px 0 #000}",
       ".act1-reference.a1-verified .a1-status,.act1-reference.a1-restored .a1-status,.act1-reference.a1-documented .a1-status,.act1-reference.a1-owned .a1-status{color:#7effcd;border-color:rgba(126,255,205,.32)}",
       ".act1-reference .a1-anchored{position:absolute;z-index:1;image-rendering:pixelated;filter:drop-shadow(0 10px 8px rgba(0,0,0,.5))}",
@@ -336,7 +340,7 @@
       "@keyframes a1-beacon{0%,45%{opacity:.25}50%,100%{opacity:1}}@keyframes a1-machine{from{transform:translateX(-30%)}to{transform:translateX(30%)}}@keyframes a1-run{from{transform:translateX(-40%)}to{transform:translateX(40%)}}",
       "@keyframes a1-audit{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(165px);opacity:.8}}@keyframes a1-lock{0%,100%{opacity:.35}50%{opacity:.8}}@keyframes a1-verify{0%,100%{opacity:.25;transform:scaleX(.5)}50%{opacity:.9;transform:scaleX(1)}}@keyframes a1-boardfocus{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}",
       "@media(prefers-reduced-motion:reduce){.act1-reference,.act1-reference *{animation:none!important;transition:none!important;clip-path:none!important}}",
-      "@media(max-width:600px){.act1-reference .a1-label{font-size:7px}.act1-reference .a1-status{font-size:6px}.act1-reference .a1-actor{right:4%;height:40%;max-width:44%;bottom:calc(var(--a1-floor-bottom,18%) + 7%)}.act1-reference .a1-props{left:4%;right:4%;gap:8px;bottom:calc(var(--a1-floor-bottom,18%) + 7%);height:24%}.act1-reference.a1-first_person .a1-props{left:6%;right:6%;height:36%}.act1-reference.a1-investigation:after{left:4%;right:4%;font-size:7px;padding:12px}.act1-reference .a1-forklift{bottom:calc(var(--a1-floor-bottom,18%) + 10%)}}"
+      "@media(max-width:600px){.act1-reference .a1-label{font-size:7px}.act1-reference .a1-caption{left:5%;right:5%;bottom:calc(var(--techops-dialog-height,120px) + 8px);font-size:7px;padding:6px 8px}.act1-reference .a1-status{font-size:6px}.act1-reference .a1-actor{right:4%;height:40%;max-width:44%;bottom:calc(var(--a1-floor-bottom,18%) + 7%)}.act1-reference .a1-props{left:4%;right:4%;gap:8px;bottom:calc(var(--a1-floor-bottom,18%) + 7%);height:24%}.act1-reference.a1-first_person .a1-props{left:6%;right:6%;height:36%}.act1-reference.a1-investigation:after{left:4%;right:4%;font-size:7px;padding:12px}.act1-reference .a1-forklift{bottom:calc(var(--a1-floor-bottom,18%) + 10%)}}"
     ].join("\n"); root.document.head.appendChild(s);
   }
 
@@ -427,7 +431,9 @@
     if (profile.board) appendStandupBoard(el, profile.board);
     addMotion(el, profile);
     if (!reducedMotion()) el.appendChild(motionNode("a1-world-anchor"));
+    if (profile.handoff) el.className += " a1-handoff";
     var label = root.document.createElement("div"); label.className = "a1-label"; label.textContent = spec.label; el.appendChild(label);
+    if (profile.caption) { var caption = root.document.createElement("div"); caption.className = "a1-caption"; caption.setAttribute("aria-hidden", "true"); caption.textContent = profile.caption; el.appendChild(caption); }
     if (profile.statusText) { var status = root.document.createElement("div"); status.className = "a1-status"; status.textContent = profile.statusText; el.appendChild(status); }
     // The fixed game wrapper is a stacking context. Keep scene and dialogue in
     // that same context so authored art cannot cover the choices that advance it.
