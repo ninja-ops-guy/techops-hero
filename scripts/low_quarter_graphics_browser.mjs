@@ -4,8 +4,16 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});const
 try{for(const [width,height] of [[1280,900],[320,740],[390,844],[844,390]]){
  const context=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:width===320?'reduce':'no-preference'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  if(width===320)await page.addInitScript(()=>{const raf=requestAnimationFrame.bind(window);let tested=false;window.requestAnimationFrame=callback=>raf(t=>{if(!tested&&document.getElementById('setup')?.hidden){tested=true;callback(t-1000);}else callback(t);});});
- await page.goto(new URL('low-quarter-review.html',root).href);await page.click('#launch');await page.click('#pause');
- assert.equal(await page.locator('#save-error').textContent(),'');assert(await page.locator('#touch').isVisible());for(const id of ['use','strike','pause']){const r=await page.locator('#'+id).boundingBox();assert(r.height>=44);}
+ await page.goto(new URL('low-quarter-review.html',root).href);await page.click('#launch');
+ if(width===844){
+  // Real controls before any art fixture: no position, clock or receipt seeding.
+  const before=await page.evaluate(()=>TechOpsLowQuarterOperationRuntime.snapshot().lowQuarterOperation.x);
+  const r=await page.locator('[data-hold="right"]').boundingBox();await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();
+  await page.waitForFunction(x=>TechOpsLowQuarterOperationRuntime.snapshot().lowQuarterOperation.x>x+20,before);await page.mouse.up();
+  assert((await page.evaluate(()=>TechOpsLowQuarterOperationRuntime.snapshot().lowQuarterOperation.x))>before+20,'Visible landscape pointer movement must work');
+ }
+ await page.click('#pause');
+ assert.equal(await page.locator('#save-error').textContent(),'');assert(await page.locator('#touch').isVisible());if(width===844){for(const id of ['world','touch']){const r=await page.locator('#'+id).boundingBox();assert(r.y>=0&&r.y+r.height<=height,'Landscape '+id+' must be simultaneously visible');}}for(const id of ['use','strike','pause']){const r=await page.locator('#'+id).boundingBox();assert(r.height>=44);}
  for(const room of ['approaches','services','shelters','departure','receiving']){
   const r=await page.evaluate(room=>{
    // EXPLICIT GRAPHICS FIXTURE: not campaign progression or playthrough evidence.

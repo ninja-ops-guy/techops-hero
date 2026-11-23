@@ -8,7 +8,7 @@
  function persist(candidate){const v=O.validate(candidate);if(!v.valid||v.blocked)throw Error(v.reason);C.save(candidate,storage);return true;}
  function commit(){if(!state)return false;try{persist(state);committed=JSON.parse(JSON.stringify(state));$('save-error').textContent='';return true;}catch(e){
    if(committed)state=JSON.parse(JSON.stringify(committed));paused=true;$('save-error').textContent=e.message+' · Paused at last committed state. Free storage or retry after reload.';return false;}}
- function show(){ $('setup').hidden=true;$('game').hidden=false;last=performance.now();render();$('world').focus();}
+ function show(){ document.body.classList.add('opening-active');$('setup').hidden=true;$('game').hidden=false;last=performance.now();render();$('world').focus();}
  function start(ending){
    const initial=C.createInitialState();initial.story={schemaVersion:2,completedActs:['epilogue'],facts:{campaign_complete:true},ending};
    initial.lateGame={chapters:{ending,campaignComplete:true}};
@@ -37,7 +37,7 @@
  }
  $('launch').onclick=()=>{try{start($('ending').value);}catch(e){$('save-error').textContent=e.message;}};
  $('resume').onclick=()=>{try{resume();}catch(e){$('save-error').textContent=e.message;}};
- $('restart').onclick=()=>{if(confirm('Discard only this tab’s opening review and return to the command selection?')){state=null;committed=null;C.reset(storage);$('game').hidden=true;$('setup').hidden=false;$('resume').hidden=true;interactionKey='';routeKey='';}};
+ $('restart').onclick=()=>{if(confirm('Discard only this tab’s opening review and return to the command selection?')){state=null;committed=null;document.body.classList.remove('opening-active');C.reset(storage);$('game').hidden=true;$('setup').hidden=false;$('resume').hidden=true;interactionKey='';routeKey='';}};
  $('pause').onclick=()=>{if(!state)return;if(!paused&&!commit())return;paused=!paused;Object.keys(keys).forEach(k=>keys[k]=false);render();};
  $('strike').onclick=()=>act(O.attack);$('use').onclick=()=>{if(state){const p=O.nearby(state)[0];if(p)act(s=>O.interact(s,p.id));}};
  const map={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump'};

@@ -10,7 +10,7 @@ K and Iona have distinct pixel silhouettes, costumes and idle/walk/work/strike p
 
 The ship has a damaged industrial silhouette and bounded infestation detail; the evacuation vehicle has windows, doors, wheels and an unmistakably separate civic silhouette. Nearby devices have distinct watch optics, dispatch boards, power/radio cabinets, ventilation, mechanical levers and care equipment. Verified interactions and occupied posts have restrained cues. Damage flashes follow actual HP reduction; no hitbox, attack timing or damage value is changed. Drawing issues no mission receipts.
 
-The portrait camera uses a 600×420 logical view instead of shrinking the entire 960×420 field. Desktop retains 960×420. Both keep aspect ratio; this is camera framing only, not a change to world coordinates or travel time. Only the current nearby person/device receives a canvas label. The accessible DOM still supplies full objectives, actions and status; debug identifiers are removed from floating scene labels. Review CSS provides larger touch controls, focus rings and clearer task/route/interaction hierarchy. Work text uses the authored action name and the status shows a readable local clock.
+The portrait camera uses a 600×420 logical view instead of shrinking the entire 960×420 field. Desktop retains 960×420. Both keep aspect ratio; this is camera framing only, not a change to world coordinates or travel time. Only the current nearby person/device receives a canvas label. The accessible DOM still supplies full objectives, actions and status; debug identifiers are removed from floating scene labels. Review CSS provides larger touch controls, focus rings and clearer task/route/interaction hierarchy. Short landscape uses a fixed viewport grid: scene and controls remain visible together while mission actions scroll in a separate side pane. Small canvas text is secondary; full objectives/actions stay in accessible DOM text. Work text uses the authored action name and the status shows a readable local clock.
 
 ## Sources and authority
 
@@ -29,11 +29,11 @@ One startup guard clamps a negative animation-frame delta to zero. A RAF callbac
 ## Verification
 
 - `node test_low_quarter_graphics.js`: 40 frozen-state combinations of sector, viewport and reduced motion; drawing preserves the entire input state. Includes background reuse, deterministic rendering and CSS isolation checks.
-- `node scripts/low_quarter_graphics_browser.mjs`: 20 explicitly labeled **graphics-only fixtures** across all five spaces at 1280×900, 320×740, 390×844 and 844×390. Checks no horizontal overflow, 44px minimum action controls, zero page/runtime errors, state immutability, bounded mean draw cost and the startup RAF guard. Screenshots inspect art/layout; these fixtures do not claim campaign progress.
+- `node scripts/low_quarter_graphics_browser.mjs`: 20 explicitly labeled **graphics-only fixtures** across all five spaces at 1280×900, 320×740, 390×844 and 844×390. Checks no horizontal overflow, 44px minimum action controls, simultaneous short-landscape scene/controls, zero page/runtime errors, real pointer-held movement in the landscape layout, state immutability, bounded mean draw cost and the startup RAF guard. Screenshots inspect art/layout; these fixtures do not claim campaign progress.
 - The existing six natural-input opening playthroughs remain separate acceptance: three endings at desktop/touch sizes, actual repairs/commands/combat/receiving, save/reload and ordinary-save isolation.
 - The 14 operation tests, existing 58 rescue cases, 22 siege tests and full production gate remain required. Source-bound CI retains CSS, renderer, runtime and harness hashes.
 
-The local 20-fixture run's worst **mean** draw cost was 1.619ms per draw (120 repeated draws per fixture, this headless machine). This is not a percentile, physical-phone FPS, touch latency, GPU-memory guarantee or device-performance qualification.
+The local 20-fixture run's worst **mean** draw cost was 1.420ms per draw (120 repeated draws per fixture, this headless machine). This is not a percentile, physical-phone FPS, touch latency, GPU-memory guarantee or device-performance qualification.
 
 ## Release status
 
