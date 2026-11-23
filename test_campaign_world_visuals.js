@@ -45,10 +45,10 @@ assert.strictEqual(typeof visuals.loadGoodBoysCanon, "function");
 // without changing the map, route model, or existing interaction authority.
 {
   const prior = {};
-  ["cv", "ctx", "TILE", "camX", "S", "TechOpsDayWorld"].forEach(key => { prior[key] = global[key]; });
+  ["cv", "ctx", "TILE", "camX", "camY", "S", "TechOpsDayWorld"].forEach(key => { prior[key] = global[key]; });
   const words = [];
   global.cv = { width: 1344, height: 1024 };
-  global.TILE = 32; global.camX = 0;
+  global.TILE = 32; global.camX = 0; global.camY = 0;
   global.ctx = {
     save() {}, restore() {}, fillRect() {}, strokeRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, stroke() {},
     fillText(text) { words.push(String(text)); }
