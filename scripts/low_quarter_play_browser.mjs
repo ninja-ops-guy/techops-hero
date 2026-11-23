@@ -13,6 +13,7 @@ const outcomes=await Promise.allSettled([['shutdown',false],['control',false],['
  const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined});
  try{
   const name=ending+(layout?'-'+layout:touch?'-touch':'-desktop'),context=await browser.newContext({viewport:layout==='compact'?{width:320,height:568}:layout==='landscape'?{width:844,height:390}:touch?{width:390,height:844}:{width:1280,height:800},hasTouch:touch,isMobile:touch,reducedMotion:touch?'reduce':'no-preference'}),page=await context.newPage(),errors=[];
+  let startup;
   page.on('pageerror',e=>errors.push(e.message));
   try{
   await context.route('**/*',r=>r.request().url().startsWith(base)?r.continue():r.abort());
@@ -38,13 +39,31 @@ const outcomes=await Promise.allSettled([['shutdown',false],['control',false],['
   }
   async function wait(predicate,limit=1500){for(let n=0;n<limit;n++){if(predicate(await snapshot()))return;await run(1000);}throw Error('World observation timed out: '+(await snapshot()).message);}
   async function go(to){if((await snapshot()).player.sector===to)return;if(!(await objects()).some(o=>o.id==='exit_'+to))await go('services');await use('exit_'+to);await wait(s=>!s.travel);}
+  const expectedWidth = touch && layout !== 'landscape' ? 540 : 960;
+  for (let waits = 0; ; waits++) {
+   const sample = await page.evaluate(() => {
+    const play = window.TechOpsLowQuarterPlay;
+    return { active: play.active(), snapshot: play.snapshot(), presentation: play.presentation(), error: play.error() };
+   });
+   startup = { waits, ...sample };
+   assert.deepEqual(errors, [], 'page error during mission startup');
+   assert.equal(sample.error, null, 'mission error during startup');
+   assert(sample.active && sample.snapshot, 'mission must be active before sampling motion');
+   if (sample.presentation !== null) {
+    assert(Number.isFinite(sample.presentation.x), 'first presented x must be finite');
+    assert.equal(sample.presentation.width, expectedWidth, 'first presented width');
+    break;
+   }
+   assert(waits < 10, 'renderer did not publish its first presentation within 160 ms');
+   await page.clock.runFor(16);
+  }
   // Observe the real renderer between fixed simulation ticks under actual input.
   await page.evaluate(()=>{window.__motionFrames=[];function observe(){const p=TechOpsLowQuarterPlay.presentation(),s=TechOpsLowQuarterPlay.snapshot();window.__motionFrames.push({x:p.x,elapsed:s.elapsed,sim:s.player.x,width:p.width});if(window.__motionFrames.length<32)requestAnimationFrame(observe);}requestAnimationFrame(observe);});
   await page.keyboard.down('ArrowRight');await page.clock.runFor(540);await page.keyboard.up('ArrowRight');
   const motion=await page.evaluate(()=>window.__motionFrames);
   assert(motion.some((v,i)=>i>0&&v.elapsed===motion[i-1].elapsed&&v.x!==motion[i-1].x),'renderer moves between unchanged fixed simulation ticks');
   assert(motion.every(v=>v.x<=v.sim+.01&&v.x>=v.sim-12),'rendered actor never extrapolates beyond gameplay position');
-  assert.equal(motion[0].width,touch&&layout!=='landscape'?540:960,'portrait recomposes without changing mission geography');
+  assert.equal(motion[0].width,expectedWidth,'portrait recomposes without changing mission geography');
   fs.writeFileSync(output+'/'+name+'-motion.json',JSON.stringify(motion,null,2));
   for(let i=0;i<4;i++)await use('access_'+i);console.log(name+': access crossing complete');await use('threat');
   for(const sector of ['approaches','services','shelters','departure']){
@@ -75,7 +94,7 @@ const outcomes=await Promise.allSettled([['shutdown',false],['control',false],['
   assert.deepEqual(result,{outcome:'district_saved',safe:48,ending,phase:'closed',picket:'safe',arrivals:4});assert.deepEqual(errors,[]);
   await page.screenshot({path:output+'/'+name+'-aftermath.png'});reports.push({name,result,errors,qualification:'Completed-epilogue fixture only; full mission uses keyboard and dialogue controls with virtual time. Touch layout is emulation, not physical iPhone.'});
   fs.writeFileSync(output+'/playthroughs.json',JSON.stringify(reports,null,2)+'\n');console.log(name+': playable mission, four sectors, all 48 shelter handoffs, four physical arrivals, pause/reload and closeout PASS');
-  }catch(error){let saved;try{saved=await page.evaluate(()=>window.TechOpsLowQuarterPlay?.snapshot());}catch{}fs.writeFileSync(output+'/'+name+'-failure.json',JSON.stringify({error:String(error),snapshot:saved,errors},null,2)+'\n');await page.screenshot({path:output+'/'+name+'-failure.png'}).catch(()=>{});throw error;}finally{await context.close();}
+  }catch(error){let saved;try{saved=await page.evaluate(()=>window.TechOpsLowQuarterPlay?.snapshot());}catch{}fs.writeFileSync(output+'/'+name+'-failure.json',JSON.stringify({error:String(error),snapshot:saved,startup,errors},null,2)+'\n');await page.screenshot({path:output+'/'+name+'-failure.png'}).catch(()=>{});throw error;}finally{await context.close();}
  }finally{await browser.close();}
 }));
 const failures=outcomes.filter(v=>v.status==='rejected');
