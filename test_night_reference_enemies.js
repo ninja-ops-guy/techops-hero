@@ -18,5 +18,6 @@ instances[1].complete=true;instances[1].naturalWidth=2172;instances[1].naturalHe
 for(const kind of ['thug','skimmer','droneop']){const e=enemy(kind),before=JSON.stringify(e),count=draws.length;assert.equal(draw(ctx,e,100,0),true);assert.equal(JSON.stringify(e),before);assert.equal(draws.length-count,kind==='droneop'?2:1);}
 assert.equal(draw(ctx,enemy('unknown'),100,0),false);
 sandbox.NM._v736={};assert.equal(draw(ctx,enemy('guard'),100,0),false,'Good Dogs retains its renderer');delete sandbox.NM._v736;
-sandbox.NM._sector04={active:true};assert.equal(draw(ctx,enemy('guard'),100,0),false,'Sector 04 retains its renderer');
+sandbox.NM._sector04={active:true};assert.equal(draw(ctx,enemy('guard'),100,0),false,'Sector 04 retains its renderer');delete sandbox.NM._sector04;
+sandbox.NM._nightwalker={};assert.equal(draw(ctx,enemy('guard'),100,0),false,'West Annex retains its renderer');
 console.log('Night enemy candidate: five archetypes, asset failure fallback, mode boundaries and non-mutating render PASS.');

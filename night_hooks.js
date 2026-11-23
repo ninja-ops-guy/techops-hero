@@ -53,7 +53,7 @@ function nmEnemySpriteIndex(e) {
 // and unavailable images keep the pre-existing renderer and gameplay state.
 let __nightReferenceEnemies = null, __nightStreetArchetypes = null;
 function drawNightReferenceEnemy(x, e, ex, now) {
-  if (!e || typeof NM !== "undefined" && (NM?._v736 || NM?._sector04?.active)) return false;
+  if (!e || typeof NM !== "undefined" && (NM?._v736 || NM?._sector04?.active || NM?._nightwalker)) return false;
   const frames = { hunter:[10,60,100,132], guard:[10,270,100,138] };
   const street = { thug:0, skimmer:1, droneop:2 };
   const fr = frames[e.kind], streetIndex = street[e.kind];
