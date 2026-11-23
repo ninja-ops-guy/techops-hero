@@ -69,6 +69,15 @@ for(const [name,type,touch] of profiles){
   if(touch)await click(page.locator('#tb-interact'));else await page.keyboard.press('KeyE');
   await page.getByText('THE CHARGER',{exact:false}).first().waitFor({state:'visible'});
   await click(page.locator('#dlg-options button').filter({hasText:'Back to the street.'}));checks.push('Charger interaction preserved');
+  // Explicit visual fixture only; restore the normal scene before input tests.
+  const savedScene=await page.evaluate(()=>({x:NM.x,cam:NM.cam,platforms:NM.platforms,enemies:NM.enemies}));
+  try {
+   await page.evaluate(()=>{const n=NM;n.x=420;n.cam=120;n.platforms=[];n.enemies=['thug','guard','skimmer','hunter','droneop'].map((kind,i)=>({x:540+i*125,y:396,w:27,h:34,hp:100,maxHp:100,kind,name:kind,alive:true,dmg:0,spd:0,windup:0,hitT:0,cd:999,cash:[0,0]}));});
+   await page.waitForFunction(()=>typeof __nightReferenceEnemies!=='undefined'&&__nightReferenceEnemies?.complete&&__nightReferenceEnemies.naturalWidth>0&&typeof __nightStreetArchetypes!=='undefined'&&__nightStreetArchetypes?.complete&&__nightStreetArchetypes.naturalWidth>0);
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   await shot('reference-archetype-fixture');checks.push('five-archetype art fixture decoded; no campaign progress');
+  } finally { await page.evaluate(saved=>Object.assign(NM,saved),savedScene); }
+
   // Preserve the existing touch grab/throw checks through the optional controls.
   await click(page.locator('#night-input-assists'));
   await page.locator('#night-input-grab').waitFor({state:'visible'});

@@ -1,0 +1,20 @@
+{
+  "status": "DRAFT_REVIEW_CANDIDATE",
+  "reference_atlas": {
+    "name": "techops-hero-enemy-combat-sprites-transparent.png",
+    "sha256": "9b71eb3256d0a88455a462336817cbda38edc447d74e369ca24abfe3a05b2b5b",
+    "scope": "guard and hunter neutral art, inspected; personal provenance is not a blanket approval of this adaptation"
+  },
+  "new_generated_candidate": "street-archetypes-candidate.webp: street thug, unarmed skimmer, drone operator and separate drone; generated using the retrieved reference atlas as the style anchor",
+  "assets_sha256": {
+    "street-archetypes-candidate.webp": "fe9a21408334533136ecca3c48253acb0c5e6153f4c84393ea5740bb5fce046b",
+    "enemies-candidate.webp": "2df19ef54501fec701e503839af5a3a8c8119730379c092fb7796c715df7d99c"
+  },
+  "scene_scope": "Ordinary Night only; Good Dogs and active Sector 04 keep their established renderers. Fallback stays in place when the image fails or kind is unsupported.",
+  "limits": [
+    "All five role drawings are static neutral poses, not a completed animation suite",
+    "Drone sprite is a decorative companion using the existing operator behavior",
+    "Visual approval, physical iPhone/Safari, all districts, bosses, cinematics, ally/civilian and special-mode coverage remain open",
+    "No combat, damage, timing, input, saving or story changes"
+  ]
+}

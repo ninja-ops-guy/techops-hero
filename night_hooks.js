@@ -49,7 +49,35 @@ function nmEnemySpriteIndex(e) {
   return 0;
 }
 
+// Reference-matched enemy art for ordinary Night only. Unsupported archetypes
+// and unavailable images keep the pre-existing renderer and gameplay state.
+let __nightReferenceEnemies = null, __nightStreetArchetypes = null;
+function drawNightReferenceEnemy(x, e, ex, now) {
+  if (!e || typeof NM !== "undefined" && (NM?._v736 || NM?._sector04?.active)) return false;
+  const frames = { hunter:[10,60,100,132], guard:[10,270,100,138] };
+  const street = { thug:0, skimmer:1, droneop:2 };
+  const fr = frames[e.kind], streetIndex = street[e.kind];
+  if (!fr && streetIndex === undefined) return false;
+  if (fr && !__nightReferenceEnemies) { __nightReferenceEnemies = new Image(); __nightReferenceEnemies.src = "assets/night-reference/enemies-candidate.webp"; }
+  if (!fr && !__nightStreetArchetypes) { __nightStreetArchetypes = new Image(); __nightStreetArchetypes.src = "assets/night-reference/street-archetypes-candidate.webp"; }
+  const img = fr ? __nightReferenceEnemies : __nightStreetArchetypes;
+  if (!img.complete || !img.naturalWidth) return false;
+  const height = Math.max(68, Math.round((e.h || 38) * 2.2)), cx = Math.round(ex + (e.w || 30) / 2), base = Math.round(e.y + (e.h || 38) + 4);
+  x.save(); x.imageSmoothingEnabled = false;
+  if (e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
+  x.translate(cx, base); if (e.down > 0) x.rotate(.24 * Math.sign(e.kb || 1));
+  if (fr) { const width = height * fr[2] / fr[3]; x.drawImage(img, ...fr, -width / 2, -height, width, height); }
+  else { const cell=img.naturalWidth/4, h=height*1.3, w=h*cell/img.naturalHeight; x.drawImage(img,cell*streetIndex,0,cell,img.naturalHeight,-w/2,-h*.91,w,h); }
+  x.restore();
+  if (e.kind === "droneop" && !e.down) {
+    const cell=img.naturalWidth/4, calm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const bob=calm?0:Math.sin(now/240)*4, h=52, w=h*cell/img.naturalHeight;
+    x.drawImage(img,cell*3,0,cell,img.naturalHeight,cx-w/2,e.y-52+bob,w,h);
+  }
+  return true;
+}
 function drawNightEnemyAtlas(x, e, ex, now) {
+  if (drawNightReferenceEnemy(x, e, ex, now)) return true;
   const img = nmGlitchImg();
   if (!img || !e) return false;
   const C = 112;
