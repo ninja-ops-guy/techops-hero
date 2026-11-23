@@ -2,9 +2,10 @@
 // Fixture-assisted UI acceptance: production startup and actual incident buttons.
 // Explicit coordinate placement and scene entry are NOT an unassisted playthrough.
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { openApp, inspectDesktop, traceLabels, repairQueue } from './lib/doors_workstation.mjs';
 
@@ -18,10 +19,24 @@ const profiles = [
   { id: 'compact', width: 320, height: 568, touch: true },
   { id: 'landscape', width: 844, height: 390, touch: true }
 ].filter(p => !process.env.DAY_DEVICE_PROFILES || process.env.DAY_DEVICE_PROFILES.split(',').includes(p.id));
+const sourcePaths = [
+  'index.html', 'runtime_day.js', 'runtime_day_prompt.js', 'runtime_day.css', 'runtime_day_doors.js', 'runtime_day_doors.css',
+  'runtime_day_plating.js', 'runtime_day_plating.css', 'runtime_day_security.js', 'runtime_day_security.css',
+  'runtime_day_world.js', 'campaign_act1.js', 'campaign_act1_investigations.js', 'campaign_native_act1.js',
+  'scripts/day_device_acceptance_browser.mjs', 'scripts/lib/doors_workstation.mjs',
+  '.github/workflows/day-device-experience.yml'
+];
+async function sourceIdentity() {
+  const hashes = Object.fromEntries(await Promise.all(sourcePaths.map(async file =>
+    [file, createHash('sha256').update(await readFile(file)).digest('hex')])));
+  return { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    tree: execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim(),
+    runId: process.env.GITHUB_RUN_ID || null, runAttempt: process.env.GITHUB_RUN_ATTEMPT || null, hashes };
+}
 const report = {
   status: 'running', fixture: true, browser: 'chromium',
   scope: 'Fixture-assisted Day device UI: real New Day, Standard, Clock in and morning choices; declared scene-exit and coordinate fixtures at authored approach tiles. Printer-to-workstation routing is traversed with actual keyboard input; other scene entries remain fixture-assisted. Actual incident buttons drive evidence and case progression. Not a complete unassisted walk, physical-phone certification, or soundtrack playback certification. External requests are blocked; music mapping is verified against a stubbed playlist widget (recorded track id must match the playlist Red in the Mirror entry) while audible playback stays uncertified.',
-  profiles: []
+  profiles: [], sourceBefore: null, sourceAfter: null, sourceUnchanged: false
 };
 let browser, activePage, server;
 await mkdir(out, { recursive: true });
@@ -105,8 +120,58 @@ async function walkMarkedRoute(page, stationId) {
   }
   throw Error('Marked keyboard route exceeded its bounded 160-step budget');
 }
+async function assertBatchLayout(page, label, selector = '.doors-field') {
+  const surface = page.locator(selector);
+  await surface.waitFor({ state: 'visible' });
+  const bounds = await surface.evaluate(el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: innerWidth, height: innerHeight,
+      documentWidth: document.body.scrollWidth,
+      regions: [...el.querySelectorAll('.doors-pane,.doors-properties,.doors-terminal,[data-plating-session],.doors-security')]
+        .map(node => ({ name: node.className, client: node.clientWidth, scroll: node.scrollWidth })) };
+  });
+  assert.ok(bounds.x >= -1 && bounds.y >= -1 && bounds.right <= bounds.width + 1 && bounds.bottom <= bounds.height + 1, label + ' fits viewport');
+  assert.ok(bounds.documentWidth <= bounds.width + 1, label + ' does not cause page horizontal overflow');
+  for (const region of bounds.regions) assert.ok(region.scroll <= region.client + 1, label + ' fits horizontally: ' + JSON.stringify(region));
+  const buttons = surface.locator('button:visible:not(:disabled)');
+  for (const button of await buttons.all()) {
+    await button.scrollIntoViewIfNeeded();
+    const b = await button.evaluate(el => {
+      const r = el.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return { label: el.getAttribute('aria-label') || el.textContent, width: r.width, height: r.height, hit: el.contains(hit) };
+    });
+    assert.ok(b.width >= 43.9 && b.height >= 43.9, label + ' has 44px controls: ' + JSON.stringify(b));
+    assert.ok(b.hit, label + ' unobscured control: ' + b.label);
+  }
+  return bounds;
+}
+async function keyboardTrap(page) {
+  const focusable = page.locator('#dlg-text button:visible:not(:disabled),#dlg-text input:visible:not(:disabled)');
+  await focusable.first().focus();
+  await page.keyboard.press('Shift+Tab');
+  assert.ok(await focusable.last().evaluate(el => document.activeElement === el), 'Shift+Tab wraps to last desktop control');
+  await page.keyboard.press('Tab');
+  assert.ok(await focusable.first().evaluate(el => document.activeElement === el), 'Tab wraps to first desktop control');
+}
+async function fixtureAtRequester(page, ticketId) {
+  return page.evaluate(ticketId => {
+    // Declared approach-only fixture: the real requester dialog and button
+    // must witness the task. No record, evidence or outcome is manufactured.
+    if (S.inDialog) closeDlg();
+    if (S.room) v69ExitRoom();
+    const id = ticketId === 'plating_workstation_down' ? 'plating' : 'shipping';
+    const contact = TechOpsDayWorld.contact(id);
+    if (!contact) throw Error('Missing authored requester ' + id);
+    const p = [[0,1],[-1,0],[1,0],[0,-1]].map(([x,y])=>({x:contact.x+x,y:contact.y+y}))
+      .find(p=>S.map[p.y]?.[p.x]===0 && !S.npcs.some(n=>n.x===p.x&&n.y===p.y));
+    if (!p) throw Error('No walkable requester approach ' + id);
+    S.px=p.x; S.py=p.y;
+    if (!TechOpsDayExperience.talk(ticketId)) throw Error('Requester refused physical approach ' + id);
+    return { id, position: p, contact: { x: contact.x, y: contact.y } };
+  }, ticketId);
+}
 async function screenshot(page, id, scene) {
-  await page.locator('#dlg-text, .day-workspace, .day-evidence').evaluateAll(nodes => nodes.forEach(el => { el.scrollTop = 0; }));
+  await page.locator('#dlg-text, .day-workspace, .day-evidence, .doors-pane, .os-content').evaluateAll(nodes => nodes.forEach(el => { el.scrollTop = 0; }));
   await page.screenshot({ path: `${out}/${id}-${scene}.png`, fullPage: true });
 }
 async function assertConsole(page, label) {
@@ -193,6 +258,19 @@ async function morningOpening(page, result) {
   await page.getByRole('log').getByText(/MIKE-WS/).waitFor();
   await command.fill('<img src=x onerror=alert(1)>'); await click(page, 'Run');
   assert.equal(await page.locator('.doors-terminal img').count(), 0);
+  assert.ok(await page.locator('.doors-terminal [data-kind=input]').count(), 'Prompt distinguishes typed input');
+  assert.ok(await page.locator('.doors-terminal [data-kind=output]').count(), 'Prompt distinguishes command output');
+  assert.ok(await page.locator('.doors-terminal [data-kind=error]').count(), 'Prompt distinguishes command errors');
+  await page.getByRole('log').getByText(/Unknown command/).waitFor();
+  assert.match(await page.getByRole('log').innerText(), /<img src=x onerror=alert\(1\)>/, 'command is displayed literally');
+  assert.ok(await command.evaluate(el => document.activeElement === el), 'Prompt returns focus after Run');
+  result.promptLayout = await assertBatchLayout(page, result.id + ' Prompt', '.os-desktop');
+  await keyboardTrap(page);
+  await command.fill('cls'); await command.press('Enter');
+  assert.equal((await page.getByRole('log').innerText()).trim(), '', 'cls clears displayed history');
+  await command.fill('whoami'); await command.press('Enter');
+  await page.getByRole('log').getByText(/AEROTECH \/ Mike/).waitFor();
+  await screenshot(page, result.id, 'prompt');
   await command.fill('open music'); await command.press('Enter');
   await page.getByRole('button', {name:'Play Red in the Mirror', exact:true}).waitFor();
   // Red in the Mirror mapping, metadata level: external soundtrack requests
@@ -379,6 +457,7 @@ async function morningOpening(page, result) {
 
 try {
   if (!profiles.length) throw Error('DAY_DEVICE_PROFILES selected no profiles');
+  report.sourceBefore = await sourceIdentity();
   if (!process.env.DAY_DEVICE_BASE_URL) server = spawn('python3', ['scripts/media_http_server.py', '--port', String(port), '--bind', '127.0.0.1'], { stdio: 'ignore' });
   await waitForServer();
   const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'].find(existsSync);
@@ -492,31 +571,112 @@ try {
       assert.deepEqual(await position(page), laptopExit);
       assert.equal(await page.evaluate(() => TechOpsDayExperience.active()), null);
       result.checks.push('Optional laptop case completes through evidence, rejected hypothesis, consent, repair and two verification stages without story changes');
-      await fixtureAtStation(page, 'plating_workstation');
+      result.platingFixture = await fixtureAtStation(page, 'plating_workstation');
+      await page.locator('.plating-cabinet[data-session="disconnected"]').waitFor();
+      assert.equal(await page.locator('.plating-hold[data-hold="pending"]').count(), 1);
+      result.platingPhysicalLayout = await assertConsole(page, `${profile.id} Plating HMI`);
+      await screenshot(page, profile.id, 'plating-hmi');
       await click(page, '02 · Open Doors');
       await openApp(page, 'Connection Test');
+      assert.match(await page.locator('.plating-checks li').nth(1).innerText(), /Not checked/);
+      assert.match(await page.locator('.plating-checks li').nth(2).innerText(), /Not verified/);
+      await click(page, 'Check local sign-in');
       await click(page, 'Ping line controller');
+      assert.match(await page.locator('.plating-checks li').nth(1).innerText(), /Reachable/);
+      assert.match(await page.locator('.plating-checks li').nth(2).innerText(), /Not verified/);
+      assert.equal((await caseState(page)).investigations.plating_workstation_down.technicalCheckPassed, false, 'ping cannot verify an application session');
+      result.platingReachableLayout = await assertBatchLayout(page, profile.id + ' reachable controller');
+      await screenshot(page, profile.id, 'plating-reachable');
       await openApp(page, 'Services');
+      assert.match(await page.locator('.plating-dependency li').nth(1).innerText(), /Query required/);
       await click(page, 'Inspect dependency chain');
+      assert.match(await page.locator('.plating-dependency li').nth(1).innerText(), /Stopped/);
+      result.platingStoppedLayout = await assertBatchLayout(page, profile.id + ' stopped dependency');
+      await screenshot(page, profile.id, 'plating-services-stopped');
       await click(page, 'Open work order');
       await click(page, 'integration failure');
       await openApp(page, 'Services');
       await click(page, 'Automatic');
       await click(page, 'Apply startup and start service');
       assert.equal((await caseState(page)).investigations.plating_workstation_down.fixApplied, false, 'the operator hold gates a supported repair');
+      assert.equal(await page.locator('.plating-hold[data-hold="pending"]').count(), 1);
       await click(page, 'Open work order');
       await click(page, 'Coordinate operator hold with Amit');
       await click(page, 'Open repair tool');
+      assert.equal(await page.locator('.plating-hold[data-hold="confirmed"]').count(), 1);
       await click(page, 'Manual');
       await click(page, 'Apply startup and start service');
       assert.equal((await caseState(page)).investigations.plating_workstation_down.fixApplied, false, 'a one-off manual start is not the persistent repair');
       await click(page, 'Automatic');
       await click(page, 'Apply startup and start service');
+      assert.match(await page.locator('.plating-dependency li').nth(1).innerText(), /Running/);
+      await screenshot(page, profile.id, 'plating-services-running');
       await openApp(page, 'Connection Test');
+      assert.match(await page.locator('.plating-checks li').nth(2).innerText(), /Repair applied · test pending/);
+      const repairOnly = await caseState(page);
+      assert.equal(repairOnly.investigations.plating_workstation_down.fixApplied, true);
+      assert.equal(repairOnly.investigations.plating_workstation_down.technicalCheckPassed, false);
+      assert.equal(!!repairOnly.tickets.plating_workstation_down, false);
+      result.platingRepairLayout = await assertBatchLayout(page, profile.id + ' session ready to test');
+      await screenshot(page, profile.id, 'plating-session-pending');
       await click(page, 'Reconnect and test session');
-      assert.equal((await caseState(page)).investigations.plating_workstation_down.technicalCheckPassed, true);
+      assert.match(await page.locator('.plating-checks li').nth(2).innerText(), /Session verified/);
+      result.platingTechnicalOnly = await caseState(page);
+      assert.equal(result.platingTechnicalOnly.investigations.plating_workstation_down.technicalCheckPassed, true);
+      assert.equal(!!result.platingTechnicalOnly.tickets.plating_workstation_down, false, 'session success cannot close the human task');
+      result.platingVerifiedLayout = await assertBatchLayout(page, profile.id + ' verified session');
+      await screenshot(page, profile.id, 'plating-session-verified');
+      await click(page, 'Inspect equipment');
+      await page.locator('.plating-cabinet[data-session="verified"]').waitFor();
+      assert.equal(await page.locator('.plating-hold[data-hold="confirmed"]').count(), 1);
       await click(page, 'Return to floor');
-      result.checks.push('Doors Prompt accepts keyboard commands; Plating requires an operator hold, automatic startup and a controller session test');
+      result.platingRequesterFixture = await fixtureAtRequester(page, 'plating_workstation_down');
+      await click(page, 'Witness the requester’s successful task');
+      result.platingComplete = await caseState(page);
+      assert.equal(result.platingComplete.tickets.plating_workstation_down.verification, 'strong');
+      assert.equal(result.platingComplete.tickets.plating_workstation_down.humanOutcome, 'restored');
+      await screenshot(page, profile.id, 'plating-requester-verified');
+      await click(page, 'Return to work');
+      result.checks.push('Plating distinguishes unknown/reachable controller, stopped/running dependency and unverified/verified session; operator hold and independent requester witness remain required');
+
+      const securityBefore = await page.evaluate(() => TechOpsCampaign.load(localStorage));
+      result.securityFixture = await fixtureAtStation(page, 'security_workstation');
+      await openApp(page, 'Badge Log');
+      await page.locator('.doors-security__equipment svg[role="img"]').waitFor();
+      assert.equal(await page.locator('.doors-security__timeline ol li').count(), 1, 'only the existing event is shown');
+      assert.equal(await page.locator('.doors-security__timeline time').innerText(), '02:13');
+      assert.equal(await page.locator('.doors-security__result').innerText(), 'ACCESS GRANTED');
+      assert.match(await page.locator('.doors-security__comparison [data-proof="recorded"]').innerText(), /Credential accepted/);
+      assert.match(await page.locator('.doors-security__comparison [data-proof="unverified"]').innerText(), /Physical presence unverified/);
+      assert.equal(await page.locator('.doors-security').getByText('M.OLIVEFIELD', { exact: false }).count(), 0, 'identity detail stays behind the existing review action');
+      assert.deepEqual(await page.evaluate(() => TechOpsCampaign.load(localStorage)), securityBefore, 'opening the log awards no evidence');
+      result.securityLayout = await assertBatchLayout(page, profile.id + ' Security Event Log');
+      await screenshot(page, profile.id, 'security-event-log');
+      await click(page, 'Review access event');
+      const securityAfter = await page.evaluate(() => TechOpsCampaign.load(localStorage));
+      const sources = securityAfter.evidence.ghostIdentityEvidence.sources;
+      assert.equal(sources.length, securityBefore.evidence.ghostIdentityEvidence.sources.length + 1);
+      const badge = sources.find(source => source.id === 'badge_impossible_access');
+      assert.ok(badge, 'existing canonical badge fact was recorded');
+      assert.equal(badge.completeness, 'partial');
+      assert.equal(badge.authority, 'access_control');
+      assert.deepEqual(securityAfter.flags, securityBefore.flags, 'review cannot award entry or other progression flags');
+      assert.deepEqual(securityAfter.night, securityBefore.night, 'review cannot start Sector 04 or reveal its events');
+      assert.deepEqual(securityAfter.tickets, securityBefore.tickets, 'the identity inconsistency is not a resolved ticket');
+      assert.equal(securityAfter.evidence.ghostIdentityEvidence.corroborated, false);
+      result.securityEvidence = { source: badge, flagsUnchanged: true, nightUnchanged: true, unresolved: true };
+      await click(page, 'Continue');
+      result.checks.push('Security log shows one existing access event; opening is read-only and deliberate review records only partial existing badge evidence without early progression');
+
+      result.promptExitFixture = await fixtureAtStation(page, 'mike_desk');
+      await click(page, 'Show desktop');
+      await click(page, 'PROMPT');
+      const promptPosition = await position(page);
+      await page.getByRole('textbox', { name: 'Command', exact: true }).fill('wasd');
+      await page.keyboard.press('Escape');
+      assert.deepEqual(await position(page), promptPosition, 'Prompt keyboard flow never moves Mike');
+      assert.equal(await page.evaluate(() => S.inDialog), false, 'Escape dismisses the desktop through its current owner');
+      result.checks.push('Prompt Enter/Run, literal errors, cls, Tab/Shift+Tab focus wrapping and Escape preserve keyboard ownership and world position');
       assert.deepEqual(result.pageErrors, []);
       result.status = 'passed';
     } catch (error) {
@@ -535,6 +695,15 @@ try {
   if (browser) await browser.close();
   if (server) server.kill();
   const reviews=[
+    ['plating-hmi','Batch 2 · Plating cabinet','Authored HMI/cabinet close-up. Repair, technical test and requester closure remain separate.'],
+    ['plating-reachable','Batch 2 · Connection Test','Controller responds while integration session remains unverified.'],
+    ['plating-services-stopped','Batch 2 · Services dependency','Queried dependency and production integration are stopped; operator hold is not yet coordinated.'],
+    ['plating-services-running','Batch 2 · Persistent repair','Automatic startup restores the service; session still needs its own test.'],
+    ['plating-session-pending','Batch 2 · Session ready','Repair applied with confirmed operator hold; no technical or human verification implied.'],
+    ['plating-session-verified','Batch 2 · Technical verification','Fresh integration session test passes; requester task is still open.'],
+    ['plating-requester-verified','Batch 2 · Independent task witness','Real requester action records strong verification and restored outcome.'],
+    ['security-event-log','Batch 2 · Evidence boundary','One existing 02:13 event. Accepted credential and unverified physical presence stay distinct.'],
+    ['prompt','Batch 2 · Prompt keyboard','Typed input, output and errors use distinct semantic rows. Commands remain local and whitelisted.'],
     ['entry-standup','P1 · Entry / story ownership','Functional entry and skip checks passed in the preceding capture. Current framing: scripted standup holds a cinematic mid shot with Mike parked at an authored mark (left third) so he cannot occlude the speaker; the current speaker carries a floor spotlight and gold pointer while the crew dims, the arrival card is suppressed until standup completes, and the dept chip reports floor-wide open tickets instead of a misleading "all clear". Compact dialogue caps at 30–34vh with auxiliary small print dropped.'],
     ['shipping-stage','P1 · Authored staging','The clerk is anchored to hand-authored scene coordinates (spot x 150/768, feet on the y 400/432 floor line) inside the art window, clear of the forklift and crate stack, with the label printer on the desk front edge occluding the monitor base. Capture asserts the rendered feet and spot against the authored fractions every run; sprite transparent padding is compensated by measured alpha-bbox anchors. Remaining: the clerk portrait artwork does not match the floor sprite set (mismatched character art stays open).'],
     ['side-room-desk','P1 · Spatial affordance','Desk is visible, keyboard approach opens the workstation, and the "use workstation" prompt now rides a dark pill that stays legible on bright backdrops and portrait crops. Remaining: the foreground desk is a canvas-drawn stand-in whose detail level differs from the backdrop furniture; replacing it with a matching furniture asset stays open.'],
@@ -547,6 +716,9 @@ try {
   report.visualReview={standard:'docs/production/PRODUCTION-BIBLE-R1.md',automaticVerdict:report.status,aestheticCertification:false,priorities:reviews.map(([scene,priority,note])=>({scene,priority,note}))};
   const html='<!doctype html><meta charset="utf-8"><title>TechOps Hero — experience review</title><style>body{background:#0b1823;color:#dce8f0;font:16px/1.5 system-ui;margin:32px;max-width:1400px}article{border:1px solid #3c586b;padding:18px;margin:24px 0}img{display:block;max-width:100%;max-height:720px;margin:auto}b{color:#ffd38b}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}figure{margin:0;position:relative}figcaption{padding:12px;background:#183448;border-left:4px solid #e7bb62}small{color:#9db4c6}</style><h1>TechOps Hero / captured experience review</h1><p>Fixture-assisted runs at four viewport sizes. Captures are annotated against the production bible. Automated functional passes do not certify texture consistency or AAA presentation.</p>'+reviews.map(([scene,priority,note])=>'<article><b>'+priority+'</b><h2>'+scene.replaceAll('-',' ')+'</h2><p>'+note+'</p><div class="shots">'+profiles.map(p=>'<figure><img loading="lazy" src="'+p.id+'-'+scene+'.png" alt="'+p.id+' '+scene+'"><figcaption>'+p.id+' · '+p.width+' × '+p.height+'<br><small>'+note+'</small></figcaption></figure>').join('')+'</div></article>').join('');
   await writeFile(`${out}/visual-review.html`,html);
+  report.sourceAfter = await sourceIdentity();
+  report.sourceUnchanged = JSON.stringify(report.sourceBefore) === JSON.stringify(report.sourceAfter);
+  if (!report.sourceUnchanged) { report.status = 'failed'; report.sourceFailure = 'Source changed during browser qualification'; process.exitCode = 1; }
   await writeFile(`${out}/report.json`, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
 }
