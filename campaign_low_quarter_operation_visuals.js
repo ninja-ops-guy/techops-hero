@@ -6,7 +6,7 @@
  const VERSION=2,FLOOR=330,cache=new Map(),lastHP=new Map();let previous=null,lastRun=null,lastCanvas=null,lastState=null;
  const characterAssets={};
  if(typeof root.Image==='function'){
-  for(const [key,url] of Object.entries({defenders:'assets/low-quarter-style-review/defender-actions.webp',iona:'assets/low-quarter-style-review/iona-nightwalker-atlas.webp',k:'assets/low-quarter-style-review/k-iona-duo.webp',roles:'assets/low-quarter-style-review/supporting-roles-candidate.webp',variants:'assets/low-quarter-style-review/resident-infected-variants.webp',props:'assets/low-quarter-style-review/interactive-props-candidate.webp',kWalk:'assets/low-quarter-style-review/k-walk-candidate.webp',ship:'assets/low-quarter-style-review/infected-ship-candidate.webp',approaches:'assets/low-quarter-style-review/approaches-background.webp',services:'assets/low-quarter-style-review/services-background.webp',shelters:'assets/low-quarter-style-review/shelters-background.webp',departure:'assets/low-quarter-style-review/departure-background.webp',receiving:'assets/low-quarter-style-review/receiving-background.webp'})){
+  for(const [key,url] of Object.entries({freight:'assets/low-quarter-style-review/freight-actions-candidate.webp',defenders:'assets/low-quarter-style-review/defender-actions.webp',iona:'assets/low-quarter-style-review/iona-nightwalker-atlas.webp',k:'assets/low-quarter-style-review/k-iona-duo.webp',roles:'assets/low-quarter-style-review/supporting-roles-candidate.webp',variants:'assets/low-quarter-style-review/resident-infected-variants.webp',props:'assets/low-quarter-style-review/interactive-props-candidate.webp',kWalk:'assets/low-quarter-style-review/k-walk-candidate.webp',ship:'assets/low-quarter-style-review/infected-ship-candidate.webp',approaches:'assets/low-quarter-style-review/approaches-background.webp',services:'assets/low-quarter-style-review/services-background.webp',shelters:'assets/low-quarter-style-review/shelters-background.webp',departure:'assets/low-quarter-style-review/departure-background.webp',receiving:'assets/low-quarter-style-review/receiving-background.webp'})){
    const image=new root.Image();characterAssets[key]=image;image.onload=()=>{if(lastCanvas&&lastState)draw(lastCanvas,lastState);};image.src=url;
   }
  }
@@ -16,8 +16,20 @@
   const variant=characterAssets.variants,readyVariant=useVariants&&variant&&variant.complete&&variant.naturalWidth;
   const img=readyVariant?variant:characterAssets[kind==='iona'||kind==='k'?kind:'roles'];if(!img||!img.complete||!img.naturalWidth)return false;
   c.save();c.translate(Math.round(x),Math.round(y));c.scale(facing||1,1);c.imageSmoothingEnabled=true;
-  if(kind==='iona'){
-   const n=pose==='strike'?7:pose==='walk'?1+Math.floor(t*7)%4:0;
+  const freight=characterAssets.freight;
+  const action=(kind==='infected' && n%4===0)
+    ? {walk:Math.floor(x/18)&1,strike:2,hurt:3,down:4}[pose]
+    : kind==='k' ? {work:0,strike:1,hurt:2}[pose] : undefined;
+  if(action!==undefined && freight?.complete && freight.naturalWidth){
+   const row=kind==='k'?0:1;
+   const cell=pose==='walk' && root.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : action;
+   c.drawImage(freight,cell*224,row*224,224,224,-62,-119,124,124);
+  }else if(kind==='infected' && pose==='down'){
+   c.restore();
+   return true;
+  }else if(kind==='iona'){
+   const fixed={work:20,hurt:22,down:23,jump:5};
+   const n=fixed[pose] ?? (pose==='strike'?7:pose==='walk'?1+Math.floor(t*7)%4:0);
    c.drawImage(img,(n%6)*256,Math.floor(n/6)*256,256,256,-64,-119,128,128);
   }else if(kind==='k'){
    const walk=characterAssets.kWalk;
@@ -210,7 +222,7 @@
   text(c,'EVAC',36,-32,10,'#e6ead5','center');c.restore();
  }
  function caption(c,label,x,y,W,accent){const w=Math.min(W-20,Math.max(70,label.length*6+16)),xx=Math.max(w/2+5,Math.min(W-w/2-5,x));rect(c,xx-w/2,y-14,w,20,'rgba(9,20,30,.94)');rect(c,xx-w/2,y-14,2,20,accent);text(c,label,xx,y,11,'#e5ecdc','center');}
- function draw(canvas,s){if(!s?.lowQuarterOperation)return;lastCanvas=canvas;lastState=s;const o=s.lowQuarterOperation,room=o.room,a=AREAS[room];if(!a)return;if(lastRun!==s.lowQuarter.runId){lastHP.clear();previous=null;lastRun=s.lowQuarter.runId;}
+ function draw(canvas,s){if(!s?.lowQuarterOperation)return;lastCanvas=canvas;lastState=s;const o=s.lowQuarterOperation,room=o.room,a=AREAS[room];if(!a)return;if(lastRun!==s.lowQuarter.runId || previous && (previous.room!==room || previous.tick>o.tick)){lastHP.clear();previous=null;lastRun=s.lowQuarter.runId;}
   const small=(canvas.clientWidth||960)<620,W=small?600:960,H=420;if(canvas.width!==W)canvas.width=W;if(canvas.height!==H)canvas.height=H;
   const c=canvas.getContext('2d');c.save();c.imageSmoothingEnabled=false;const cam=Math.max(0,Math.min(1800-W,o.x-W*.47)),t=o.tick,calm=!!root.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const bg=background(room),art=characterAssets[room];if(art&&art.complete&&art.naturalWidth){
@@ -239,11 +251,22 @@
   for(const p of o.residents.filter(p=>p.room===room&&(!p.boarded||room==='receiving'&&o.done.receiver))){actors.push({x:p.x,y:FLOOR,kind:'civilian',i:Number(p.id.split('_')[1]),pose:p.follow&&Math.abs(p.x-Math.min(o.x-25,1120))>4?'walk':'idle',name:'RESIDENT '+p.id.split('_')[1],facing:p.follow&&p.x>Math.min(o.x-25,1120)?-1:1});}
   if(room!=='receiving'){actors.push({x:room==='approaches'?360:100,y:FLOOR,kind:'civilian',i:2,pose:'idle',name:'LOCAL WITNESS'},{x:room==='approaches'?420:160,y:FLOOR,kind:'military',i:3,pose:'idle',name:'OFFICER'});}else actors.push({x:600,y:FLOOR,kind:'medic',i:0,pose:'idle',name:'RECEIVING MEDIC'});
   if(o.raiders?.room===room&&!o.done.cut_route)actors.push({x:o.raiders.x,y:FLOOR,kind:'infected',i:0,pose:'walk',name:'ROUTE RAIDERS',facing:-1});
-  if(room==='approaches')for(const e of o.enemies.filter(e=>e.alive)){
-   const old=lastHP.get(e.id);if(old&&old.hp>e.hp)lastHP.set(e.id,{hp:e.hp,hit:t});else if(!old)lastHP.set(e.id,{hp:e.hp,hit:-1});
-   actors.push({x:e.x,y:FLOOR,kind:'infected',i:Number(e.id.split('_')[1]),pose:'walk',name:'INFECTED',hp:e.hp,hit:lastHP.get(e.id)?.hit,facing:o.x<e.x?-1:1});
+  if(room==='approaches')for(const e of o.enemies){
+   const index=Number(e.id.split('_')[1]), old=lastHP.get(e.id);
+   if(!e.alive){
+    if(index%4!==0 || !old || old.hp<=0 && old.defeat===undefined)continue;
+    if(old.hp>0)lastHP.set(e.id,{hp:0,defeat:t});
+    const age=t-lastHP.get(e.id).defeat;
+    if(age>=0 && age<.22)actors.push({x:e.x,y:FLOOR,kind:'infected',i:index,pose:'down',facing:o.x<e.x?-1:1});
+    continue;
+   }
+   const hit=old && old.hp>e.hp ? t : old?.hit ?? -1;
+   lastHP.set(e.id,{hp:e.hp,hit});
+   const pose=t-hit<.15?'hurt':t-e.hitAt<.2?'strike':'walk';
+   actors.push({x:e.x,y:FLOOR,kind:'infected',i:index,pose,name:'INFECTED',hp:e.hp,hit,facing:o.x<e.x?-1:1});
   }
-  const moving=previous&&previous.room===room&&Math.abs(previous.x-o.x)>.1,pose=t-o.attackAt<.22?'strike':o.work?'work':moving&&!o.travel?'walk':'idle';
+  const moving=previous&&previous.room===room&&Math.abs(previous.x-o.x)>.1;
+  const pose=o.hp<=0?'down':t-o.hurtAt<.18?'hurt':t-o.attackAt<.22?'strike':o.work?'work':o.y>1?'jump':moving&&!o.travel?'walk':'idle';
   actors.push({x:o.x-75,y:FLOOR-o.y,kind:'k',i:0,pose:moving?'walk':'idle',name:'K',facing:o.facing},{x:o.x,y:FLOOR-o.y,kind:'iona',i:0,pose,name:'IONA',facing:o.facing});
   actors.sort((x,y)=>(x.kind==='iona'?2:x.kind==='k'?1:0)-(y.kind==='iona'?2:y.kind==='k'?1:0));
   for(const b of actors){if(b.x<cam-70||b.x>cam+W+70)continue;if(b.kind==='robot'||b.kind==='military')drawDefender(c,b,calm);else person(c,b.x,b.y,b.kind,b.i,b.pose,t,b.facing||1);if(b.ready){rect(c,b.x-19,FLOOR+5,38,2,'#91c5a4');}if(b.hp!==undefined){rect(c,b.x-17,b.y-107,34,4,'#192631');rect(c,b.x-16,b.y-106,32*b.hp/60,2,'#cc8a8e');if(!calm&&t>=b.hit&&t-b.hit<.13){line(c,b.x-20,b.y-57,b.x+20,b.y-41,'#f0cf96',3);line(c,b.x+10,b.y-64,b.x-8,b.y-31,'#e3ae83',2);}}}
@@ -257,7 +280,7 @@
   const phase=o.breachStart?'BREACH ACTIVE':o.done.ready?'LANDING '+Math.max(0,Math.ceil(o.assaultStart-t))+'s':'WATCH / PREPARATION';text(c,phase,W-14,22,10,a.accent,'right');
   if(o.done.enemy_order&&!o.done.cut_route&&room==='departure'){rect(c,0,H-27,W,27,'#573b44');text(c,'SERVICE ROAD COMPROMISED / USE THE CLEARED ALTERNATE',12,H-10,small?10:12,'#ffdab3');}
   if(o.travel){rect(c,40,128,W-80,94,'rgba(9,22,33,.94)');rect(c,40,128,3,94,a.accent);text(c,'MOVING TO '+o.travel.to.toUpperCase(),W/2,158,14,'#e2e7cd','center');text(c,Math.ceil(o.travel.remaining)+' seconds / crew and routes remain committed',W/2,182,10,'#abc4bf','center');rect(c,64,202,W-128,3,'#243d4a');rect(c,64,202,(W-128)*(1-o.travel.remaining/o.travel.duration),3,a.accent);}
-  c.restore();previous={room,x:o.x};
+  c.restore();previous={room,x:o.x,tick:t};
  }
  root.TechOpsLowQuarterOperationVisuals={VERSION,draw,areas:AREAS,clearCache:function(){cache.clear();lastHP.clear();previous=null;lastRun=null;}};
 })(globalThis);

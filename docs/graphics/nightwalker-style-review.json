@@ -17,7 +17,8 @@
     "infected-ship-candidate.webp",
     "resident-infected-variants.webp",
     "interactive-props-candidate.webp",
-    "defender-actions.webp"
+    "defender-actions.webp",
+    "freight-actions-candidate.webp"
   ],
   "asset_sha256": {
     "approaches-background.webp": "c9780d03cb11158639d9011db1b2642c015d61af68edc470c9d9a204f9c3b28b",
@@ -32,7 +33,8 @@
     "services-background.webp": "3387467f3da4424731e8eaceda41f71b1ea1d01c1e591749f2a9aff9c6cd9f0c",
     "shelters-background.webp": "97001631845e69635d560439ac85fa5488e96fa48a6235e5fd5dd953825112f1",
     "supporting-roles-candidate.webp": "b10815fe83f0a698c5c6a9282cd0a8ab6fcdee98fe8d2f05e2f40a098eb8ac26",
-    "defender-actions.webp": "aeea076dd6c59a86bff2c2686a81e5dce7a544d622e53dee7cf28b0aa49de63b"
+    "defender-actions.webp": "aeea076dd6c59a86bff2c2686a81e5dce7a544d622e53dee7cf28b0aa49de63b",
+    "freight-actions-candidate.webp": "d4c2ff2ce9d3f70dec7d95ea28ae605e97d512dda10b7813be28374244d07705"
   },
   "not_yet_covered": [
     "Full Night Walker districts, enemies, vehicles, bosses and cinematics",
@@ -47,5 +49,26 @@
     "No changed combat, saving, receipts, chronology, population or deterministic authority",
     "The six natural-input playthroughs must be rerun on this candidate"
   ],
-  "previous_candidate": "PR #161 head 8603d8eaee8159856cc3f6c97c7ee61d62742315"
+  "previous_candidate": "PR #161 head 8603d8eaee8159856cc3f6c97c7ee61d62742315",
+  "freight_frames": {
+    "source": [
+      "k-iona-duo.webp",
+      "supporting-roles-candidate.webp"
+    ],
+    "cell": 224,
+    "K": [
+      "work",
+      "strike",
+      "hurt",
+      "idle"
+    ],
+    "infected": [
+      "stride A",
+      "stride B",
+      "strike",
+      "hurt",
+      "down"
+    ],
+    "usage": "Generated candidates. K actions reserved for review. Infected slots used for the original appearance only. Iona uses her source sheet for work, jump, strike, hurt and down."
+  }
 }
