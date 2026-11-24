@@ -1,0 +1,44 @@
+name: Night comic playback
+on:
+  pull_request:
+    paths:
+      - 'v722_hooks.js'
+      - 'v725_hooks.js'
+      - 'v733_hooks.js'
+      - 'v742_hooks.js'
+      - 'night_hooks.js'
+      - 'night_reference_visuals.js'
+      - 'assets/visual-combat/porch-cast.png'
+      - 'scripts/night_comic_browser.mjs'
+      - '.github/workflows/night-comic.yml'
+permissions:
+  contents: read
+jobs:
+  playback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Play from clock-out through contact and the porch
+        env:
+          BOT_BASE_URL: http://127.0.0.1:4173/
+        run: |
+          python3 scripts/media_http_server.py --bind 127.0.0.1 --port 4173 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          curl --fail --retry 12 --retry-connrefused --retry-delay 1 --silent "$BOT_BASE_URL" --output /dev/null
+          node scripts/night_comic_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: night-comic-playback-${{ github.sha }}
+          path: artifacts/night-comic/
+          retention-days: 7

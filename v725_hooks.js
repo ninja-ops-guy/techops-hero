@@ -854,7 +854,7 @@
     const fade = Math.min(1, el / 500), out = Math.min(1, Math.max(0, (totalDur() - el) / 500));
     const a = calm ? 0 : 1 - Math.min(fade, out || 1);
     if (a > 0) { x.fillStyle = "rgba(0,0,0," + a + ")"; x.fillRect(0, 0, LW, LH); }
-    if (!waitingChoice && el >= totalDur() && shots[shots.length - 1].dur > 0 && el > totalDur() + 400) { end725(false); return; }
+    if (!waitingChoice && el >= totalDur() && shots[shots.length - 1].dur > 0 && (CINES[cine725].immediateReturn || el > totalDur() + 400)) { end725(false); return; }
     if (!waitingChoice && el >= totalDur() && cine725 !== null && shots[shots.length - 1].choice) { end725(false); return; }
     queueFrame725();
   }
@@ -895,8 +895,9 @@
     if (ownedFocus && restoreFocus && restoreFocus.isConnected && restoreFocus.focus) restoreFocus.focus({preventScroll: true});
     stopAudio725();
     st725.plays++; if (skipped) st725.skips++; else st725.completes++;
+    const immediate = CINES[cine725].immediateReturn;
     const cb = done725; done725 = null; cine725 = null;
-    if (cb) setTimeout(cb, 30);
+    if (cb) { if (immediate) cb(); else setTimeout(cb, 30); }
     return true;
   }
 

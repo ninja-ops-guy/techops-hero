@@ -47,7 +47,78 @@
     }else architecture(x,im,sw,sy,cam,F);
     x.restore();return true;
   }
+  // Ordinary Earth streets share a world-anchored pixel surface. Authored
+  // plates, campaign stages and the dogs retain their own ground/composition.
+  const streets={downtown:'#426c83',wooster:'#805777',airport:'#667b56',suburbs:'#8b7453'};
+  function street(n){return !!(n&&!n._v736&&!n._sector04&&!n._nightwalker&&!n.drive&&streets[n.district]);}
+  function drawStreetGround(x,n,F){
+    if(!street(n))return false;
+    const W=x.canvas.width,H=x.canvas.height,cam=Number(n.cam)||0;
+    x.save();clip(x,F,Math.max(0,H-F));
+    x.fillStyle='#131e2b';x.fillRect(0,F,W,H-F);
+    // A brighter contact plane falls off into a quiet foreground.
+    x.fillStyle='#1d2b39';x.fillRect(0,F,W,42);
+    x.fillStyle='#182430';x.fillRect(0,F+42,W,55);
+    x.fillStyle='#101a26';x.fillRect(0,F+160,W,Math.max(0,H-F-160));
+    const first=Math.floor(cam/96)*96;
+    for(let wx=first;wx<cam+W+96;wx+=96){
+      const dx=Math.round(wx-cam),seed=Math.floor(wx/96);
+      // Broken reflections keep individual pixels, with no full-frame filter,
+      // blur, random source, animation or animated flicker.
+      for(let row=0;row<9;row++){
+        const off=((seed*37+row*53)%83+83)%83;
+        x.fillStyle=row%3===0?streets[n.district]:'#31424e';
+        x.globalAlpha=row%3===0?.25:.35;
+        x.fillRect(dx+off,F+13+row*15,12+(off%29),row%2+1);
+      }
+      x.globalAlpha=1;
+      x.fillStyle='#34444e';x.fillRect(dx,F,94,3);
+      x.fillStyle='#090f18';x.fillRect(dx+94,F,2,7);
+      // Aggregate and tar seams run in world space, so they never swim as
+      // the camera follows Mike. Work scales with viewport, not world width.
+      for(let row=0;row<12;row++){
+        const off=((seed*19+row*31)%91+91)%91;
+        x.fillStyle=row%2?'#23313c':'#0b1420';
+        x.fillRect(dx+off,F+8+row*23,2+off%4,1);
+      }
+    }
+    // Existing street lane rhythm; drains establish scale at the curb.
+    for(let wx=Math.floor(cam/260)*260;wx<cam+W+260;wx+=260){
+      const dx=Math.round(wx-cam);
+      x.fillStyle='#7a7046';x.fillRect(dx+70,F+23,46,3);
+      x.fillStyle='#b2a26b';x.fillRect(dx+72,F+23,42,1);
+      x.fillStyle='#080f17';x.fillRect(dx+168,F+4,28,7);
+      x.fillStyle='#46515a';for(let i=0;i<6;i++)x.fillRect(dx+170+i*4,F+5,1,5);
+    }
+    x.restore();return true;
+  }
+  function drawStreetPlatforms(x,n,F){
+    if(!street(n))return false;
+    const cam=Number(n.cam)||0;
+    x.save();
+    for(const p of n.platforms||[]){
+      const dx=Math.round(p.x-cam),w=p.w,y=p.y;
+      if(dx+w<0||dx>x.canvas.width)continue;
+      // Back-mounted service gantries: slim supports stop at the contact
+      // plane, leaving the existing top edge/collision coordinate unchanged.
+      const h=Math.max(0,F-y-12);
+      for(const sx of [dx+8,dx+w-14]){
+        x.fillStyle='#101b25';x.fillRect(sx,y+12,6,h);
+        x.fillStyle='#3b4d5a';x.fillRect(sx,y+12,1,h);
+        if(h){x.fillStyle='#0a121c';x.fillRect(sx-4,F-3,14,3);}
+      }
+      x.fillStyle='#111c28';x.fillRect(dx,y,w,14);
+      x.fillStyle='#334652';x.fillRect(dx,y+3,w,7);
+      x.fillStyle='#829ba7';x.fillRect(dx,y,w,2);
+      x.fillStyle='#49636e';x.fillRect(dx,y+2,w,1);
+      for(let i=8;i<w-4;i+=18){x.fillStyle='#152630';x.fillRect(dx+i,y+4,10,2);}
+      for(const sx of [dx+3,dx+w-5]){x.fillStyle='#b1a56e';x.fillRect(sx,y+5,2,2);}
+      x.fillStyle='#080e17';x.fillRect(dx,y+11,w,3);
+    }
+    x.restore();return true;
+  }
   function drawGround(x,n,F=430){
+    if(drawStreetGround(x,n,F))return true;
     if(!ready(n))return false;const id=key(n),im=image(id);
     const sy=Math.round(im.naturalHeight*specs[id].ground),sh=im.naturalHeight-sy,H=x.canvas.height;
     x.save();x.imageSmoothingEnabled=false;clip(x,F,H-F);
@@ -61,6 +132,7 @@
     x.restore();return true;
   }
   function drawPlatforms(x,n,F=430){
+    if(drawStreetPlatforms(x,n,F))return true;
     if(!ready(n))return false;
     const id=key(n),im=image(id),cam=n.cam||0,accent=specs[id].accent;
     x.save();x.imageSmoothingEnabled=false;
@@ -100,6 +172,6 @@
   function drawDomesticCinematic(x,pan=0){
     const n={_v736:{m:1},cam:pan};return drawBackdrop(x,n,351)&&drawGround(x,n,351);
   }
-  root.TechOpsSceneArt={VERSION:2,specs,key,image,ready,drawBackdrop,drawGround,drawPlatforms,drawProp,drawPropertyProps,drawDomesticCinematic};
+  root.TechOpsSceneArt={VERSION:3,specs,key,image,ready,drawBackdrop,drawGround,drawPlatforms,drawProp,drawPropertyProps,drawDomesticCinematic};
   Object.keys(specs).forEach(image);image('props');
 })(typeof globalThis!=='undefined'?globalThis:this);

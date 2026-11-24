@@ -134,6 +134,8 @@
 
   function portraitCoverCanvas(canvas) {
     if (!canvas || !root || !root.innerWidth || !root.innerHeight) return false;
+    // After the Shift owns safe-area layout and a separate touch Skip control.
+    if (canvas.parentNode && canvas.parentNode.dataset && canvas.parentNode.dataset.nightDriveVariant) return false;
     var vw = root.innerWidth, vh = root.innerHeight;
     if (vw >= vh) return false;
     // The cinematic canvas is 16:9. On portrait, cover the viewport and crop

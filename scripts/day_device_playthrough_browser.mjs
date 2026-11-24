@@ -152,6 +152,10 @@ async function walkTo(page, id, kind) {
       if (observed.targetOccupied && !observed.room && !observed.inDialog && !observed.inBattle && !observed.night) { evidence.transientOccupancy.push({ to: next.to, observed }); continue; }
       throw Error('Keyboard route did not reach its next tile: ' + JSON.stringify({ next, observed }));
     }
+    if (observed.room && id === 'mike_desk' && kind === 'station') {
+      evidence.stop = { stop: 'room', room: { id: observed.room } };
+      return evidence;
+    }
     assert.equal(observed.room, null, 'walk remains in the displayed floor scene');
     assert.equal(observed.keyReleased, true, 'route step releases its movement key');
     assert.equal(observed.px, next.to.x, 'actual keyboard movement reached the routed tile (x)');
@@ -259,9 +263,16 @@ try {
   await click(page, 'Open Felicia profile');
   await click(page, 'Play People Behind the Flight');
   await page.locator('.day-film-shot').waitFor({ state: 'visible', timeout: 8000 });
+  const companyFilm = await page.evaluate(() => ({ alt: document.querySelector('.day-film-shot img')?.getAttribute('alt'), caption: document.querySelector('.day-film-caption')?.textContent, reducedHint: document.querySelector('.day-film-note')?.textContent }));
+  assert.equal(companyFilm.alt, '', 'the caption, not duplicate artwork alt text, owns the company-film copy');
+  assert.match(companyFilm.caption, /FIELD SYSTEMS/i);
+  assert.match(companyFilm.reducedHint, /Next shot/i);
   await screenshot(page, '05-company-cutscene');
   await click(page, 'Skip video');
   await click(page, 'CLOCK IN — START DAY SHIFT');
+  await page.locator('.day-film-shot.handoff').waitFor({ state: 'visible', timeout: 8000 });
+  const handoffFilm = await page.locator('.day-film-caption').innerText();
+  assert.match(handoffFilm, /RETURN TO THE FLOOR/i);
   await click(page, 'Stand up');
   report.afterClockIn = await state(page);
   assert.equal(report.afterClockIn.flags.day_work_unlocked, true, 'clock-in unlocks the day shift');

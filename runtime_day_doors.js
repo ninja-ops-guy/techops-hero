@@ -9,7 +9,7 @@
     access: ['Queue Security', 'key'],
     services: ['Services', 'services'],
     link: ['Connection Test', 'link'],
-    log: ['Badge Log', 'key']
+    log: ['Badge Log', 'log']
   };
   // Each optional station exposes the tools actually attached to that device.
   // The case definition supplies its observations, consent and verification rules.
@@ -29,14 +29,22 @@
     notes: 'M5 4h14v17H5z M8 8h8 M8 12h8 M8 16h5',
     services: 'M4 4h16v6H4z M4 14h16v6H4z M7 7h1 M7 17h1 M12 7h5 M12 17h5',
     link: 'M3 3h8v6H3z M13 15h8v6h-8z M7 9v8h6 M11 6h6v9',
-    display: 'M3 3h18v13H3z M8 21h8 M12 16v5'
+    display: 'M3 3h18v13H3z M8 21h8 M12 16v5',
+    log: 'M5 3h14v18H5z M8 7h2 M12 7h4 M8 11h2 M12 11h4 M8 15h2 M12 15h4 M8 18h8'
   };
 
   function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
   }
   function icon(name) {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="' + paths[name] + '"/></svg>';
+    return '<svg class="doors-tool-icon" data-icon="' + name + '" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="' + paths[name] + '"/></svg>';
+  }
+  function crest() {
+    return typeof TO_EMBLEM === 'string' ? '<img class="doors-aerotech-crest" src="' + esc(TO_EMBLEM) + '" alt="">' : '';
+  }
+  function hostLabel(station) {
+    const hosts = {shipping_workstation:'SHIPPING / DISPATCH WORKSTATION',plating_workstation:'PLATING-WS07 / PRODUCTION',security_workstation:'SECURITY / ACCESS REVIEW'};
+    return hosts[station.id] || (station.supportComputer ? station.supportComputer.label + ' / ' + station.label : station.label);
   }
   function button(label, action, value, attrs) {
     return '<button type="button" data-day-action="' + action + '"' +
@@ -82,14 +90,16 @@
       ['print', 'Approved Shipping group · Print'], ['manage', 'Shipping clerk · Manage queue'], ['everyone', 'Everyone · Full control']
     ]) + button('Apply and refresh token', 'doors-apply', '', ' class="doors-primary"');
   }
-  function servicesApp(ui, record, complete) {
+  function servicesApp(ui, record, complete, holdConfirmed) {
+    if(root.TechOpsDayPlating)return root.TechOpsDayPlating.services(ui,record,complete,holdConfirmed);
     let html = rows([['Host', 'PLATING-WS07'], ['Service', 'Production Integration'], ['Dependency status', record.fixApplied ? 'Running' : record.evidence.includes('integration_service') ? 'Stopped' : 'Query required']]);
     if (record.fixApplied || complete) return html;
     html += button('Inspect dependency chain', 'observe', 'integration_service');
     return html + choices('Dependency startup', 'doors-startup', ui.startup, [['manual', 'Manual'], ['auto', 'Automatic']]) +
       button('Apply startup and start service', 'doors-apply', '', ' class="doors-primary"');
   }
-  function connectionApp(record, complete) {
+  function connectionApp(record, complete, holdConfirmed) {
+    if(root.TechOpsDayPlating)return root.TechOpsDayPlating.connection(record,complete,holdConfirmed);
     let html = rows([['Source', 'PLATING-WS07'], ['Target', 'Line controller'], ['Integration session', record.technicalCheckPassed ? 'Connected' : record.fixApplied ? 'Ready to test' : 'Disconnected']]);
     if (complete || record.technicalCheckPassed) return html;
     if (record.fixApplied) return html + button('Reconnect and test session', 'technical', '', ' class="doors-primary"');
@@ -106,6 +116,7 @@
     return html;
   }
   function badgeApp() {
+    if(root.TechOpsDaySecurity)return root.TechOpsDaySecurity.view();
     return rows([['Log', 'Sector 04 / East door'], ['02:13', 'ACCESS GRANTED'], ['Source', 'Badge reader']]) +
       button('Review access event', 'doors-badge', '', ' class="doors-primary"');
   }
@@ -115,8 +126,8 @@
       case 'order': return notice(session) + notes;
       case 'print': return printApp(ui, data.record) + notice(session);
       case 'access': return accessApp(ui, data.record, data.complete) + notice(session);
-      case 'services': return servicesApp(ui, data.record, data.complete) + notice(session);
-      case 'link': return connectionApp(data.record, data.complete) + notice(session);
+      case 'services': return servicesApp(ui, data.record, data.complete, data.operatorHoldConfirmed) + notice(session);
+      case 'link': return connectionApp(data.record, data.complete, data.operatorHoldConfirmed) + notice(session);
       case 'device': return deviceApp(station, data) + notice(session);
       case 'log': return badgeApp();
     }
@@ -147,11 +158,11 @@
     return '<section class="day-console doors-field" aria-label="Doors desktop" data-window="' + visible + '" data-max="' + (visible && ui.maximized) + '">' +
       '<header class="doors-host"><strong id="day-device-title">' + esc(device) + '</strong><nav aria-label="Workstation">' +
       (station.id === 'security_workstation' ? '' : button('Inspect equipment', 'physical')) + button('Return to floor', 'exit') + '</nav></header>' +
-      '<div class="doors-workarea"><div class="doors-wallpaper" aria-hidden="true"><i></i><b>Doors</b><small>Workstation Edition</small></div>' +
+      '<div class="doors-workarea"><div class="doors-wallpaper" aria-hidden="true">' + crest() + '<b>Doors</b><small>AEROTECH · NEW HAVEN</small><small class="doors-station-label">' + esc(hostLabel(station)) + '</small></div>' +
       '<nav class="doors-shortcuts" aria-label="Installed applications">' + shortcuts + '</nav>' + notification + window + '</div>' +
       '<footer class="doors-bar">' + button('<i class="doors-mark" aria-hidden="true"></i> Doors', 'doors-home', '', ' aria-label="Show desktop"') +
       (app ? button(esc(app[0]), 'doors-task', '', ' aria-label="' + (ui.minimized ? 'Restore ' : 'Minimize ') + esc(app[0]) + '" aria-pressed="' + visible + '"') : '') +
-      '<span>LOCAL SESSION</span></footer></section>';
+      '<span>' + esc(hostLabel(station)) + '</span></footer></section>';
   }
   // Navigation changes this session only. The transaction callback owns durable
   // evidence, save failures, operator holds and independent requester closure.
