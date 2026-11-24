@@ -102,6 +102,7 @@ const tests = [
   "test_static_entrypoint_integrity.js",
   "test_v736_runtime_assets.js",
   "test_night_runtime_assets.js",
+  "test_night_reference_enemies.js",
   "test_night_onboarding.js",
   "test_glitch_asset_degradation.js",
   "test_night_directional_combat.js",

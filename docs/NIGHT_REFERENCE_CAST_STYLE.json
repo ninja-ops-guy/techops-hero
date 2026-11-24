@@ -1,0 +1,21 @@
+{
+  "status": "DRAFT_REVIEW_CANDIDATE",
+  "reference_atlas": {
+    "name": "techops-hero-enemy-combat-sprites-transparent.png",
+    "sha256": "9b71eb3256d0a88455a462336817cbda38edc447d74e369ca24abfe3a05b2b5b",
+    "scope": "Guard and hunter idle, walking, attack preparation, recoil and grounded recovery."
+  },
+  "new_generated_candidate": "street-archetypes-candidate.webp: street thug, unarmed skimmer, drone operator and separate drone; generated using the retrieved reference atlas as the style anchor",
+  "assets_sha256": {
+    "street-archetypes-candidate.webp": "fe9a21408334533136ecca3c48253acb0c5e6153f4c84393ea5740bb5fce046b",
+    "enemies-candidate.webp": "2df19ef54501fec701e503839af5a3a8c8119730379c092fb7796c715df7d99c",
+    "enemy-actions.webp": "7edc2040be5f14b0e72594b034fbb1229e33f75fe7457d227fd8598f76542a5e"
+  },
+  "scene_scope": "Ordinary Night only; Good Dogs, active Sector 04 and West Annex keep established renderers. Fallback stays in place when image decoding fails or kind is unsupported.",
+  "limits": [
+    "Ordinary enemies share action coverage. The three street characters reuse recoil during recovery. Guard and hunter show their sourced prone pose for up to 220ms after their last live draw. Other roles retain existing KO feedback.",
+    "Drone sprite is a decorative companion using the existing operator behavior",
+    "Visual approval, physical iPhone/Safari, all districts, bosses, cinematics, ally/civilian and special-mode coverage remain open",
+    "No combat, damage, timing, input, saving or story changes"
+  ]
+}

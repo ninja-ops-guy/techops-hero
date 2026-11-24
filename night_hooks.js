@@ -49,7 +49,87 @@ function nmEnemySpriteIndex(e) {
   return 0;
 }
 
+// Reference-matched enemy art for ordinary Night only. Unsupported archetypes
+// and unavailable images keep the pre-existing renderer and gameplay state.
+let __nightReferenceEnemies = null, __nightStreetArchetypes = null;
+let nightActionAtlas;
+const nightActionRows = new Map(["guard", "hunter", "thug", "skimmer", "droneop"].map((kind, row) => [kind, row]));
+
+// Remember the last live draw on the existing combat clock. Reloaded corpses
+// have no entry and never replay their defeat.
+const nightLastVisible = new WeakMap();
+const nightDefeatFrames = {guard:[1234,359,100,48], hunter:[1333,140,96,54]};
+
+function drawNightDefeat(ctx, e, screenX) {
+  const frame = nightDefeatFrames[e.kind];
+  const last = nightLastVisible.get(e);
+  if (!frame || !last || NM._v736 || NM._sector04?.active || NM._nightwalker) return;
+  const clock = NM._nightCombat;
+  if (!clock || clock !== last.clock || clock.time < last.time || clock.time - last.time > 220) return;
+  const scale = Math.max(68, Math.round(e.h * 2.2)) / (e.kind === "guard" ? 138 : 132);
+  const width = frame[2] * scale, height = frame[3] * scale;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(Math.round(screenX + e.w / 2), NM_FLOOR + 4);
+  ctx.scale(last.face, 1);
+  ctx.drawImage(__nightReferenceEnemies, ...frame, -width / 2, -height, width, height);
+  ctx.restore();
+}
+
+function nightEnemyActionColumn(e, calm) {
+  const combat = e._nightCombat;
+  const time = NM._nightCombat?.time || 0;
+  if (e.down > 0 || combat?.recoverUntil > time) return nightActionRows.get(e.kind) < 2 ? 4 : 3;
+  if (e.hitT > 0 || e.launch > 0 || combat?.held || combat?.air || combat?.stunUntil > time) return 3;
+  if (e.windup > 8) return 2;
+  if (e._press) return calm ? 0 : Math.floor(e.x / 16) & 1;
+  return -1;
+}
+
+function drawNightReferenceEnemy(x, e, ex, now) {
+  if (!e || typeof NM !== "undefined" && (NM?._v736 || NM?._sector04?.active || NM?._nightwalker)) return false;
+  const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const frames = { hunter:[10,60,100,132], guard:[10,270,100,138] };
+  const street = { thug:0, skimmer:1, droneop:2 };
+  const fr = frames[e.kind], streetIndex = street[e.kind];
+  if (!fr && streetIndex === undefined) return false;
+  if (fr && !__nightReferenceEnemies) { __nightReferenceEnemies = new Image(); __nightReferenceEnemies.src = "assets/night-reference/enemies-candidate.webp"; }
+  if (!fr && !__nightStreetArchetypes) { __nightStreetArchetypes = new Image(); __nightStreetArchetypes.src = "assets/night-reference/street-archetypes-candidate.webp"; }
+  const img = fr ? __nightReferenceEnemies : __nightStreetArchetypes;
+  if (!img.complete || !img.naturalWidth) return false;
+  const height = Math.max(68, Math.round((e.h || 38) * 2.2)), cx = Math.round(ex + (e.w || 30) / 2), base = Math.round(e.y + (e.h || 38) + 4);
+  x.save(); x.imageSmoothingEnabled = false;
+  if (!calm && e.hitT > 0 && Math.floor(now / 55) % 2) x.globalAlpha = .62;
+  x.translate(cx, base);
+  const face = NM.x + NM.w / 2 < e.x + e.w / 2 ? -1 : 1;
+  if (face < 0) x.scale(-1, 1);
+  if (fr && NM._nightCombat) nightLastVisible.set(e, {clock:NM._nightCombat,time:NM._nightCombat.time,face});
+  const column = nightEnemyActionColumn(e, calm);
+  if (column >= 0 && !nightActionAtlas) {
+    nightActionAtlas = new Image();
+    nightActionAtlas.src = "assets/night-reference/enemy-actions.webp";
+  }
+  if (column >= 0 && nightActionAtlas.complete && nightActionAtlas.naturalWidth) {
+    const scale = height / 138;
+    x.drawImage(nightActionAtlas, column * 192, nightActionRows.get(e.kind) * 160, 192, 160,
+      -96 * scale, -152 * scale, 192 * scale, 160 * scale);
+  } else if (fr) {
+    const width = height * fr[2] / fr[3];
+    x.drawImage(img, ...fr, -width / 2, -height, width, height);
+  } else {
+    const cell = img.naturalWidth / 4, h = height * 1.3, w = h * cell / img.naturalHeight;
+    x.drawImage(img, cell * streetIndex, 0, cell, img.naturalHeight, -w / 2, -h * .91, w, h);
+  }
+  x.restore();
+  if (e.kind === "droneop" && !e.down) {
+    const cell=img.naturalWidth/4;
+    const bob=calm?0:Math.sin(now/240)*4, h=52, w=h*cell/img.naturalHeight;
+    x.drawImage(img,cell*3,0,cell,img.naturalHeight,cx-w/2,e.y-52+bob,w,h);
+  }
+  return true;
+}
 function drawNightEnemyAtlas(x, e, ex, now) {
+  if (drawNightReferenceEnemy(x, e, ex, now)) return true;
   const img = nmGlitchImg();
   if (!img || !e) return false;
   const C = 112;
@@ -792,7 +872,10 @@ function drawNM() {
   }
   // enemies — archetype silhouettes with glitch flicker
   for (const e of NM.enemies) {
-    if (!e.alive) continue;
+    if (!e.alive) {
+      drawNightDefeat(ctx, e, e.x - NM.cam);
+      continue;
+    }
     const ex = e.x - NM.cam;
     // tint underglow — figures read against the dark street
     ctx.save(); ctx.globalAlpha = .45; ctx.fillStyle = e.tint;
