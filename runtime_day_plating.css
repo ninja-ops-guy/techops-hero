@@ -1,0 +1,31 @@
+/* Plating authored HMI and tool-specific layouts. No motion or state owner. */
+.plating-cabinet { width: 100%; min-width: 0; }
+.day-device-stage:has(.plating-cabinet) { display: block; aspect-ratio: auto; background: #0b202c; padding: 8px; }
+.day-device-stage .plating-cabinet > svg { position: static; width: 100%; height: auto; max-height: none; display: block; }
+.plating-cabinet__legend { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; padding: 8px; color: #d9e8ee; font: 14px/1.45 system-ui,sans-serif; }
+.plating-tool { min-width: 0; font: 14px/1.5 system-ui,sans-serif; }
+.plating-tool__toolbar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; border-bottom: 1px solid #b6c9c9; padding: 0 0 10px; color: #405c64; font: 13px/1.4 ui-monospace,monospace; }
+.plating-tool h3 { font-size: 19px; line-height: 1.25; margin: 14px 0 6px; }
+.plating-tool__intro { margin: 0 0 14px; }
+.plating-dependency, .plating-checks { list-style: none; margin: 14px 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.plating-dependency > li, .plating-checks > li { position: relative; min-width: 0; border: 1px solid #b3c6c6; border-top: 3px solid #78929c; padding: 12px; background: #e4ecea; overflow-wrap: anywhere; }
+.plating-dependency > li + li::before { content: ""; position: absolute; top: 23px; left: -11px; width: 10px; height: 3px; background: #78929c; }
+.plating-dependency > li[data-state=stopped] { border-top-color: #9b6328; }
+.plating-dependency > li[data-state=verified], .plating-checks > li[data-state=verified] { border-top-color: #39735b; }
+.plating-dependency strong, .plating-checks strong { display: block; margin-bottom: 10px; font-size: 15px; line-height: 1.35; }
+.plating-dependency p, .plating-checks p { margin: 9px 0 0; font-size: 14px; }
+.plating-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid #78929c; border-radius: 3px; background: #e9eeed; color: #334c58; font: 600 13px/1.3 system-ui,sans-serif; overflow-wrap: anywhere; }
+.plating-status[data-state=verified] { background: #d6e9dd; border-color: #658b75; color: #23523b; }
+.plating-status[data-state=stopped], .plating-status[data-state=waiting] { background: #f2e5d2; border-color: #af884e; color: #664419; }
+.plating-status[data-state=ready] { background: #dce9f0; border-color: #6a8a9d; color: #2b5064; }
+.plating-hold { display: flex; align-items: start; gap: 10px; padding: 11px 12px; margin: 12px 0 16px; border: 1px solid #ae9165; border-left: 4px solid #a17736; background: #f0e8da; color: #64481f; font: 14px/1.45 system-ui,sans-serif; overflow-wrap: anywhere; }
+.plating-hold__symbol { display: grid; place-items: center; flex: none; width: 25px; height: 25px; border: 1px solid currentColor; border-radius: 3px; font-weight: 700; }
+.plating-hold p { margin: 4px 0 0; font-size: 14px; }
+.plating-hold[data-hold=confirmed] { border-color: #719585; border-left-color: #39735b; background: #deebe3; color: #2b5140; }
+.day-device-stage > .plating-hold { margin: 8px 0; text-align: left; }
+.day-device-stage:has(.plating-cabinet) .day-stage-caption { position: static; margin: 8px; font-size: 12px; }
+.plating-boundary { padding: 10px 12px; background: #dce6ec; border-left: 3px solid #607f91; color: #334e5b; font-size: 14px; }
+@media (max-width: 900px) { .plating-dependency, .plating-checks { grid-template-columns: 1fr; gap: 8px; }.plating-dependency > li + li::before { top: -9px; left: 22px; width: 3px; height: 8px; }.plating-dependency strong, .plating-checks strong { margin-bottom: 6px; } }
+@media (max-width: 380px) { .plating-dependency > li, .plating-checks > li { padding: 10px; }.plating-hold { padding: 9px; gap: 8px; }.plating-cabinet__legend { padding: 4px; }.plating-tool h3 { font-size: 17px; } }
+@media (max-height: 450px) { .plating-dependency, .plating-checks { grid-template-columns: repeat(3,minmax(0,1fr)); }.plating-dependency > li + li::before { top: 23px; left: -11px; width: 10px; height: 3px; }.plating-dependency > li, .plating-checks > li { padding: 8px; }.plating-hold { padding: 8px; margin-block: 8px; } }
+.day-device-stage .plating-hold__symbol svg { position: static; inset: auto; width: 14px; height: 14px; display: block; }
