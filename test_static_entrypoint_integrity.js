@@ -22,9 +22,16 @@ for(const src of ["campaign_world_visuals.js","night_hooks.js","v722_hooks.js","
 assert.strictEqual(refFor("runtime_day_audio.js"),"runtime_day_audio.js?v=20261118-inspect-r1");
 assert.strictEqual(refFor("runtime_day_cases.js"),"runtime_day_cases.js?v=20261105-doors-r1");
 assert.strictEqual(refFor("v67_hooks.js"),"v67_hooks.js?v=20261107-fixed-contacts-r1");
-for(const src of ["game.js","runtime_day.js","runtime_day_world.js","campaign_native_act1.js","v55_hooks.js","v63_hooks.js","v69_hooks.js"])assert.strictEqual(refFor(src),src+"?v=20261120-day-field");
-assert.ok(html.includes('href="runtime_day.css?v=20261120-day-field"'));
-for(const [asset,version] of [["runtime_day_doors.js","20261105-doors-r1"],["runtime_day_doors.css","20261120-day-field"]]){
+for(const src of ["game.js","runtime_day_world.js","campaign_native_act1.js","v55_hooks.js","v63_hooks.js","v69_hooks.js"])assert.strictEqual(refFor(src),src+"?v=20261120-day-field");
+assert.ok(html.includes('href="runtime_day.css?v=20261123-batch3"'));
+assert.strictEqual(refFor("runtime_day.js"),"runtime_day.js?v=20261123-day-graphics-r1");
+for(const type of ["plating","security"])for(const ext of ["js","css"]){
+  const asset="runtime_day_"+type+"."+ext;
+  assertLocalFile(asset,"Doors station art");
+  assert.ok(!html.includes(asset),"station art must stay outside startup budget");
+}
+assert.ok(fs.readFileSync("runtime_day.js","utf8").includes("function loadDeviceArt(station)"));
+for(const [asset,version] of [["runtime_day_doors.js","20261122-doors-batch2"],["runtime_day_doors.css","20261122-doors-batch2"]]){
   const url=asset+"?v="+version;
   assertLocalFile(url,"Doors");
   assert.ok(!html.includes(asset),"Doors assets load only when a computer is used");
