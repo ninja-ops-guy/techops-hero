@@ -459,7 +459,7 @@
     bind('[data-os-close]',function(){if(home)minimize(true);else native.openWorkstation();});
     bind('[data-os-exit]',function(){root.closeDlg();});
     bind('[data-os-min]',function(){minimize(true);});
-    bind('[data-os-task]',function(){minimize(!box.querySelector('.os-window').classList.contains('os-minimized'));}); 
+    bind('[data-os-task]',function(){minimize(!box.querySelector('.os-window').classList.contains('os-minimized'));});
     bind('[data-os-max]',function(){box.querySelector('.os-window').classList.toggle('os-maximized');});
     var actions=box.querySelector('.os-actions');
     (options||[]).forEach(function(option){
