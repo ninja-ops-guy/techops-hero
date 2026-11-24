@@ -23,7 +23,7 @@ function boot(){
   const entries=new Map(),storage={writes:0,fail:false,getItem(k){return entries.get(k)||null;},setItem(k,v){if(this.fail)throw Error('disk full');this.writes++;entries.set(k,String(v));}};
   const ctx=vm.createContext({console,localStorage:storage,setTimeout:null,S:{day:1,px:21,py:16,map:Array.from({length:32},()=>Array(42).fill(0)),meta:{campaignAct1Native:{shipping:{x:8,y:26},plating:{x:18,y:26},standup:{x:34,y:12},access:{x:38,y:12}}},npcs:[],inDialog:false,inBattle:false,nightMode:false},toast(message){ctx.lastToast=message;},save(){ctx.gameSaveCalls++;if(ctx.failGameSave)return false;ctx.gameCheckpoint=JSON.stringify(ctx.S.meta);return true;}});
   ctx.gameSaveCalls=0;ctx.failGameSave=false;
-  for(const file of ['campaign_act1.js','campaign_act1_investigations.js','runtime_day_cases.js','runtime_day_world.js','runtime_day_doors.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),ctx,{filename:file});
+  for(const file of ['campaign_act1.js','campaign_act1_investigations.js','runtime_day_cases.js','runtime_day_world.js','runtime_day_plating.js','runtime_day_security.js','runtime_day_doors.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),ctx,{filename:file});
   const C=ctx.TechOpsCampaign,I=ctx.TechOpsCampaignInvestigations,W=ctx.TechOpsDayWorld;
   const c=C.createInitialState();C.assignTicket(c,SHIPPING,'mike');C.assignTicket(c,PLATING,'amit');C.assignTicket(c,'impossible_access_event','mike');C.completeStandup(c);C.completeWorkstation(c,{feliciaVideoSkipped:true});C.save(c,storage);
   ctx.document=documentMock();ctx.dlg=function(name,body,options){ctx.dialog={name,body,options};ctx.S.inDialog=true;ctx.document.getElementById('dlg-name').textContent=name;ctx.document.getElementById('dlg-text').innerHTML=body;};ctx.closeDlg=function(){ctx.S.inDialog=false;ctx.dialog=null;};
@@ -134,7 +134,7 @@ test('Doors work order reads the recorded outcome of a partially closed ticket',
 test('optional failed-save mutation rolls back and successful replay is idempotent',()=>{
   const b=boot();b.open('laptop_dock_link');const def=b.cases.definition('laptop_dock_link'),e=def.evidence[0];b.ctx.failGameSave=true;
   assert.equal(b.X.transact('observe',e.id),false);assert.equal(b.ctx.S.meta.dayCases.laptop_dock_link,undefined);
-  b.ctx.failGameSave=false;assert.equal(b.X.transact('observe',e.id),true);const saved=JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link);assert.equal(b.X.transact('observe',e.id),true);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link),saved);
+  b.ctx.failGameSave=false;assert.equal(b.X.transact('observe',e.id),true);const saved=JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link);assert.equal(b.X.transact('observe',e.id),true);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases[id]),saved);
   b.ctx.failGameSave=true;assert.equal(b.X.transact('observe',def.evidence[1].id),false);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link),saved);
   const calls=b.ctx.gameSaveCalls;assert.equal(b.X.transact('invented_action'),false);assert.equal(b.ctx.gameSaveCalls,calls);
 });
@@ -180,6 +180,14 @@ test('Day 2 field workstation reopens its follow-up while unfinished carryover r
 test('progress list closes before evidence and action layout begins',()=>{
   const b=boot();b.open('laptop_dock_link');const html=b.ctx.document.getElementById('dlg-text').innerHTML;assert.match(html,/<ol class="day-progress">(?:<li[^>]*>[^<]+<\/li>){4}<\/ol><h3>Evidence/);
 });
+test('long Day evidence lists retain the extra observation behind a semantic summary',()=>{
+  const b=boot(),def=b.cases.definition('laptop_dock_link');b.open('laptop_dock_link');
+  for(const evidence of def.evidence){b.surface(evidence.surface);assert.equal(b.X.transact('observe',evidence.id),true);}
+  b.surface('physical');const html=b.ctx.document.getElementById('dlg-text').innerHTML;
+  assert.match(html,/class="day-evidence-current"/);
+  assert.match(html,/<details class="day-evidence-more"><summary>Show 1 more recorded observation<\/summary>/);
+  assert.match(html,/Open connected devices/);
+});
 test('repairs require their physical or software surface and all technical checks require a screen',()=>{
   const b=boot();
   for(const id of b.cases.ids()){
@@ -191,6 +199,14 @@ test('HUD describes the tracked destination instead of contradicting its route b
   const b=boot();b.ctx.S.meta.dayRouteTarget='laptop_dock_link';b.X.syncHud();const hud=b.ctx.document.getElementById('day-route-hud');assert.match(hud.innerHTML,/Destination · Engineering laptop dock/);assert.doesNotMatch(hud.innerHTML,/Talk to the Shipping clerk/);
   b.ctx.S.meta.dayRouteTarget='shipping';b.X.syncHud();assert.match(hud.innerHTML,/Talk to the Shipping clerk/);assert.match(hud.innerHTML,/Route to Shipping clerk/);
   assert.match(b.ctx.document.getElementById('day-floor-announcement').textContent,/Talk to the Shipping clerk\. Route to Shipping clerk/);
+});
+test('unavailable station art preserves legacy equipment and Security actions',()=>{
+  const b=boot();vm.runInContext('TechOpsDayPlating=undefined;TechOpsDaySecurity=undefined;',b.ctx);b.ctx.document.head={appendChild(){}};
+  b.open('plating_workstation');assert.match(b.ctx.document.getElementById('dlg-text').innerHTML,/inspection diagram/);
+  const before=b.storage.writes;b.X.render();assert.equal(b.storage.writes,before);
+  b.X.exit();b.open('security_workstation');b.click('doors-open','log');
+  assert.match(b.ctx.document.getElementById('dlg-text').innerHTML,/Review access event/);
+  assert.equal(b.storage.writes,before,'missing decoration does not record evidence');
 });
 test('talking to Security does not read the nearby computer or grant badge evidence',()=>{
   const b=boot();b.move('security_workstation');b.ctx.S.meta.campaignAct1Native.access={x:b.ctx.S.px,y:b.ctx.S.py+1};b.ctx.S.meta.dayRouteTarget='access';let reads=0;b.ctx.TechOpsCampaignNativeAct1.recordAccessEvidence=function(){reads++;return true;};const before=b.storage.writes;b.X.interact();assert.equal(b.ctx.dialog.name,'SECURITY OPS');assert.equal(reads,0);assert.equal(b.storage.writes,before);assert.equal(b.ctx.dialog.options[0].t,'Walk to Security workstation');b.X.exit();b.X.openDevice('security_workstation');assert.equal(reads,0);
