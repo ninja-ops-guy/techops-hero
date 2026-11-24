@@ -134,7 +134,7 @@ test('Doors work order reads the recorded outcome of a partially closed ticket',
 test('optional failed-save mutation rolls back and successful replay is idempotent',()=>{
   const b=boot();b.open('laptop_dock_link');const def=b.cases.definition('laptop_dock_link'),e=def.evidence[0];b.ctx.failGameSave=true;
   assert.equal(b.X.transact('observe',e.id),false);assert.equal(b.ctx.S.meta.dayCases.laptop_dock_link,undefined);
-  b.ctx.failGameSave=false;assert.equal(b.X.transact('observe',e.id),true);const saved=JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link);assert.equal(b.X.transact('observe',e.id),true);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases[id]),saved);
+  b.ctx.failGameSave=false;assert.equal(b.X.transact('observe',e.id),true);const saved=JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link);assert.equal(b.X.transact('observe',e.id),true);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link),saved);
   b.ctx.failGameSave=true;assert.equal(b.X.transact('observe',def.evidence[1].id),false);assert.equal(JSON.stringify(b.ctx.S.meta.dayCases.laptop_dock_link),saved);
   const calls=b.ctx.gameSaveCalls;assert.equal(b.X.transact('invented_action'),false);assert.equal(b.ctx.gameSaveCalls,calls);
 });
