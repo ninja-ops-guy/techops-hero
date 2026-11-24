@@ -40,6 +40,42 @@ assert.strictEqual(typeof visuals.loadNightReference, "function");
 assert.strictEqual(typeof visuals.loadGoodDogsProduction, "function");
 assert.strictEqual(typeof visuals.loadGoodBoysMechanics, "function");
 assert.strictEqual(typeof visuals.loadGoodBoysCanon, "function");
+
+// Day floor polish is an overlay: it exposes named destinations and chevrons
+// without changing the map, route model, or existing interaction authority.
+{
+  const prior = {};
+  ["cv", "ctx", "TILE", "camX", "camY", "S", "TechOpsDayWorld"].forEach(key => { prior[key] = global[key]; });
+  const words = [];
+  global.cv = { width: 1344, height: 1024 };
+  global.TILE = 32; global.camX = 0; global.camY = 0;
+  global.ctx = {
+    save() {}, restore() {}, fillRect() {}, strokeRect() {}, beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, stroke() {},
+    fillText(text) { words.push(String(text)); }
+  };
+  global.S = {
+    px: 9, py: 26, nightMode: false, room: null,
+    npcs: [
+      { id: "campaign_shipping", x: 8, y: 26 },
+      { id: "campaign_plating", x: 18, y: 26 },
+      { id: "campaign_access", x: 38, y: 12 }
+    ]
+  };
+  global.TechOpsDayWorld = {
+    stations: () => [
+      { id: "shipping_printer", available: true, deviceType: "printer", x: 8, y: 26 },
+      { id: "shipping_workstation", available: true, deviceType: "desktop", x: 10, y: 26 },
+      { id: "plating_workstation", available: true, deviceType: "desktop", x: 18, y: 26 },
+      { id: "security_workstation", available: true, deviceType: "desktop", x: 38, y: 12 }
+    ],
+    currentRoute: () => ({ ok: true, path: [{ x: 9, y: 26 }, { x: 10, y: 26 }, { x: 11, y: 26 }], target: { id: "shipping_workstation", x: 10, y: 26 } })
+  };
+  const before = JSON.stringify(global.S);
+  assert.strictEqual(visuals.drawDayFloorPolish(240), true);
+  ["SHIPPING", "PLATING", "SECURITY", "TARGET"].forEach(label => assert(words.includes(label), `floor layer exposes ${label} as text, not color alone`));
+  assert.strictEqual(JSON.stringify(global.S), before, "floor art remains presentation-only");
+  Object.entries(prior).forEach(([key, value]) => { if (value === undefined) delete global[key]; else global[key] = value; });
+}
 assert.strictEqual(typeof visuals.loadGoodBoysGameplayLoop, "function");
 
 const goodDogs = fs.readFileSync("good_dogs_production_runtime.js", "utf8");
