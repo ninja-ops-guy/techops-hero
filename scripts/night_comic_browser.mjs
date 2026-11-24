@@ -16,7 +16,8 @@ for(const [name,engine,width,height,touch,calm,skip] of [
   ['landscape',webkit,844,390,true,false,false],
 ]){
   if(process.env.NIGHT_PROFILE && process.env.NIGHT_PROFILE!==name)continue;
-  const browser=await engine.launch();
+  const executablePath=engine===chromium&&process.env.BOT_CHROMIUM_EXECUTABLE?process.env.BOT_CHROMIUM_EXECUTABLE:undefined;
+  const browser=await engine.launch({headless:true,...(executablePath?{executablePath}:{})});
   const context=await browser.newContext({viewport:{width,height},hasTouch:touch,isMobile:touch,reducedMotion:calm?'reduce':'no-preference'});
   await context.route('**/*',r=>r.request().url().startsWith(base)?r.fallback():r.abort());
   const page=await context.newPage(); const errors=[];
