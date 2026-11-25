@@ -66,6 +66,28 @@ try{
  assert(samples.striking.includes('infected:2,1') && samples.striking.includes('iona:7'));
  assert(samples.hurt.includes('infected:3,1') && samples.hurt.includes('iona:22'));
  assert(samples.down.includes('infected:4,1') && samples.down.includes('iona:23'));
+ const kPoses=await page.evaluate(()=>{
+  const s=TechOpsCampaign.createInitialState();s.story={ending:'shutdown',facts:{campaign_complete:true}};
+  const state=TechOpsLowQuarterOperation.begin(s,'shutdown','k_pose_fixture'),o=state.lowQuarterOperation;
+  const canvas=document.getElementById('world'),ctx=canvas.getContext('2d'),original=ctx.drawImage;
+  function sample(room){
+   o.room=room;const cells=[];
+   ctx.drawImage=function(img,...args){if(img.currentSrc?.endsWith('/freight-actions-candidate.webp')&&args[1]===0)cells.push(args[0]/224);return original.call(this,img,...args);};
+   try{const before=JSON.stringify(state);TechOpsLowQuarterOperationVisuals.draw(canvas,state);if(before!==JSON.stringify(state))throw Error('K pose mutated operation');return cells;}finally{ctx.drawImage=original;}
+  }
+  o.x=700;o.tick=10;o.room='departure';
+  const resident=o.residents[0];resident.room='departure';resident.follow=true;resident.x=o.x-75;
+  const rescue=sample('departure');
+  resident.follow=false;o.room='approaches';o.breachStart=1;
+  o.enemies=[{id:'fixture_infected',alive:true,x:o.x-75+100,hp:60,hitAt:-1}];
+  const brace=sample('approaches');
+  o.room='services';o.breachStart=null;o.enemies=[];
+  const idle=sample('services');
+  return {rescue,brace,idle};
+ });
+ assert(kPoses.rescue.includes(0),'K rescue pose must use the authored reaching frame');
+ assert(kPoses.brace.includes(3),'K breach pose must use the authored guard frame');
+ assert(!kPoses.idle.includes(0)&&!kPoses.idle.includes(3),'K returns to the reference idle pose outside rescue/threat states');
  assert(!samples.expired.includes('infected:4,1'));
  const frames=await page.evaluate(()=>window.__defenderFrames);
  assert(frames.some(([x,y])=>x===576&&y===0),'Posted military signal drawn');
