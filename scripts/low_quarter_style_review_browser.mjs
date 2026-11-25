@@ -93,7 +93,7 @@ try{
   const s=TechOpsCampaign.createInitialState();s.story={ending:'shutdown',facts:{campaign_complete:true}};
   const state=TechOpsLowQuarterOperation.begin(s,'shutdown','resident_walk_fixture'),o=state.lowQuarterOperation;
   o.room='departure';o.x=700;o.tick=1;
-  const resident=o.residents[0];resident.room='departure';resident.follow=true;resident.x=o.x-25;
+  const resident=o.residents[0];resident.room='departure';resident.follow=true;resident.x=o.x-10;
   const canvas=document.getElementById('world'),ctx=canvas.getContext('2d'),original=ctx.drawImage,frames=[];
   ctx.drawImage=function(img,...args){if(img.currentSrc?.endsWith('/civilian-walk-candidate.webp'))frames.push(Math.round(args[0]/(img.naturalWidth/6)));return original.call(this,img,...args);};
   try{TechOpsLowQuarterOperationVisuals.draw(canvas,state);o.tick=1.2;TechOpsLowQuarterOperationVisuals.draw(canvas,state);return frames;}finally{ctx.drawImage=original;}
