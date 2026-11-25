@@ -40,3 +40,12 @@ The local 20-fixture run's worst **mean** draw cost was 1.420ms per draw (120 re
 ## Release status
 
 **Implemented graphics candidate / visual review required.** Original character references and current costume rules are bound to the manifest; new likeness acceptance, physical iPhone/native Safari/multitouch and measured device frame-time remain release qualifications. The operation is still a twelve-person opening review; its graphics do not qualify a full district census, later wave content or PR #154 integration. Merge and deployment remain separately owner-gated.
+
+
+## Approved siege choreography follow-up
+
+The review pass now binds two existing K action cells to observed scene context. K uses the authored reaching pose when a consenting resident is physically following nearby, and the authored guard pose when an infected is near the active freight breach. Movement, consent, boarding, health, unit status, receipts and rescue outcomes remain owned by the operation authority. K's pose selection is a read-only projection.
+
+The infected two-frame walk now advances from logical operation time rather than world position. The six-cell civilian walk candidate is used only for residents already following; a deterministic resident-ID phase prevents nearby walkers from stepping in unison. Reduced motion holds both locomotion cycles at their first cell. The browser fixture samples K's rescue and brace cells, samples two distinct civilian walk frames, and checks that rendering does not mutate operation state.
+
+The candidate still needs review for resident waiting, shelter and boarding transitions, human defender reactions, crowd spacing, care equipment, landmark alignment and physical iPhone/Safari. The new mapping is review art and does not grant likeness or release approval.
