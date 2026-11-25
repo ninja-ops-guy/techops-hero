@@ -18,7 +18,8 @@
     "resident-infected-variants.webp",
     "interactive-props-candidate.webp",
     "defender-actions.webp",
-    "freight-actions-candidate.webp"
+    "freight-actions-candidate.webp",
+    "civilian-walk-candidate.webp"
   ],
   "asset_sha256": {
     "approaches-background.webp": "c9780d03cb11158639d9011db1b2642c015d61af68edc470c9d9a204f9c3b28b",
@@ -34,12 +35,13 @@
     "shelters-background.webp": "97001631845e69635d560439ac85fa5488e96fa48a6235e5fd5dd953825112f1",
     "supporting-roles-candidate.webp": "b10815fe83f0a698c5c6a9282cd0a8ab6fcdee98fe8d2f05e2f40a098eb8ac26",
     "defender-actions.webp": "aeea076dd6c59a86bff2c2686a81e5dce7a544d622e53dee7cf28b0aa49de63b",
-    "freight-actions-candidate.webp": "d4c2ff2ce9d3f70dec7d95ea28ae605e97d512dda10b7813be28374244d07705"
+    "freight-actions-candidate.webp": "d4c2ff2ce9d3f70dec7d95ea28ae605e97d512dda10b7813be28374244d07705",
+    "civilian-walk-candidate.webp": "f5378de017395bf9448ec94c5fe677ec427933f04e9d5561d786e74e3e6df260"
   },
   "not_yet_covered": [
-    "Full Night Walker districts, enemies, vehicles, bosses and cinematics",
-    "Resident and infected movement, supporting cast combat reactions and K non-walk action frames",
-    "Additional distinct resident and infected appearances",
+    "Resident waiting, shelter and boarding transitions; current candidate only animates residents already following",
+    "Human defender combat reactions and combat choreographic staging",
+    "Crowd overlap and per-sector evacuation spacing",
     "Textured care equipment and evacuation vehicle",
     "Physical iPhone and Safari performance",
     "Exact matching between backdrop landmarks and mission interaction coordinates"
@@ -57,10 +59,10 @@
     ],
     "cell": 224,
     "K": [
-      "work",
+      "work/rescue",
       "strike",
       "hurt",
-      "idle"
+      "brace"
     ],
     "infected": [
       "stride A",
@@ -69,6 +71,6 @@
       "hurt",
       "down"
     ],
-    "usage": "Generated candidates. K actions reserved for review. Infected slots used for the original appearance only. Iona uses her source sheet for work, jump, strike, hurt and down."
+    "usage": "Generated candidates. K rescue and brace frames are read-only presentation cues. Infected action/stride cells do not create new infection stages or authority."
   }
 }
