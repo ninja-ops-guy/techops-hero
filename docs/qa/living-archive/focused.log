@@ -1,0 +1,18 @@
+PASS unwitnessed route flags and remote input cannot publish a mark
+PASS physical marks persist and move consenting walkers without nearby K
+PASS off-sector continuation uses the saved mark, not the character presence
+PASS unknown consent, refusal and a change of choice all stop autonomous following
+PASS mirrored consent and care fields cannot substitute for authoritative sources
+PASS route closure and a later reopening never make an old mark current
+PASS a closed primary is replaced by a separately tested alternative
+PASS lost service, a missing defender and local threats each suspend unattended movement
+PASS pause and failed persistence cannot move people or commit new marks
+PASS save and reload retain marks without granting transport or rescue
+PASS unbound records, a wrong run and future schemas preserve the input and block continuation
+PASS local readings require a physical visit and remain honest last-read snapshots
+PASS reading copies does not create records or advance the simulation
+PASS an unavailable archive module preserves legacy play and blocks marked saves
+PASS copied readings reject removed or duplicate source references
+PASS one lane receipt cannot claim both lanes were checked
+PASS Chorus traces need actual assimilation; relay loss does not erase acquired fragments
+Living Archive: 17 groups PASS

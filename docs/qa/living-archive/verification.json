@@ -1,0 +1,137 @@
+{
+  "observedAt": "2026-11-25T05:39:12.129615+00:00",
+  "baseline": {
+    "repository": "ninja-ops-guy/techops-hero",
+    "pr": 160,
+    "branch": "codex/siege-art-motion",
+    "commit": "1e34c5687ce9229ac3438829f32a83dcf3b10930"
+  },
+  "candidateBranch": "codex/living-archive-stigmergy",
+  "status": "IMPLEMENTED_AND_LOCALLY_VERIFIED_DRAFT",
+  "sourceHashes": {
+    "RUNTIME_AUTHORITY.md": "b5504fde315236bbcc14c1df6cf6f9e0db119d3f19f4af7e94a357fb5f21c2f6",
+    "campaign_late_game_bootstrap.js": "8b1df1c4ace3e2e07afd364b25a557e32526da046e8ba9f34af96e1641452d05",
+    "campaign_living_archive.js": "64650a1ca200c1442f50dcf83a18b48b409403c12b6d0a422b138fbc8f3eafee",
+    "campaign_low_quarter_mission.js": "f53b80de564d1b211cd08579b212a244691518d2eb17978f823d0e3c71e84014",
+    "campaign_low_quarter_play.js": "be5a641d0fc2888a8cb7f137a5304e08a0b3c207dcb76e4ff775fe82c94f9e3c",
+    "campaign_native_act1_visuals.js": "33b59ec1ccf88f79c87940409c2a4329cd02685ea9d84df0dc79d349f84c95c6",
+    "campaign_story.js": "4b3edc7e16442efd5b775b7a05632bcad3527230ec7232d141eb0c53b03dbf5e",
+    "index.html": "a9fe73b2c3879a61e22b939d08b07d25d436b905c62b86cd2d7269bae774fe25",
+    "scripts/production_release_gate.js": "814d4ec86a5a3018d0e89da6829324a13f4fde76fc263ee12436615fe8240dc5",
+    "scripts/living_archive_browser.mjs": "577b080ae6bd9ec8f008b297ccb38e92fabfabc78bb4c78aee46ae7e3369a64f",
+    "test_campaign_late_game_contracts.js": "ad42ba8e2ddbff1c47b7a7f461c441744377480c984c06b5469273f6d55236dd",
+    "test_campaign_living_archive.js": "8f862e2c1ac1bbace30fe6cfe3dfa2ec0f05fa8f3abb40200495b40736b62f0b",
+    "test_campaign_low_quarter_mission.js": "b214205a59bd7c722176519e711a6f2326347842780a7e857f6a2e50f722b157",
+    "test_campaign_story.js": "b82dcc3e8029e83b642a7b901387b4778a237a7759ab286f810b2bf5d5ad8f98",
+    "test_good_boys_ship_deck_mapping.js": "c33ee2221b8557a8113f4904d506414c98620d3bf6b5b7383e689732927d2348",
+    "test_static_entrypoint_integrity.js": "b49a22a5f2bd3b66e125926bf67cea9979b2551246d4dfd9bd1698d5bb436a2e",
+    "docs/LIVING_ARCHIVE_STIGMERGY.md": "2ee682fbe1475b0f9a2fcc24982b61831fede61dba86cfe6799673e2c5aefbad"
+  },
+  "checks": {
+    "production": {
+      "command": "npm test",
+      "suites": 125,
+      "javascriptSyntaxFiles": 635,
+      "result": "PASS"
+    },
+    "focused": {
+      "command": "node test_campaign_living_archive.js",
+      "groups": 17,
+      "result": "PASS"
+    },
+    "independentFocused": {
+      "groups": 17,
+      "result": "PASS",
+      "receipt": "independent-review.json"
+    },
+    "browser": {
+      "command": "node scripts/living_archive_browser.mjs",
+      "profiles": [
+        "desktop",
+        "touch"
+      ],
+      "browser": "140.0.7339.186",
+      "result": "PASS",
+      "sourceImmutable": true
+    }
+  },
+  "artifacts": {
+    "browser.log": {
+      "sha256": "15e3f4a39c749f206ab3135504fb82cb45eee334971d65b4b24b38971d864b77",
+      "bytes": 54
+    },
+    "desktop-marks.png": {
+      "sha256": "8116e0bf0ef9d5d32dac7a52d9833575c9feb79371c2f0737a61981d8b5b012a",
+      "bytes": 75725
+    },
+    "desktop-records.png": {
+      "sha256": "8e896fa7b2f5370ac9dc8e7a2b66a6254fb57f7be0cd4f3d4903b08851fde243",
+      "bytes": 97250
+    },
+    "desktop.json": {
+      "sha256": "5581f3db74ef19f237173154a40c6a22d22ed5ae26dda687e4a3534966eb45f0",
+      "bytes": 1463
+    },
+    "focused.log": {
+      "sha256": "bc7cc033278ac15d603d7632eb58283464bdfea26836954105922006252a1be2",
+      "bytes": 1333
+    },
+    "independent-focused.log": {
+      "sha256": "bc7cc033278ac15d603d7632eb58283464bdfea26836954105922006252a1be2",
+      "bytes": 1333
+    },
+    "independent-review.json": {
+      "sha256": "091a5683d3408b7b34cb31e4b69e7b58d881fcfc36009e2c203c3d6003f85131",
+      "bytes": 2025
+    },
+    "initial-browser-attempt.log": {
+      "sha256": "b16b303e1b873a4e081cd1032bf97b33bc125d0beefecac20763ddf1e9626914",
+      "bytes": 586
+    },
+    "production.log": {
+      "sha256": "eb5c4e24847ecb6a2fb5e9d4dcddb82c3e4c6e6cd171049b7710cb7575540396",
+      "bytes": 50742
+    },
+    "results.json": {
+      "sha256": "cb4f289aa52345d479b6e644073c7bdd71033a44890946b656fd3b159b9b45f7",
+      "bytes": 3064
+    },
+    "touch-marks.png": {
+      "sha256": "0f8b544fe48cd3af543f803fff2b281cc54393aac2250404bf17614d657943fc",
+      "bytes": 52650
+    },
+    "touch-records.png": {
+      "sha256": "0021d4075de9185be97f7a69bcee070cf0dd56a2e549b3c0a9a7f36e184e5acc",
+      "bytes": 77000
+    },
+    "touch.json": {
+      "sha256": "103616fbfde7d7396b142b738db1f60b40d680f536bae661c887c67eca92e325",
+      "bytes": 1468
+    }
+  },
+  "environment": {
+    "os": "Linux",
+    "python": "3.12.14",
+    "node": "v24.22.3",
+    "hostQualification": "Scratch Linux only; no DBOX or Windows qualification"
+  },
+  "verifiedBehavior": [
+    "Posted marks survive save/reload",
+    "Consenting independent service resident reaches gate while K stays in approaches",
+    "Authored attendant need, refusal and unknown consent remain respected",
+    "No safety granted by a mark or gate arrival",
+    "Current receipt, care, defense and live-threat gates govern use",
+    "Stale route marks require local correction",
+    "Local record copies remain as last read until another physical visit",
+    "Archive-module failure and future schemas preserve saved data"
+  ],
+  "limits": [
+    "Completed-epilogue setup fixture; not full campaign playthrough",
+    "Virtual browser clock",
+    "Touch uses pointer on actual controls, not physical multitouch",
+    "No physical iPhone, native Safari or measured device performance",
+    "No fresh character art or likeness approval",
+    "No merge, deployment or comic publication"
+  ],
+  "initialAttempts": "System Chromium could not launch because its singleton socket was denied. Standard Playwright headless shell ran. Initial touch harness used a fixed-duration hold; changed only the runner to wait for observed completion under held input. Final desktop/touch runs pass with source hashes unchanged."
+}

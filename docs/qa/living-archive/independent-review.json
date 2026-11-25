@@ -1,0 +1,16 @@
+{
+  "kind": "game",
+  "observed_at_utc": "2026-11-25T05:37:43.367312+00:00",
+  "command": "node test_campaign_living_archive.js",
+  "exit_code": 0,
+  "source_stable": true,
+  "source_sha256": {
+    "campaign_living_archive.js": "64650a1ca200c1442f50dcf83a18b48b409403c12b6d0a422b138fbc8f3eafee",
+    "campaign_low_quarter_mission.js": "f53b80de564d1b211cd08579b212a244691518d2eb17978f823d0e3c71e84014",
+    "campaign_low_quarter_play.js": "be5a641d0fc2888a8cb7f137a5304e08a0b3c207dcb76e4ff775fe82c94f9e3c",
+    "test_campaign_living_archive.js": "8f862e2c1ac1bbace30fe6cfe3dfa2ec0f05fa8f3abb40200495b40736b62f0b"
+  },
+  "groups_passed": 17,
+  "output": "PASS unwitnessed route flags and remote input cannot publish a mark\nPASS physical marks persist and move consenting walkers without nearby K\nPASS off-sector continuation uses the saved mark, not the character presence\nPASS unknown consent, refusal and a change of choice all stop autonomous following\nPASS mirrored consent and care fields cannot substitute for authoritative sources\nPASS route closure and a later reopening never make an old mark current\nPASS a closed primary is replaced by a separately tested alternative\nPASS lost service, a missing defender and local threats each suspend unattended movement\nPASS pause and failed persistence cannot move people or commit new marks\nPASS save and reload retain marks without granting transport or rescue\nPASS unbound records, a wrong run and future schemas preserve the input and block continuation\nPASS local readings require a physical visit and remain honest last-read snapshots\nPASS reading copies does not create records or advance the simulation\nPASS an unavailable archive module preserves legacy play and blocks marked saves\nPASS copied readings reject removed or duplicate source references\nPASS one lane receipt cannot claim both lanes were checked\nPASS Chorus traces need actual assimilation; relay loss does not erase acquired fragments\nLiving Archive: 17 groups PASS\n",
+  "stderr": ""
+}

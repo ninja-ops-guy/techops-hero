@@ -13,6 +13,7 @@ The repository contains a long historical hook stack. Those files are still allo
 | Full campaign facts/order | `campaign_story.js` | Owns act prerequisites, produced facts, endings, and hard campaign progression semantics. |
 | Scene schema | `campaign_scene_schema.js` | Validates authored scene IDs, speakers, text limits, state writes, branches, and dead-end protection. |
 | Runtime adapter | `campaign_runtime.js` | Bridges systems to canonical campaign state; must not invent parallel story state. |
+| Living Archive route marks and copied records | `campaign_living_archive.js` | Optional physical markings and last-read copies in the existing Low Quarter mission save. Reads accepted rescue/siege evidence; cannot award safety, restore memory, change endings or acquire Chorus knowledge. See `docs/LIVING_ARCHIVE_STIGMERGY.md`. |
 | State-machine registry | `runtime_state_machines.js` | Owns transition contracts and read-only inspection only; never duplicates gameplay state, writes saves, or becomes a narrative authority. See `docs/STATE_MACHINES.md`. |
 | Day 1 presentation/world | `campaign_native_act1.js` | Owns authored standup/workstation/ticket presentation and base-runtime gating. |
 | Good Dogs home opening | `good_dogs_home_scene.js` / `good_boys_button_hard_fix.js` | Title mode selection and domestic prologue; the ship movie remains owned by M2 boarding. |

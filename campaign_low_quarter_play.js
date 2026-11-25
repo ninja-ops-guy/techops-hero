@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   if(!root.document||root.TechOpsLowQuarterPlay)return;
-  var Mission=root.TechOpsLowQuarterMission,Content=root.TechOpsLowQuarterScenario;
+  var Mission=root.TechOpsLowQuarterMission,Content=root.TechOpsLowQuarterScenario,Archive=root.TechOpsLivingArchive;
   if(!Mission||!Content)return;
   var ui=null,state=null,keys={},last=0,accumulator=0,savedAt=0,frame=0,priorDialog=false,error=null;
   var presentation=null;
@@ -14,6 +14,7 @@
   function message(text){ui.status.textContent=text;}
   function key(e,down){
     if(!ui)return;
+    if(down&&e.code==='Escape'&&state.lowQuarterMission.dialog&&state.lowQuarterMission.dialog.kind==='archive'){e.preventDefault();e.stopImmediatePropagation();choose('cancel');return;}
     if(e.code==='Tab'&&down){var container=ui.choice.hidden?ui.host:ui.choice,buttons=Array.from(container.querySelectorAll('button')).filter(function(b){return !b.disabled;});var at=buttons.indexOf(root.document.activeElement);e.preventDefault();e.stopImmediatePropagation();buttons[(at+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;}
     if(ui.choice.hidden===false&&e.code!=='Escape'){e.stopImmediatePropagation();return;}
     if(!['ArrowLeft','ArrowRight','ArrowUp','KeyA','KeyD','KeyW','KeyE','KeyJ','KeyK','Space','Escape'].includes(e.code))return;e.preventDefault();e.stopImmediatePropagation();
@@ -48,6 +49,7 @@
         #low-quarter-play button{padding:4px;font-size:12px}
         #lq-prompt,#lq-status{font-size:12px;min-height:0}
       }`;
+      style.textContent += '#lq-choice{inset:8% 5% auto;max-height:84%;overflow-y:auto;box-sizing:border-box}#lq-choice h3{font-size:17px;margin:0 0 10px}#lq-choice article{border-top:1px solid #41635f;padding:12px 0}#lq-choice article h4{margin:0 0 6px;color:#aee1c7}#lq-choice article p{line-height:1.5;margin:0 0 6px;overflow-wrap:anywhere}#lq-choice article small{display:block;line-height:1.5}';
       host.appendChild(style);var header=root.document.createElement('header'),title=root.document.createElement('h2');title.textContent='LOW QUARTER · HOLD THE WAY HOME';header.appendChild(title);
       var pause=button('Pause',function(){ui.paused=!ui.paused;keys={};pause.textContent=ui.paused?'Resume':'Pause';});header.appendChild(pause);header.appendChild(button('Save & return',close));host.appendChild(header);
       var scope=root.document.createElement('small');scope.textContent=Content.scope+' K and Iona are here; other crew stay at their established stations.';host.appendChild(scope);
@@ -55,6 +57,7 @@
       var prompt=root.document.createElement('div');prompt.id='lq-prompt';host.appendChild(prompt);var status=root.document.createElement('div');status.id='lq-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');host.appendChild(status);
       var nav=root.document.createElement('nav');nav.setAttribute('aria-label','Mission controls');[['◀','ArrowLeft'],['▶','ArrowRight'],['Jump','Space'],['Strike','KeyJ'],['Guard','KeyK'],['Interact','KeyE']].forEach(function(pair){nav.appendChild(control(pair[0],pair[1]));});host.appendChild(nav);
       nav.appendChild(button('People & routes',function(){ui.paused=true;ui.pause.textContent='Resume';keys={};var s=state.lowQuarter?root.TechOpsLowQuarter.evaluate(state):null;message(s?'Verified safe '+s.safe.length+' / 48. Unresolved '+s.unresolved.length+'. '+state.lowQuarterMission.carriers.map(function(c){return c.id+': '+c.phase+' ('+c.sector+')';}).join(' · '):'The repaired two-ended crossing must be verified before entering.');}));
+      if(Archive)nav.appendChild(button('Read records',function(){try{var next=Mission.step(state,{readArchive:true},.1);save(next);state=next;keys={};dialog();}catch(e){error=e.message;message('Records unavailable: '+error);}}));
       var choice=root.document.createElement('div');choice.id='lq-choice';choice.hidden=true;host.appendChild(choice);root.document.body.appendChild(host);
       ui={host:host,canvas:canvas,ctx:canvas.getContext('2d'),status:status,prompt:prompt,choice:choice,pause:pause,paused:false,dialogKey:null,focus:root.document.activeElement};
       root.addEventListener('keydown',down,true);root.addEventListener('keyup',up,true);root.addEventListener('blur',release);root.document.addEventListener('visibilitychange',visibility);
@@ -68,6 +71,14 @@
   }
   function choose(value){try{var next=Mission.step(state,{choice:value},.1);save(next);state=next;keys={};}catch(e){error=e.message;message('Choice was not saved: '+error);}}
   function dialog(){var m=state.lowQuarterMission,d=m.dialog,key=d?JSON.stringify(d):null;if(key===ui.dialogKey)return;ui.dialogKey=key;ui.choice.replaceChildren();ui.choice.hidden=!d;if(!d)return;
+    if(d.kind==='archive'){
+      var heading=root.document.createElement('h3');heading.textContent=d.sector?'Records left here':'Your copies of local records';ui.choice.appendChild(heading);
+      var introduction=root.document.createElement('p');introduction.textContent='Repair tags, directions and care handoffs preserve what people did. These are the last copies K read; a later change needs another visit.';ui.choice.appendChild(introduction);
+      var cards=d.sector?m.archive&&m.archive.readings[d.sector]||[]:Archive.remembered(state);
+      if(!cards.length){var empty=root.document.createElement('p');empty.textContent='No local records copied yet. Walk to a records station after work has been witnessed.';ui.choice.appendChild(empty);}
+      cards.forEach(function(card){var article=root.document.createElement('article'),title=root.document.createElement('h4'),body=root.document.createElement('p'),source=root.document.createElement('small');title.textContent=card.title;body.textContent=card.body;source.textContent=card.sources.length+' local observation'+(card.sources.length===1?'':'s')+' · copied '+Math.floor(card.observedAt)+' seconds into this mission';article.appendChild(title);article.appendChild(body);article.appendChild(source);ui.choice.appendChild(article);});
+      ui.choice.appendChild(button('Return to the street',function(){choose('cancel');ui.pause.focus();}));ui.choice.querySelector('button').focus();return;
+    }
     var p=root.document.createElement('p');p.textContent=d.kind==='resident'?d.label+'. '+(d.care==='ordinary care'?'A neighbor asks who will receive them.':'“I need an attendant. Where will someone accept my care?”')+' The route stays in this realm; the ship is not the destination.':'Outcome: '+d.outcome.replaceAll('_',' ')+'. This permanently closes this surveyed response area for this run. Wider Low Quarter unassessed.';ui.choice.appendChild(p);
     (d.kind==='resident'?[['Offer attended transport','transport'],['Offer supported shelter','shelter'],['Respect refusal','declined'],['Keep talking later','cancel']]:[['Keep working','cancel'],['Confirm permanent closeout','confirm']]).forEach(function(pair){ui.choice.appendChild(button(pair[0],function(){choose(pair[1]);}));});ui.choice.querySelector('button').focus();
   }
@@ -124,6 +135,10 @@
     m.units.filter(function(u){return u.sector===p.sector&&u.travel<=0&&!u.lost;}).forEach(function(u){figure(smooth(u,view&&view.previous&&view.previous.units)-cam,floor,u.id.startsWith('robot')?'#7f9dba':'#6c8d78',u.id==='signal_picket'?'picket':null);});
     m.enemies.filter(function(e){return e.sector===p.sector;}).forEach(function(e){var ex=smooth(e,view&&view.previous&&view.previous.enemies)-cam;figure(ex,floor,e.contained?'#584e64':'#9a405d',e.contained?'contained lane':null);rect(ex-10,floor-60,e.hp*6,3,'#b96b87');});
     if(p.sector==='approaches'&&m.primaryClosed){rect(1860-cam,350,18,80,'#b7ac83');text('OLD BRANCH CLOSED',1790-cam,332,'#e1d5b1',11);}
+    if(Archive&&area){var guide=Archive.status(state,p.sector);if(guide.mark){var markColor=guide.ready?'#a8d9ba':'#d9ba78';
+      [1100,1240,1380].forEach(function(x){rect(x-cam,floor+20,35,3,markColor);rect(x+27-cam,floor+14,3,15,markColor);rect(x+31-cam,floor+17,3,9,markColor);});
+      text(guide.ready?'FOLLOW MARKS TO GATE':'WAIT · CHECK LOCAL CONDITIONS',1100-cam,floor+48,markColor,11);
+    }}
     if(p.sector==='receiving'){figure(660-cam,floor,'#e4c49a','receiver 1');figure(860-cam,floor,'#e4c49a','receiver 2');text('SCREENED CARE · SAME REALM',550-cam,300,'#b8d7ca',13);}
     m.carriers.filter(function(v){return v.sector===p.sector&&['idle','loading','outbound','interrupted','handoff','care'].includes(v.phase);}).forEach(function(v){var x=smooth(v,view&&view.previous&&view.previous.carriers)-cam;if(art)art.carrier(c,x,floor);else{rect(x-40,floor-38,80,28,'#577d89');rect(x-30,floor-10,18,12,'#090e16');rect(x+20,floor-10,18,12,'#090e16');}text(v.id,x-40,floor-58,'#c1e0e8',10);});
     var pose=view?view.pose:m.hold?12:m.attack>0?5:(keys.ArrowLeft||keys.ArrowRight||keys.KeyA||keys.KeyD)?Math.floor(m.elapsed*1000/120)%4:28;if(reduced&&view&&view.moving&&!m.attack&&!m.hold)pose=0;

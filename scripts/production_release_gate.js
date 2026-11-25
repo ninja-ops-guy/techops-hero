@@ -5,6 +5,7 @@ const fs = require("fs");
 
 const tests = [
   "test_campaign_low_quarter_art_motion.js",
+  "test_campaign_living_archive.js",
   "test_day_dialogue_variance.js",
   "test_campaign_day_spatial_music.js",
   "test_runtime_day_cases.js",
