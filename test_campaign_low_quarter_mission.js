@@ -43,6 +43,7 @@ function driver(ending='shutdown'){
  }
  return {get state(){return s;},set state(v){s=v;},step,walk,use,choose,go,prepare,finish,waitUntil};
 }
+if(require.main===module){
 let count=0;function test(name,fn){fn();count++;console.log('PASS '+name);}
 for(const ending of ['shutdown','control','open_network'])test('normal world inputs earn a full response-area save: '+ending,()=>{
  const d=driver(ending);d.prepare();assert.equal(d.state.lowQuarterMission.clock,20,'preparation does not consume the assault window');
@@ -77,5 +78,6 @@ test('reload keeps an unfinished world, does not grant evidence, and failed save
  assert.notEqual(Siege.status(loaded).phase,'complete');assert.throws(()=>Rescue.transact(loaded,s=>Mission.step(s,{move:1},.25),()=>false),/saved/);assert.deepEqual(loaded.lowQuarterMission,before.lowQuarterMission);
 });
 test('continuing refusal is respected and cannot count as a full save',()=>{const d=driver();for(let i=0;i<4;i++)d.use('access_'+i);d.use('lq_a_01');d.choose('declined');assert.equal(Rescue.inspect(d.state).people.lq_a_01.consent,'declined');assert(Rescue.evaluate(d.state).unresolved.includes('lq_a_01'));});
-if(require.main===module)console.log('Playable Low Quarter: '+count+' groups PASS');
+console.log('Playable Low Quarter: '+count+' groups PASS');
+}
 module.exports={driver};

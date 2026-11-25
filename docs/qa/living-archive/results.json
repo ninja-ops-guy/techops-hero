@@ -1,0 +1,66 @@
+[
+  {
+    "profile": "desktop",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "browser": "140.0.7339.186",
+    "sourceHashes": {
+      "campaign_living_archive.js": "64650a1ca200c1442f50dcf83a18b48b409403c12b6d0a422b138fbc8f3eafee",
+      "campaign_low_quarter_mission.js": "f53b80de564d1b211cd08579b212a244691518d2eb17978f823d0e3c71e84014",
+      "campaign_low_quarter_play.js": "be5a641d0fc2888a8cb7f137a5304e08a0b3c207dcb76e4ff775fe82c94f9e3c",
+      "campaign_late_game_bootstrap.js": "8b1df1c4ace3e2e07afd364b25a557e32526da046e8ba9f34af96e1641452d05",
+      "campaign_native_act1_visuals.js": "33b59ec1ccf88f79c87940409c2a4329cd02685ea9d84df0dc79d349f84c95c6",
+      "campaign_story.js": "4b3edc7e16442efd5b775b7a05632bcad3527230ec7232d141eb0c53b03dbf5e",
+      "index.html": "a9fe73b2c3879a61e22b939d08b07d25d436b905c62b86cd2d7269bae774fe25",
+      "scripts/living_archive_browser.mjs": "577b080ae6bd9ec8f008b297ccb38e92fabfabc78bb4c78aee46ae7e3369a64f"
+    },
+    "offSectorFollower": "lq_b_02",
+    "requiredAttendantWaited": "lq_b_01",
+    "refusalStayed": "lq_b_03",
+    "unknownConsentStayed": "lq_b_04",
+    "safeCount": 0,
+    "reloadPreserved": true,
+    "recordBounds": {
+      "x": 64,
+      "y": 64,
+      "width": 1152,
+      "height": 450.5
+    },
+    "pageErrors": [],
+    "scope": "Actual keyboard/pointer controls after a completed-epilogue fixture; virtual browser clock. Touch uses mouse pointer on the actual touch controls; not physical iPhone, native multitouch or Safari."
+  },
+  {
+    "profile": "touch",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "browser": "140.0.7339.186",
+    "sourceHashes": {
+      "campaign_living_archive.js": "64650a1ca200c1442f50dcf83a18b48b409403c12b6d0a422b138fbc8f3eafee",
+      "campaign_low_quarter_mission.js": "f53b80de564d1b211cd08579b212a244691518d2eb17978f823d0e3c71e84014",
+      "campaign_low_quarter_play.js": "be5a641d0fc2888a8cb7f137a5304e08a0b3c207dcb76e4ff775fe82c94f9e3c",
+      "campaign_late_game_bootstrap.js": "8b1df1c4ace3e2e07afd364b25a557e32526da046e8ba9f34af96e1641452d05",
+      "campaign_native_act1_visuals.js": "33b59ec1ccf88f79c87940409c2a4329cd02685ea9d84df0dc79d349f84c95c6",
+      "campaign_story.js": "4b3edc7e16442efd5b775b7a05632bcad3527230ec7232d141eb0c53b03dbf5e",
+      "index.html": "a9fe73b2c3879a61e22b939d08b07d25d436b905c62b86cd2d7269bae774fe25",
+      "scripts/living_archive_browser.mjs": "577b080ae6bd9ec8f008b297ccb38e92fabfabc78bb4c78aee46ae7e3369a64f"
+    },
+    "offSectorFollower": "lq_b_02",
+    "requiredAttendantWaited": "lq_b_01",
+    "refusalStayed": "lq_b_03",
+    "unknownConsentStayed": "lq_b_04",
+    "safeCount": 0,
+    "reloadPreserved": true,
+    "recordBounds": {
+      "x": 19.5,
+      "y": 67.515625,
+      "width": 351,
+      "height": 551.5
+    },
+    "pageErrors": [],
+    "scope": "Actual keyboard/pointer controls after a completed-epilogue fixture; virtual browser clock. Touch uses mouse pointer on the actual touch controls; not physical iPhone, native multitouch or Safari."
+  }
+]

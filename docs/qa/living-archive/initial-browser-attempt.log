@@ -1,0 +1,17 @@
+PASS Living Archive desktop
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Physical interaction completed repair_shelters Local receivers and runners deliver the warning.
+    at use (file:///workspace/scratch/a102a85ef6d2/techops-work/scripts/living_archive_browser.mjs:31:194)
+    at async file:///workspace/scratch/a102a85ef6d2/techops-work/scripts/living_archive_browser.mjs:36:101 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.3

@@ -2,9 +2,9 @@
  * A checkpoint is presentation/world state, never a district_saved flag. */
 (function(root,factory){
   var node=typeof module==='object'&&module.exports;
-  var api=factory(node?require('./campaign_low_quarter.js'):root.TechOpsLowQuarter,node?require('./campaign_chorus_siege.js'):root.TechOpsChorusSiege,node?require('./campaign_low_quarter_scenario.js'):root.TechOpsLowQuarterScenario);
+  var api=factory(node?require('./campaign_low_quarter.js'):root.TechOpsLowQuarter,node?require('./campaign_chorus_siege.js'):root.TechOpsChorusSiege,node?require('./campaign_low_quarter_scenario.js'):root.TechOpsLowQuarterScenario,node?require('./campaign_living_archive.js'):root.TechOpsLivingArchive);
   if(node)module.exports=api;if(root)root.TechOpsLowQuarterMission=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(Rescue,Siege,Content){
+})(typeof globalThis!=='undefined'?globalThis:this,function(Rescue,Siege,Content,Archive){
   'use strict';
   var D=Content.definition,IDS=Content.places.map(function(p){return p.id;}),SPEED=110;
   function copy(v){return JSON.parse(JSON.stringify(v));}
@@ -36,6 +36,7 @@
   function validate(state){
     var m=state.lowQuarterMission;if(!m)return {valid:true};
     if(m.schema!==1||m.revision!==Content.revision)return {valid:true,continuationBlocked:true,reason:'Mission checkpoint version unavailable; preserve original save'};
+    if(m.archive||m.dialog&&m.dialog.kind==='archive'){var archiveValidation=Archive?Archive.validate(state):{valid:true,continuationBlocked:true,reason:'Living Archive module unavailable; preserve original save'};if(!archiveValidation.valid||archiveValidation.continuationBlocked)return archiveValidation;}
     try{assert(Number.isFinite(m.elapsed)&&m.elapsed>=0&&Number.isFinite(m.clock)&&m.clock>=20,'Invalid mission clock');assert(m.player&&Number.isFinite(m.player.x)&&['access'].concat(IDS,['receiving']).includes(m.player.sector),'Invalid player location');assert(Array.isArray(m.enemies)&&m.enemies.length<=16&&m.enemies.every(function(e){return IDS.includes(e.sector)&&Number.isFinite(e.x)&&Number.isFinite(e.hp);}), 'Invalid active threats');assert(m.stage==='access'||state.lowQuarter&&state.lowQuarter.scenario===Content.id&&state.lowQuarter.runId===m.runId,'Mission run mismatch');return {valid:true};}catch(e){return {valid:false,errors:[e.message]};}
   }
   function ready(m){return IDS.every(function(k){return m.survey[k]&&m.warned[k]&&m.services[k]&&m.staffed[k]&&m.routeTested[k];})&&Content.authority[m.ending].every(function(k){return m.checked[k];})&&m.checked.threat_corroborated&&m.units.length>=9&&m.units.every(function(u){return u.ready;});}
@@ -64,6 +65,7 @@
     if(m.travel)return out;
     var area=place(m);if(!area)return out;
     if(k==='receiving'){
+      if(Archive)obj('records_receiving','Read the independent receiving register',570,1,'records');
       obj('care_bays','Inspect both staffed receiving bays and accepted care',650,2,'care_bays');
       IDS.forEach(function(to,i){obj('exit_'+to,'Return along the surveyed ground lane to '+to,1840-i*130,1,'exit');});return out;
     }
@@ -73,6 +75,10 @@
     if(!m.services[k])obj('repair_'+k,'Repair and load-test water, power and containment',1160,5,'repair');
     if(!m.staffed[k])obj('staff_'+k,'Check care supplies and arrange a witnessed relief rota',1380,3,'staff');
     if(!m.routeTested[k])obj('route_'+k,'Walk the loading gate; test both evacuation lanes',1570,4,'route');
+    if(Archive){
+      obj('records_'+k,'Read local repair tags, directions and care records',570,1,'records');
+      if(Archive.canPost(state,k))obj('mark_'+k,Archive.currentMark(state,k)?'Correct the old directions with the currently tested lane':'Leave tested directions for independent walkers',1640,3,'mark');
+    }
     if(k==='approaches'&&m.stage==='preparation'){
       var key=branchTask(m);if(key)obj('command_'+key,BRANCH_TEXT[key],1800+(m.branch.step%3)*160,4,'command');
       if(m.ending==='control'&&m.branch.step===4&&!m.branch.stopped)obj('stop','Invoke the external stop: people are still crossing',2100,1,'stop');
@@ -107,7 +113,7 @@
         rescue(s,'consent',{actor:person.sector+'_witness',person:person.id,choice:input});m.choices[person.id]=input;
         if(input==='transport')m.residents[person.id].status='home';
         if(input==='shelter'&&m.services[person.sector]&&m.staffed[person.sector]){rescue(s,'shelter',{actor:person.sector+'_witness',person:person.id,careVerified:true,safetyVerified:true});m.residents[person.id].status='sheltered';}
-        notice(m,input==='declined'?'Choice respected. This person remains unresolved.':input==='shelter'?'Shelter accepted; safety depends on continued services and containment.':'Transport accepted. Walk with this neighbor to the sector loading gate.');
+        notice(m,input==='declined'?'Choice respected. This person remains unresolved.':input==='shelter'?'Shelter accepted; safety depends on continued services and containment.':person.care==='ordinary care'&&Archive&&Archive.status(s,person.sector).ready?'Transport accepted. This neighbor can follow the tested local marks when the corridor is clear.':'Transport accepted. Walk with this neighbor to the sector loading gate.');
       }
     }else if(d.kind==='closeout'&&input==='confirm'){
       s.lowQuarter=Rescue.closeout(s,{rescue:s.lowQuarter.events.length,siege:s.lowQuarter.siege.events.length},true).lowQuarter;m.stage='closed';notice(m,'Response-area result recorded. The wider Chorus and Iona’s campaign continue.');
@@ -117,6 +123,8 @@
   function perform(s,o){
     var m=s.lowQuarterMission,k=m.player.sector;
     switch(o.action){
+      case 'mark':m.archive=Archive.post(s,k);notice(m,'Directions remain here when K leaves. Only consenting independent walkers use a current, defended lane; anyone requesting an attendant still waits for an escort.');break;
+      case 'records':m.archive=Archive.read(s,k);m.dialog={kind:'archive',sector:k};break;
       case 'access':m.access++;if(m.access===4)enter(s);else notice(m,'Observed access step recorded. Continue to the next marked workstation.');break;
       case 'survey':if(!D.rescue.people.filter(function(p){return p.sector===k;}).every(function(p){return m.visitedRooms&&m.visitedRooms[p.id];})){notice(m,'Walk past every occupied doorway with the local witness, then return to compare the room count.');break;}m.survey[k]=true;rescue(s,'survey',{actor:k+'_witness',sector:k});notice(m,'Twelve resident entries checked against the rooms you visited. The later final sweep remains required.');break;
       case 'threat':sample(m,'threat_corroborated');check(s,'threat_corroborated');notice(m,'Independent lookout and optical trace agree: ships are preparing a crossing. Warn every sector.');break;
@@ -180,7 +188,8 @@
   }
   function transportStep(s,dt){
     var m=s.lowQuarterMission;
-    Object.keys(m.residents).forEach(function(id){var r=m.residents[id];if(m.choices[id]==='transport'&&r.status==='home'&&m.player.sector===r.sector&&Math.abs(r.x-m.player.x)<220){toward(r,1500,72,dt);if(Math.abs(r.x-1500)<1)r.status='gate';}
+    var guides=Archive?Object.fromEntries(IDS.map(function(id){return [id,Archive.status(s,id)];})):{};
+    Object.keys(m.residents).forEach(function(id){var r=m.residents[id],following=Archive&&Archive.canFollow(s,id,guides[r.sector]);if(m.choices[id]==='transport'&&r.status==='home'&&(following||m.player.sector===r.sector&&Math.abs(r.x-m.player.x)<220)){toward(r,1500,72,dt);if(following)r.followedMark=guides[r.sector].mark.id;if(Math.abs(r.x-1500)<1)r.status='gate';}
       if(m.choices[id]==='shelter'&&r.status==='home'&&m.services[r.sector]&&m.staffed[r.sector]){rescue(s,'shelter',{actor:r.sector+'_witness',person:id,careVerified:true,safetyVerified:true});r.status='sheltered';}
     });
     m.carriers.forEach(function(c){if(c.phase==='idle'||c.phase==='interrupted')return;
@@ -260,7 +269,7 @@
     var valid=validate(state);assert(valid.valid&&!valid.continuationBlocked,(valid.errors||[valid.reason]).join('; '));
     assert(Number.isFinite(dt)&&dt>0&&dt<=.25,'Mission uses bounded simulation steps');
     var s=copy(state),m=s.lowQuarterMission;input=input||{};assert(m,'Start the mission first');m.ending=s.story.ending;
-    if(m.dialog){choice(s,input.choice);return s;}if(input.paused||m.stage==='closed')return s;
+    if(m.dialog){choice(s,input.choice);return s;}if(input.readArchive&&Archive){m.dialog={kind:'archive',sector:null};return s;}if(input.paused||m.stage==='closed')return s;
     m.elapsed+=dt;if(m.stage==='assault'||m.stage==='accounted')m.clock+=dt;
     if(m.branch.crossing>0&&m.branch.crossingResident){
       var crossingPerson=m.residents[m.branch.crossingResident];
