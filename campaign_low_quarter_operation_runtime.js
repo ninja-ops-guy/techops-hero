@@ -1,7 +1,7 @@
 /* Explicit review page owner. Same campaign serializer/key, tab-local session
  * adapter; never reads or writes the ordinary localStorage campaign slot. */
 (function(root){'use strict';
- const O=root.TechOpsLowQuarterOperation,C=root.TechOpsCampaign,R=root.TechOpsLowQuarter,V=root.TechOpsLowQuarterOperationVisuals;
+ const O=root.TechOpsLowQuarterOperation,C=root.TechOpsCampaign,R=root.TechOpsLowQuarter,V=root.TechOpsLowQuarterOperationVisuals,H=root.TechOpsLowQuarterSafehouse;
  const $=id=>document.getElementById(id),keys={},storage=root.sessionStorage;
  let state=null,committed=null,paused=false,last=0,saveAge=0,uiAge=0,fatal=false;
  O.register();
@@ -18,13 +18,20 @@
  function resume(){const s=C.load(storage),v=O.validate(s);if(!s.lowQuarterOperation||!v.valid||v.blocked)throw Error(v.reason||'Opening save is unavailable');state=s;committed=JSON.parse(JSON.stringify(s));paused=false;show();}
  function act(fn){if(!state||paused||fatal)return;try{const next=O.transact(state,fn,persist);state=next;committed=JSON.parse(JSON.stringify(state));render();}catch(e){$('save-error').textContent=e.message;paused=true;}}
  function button(label,fn){const b=document.createElement('button');b.textContent=label;b.onclick=fn;return b;}
+ function clearKeys(){Object.keys(keys).forEach(k=>keys[k]=false);}
+ function nearby(){const near=O.nearby(state);if(H?.canEnter(state))near.unshift({id:'cylinder',label:'Enter The Cylinder · Dr Mortise',kind:'safehouse'});return near;}
+ function enterCylinder(){
+   if(!state||paused||fatal||!H?.canEnter(state)||H.isOpen()||!commit())return;
+   paused=true;clearKeys();render();
+   H.open(()=>{clearKeys();last=performance.now();paused=document.hidden||!document.hasFocus();render();$('world').focus();});
+ }
  let interactionKey='',routeKey='';
  function render(){if(!state)return;const o=state.lowQuarterOperation;V.draw($('world'),state);
    const clock=String(Math.floor(o.tick/60)).padStart(2,'0')+':'+String(Math.floor(o.tick%60)).padStart(2,'0');
    $('status').textContent='IONA '+Math.round(o.hp)+' HP  /  '+clock+' LOCAL  /  BREACH '+o.kills+'/18  /  '+(o.checkpoint?'CHECKPOINT':o.halted?'HALTED':paused?'PAUSED':'ACTIVE');
    $('objective').textContent=O.objective(state);const currentWork=o.work&&O.PROPS.find(p=>p.id===o.work.id);$('message').textContent=o.work?(currentWork?currentWork.label:'Working')+' · '+Math.ceil(o.work.remaining)+'s':o.message;
-   const near=O.nearby(state),key=near.map(p=>p.id).join(',')+Boolean(o.work)+paused;
-   if(key!==interactionKey){interactionKey=key;$('actions').replaceChildren();for(const p of near){const b=button(p.label,()=>act(s=>O.interact(s,p.id)));b.dataset.interaction=p.id;b.disabled=!!o.work||paused;$('actions').append(b);
+   const near=nearby(),key=near.map(p=>p.id).join(',')+Boolean(o.work)+paused;
+   if(key!==interactionKey){interactionKey=key;$('actions').replaceChildren();for(const p of near){const b=button(p.label,p.kind==='safehouse'?enterCylinder:()=>act(s=>O.interact(s,p.id)));b.dataset.interaction=p.id;b.disabled=!!o.work||paused;$('actions').append(b);
      if(p.kind==='resident'){$('actions').append(button('Respect refusal',()=>act(s=>O.interact(s,p.id,'declined'))));}}
    }
    if(o.room!==routeKey){routeKey=o.room;$('routes').replaceChildren();
@@ -39,9 +46,9 @@
  $('resume').onclick=()=>{try{resume();}catch(e){$('save-error').textContent=e.message;}};
  $('restart').onclick=()=>{if(confirm('Discard only this tab’s opening review and return to the command selection?')){state=null;committed=null;document.body.classList.remove('opening-active');C.reset(storage);$('game').hidden=true;$('setup').hidden=false;$('resume').hidden=true;interactionKey='';routeKey='';}};
  $('pause').onclick=()=>{if(!state)return;if(!paused&&!commit())return;paused=!paused;Object.keys(keys).forEach(k=>keys[k]=false);render();};
- $('strike').onclick=()=>act(O.attack);$('use').onclick=()=>{if(state){const p=O.nearby(state)[0];if(p)act(s=>O.interact(s,p.id));}};
+ $('strike').onclick=()=>act(O.attack);$('use').onclick=()=>{if(state){const p=nearby()[0];if(p?.kind==='safehouse')enterCylinder();else if(p)act(s=>O.interact(s,p.id));}};
  const map={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump'};
- document.addEventListener('keydown',e=>{if(!state||['SELECT','INPUT','TEXTAREA'].includes(e.target.tagName))return;if(map[e.code]){keys[map[e.code]]=true;e.preventDefault();}if(!e.repeat&&e.code==='KeyJ'){e.preventDefault();act(O.attack);}if(!e.repeat&&e.code==='KeyE')$('use').click();});
+ document.addEventListener('keydown',e=>{if(!state||H?.isOpen()||['SELECT','INPUT','TEXTAREA'].includes(e.target.tagName))return;if(map[e.code]){keys[map[e.code]]=true;e.preventDefault();}if(!e.repeat&&e.code==='KeyJ'){e.preventDefault();act(O.attack);}if(!e.repeat&&e.code==='KeyE')$('use').click();});
  document.addEventListener('keyup',e=>{if(map[e.code])keys[map[e.code]]=false;});
  for(const b of document.querySelectorAll('[data-hold]')){b.onpointerdown=e=>{keys[b.dataset.hold]=true;b.setPointerCapture(e.pointerId);e.preventDefault();};b.onpointerup=b.onpointercancel=()=>keys[b.dataset.hold]=false;b.onlostpointercapture=()=>keys[b.dataset.hold]=false;}
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&state){Object.keys(keys).forEach(k=>keys[k]=false);commit();paused=true;}});

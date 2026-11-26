@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "project": "TechOps Hero",
+  "medium": "game-pixel-art",
+  "source_branch": "codex/low-quarter-approved-sprite-direction",
+  "source_commit": "556d00984c76cf86b3edf7116744c9435440d328",
+  "creator_direction": {
+    "provenance": "LOCAL_TRANSCRIPT_RECORD",
+    "date": "2026-11-24",
+    "requirements": ["New Siege safehouse: The Cylinder", "Shopkeeper: Dr Mortise", "Shop exit door: exit device and door closer"]
+  },
+  "scenes": [{
+    "scene_id": "siege-cylinder-interior",
+    "story_phase": "Existing post-epilogue First Warning review setup",
+    "location": "The Cylinder, off the Service Exchange",
+    "channel": "objective",
+    "style_register": "game-pixel-art",
+    "cast": [{"actor_id": "dr_mortise", "name_used": "Dr Mortise", "appearance_status": "PROVISIONAL", "likeness_verification": "NOT_VERIFIED", "reference_files": [], "appearance": {"proposal": "Glasses and workshop apron; no established likeness or biography claimed"}}],
+    "beats": ["Enter from the services street", "Speak to Dr Mortise behind the counter", "Leave through the door fitted with a push bar and overhead closer"],
+    "panels": [{"panel_id": "room", "description": "Fixed interactive room", "camera_axis": "Interior looking toward counter and exit; hinges on left, latch on right", "props": ["Hardware shelves", "Counter", "Exit device", "Surface-mounted closer and jointed arm", "Exit sign"]}],
+    "render_source": "campaign_low_quarter_safehouse.js",
+    "raster_generation": "NOT_APPLICABLE: authored Canvas code",
+    "protected_state": ["Campaign/rescue/siege authority", "People and unit locations", "Currency and inventory", "Existing character designs"]
+  }],
+  "approval": {"status": "PROVISIONAL", "creator_approved_scope": "Requested names and door hardware; implementation authorized", "visual_likeness_approval": "NOT_VERIFIED"},
+  "revision_packet": "docs/THE_CYLINDER.md and artifacts/cylinder/",
+  "revision_chat": "NOT_CREATED",
+  "production_state": "INTEGRATED_REVIEW_CANDIDATE"
+}
