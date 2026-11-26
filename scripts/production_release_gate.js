@@ -41,6 +41,7 @@ const tests = [
   "test_good_dogs_handoff_probe.mjs",
   "test_good_dogs_coop.js",
   "test_good_dogs_state_integrity.js",
+  "test_good_dogs_retry.js",
   "test_campaign_world_visuals.js",
   "test_campaign_late_game_contracts.js",
   "test_campaign_swarm_migration.js",

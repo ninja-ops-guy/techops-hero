@@ -620,7 +620,7 @@
         "_gbShipRevealed", "_gbBoardRequested", "_gbBoardSequenceComplete"
       ].forEach(key => { try { delete NM[key]; } catch (e) { NM[key] = undefined; } });
     }
-    function startCombat736(m) {
+    function startCombat736(m, activeDog) {
       try {
         const M = missionSpec(m); if (!M) return;
         if (!S.nightMode && typeof enterNight === "function") enterNight();
@@ -628,6 +628,7 @@
         if (typeof nmLoadDistrict === "function") nmLoadDistrict(M.dist);
         clearMissionTransients736();
         NM._v736 = mkCState(m);
+        if (activeDog === "manchez") NM._v736.active = activeDog;
         NM.enemies = [];
         if (M.boss) {
           const b = spawn736([M.boss], NM._v736)[0];
@@ -720,7 +721,18 @@
     function missionFail736(why) {
       const cs = NM._v736; if (!cs || cs.resolving) return; cs.resolving = true;
       dlg("💀 MISSION FAILED — " + (missionSpec(cs.m).name || ""), why + "<br><small>Both fighters down. The cell numbers keep their prisoners.</small>", [
-        { t: "↻ Retry M" + cs.m, f: () => { closeDlg(); const m = cs.m; endNightQuiet736(); startCombat736(m); } },
+        { t: "↻ Retry M" + cs.m, f: () => {
+          // A delayed second click belongs to the failed attempt.
+          if (!NM || NM._v736 !== cs) return;
+          if (S.nightMode !== NM || Number(S.meta?._v736?.m) !== cs.m) {
+            dlg("Retry unavailable", "Resume Good Dogs from the title to restore your checkpoint.", [
+              { t: "Return to title", f: () => location.reload() },
+            ]);
+            return;
+          }
+          closeDlg();
+          startCombat736(cs.m, cs.active);
+        } },
         { t: "Abort to the title", f: () => { closeDlg(); endNightQuiet736(); try { save(); } catch (e) { } location.reload(); } },
       ]);
     }
