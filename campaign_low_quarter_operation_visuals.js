@@ -237,6 +237,7 @@
    ship(c,Math.min(W-90,W*.70)-progress*90,approach?82:67,approach?200:78,!!o.breachStart,t,calm);
   }
   c.save();c.translate(-Math.floor(cam),0);
+  if(room==='services')root.TechOpsLowQuarterSafehouse?.drawEntrance(c);
   for(let x=70;x<1800;x+=450)lamp(c,x,a.light);
   if(room==='approaches'){
    rect(c,1000,202,11,128,'#223744');rect(c,1090,202,11,128,'#223744');rect(c,997,200,108,8,'#849392');
